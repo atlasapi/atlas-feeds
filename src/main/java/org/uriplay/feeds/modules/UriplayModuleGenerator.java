@@ -189,26 +189,13 @@ public class UriplayModuleGenerator implements ModuleGenerator {
 	}
 
 	private void addDataContainerFormat(Element contentElm, Encoding encoding) {
-		if (encoding.getDataContainerFormat() != null) {
-			MimeType containerFormat;
-			
-			try {
-				// FIXME: encoding should store formats natively as MimeTypes to
-				// FIXME  make this unnecessary.
-				containerFormat = MimeType.fromString(encoding.getDataContainerFormat());
-			} catch (IllegalArgumentException e) {
-				containerFormat = null;
-			}
-			
-			contentElm.setAttribute("type", encoding.getDataContainerFormat());
-			
-			
-			if (containerFormat != null) {
-				if (containerFormat.getParentType().equals("video")) {
-					contentElm.setAttribute("medium", "video");
-				} else if (containerFormat.getParentType().equals("video")) {
-					contentElm.setAttribute("medium", "audio");
-				}
+		MimeType containerFormat = encoding.getDataContainerFormat();
+		if (containerFormat != null) {
+			contentElm.setAttribute("type", encoding.getDataContainerFormat().toString());
+			if (containerFormat.getParentType().equals("video")) {
+				contentElm.setAttribute("medium", "video");
+			} else if (containerFormat.getParentType().equals("video")) {
+				contentElm.setAttribute("medium", "audio");
 			}
 		}
 	}
