@@ -24,6 +24,7 @@ import org.jdom.Namespace;
 import org.jdom.Text;
 import org.jherd.core.MimeType;
 import org.jherd.rdf.vocabulary.RDF;
+import org.uriplay.media.TransportType;
 import org.uriplay.media.entity.Encoding;
 import org.uriplay.media.entity.Item;
 import org.uriplay.media.entity.Location;
@@ -90,7 +91,7 @@ public class UriplayModuleGenerator implements ModuleGenerator {
 								firstLocationUri = location.getCanonicalUri();
 							}
 							
-							if (guidLink == null && "HTMLEMBED".equalsIgnoreCase(location.getTransportType())) {
+							if (guidLink == null && TransportType.HTMLEMBED.equals(location.getTransportType())) {
 								guidLink = location.getCanonicalUri();
 							}
 							
