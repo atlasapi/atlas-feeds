@@ -18,6 +18,7 @@ package org.uriplay.beans;
 import java.io.ByteArrayOutputStream;
 import java.util.Set;
 
+import org.jherd.core.MimeType;
 import org.jmock.Expectations;
 import org.jmock.integration.junit3.MockObjectTestCase;
 import org.uriplay.beans.FeedTranslator.FeedFactory;
@@ -131,7 +132,7 @@ public class FeedTranslatorTest extends MockObjectTestCase {
 		Version version = new Version();
 		Encoding encoding = new Encoding();
 		encoding.setDataSize(DATA_SIZE);
-		encoding.setAudioCoding("audio/mpeg");
+		encoding.setAudioCoding(MimeType.AUDIO_MPEG);
 		Location location = new Location();
 		location.setCanonicalUri(locationUri);
 		encoding.setAvailableAt(Sets.newHashSet(location));
