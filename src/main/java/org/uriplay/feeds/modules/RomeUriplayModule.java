@@ -27,13 +27,15 @@ import com.sun.syndication.feed.module.ModuleImpl;
  */
 public class RomeUriplayModule extends ModuleImpl implements UriplayModule {
 
+	private static final long serialVersionUID = 1L;
+
 	private Object bean;
 	
 	public RomeUriplayModule() {
 		super(UriplayModule.class, PLAY.NS);
 	}
 
-	public Class getInterface() {
+	public Class<?> getInterface() {
 		return UriplayModule.class;
 	}
 
