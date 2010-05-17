@@ -18,7 +18,6 @@ package org.uriplay.beans;
 import java.io.ByteArrayOutputStream;
 import java.util.Set;
 
-import org.jherd.core.MimeType;
 import org.jmock.Expectations;
 import org.jmock.integration.junit3.MockObjectTestCase;
 import org.uriplay.beans.FeedTranslator.FeedFactory;
@@ -29,6 +28,7 @@ import org.uriplay.media.entity.Episode;
 import org.uriplay.media.entity.Location;
 import org.uriplay.media.entity.Playlist;
 import org.uriplay.media.entity.Version;
+import org.uriplay.media.reference.entity.MimeType;
 import org.uriplay.media.vocabulary.PLAY;
 
 import com.google.common.collect.Sets;
