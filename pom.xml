@@ -1,47 +1,78 @@
-<?xml version="1.0" encoding="UTF-8"?><project>
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>uriplay</groupId>
-  <artifactId>uriplay-feeds</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <description></description>
-  <build>
-	  <plugins>
-	      <plugin>
-	        <artifactId>maven-compiler-plugin</artifactId>
-	        <version>2.0.2</version>
-	        <configuration>
-	          <source>1.6</source>
-	          <target>1.6</target>
-	        </configuration>
-	      </plugin>
-	  </plugins>
-  </build>
-  <dependencies>
-      <dependency>
-      <groupId>org.jherd</groupId>
-      <artifactId>jherd</artifactId>
-      <version>0.7.0-SNAPSHOT</version>
-    </dependency>
-    <dependency>
-	  <groupId>uriplay-media-reference</groupId>
-		<artifactId>uriplay-media-reference
-		</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
-	</dependency>
-	    <dependency>
-      <groupId>com.sun.xml.bind</groupId>
-      <artifactId>jaxb-impl</artifactId>
-      <version>2.1.9</version>
-    </dependency>
-	<dependency>
-      <groupId>rome</groupId>
-      <artifactId>rome</artifactId>
-      <version>0.9</version>
-    </dependency>
-    <dependency>
-      <groupId>rome</groupId>
-      <artifactId>opml</artifactId>
-      <version>0.1</version>
-    </dependency>
-  </dependencies>
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>uriplay</groupId>
+    <artifactId>uriplay-feeds</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <description></description>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.0.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+        </plugins>
+
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-webdav</artifactId>
+                <version>1.0-beta-2</version>
+            </extension>
+        </extensions>
+    </build>
+    <dependencies>
+        <dependency>
+            <groupId>uriplay-media-reference</groupId>
+            <artifactId>uriplay-media-reference</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-impl</artifactId>
+            <version>2.1.9</version>
+        </dependency>
+        <dependency>
+            <groupId>rome</groupId>
+            <artifactId>rome</artifactId>
+            <version>0.9</version>
+        </dependency>
+        <dependency>
+            <groupId>rome</groupId>
+            <artifactId>opml</artifactId>
+            <version>0.1</version>
+        </dependency>
+    </dependencies>
+    
+    <scm>
+        <connection>scm:svn:https://uriplay.googlecode.com/svn/uriplay-feeds/trunk/</connection>
+        <developerConnection>scm:svn:http://uriplay.googlecode.com/svn/uriplay-feeds/trunk/</developerConnection>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>metabroadcast-mvn</id>
+            <name>Public Releases MetaBroadcast Repo</name>
+            <url>dav:http://mvn.metabroadcast.com:80/public-releases-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>metabroadcast-mvn</id>
+            <name>Public Snapshots MetaBroadcast Repo</name>
+            <url>dav:http://mvn.metabroadcast.com:80/public-snapshots-local </url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>metabroadcast-mvn</id>
+            <name>Metabroadcast</name>
+            <url>http://mvn.metabroadcast.com/all</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
 </project>
