@@ -42,7 +42,8 @@ public class RomeSyndicationFeed implements SyndicationFeed {
 
 	private final String feedType;
 	
-	public RomeSyndicationFeed(String feedType) {
+	@SuppressWarnings("unchecked")
+    public RomeSyndicationFeed(String feedType) {
 		this.feedType = feedType;
 
 		this.feed.getModules().add(new RomeUriplayModule());

@@ -22,7 +22,6 @@ import java.util.Set;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jdom.Text;
-import org.jherd.rdf.vocabulary.RDF;
 import org.uriplay.media.TransportType;
 import org.uriplay.media.entity.Encoding;
 import org.uriplay.media.entity.Item;
@@ -31,6 +30,7 @@ import org.uriplay.media.entity.Version;
 import org.uriplay.media.reference.entity.MimeType;
 import org.uriplay.media.vocabulary.MEDIA;
 import org.uriplay.media.vocabulary.PLAY;
+import org.uriplay.media.vocabulary.RDF;
 
 import com.google.common.collect.Sets;
 import com.sun.syndication.feed.module.Module;

@@ -20,11 +20,7 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.jherd.beans.BeanGraphExtractor;
-import org.jherd.beans.BeanGraphWriter;
-import org.jherd.beans.DescriptionMode;
-import org.jherd.beans.Representation;
+import org.springframework.web.util.HtmlUtils;
 import org.uriplay.feeds.SyndicationFeed;
 import org.uriplay.feeds.modules.UriplayModule;
 import org.uriplay.media.entity.Encoding;
@@ -104,7 +100,7 @@ public class FeedTranslator implements BeanGraphExtractor<InputStream>, BeanGrap
 			rssDescription.append(item.getDescription());
 		}
 		
-		String embedCode = StringEscapeUtils.unescapeHtml(embedCodeFor(item));
+		String embedCode = HtmlUtils.htmlEscape(embedCodeFor(item));
 		
 		if (embedCode != null) {
 			rssDescription.append(" ");

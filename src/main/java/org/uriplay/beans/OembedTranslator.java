@@ -19,10 +19,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 
-import org.jherd.beans.BeanGraphExtractor;
-import org.jherd.beans.BeanGraphWriter;
-import org.jherd.beans.DescriptionMode;
-import org.jherd.beans.Representation;
 import org.uriplay.feeds.OembedOutput;
 import org.uriplay.media.entity.Encoding;
 import org.uriplay.media.entity.Item;
