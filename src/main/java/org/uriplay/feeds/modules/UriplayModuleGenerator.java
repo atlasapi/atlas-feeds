@@ -201,7 +201,7 @@ public class UriplayModuleGenerator implements ModuleGenerator {
 	}
 
 	private Element getEnclosureElement(Element element, String uri) {
-		Iterator children = element.getContent().iterator(); 
+		Iterator<?> children = element.getContent().iterator(); 
 		Element enclosure = null;
 
 		while (children.hasNext() && enclosure == null) {
