@@ -91,7 +91,7 @@ public class UriplayModuleGenerator implements ModuleGenerator {
 								firstLocationUri = location.getCanonicalUri();
 							}
 							
-							if (guidLink == null && TransportType.HTMLEMBED.equals(location.getTransportType())) {
+							if (guidLink == null && TransportType.LINK.equals(location.getTransportType())) {
 								guidLink = location.getCanonicalUri();
 							}
 							
