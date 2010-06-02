@@ -97,6 +97,7 @@ public class RomeSyndicationFeed implements SyndicationFeed {
 
 		SyndEntry entry;
 		
+		@SuppressWarnings("unchecked")
 		public FeedItem(String uri) {
 			entry = new SyndEntryImpl();			
 			entry.getModules().add(new RomeUriplayModule());
