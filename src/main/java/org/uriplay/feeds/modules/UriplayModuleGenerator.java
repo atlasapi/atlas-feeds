@@ -27,12 +27,12 @@ import org.uriplay.media.entity.Encoding;
 import org.uriplay.media.entity.Item;
 import org.uriplay.media.entity.Location;
 import org.uriplay.media.entity.Version;
-import org.uriplay.media.reference.entity.MimeType;
 import org.uriplay.media.vocabulary.MEDIA;
 import org.uriplay.media.vocabulary.PLAY;
 import org.uriplay.media.vocabulary.RDF;
 
 import com.google.common.collect.Sets;
+import com.metabroadcast.common.media.MimeType;
 import com.sun.syndication.feed.module.Module;
 import com.sun.syndication.io.ModuleGenerator;
 

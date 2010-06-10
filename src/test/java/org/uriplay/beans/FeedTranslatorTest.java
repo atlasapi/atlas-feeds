@@ -28,10 +28,10 @@ import org.uriplay.media.entity.Episode;
 import org.uriplay.media.entity.Location;
 import org.uriplay.media.entity.Playlist;
 import org.uriplay.media.entity.Version;
-import org.uriplay.media.reference.entity.MimeType;
 import org.uriplay.media.vocabulary.PLAY;
 
 import com.google.common.collect.Sets;
+import com.metabroadcast.common.media.MimeType;
 
 /**
  * Unit test for {@link FeedTranslator}.
