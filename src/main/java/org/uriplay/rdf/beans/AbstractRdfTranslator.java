@@ -16,7 +16,6 @@ package org.uriplay.rdf.beans;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
-import java.io.Reader;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -25,19 +24,15 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.springframework.beans.BeanWrapperImpl;
-import org.uriplay.beans.BeanGraphExtractor;
 import org.uriplay.beans.BeanGraphWriter;
 import org.uriplay.beans.BeanIntrospector;
 import org.uriplay.content.rdf.annotations.RdfProperty;
-import org.uriplay.feeds.naming.ResourceMapping;
+import org.uriplay.media.entity.Description;
 import org.uriplay.media.vocabulary.RDF;
 import org.uriplay.rdf.RdfIntrospector;
 
-public abstract class AbstractRdfTranslator<ModelType, ResourceType, PropertyType, ReferenceType, LiteralType> 
-		implements BeanGraphExtractor<Reader>, BeanGraphWriter {
+public abstract class AbstractRdfTranslator<ModelType, ResourceType, PropertyType, ReferenceType, LiteralType> implements  BeanGraphWriter {
 
-	protected ResourceMapping resourceMap = null;
-	
 	protected TypeMap typeMap = null;
 	
 	protected Map<String, String> ontologyMap = new HashMap<String, String>();
@@ -79,9 +74,8 @@ public abstract class AbstractRdfTranslator<ModelType, ResourceType, PropertyTyp
             Object bean) {
         ResourceType resource = null;
         ReferenceType reference = null;
-        String preferredUri = resourceMap.getUri(bean);
         
-        reference = createReference(model, preferredUri, references, bean);
+        reference = createReference(model, uriOf(bean), references, bean);
         resource = createResource(model, bean, reference);
         addPropertyValues(model, workList, references, bean, resource);
     }
@@ -191,8 +185,7 @@ public abstract class AbstractRdfTranslator<ModelType, ResourceType, PropertyTyp
                     workList, 
                     references);
         } else if (isEntityRelation) {
-            String preferredUri = resourceMap.getUri(value);
-            ReferenceType valueRef = createReference(model, preferredUri, references, value);
+            ReferenceType valueRef = createReference(model, uriOf(value), references, value);
             createReferenceStatement(model, resource, rdfProperty, valueRef);
                 
             if (!workList.contains(value)) {
@@ -206,6 +199,10 @@ public abstract class AbstractRdfTranslator<ModelType, ResourceType, PropertyTyp
             createLiteralStatement(model, resource, rdfProperty, valueLit);                
         }
     }
+    
+	private String uriOf(Object bean) {
+		return (bean instanceof Description) ? ((Description) bean).getCanonicalUri() : null;
+	}
 
     protected void addCollectionPropertyValue(
             ModelType model, 

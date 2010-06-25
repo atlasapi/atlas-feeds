@@ -15,7 +15,6 @@ permissions and limitations under the License. */
 
 package org.uriplay.beans;
 
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 
@@ -30,7 +29,7 @@ import org.uriplay.media.entity.Version;
  *  
  * @author Robert Chatley (robert@metabroadcast.com)
  */
-public class OembedTranslator implements BeanGraphExtractor<InputStream>, BeanGraphWriter {
+public class OembedTranslator implements BeanGraphWriter {
 
 	interface OutputFactory {
 		OembedOutput createOutput();
@@ -40,14 +39,6 @@ public class OembedTranslator implements BeanGraphExtractor<InputStream>, BeanGr
 	
 	public OembedTranslator(OutputFactory outputFactory) {
 		this.feedFactory = outputFactory;
-	}
-
-	public Representation extractFrom(InputStream source) {
-		throw new UnsupportedOperationException("not implemented yet");
-	}
-
-	public Representation extractFrom(InputStream source, DescriptionMode mode) {
-		throw new UnsupportedOperationException("not implemented yet");
 	}
 
 	public void writeTo(Collection<Object> graph, OutputStream stream) {

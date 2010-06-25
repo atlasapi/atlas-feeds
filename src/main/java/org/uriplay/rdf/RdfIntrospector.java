@@ -24,7 +24,6 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.uriplay.beans.BeanIntrospector;
-import org.uriplay.beans.PropertySet;
 import org.uriplay.content.rdf.annotations.RdfClass;
 import org.uriplay.content.rdf.annotations.RdfId;
 import org.uriplay.content.rdf.annotations.RdfProperty;
@@ -106,39 +105,6 @@ public class RdfIntrospector {
         }
 
         return null;
-    }
-
-    /** TODO: getDefaultProperties needs to be check more carefully for
-     * TODO  property annotations instead of assuming that the read method is
-     * TODO  annotated.
-     *
-     * TODO: should be moved to a separate introspector class as this is 
-     * TODO  unrelated to RDF metadata
-     */
-    public static void getPropertySet(
-            Class<?> type,
-            String set,
-            List<String> properties,
-            List<String> relations) throws Exception {
-        Map<String, PropertyDescriptor> metadata = BeanIntrospector.getPropertyDescriptors(type);
-
-        for (Map.Entry<String, PropertyDescriptor> entry 
-                : metadata.entrySet()) {
-            PropertyDescriptor pd = entry.getValue();
-            Method readMethod = pd.getReadMethod();
-            PropertySet ann = readMethod.getAnnotation(PropertySet.class);
-
-            if (ann != null && containsPropertySet(ann.sets(), set)) {
-                RdfProperty relation = 
-                    readMethod.getAnnotation(RdfProperty.class);
-
-                properties.add(entry.getKey());
-
-                if (relation != null && relation.relation()) {
-                    relations.add(entry.getKey());
-                }
-            }
-        }
     }
 
     public static String getRdfIdProperty(Class<?> entityType) throws Exception {

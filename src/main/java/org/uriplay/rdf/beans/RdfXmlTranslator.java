@@ -20,8 +20,6 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
-import org.uriplay.beans.Representation;
-import org.uriplay.feeds.naming.ResourceMapping;
 
 import com.hp.hpl.jena.ontology.OntModel;
 
@@ -41,12 +39,12 @@ public class RdfXmlTranslator extends JenaRdfTranslator {
 	
 	private String outputFormat;
 	
-	public RdfXmlTranslator(TypeMap typeMap, ResourceMapping resourceMap) {
-		this(typeMap, resourceMap, RDF_XML);
+	public RdfXmlTranslator(TypeMap typeMap) {
+		this(typeMap, RDF_XML);
 	}
 	
-	public RdfXmlTranslator(TypeMap typeMap, ResourceMapping resourceMap, String outputFormat) {
-		super(typeMap, resourceMap);
+	public RdfXmlTranslator(TypeMap typeMap, String outputFormat) {
+		super(typeMap);
 		this.outputFormat = outputFormat;
 	}
 

@@ -15,7 +15,6 @@ permissions and limitations under the License. */
 
 package org.uriplay.beans;
 
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
@@ -37,7 +36,7 @@ import com.google.common.collect.Lists;
  * 
  * @author Robert Chatley (robert@metabroadcast.com)
  */
-public class FeedTranslator implements BeanGraphExtractor<InputStream>, BeanGraphWriter {
+public class FeedTranslator implements BeanGraphWriter {
 	
 	interface FeedFactory {
 		SyndicationFeed createFeed();
@@ -129,17 +128,4 @@ public class FeedTranslator implements BeanGraphExtractor<InputStream>, BeanGrap
 		}
 		return allLocations;
 	}
-	
-	
-	
-
-	public Representation extractFrom(InputStream stream) {
-		return extractFrom(stream, DescriptionMode.OPEN_WORLD);
-	}
-
-	public Representation extractFrom(InputStream stream, DescriptionMode mode) {
-		throw new UnsupportedOperationException();
-	}
-
-
 }
