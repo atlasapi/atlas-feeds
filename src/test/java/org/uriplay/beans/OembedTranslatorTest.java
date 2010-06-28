@@ -18,8 +18,13 @@ package org.uriplay.beans;
 import java.io.ByteArrayOutputStream;
 import java.util.Set;
 
+import junit.framework.TestCase;
+
 import org.jmock.Expectations;
-import org.jmock.integration.junit3.MockObjectTestCase;
+import org.jmock.Mockery;
+import org.jmock.integration.junit4.JMock;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.uriplay.beans.OembedTranslator.OutputFactory;
 import org.uriplay.feeds.OembedOutput;
 import org.uriplay.media.entity.Encoding;
@@ -34,26 +39,31 @@ import com.google.common.collect.Sets;
  * 
  * @author Robert Chatley (robert@metabroadcast.com)
  */
-public class OembedTranslatorTest extends MockObjectTestCase {
+@RunWith(JMock.class)
+public class OembedTranslatorTest extends TestCase {
+	
+	private final Mockery context = new Mockery();
 	
 	Set<Object> graph = Sets.<Object>newHashSet();
 	ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 	
-	OutputFactory outputFactory = mock(OutputFactory.class);
-	OembedOutput oembedOutput = mock(OembedOutput.class);
+	OutputFactory outputFactory = context.mock(OutputFactory.class);
+	OembedOutput oembedOutput = context.mock(OembedOutput.class);
 	
+	@Test
 	public void testCreatesFeed() throws Exception {
 		
-		checking(new Expectations() {{ 
+		context.checking(new Expectations() {{ 
 			one(outputFactory).createOutput(); 
 		}});
 		
 		new OembedTranslator(outputFactory).writeTo(graph, outputStream);
 	}
 	
+	@Test
 	public void testWritesFeedToStream() throws Exception {
 		
-		checking(new Expectations() {{ 
+		context.checking(new Expectations() {{ 
 			allowing(outputFactory).createOutput(); will(returnValue(oembedOutput));
 			one(oembedOutput).writeTo(outputStream);
 		}});
@@ -61,6 +71,7 @@ public class OembedTranslatorTest extends MockObjectTestCase {
 		new OembedTranslator(outputFactory).writeTo(graph, outputStream);
 	}
 	
+	@Test
 	public void testSetsOembedFieldsFromItemData() throws Exception {
 		
 		Item item = new Item();
@@ -82,7 +93,7 @@ public class OembedTranslatorTest extends MockObjectTestCase {
 		
 		graph.add(item);
 		
-		checking(new Expectations() {{ 
+		context.checking(new Expectations() {{ 
 			allowing(outputFactory).createOutput(); will(returnValue(oembedOutput));
 			allowing(oembedOutput).writeTo(outputStream);
 	

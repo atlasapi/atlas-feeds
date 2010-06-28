@@ -19,7 +19,10 @@ import java.io.ByteArrayOutputStream;
 import java.util.Set;
 
 import org.jmock.Expectations;
-import org.jmock.integration.junit3.MockObjectTestCase;
+import org.jmock.Mockery;
+import org.jmock.integration.junit4.JMock;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.uriplay.beans.FeedTranslator.FeedFactory;
 import org.uriplay.feeds.SyndicationFeed;
 import org.uriplay.feeds.modules.UriplayModule;
@@ -38,30 +41,35 @@ import com.metabroadcast.common.media.MimeType;
  * 
  * @author Robert Chatley (robert@metabroadcast.com)
  */
-public class FeedTranslatorTest extends MockObjectTestCase {
+@RunWith(JMock.class)
+public class FeedTranslatorTest  {
 	
-	static final long DATA_SIZE = 10L;
+	private static final long DATA_SIZE = 10L;
+	
+	private final Mockery context = new Mockery();
 	
 	Set<Object> graph = Sets.<Object>newHashSet();
 	ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 	
-	FeedFactory feedFactory = mock(FeedFactory.class);
-	SyndicationFeed rssFeed = mock(SyndicationFeed.class);
-	SyndicationFeed.Item item = mock(SyndicationFeed.Item.class);
-	UriplayModule uriplayModule = mock(UriplayModule.class);
+	FeedFactory feedFactory = context.mock(FeedFactory.class);
+	SyndicationFeed rssFeed = context.mock(SyndicationFeed.class);
+	SyndicationFeed.Item item = context.mock(SyndicationFeed.Item.class);
+	UriplayModule uriplayModule = context.mock(UriplayModule.class);
 	
+	@Test
 	public void testCreatesFeed() throws Exception {
 		
-		checking(new Expectations() {{ 
+		context.checking(new Expectations() {{ 
 			one(feedFactory).createFeed(); 
 		}});
 		
 		new FeedTranslator(feedFactory).writeTo(graph, outputStream);
 	}
 	
+	@Test
 	public void testWritesFeedToStream() throws Exception {
 		
-		checking(new Expectations() {{ 
+		context.checking(new Expectations() {{ 
 			allowing(feedFactory).createFeed(); will(returnValue(rssFeed));
 			one(rssFeed).writeTo(outputStream);
 		}});
@@ -69,6 +77,7 @@ public class FeedTranslatorTest extends MockObjectTestCase {
 		new FeedTranslator(feedFactory).writeTo(graph, outputStream);
 	}
 	
+	@Test
 	public void testSetsFeedTitleAndDescriptionFromPlaylists() throws Exception {
 		
 		final Playlist playlist = new Playlist();
@@ -77,7 +86,7 @@ public class FeedTranslatorTest extends MockObjectTestCase {
 		playlist.setCanonicalUri("http://example.com");
 		graph.add(playlist);
 		
-		checking(new Expectations() {{ 
+		context.checking(new Expectations() {{ 
 			allowing(feedFactory).createFeed(); will(returnValue(rssFeed));
 			allowing(rssFeed).writeTo(outputStream);
 			allowing(rssFeed).getModule(PLAY.NS); will(returnValue(uriplayModule));
@@ -91,6 +100,7 @@ public class FeedTranslatorTest extends MockObjectTestCase {
 		new FeedTranslator(feedFactory).writeTo(graph, outputStream);
 	}
 	
+	@Test
 	public void testAddsItemForEachItemInPlaylist() throws Exception {
 		
 		final Playlist playlist = new Playlist();
@@ -108,7 +118,7 @@ public class FeedTranslatorTest extends MockObjectTestCase {
 		graph.add(playlist);
 		graph.add(episode);
 		
-		checking(new Expectations() {{ 
+		context.checking(new Expectations() {{ 
 			allowing(feedFactory).createFeed(); will(returnValue(rssFeed));
 			allowing(rssFeed).writeTo(outputStream);
 			allowing(rssFeed).getModule(PLAY.NS); will(returnValue(uriplayModule));
