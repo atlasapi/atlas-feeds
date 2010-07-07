@@ -2,8 +2,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.uriplay</groupId>
-    <artifactId>uriplay-feeds</artifactId>
+    <groupId>org.atlasapi</groupId>
+    <artifactId>atlas-feeds</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <description></description>
     <build>
@@ -28,9 +28,9 @@
     </build>
     <dependencies>
         <dependency>
-            <groupId>org.uriplay</groupId>
-            <artifactId>uriplay-media-reference</artifactId>
-            <version>${uriplay.version}</version>
+            <groupId>org.atlasapi</groupId>
+            <artifactId>atlas-model</artifactId>
+            <version>${atlas.version}</version>
         </dependency>
         <dependency>
             <groupId>com.sun.xml.bind</groupId>
@@ -88,7 +88,7 @@
     </repositories>
     
     <properties>
-        <uriplay.version>${project.version}</uriplay.version>
+        <atlas.version>${project.version}</atlas.version>
         <spring.version>3.0.2.RELEASE</spring.version>
     </properties>
 </project>
