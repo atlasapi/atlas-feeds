@@ -26,6 +26,7 @@ import org.atlasapi.feeds.OembedOutput;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -77,7 +78,7 @@ public class OembedTranslatorTest extends TestCase {
 		
 		Item item = new Item();
 		item.setTitle("Test Title");
-		item.setPublisher("youtube.com");
+		item.setPublisher(Publisher.YOUTUBE);
 		item.setCanonicalUri("http://example.com");
 		
 		Version version = new Version();

@@ -52,7 +52,7 @@ public class OembedTranslator implements BeanGraphWriter {
 				Item item = (Item) bean;
 				
 				output.setTitle(item.getTitle());
-				output.setProviderUrl(item.getPublisher());
+				output.setProviderUrl(item.getPublisher().title());
 				output.setType("video");
 				
 				if (item.getVersions() != null) {
