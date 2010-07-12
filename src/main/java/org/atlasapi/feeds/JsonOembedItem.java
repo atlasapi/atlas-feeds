@@ -30,13 +30,13 @@ public class JsonOembedItem extends OembedItem implements OembedOutput {
 		Writer writer = new OutputStreamWriter(outputStream);
 		try {
 			writer.write("{\n");
-			output("version", "1.0", writer);
-			output("type", type, writer);
-			output("provider_url", providerUrl, writer);
-			output("width", String.valueOf(width), writer);
-			output("height", String.valueOf(height), writer);
-			output("title", title, writer);
-			output("html", embedCode, writer);
+			output("version", "1.0", writer, false);
+			output("type", type, writer, false);
+			output("provider_url", providerUrl, writer, false);
+			output("width", String.valueOf(width), writer, false);
+			output("height", String.valueOf(height), writer, false);
+			output("title", title, writer, false);
+			output("html", embedCode, writer, true);
 			writer.write("}\n");
 			writer.close();
 		} catch (Exception e) {
@@ -44,9 +44,14 @@ public class JsonOembedItem extends OembedItem implements OembedOutput {
 		}
 	}
 
-	private void output(String key, String value, Writer writer) throws IOException {
+	private void output(String key, String value, Writer writer, boolean lastAttribute) throws IOException {
 		if (value != null) {
-			writer.write("  " + QUOTE + key + QUOTE + ": " + QUOTE + value  + QUOTE + ',' + '\n');
+			writer.write("  " + QUOTE + key + QUOTE + ": " + QUOTE + value  + QUOTE);
+			if (lastAttribute) {
+			    writer.write("\n");
+			} else {
+			    writer.write(",\n");
+			}
 		}
 	}
 
