@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.atlasapi.feeds.SyndicationFeed;
-import org.atlasapi.feeds.modules.UriplayModule;
+import org.atlasapi.feeds.modules.AtlasFeedModule;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
@@ -66,8 +66,8 @@ public class FeedTranslator implements BeanGraphWriter {
 				feed.setLink(playlist.getCanonicalUri());
 				
 				if (feed.getModule(PLAY.NS) != null
-					&& feed.getModule(PLAY.NS) instanceof UriplayModule) {
-					((UriplayModule) feed.getModule(PLAY.NS)).setBean(bean);
+					&& feed.getModule(PLAY.NS) instanceof AtlasFeedModule) {
+					((AtlasFeedModule) feed.getModule(PLAY.NS)).setBean(bean);
 				}
 				
 				//FIXME: playlist items are stored in a Set, so inherently unordered, leads to unordered feeds.
@@ -81,8 +81,8 @@ public class FeedTranslator implements BeanGraphWriter {
 					rssItem.setDescription(descriptionOf(item));
 
 					if (rssItem.getModule(PLAY.NS) != null
-						&& rssItem.getModule(PLAY.NS) instanceof UriplayModule) {
-						((UriplayModule) rssItem.getModule(PLAY.NS)).setBean(item);
+						&& rssItem.getModule(PLAY.NS) instanceof AtlasFeedModule) {
+						((AtlasFeedModule) rssItem.getModule(PLAY.NS)).setBean(item);
 					}
 				}
 			}

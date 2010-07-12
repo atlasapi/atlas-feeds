@@ -25,22 +25,22 @@ import com.sun.syndication.feed.module.ModuleImpl;
  * @author Robert Chatley (robert@metabroadcast.com)
  * @author Lee Denison (lee@metabroadcast.com)
  */
-public class RomeUriplayModule extends ModuleImpl implements UriplayModule {
+public class RomeUriplayModule extends ModuleImpl implements AtlasFeedModule {
 
 	private static final long serialVersionUID = 1L;
 
 	private Object bean;
 	
 	public RomeUriplayModule() {
-		super(UriplayModule.class, PLAY.NS);
+		super(AtlasFeedModule.class, PLAY.NS);
 	}
 
 	public Class<?> getInterface() {
-		return UriplayModule.class;
+		return AtlasFeedModule.class;
 	}
 
 	public void copyFrom(Object obj) {
-		UriplayModule module = (UriplayModule) obj;
+		AtlasFeedModule module = (AtlasFeedModule) obj;
 		setBean(module.getBean());
 	}
 	

@@ -15,25 +15,17 @@ permissions and limitations under the License. */
 
 package org.atlasapi.feeds.modules;
 
-import org.atlasapi.media.vocabulary.PLAY;
-import org.jdom.Element;
-
 import com.sun.syndication.feed.module.Module;
-import com.sun.syndication.io.ModuleParser;
 
 /**
- * We currently cannot parse our custom tags, only generate.
+ * RSS extension module to support Atlas custom tags and attributes.
  * 
  * @author Robert Chatley (robert@metabroadcast.com)
  */
-public class UriplayModuleParser implements ModuleParser {
-
-	public String getNamespaceUri() {
-		return PLAY.NS;
-	}
-
-	public Module parse(Element element) {
-		throw new UnsupportedOperationException();
-	}
+public interface AtlasFeedModule extends Module {
+	
+	public void setBean(Object bean);
+	
+	public Object getBean();
 
 }

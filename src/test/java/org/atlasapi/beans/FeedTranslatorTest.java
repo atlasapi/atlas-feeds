@@ -21,7 +21,7 @@ import java.util.Set;
 import org.atlasapi.beans.FeedTranslator;
 import org.atlasapi.beans.FeedTranslator.FeedFactory;
 import org.atlasapi.feeds.SyndicationFeed;
-import org.atlasapi.feeds.modules.UriplayModule;
+import org.atlasapi.feeds.modules.AtlasFeedModule;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
@@ -55,7 +55,7 @@ public class FeedTranslatorTest  {
 	FeedFactory feedFactory = context.mock(FeedFactory.class);
 	SyndicationFeed rssFeed = context.mock(SyndicationFeed.class);
 	SyndicationFeed.Item item = context.mock(SyndicationFeed.Item.class);
-	UriplayModule uriplayModule = context.mock(UriplayModule.class);
+	AtlasFeedModule atlasModule = context.mock(AtlasFeedModule.class);
 	
 	@Test
 	public void testCreatesFeed() throws Exception {
@@ -90,12 +90,12 @@ public class FeedTranslatorTest  {
 		context.checking(new Expectations() {{ 
 			allowing(feedFactory).createFeed(); will(returnValue(rssFeed));
 			allowing(rssFeed).writeTo(outputStream);
-			allowing(rssFeed).getModule(PLAY.NS); will(returnValue(uriplayModule));
+			allowing(rssFeed).getModule(PLAY.NS); will(returnValue(atlasModule));
 	
 			one(rssFeed).setTitle("Test Title");
 			one(rssFeed).setDescription("Test Description");
 			one(rssFeed).setLink("http://example.com");
-			one(uriplayModule).setBean(playlist);
+			one(atlasModule).setBean(playlist);
 		}});
 		
 		new FeedTranslator(feedFactory).writeTo(graph, outputStream);
@@ -112,7 +112,7 @@ public class FeedTranslatorTest  {
 		final Episode episode = new Episode();
 		episode.setTitle("Dr Who Ep 1");
 		episode.setDescription("Timelord stuff");
-		episode.setCanonicalUri("http://uriplay.org/dw");
+		episode.setCanonicalUri("http://atlasapi.org/dw");
 		addLocationTo(episode, "http://example.com/dr-who.mp4");
 		playlist.addItem(episode);
 		
@@ -122,18 +122,18 @@ public class FeedTranslatorTest  {
 		context.checking(new Expectations() {{ 
 			allowing(feedFactory).createFeed(); will(returnValue(rssFeed));
 			allowing(rssFeed).writeTo(outputStream);
-			allowing(rssFeed).getModule(PLAY.NS); will(returnValue(uriplayModule));
-			allowing(item).getModule(PLAY.NS); will(returnValue(uriplayModule));
+			allowing(rssFeed).getModule(PLAY.NS); will(returnValue(atlasModule));
+			allowing(item).getModule(PLAY.NS); will(returnValue(atlasModule));
 	
 			one(rssFeed).setTitle("Test Title");
 			one(rssFeed).setDescription("Test Description");
 			one(rssFeed).setLink("http://example.com");
-			one(uriplayModule).setBean(playlist);
+			one(atlasModule).setBean(playlist);
 			
-			one(rssFeed).createItem("http://uriplay.org/dw"); will(returnValue(item));
+			one(rssFeed).createItem("http://atlasapi.org/dw"); will(returnValue(item));
 			one(item).setTitle("Dr Who Ep 1");
 			one(item).setDescription("Timelord stuff");
-			one(uriplayModule).setBean(episode);
+			one(atlasModule).setBean(episode);
 		}});
 		
 		new FeedTranslator(feedFactory).writeTo(graph, outputStream);

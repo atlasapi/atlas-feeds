@@ -37,13 +37,13 @@ import com.sun.syndication.feed.module.Module;
 import com.sun.syndication.io.ModuleGenerator;
 
 /**
- * Rome generator for extension module to support URIplay custom tags and attributes.
+ * Rome generator for extension module to support Atlas custom tags and attributes.
  * Can manipulate item elements, and add attributes or child elements.
  * 
  * @author Robert Chatley (robert@metabroadcast.com)
  * @author Lee Denison (lee@metabroadcast.com)
  */
-public class UriplayModuleGenerator implements ModuleGenerator {
+public class AtlasFeedModuleGenerator implements ModuleGenerator {
 
 	private static final Namespace PLAY_NS = Namespace.getNamespace(PLAY.PREFIX, PLAY.NS);
 	private static final Namespace MEDIA_NS = Namespace.getNamespace(MEDIA.PREFIX, MEDIA.NS);
@@ -68,8 +68,8 @@ public class UriplayModuleGenerator implements ModuleGenerator {
 
 	public void generate(Module module, Element element) {
 		
-		UriplayModule uriplayModule = (UriplayModule) module;
-		Object bean = uriplayModule.getBean();
+		AtlasFeedModule atlasModule = (AtlasFeedModule) module;
+		Object bean = atlasModule.getBean();
 	
 		if (bean != null) {
 
