@@ -66,7 +66,9 @@ public class OembedTranslator implements BeanGraphWriter {
 									output.setWidth(encoding.getVideoHorizontalSize());
 								}
 								for (Location location : encoding.getAvailableAt()) {
-									output.setEmbedCode(escapeQuotes(location.getEmbedCode()));
+								    if (location.getEmbedCode() != null) {
+								        output.setEmbedCode(escapeQuotes(location.getEmbedCode()));
+								    }
 								}
 							}
 						}
