@@ -30,7 +30,7 @@ public class InterlinkFeedOutputterTest {
 			.withAuthor(new InterlinkFeedAuthor("a partner", "a supplier"))
 			.addBrand(brand);
 		
-		assertEquals(expectedFeed("brand.atom").trim(), output(feed).trim());
+		assertEquals(expectedFeed("brand.atom"), output(feed));
 	}
 
 	private String output(InterlinkFeed feed) throws IOException {
