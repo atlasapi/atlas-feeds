@@ -2,7 +2,7 @@ package org.atlasapi.feeds.interlinking;
 
 public class InterlinkEpisode extends InterlinkContent {
 
-	public InterlinkEpisode(String id, int index) {
+	public InterlinkEpisode(String id, Integer index) {
 		super(id, index);
 	}
 	
