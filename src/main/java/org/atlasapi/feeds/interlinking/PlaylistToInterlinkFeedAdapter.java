@@ -2,10 +2,13 @@ package org.atlasapi.feeds.interlinking;
 
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.atlasapi.media.entity.Brand;
+import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Playlist;
+import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 
 public class PlaylistToInterlinkFeedAdapter {
 
@@ -36,8 +39,30 @@ public class PlaylistToInterlinkFeedAdapter {
 	private InterlinkEpisode fromItem(Item item) {
 		InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item))
 			.withTitle(item.getTitle());
-		return episode;
 		
+		for (Version version : item.getVersions()) {
+			for (Broadcast broadcast : version.getBroadcasts()) {
+				episode.addBroadcast(fromBroadcast(broadcast));
+			}
+		}
+		return episode;
+	}
+
+	private InterlinkBroadcast fromBroadcast(Broadcast broadcast) {
+		// use a generated id for now until ids are in the model
+		String generatedId = broadcast.getBroadcastOn() + "-" + broadcast.getTransmissionTime().getMillis();
+		InterlinkBroadcast linkBroadcast = new InterlinkBroadcast(generatedId)
+			.withDuration(toDuration(broadcast.getBroadcastDuration()))
+			.withBroadcastStart(broadcast.getTransmissionTime());
+		return linkBroadcast;
+		
+	}
+
+	private Duration toDuration(Integer seconds) {
+		if (seconds != null) {
+			return Duration.standardSeconds(seconds);
+		}
+		return null;
 	}
 
 	private Integer itemIndexFrom(Item item) {

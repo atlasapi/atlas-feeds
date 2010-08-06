@@ -35,4 +35,15 @@
             </media:content>
         </content>
     </entry>
+    <entry>
+        <id>broadcast4</id>
+        <ilink:type>broadcast</ilink:type>
+        <content type="application/xml">
+            <media:content>
+                <ilink:parent_id>episode3</ilink:parent_id>
+                <ilink:broadcast_start>2010-01-10T21:00:00Z</ilink:broadcast_start>
+                <ilink:duration>PT45M</ilink:duration>
+            </media:content>
+        </content>
+    </entry>
 </feed>

@@ -6,11 +6,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import org.atlasapi.feeds.interlinking.InterlinkBrand;
+import org.atlasapi.feeds.interlinking.InterlinkBroadcast;
 import org.atlasapi.feeds.interlinking.InterlinkEpisode;
 import org.atlasapi.feeds.interlinking.InterlinkFeed;
 import org.atlasapi.feeds.interlinking.InterlinkSeries;
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
@@ -23,14 +25,21 @@ public class InterlinkFeedOutputterTest {
 	@Test
 	public void testSerialisationOfAFeed() throws Exception {
 		
-		InterlinkBrand brand = new InterlinkBrand("1").withTitle("Lark Rise to Candleford");
+		InterlinkBrand brand = new InterlinkBrand("1")
+			.withTitle("Lark Rise to Candleford");
 
 		InterlinkSeries series = new InterlinkSeries("series2", 2)
 			.withTitle("Lark Rise to Candleford Series 2");
+		
 		brand.addSeries(series);
 		
+		InterlinkBroadcast broadcast = new InterlinkBroadcast("broadcast4")
+			.withBroadcastStart(new DateTime("2010-01-10T21:00:00Z"))
+			.withDuration(Duration.standardMinutes(45));
+		
 		InterlinkEpisode episode = new InterlinkEpisode("episode3", 3)
-			.withTitle("Lark Rise to Candleford Episode 3");
+			.withTitle("Lark Rise to Candleford Episode 3")
+			.addBroadcast(broadcast);
 		series.addEpisode(episode);
 		
 		InterlinkFeed feed = new InterlinkFeed("https://www.bbc.co.uk/interlinking/20100115")
