@@ -2,6 +2,7 @@ package org.atlasapi.feeds.interlinking;
 
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.atlasapi.media.entity.Brand;
+import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Playlist;
 import org.joda.time.DateTime;
@@ -33,9 +34,17 @@ public class PlaylistToInterlinkFeedAdapter {
 	}
 
 	private InterlinkEpisode fromItem(Item item) {
-		// TODO use correct series position
-		return new InterlinkEpisode(item.getCanonicalUri(), 1);
+		InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item))
+			.withTitle(item.getTitle());
+		return episode;
 		
+	}
+
+	private Integer itemIndexFrom(Item item) {
+		if (item instanceof Episode) {
+			return ((Episode) item).getEpisodeNumber();
+		}
+		return null;
 	}
 
 	private InterlinkBrand fromBrand(Brand brand) {
