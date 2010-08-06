@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xml:lang="en-GB" xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms" xmlns:media="http://search.yahoo.com/mrss/" xmlns:ilink="http://www.bbc.co.uk/interlinking">
+    <title>BBC Daily Change Feed</title>
+    <subtitle>All metadata changes for on demand BBC content</subtitle>
+    <updated>2010-01-15T14:51:10Z</updated>
+    <id>https://www.bbc.co.uk/interlinking/20100115</id>
+    <author>
+        <ilink:partner>a partner</ilink:partner>
+        <ilink:supplier>a supplier</ilink:supplier>
+    </author>
+    <entry>
+        <title>Lark Rise to Candleford</title>
+        <id>1</id>
+        <ilink:type>brand</ilink:type>
+    </entry>
+    <entry>
+        <title>Lark Rise to Candleford Series 2</title>
+        <id>series2</id>
+        <ilink:type>series</ilink:type>
+        <content type="application/xml">
+            <media:content>
+                <ilink:parent_id>1</ilink:parent_id>
+                <ilink:index>2</ilink:index>
+            </media:content>
+        </content>
+    </entry>
+    <entry>
+        <title>Lark Rise to Candleford Episode 3</title>
+        <id>episode3</id>
+        <ilink:type>episode</ilink:type>
+        <content type="application/xml">
+            <media:content>
+                <ilink:parent_id>series2</ilink:parent_id>
+                <ilink:index>3</ilink:index>
+            </media:content>
+        </content>
+    </entry>
+</feed>

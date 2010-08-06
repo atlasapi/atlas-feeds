@@ -6,7 +6,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import org.atlasapi.feeds.interlinking.InterlinkBrand;
+import org.atlasapi.feeds.interlinking.InterlinkEpisode;
 import org.atlasapi.feeds.interlinking.InterlinkFeed;
+import org.atlasapi.feeds.interlinking.InterlinkSeries;
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -22,6 +24,14 @@ public class InterlinkFeedOutputterTest {
 	public void testSerialisationOfAFeed() throws Exception {
 		
 		InterlinkBrand brand = new InterlinkBrand("1").withTitle("Lark Rise to Candleford");
+
+		InterlinkSeries series = new InterlinkSeries("series2", 2)
+			.withTitle("Lark Rise to Candleford Series 2");
+		brand.addSeries(series);
+		
+		InterlinkEpisode episode = new InterlinkEpisode("episode3", 3)
+			.withTitle("Lark Rise to Candleford Episode 3");
+		series.addEpisode(episode);
 		
 		InterlinkFeed feed = new InterlinkFeed("https://www.bbc.co.uk/interlinking/20100115")
 			.withTitle("BBC Daily Change Feed")
@@ -30,7 +40,7 @@ public class InterlinkFeedOutputterTest {
 			.withAuthor(new InterlinkFeedAuthor("a partner", "a supplier"))
 			.addBrand(brand);
 		
-		assertEquals(expectedFeed("brand.atom"), output(feed));
+		assertEquals(expectedFeed("feed.atom"), output(feed));
 	}
 
 	private String output(InterlinkFeed feed) throws IOException {

@@ -1,21 +1,26 @@
 package org.atlasapi.feeds.interlinking;
 
-public class InterlinkBrand {
+import java.util.Set;
 
-	private final String id;
-	private String title;
+import com.google.common.collect.Sets;
+
+public class InterlinkBrand extends InterlinkContent {
+
+	private final Set<InterlinkSeries> series = Sets.newHashSet();
 
 	public InterlinkBrand(String id) {
-		this.id = id;
-	}
-
-	public String title() {
-		return title;
+		super(id, null);
 	}
 	
-	public String id() {
-		return id;
+	public Set<InterlinkSeries> series() {
+		return series;
 	}
+	
+	public InterlinkBrand addSeries(InterlinkSeries series) {
+		this.series.add(series);
+		return this;
+	}
+	
 	
 	public InterlinkBrand withTitle(String title) {
 		this.title = title;

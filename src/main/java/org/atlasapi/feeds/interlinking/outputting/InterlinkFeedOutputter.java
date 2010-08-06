@@ -10,8 +10,12 @@ import nu.xom.Element;
 import nu.xom.Namespace;
 import nu.xom.Serializer;
 
+import org.atlasapi.feeds.interlinking.InterlinkBase;
 import org.atlasapi.feeds.interlinking.InterlinkBrand;
+import org.atlasapi.feeds.interlinking.InterlinkContent;
+import org.atlasapi.feeds.interlinking.InterlinkEpisode;
 import org.atlasapi.feeds.interlinking.InterlinkFeed;
+import org.atlasapi.feeds.interlinking.InterlinkSeries;
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -31,14 +35,52 @@ public class InterlinkFeedOutputter {
 		Element feedElem = createFeed(feed);
 		for (InterlinkBrand brand : feed.brands()) {
 			feedElem.appendChild(brandToEntry(brand));
+
+			for (InterlinkSeries series : brand.series()) {
+				feedElem.appendChild(seriesToEntry(series, brand));
+				
+				for (InterlinkEpisode episode : series.episodes()) {
+					feedElem.appendChild(episodeToEntry(episode, series));
+				}
+			}
 		}
 	    write(out, feedElem);  
 	}
+	
+	private Element episodeToEntry(InterlinkEpisode episode, InterlinkContent parent) {
+		Element entry = createElement("entry", NS_ATOM);
+		addCommonFieldsTo(episode, entry);
+		entry.appendChild(stringElement("type", NS_ILINK, "episode"));
+		entry.appendChild(contentElement(episode, parent));
+		return entry;
+	}
+
+	private Element seriesToEntry(InterlinkSeries series, InterlinkContent parent) {
+		Element entry = createElement("entry", NS_ATOM);
+		addCommonFieldsTo(series, entry);
+		entry.appendChild(stringElement("type", NS_ILINK, "series"));
+		entry.appendChild(contentElement(series, parent));
+		return entry;
+	}
+
+	private Element contentElement(InterlinkContent content, InterlinkContent parent) {
+		Element mrssContent = createElement("content", NS_MRSS);
+		
+		if (parent != null) {
+			mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
+			mrssContent.appendChild(stringElement("index", NS_ILINK, String.valueOf(content.indexWithinParent())));
+		}
+		
+		Element atomContent = createElement("content", NS_ATOM);
+		atomContent.addAttribute(new Attribute("type", "application/xml"));
+		atomContent.appendChild(mrssContent);
+		return atomContent;
+	}
+
 
 	private Element brandToEntry(InterlinkBrand brand) {
 		Element entry = createElement("entry", NS_ATOM);
-		entry.appendChild(stringElement("title", NS_ATOM, brand.title()));
-		entry.appendChild(stringElement("id", NS_ATOM, brand.id()));
+		addCommonFieldsTo(brand, entry);
 		entry.appendChild(stringElement("type", NS_ILINK, "brand"));
 		return entry;
 	}
@@ -64,6 +106,11 @@ public class InterlinkFeedOutputter {
 		feedElem.appendChild(authorElem);
 		
 		return feedElem;
+	}
+	
+	private void addCommonFieldsTo(InterlinkBase base, Element entry) {
+		entry.appendChild(stringElement("title", NS_ATOM, base.title()));
+		entry.appendChild(stringElement("id", NS_ATOM, base.id()));
 	}
 
 	private void write(OutputStream out, Element feed) throws UnsupportedEncodingException, IOException {
