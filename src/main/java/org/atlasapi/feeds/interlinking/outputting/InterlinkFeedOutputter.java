@@ -16,6 +16,7 @@ import org.atlasapi.feeds.interlinking.InterlinkBroadcast;
 import org.atlasapi.feeds.interlinking.InterlinkContent;
 import org.atlasapi.feeds.interlinking.InterlinkEpisode;
 import org.atlasapi.feeds.interlinking.InterlinkFeed;
+import org.atlasapi.feeds.interlinking.InterlinkOnDemand;
 import org.atlasapi.feeds.interlinking.InterlinkSeries;
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.joda.time.format.DateTimeFormatter;
@@ -47,23 +48,34 @@ public class InterlinkFeedOutputter {
 					for (InterlinkBroadcast broadcast : episode.broadcasts()) {
 						feedElem.appendChild(broadcastToEntry(broadcast, episode));
 					}
+					for (InterlinkOnDemand onDemand : episode.onDemands()) {
+						feedElem.appendChild(onDemandToEntry(onDemand, episode));
+					}
 				}
 			}
 		}
 	    write(out, feedElem);  
 	}
 	
+	private Element onDemandToEntry(InterlinkOnDemand onDemand, InterlinkEpisode parent) {
+		Element entry = createElement("entry", NS_ATOM);
+		entry.appendChild(stringElement("id", NS_ATOM, onDemand.id()));
+		entry.appendChild(stringElement("type", NS_ILINK, "ondemand"));
+		Element mrssContent = createElement("content", NS_MRSS);
+		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
+		entry.appendChild(atomContentElementContaining(mrssContent));
+		return entry;
+	}
+
 	private Element broadcastToEntry(InterlinkBroadcast broadcast, InterlinkEpisode parent) {
 		Element entry = createElement("entry", NS_ATOM);
 		entry.appendChild(stringElement("id", NS_ATOM, broadcast.id()));
 		entry.appendChild(stringElement("type", NS_ILINK, "broadcast"));
 		Element mrssContent = createElement("content", NS_MRSS);
-		if (parent != null) {
-			mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
-			mrssContent.appendChild(stringElement("broadcast_start", NS_ILINK, broadcast.broadcastStart().toString(DATE_TIME_FORMAT)));
-			if (broadcast.duration() != null) {
-				mrssContent.appendChild(stringElement("duration", NS_ILINK, ISOPeriodFormat.standard().print(broadcast.duration().toPeriod())));
-			}
+		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
+		mrssContent.appendChild(stringElement("broadcast_start", NS_ILINK, broadcast.broadcastStart().toString(DATE_TIME_FORMAT)));
+		if (broadcast.duration() != null) {
+			mrssContent.appendChild(stringElement("duration", NS_ILINK, ISOPeriodFormat.standard().print(broadcast.duration().toPeriod())));
 		}
 		entry.appendChild(atomContentElementContaining(mrssContent));
 		return entry;

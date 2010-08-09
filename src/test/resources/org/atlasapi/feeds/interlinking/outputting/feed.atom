@@ -46,4 +46,13 @@
             </media:content>
         </content>
     </entry>
+    <entry>
+        <id>ondemand5</id>
+        <ilink:type>ondemand</ilink:type>
+        <content type="application/xml">
+            <media:content>
+                <ilink:parent_id>episode3</ilink:parent_id>
+            </media:content>
+        </content>
+    </entry>
 </feed>

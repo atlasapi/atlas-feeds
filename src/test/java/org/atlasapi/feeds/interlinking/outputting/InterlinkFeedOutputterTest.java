@@ -10,6 +10,7 @@ import org.atlasapi.feeds.interlinking.InterlinkBroadcast;
 import org.atlasapi.feeds.interlinking.InterlinkEpisode;
 import org.atlasapi.feeds.interlinking.InterlinkFeed;
 import org.atlasapi.feeds.interlinking.InterlinkSeries;
+import org.atlasapi.feeds.interlinking.InterlinkOnDemand;
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -33,13 +34,16 @@ public class InterlinkFeedOutputterTest {
 		
 		brand.addSeries(series);
 		
+		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5");
+		
 		InterlinkBroadcast broadcast = new InterlinkBroadcast("broadcast4")
 			.withBroadcastStart(new DateTime("2010-01-10T21:00:00Z"))
 			.withDuration(Duration.standardMinutes(45));
 		
 		InterlinkEpisode episode = new InterlinkEpisode("episode3", 3)
 			.withTitle("Lark Rise to Candleford Episode 3")
-			.addBroadcast(broadcast);
+			.addBroadcast(broadcast)
+			.addOnDemand(onDemand);
 		series.addEpisode(episode);
 		
 		InterlinkFeed feed = new InterlinkFeed("https://www.bbc.co.uk/interlinking/20100115")

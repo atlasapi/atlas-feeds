@@ -7,6 +7,7 @@ import com.google.common.collect.Sets;
 public class InterlinkEpisode extends InterlinkContent {
 
 	private final Set<InterlinkBroadcast> broadcasts = Sets.newHashSet();
+	private final Set<InterlinkOnDemand> onDemands = Sets.newHashSet();
 	
 	public InterlinkEpisode(String id, Integer index) {
 		super(id, index);
@@ -24,5 +25,14 @@ public class InterlinkEpisode extends InterlinkContent {
 
 	public Set<InterlinkBroadcast> broadcasts() {
 		return broadcasts;
+	}
+
+	public InterlinkEpisode addOnDemand(InterlinkOnDemand onDemand) {
+		onDemands.add(onDemand);
+		return this;
+	}
+
+	public Set<InterlinkOnDemand> onDemands() {
+		return onDemands;
 	}
 }
