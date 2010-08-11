@@ -40,7 +40,7 @@ public class PlaylistToInterlinkFeedAdapter {
 					
 					if (item instanceof Episode) {
 						Episode episode = (Episode) item;
-						Series series = episode.getSeries();
+						Series series = episode.getSeriesSummary();
 						if (series != null) {
 							InterlinkSeries linkSeries = seriesLookup.get(series.getCanonicalUri());
 							if (linkSeries == null) {
