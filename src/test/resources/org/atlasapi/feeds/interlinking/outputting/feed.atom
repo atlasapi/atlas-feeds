@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<feed xml:lang="en-GB" xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms" xmlns:media="http://search.yahoo.com/mrss/" xmlns:ilink="http://www.bbc.co.uk/interlinking">
+<feed xml:lang="en-GB" xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms" xmlns:media="http://search.yahoo.com/mrss/" xmlns:ilink="http://www.bbc.co.uk/developer/interlinking">
     <title>BBC Daily Change Feed</title>
     <subtitle>All metadata changes for on demand BBC content</subtitle>
     <updated>2010-01-15T14:51:10Z</updated>
@@ -14,9 +14,39 @@
         <ilink:type>brand</ilink:type>
     </entry>
     <entry>
+        <title>Episode not in a series</title>
+        <id>notInASeries</id>
+        <ilink:type>episode</ilink:type>
+        <content type="application/xml">
+            <media:content>
+                <ilink:parent_id>1</ilink:parent_id>
+                <ilink:index>2</ilink:index>
+            </media:content>
+        </content>
+    </entry>
+    <entry>
+        <id>broadcastNotInASeries</id>
+        <ilink:type>broadcast</ilink:type>
+        <content type="application/xml">
+            <media:content>
+                <ilink:parent_id>notInASeries</ilink:parent_id>
+            </media:content>
+        </content>
+    </entry>
+    <entry>
+        <id>odNotInASeries</id>
+        <ilink:type>ondemand</ilink:type>
+        <content type="application/xml">
+            <media:content>
+                <ilink:parent_id>notInASeries</ilink:parent_id>
+            </media:content>
+        </content>
+    </entry>
+    <entry>
         <title>Lark Rise to Candleford Series 2</title>
         <id>series2</id>
         <ilink:type>series</ilink:type>
+        <summary>Adaption of Flora Thompson's</summary>
         <content type="application/xml">
             <media:content>
                 <ilink:parent_id>1</ilink:parent_id>

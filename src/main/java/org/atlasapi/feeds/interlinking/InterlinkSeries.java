@@ -8,7 +8,7 @@ public class InterlinkSeries extends InterlinkContent {
 
 	private final Set<InterlinkEpisode> episodes = Sets.newHashSet();
 	
-	public InterlinkSeries(String id, int index) {
+	public InterlinkSeries(String id, Integer index) {
 		super(id, index);
 	}
 	
@@ -24,5 +24,10 @@ public class InterlinkSeries extends InterlinkContent {
 
 	public Set<InterlinkEpisode> episodes() {
 		return episodes;
+	}
+	
+	public InterlinkSeries withSummary(String summary) {
+		this.summary = summary;
+		return this;
 	}
 }

@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.interlinking;
 
+import java.util.Map;
 import java.util.Set;
 
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
@@ -11,10 +12,12 @@ import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Playlist;
+import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class PlaylistToInterlinkFeedAdapter {
@@ -31,16 +34,36 @@ public class PlaylistToInterlinkFeedAdapter {
 				InterlinkBrand brand = fromBrand((Brand) subPlaylist);
 				feed.addBrand(brand);
 				
-				// TODO: When we have series info include it here
-				InterlinkSeries series = new InterlinkSeries("dummy-series-" + subPlaylist.getCurie(), 1);
-				brand.addSeries(series);
-				
+				Map<String, InterlinkSeries> seriesLookup = Maps.newHashMap();
+
 				for (Item item : subPlaylist.getItems()) {
-					series.addEpisode(fromItem(item));
+					
+					if (item instanceof Episode) {
+						Episode episode = (Episode) item;
+						Series series = episode.getSeries();
+						if (series != null) {
+							InterlinkSeries linkSeries = seriesLookup.get(series.getCanonicalUri());
+							if (linkSeries == null) {
+								linkSeries = fromSeries(series);
+								brand.addSeries(linkSeries);
+								seriesLookup.put(series.getCanonicalUri(), linkSeries);
+							}
+							linkSeries.addEpisode(fromItem(episode));
+							continue;
+						}
+					}
+					brand.addEpisodeWithoutASeries(fromItem(item));
 				}
 			}
 		}
 		return feed;
+	}
+
+	private InterlinkSeries fromSeries(Series series) {
+		return new InterlinkSeries(series.getCanonicalUri(), series.getSeriesNumber())
+			.withTitle(series.getTitle())
+			.withSummary(series.getDescription());
+
 	}
 
 	private InterlinkEpisode fromItem(Item item) {
@@ -61,9 +84,9 @@ public class PlaylistToInterlinkFeedAdapter {
 	}
 
 	private InterlinkBrand fromBrand(Brand brand) {
-		InterlinkBrand linkBrand = new InterlinkBrand(brand.getCanonicalUri());
-		linkBrand.withTitle(brand.getTitle());
-		return linkBrand;
+		return new InterlinkBrand(brand.getCanonicalUri())
+			.withTitle(brand.getTitle())
+			.withSummary(brand.getDescription());
 	}
 	
 	private InterlinkOnDemand fromLocation(Location linkLocation) {

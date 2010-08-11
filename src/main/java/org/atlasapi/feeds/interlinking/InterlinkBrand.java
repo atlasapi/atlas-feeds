@@ -7,6 +7,7 @@ import com.google.common.collect.Sets;
 public class InterlinkBrand extends InterlinkContent {
 
 	private final Set<InterlinkSeries> series = Sets.newHashSet();
+	private final Set<InterlinkEpisode> episodes = Sets.newHashSet();
 
 	public InterlinkBrand(String id) {
 		super(id, null);
@@ -21,9 +22,22 @@ public class InterlinkBrand extends InterlinkContent {
 		return this;
 	}
 	
-	
 	public InterlinkBrand withTitle(String title) {
 		this.title = title;
+		return this;
+	}
+
+	public InterlinkBrand addEpisodeWithoutASeries(InterlinkEpisode episode) {
+		episodes.add(episode);
+		return this;
+	}
+	
+	public Set<InterlinkEpisode> episodesWithoutASeries() {
+		return episodes;
+	}
+	
+	public InterlinkBrand withSummary(String summary) {
+		this.summary = summary;
 		return this;
 	}
 }
