@@ -20,9 +20,7 @@ import org.joda.time.Duration;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-public class PlaylistToInterlinkFeedAdapter {
-    
-    private static final String BROADCAST_ID_PREFIX = "tag:";
+public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 
     public InterlinkFeed fromPlaylist(Playlist playlist) {
         InterlinkFeed feed = new InterlinkFeed(playlist.getCanonicalUri());
@@ -92,22 +90,13 @@ public class PlaylistToInterlinkFeedAdapter {
         return new InterlinkOnDemand(linkLocation.getUri());
     }
 
-    private InterlinkBroadcast fromBroadcast(Broadcast broadcast) {
-        String id = null;
-        for (String alias : broadcast.getAliases()) {
-            if (alias.startsWith(BROADCAST_ID_PREFIX) || alias.startsWith("urn:"+BROADCAST_ID_PREFIX)) {
-                id = alias;
-                break;
-            }
-        }
+    protected InterlinkBroadcast fromBroadcast(Broadcast broadcast) {
+        String id = broadcast.getBroadcastOn() + "-" + broadcast.getTransmissionTime().getMillis();
 
-        if (id != null) {
-            return new InterlinkBroadcast(id).withDuration(toDuration(broadcast.getBroadcastDuration())).withBroadcastStart(broadcast.getTransmissionTime());
-        }
-        return null;
+        return new InterlinkBroadcast(id).withDuration(toDuration(broadcast.getBroadcastDuration())).withBroadcastStart(broadcast.getTransmissionTime());
     }
 
-    private static Set<Broadcast> broadcasts(Item item) {
+    static Set<Broadcast> broadcasts(Item item) {
         Set<Broadcast> broadcasts = Sets.newHashSet();
         for (Version version : item.getVersions()) {
             for (Broadcast broadcast : version.getBroadcasts()) {
@@ -117,7 +106,7 @@ public class PlaylistToInterlinkFeedAdapter {
         return broadcasts;
     }
 
-    private static Location firstLinkLocation(Item item) {
+    static Location firstLinkLocation(Item item) {
         for (Version version : item.getVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
@@ -130,14 +119,14 @@ public class PlaylistToInterlinkFeedAdapter {
         return null;
     }
 
-    private static Integer itemIndexFrom(Item item) {
+    static Integer itemIndexFrom(Item item) {
         if (item instanceof Episode) {
             return ((Episode) item).getEpisodeNumber();
         }
         return null;
     }
 
-    private static Duration toDuration(Integer seconds) {
+    static Duration toDuration(Integer seconds) {
         if (seconds != null) {
             return Duration.standardSeconds(seconds);
         }
