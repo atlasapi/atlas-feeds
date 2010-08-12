@@ -71,6 +71,7 @@
     <entry>
         <id>broadcast4</id>
         <ilink:type>broadcast</ilink:type>
+        <updated>2010-04-27T09:49:40Z</updated>
         <content type="application/xml">
             <media:content>
                 <ilink:parent_id>episode3</ilink:parent_id>
