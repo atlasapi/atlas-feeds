@@ -67,12 +67,16 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
     private InterlinkSeries fromSeries(Series series) {
-        return new InterlinkSeries(series.getCanonicalUri(), series.getSeriesNumber()).withTitle(series.getTitle()).withSummary(toSummary(series));
+        return new InterlinkSeries(series.getCanonicalUri(), series.getSeriesNumber())
+        	.withTitle(series.getTitle())
+        	.withLastUpdated(series.getLastUpdated())
+        	.withSummary(toSummary(series));
     }
 
     private InterlinkEpisode fromItem(Item item) {
         InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item))
         	.withTitle(item.getTitle())
+        	.withLastUpdated(item.getLastUpdated())
         	.withSummary(toSummary(item));
 
         for (Broadcast broadcast : broadcasts(item)) {
@@ -92,7 +96,10 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
     private InterlinkBrand fromBrand(Brand brand) {
-        return new InterlinkBrand(brand.getCanonicalUri()).withTitle(brand.getTitle()).withSummary(toSummary(brand));
+        return new InterlinkBrand(brand.getCanonicalUri())
+			.withLastUpdated(brand.getLastUpdated())
+        	.withTitle(brand.getTitle())
+        	.withSummary(toSummary(brand));
     }
 
     private String toSummary(Content content) {
@@ -104,13 +111,17 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
 	private InterlinkOnDemand fromLocation(Location linkLocation) {
-        return new InterlinkOnDemand(linkLocation.getUri());
+        return new InterlinkOnDemand(linkLocation.getUri())
+			.withLastUpdated(linkLocation.getLastUpdated());
     }
 
     protected InterlinkBroadcast fromBroadcast(Broadcast broadcast) {
         String id = broadcast.getBroadcastOn() + "-" + broadcast.getTransmissionTime().getMillis();
 
-        return new InterlinkBroadcast(id).withDuration(toDuration(broadcast.getBroadcastDuration())).withBroadcastStart(broadcast.getTransmissionTime());
+        return new InterlinkBroadcast(id)
+    		.withLastUpdated(broadcast.getLastUpdated())
+        	.withDuration(toDuration(broadcast.getBroadcastDuration()))
+        	.withBroadcastStart(broadcast.getTransmissionTime());
     }
 
     static Set<Broadcast> broadcasts(Item item) {
