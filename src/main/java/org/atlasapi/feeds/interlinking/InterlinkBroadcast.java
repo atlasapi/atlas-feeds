@@ -7,6 +7,7 @@ public class InterlinkBroadcast extends InterlinkBase {
 
 	private DateTime broadcastStart;
 	private Duration duration;
+	private String service;
 
 	public InterlinkBroadcast(String id) {
 		super(id);
@@ -34,4 +35,13 @@ public class InterlinkBroadcast extends InterlinkBase {
         this.lastUpdated = lastUpdated;
         return this;
     }
+	
+	public String service() {
+        return service;
+    }
+	
+	public InterlinkBroadcast withService(String service) {
+	    this.service = service;
+	    return this;
+	}
 }

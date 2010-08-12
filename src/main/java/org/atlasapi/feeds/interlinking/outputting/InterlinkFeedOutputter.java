@@ -81,6 +81,9 @@ public class InterlinkFeedOutputter {
 		mrssContent.appendChild(stringElement("availability_start", NS_ILINK, onDemand.availabilityStart().toString(DATE_TIME_FORMAT)));
 		mrssContent.appendChild(stringElement("availability_end", NS_ILINK, onDemand.availabilityEnd().toString(DATE_TIME_FORMAT)));
 		mrssContent.appendChild(stringElement("duration", NS_ILINK, duration(onDemand.duration())));
+		if (onDemand.service() != null) {
+		    mrssContent.appendChild(stringElement("service", NS_ILINK, onDemand.service()));
+		}
 		
 		// TODO: Static attributes for now
 		mrssContent.appendChild(stringElement("platform_code", NS_ILINK, "pc"));
@@ -112,6 +115,9 @@ public class InterlinkFeedOutputter {
 		
 		if (broadcast.duration() != null) {
 			mrssContent.appendChild(stringElement("duration", NS_ILINK, ISOPeriodFormat.standard().print(broadcast.duration().toPeriod())));
+		}
+		if (broadcast.service() != null) {
+		    mrssContent.appendChild(stringElement("service", NS_ILINK, broadcast.service()));
 		}
 		entry.appendChild(atomContentElementContaining(mrssContent));
 		return entry;

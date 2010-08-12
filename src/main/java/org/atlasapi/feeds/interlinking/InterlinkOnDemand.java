@@ -8,6 +8,7 @@ public class InterlinkOnDemand extends InterlinkBase {
 	private final DateTime availabilityStart;
     private final DateTime availabilityEnd;
     private final Duration duration;
+    private String service;
 
     public InterlinkOnDemand(String id, DateTime availabilityStart, DateTime availabilityEnd, Duration duration) {
 		super(id);
@@ -21,6 +22,11 @@ public class InterlinkOnDemand extends InterlinkBase {
         return this;
     }
 	
+	public InterlinkOnDemand withService(String service) {
+	    this.service = service;
+	    return this;
+	}
+	
 	public DateTime availabilityStart() {
         return availabilityStart;
     }
@@ -31,5 +37,9 @@ public class InterlinkOnDemand extends InterlinkBase {
 	
 	public Duration duration() {
 	    return duration;
+	}
+	
+	public String service() {
+	    return service;
 	}
 }

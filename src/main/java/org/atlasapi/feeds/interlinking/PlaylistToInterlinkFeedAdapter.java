@@ -23,6 +23,15 @@ import com.google.common.collect.Sets;
 import com.metabroadcast.common.text.Truncator;
 
 public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
+    
+    private static Map<String, String> channelLookup() {
+        Map<String, String> channelLookup = Maps.newHashMap();
+        channelLookup.put("http://www.channel4.com", "C4");
+        channelLookup.put("http://www.channel4.com/more4", "M4");
+        channelLookup.put("http://www.e4.com", "E4");
+        return channelLookup;
+    }
+    public static Map<String, String> CHANNEL_LOOKUP = channelLookup(); 
 
 	private final Truncator summaryTruncator = new Truncator()
 		.withMaxLength(90)
@@ -119,11 +128,13 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 
     protected InterlinkBroadcast fromBroadcast(Broadcast broadcast) {
         String id = broadcast.getBroadcastOn() + "-" + broadcast.getTransmissionTime().getMillis();
+        String service = CHANNEL_LOOKUP.get(broadcast.getBroadcastOn());
 
         return new InterlinkBroadcast(id)
     		.withLastUpdated(broadcast.getLastUpdated())
         	.withDuration(toDuration(broadcast.getBroadcastDuration()))
-        	.withBroadcastStart(broadcast.getTransmissionTime());
+        	.withBroadcastStart(broadcast.getTransmissionTime())
+        	.withService(service);
     }
 
     static Set<Broadcast> broadcasts(Item item) {
@@ -151,8 +162,10 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     
     static InterlinkOnDemand fromLocation(Location linkLocation, int d) {
         Duration duration = new Duration(d*1000);
+        
         return new InterlinkOnDemand(linkLocation.getUri(), linkLocation.getPolicy().getAvailabilityStart(), linkLocation.getPolicy().getAvailabilityEnd(), duration)
-            .withLastUpdated(linkLocation.getLastUpdated());
+            .withLastUpdated(linkLocation.getLastUpdated())
+            .withService("4oD");
     }
 
     static Integer itemIndexFrom(Item item) {
