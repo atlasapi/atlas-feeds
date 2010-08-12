@@ -39,7 +39,7 @@ public class InterlinkEpisode extends InterlinkContent {
 	}
 	
 	public InterlinkEpisode withLastUpdated(DateTime lastUpdated) {
-        this.lastUpdated = lastUpdated();
+        this.lastUpdated = lastUpdated;
         return this;
     }
 }

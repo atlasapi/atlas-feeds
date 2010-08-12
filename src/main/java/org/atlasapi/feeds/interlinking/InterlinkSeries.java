@@ -34,7 +34,7 @@ public class InterlinkSeries extends InterlinkContent {
 	}
 	
 	public InterlinkSeries withLastUpdated(DateTime lastUpdated) {
-        this.lastUpdated = lastUpdated();
+        this.lastUpdated = lastUpdated;
         return this;
     }
 }

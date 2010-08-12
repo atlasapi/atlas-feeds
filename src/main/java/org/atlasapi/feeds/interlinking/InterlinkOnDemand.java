@@ -9,7 +9,7 @@ public class InterlinkOnDemand extends InterlinkBase {
 	}
 	
 	public InterlinkOnDemand withLastUpdated(DateTime lastUpdated) {
-        this.lastUpdated = lastUpdated();
+        this.lastUpdated = lastUpdated;
         return this;
     }
 }

@@ -79,7 +79,7 @@ public class InterlinkFeedOutputterTest {
 		InterlinkFeed feed = new InterlinkFeed("https://www.bbc.co.uk/interlinking/20100115")
 			.withTitle("BBC Daily Change Feed")
 			.withSubtitle("All metadata changes for on demand BBC content")
-			.withUpdatedAt(new DateTime("2010-01-15T14:51:10Z"))
+			.withUpdatedAt(lastUpdated)
 			.withAuthor(new InterlinkFeedAuthor("a partner", "a supplier"))
 			.addBrand(brand);
 		

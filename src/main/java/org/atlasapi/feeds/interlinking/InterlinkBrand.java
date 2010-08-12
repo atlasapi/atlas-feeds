@@ -30,7 +30,7 @@ public class InterlinkBrand extends InterlinkContent {
 	}
 	
 	public InterlinkBrand withLastUpdated(DateTime lastUpdated) {
-	    this.lastUpdated = lastUpdated();
+	    this.lastUpdated = lastUpdated;
 	    return this;
 	}
 

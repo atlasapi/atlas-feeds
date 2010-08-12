@@ -31,7 +31,7 @@ public class InterlinkBroadcast extends InterlinkBase {
 	}
 	
 	public InterlinkBroadcast withLastUpdated(DateTime lastUpdated) {
-        this.lastUpdated = lastUpdated();
+        this.lastUpdated = lastUpdated;
         return this;
     }
 }
