@@ -69,6 +69,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     private InterlinkSeries fromSeries(Series series) {
         return new InterlinkSeries(series.getCanonicalUri(), series.getSeriesNumber())
         	.withTitle(series.getTitle())
+        	.withDescription(series.getDescription())
         	.withLastUpdated(series.getLastUpdated())
         	.withSummary(toSummary(series));
     }
@@ -76,6 +77,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     private InterlinkEpisode fromItem(Item item) {
         InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item))
         	.withTitle(item.getTitle())
+        	.withDescription(item.getDescription())
         	.withLastUpdated(item.getLastUpdated())
         	.withSummary(toSummary(item));
 
@@ -99,6 +101,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         return new InterlinkBrand(brand.getCanonicalUri())
 			.withLastUpdated(brand.getLastUpdated())
         	.withTitle(brand.getTitle())
+        	.withDescription(brand.getDescription())
         	.withSummary(toSummary(brand));
     }
 
