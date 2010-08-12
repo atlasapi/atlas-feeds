@@ -46,6 +46,7 @@ public class InterlinkFeedOutputterTest {
 		
 		InterlinkBrand brand = new InterlinkBrand("1")
 			.withTitle("Lark Rise to Candleford")
+			.withDescription("Adaption of Flora Thompson's memoir of her Oxfordshire childhood")
 			.withLastUpdated(lastUpdated);
 		
 		// add an episode directly to the brand

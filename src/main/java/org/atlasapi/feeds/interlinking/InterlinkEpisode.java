@@ -47,4 +47,9 @@ public class InterlinkEpisode extends InterlinkContent {
         this.lastUpdated = lastUpdated;
         return this;
     }
+	
+	public InterlinkEpisode withDescription(String description) {
+		this.description = description;
+		return this;
+	}
 }

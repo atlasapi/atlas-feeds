@@ -37,4 +37,9 @@ public class InterlinkSeries extends InterlinkContent {
         this.lastUpdated = lastUpdated;
         return this;
     }
+	
+	public InterlinkSeries withDescription(String description) {
+		this.description = description;
+		return this;
+	}
 }

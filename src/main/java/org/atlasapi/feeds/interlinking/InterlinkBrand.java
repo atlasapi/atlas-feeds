@@ -47,4 +47,9 @@ public class InterlinkBrand extends InterlinkContent {
 		this.summary = summary;
 		return this;
 	}
+	
+	public InterlinkBrand withDescription(String description) {
+		this.description = description;
+		return this;
+	}
 }
