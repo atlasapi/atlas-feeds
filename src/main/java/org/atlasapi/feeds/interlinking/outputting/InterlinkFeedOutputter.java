@@ -90,21 +90,8 @@ public class InterlinkFeedOutputter {
 	
 	private String duration(DateTime start, DateTime end) {
 	    Period period = new Period(start, end);
-	    StringBuffer duration = new StringBuffer("PT");
 	    
-	    int hours = period.getHours();
-	    int minutes = period.getMinutes();
-	    int seconds = period.getSeconds();
-	    
-	    if (hours > 0) {
-	        duration.append(hours+"H");
-	    }
-	    if (minutes > 0 || hours > 0) {
-	        duration.append(minutes+"M");
-	    }
-	    duration.append(seconds+"S");
-	    
-	    return duration.toString();
+	    return ISOPeriodFormat.standard().print(period);
 	}
 
 	private Element broadcastToEntry(InterlinkBroadcast broadcast, InterlinkEpisode parent) {
@@ -169,6 +156,11 @@ public class InterlinkFeedOutputter {
 			mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
 			mrssContent.appendChild(stringElement("index", NS_ILINK, String.valueOf(content.indexWithinParent())));
 		}
+		if (content.thumbnail() != null) {
+            Element thumbnail = createElement("thumbnail", NS_MRSS);
+            thumbnail.addAttribute(new Attribute("url", content.thumbnail()));
+            mrssContent.appendChild(thumbnail);
+        }
 		return atomContentElementContaining(mrssContent);
 	}
 
@@ -188,6 +180,7 @@ public class InterlinkFeedOutputter {
 		if (content.lastUpdated() != null) {
 		    entry.appendChild(stringElement("updated", NS_ATOM, content.lastUpdated().toString(DATE_TIME_FORMAT)));
 		}
+		
 		entry.appendChild(contentElement(content, parent));
 
 	}

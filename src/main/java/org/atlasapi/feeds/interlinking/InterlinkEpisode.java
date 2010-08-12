@@ -50,6 +50,11 @@ public class InterlinkEpisode extends InterlinkContent {
         return this;
     }
 	
+	public InterlinkEpisode withThumbnail(String thumbnail) {
+        this.thumbnail = thumbnail;
+        return this;
+    }
+	
 	public String link() {
 	    return link;
   }

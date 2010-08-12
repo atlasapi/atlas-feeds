@@ -38,6 +38,11 @@ public class InterlinkSeries extends InterlinkContent {
         return this;
     }
 	
+	public InterlinkSeries withThumbnail(String thumbnail) {
+        this.thumbnail = thumbnail;
+        return this;
+    }
+	
 	public InterlinkSeries withDescription(String description) {
 		this.description = description;
 		return this;

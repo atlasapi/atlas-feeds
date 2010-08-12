@@ -33,6 +33,11 @@ public class InterlinkBrand extends InterlinkContent {
 	    this.lastUpdated = lastUpdated;
 	    return this;
 	}
+	
+	public InterlinkBrand withThumbnail(String thumbnail) {
+	    this.thumbnail = thumbnail;
+	    return this;
+	}
 
 	public InterlinkBrand addEpisodeWithoutASeries(InterlinkEpisode episode) {
 		episodes.add(episode);

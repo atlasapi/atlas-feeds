@@ -16,6 +16,7 @@
         <content type="application/xml">
             <media:content>
                 <media:description>Adaption of Flora Thompson's memoir of her Oxfordshire childhood</media:description>
+                <media:thumbnail url="thumbnail"/>
             </media:content>
         </content>
     </entry>

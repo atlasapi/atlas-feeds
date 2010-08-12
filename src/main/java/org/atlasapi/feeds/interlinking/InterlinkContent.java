@@ -5,6 +5,7 @@ public abstract class InterlinkContent extends InterlinkBase {
 	private final Integer index;
 	protected String summary;
 	protected String description;
+	protected String thumbnail;
 
 	public InterlinkContent(String id, Integer index) {
 		super(id);
@@ -21,5 +22,9 @@ public abstract class InterlinkContent extends InterlinkBase {
 	
 	public String description() {
 		return description;
+	}
+	
+	public String thumbnail() {
+	    return thumbnail;
 	}
 }

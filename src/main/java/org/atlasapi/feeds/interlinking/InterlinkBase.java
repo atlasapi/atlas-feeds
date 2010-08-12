@@ -8,7 +8,6 @@ public abstract class InterlinkBase {
 	protected String title;
 	protected Integer index;
 	protected DateTime lastUpdated;
-
 	
 	public InterlinkBase(String id) {
 		this.id = id;

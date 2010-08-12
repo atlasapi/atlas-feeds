@@ -71,7 +71,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         	.withTitle(series.getTitle())
         	.withDescription(series.getDescription())
         	.withLastUpdated(series.getLastUpdated())
-        	.withSummary(toSummary(series));
+        	.withSummary(toSummary(series))
+        	.withThumbnail(series.getImage());
     }
 
     private InterlinkEpisode fromItem(Item item) {
@@ -79,7 +80,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         	.withTitle(item.getTitle())
         	.withDescription(item.getDescription())
         	.withLastUpdated(item.getLastUpdated())
-        	.withSummary(toSummary(item));
+        	.withSummary(toSummary(item))
+        	.withThumbnail(item.getImage());
 
         for (Broadcast broadcast : broadcasts(item)) {
             InterlinkBroadcast interlinkBroadcast = fromBroadcast(broadcast);
@@ -102,7 +104,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 			.withLastUpdated(brand.getLastUpdated())
         	.withTitle(brand.getTitle())
         	.withDescription(brand.getDescription())
-        	.withSummary(toSummary(brand));
+        	.withSummary(toSummary(brand))
+        	.withThumbnail(brand.getImage());
     }
 
     private String toSummary(Content content) {
