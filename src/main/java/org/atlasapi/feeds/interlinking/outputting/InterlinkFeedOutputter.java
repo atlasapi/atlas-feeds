@@ -112,8 +112,7 @@ public class InterlinkFeedOutputter {
 		linkElement.addAttribute(new Attribute("rel", "alternate"));
 		entry.appendChild(linkElement);
 		
-		addCommonContentFieldsTo(episode, entry);
-		entry.appendChild(contentElement(episode, parent));
+		addCommonContentFieldsTo(episode, entry, parent);
 		return entry;
 	}
 
@@ -121,13 +120,24 @@ public class InterlinkFeedOutputter {
 		Element entry = createElement("entry", NS_ATOM);
 		addCommonFieldsTo(series, entry);
 		entry.appendChild(stringElement("type", NS_ILINK, "series"));
-		addCommonContentFieldsTo(series, entry);
-		entry.appendChild(contentElement(series, parent));
+		addCommonContentFieldsTo(series, entry, parent);
+		return entry;
+	}
+	
+	private Element brandToEntry(InterlinkBrand brand) {
+		Element entry = createElement("entry", NS_ATOM);
+		addCommonFieldsTo(brand, entry);
+		entry.appendChild(stringElement("type", NS_ILINK, "brand"));
+		addCommonContentFieldsTo(brand, entry, null);
 		return entry;
 	}
 
 	private Element contentElement(InterlinkContent content, InterlinkContent parent) {
 		Element mrssContent = createElement("content", NS_MRSS);
+		
+		if (content.description() != null) {
+			mrssContent.appendChild(stringElement("description", NS_MRSS, content.description()));
+		}
 		if (parent != null) {
 			mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
 			mrssContent.appendChild(stringElement("index", NS_ILINK, String.valueOf(content.indexWithinParent())));
@@ -142,21 +152,17 @@ public class InterlinkFeedOutputter {
 		return atomContent;
 	}
 
-	private Element brandToEntry(InterlinkBrand brand) {
-		Element entry = createElement("entry", NS_ATOM);
-		addCommonFieldsTo(brand, entry);
-		entry.appendChild(stringElement("type", NS_ILINK, "brand"));
-		addCommonContentFieldsTo(brand, entry);
-		return entry;
-	}
 
-	private void addCommonContentFieldsTo(InterlinkContent content, Element entry) {
+
+	private void addCommonContentFieldsTo(InterlinkContent content, Element entry, InterlinkContent parent) {
 		if (content.summary() != null) {
 			entry.appendChild(stringElement("summary", NS_ATOM, content.summary()));
 		}
 		if (content.lastUpdated() != null) {
 		    entry.appendChild(stringElement("updated", NS_ATOM, content.lastUpdated().toString(DATE_TIME_FORMAT)));
 		}
+		entry.appendChild(contentElement(content, parent));
+
 	}
 
 	private Element createFeed(InterlinkFeed feed) {

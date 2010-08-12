@@ -39,6 +39,11 @@ public class InterlinkEpisode extends InterlinkContent {
 	public Set<InterlinkOnDemand> onDemands() {
 		return onDemands;
 	}
+
+	public InterlinkEpisode withSummary(String summary) {
+		this.summary = summary;
+		return this;
+	}
 	
 	public InterlinkEpisode withLastUpdated(DateTime lastUpdated) {
         this.lastUpdated = lastUpdated;
@@ -47,5 +52,10 @@ public class InterlinkEpisode extends InterlinkContent {
 	
 	public String link() {
 	    return link;
+  }
+
+	public InterlinkEpisode withDescription(String description) {
+		this.description = description;
+		return this;
 	}
 }

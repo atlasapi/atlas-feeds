@@ -7,6 +7,7 @@ import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
@@ -19,15 +20,21 @@ import org.joda.time.Duration;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.text.Truncator;
 
 public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 
+	private final Truncator summaryTruncator = new Truncator()
+		.withMaxLength(90)
+		.onlyTruncateAtAWordBoundary()
+		.onlyStartANewSentenceIfTheSentenceIsAtLeastPercentComplete(50).withOmissionMarker("...");
+	
     public InterlinkFeed fromPlaylist(Playlist playlist) {
         InterlinkFeed feed = new InterlinkFeed(playlist.getCanonicalUri());
 
+        // TODO These are dummy entries
         feed.withAuthor(new InterlinkFeedAuthor(playlist.getPublisher().name(), playlist.getPublisher().name()));
-        DateTime lastUpdated = null;
+        feed.withUpdatedAt(new DateTime());
 
         for (Playlist subPlaylist : playlist.getPlaylists()) {
             if (subPlaylist instanceof Brand) {
@@ -53,25 +60,26 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
                         }
                     }
                     brand.addEpisodeWithoutASeries(fromItem(item));
-                    
-                    if (brand.lastUpdated() != null && (lastUpdated == null || brand.lastUpdated().isAfter(lastUpdated))) {
-                        lastUpdated = brand.lastUpdated();
-                    }
                 }
             }
         }
-        
-        feed.withUpdatedAt(lastUpdated != null ? lastUpdated : new DateTime(DateTimeZones.UTC));
-        
         return feed;
     }
 
     private InterlinkSeries fromSeries(Series series) {
-        return new InterlinkSeries(series.getCanonicalUri(), series.getSeriesNumber()).withTitle(series.getTitle()).withSummary(series.getDescription()).withLastUpdated(series.getLastUpdated());
+        return new InterlinkSeries(series.getCanonicalUri(), series.getSeriesNumber())
+        	.withTitle(series.getTitle())
+        	.withDescription(series.getDescription())
+        	.withLastUpdated(series.getLastUpdated())
+        	.withSummary(toSummary(series));
     }
 
     private InterlinkEpisode fromItem(Item item) {
-        InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item), item.getCanonicalUri()).withTitle(item.getTitle()).withLastUpdated(item.getLastUpdated());
+        InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item), item.getCanonicalUri())
+        	.withTitle(item.getTitle())
+        	.withDescription(item.getDescription())
+        	.withLastUpdated(item.getLastUpdated())
+        	.withSummary(toSummary(item));
 
         for (Broadcast broadcast : broadcasts(item)) {
             InterlinkBroadcast interlinkBroadcast = fromBroadcast(broadcast);
@@ -90,17 +98,33 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
     private InterlinkBrand fromBrand(Brand brand) {
-        return new InterlinkBrand(brand.getCanonicalUri()).withTitle(brand.getTitle()).withSummary(brand.getDescription()).withLastUpdated(brand.getLastUpdated());
+        return new InterlinkBrand(brand.getCanonicalUri())
+			.withLastUpdated(brand.getLastUpdated())
+        	.withTitle(brand.getTitle())
+        	.withDescription(brand.getDescription())
+        	.withSummary(toSummary(brand));
     }
 
-    private InterlinkOnDemand fromLocation(Location linkLocation) {
-        return new InterlinkOnDemand(linkLocation.getUri()).withLastUpdated(linkLocation.getLastUpdated());
+    private String toSummary(Content content) {
+    	String description = content.getDescription();
+		if (description == null) {
+    		return null;
+    	}
+    	return summaryTruncator.truncate(description);
+    }
+
+	private InterlinkOnDemand fromLocation(Location linkLocation) {
+        return new InterlinkOnDemand(linkLocation.getUri())
+			.withLastUpdated(linkLocation.getLastUpdated());
     }
 
     protected InterlinkBroadcast fromBroadcast(Broadcast broadcast) {
         String id = broadcast.getBroadcastOn() + "-" + broadcast.getTransmissionTime().getMillis();
 
-        return new InterlinkBroadcast(id).withDuration(toDuration(broadcast.getBroadcastDuration())).withBroadcastStart(broadcast.getTransmissionTime()).withLastUpdated(broadcast.getLastUpdated());
+        return new InterlinkBroadcast(id)
+    		.withLastUpdated(broadcast.getLastUpdated())
+        	.withDuration(toDuration(broadcast.getBroadcastDuration()))
+        	.withBroadcastStart(broadcast.getTransmissionTime());
     }
 
     static Set<Broadcast> broadcasts(Item item) {

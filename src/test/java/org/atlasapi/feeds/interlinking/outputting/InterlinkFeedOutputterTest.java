@@ -46,6 +46,7 @@ public class InterlinkFeedOutputterTest {
 		
 		InterlinkBrand brand = new InterlinkBrand("1")
 			.withTitle("Lark Rise to Candleford")
+			.withDescription("Adaption of Flora Thompson's memoir of her Oxfordshire childhood")
 			.withLastUpdated(lastUpdated);
 		
 		// add an episode directly to the brand
@@ -126,20 +127,24 @@ public class InterlinkFeedOutputterTest {
 		 
 		@Override
 		public void error(SAXParseException exception) throws SAXException {
-			System.out.println(exception);
+			printError(exception);
 			thereWasAnError = true;
 		}
 
 		@Override
 		public void fatalError(SAXParseException exception) throws SAXException {
-			System.out.println(exception);
+			printError(exception);
 			thereWasAnError = true;
 		}
 
 		@Override
 		public void warning(SAXParseException exception) throws SAXException {
-			System.out.println(exception);
+			printError(exception);
 			thereWasAnError = true;
+		}
+
+		private static void printError(SAXParseException exception) {
+			System.out.println(exception + " on line " + exception.getLineNumber() + ":" + exception.getColumnNumber());
 		}
 	 }
 
