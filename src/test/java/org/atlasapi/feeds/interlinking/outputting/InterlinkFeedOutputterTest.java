@@ -54,7 +54,7 @@ public class InterlinkFeedOutputterTest {
 		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", 2, "link").withTitle("Episode not in a series").withLastUpdated(lastUpdated);
 		
 		episodeWithoutASeries.addBroadcast(new InterlinkBroadcast("broadcastNotInASeries"));
-		episodeWithoutASeries.addOnDemand(new InterlinkOnDemand("odNotInASeries", lastUpdated, lastUpdated));
+		episodeWithoutASeries.addOnDemand(new InterlinkOnDemand("odNotInASeries", lastUpdated, lastUpdated, new Duration(1000)));
 		
 		brand.addEpisodeWithoutASeries(episodeWithoutASeries);
 		
@@ -64,7 +64,7 @@ public class InterlinkFeedOutputterTest {
 		
 		brand.addSeries(series);
 		
-		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5", lastUpdated, lastUpdated);
+		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5", lastUpdated, lastUpdated, new Duration(1000));
 		
 		InterlinkBroadcast broadcast = new InterlinkBroadcast("broadcast4")
 			.withBroadcastStart(new DateTime("2010-01-10T21:00:00Z"))

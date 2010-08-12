@@ -90,10 +90,10 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
             }
         }
 
-        Location linkLocation = firstLinkLocation(item);
+        InterlinkOnDemand onDemand = firstLinkLocation(item);
 
-        if (linkLocation != null) {
-            episode.addOnDemand(fromLocation(linkLocation));
+        if (onDemand != null) {
+            episode.addOnDemand(onDemand);
         }
 
         return episode;
@@ -116,11 +116,6 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     	return summaryTruncator.truncate(description);
     }
 
-	private InterlinkOnDemand fromLocation(Location linkLocation) {
-        return new InterlinkOnDemand(linkLocation.getUri(), linkLocation.getPolicy().getAvailabilityStart(), linkLocation.getPolicy().getAvailabilityEnd())
-			.withLastUpdated(linkLocation.getLastUpdated());
-    }
-
     protected InterlinkBroadcast fromBroadcast(Broadcast broadcast) {
         String id = broadcast.getBroadcastOn() + "-" + broadcast.getTransmissionTime().getMillis();
 
@@ -140,17 +135,23 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         return broadcasts;
     }
 
-    static Location firstLinkLocation(Item item) {
+    static InterlinkOnDemand firstLinkLocation(Item item) {
         for (Version version : item.getVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
                     if (TransportType.LINK.equals(location.getTransportType())) {
-                        return location;
+                        return fromLocation(location, version.getDuration());
                     }
                 }
             }
         }
         return null;
+    }
+    
+    static InterlinkOnDemand fromLocation(Location linkLocation, int d) {
+        Duration duration = new Duration(d*1000);
+        return new InterlinkOnDemand(linkLocation.getUri(), linkLocation.getPolicy().getAvailabilityStart(), linkLocation.getPolicy().getAvailabilityEnd(), duration)
+            .withLastUpdated(linkLocation.getLastUpdated());
     }
 
     static Integer itemIndexFrom(Item item) {

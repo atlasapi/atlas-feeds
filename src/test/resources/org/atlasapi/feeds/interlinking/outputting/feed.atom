@@ -50,7 +50,7 @@
                 <ilink:parent_id>notInASeries</ilink:parent_id>
                 <ilink:availability_start>2010-04-27T09:49:40Z</ilink:availability_start>
                 <ilink:availability_end>2010-04-27T09:49:40Z</ilink:availability_end>
-                <ilink:duration>PT0S</ilink:duration>
+                <ilink:duration>PT1S</ilink:duration>
                 <ilink:platform_code>pc</ilink:platform_code>
                 <ilink:payment_type>free</ilink:payment_type>
             </media:content>
@@ -101,7 +101,7 @@
                 <ilink:parent_id>episode3</ilink:parent_id>
                 <ilink:availability_start>2010-04-27T09:49:40Z</ilink:availability_start>
                 <ilink:availability_end>2010-04-27T09:49:40Z</ilink:availability_end>
-                <ilink:duration>PT0S</ilink:duration>
+                <ilink:duration>PT1S</ilink:duration>
                 <ilink:platform_code>pc</ilink:platform_code>
                 <ilink:payment_type>free</ilink:payment_type>
             </media:content>

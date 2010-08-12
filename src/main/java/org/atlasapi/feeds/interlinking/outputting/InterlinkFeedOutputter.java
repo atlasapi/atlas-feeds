@@ -20,6 +20,7 @@ import org.atlasapi.feeds.interlinking.InterlinkOnDemand;
 import org.atlasapi.feeds.interlinking.InterlinkSeries;
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.joda.time.Period;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -79,7 +80,7 @@ public class InterlinkFeedOutputter {
 		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
 		mrssContent.appendChild(stringElement("availability_start", NS_ILINK, onDemand.availabilityStart().toString(DATE_TIME_FORMAT)));
 		mrssContent.appendChild(stringElement("availability_end", NS_ILINK, onDemand.availabilityEnd().toString(DATE_TIME_FORMAT)));
-		mrssContent.appendChild(stringElement("duration", NS_ILINK, duration(onDemand.availabilityStart(), onDemand.availabilityEnd())));
+		mrssContent.appendChild(stringElement("duration", NS_ILINK, duration(onDemand.duration())));
 		
 		// TODO: Static attributes for now
 		mrssContent.appendChild(stringElement("platform_code", NS_ILINK, "pc"));
@@ -88,8 +89,8 @@ public class InterlinkFeedOutputter {
 		return entry;
 	}
 	
-	private String duration(DateTime start, DateTime end) {
-	    Period period = new Period(start, end);
+	private String duration(Duration duration) {
+	    Period period = duration.toPeriod();
 	    
 	    return ISOPeriodFormat.standard().print(period);
 	}
