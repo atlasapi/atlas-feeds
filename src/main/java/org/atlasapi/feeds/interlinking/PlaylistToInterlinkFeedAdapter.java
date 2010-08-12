@@ -27,6 +27,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 	private final Truncator summaryTruncator = new Truncator()
 		.withMaxLength(90)
 		.onlyTruncateAtAWordBoundary()
+		.omitTrailingPunctuationWhenTruncated()
 		.onlyStartANewSentenceIfTheSentenceIsAtLeastPercentComplete(50).withOmissionMarker("...");
 	
     public InterlinkFeed fromPlaylist(Playlist playlist) {
