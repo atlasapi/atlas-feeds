@@ -122,20 +122,24 @@ public class InterlinkFeedOutputterTest {
 		 
 		@Override
 		public void error(SAXParseException exception) throws SAXException {
-			System.out.println(exception);
+			printError(exception);
 			thereWasAnError = true;
 		}
 
 		@Override
 		public void fatalError(SAXParseException exception) throws SAXException {
-			System.out.println(exception);
+			printError(exception);
 			thereWasAnError = true;
 		}
 
 		@Override
 		public void warning(SAXParseException exception) throws SAXException {
-			System.out.println(exception);
+			printError(exception);
 			thereWasAnError = true;
+		}
+
+		private static void printError(SAXParseException exception) {
+			System.out.println(exception + " on line " + exception.getLineNumber() + ":" + exception.getColumnNumber());
 		}
 	 }
 
