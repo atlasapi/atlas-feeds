@@ -76,6 +76,8 @@ public class InterlinkFeedOutputter {
         }
 		Element mrssContent = createElement("content", NS_MRSS);
 		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
+		mrssContent.appendChild(stringElement("availability_start", NS_ILINK, onDemand.availabilityStart().toString(DATE_TIME_FORMAT)));
+		mrssContent.appendChild(stringElement("availability_end", NS_ILINK, onDemand.availabilityEnd().toString(DATE_TIME_FORMAT)));
 		entry.appendChild(atomContentElementContaining(mrssContent));
 		return entry;
 	}

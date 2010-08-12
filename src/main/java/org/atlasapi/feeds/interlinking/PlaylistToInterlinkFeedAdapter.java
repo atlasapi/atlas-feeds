@@ -114,7 +114,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
 	private InterlinkOnDemand fromLocation(Location linkLocation) {
-        return new InterlinkOnDemand(linkLocation.getUri())
+        return new InterlinkOnDemand(linkLocation.getUri(), linkLocation.getPolicy().getAvailabilityStart(), linkLocation.getPolicy().getAvailabilityEnd())
 			.withLastUpdated(linkLocation.getLastUpdated());
     }
 

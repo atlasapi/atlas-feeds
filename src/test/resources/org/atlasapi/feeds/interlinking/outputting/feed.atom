@@ -47,6 +47,8 @@
         <content type="application/xml">
             <media:content>
                 <ilink:parent_id>notInASeries</ilink:parent_id>
+                <ilink:availability_start>2010-04-27T09:49:40Z</ilink:availability_start>
+                <ilink:availability_end>2010-04-27T09:49:40Z</ilink:availability_end>
             </media:content>
         </content>
     </entry>
@@ -93,6 +95,8 @@
         <content type="application/xml">
             <media:content>
                 <ilink:parent_id>episode3</ilink:parent_id>
+                <ilink:availability_start>2010-04-27T09:49:40Z</ilink:availability_start>
+                <ilink:availability_end>2010-04-27T09:49:40Z</ilink:availability_end>
             </media:content>
         </content>
     </entry>
