@@ -17,7 +17,7 @@ public class C4PlaylistToInterterlinkFeedAdapter extends PlaylistToInterlinkFeed
         }
 
         if (id != null) {
-            return new InterlinkBroadcast(id).withDuration(toDuration(broadcast.getBroadcastDuration())).withBroadcastStart(broadcast.getTransmissionTime());
+            return new InterlinkBroadcast(id).withDuration(toDuration(broadcast.getBroadcastDuration())).withBroadcastStart(broadcast.getTransmissionTime()).withLastUpdated(broadcast.getLastUpdated());
         }
         return null;
     }

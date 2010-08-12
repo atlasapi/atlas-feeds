@@ -29,4 +29,9 @@ public class InterlinkBroadcast extends InterlinkBase {
 	public Duration duration() {
 		return duration;
 	}
+	
+	public InterlinkBroadcast withLastUpdated(DateTime lastUpdated) {
+        this.lastUpdated = lastUpdated();
+        return this;
+    }
 }

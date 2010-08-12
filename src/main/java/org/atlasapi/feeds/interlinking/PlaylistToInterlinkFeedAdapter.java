@@ -19,15 +19,15 @@ import org.joda.time.Duration;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.metabroadcast.common.time.DateTimeZones;
 
 public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 
     public InterlinkFeed fromPlaylist(Playlist playlist) {
         InterlinkFeed feed = new InterlinkFeed(playlist.getCanonicalUri());
 
-        // TODO These are dummy entries
         feed.withAuthor(new InterlinkFeedAuthor(playlist.getPublisher().name(), playlist.getPublisher().name()));
-        feed.withUpdatedAt(new DateTime());
+        DateTime lastUpdated = null;
 
         for (Playlist subPlaylist : playlist.getPlaylists()) {
             if (subPlaylist instanceof Brand) {
@@ -53,18 +53,25 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
                         }
                     }
                     brand.addEpisodeWithoutASeries(fromItem(item));
+                    
+                    if (brand.lastUpdated() != null && (lastUpdated == null || brand.lastUpdated().isAfter(lastUpdated))) {
+                        lastUpdated = brand.lastUpdated();
+                    }
                 }
             }
         }
+        
+        feed.withUpdatedAt(lastUpdated != null ? lastUpdated : new DateTime(DateTimeZones.UTC));
+        
         return feed;
     }
 
     private InterlinkSeries fromSeries(Series series) {
-        return new InterlinkSeries(series.getCanonicalUri(), series.getSeriesNumber()).withTitle(series.getTitle()).withSummary(series.getDescription());
+        return new InterlinkSeries(series.getCanonicalUri(), series.getSeriesNumber()).withTitle(series.getTitle()).withSummary(series.getDescription()).withLastUpdated(series.getLastUpdated());
     }
 
     private InterlinkEpisode fromItem(Item item) {
-        InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item)).withTitle(item.getTitle());
+        InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item)).withTitle(item.getTitle()).withLastUpdated(item.getLastUpdated());
 
         for (Broadcast broadcast : broadcasts(item)) {
             InterlinkBroadcast interlinkBroadcast = fromBroadcast(broadcast);
@@ -83,17 +90,17 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
     private InterlinkBrand fromBrand(Brand brand) {
-        return new InterlinkBrand(brand.getCanonicalUri()).withTitle(brand.getTitle()).withSummary(brand.getDescription());
+        return new InterlinkBrand(brand.getCanonicalUri()).withTitle(brand.getTitle()).withSummary(brand.getDescription()).withLastUpdated(brand.getLastUpdated());
     }
 
     private InterlinkOnDemand fromLocation(Location linkLocation) {
-        return new InterlinkOnDemand(linkLocation.getUri());
+        return new InterlinkOnDemand(linkLocation.getUri()).withLastUpdated(linkLocation.getLastUpdated());
     }
 
     protected InterlinkBroadcast fromBroadcast(Broadcast broadcast) {
         String id = broadcast.getBroadcastOn() + "-" + broadcast.getTransmissionTime().getMillis();
 
-        return new InterlinkBroadcast(id).withDuration(toDuration(broadcast.getBroadcastDuration())).withBroadcastStart(broadcast.getTransmissionTime());
+        return new InterlinkBroadcast(id).withDuration(toDuration(broadcast.getBroadcastDuration())).withBroadcastStart(broadcast.getTransmissionTime()).withLastUpdated(broadcast.getLastUpdated());
     }
 
     static Set<Broadcast> broadcasts(Item item) {

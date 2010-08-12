@@ -142,6 +142,9 @@ public class InterlinkFeedOutputter {
 		if (content.summary() != null) {
 			entry.appendChild(stringElement("summary", NS_ATOM, content.summary()));
 		}
+		if (content.lastUpdated() != null) {
+		    entry.appendChild(stringElement("updated", NS_ATOM, content.lastUpdated().toString(DATE_TIME_FORMAT)));
+		}
 	}
 
 	private Element createFeed(InterlinkFeed feed) {
