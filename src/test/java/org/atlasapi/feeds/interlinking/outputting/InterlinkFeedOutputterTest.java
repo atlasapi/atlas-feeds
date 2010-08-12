@@ -49,7 +49,7 @@ public class InterlinkFeedOutputterTest {
 			.withLastUpdated(lastUpdated);
 		
 		// add an episode directly to the brand
-		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", 2).withTitle("Episode not in a series").withLastUpdated(lastUpdated);
+		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", 2, "link").withTitle("Episode not in a series").withLastUpdated(lastUpdated);
 		
 		episodeWithoutASeries.addBroadcast(new InterlinkBroadcast("broadcastNotInASeries"));
 		episodeWithoutASeries.addOnDemand(new InterlinkOnDemand("odNotInASeries"));
@@ -68,7 +68,7 @@ public class InterlinkFeedOutputterTest {
 			.withBroadcastStart(new DateTime("2010-01-10T21:00:00Z"))
 			.withDuration(Duration.standardMinutes(45)).withLastUpdated(lastUpdated);
 		
-		InterlinkEpisode episode = new InterlinkEpisode("episode3", 3)
+		InterlinkEpisode episode = new InterlinkEpisode("episode3", 3, "link")
 			.withTitle("Lark Rise to Candleford Episode 3")
 			.addBroadcast(broadcast)
 			.addOnDemand(onDemand)

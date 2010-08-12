@@ -106,6 +106,12 @@ public class InterlinkFeedOutputter {
 		Element entry = createElement("entry", NS_ATOM);
 		addCommonFieldsTo(episode, entry);
 		entry.appendChild(stringElement("type", NS_ILINK, "episode"));
+		
+		Element linkElement = createElement("link", NS_ATOM);
+		linkElement.addAttribute(new Attribute("href", episode.link()));
+		linkElement.addAttribute(new Attribute("rel", "alternate"));
+		entry.appendChild(linkElement);
+		
 		addCommonContentFieldsTo(episode, entry);
 		entry.appendChild(contentElement(episode, parent));
 		return entry;

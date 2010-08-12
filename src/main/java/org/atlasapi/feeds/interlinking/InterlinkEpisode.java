@@ -10,9 +10,11 @@ public class InterlinkEpisode extends InterlinkContent {
 
 	private final Set<InterlinkBroadcast> broadcasts = Sets.newHashSet();
 	private final Set<InterlinkOnDemand> onDemands = Sets.newHashSet();
+    private final String link;
 	
-	public InterlinkEpisode(String id, Integer index) {
+	public InterlinkEpisode(String id, Integer index, String link) {
 		super(id, index);
+        this.link = link;
 	}
 	
 	public InterlinkEpisode withTitle(String title) {
@@ -42,4 +44,8 @@ public class InterlinkEpisode extends InterlinkContent {
         this.lastUpdated = lastUpdated;
         return this;
     }
+	
+	public String link() {
+	    return link;
+	}
 }

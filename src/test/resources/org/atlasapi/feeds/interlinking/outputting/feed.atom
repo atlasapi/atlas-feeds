@@ -18,6 +18,7 @@
         <title>Episode not in a series</title>
         <id>notInASeries</id>
         <ilink:type>episode</ilink:type>
+        <link href="link" rel="alternate"/>
         <updated>2010-04-27T09:49:40Z</updated>
         <content type="application/xml">
             <media:content>
@@ -60,6 +61,7 @@
         <title>Lark Rise to Candleford Episode 3</title>
         <id>episode3</id>
         <ilink:type>episode</ilink:type>
+        <link href="link" rel="alternate"/>
         <updated>2010-04-27T09:49:40Z</updated>
         <content type="application/xml">
             <media:content>

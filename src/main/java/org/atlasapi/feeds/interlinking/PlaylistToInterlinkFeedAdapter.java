@@ -71,7 +71,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
     private InterlinkEpisode fromItem(Item item) {
-        InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item)).withTitle(item.getTitle()).withLastUpdated(item.getLastUpdated());
+        InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item), item.getCanonicalUri()).withTitle(item.getTitle()).withLastUpdated(item.getLastUpdated());
 
         for (Broadcast broadcast : broadcasts(item)) {
             InterlinkBroadcast interlinkBroadcast = fromBroadcast(broadcast);
