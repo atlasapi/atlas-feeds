@@ -26,6 +26,7 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import com.metabroadcast.common.time.DateTimeZones;
 import com.thaiopensource.util.PropertyMap;
 import com.thaiopensource.util.PropertyMapBuilder;
 import com.thaiopensource.validate.Schema;
@@ -38,15 +39,17 @@ import com.thaiopensource.validate.rng.RngProperty;
 public class InterlinkFeedOutputterTest {
 
 	private final static InterlinkFeedOutputter outputter = new InterlinkFeedOutputter();
+	private final DateTime lastUpdated = new DateTime("2010-04-27T09:49:40.803Z", DateTimeZones.UTC);
 	
 	@Test
 	public void testSerialisationOfAFeed() throws Exception {
 		
 		InterlinkBrand brand = new InterlinkBrand("1")
-			.withTitle("Lark Rise to Candleford");
+			.withTitle("Lark Rise to Candleford")
+			.withLastUpdated(lastUpdated);
 		
 		// add an episode directly to the brand
-		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", 2).withTitle("Episode not in a series");
+		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", 2).withTitle("Episode not in a series").withLastUpdated(lastUpdated);
 		
 		episodeWithoutASeries.addBroadcast(new InterlinkBroadcast("broadcastNotInASeries"));
 		episodeWithoutASeries.addOnDemand(new InterlinkOnDemand("odNotInASeries"));
@@ -63,19 +66,20 @@ public class InterlinkFeedOutputterTest {
 		
 		InterlinkBroadcast broadcast = new InterlinkBroadcast("broadcast4")
 			.withBroadcastStart(new DateTime("2010-01-10T21:00:00Z"))
-			.withDuration(Duration.standardMinutes(45));
+			.withDuration(Duration.standardMinutes(45)).withLastUpdated(lastUpdated);
 		
 		InterlinkEpisode episode = new InterlinkEpisode("episode3", 3)
 			.withTitle("Lark Rise to Candleford Episode 3")
 			.addBroadcast(broadcast)
-			.addOnDemand(onDemand);
+			.addOnDemand(onDemand)
+			.withLastUpdated(lastUpdated);
 		
 		series.addEpisode(episode);
 		
 		InterlinkFeed feed = new InterlinkFeed("https://www.bbc.co.uk/interlinking/20100115")
 			.withTitle("BBC Daily Change Feed")
 			.withSubtitle("All metadata changes for on demand BBC content")
-			.withUpdatedAt(new DateTime("2010-01-15T14:51:10Z"))
+			.withUpdatedAt(lastUpdated)
 			.withAuthor(new InterlinkFeedAuthor("a partner", "a supplier"))
 			.addBrand(brand);
 		

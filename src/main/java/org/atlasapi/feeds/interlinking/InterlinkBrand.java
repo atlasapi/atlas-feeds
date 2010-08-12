@@ -2,6 +2,8 @@ package org.atlasapi.feeds.interlinking;
 
 import java.util.Set;
 
+import org.joda.time.DateTime;
+
 import com.google.common.collect.Sets;
 
 public class InterlinkBrand extends InterlinkContent {
@@ -25,6 +27,11 @@ public class InterlinkBrand extends InterlinkContent {
 	public InterlinkBrand withTitle(String title) {
 		this.title = title;
 		return this;
+	}
+	
+	public InterlinkBrand withLastUpdated(DateTime lastUpdated) {
+	    this.lastUpdated = lastUpdated;
+	    return this;
 	}
 
 	public InterlinkBrand addEpisodeWithoutASeries(InterlinkEpisode episode) {

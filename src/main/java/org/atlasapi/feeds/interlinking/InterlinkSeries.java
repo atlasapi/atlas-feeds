@@ -2,6 +2,8 @@ package org.atlasapi.feeds.interlinking;
 
 import java.util.Set;
 
+import org.joda.time.DateTime;
+
 import com.google.common.collect.Sets;
 
 public class InterlinkSeries extends InterlinkContent {
@@ -30,4 +32,9 @@ public class InterlinkSeries extends InterlinkContent {
 		this.summary = summary;
 		return this;
 	}
+	
+	public InterlinkSeries withLastUpdated(DateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
+        return this;
+    }
 }

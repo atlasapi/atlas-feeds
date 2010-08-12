@@ -71,6 +71,9 @@ public class InterlinkFeedOutputter {
 		Element entry = createElement("entry", NS_ATOM);
 		entry.appendChild(stringElement("id", NS_ATOM, onDemand.id()));
 		entry.appendChild(stringElement("type", NS_ILINK, "ondemand"));
+		if (onDemand.lastUpdated() != null) {
+            entry.appendChild(stringElement("updated", NS_ATOM, onDemand.lastUpdated().toString(DATE_TIME_FORMAT)));
+        }
 		Element mrssContent = createElement("content", NS_MRSS);
 		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
 		entry.appendChild(atomContentElementContaining(mrssContent));
@@ -81,6 +84,9 @@ public class InterlinkFeedOutputter {
 		Element entry = createElement("entry", NS_ATOM);
 		entry.appendChild(stringElement("id", NS_ATOM, broadcast.id()));
 		entry.appendChild(stringElement("type", NS_ILINK, "broadcast"));
+		if (broadcast.lastUpdated() != null) {
+            entry.appendChild(stringElement("updated", NS_ATOM, broadcast.lastUpdated().toString(DATE_TIME_FORMAT)));
+        }
 		Element mrssContent = createElement("content", NS_MRSS);
 		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
 		
@@ -141,6 +147,9 @@ public class InterlinkFeedOutputter {
 	private void addCommonContentFieldsTo(InterlinkContent content, Element entry) {
 		if (content.summary() != null) {
 			entry.appendChild(stringElement("summary", NS_ATOM, content.summary()));
+		}
+		if (content.lastUpdated() != null) {
+		    entry.appendChild(stringElement("updated", NS_ATOM, content.lastUpdated().toString(DATE_TIME_FORMAT)));
 		}
 	}
 
