@@ -35,4 +35,9 @@ public class InterlinkEpisode extends InterlinkContent {
 	public Set<InterlinkOnDemand> onDemands() {
 		return onDemands;
 	}
+
+	public InterlinkEpisode withSummary(String summary) {
+		this.summary = summary;
+		return this;
+	}
 }

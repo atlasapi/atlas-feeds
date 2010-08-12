@@ -7,6 +7,7 @@ import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
@@ -19,9 +20,15 @@ import org.joda.time.Duration;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.metabroadcast.common.text.Truncator;
 
 public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 
+	private final Truncator summaryTruncator = new Truncator()
+		.withMaxLength(90)
+		.onlyTruncateAtAWordBoundary()
+		.onlyStartANewSentenceIfTheSentenceIsAtLeastPercentComplete(50).withOmissionMarker("...");
+	
     public InterlinkFeed fromPlaylist(Playlist playlist) {
         InterlinkFeed feed = new InterlinkFeed(playlist.getCanonicalUri());
 
@@ -60,11 +67,13 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
     private InterlinkSeries fromSeries(Series series) {
-        return new InterlinkSeries(series.getCanonicalUri(), series.getSeriesNumber()).withTitle(series.getTitle()).withSummary(series.getDescription());
+        return new InterlinkSeries(series.getCanonicalUri(), series.getSeriesNumber()).withTitle(series.getTitle()).withSummary(toSummary(series));
     }
 
     private InterlinkEpisode fromItem(Item item) {
-        InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item)).withTitle(item.getTitle());
+        InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item))
+        	.withTitle(item.getTitle())
+        	.withSummary(toSummary(item));
 
         for (Broadcast broadcast : broadcasts(item)) {
             InterlinkBroadcast interlinkBroadcast = fromBroadcast(broadcast);
@@ -83,10 +92,18 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
     private InterlinkBrand fromBrand(Brand brand) {
-        return new InterlinkBrand(brand.getCanonicalUri()).withTitle(brand.getTitle()).withSummary(brand.getDescription());
+        return new InterlinkBrand(brand.getCanonicalUri()).withTitle(brand.getTitle()).withSummary(toSummary(brand));
     }
 
-    private InterlinkOnDemand fromLocation(Location linkLocation) {
+    private String toSummary(Content content) {
+    	String description = content.getDescription();
+		if (description == null) {
+    		return null;
+    	}
+    	return summaryTruncator.truncate(description);
+    }
+
+	private InterlinkOnDemand fromLocation(Location linkLocation) {
         return new InterlinkOnDemand(linkLocation.getUri());
     }
 
