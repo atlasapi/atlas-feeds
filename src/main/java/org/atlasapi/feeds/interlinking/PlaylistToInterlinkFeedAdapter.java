@@ -198,8 +198,9 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     
     static InterlinkOnDemand fromLocation(Location linkLocation, InterlinkEpisode episode, int d) {
         Duration duration = new Duration(d*1000);
+        Operation operation = linkLocation.getAvailable() ? Operation.STORE : Operation.DELETE;
         
-        return new InterlinkOnDemand(linkLocation.getUri(), DEFAULT_OPERATION, linkLocation.getPolicy().getAvailabilityStart(), linkLocation.getPolicy().getAvailabilityEnd(), duration, episode)
+        return new InterlinkOnDemand(linkLocation.getUri(), operation, linkLocation.getPolicy().getAvailabilityStart(), linkLocation.getPolicy().getAvailabilityEnd(), duration, episode)
             .withLastUpdated(linkLocation.getLastUpdated())
             .withService("4oD");
     }
