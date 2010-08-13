@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringReader;
-import java.net.URL;
 
 import org.atlasapi.feeds.interlinking.InterlinkBrand;
 import org.atlasapi.feeds.interlinking.InterlinkBroadcast;
@@ -13,28 +11,16 @@ import org.atlasapi.feeds.interlinking.InterlinkEpisode;
 import org.atlasapi.feeds.interlinking.InterlinkFeed;
 import org.atlasapi.feeds.interlinking.InterlinkOnDemand;
 import org.atlasapi.feeds.interlinking.InterlinkSeries;
+import org.atlasapi.feeds.interlinking.InterlinkBase.Operation;
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
+import org.atlasapi.feeds.interlinking.validation.InterlinkOutputValidator;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.junit.Test;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.XMLReaderFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.metabroadcast.common.time.DateTimeZones;
-import com.thaiopensource.util.PropertyMap;
-import com.thaiopensource.util.PropertyMapBuilder;
-import com.thaiopensource.validate.Schema;
-import com.thaiopensource.validate.SchemaReader;
-import com.thaiopensource.validate.ValidateProperty;
-import com.thaiopensource.validate.Validator;
-import com.thaiopensource.validate.rng.CompactSchemaReader;
-import com.thaiopensource.validate.rng.RngProperty;
 
 public class InterlinkFeedOutputterTest {
 
@@ -44,28 +30,29 @@ public class InterlinkFeedOutputterTest {
 	@Test
 	public void testSerialisationOfAFeed() throws Exception {
 		
-		InterlinkBrand brand = new InterlinkBrand("1")
+		InterlinkBrand brand = new InterlinkBrand("1", Operation.STORE)
 			.withTitle("Lark Rise to Candleford")
 			.withDescription("Adaption of Flora Thompson's memoir of her Oxfordshire childhood")
 			.withLastUpdated(lastUpdated)
 			.withThumbnail("thumbnail");
 		
 		// add an episode directly to the brand
-		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", 2, "link", brand).withTitle("Episode not in a series").withLastUpdated(lastUpdated);
-		InterlinkBroadcast broadcastWithoutASeries = new InterlinkBroadcast("broadcastNotInASeries", episodeWithoutASeries);
-		InterlinkOnDemand onDemandWithoutASeries = new InterlinkOnDemand("odNotInASeries", lastUpdated, lastUpdated, new Duration(1000), episodeWithoutASeries);
+		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", Operation.STORE, 2, "link", brand).withTitle("Episode not in a series").withLastUpdated(lastUpdated);
+		InterlinkBroadcast broadcastWithoutASeries = new InterlinkBroadcast("broadcastNotInASeries", Operation.STORE, episodeWithoutASeries);
+		InterlinkOnDemand onDemandWithoutASeries = new InterlinkOnDemand("odNotInASeries", Operation.STORE, lastUpdated, lastUpdated, new Duration(1000), episodeWithoutASeries);
 		
-		InterlinkSeries series = new InterlinkSeries("series2", 2, brand)
+		InterlinkSeries series = new InterlinkSeries("series2", Operation.STORE, 2, brand)
+
 			.withTitle("Lark Rise to Candleford Series 2")
 			.withSummary("Adaption of Flora Thompson's");
 		
-		InterlinkEpisode episode = new InterlinkEpisode("episode3", 3, "link", series)
+		InterlinkEpisode episode = new InterlinkEpisode("episode3", Operation.STORE, 3, "link", series)
             .withTitle("Lark Rise to Candleford Episode 3")
             .withLastUpdated(lastUpdated);
 		
-		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5", lastUpdated, lastUpdated, new Duration(1000), episode);
+		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5", Operation.STORE, lastUpdated, lastUpdated, new Duration(1000), episode);
 		
-		InterlinkBroadcast broadcast = new InterlinkBroadcast("broadcast4", episode)
+		InterlinkBroadcast broadcast = new InterlinkBroadcast("broadcast4", Operation.STORE, episode)
 			.withBroadcastStart(new DateTime("2010-01-10T21:00:00Z"))
 			.withDuration(Duration.standardMinutes(45)).withLastUpdated(lastUpdated);
 		
@@ -87,65 +74,8 @@ public class InterlinkFeedOutputterTest {
 		assertEquals(expectedFeed("feed.atom"), generated);
 		
 		// for now just print out errors since the feed is not finished and will not validate
-		validatesAgainstSchema(generated);
+		new InterlinkOutputValidator().validatesAgainstSchema(generated, System.out);
 	}
-
-	public boolean validatesAgainstSchema(String xml) throws Exception {
-		URL schemaUrl = null;
-		try {
-			schemaUrl = Resources.getResource("org/atlasapi/feeds/interlinking/outputting/interlinking.rnc");
-		} catch (IllegalArgumentException e) {
-			System.out.println("WARN: Could not find schema to validate feed");
-			return false;
-		}
-		SchemaReader schemaReader = CompactSchemaReader.getInstance();
-		Schema schema = schemaReader.createSchema(new InputSource(schemaUrl.openStream()), PropertyMap.EMPTY);
-
-		PropertyMapBuilder properties = new PropertyMapBuilder();
-		RngProperty.CHECK_ID_IDREF.add(properties);
-		PrintingErrorHandler printingErrorHandler = new PrintingErrorHandler();
-		ValidateProperty.ERROR_HANDLER.put(properties, printingErrorHandler);
-		Validator validator = schema.createValidator(properties.toPropertyMap());
-
-		XMLReader xmlReader = XMLReaderFactory.createXMLReader();
-
-		xmlReader.setContentHandler(validator.getContentHandler());
-		xmlReader.setDTDHandler(validator.getDTDHandler());
-
-		try {
-			xmlReader.parse(new InputSource(new StringReader(xml)));
-		} catch (SAXException e) {
-			return false;
-		}
-		return !printingErrorHandler.thereWasAnError;
-	}
-	 
-	 private static class PrintingErrorHandler implements ErrorHandler {
-
-		private boolean thereWasAnError = false;
-		 
-		@Override
-		public void error(SAXParseException exception) throws SAXException {
-			printError(exception);
-			thereWasAnError = true;
-		}
-
-		@Override
-		public void fatalError(SAXParseException exception) throws SAXException {
-			printError(exception);
-			thereWasAnError = true;
-		}
-
-		@Override
-		public void warning(SAXParseException exception) throws SAXException {
-			printError(exception);
-			thereWasAnError = true;
-		}
-
-		private static void printError(SAXParseException exception) {
-			System.out.println(exception + " on line " + exception.getLineNumber() + ":" + exception.getColumnNumber());
-		}
-	 }
 
 	private String output(InterlinkFeed feed) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();

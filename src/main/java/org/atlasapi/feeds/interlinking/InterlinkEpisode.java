@@ -7,8 +7,8 @@ public class InterlinkEpisode extends InterlinkContent {
     private final String link;
     private final InterlinkContent parent;
 	
-	public InterlinkEpisode(String id, Integer index, String link, InterlinkContent parent) {
-		super(id, index);
+	public InterlinkEpisode(String id, Operation operation, Integer index, String link, InterlinkContent parent) {
+		super(id, operation, index);
         this.link = link;
         this.parent = parent;
 	}

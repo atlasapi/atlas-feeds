@@ -10,8 +10,8 @@ public class InterlinkBroadcast extends InterlinkBase {
 	private String service;
     private final InterlinkEpisode episode;
 
-	public InterlinkBroadcast(String id, InterlinkEpisode episode) {
-		super(id);
+	public InterlinkBroadcast(String id, Operation operation, InterlinkEpisode episode) {
+		super(id, operation);
         this.episode = episode;
 	}
 

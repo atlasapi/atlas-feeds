@@ -4,8 +4,8 @@ import org.joda.time.DateTime;
 
 public class InterlinkBrand extends InterlinkContent {
 
-	public InterlinkBrand(String id) {
-		super(id, null);
+	public InterlinkBrand(String id, Operation operation) {
+		super(id, operation, null);
 	}
 	
 	public InterlinkBrand withTitle(String title) {

@@ -6,8 +6,8 @@ public class InterlinkSeries extends InterlinkContent {
 
 	private final InterlinkBrand brand;
 	
-	public InterlinkSeries(String id, Integer index, InterlinkBrand brand) {
-		super(id, index);
+	public InterlinkSeries(String id, Operation operation, Integer index, InterlinkBrand brand) {
+		super(id, operation, index);
         this.brand = brand;
 	}
 	

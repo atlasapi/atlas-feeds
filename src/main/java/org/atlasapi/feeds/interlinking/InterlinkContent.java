@@ -7,8 +7,8 @@ public abstract class InterlinkContent extends InterlinkBase {
 	protected String description;
 	protected String thumbnail;
 
-	public InterlinkContent(String id, Integer index) {
-		super(id);
+	public InterlinkContent(String id, Operation operation,  Integer index) {
+		super(id, operation);
 		this.index = index;
 	}
 

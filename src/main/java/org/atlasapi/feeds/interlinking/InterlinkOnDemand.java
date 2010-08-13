@@ -11,8 +11,8 @@ public class InterlinkOnDemand extends InterlinkBase {
     private String service;
     private final InterlinkEpisode episode;
 
-    public InterlinkOnDemand(String id, DateTime availabilityStart, DateTime availabilityEnd, Duration duration, InterlinkEpisode episode) {
-		super(id);
+    public InterlinkOnDemand(String id, Operation operation, DateTime availabilityStart, DateTime availabilityEnd, Duration duration, InterlinkEpisode episode) {
+		super(id, operation);
         this.availabilityStart = availabilityStart;
         this.availabilityEnd = availabilityEnd;
         this.duration = duration;
