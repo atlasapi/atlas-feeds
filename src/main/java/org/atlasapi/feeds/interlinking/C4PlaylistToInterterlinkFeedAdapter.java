@@ -7,7 +7,7 @@ public class C4PlaylistToInterterlinkFeedAdapter extends PlaylistToInterlinkFeed
     private static final String BROADCAST_ID_PREFIX = "tag:";
     
     @Override
-    protected InterlinkBroadcast fromBroadcast(Broadcast broadcast) {
+    protected InterlinkBroadcast fromBroadcast(Broadcast broadcast, InterlinkEpisode episode) {
         String id = null;
         for (String alias : broadcast.getAliases()) {
             if (alias.startsWith(BROADCAST_ID_PREFIX) || alias.startsWith("urn:"+BROADCAST_ID_PREFIX)) {
@@ -17,7 +17,7 @@ public class C4PlaylistToInterterlinkFeedAdapter extends PlaylistToInterlinkFeed
         }
 
         if (id != null) {
-            return new InterlinkBroadcast(id).withDuration(toDuration(broadcast.getBroadcastDuration())).withBroadcastStart(broadcast.getTransmissionTime()).withLastUpdated(broadcast.getLastUpdated());
+            return new InterlinkBroadcast(id, episode).withDuration(toDuration(broadcast.getBroadcastDuration())).withBroadcastStart(broadcast.getTransmissionTime()).withLastUpdated(broadcast.getLastUpdated());
         }
         return null;
     }

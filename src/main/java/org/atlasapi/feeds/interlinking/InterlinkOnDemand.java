@@ -9,12 +9,14 @@ public class InterlinkOnDemand extends InterlinkBase {
     private final DateTime availabilityEnd;
     private final Duration duration;
     private String service;
+    private final InterlinkEpisode episode;
 
-    public InterlinkOnDemand(String id, DateTime availabilityStart, DateTime availabilityEnd, Duration duration) {
+    public InterlinkOnDemand(String id, DateTime availabilityStart, DateTime availabilityEnd, Duration duration, InterlinkEpisode episode) {
 		super(id);
         this.availabilityStart = availabilityStart;
         this.availabilityEnd = availabilityEnd;
         this.duration = duration;
+        this.episode = episode;
 	}
 	
 	public InterlinkOnDemand withLastUpdated(DateTime lastUpdated) {
@@ -42,4 +44,8 @@ public class InterlinkOnDemand extends InterlinkBase {
 	public String service() {
 	    return service;
 	}
+	
+	public InterlinkEpisode episode() {
+        return episode;
+    }
 }

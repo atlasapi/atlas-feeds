@@ -1,9 +1,11 @@
 package org.atlasapi.feeds.interlinking;
 
-import org.atlasapi.media.entity.Playlist;
+import java.util.List;
+
+import org.atlasapi.media.entity.Brand;
+import org.joda.time.DateTime;
 
 public interface PlaylistToInterlinkFeed {
 
-    public InterlinkFeed fromPlaylist(Playlist playlist);
-
+    public InterlinkFeed fromBrands(String id, String publisher, DateTime from, DateTime to, List<Brand> brands);
 }

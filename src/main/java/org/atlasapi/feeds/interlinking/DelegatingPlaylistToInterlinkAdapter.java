@@ -1,9 +1,11 @@
 package org.atlasapi.feeds.interlinking;
 
+import java.util.List;
 import java.util.Map;
 
-import org.atlasapi.media.entity.Playlist;
+import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Publisher;
+import org.joda.time.DateTime;
 
 public class DelegatingPlaylistToInterlinkAdapter implements PlaylistToInterlinkFeed {
     
@@ -16,11 +18,11 @@ public class DelegatingPlaylistToInterlinkAdapter implements PlaylistToInterlink
     }
 
     @Override
-    public InterlinkFeed fromPlaylist(Playlist playlist) {
-        if (playlist.getPublisher() != null && delegates.containsKey(playlist.getPublisher())) {
-            return delegates.get(playlist.getPublisher()).fromPlaylist(playlist);
+    public InterlinkFeed fromBrands(String id, String publisher, DateTime from, DateTime to, List<Brand> brands) {
+        if (publisher != null && delegates.containsKey(publisher)) {
+            return delegates.get(publisher).fromBrands(id, publisher, from, to, brands);
         }
         
-        return fallback.fromPlaylist(playlist);
+        return fallback.fromBrands(id, publisher, from, to, brands);
     }
 }

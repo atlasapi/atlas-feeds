@@ -39,37 +39,23 @@ public class InterlinkFeedOutputter {
 	
 	public void output(InterlinkFeed feed, OutputStream out) throws IOException {
 		Element feedElem = createFeed(feed);
-		for (InterlinkBrand brand : feed.brands()) {
-			feedElem.appendChild(brandToEntry(brand));
-
-			for (InterlinkEpisode episode : brand.episodesWithoutASeries()) {
-				appendEpisodeTo(feedElem, episode, brand);
-			}
-			
-			for (InterlinkSeries series : brand.series()) {
-				
-				feedElem.appendChild(seriesToEntry(series, brand));
-
-				for (InterlinkEpisode episode : series.episodes()) {
-					appendEpisodeTo(feedElem, episode, series);
-				}
+		for (InterlinkBase entry : feed.entries()) {
+			if (entry instanceof InterlinkBrand) {
+			    feedElem.appendChild(brandToEntry((InterlinkBrand) entry));
+			} else if (entry instanceof InterlinkSeries) {
+			    feedElem.appendChild(seriesToEntry((InterlinkSeries) entry));
+			} else if (entry instanceof InterlinkEpisode) {
+			    feedElem.appendChild(episodeToEntry((InterlinkEpisode) entry));
+			} else if (entry instanceof InterlinkBroadcast) {
+			    feedElem.appendChild(broadcastToEntry((InterlinkBroadcast) entry));
+			} else if (entry instanceof InterlinkOnDemand) {
+			    feedElem.appendChild(onDemandToEntry((InterlinkOnDemand) entry));
 			}
 		}
 	    write(out, feedElem);  
 	}
-
-	private void appendEpisodeTo(Element feedElem,  InterlinkEpisode episode, InterlinkContent context) {
-		feedElem.appendChild(episodeToEntry(episode, context));
-		
-		for (InterlinkBroadcast broadcast : episode.broadcasts()) {
-			feedElem.appendChild(broadcastToEntry(broadcast, episode));
-		}
-		for (InterlinkOnDemand onDemand : episode.onDemands()) {
-			feedElem.appendChild(onDemandToEntry(onDemand, episode));
-		}
-	}
 	
-	private Element onDemandToEntry(InterlinkOnDemand onDemand, InterlinkEpisode parent) {
+	private Element onDemandToEntry(InterlinkOnDemand onDemand) {
 		Element entry = createElement("entry", NS_ATOM);
 		entry.appendChild(stringElement("id", NS_ATOM, onDemand.id()));
 		entry.appendChild(stringElement("type", NS_ILINK, "ondemand"));
@@ -77,7 +63,7 @@ public class InterlinkFeedOutputter {
             entry.appendChild(stringElement("updated", NS_ATOM, onDemand.lastUpdated().toString(DATE_TIME_FORMAT)));
         }
 		Element mrssContent = createElement("content", NS_MRSS);
-		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
+		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, onDemand.episode().id()));
 		mrssContent.appendChild(stringElement("availability_start", NS_ILINK, onDemand.availabilityStart().toString(DATE_TIME_FORMAT)));
 		mrssContent.appendChild(stringElement("availability_end", NS_ILINK, onDemand.availabilityEnd().toString(DATE_TIME_FORMAT)));
 		mrssContent.appendChild(stringElement("duration", NS_ILINK, duration(onDemand.duration())));
@@ -98,7 +84,7 @@ public class InterlinkFeedOutputter {
 	    return ISOPeriodFormat.standard().print(period);
 	}
 
-	private Element broadcastToEntry(InterlinkBroadcast broadcast, InterlinkEpisode parent) {
+	private Element broadcastToEntry(InterlinkBroadcast broadcast) {
 		Element entry = createElement("entry", NS_ATOM);
 		entry.appendChild(stringElement("id", NS_ATOM, broadcast.id()));
 		entry.appendChild(stringElement("type", NS_ILINK, "broadcast"));
@@ -106,7 +92,7 @@ public class InterlinkFeedOutputter {
             entry.appendChild(stringElement("updated", NS_ATOM, broadcast.lastUpdated().toString(DATE_TIME_FORMAT)));
         }
 		Element mrssContent = createElement("content", NS_MRSS);
-		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
+		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, broadcast.episode().id()));
 		
 		DateTime broadcastStart = broadcast.broadcastStart();
 		if (broadcastStart != null) {
@@ -123,7 +109,7 @@ public class InterlinkFeedOutputter {
 		return entry;
 	}
 
-	private Element episodeToEntry(InterlinkEpisode episode, InterlinkContent parent) {
+	private Element episodeToEntry(InterlinkEpisode episode) {
 		Element entry = createElement("entry", NS_ATOM);
 		addCommonFieldsTo(episode, entry);
 		entry.appendChild(stringElement("type", NS_ILINK, "episode"));
@@ -133,15 +119,15 @@ public class InterlinkFeedOutputter {
 		linkElement.addAttribute(new Attribute("rel", "alternate"));
 		entry.appendChild(linkElement);
 		
-		addCommonContentFieldsTo(episode, entry, parent);
+		addCommonContentFieldsTo(episode, entry, episode.parent());
 		return entry;
 	}
 
-	private Element seriesToEntry(InterlinkSeries series, InterlinkContent parent) {
+	private Element seriesToEntry(InterlinkSeries series) {
 		Element entry = createElement("entry", NS_ATOM);
 		addCommonFieldsTo(series, entry);
 		entry.appendChild(stringElement("type", NS_ILINK, "series"));
-		addCommonContentFieldsTo(series, entry, parent);
+		addCommonContentFieldsTo(series, entry, series.brand());
 		return entry;
 	}
 	

@@ -1,43 +1,21 @@
 package org.atlasapi.feeds.interlinking;
 
-import java.util.Set;
-
 import org.joda.time.DateTime;
-
-import com.google.common.collect.Sets;
 
 public class InterlinkEpisode extends InterlinkContent {
 
-	private final Set<InterlinkBroadcast> broadcasts = Sets.newHashSet();
-	private final Set<InterlinkOnDemand> onDemands = Sets.newHashSet();
     private final String link;
+    private final InterlinkContent parent;
 	
-	public InterlinkEpisode(String id, Integer index, String link) {
+	public InterlinkEpisode(String id, Integer index, String link, InterlinkContent parent) {
 		super(id, index);
         this.link = link;
+        this.parent = parent;
 	}
 	
 	public InterlinkEpisode withTitle(String title) {
 		this.title = title;
 		return this;
-	}
-
-	public InterlinkEpisode addBroadcast(InterlinkBroadcast interlinkBroadcast) {
-		broadcasts.add(interlinkBroadcast);
-		return this;
-	}
-
-	public Set<InterlinkBroadcast> broadcasts() {
-		return broadcasts;
-	}
-
-	public InterlinkEpisode addOnDemand(InterlinkOnDemand onDemand) {
-		onDemands.add(onDemand);
-		return this;
-	}
-
-	public Set<InterlinkOnDemand> onDemands() {
-		return onDemands;
 	}
 
 	public InterlinkEpisode withSummary(String summary) {
@@ -63,4 +41,8 @@ public class InterlinkEpisode extends InterlinkContent {
 		this.description = description;
 		return this;
 	}
+	
+	public InterlinkContent parent() {
+        return parent;
+    }
 }

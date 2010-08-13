@@ -8,9 +8,11 @@ public class InterlinkBroadcast extends InterlinkBase {
 	private DateTime broadcastStart;
 	private Duration duration;
 	private String service;
+    private final InterlinkEpisode episode;
 
-	public InterlinkBroadcast(String id) {
+	public InterlinkBroadcast(String id, InterlinkEpisode episode) {
 		super(id);
+        this.episode = episode;
 	}
 
 	public InterlinkBroadcast withBroadcastStart(DateTime broadcastStart) {
@@ -44,4 +46,8 @@ public class InterlinkBroadcast extends InterlinkBase {
 	    this.service = service;
 	    return this;
 	}
+	
+	public InterlinkEpisode episode() {
+        return episode;
+    }
 }

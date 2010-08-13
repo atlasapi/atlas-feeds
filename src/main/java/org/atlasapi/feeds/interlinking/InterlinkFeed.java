@@ -1,10 +1,10 @@
 package org.atlasapi.feeds.interlinking;
 
-import java.util.Set;
+import java.util.List;
 
 import org.joda.time.DateTime;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.Lists;
 
 public final class InterlinkFeed {
 
@@ -14,7 +14,7 @@ public final class InterlinkFeed {
 	private DateTime updated; 
 	private InterlinkFeedAuthor author;
 	
-	private Set<InterlinkBrand> brands = Sets.newHashSet();
+	private List<InterlinkBase> entries = Lists.newArrayList();
 	
 	public InterlinkFeed(String id) {
 		this.id = id;
@@ -40,13 +40,13 @@ public final class InterlinkFeed {
 		return this;
 	}
 	
-	public InterlinkFeed addBrand(InterlinkBrand brand) {
-		brands.add(brand);
+	public InterlinkFeed addEntry(InterlinkBase entry) {
+		entries.add(entry);
 		return this;
 	}
 	
-	public Set<InterlinkBrand> brands() {
-		return brands;
+	public List<InterlinkBase> entries() {
+		return entries;
 	}
 	
 	public InterlinkFeedAuthor author() {

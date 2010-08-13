@@ -51,39 +51,37 @@ public class InterlinkFeedOutputterTest {
 			.withThumbnail("thumbnail");
 		
 		// add an episode directly to the brand
-		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", 2, "link").withTitle("Episode not in a series").withLastUpdated(lastUpdated);
+		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", 2, "link", brand).withTitle("Episode not in a series").withLastUpdated(lastUpdated);
+		InterlinkBroadcast broadcastWithoutASeries = new InterlinkBroadcast("broadcastNotInASeries", episodeWithoutASeries);
+		InterlinkOnDemand onDemandWithoutASeries = new InterlinkOnDemand("odNotInASeries", lastUpdated, lastUpdated, new Duration(1000), episodeWithoutASeries);
 		
-		episodeWithoutASeries.addBroadcast(new InterlinkBroadcast("broadcastNotInASeries"));
-		episodeWithoutASeries.addOnDemand(new InterlinkOnDemand("odNotInASeries", lastUpdated, lastUpdated, new Duration(1000)));
-		
-		brand.addEpisodeWithoutASeries(episodeWithoutASeries);
-		
-		InterlinkSeries series = new InterlinkSeries("series2", 2)
+		InterlinkSeries series = new InterlinkSeries("series2", 2, brand)
 			.withTitle("Lark Rise to Candleford Series 2")
 			.withSummary("Adaption of Flora Thompson's");
 		
-		brand.addSeries(series);
+		InterlinkEpisode episode = new InterlinkEpisode("episode3", 3, "link", series)
+            .withTitle("Lark Rise to Candleford Episode 3")
+            .withLastUpdated(lastUpdated);
 		
-		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5", lastUpdated, lastUpdated, new Duration(1000));
+		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5", lastUpdated, lastUpdated, new Duration(1000), episode);
 		
-		InterlinkBroadcast broadcast = new InterlinkBroadcast("broadcast4")
+		InterlinkBroadcast broadcast = new InterlinkBroadcast("broadcast4", episode)
 			.withBroadcastStart(new DateTime("2010-01-10T21:00:00Z"))
 			.withDuration(Duration.standardMinutes(45)).withLastUpdated(lastUpdated);
-		
-		InterlinkEpisode episode = new InterlinkEpisode("episode3", 3, "link")
-			.withTitle("Lark Rise to Candleford Episode 3")
-			.addBroadcast(broadcast)
-			.addOnDemand(onDemand)
-			.withLastUpdated(lastUpdated);
-		
-		series.addEpisode(episode);
 		
 		InterlinkFeed feed = new InterlinkFeed("https://www.bbc.co.uk/interlinking/20100115")
 			.withTitle("BBC Daily Change Feed")
 			.withSubtitle("All metadata changes for on demand BBC content")
 			.withUpdatedAt(lastUpdated)
 			.withAuthor(new InterlinkFeedAuthor("a partner", "a supplier"))
-			.addBrand(brand);
+			.addEntry(brand)
+			.addEntry(episodeWithoutASeries)
+			.addEntry(broadcastWithoutASeries)
+			.addEntry(onDemandWithoutASeries)
+			.addEntry(series)
+			.addEntry(episode)
+			.addEntry(broadcast)
+			.addEntry(onDemand);
 		
 		String generated = output(feed);
 		assertEquals(expectedFeed("feed.atom"), generated);
