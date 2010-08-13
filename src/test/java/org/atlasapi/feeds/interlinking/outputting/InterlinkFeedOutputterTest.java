@@ -11,6 +11,7 @@ import org.atlasapi.feeds.interlinking.InterlinkEpisode;
 import org.atlasapi.feeds.interlinking.InterlinkFeed;
 import org.atlasapi.feeds.interlinking.InterlinkOnDemand;
 import org.atlasapi.feeds.interlinking.InterlinkSeries;
+import org.atlasapi.feeds.interlinking.InterlinkBase.Operation;
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.atlasapi.feeds.interlinking.validation.InterlinkOutputValidator;
 import org.joda.time.DateTime;
@@ -29,33 +30,33 @@ public class InterlinkFeedOutputterTest {
 	@Test
 	public void testSerialisationOfAFeed() throws Exception {
 		
-		InterlinkBrand brand = new InterlinkBrand("1")
+		InterlinkBrand brand = new InterlinkBrand("1", Operation.STORE)
 			.withTitle("Lark Rise to Candleford")
 			.withDescription("Adaption of Flora Thompson's memoir of her Oxfordshire childhood")
 			.withLastUpdated(lastUpdated)
 			.withThumbnail("thumbnail");
 		
 		// add an episode directly to the brand
-		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", 2, "link").withTitle("Episode not in a series").withLastUpdated(lastUpdated);
+		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", Operation.STORE, 2, "link").withTitle("Episode not in a series").withLastUpdated(lastUpdated);
 		
-		episodeWithoutASeries.addBroadcast(new InterlinkBroadcast("broadcastNotInASeries"));
-		episodeWithoutASeries.addOnDemand(new InterlinkOnDemand("odNotInASeries", lastUpdated, lastUpdated, new Duration(1000)));
+		episodeWithoutASeries.addBroadcast(new InterlinkBroadcast("broadcastNotInASeries", Operation.STORE));
+		episodeWithoutASeries.addOnDemand(new InterlinkOnDemand("odNotInASeries", Operation.STORE, lastUpdated, lastUpdated, new Duration(1000)));
 		
 		brand.addEpisodeWithoutASeries(episodeWithoutASeries);
 		
-		InterlinkSeries series = new InterlinkSeries("series2", 2)
+		InterlinkSeries series = new InterlinkSeries("series2", Operation.STORE, 2)
 			.withTitle("Lark Rise to Candleford Series 2")
 			.withSummary("Adaption of Flora Thompson's");
 		
 		brand.addSeries(series);
 		
-		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5", lastUpdated, lastUpdated, new Duration(1000));
+		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5", Operation.STORE, lastUpdated, lastUpdated, new Duration(1000));
 		
-		InterlinkBroadcast broadcast = new InterlinkBroadcast("broadcast4")
+		InterlinkBroadcast broadcast = new InterlinkBroadcast("broadcast4", Operation.STORE)
 			.withBroadcastStart(new DateTime("2010-01-10T21:00:00Z"))
 			.withDuration(Duration.standardMinutes(45)).withLastUpdated(lastUpdated);
 		
-		InterlinkEpisode episode = new InterlinkEpisode("episode3", 3, "link")
+		InterlinkEpisode episode = new InterlinkEpisode("episode3", Operation.STORE, 3, "link")
 			.withTitle("Lark Rise to Candleford Episode 3")
 			.addBroadcast(broadcast)
 			.addOnDemand(onDemand)

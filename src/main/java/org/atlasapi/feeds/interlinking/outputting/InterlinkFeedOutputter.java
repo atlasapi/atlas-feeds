@@ -71,7 +71,7 @@ public class InterlinkFeedOutputter {
 	
 	private Element onDemandToEntry(InterlinkOnDemand onDemand, InterlinkEpisode parent) {
 		Element entry = createElement("entry", NS_ATOM);
-		entry.appendChild(stringElement("id", NS_ATOM, onDemand.id()));
+		addCommonFieldsTo(onDemand, entry);
 		entry.appendChild(stringElement("type", NS_ILINK, "ondemand"));
 		if (onDemand.lastUpdated() != null) {
             entry.appendChild(stringElement("updated", NS_ATOM, onDemand.lastUpdated().toString(DATE_TIME_FORMAT)));
@@ -100,7 +100,9 @@ public class InterlinkFeedOutputter {
 
 	private Element broadcastToEntry(InterlinkBroadcast broadcast, InterlinkEpisode parent) {
 		Element entry = createElement("entry", NS_ATOM);
-		entry.appendChild(stringElement("id", NS_ATOM, broadcast.id()));
+		
+		addCommonFieldsTo(broadcast, entry);
+		
 		entry.appendChild(stringElement("type", NS_ILINK, "broadcast"));
 		if (broadcast.lastUpdated() != null) {
             entry.appendChild(stringElement("updated", NS_ATOM, broadcast.lastUpdated().toString(DATE_TIME_FORMAT)));
@@ -216,8 +218,13 @@ public class InterlinkFeedOutputter {
 	}
 	
 	private void addCommonFieldsTo(InterlinkBase base, Element entry) {
-		entry.appendChild(stringElement("title", NS_ATOM, base.title()));
+		if (base.title() != null) {
+			entry.appendChild(stringElement("title", NS_ATOM, base.title()));
+		}
 		entry.appendChild(stringElement("id", NS_ATOM, base.id()));
+		if (base.operation() != null) {
+			entry.appendChild(stringElement("operation", NS_ILINK, base.operation().toString()));
+		}
 	}
 
 	private void write(OutputStream out, Element feed) throws UnsupportedEncodingException, IOException {

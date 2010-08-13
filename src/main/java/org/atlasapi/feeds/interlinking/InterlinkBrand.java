@@ -11,8 +11,8 @@ public class InterlinkBrand extends InterlinkContent {
 	private final Set<InterlinkSeries> series = Sets.newHashSet();
 	private final Set<InterlinkEpisode> episodes = Sets.newHashSet();
 
-	public InterlinkBrand(String id) {
-		super(id, null);
+	public InterlinkBrand(String id, Operation operation) {
+		super(id, operation, null);
 	}
 	
 	public Set<InterlinkSeries> series() {

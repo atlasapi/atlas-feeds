@@ -9,8 +9,8 @@ public class InterlinkBroadcast extends InterlinkBase {
 	private Duration duration;
 	private String service;
 
-	public InterlinkBroadcast(String id) {
-		super(id);
+	public InterlinkBroadcast(String id, Operation operation) {
+		super(id, operation);
 	}
 
 	public InterlinkBroadcast withBroadcastStart(DateTime broadcastStart) {

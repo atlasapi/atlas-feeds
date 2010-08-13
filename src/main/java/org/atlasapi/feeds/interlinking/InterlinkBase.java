@@ -8,9 +8,20 @@ public abstract class InterlinkBase {
 	protected String title;
 	protected Integer index;
 	protected DateTime lastUpdated;
+	protected Operation operation;
 	
-	public InterlinkBase(String id) {
+	public enum Operation {
+		STORE,
+		DELETE;
+		
+		public String toString() {
+			return name().toLowerCase();
+		};
+	}
+	
+	public InterlinkBase(String id, Operation operation) {
 		this.id = id;
+		this.operation = operation;
 	}
 	
 	public String title() {
@@ -23,6 +34,10 @@ public abstract class InterlinkBase {
 	
 	public DateTime lastUpdated() {
 	    return lastUpdated;
+	}
+	
+	public Operation operation() {
+		return operation;
 	}
 	
 	@Override

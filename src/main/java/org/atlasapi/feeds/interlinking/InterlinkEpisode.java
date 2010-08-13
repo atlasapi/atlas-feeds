@@ -12,8 +12,8 @@ public class InterlinkEpisode extends InterlinkContent {
 	private final Set<InterlinkOnDemand> onDemands = Sets.newHashSet();
     private final String link;
 	
-	public InterlinkEpisode(String id, Integer index, String link) {
-		super(id, index);
+	public InterlinkEpisode(String id, Operation operation, Integer index, String link) {
+		super(id, operation, index);
         this.link = link;
 	}
 	

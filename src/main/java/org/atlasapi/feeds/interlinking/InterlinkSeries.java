@@ -10,8 +10,8 @@ public class InterlinkSeries extends InterlinkContent {
 
 	private final Set<InterlinkEpisode> episodes = Sets.newHashSet();
 	
-	public InterlinkSeries(String id, Integer index) {
-		super(id, index);
+	public InterlinkSeries(String id, Operation operation, Integer index) {
+		super(id, operation, index);
 	}
 	
 	public InterlinkSeries addEpisode(InterlinkEpisode episode) {

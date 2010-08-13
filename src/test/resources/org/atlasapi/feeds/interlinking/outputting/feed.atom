@@ -11,6 +11,7 @@
     <entry>
         <title>Lark Rise to Candleford</title>
         <id>1</id>
+        <ilink:operation>store</ilink:operation>
         <ilink:type>brand</ilink:type>
         <updated>2010-04-27T09:49:40Z</updated>
         <content type="application/xml">
@@ -23,6 +24,7 @@
     <entry>
         <title>Episode not in a series</title>
         <id>notInASeries</id>
+        <ilink:operation>store</ilink:operation>
         <ilink:type>episode</ilink:type>
         <link href="link" rel="alternate"/>
         <updated>2010-04-27T09:49:40Z</updated>
@@ -35,6 +37,7 @@
     </entry>
     <entry>
         <id>broadcastNotInASeries</id>
+        <ilink:operation>store</ilink:operation>
         <ilink:type>broadcast</ilink:type>
         <content type="application/xml">
             <media:content>
@@ -44,6 +47,7 @@
     </entry>
     <entry>
         <id>odNotInASeries</id>
+        <ilink:operation>store</ilink:operation>
         <ilink:type>ondemand</ilink:type>
         <content type="application/xml">
             <media:content>
@@ -59,6 +63,7 @@
     <entry>
         <title>Lark Rise to Candleford Series 2</title>
         <id>series2</id>
+        <ilink:operation>store</ilink:operation>
         <ilink:type>series</ilink:type>
         <summary>Adaption of Flora Thompson's</summary>
         <content type="application/xml">
@@ -71,6 +76,7 @@
     <entry>
         <title>Lark Rise to Candleford Episode 3</title>
         <id>episode3</id>
+        <ilink:operation>store</ilink:operation>
         <ilink:type>episode</ilink:type>
         <link href="link" rel="alternate"/>
         <updated>2010-04-27T09:49:40Z</updated>
@@ -83,6 +89,7 @@
     </entry>
     <entry>
         <id>broadcast4</id>
+        <ilink:operation>store</ilink:operation>
         <ilink:type>broadcast</ilink:type>
         <updated>2010-04-27T09:49:40Z</updated>
         <content type="application/xml">
@@ -95,6 +102,7 @@
     </entry>
     <entry>
         <id>ondemand5</id>
+        <ilink:operation>store</ilink:operation>
         <ilink:type>ondemand</ilink:type>
         <content type="application/xml">
             <media:content>

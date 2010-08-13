@@ -10,8 +10,8 @@ public class InterlinkOnDemand extends InterlinkBase {
     private final Duration duration;
     private String service;
 
-    public InterlinkOnDemand(String id, DateTime availabilityStart, DateTime availabilityEnd, Duration duration) {
-		super(id);
+    public InterlinkOnDemand(String id, Operation operation, DateTime availabilityStart, DateTime availabilityEnd, Duration duration) {
+		super(id, operation);
         this.availabilityStart = availabilityStart;
         this.availabilityEnd = availabilityEnd;
         this.duration = duration;
