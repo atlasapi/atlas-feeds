@@ -5,7 +5,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.feeds.interlinking.C4PlaylistToInterterlinkFeedAdapter;
 import org.atlasapi.feeds.interlinking.DelegatingPlaylistToInterlinkAdapter;
 import org.atlasapi.feeds.interlinking.PlaylistToInterlinkFeed;
 import org.atlasapi.feeds.interlinking.PlaylistToInterlinkFeedAdapter;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.google.common.collect.Maps;
 import com.metabroadcast.common.media.MimeType;
 
 @Controller
@@ -27,11 +25,8 @@ public class InterlinkController {
 	private final InterlinkFeedOutputter outputter = new InterlinkFeedOutputter();
 	private final PlaylistToInterlinkFeed adapter;
 
-	public InterlinkController(ContentResolver resolver) {
+	public InterlinkController(ContentResolver resolver, Map<Publisher, PlaylistToInterlinkFeed> delegates) {
 		this.resolver = resolver;
-		
-		Map<Publisher, PlaylistToInterlinkFeed> delegates = Maps.newHashMap();
-		delegates.put(Publisher.C4, new C4PlaylistToInterterlinkFeedAdapter());
 		this.adapter = new DelegatingPlaylistToInterlinkAdapter(delegates, new PlaylistToInterlinkFeedAdapter());
 	}
 	

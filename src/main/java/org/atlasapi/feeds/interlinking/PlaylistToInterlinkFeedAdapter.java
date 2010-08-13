@@ -77,7 +77,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
     private InterlinkSeries fromSeries(Series series) {
-        return new InterlinkSeries(series.getCanonicalUri(), series.getSeriesNumber())
+        return new InterlinkSeries(idFrom(series), series.getSeriesNumber())
         	.withTitle(series.getTitle())
         	.withDescription(series.getDescription())
         	.withLastUpdated(series.getLastUpdated())
@@ -86,7 +86,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
     private InterlinkEpisode fromItem(Item item) {
-        InterlinkEpisode episode = new InterlinkEpisode(item.getCanonicalUri(), itemIndexFrom(item), item.getCanonicalUri())
+        InterlinkEpisode episode = new InterlinkEpisode(idFrom(item), itemIndexFrom(item), item.getCanonicalUri())
         	.withTitle(item.getTitle())
         	.withDescription(item.getDescription())
         	.withLastUpdated(item.getLastUpdated())
@@ -110,15 +110,20 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
     private InterlinkBrand fromBrand(Brand brand) {
-        return new InterlinkBrand(brand.getCanonicalUri())
+        return new InterlinkBrand(idFrom(brand))
 			.withLastUpdated(brand.getLastUpdated())
         	.withTitle(brand.getTitle())
         	.withDescription(brand.getDescription())
         	.withSummary(toSummary(brand))
         	.withThumbnail(brand.getImage());
+
     }
 
-    private String toSummary(Content content) {
+    protected String idFrom(Content content) {
+		return content.getCanonicalUri();
+	}
+
+	private String toSummary(Content content) {
     	String description = content.getDescription();
 		if (description == null) {
     		return null;
