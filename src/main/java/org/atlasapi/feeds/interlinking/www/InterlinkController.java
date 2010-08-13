@@ -74,7 +74,7 @@ public class InterlinkController {
         response.setStatus(HttpServletResponse.SC_OK);
 
         ContentQuery query = ContentQueryBuilder.query()
-                .equalTo(Attributes.ITEM_PUBLISHER, Publisher.C4.key())
+                .equalTo(Attributes.BRAND_PUBLISHER, Publisher.C4.key())
                 .after(Attributes.BRAND_THIS_OR_CHILD_LAST_UPDATED, from)
                 .before(Attributes.BRAND_THIS_OR_CHILD_LAST_UPDATED, to)
                 .build();

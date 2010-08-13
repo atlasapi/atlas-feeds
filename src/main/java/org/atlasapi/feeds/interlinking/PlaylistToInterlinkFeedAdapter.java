@@ -74,7 +74,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
                     }
                 }
                 
-                populateFeedWithItem(feed, item, to, from, (linkSeries != null ? linkSeries : interlinkBrand));
+                populateFeedWithItem(feed, item, from, to, (linkSeries != null ? linkSeries : interlinkBrand));
             }
         }
         
@@ -103,7 +103,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         	.withThumbnail(series.getImage());
     }
 
-    private void populateFeedWithItem(InterlinkFeed feed, Item item, DateTime to, DateTime from, InterlinkContent parent) {
+    private void populateFeedWithItem(InterlinkFeed feed, Item item, DateTime from, DateTime to, InterlinkContent parent) {
         InterlinkEpisode episode = new InterlinkEpisode(idFrom(item), DEFAULT_OPERATION, itemIndexFrom(item), item.getCanonicalUri(), parent)
             .withTitle(item.getTitle())
             .withDescription(item.getDescription())
@@ -124,7 +124,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
             }
         }
 
-        InterlinkOnDemand onDemand = firstLinkLocation(item, to, from, episode);
+        InterlinkOnDemand onDemand = firstLinkLocation(item, from, to, episode);
         if (onDemand != null) {
             feed.addEntry(onDemand);
         }
@@ -183,11 +183,11 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         return broadcasts;
     }
 
-    static InterlinkOnDemand firstLinkLocation(Item item, DateTime to, DateTime from, InterlinkEpisode episode) {
+    static InterlinkOnDemand firstLinkLocation(Item item, DateTime from, DateTime to, InterlinkEpisode episode) {
         for (Version version : item.getVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if (TransportType.LINK.equals(location.getTransportType()) && qualifies(to, from, location)) {
+                    if (TransportType.LINK.equals(location.getTransportType()) && qualifies(from, to, location)) {
                         return fromLocation(location, episode, version.getDuration());
                     }
                 }
