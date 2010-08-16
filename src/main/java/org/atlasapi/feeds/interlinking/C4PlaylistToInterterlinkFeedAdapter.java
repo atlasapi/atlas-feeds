@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 import org.atlasapi.media.entity.Broadcast;
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Description;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.ContentResolver;
 
@@ -42,16 +42,16 @@ public class C4PlaylistToInterterlinkFeedAdapter extends PlaylistToInterlinkFeed
     }
     
     @Override
-    protected String idFrom(Content content) {
+    protected String idFrom(Description description) {
     	// Lookup full series if it is an embedded series
-    	if (content instanceof Series) {
-    		content = seriesLookup.get(content.getCanonicalUri());
+    	if (description instanceof Series) {
+    	    description = seriesLookup.get(description.getCanonicalUri());
     	}
-    	for (String alias : content.getAliases()) {
+    	for (String alias : description.getAliases()) {
 			if (alias.startsWith("tag:www.channel4.com") || alias.startsWith("urn:tag:www.channel4.com")) {
 				return alias;
 			}
 		}
-    	throw new IllegalArgumentException("Cannot find correct C4 id for " + content.getCanonicalUri());
+    	return description.getCanonicalUri();
     }
 }

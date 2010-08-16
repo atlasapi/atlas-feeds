@@ -63,7 +63,7 @@ public class InterlinkController {
             }
         }
         
-        outputter.output(adapter.fromBrands(playlist.getCanonicalUri(), playlist.getPublisher().title(), null, null, brands), response.getOutputStream());
+        outputter.output(adapter.fromBrands(playlist.getCanonicalUri(), playlist.getPublisher(), null, null, brands), response.getOutputStream());
     }
 
     @RequestMapping("/feeds/bbc-interlinking/{date}")
@@ -80,7 +80,7 @@ public class InterlinkController {
                 .build();
         List<Brand> brands = executor.executeBrandQuery(query);
         
-        outputter.output(adapter.fromBrands(FEED_ID+date, Publisher.C4.title(), from, to, brands), response.getOutputStream());
+        outputter.output(adapter.fromBrands(FEED_ID+date, Publisher.C4, from, to, brands), response.getOutputStream());
     }
     
     @RequestMapping("/feeds/bbc-interlinking/validate")
@@ -97,7 +97,7 @@ public class InterlinkController {
             }
         }
         
-        outputter.output(adapter.fromBrands(playlist.getCanonicalUri(), playlist.getPublisher().title(), null, null, brands), out);
+        outputter.output(adapter.fromBrands(playlist.getCanonicalUri(), playlist.getPublisher(), null, null, brands), out);
         
         validator.validatesAgainstSchema(out.toString(Charsets.UTF_8.toString()), response.getOutputStream());
     }

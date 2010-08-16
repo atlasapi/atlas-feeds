@@ -15,6 +15,7 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
@@ -49,7 +50,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         .omitTrailingPunctuationWhenTruncated()
         .onlyStartANewSentenceIfTheSentenceIsAtLeastPercentComplete(50).withOmissionMarker("...");
     
-    public InterlinkFeed fromBrands(String id, String publisher, DateTime from, DateTime to, List<Brand> brands) {
+    public InterlinkFeed fromBrands(String id, Publisher publisher, DateTime from, DateTime to, List<Brand> brands) {
         InterlinkFeed feed = feed(id, publisher);
         
         for (Brand brand: brands) {
@@ -85,10 +86,10 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         return ((from == null && to == null) || (description != null && description.getLastUpdated() != null && description.getLastUpdated().isAfter(from) && description.getLastUpdated().isBefore(to)));
     }
     
-    private InterlinkFeed feed(String id, String publisher) {
+    private InterlinkFeed feed(String id, Publisher publisher) {
         InterlinkFeed feed = new InterlinkFeed(id);
 
-        feed.withAuthor(new InterlinkFeedAuthor(publisher, publisher));
+        feed.withAuthor(new InterlinkFeedAuthor(publisher.key(), publisher.key()));
         feed.withUpdatedAt(new DateTime());
         
         return feed;
@@ -140,10 +141,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 
     }
 
-  
-
-	protected String idFrom(Content content) {
-		return content.getCanonicalUri();
+	protected String idFrom(Description description) {
+		return description.getCanonicalUri();
 	}
 
 	private String toSummary(Content content) {
@@ -173,7 +172,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         	.withService(service);
     }
 
-    static Set<Broadcast> broadcasts(Item item) {
+    protected Set<Broadcast> broadcasts(Item item) {
         Set<Broadcast> broadcasts = Sets.newHashSet();
         for (Version version : item.getVersions()) {
             for (Broadcast broadcast : version.getBroadcasts()) {
@@ -183,7 +182,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         return broadcasts;
     }
 
-    static InterlinkOnDemand firstLinkLocation(Item item, DateTime from, DateTime to, InterlinkEpisode episode) {
+    protected InterlinkOnDemand firstLinkLocation(Item item, DateTime from, DateTime to, InterlinkEpisode episode) {
         for (Version version : item.getVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
@@ -196,16 +195,16 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         return null;
     }
     
-    static InterlinkOnDemand fromLocation(Location linkLocation, InterlinkEpisode episode, int d) {
+    protected InterlinkOnDemand fromLocation(Location linkLocation, InterlinkEpisode episode, int d) {
         Duration duration = new Duration(d*1000);
         Operation operation = linkLocation.getAvailable() ? Operation.STORE : Operation.DELETE;
         
-        return new InterlinkOnDemand(linkLocation.getUri(), operation, linkLocation.getPolicy().getAvailabilityStart(), linkLocation.getPolicy().getAvailabilityEnd(), duration, episode)
+        return new InterlinkOnDemand(idFrom(linkLocation), operation, linkLocation.getPolicy().getAvailabilityStart(), linkLocation.getPolicy().getAvailabilityEnd(), duration, episode)
             .withLastUpdated(linkLocation.getLastUpdated())
             .withService("4oD");
     }
 
-    static Integer itemIndexFrom(Item item) {
+    protected Integer itemIndexFrom(Item item) {
         if (item instanceof Episode) {
             return ((Episode) item).getEpisodeNumber();
         }

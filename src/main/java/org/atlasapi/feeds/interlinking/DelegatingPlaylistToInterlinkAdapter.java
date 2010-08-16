@@ -18,7 +18,7 @@ public class DelegatingPlaylistToInterlinkAdapter implements PlaylistToInterlink
     }
 
     @Override
-    public InterlinkFeed fromBrands(String id, String publisher, DateTime from, DateTime to, List<Brand> brands) {
+    public InterlinkFeed fromBrands(String id, Publisher publisher, DateTime from, DateTime to, List<Brand> brands) {
         if (publisher != null && delegates.containsKey(publisher)) {
             return delegates.get(publisher).fromBrands(id, publisher, from, to, brands);
         }
