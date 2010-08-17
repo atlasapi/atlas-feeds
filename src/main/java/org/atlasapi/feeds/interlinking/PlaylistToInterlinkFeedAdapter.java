@@ -167,7 +167,10 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         String service = CHANNEL_LOOKUP.get(broadcast.getBroadcastOn());
         
         DateTime thirtyDaysAgo = new DateTime(DateTimeZones.UTC).minusDays(30);
-        Operation operation = (thirtyDaysAgo.isAfter(broadcast.getTransmissionTime()) ? Operation.DELETE : Operation.STORE);
+        Operation operation = Operation.STORE;
+        if (thirtyDaysAgo.isAfter(broadcast.getTransmissionTime()) || ! broadcast.isActivelyPublished()) {
+            operation = Operation.DELETE;
+        }
 
         return new InterlinkBroadcast(id, operation, episode)
     		.withLastUpdated(broadcast.getLastUpdated())
