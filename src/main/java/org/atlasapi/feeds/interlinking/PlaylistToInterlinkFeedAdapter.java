@@ -173,7 +173,18 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 
 	private Operation operationFor(Item item, DateTime from, DateTime to) {
 		Location location = firstQualifyingLocation(item, from, to);
-		if (location == null || !location.getAvailable()) {
+		
+		boolean activeBroadcast = false;
+		for (Version version: item.getVersions()) {
+		    for (Broadcast broadcast: version.getBroadcasts()) {
+		        Operation operation = broadcastOperation(broadcast);
+		        if (Operation.STORE.equals(operation)) {
+		            activeBroadcast = true;
+		        }
+		    }
+		}
+		
+		if ((location == null || !location.getAvailable()) && (! activeBroadcast)) {
 			return Operation.DELETE;
 		} else {
 			return Operation.STORE;
@@ -204,17 +215,22 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         String id = broadcast.getBroadcastOn() + "-" + broadcast.getTransmissionTime().getMillis();
         String service = CHANNEL_LOOKUP.get(broadcast.getBroadcastOn());
         
-        DateTime thirtyDaysAgo = new DateTime(DateTimeZones.UTC).minusDays(30);
-        Operation operation = Operation.STORE;
-        if (thirtyDaysAgo.isAfter(broadcast.getTransmissionTime()) || ! broadcast.isActivelyPublished()) {
-            operation = Operation.DELETE;
-        }
+        Operation operation = broadcastOperation(broadcast);
 
         return new InterlinkBroadcast(id, operation, episode)
     		.withLastUpdated(broadcast.getLastUpdated())
         	.withDuration(toDuration(broadcast.getBroadcastDuration()))
         	.withBroadcastStart(broadcast.getTransmissionTime())
         	.withService(service);
+    }
+    
+    protected Operation broadcastOperation(Broadcast broadcast) {
+        DateTime thirtyDaysAgo = new DateTime(DateTimeZones.UTC).minusDays(30);
+        Operation operation = Operation.STORE;
+        if (thirtyDaysAgo.isAfter(broadcast.getTransmissionTime()) || ! broadcast.isActivelyPublished()) {
+            operation = Operation.DELETE;
+        }
+        return operation;
     }
 
     protected Set<Broadcast> broadcasts(Item item) {
