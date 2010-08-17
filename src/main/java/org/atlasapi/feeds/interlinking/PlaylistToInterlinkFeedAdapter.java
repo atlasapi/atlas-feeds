@@ -24,6 +24,7 @@ import org.joda.time.Duration;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.text.Truncator;
+import com.metabroadcast.common.time.DateTimeZones;
 
 public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     
@@ -164,8 +165,11 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     protected InterlinkBroadcast fromBroadcast(Broadcast broadcast, InterlinkEpisode episode) {
         String id = broadcast.getBroadcastOn() + "-" + broadcast.getTransmissionTime().getMillis();
         String service = CHANNEL_LOOKUP.get(broadcast.getBroadcastOn());
+        
+        DateTime thirtyDaysAgo = new DateTime(DateTimeZones.UTC).minusDays(30);
+        Operation operation = (thirtyDaysAgo.isAfter(broadcast.getTransmissionTime()) ? Operation.DELETE : Operation.STORE);
 
-        return new InterlinkBroadcast(id, DEFAULT_OPERATION, episode)
+        return new InterlinkBroadcast(id, operation, episode)
     		.withLastUpdated(broadcast.getLastUpdated())
         	.withDuration(toDuration(broadcast.getBroadcastDuration()))
         	.withBroadcastStart(broadcast.getTransmissionTime())
