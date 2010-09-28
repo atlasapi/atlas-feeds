@@ -19,6 +19,7 @@ import org.atlasapi.feeds.interlinking.InterlinkFeed;
 import org.atlasapi.feeds.interlinking.InterlinkOnDemand;
 import org.atlasapi.feeds.interlinking.InterlinkSeries;
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
+import org.atlasapi.feeds.xml.XMLNamespace;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.Period;
@@ -181,7 +182,7 @@ public class InterlinkFeedOutputter {
 	}
 
 	private Element createFeed(InterlinkFeed feed) {
-		Element feedElem = new Element("feed", NS_ATOM.uri);
+		Element feedElem = new Element("feed", NS_ATOM.getUri());
 
 		NS_DC.addDeclarationTo(feedElem);
 		NS_MRSS.addDeclarationTo(feedElem);
@@ -227,25 +228,10 @@ public class InterlinkFeedOutputter {
 	}
 
 	private Element createElement(String name, XMLNamespace ns) {
-		Element elem = new Element(name, ns.uri);
+		Element elem = new Element(name, ns.getUri());
 		if (!NS_ATOM.equals(ns)) {
-			elem.setNamespacePrefix(ns.prefix);
+			elem.setNamespacePrefix(ns.getPrefix());
 		}
 		return elem;
-	}
-	
-	private final static class XMLNamespace {
-		
-		private final String uri;
-		private final String prefix;
-
-		public XMLNamespace(String prefix,String uri) {
-			this.prefix = prefix;
-			this.uri = uri;
-		}
-		
-		void addDeclarationTo(Element elem) {
-			elem.addNamespaceDeclaration(prefix, uri);
-		}
 	}
 }
