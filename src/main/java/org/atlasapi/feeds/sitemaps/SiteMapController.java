@@ -15,7 +15,6 @@ import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -33,7 +32,7 @@ public class SiteMapController {
 		this.queryExecutor = queryExecutor;
 	}
 	
-	@RequestMapping("/sitemap/{curie}/sitemap.xml")
+	@RequestMapping("/sitemaps/{curie}/sitemap.xml")
 	public String siteMapForBrand(@PathVariable("curie") String uri, HttpServletResponse response) throws IOException {
 		List<Brand> brands = queryExecutor.executeBrandQuery(new ContentQuery(new StringAttributeQuery(Attributes.BRAND_URI, Operators.EQUALS, ImmutableList.of(uri))));
 		if (brands.isEmpty()) {
@@ -45,13 +44,12 @@ public class SiteMapController {
 		return null;
 	}
 	
-	@RequestMapping("/sitemaps/{publisher}/sitemap.xml")
+	@RequestMapping("/sitemapindexes/{publisher}/sitemapindex.xml")
 	public String siteMapFofPublisher(@PathVariable("publisher") String publisherString, HttpServletResponse response) throws IOException {
 		Maybe<Publisher> publisher = Publisher.fromKey(publisherString);
 		if (publisher.isNothing()) {
 			return notFound(response);
 		}
-		
 		List<Brand> brands = queryExecutor.executeBrandQuery(new ContentQuery(new StringAttributeQuery(Attributes.BRAND_PUBLISHER, Operators.EQUALS, ImmutableList.of(publisher.requireValue().key()))));
 		response.setStatus(HttpServletResponse.SC_OK);
 		
@@ -59,7 +57,7 @@ public class SiteMapController {
 
 			@Override
 			public SiteMapRef apply(Brand brand) {
-				return new SiteMapRef("http://atlasapi.org/sitemap/" + brand.getCurie() + "/sitemap.xml");
+				return new SiteMapRef("http://atlasapi.org/sitemap/" + brand.getCurie() + "/sitemap.xml", brand.getLastUpdated());
 			}
 		});
 		response.setStatus(HttpServletResponse.SC_OK);

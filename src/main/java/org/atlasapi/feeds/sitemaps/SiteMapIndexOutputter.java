@@ -29,6 +29,9 @@ public class SiteMapIndexOutputter {
 		for (SiteMapRef ref : refs) {
 			Element siteMapRefElem = createElement("sitemap", SITEMAP);
 			siteMapRefElem.appendChild(stringElement("loc", SITEMAP, ref.getUrl()));
+			if (ref.getLastModified() != null) {
+				siteMapRefElem.appendChild(stringElement("lastmod", SITEMAP, DATE_TIME_FORMAT.print(ref.getLastModified())));
+			}
 			feed.appendChild(siteMapRefElem);
 		}
 		return feed;

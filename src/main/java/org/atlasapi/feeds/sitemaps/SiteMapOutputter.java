@@ -31,7 +31,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.text.Truncator;
-import com.metabroadcast.common.url.UrlEncoding;
 
 public class SiteMapOutputter {
 
@@ -63,16 +62,17 @@ public class SiteMapOutputter {
 		return feed;
 	}
 
-
 	private Element videoEntry(Item item, Location location) {
 		Element urlElement = createElement("url", SITEMAP);
 		urlElement.appendChild(stringElement("loc", SITEMAP, location.getUri()));
+		if (item.getLastUpdated() != null) {
+			urlElement.appendChild(stringElement("lastmod", SITEMAP, DATE_TIME_FORMAT.print(item.getLastUpdated())));
+		}
 		if (location.getAvailable()) {
 			urlElement.appendChild(videoElem(item, location));
 		}
 		return urlElement;
 	}
-
 
 	private Element videoElem(Item item, Location location) {
 		Element videoElem = createElement("video", VIDEO);
@@ -112,7 +112,6 @@ public class SiteMapOutputter {
 	private void c4playerLoc(Element videoElem, Item item, Location location) {
 		Element playerLocElem = createElement("player_loc", VIDEO);
 		playerLocElem.addAttribute(new Attribute("allow_embed","false"));
-		//http://www.channel4.com/static/programmes/asset/flash/swf/4odplayer-4.71.swf?brandTitle=Grand%20Designs&wsBrandTitle=grand-designs&primaryColor=0x0087E1&secondaryColor=0x0096FF&invertSkin=false&preSelectAsset=3121617&preSelectAssetGuidance=&preSelectAssetImageURL=/assets/programmes/images/grand-designs/series-7/9867d8e4-1c2e-422c-a99d-96257bd0e4ae_625x352.jpg&pinRequestCallback=C4.PinController.doPinChecks
 		Brand brand = ((Episode)item).getBrand();
 		String playerLoc = "http://www.channel4.com/static/programmes/asset/flash/swf/4odplayer-4.71.swf?brandTitle="+
 							brand.getTitle()+ 
@@ -147,7 +146,6 @@ public class SiteMapOutputter {
 		}
 		return null;
 	}
-
 
 	private void write(OutputStream out, Element feed) throws UnsupportedEncodingException, IOException {
 		Serializer serializer = new Serializer(out, Charsets.UTF_8.toString());
