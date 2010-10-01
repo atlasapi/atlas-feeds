@@ -14,6 +14,7 @@ import nu.xom.Serializer;
 import org.atlasapi.feeds.xml.XMLNamespace;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
+import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Country;
 import org.atlasapi.media.entity.Encoding;
@@ -46,23 +47,27 @@ public class SiteMapOutputter {
 		Element feedElem = createFeed(feed);
 	    write(out, feedElem);  
 	}
-	
 
 	private Element createFeed(List<Item> items) {
 		Element feed = new Element("urlset", SITEMAP.getUri());
 		VIDEO.addDeclarationTo(feed);
-		
 		for (Item item : items) {
-			Location location = locationFrom(item);
-			if (location != null) {
-				feed.appendChild(videoEntry(item, location));
+			entryForItem(feed, item);
+			for (Clip clip : item.getClips()) {
+				entryForItem(feed, clip);
 			}
 		}
-		
 		return feed;
 	}
 
-	private Element videoEntry(Item item, Location location) {
+	private void entryForItem(Element feed, Item item) {
+		Location location = locationFrom(item);
+		if (location != null) {
+			feed.appendChild(urlEntry(item, location));
+		}
+	}
+
+	private Element urlEntry(Item item, Location location) {
 		Element urlElement = createElement("url", SITEMAP);
 		urlElement.appendChild(stringElement("loc", SITEMAP, location.getUri()));
 		if (item.getLastUpdated() != null) {
@@ -102,7 +107,9 @@ public class SiteMapOutputter {
 		}
 		
 		if (Publisher.C4.equals(item.getPublisher())) {
-			c4playerLoc(videoElem, item, location);
+			if (item instanceof Episode) {
+				c4playerLoc(videoElem, item, location);
+			}
 		}
 		
 		return videoElem;
@@ -127,7 +134,7 @@ public class SiteMapOutputter {
 	}
 
 	private Integer getDuration(Item item) {
-		for(Version version : item.getVersions()){
+		for(Version version : item.nativeVersions()){
 			return version.getDuration();
 		}
 		return null;
@@ -135,7 +142,7 @@ public class SiteMapOutputter {
 
 
 	private Location locationFrom(Item item) {
-		for (Version version : item.getVersions()) {
+		for (Version version : item.nativeVersions()) {
 			for (Encoding encoding : version.getManifestedAs()) {
 				for (Location location : encoding.getAvailableAt()) {
 					if (TransportType.LINK.equals(location.getTransportType())) {

@@ -175,7 +175,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 		Location location = firstQualifyingLocation(item, from, to);
 		
 		boolean activeBroadcast = false;
-		for (Version version: item.getVersions()) {
+		for (Version version: item.nativeVersions()) {
 		    for (Broadcast broadcast: version.getBroadcasts()) {
 		        Operation operation = broadcastOperation(broadcast);
 		        if (Operation.STORE.equals(operation)) {
@@ -235,7 +235,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 
     protected Set<Broadcast> broadcasts(Item item) {
         Set<Broadcast> broadcasts = Sets.newHashSet();
-        for (Version version : item.getVersions()) {
+        for (Version version : item.nativeVersions()) {
             for (Broadcast broadcast : version.getBroadcasts()) {
                 broadcasts.add(broadcast);
             }
@@ -244,7 +244,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
     
     private Location firstQualifyingLocation(Item item, DateTime from, DateTime to) {
-	   for (Version version : item.getVersions()) {
+	   for (Version version : item.nativeVersions()) {
            for (Encoding encoding : version.getManifestedAs()) {
                for (Location location : encoding.getAvailableAt()) {
                    if (TransportType.LINK.equals(location.getTransportType()) && qualifies(from, to, location)) {
@@ -257,7 +257,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
     
     protected InterlinkOnDemand firstLinkLocation(Item item, DateTime from, DateTime to, InterlinkEpisode episode) {
-        for (Version version : item.getVersions()) {
+        for (Version version : item.nativeVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
                     if (TransportType.LINK.equals(location.getTransportType()) && qualifies(from, to, location)) {
