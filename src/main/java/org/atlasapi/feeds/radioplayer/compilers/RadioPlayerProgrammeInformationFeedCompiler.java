@@ -15,6 +15,7 @@ import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 
 import com.google.common.collect.ImmutableList;
@@ -38,7 +39,7 @@ public class RadioPlayerProgrammeInformationFeedCompiler extends RadioPlayerFeed
 	
 	@Override
 	public void compileFeedFor(Matcher matcher, KnownTypeQueryExecutor queryExecutor, OutputStream out) throws IOException {
-		DateTime day = DateTimeFormat.forPattern("yyyyMMdd").parseDateTime(matcher.group(1));
+		DateTime day = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZone.UTC).parseDateTime(matcher.group(1));
 		
 		String stationId  = matcher.group(2);
 		RadioPlayerServiceIdentifier identifier = RadioPlayerIDMappings.all.get(stationId);
