@@ -8,7 +8,7 @@
             <epg:mediumName>BBC Electric</epg:mediumName>
             <epg:longName>BBC Electric Proms: Saturday Night Fever</epg:longName>
             <epg:location>
-                <epg:time time="2008-10-25T18:30:00+01:00" duration="PT1H30M"/>
+                <epg:time time="2008-10-25T18:30:00+08:00" duration="PT1H30M"/>
                 <epg:bearer radioplayerId="502" id="00.0000.0000.0"/>
             </epg:location>
             <epg:mediaDescription>

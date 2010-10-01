@@ -27,6 +27,7 @@ import com.google.common.io.Resources;
 
 public class RadioPlayerProgrammeInformationOutputterTest {
 
+	private static final DateTimeZone TIMEZONE = DateTimeZone.forOffsetHours(8);
 	private RadioPlayerXMLOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
 
 	@Test
@@ -46,15 +47,16 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		Version version = new Version();
 		
-		Broadcast broadcast = new Broadcast("http://www.bbc.co.uk/services/radio2", new DateTime(2008,10,25,18,30,0,0), new DateTime(2008,10,25,20,0,0,0));
+		
+		Broadcast broadcast = new Broadcast("http://www.bbc.co.uk/services/radio2", new DateTime(2008,10,25,18,30,0,0, TIMEZONE), new DateTime(2008,10,25,20,0,0,0, TIMEZONE));
 		version.addBroadcast(broadcast);
 		
 		Encoding encoding = new Encoding();
 		Location location = new Location();
 		location.setUri("http://www.bbc.co.uk/iplayer/episode/b00f4d9c");
 		Policy policy = new Policy();
-		policy.setAvailabilityEnd(new DateTime(2010, 8, 28, 23, 40, 19, 0, DateTimeZone.forOffsetHours(8)));
-		policy.setAvailabilityStart(new DateTime(2010, 9,  4, 23, 02, 00, 0, DateTimeZone.forOffsetHours(8)));
+		policy.setAvailabilityEnd(new DateTime(2010, 8, 28, 23, 40, 19, 0, TIMEZONE));
+		policy.setAvailabilityStart(new DateTime(2010, 9,  4, 23, 02, 00, 0, TIMEZONE));
 		policy.addAvailableCountry(Countries.GB);
 		location.setPolicy(policy);
 		location.setTransportType(TransportType.LINK);
