@@ -1,8 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<epg xsi:schemaLocation="http://www.radioplayer.co.uk/schemas/10/epgSchedule epgSchedule_10.xsd" system="DAB" xml:lang="en" xmlns="http://www.radioplayer.co.uk/schemas/10/epgSchedule" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:epg="http://www.radioplayer.co.uk/schemas/10/epgDataTypes" xmlns:radioplayer="http://www.radioplayer.co.uk/schemas/10/rpDataTypes" >
-	<schedule originator="BBC" version="1" creationTime="2010-09-06T17:40:00">
-		<scope startTime="2010-08-24T00:00:00+01:00" stopTime="2010-08-25T00:00:00+01:00">
-			<serviceScope id="e1.ce15.c221.0"/>
-		</scope>
-	</schedule>
+<epg xsi:schemaLocation="http://www.radioplayer.co.uk/schemas/10/epgSchedule epgSchedule_10.xsd" system="DAB" xml:lang="en" xmlns="http://www.radioplayer.co.uk/schemas/10/epgSchedule" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:epg="http://www.radioplayer.co.uk/schemas/10/epgDataTypes" xmlns:radioplayer="http://www.radioplayer.co.uk/schemas/10/rpDataTypes">
+    <schedule originator="MBST" version="1" creationTime="2010-09-06T00:00:00+01:00">
+        <scope startTime="2010-09-06T00:00:00+01:00" stopTime="2010-09-07T00:00:00+01:00">
+            <serviceScope id="00.0000.0000.0"/>
+        </scope>
+        <programme shortId="0" id="crid://www.bbc.co.uk/programmes/b00f4d9c">
+            <epg:mediumName>BBC Electric</epg:mediumName>
+            <epg:longName>BBC Electric Proms: Saturday Night Fever</epg:longName>
+            <epg:location>
+                <epg:time time="2008-10-25T18:30:00+01:00" duration="PT1H30M"/>
+                <epg:bearer radioplayerId="502" id="00.0000.0000.0"/>
+            </epg:location>
+            <epg:mediaDescription>
+                <epg:shortDescription>Another chance to hear Robin Gibb perform the Bee Gees' classic disco album with the BBC Concert Orchestra. It was recorded for the BBC Electric Proms back in October 2008,</epg:shortDescription>
+            </epg:mediaDescription>
+            <epg:ondemand>
+                <radioplayer:player>http://bbcradioplayer.metabroadcast.com/e1_ce15_c222_0/b00f4d9c</radioplayer:player>
+                <radioplayer:availability>
+                    <radioplayer:scope startTime="2010-09-04T23:02:00+08:00" endTime="2010-08-28T23:40:19+08:00"/>
+                </radioplayer:availability>
+                <radioplayer:restriction relationship="allow">GB</radioplayer:restriction>
+            </epg:ondemand>
+        </programme>
+    </schedule>
 </epg>

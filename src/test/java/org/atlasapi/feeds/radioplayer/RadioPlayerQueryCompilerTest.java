@@ -21,7 +21,7 @@ public class RadioPlayerQueryCompilerTest {
 	
 	@Test
 	public void testCompileQuery(){
-		String filename = "20100906_e1_ce15_c221_0_PI.xml";
+		String filename = "20100906_e1_ce15_c222_0_PI.xml";
 		Matcher matcher = compiler.getPattern().matcher(filename);
 		
 		assertTrue(matcher.matches());
