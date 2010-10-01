@@ -11,8 +11,8 @@ import com.metabroadcast.common.base.Maybe;
 public class RadioPlayerFeedCompilers {
 	
 	public static List<RadioPlayerProgrammeInformationFeedCompiler> compilers = ImmutableList.of(
-		new RadioPlayerProgrammeInformationFeedCompiler("([0-9]{8})_([0-9A-Za-z\\_]+)_PI.xml", new RadioPlayerProgrammeInformationOutputter())/*,
-		new RadioPlayerProgrammeInformationFeedCompiler("([0-9]{8})_([0-9A-Za-z\\_]+)_OD.xml", new RadioPlayerProgrammeInformationOutputter())*/
+		new RadioPlayerProgrammeInformationFeedCompiler("([0-9]{8})_([0-9A-Za-z\\_]+)_PI", new RadioPlayerProgrammeInformationOutputter())/*,
+		new RadioPlayerProgrammeInformationFeedCompiler("([0-9]{8})_([0-9A-Za-z\\_]+)_OD", new RadioPlayerProgrammeInformationOutputter())*/
 	);
 
 	public static Maybe<RadioPlayerFeedCompilerMatch> findByFilename(String filename) {
