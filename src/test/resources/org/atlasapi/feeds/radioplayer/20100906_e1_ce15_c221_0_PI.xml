@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<epg xsi:schemaLocation="http://www.radioplayer.co.uk/schemas/10/epgSchedule epgSchedule_10.xsd" system="DAB" xml:lang="en" xmlns="http://www.radioplayer.co.uk/schemas/10/epgSchedule" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:epg="http://www.radioplayer.co.uk/schemas/10/epgDataTypes" xmlns:radioplayer="http://www.radioplayer.co.uk/schemas/10/rpDataTypes" >
+	<schedule originator="BBC" version="1" creationTime="2010-09-06T17:40:00">
+		<scope startTime="2010-08-24T00:00:00+01:00" stopTime="2010-08-25T00:00:00+01:00">
+			<serviceScope id="e1.ce15.c221.0"/>
+		</scope>
+	</schedule>
+</epg>
