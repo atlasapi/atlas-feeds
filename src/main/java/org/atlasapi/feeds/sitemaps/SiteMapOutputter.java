@@ -24,12 +24,14 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.entity.simple.BrandSummary;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.text.Truncator;
 
@@ -82,7 +84,7 @@ public class SiteMapOutputter {
 	private Element videoElem(Item item, Location location) {
 		Element videoElem = createElement("video", VIDEO);
 		videoElem.appendChild(stringElement("thumbnail_loc", VIDEO, item.getThumbnail()));
-		videoElem.appendChild(stringElement("title", VIDEO, titleTruncator.truncatePossibleNull(item.getTitle())));
+		videoElem.appendChild(stringElement("title", VIDEO, itemTitle(item)));
 		videoElem.appendChild(stringElement("description", VIDEO, descTruncator.truncatePossibleNull(item.getDescription())));
 		
 		Integer duration = getDuration(item);
@@ -113,6 +115,20 @@ public class SiteMapOutputter {
 		}
 		
 		return videoElem;
+	}
+
+	private String itemTitle(Item item) {
+		String title = Strings.nullToEmpty(item.getTitle());
+		if (item instanceof Episode) {
+			Brand brand = ((Episode) item).getBrand();
+			if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
+				String brandTitle = brand.getTitle();
+				if (!brandTitle.equals(title)) {
+					title = brandTitle + " : " + title;
+				}
+			}
+		}
+		return titleTruncator.truncate(title);
 	}
 
 
