@@ -29,9 +29,10 @@ public abstract class RadioPlayerXMLOutputter {
 
 	protected abstract Element createFeed(DateTime day, RadioPlayerServiceIdentifier id, Iterable<Item> items);
 
-	protected static final Truncator MEDIUM_TITLE = new Truncator().withMaxLength(16).onlyTruncateAtAWordBoundary();
-	protected static final Truncator LONG_TITLE = new Truncator().withMaxLength(128).onlyTruncateAtAWordBoundary();
-	protected static final Truncator SHORT_DESC = new Truncator().withMaxLength(180).onlyTruncateAtAWordBoundary();
+	protected static final Truncator MEDIUM_TITLE = new Truncator().withMaxLength(16).onlyTruncateAtAWordBoundary().omitTrailingPunctuationWhenTruncated();
+	protected static final Truncator LONG_TITLE = new Truncator().withMaxLength(128).onlyTruncateAtAWordBoundary().omitTrailingPunctuationWhenTruncated();
+	protected static final Truncator SHORT_DESC = new Truncator().withMaxLength(180).onlyTruncateAtAWordBoundary().omitTrailingPunctuationWhenTruncated();
+	
 	protected static final XMLNamespace EPGSCHEDULE = new XMLNamespace("", "http://www.radioplayer.co.uk/schemas/10/epgSchedule");
 	protected static final XMLNamespace EPGDATATYPES = new XMLNamespace("epg", "http://www.radioplayer.co.uk/schemas/10/epgDataTypes");
 	protected static final XMLNamespace XSI = new XMLNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");

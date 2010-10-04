@@ -30,11 +30,9 @@ import com.google.common.io.Resources;
 public class RadioPlayerProgrammeInformationOutputterTest {
 
 	private static final DateTimeZone TIMEZONE = DateTimeZone.forOffsetHours(8);
-	private RadioPlayerXMLOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
-
-	@Test
-	public void testOutputtingASitemap() throws Exception {
-
+	private static RadioPlayerXMLOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
+	
+	public static List<Item> buildItems(){
 		Item testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c",
 				"bbc:b00f4d9c", Publisher.BBC);
 		testItem.setTitle("BBC Electric Proms: Saturday Night Fever");
@@ -56,24 +54,29 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		Broadcast broadcast = new Broadcast("http://www.bbc.co.uk/services/radio2", new DateTime(2008,10,25,18,30,0,0, TIMEZONE), new DateTime(2008,10,25,20,0,0,0, TIMEZONE));
 		version.addBroadcast(broadcast);
 		
-//		Encoding encoding = new Encoding();
-//		Location location = new Location();
-//		location.setUri("http://www.bbc.co.uk/iplayer/episode/b00f4d9c");
-//		Policy policy = new Policy();
-//		policy.setAvailabilityEnd(new DateTime(2010, 8, 28, 23, 40, 19, 0, TIMEZONE));
-//		policy.setAvailabilityStart(new DateTime(2010, 9,  4, 23, 02, 00, 0, TIMEZONE));
-//		policy.addAvailableCountry(Countries.GB);
-//		location.setPolicy(policy);
-//		location.setTransportType(TransportType.LINK);
-//		encoding.addAvailableAt(location);
-//		version.addManifestedAs(encoding);
+		Encoding encoding = new Encoding();
+		Location location = new Location();
+		location.setUri("http://www.bbc.co.uk/iplayer/episode/b00f4d9c");
+		Policy policy = new Policy();
+		policy.setAvailabilityEnd(new DateTime(2010, 8, 28, 23, 40, 19, 0, TIMEZONE));
+		policy.setAvailabilityStart(new DateTime(2010, 9,  4, 23, 02, 00, 0, TIMEZONE));
+		policy.addAvailableCountry(Countries.GB);
+		location.setPolicy(policy);
+		location.setTransportType(TransportType.LINK);
+		encoding.addAvailableAt(location);
+		version.addManifestedAs(encoding);
 		
 		testItem.addVersion(version);
-
-		assertEquals(expectedFeed("noLocationPIFeedTest.xml"), output(ImmutableList.of(testItem)));
+		
+		return ImmutableList.of(testItem);
 	}
 
-	private String output(List<Item> items) throws IOException {
+	@Test
+	public void testOutputtingASitemap() throws Exception {
+		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(buildItems()));
+	}
+
+	private static String output(List<Item> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		outputter.output(new DateTime(2010, 9, 6, 0, 0, 0, 0, DateTimeZone.UTC),
 						new RadioPlayerServiceIdentifier(502, "http://www.bbc.co.uk/services/radio2","e1_ce15_c222_0"), items, out);
