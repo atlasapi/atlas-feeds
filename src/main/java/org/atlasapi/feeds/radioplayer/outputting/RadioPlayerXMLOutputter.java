@@ -93,21 +93,25 @@ public abstract class RadioPlayerXMLOutputter {
 		return version.getBroadcasts().size() > 0;
 	}
 
-	protected Location locationFrom(Version version) {
-		for (Encoding encoding : version.getManifestedAs()) {
-			for (Location location : encoding.getAvailableAt()) {
-				if (TransportType.LINK.equals(location.getTransportType())) {
-					return location;
+	protected Location locationFrom(Item item) {
+		for (Version version : item.getVersions()) {
+			for (Encoding encoding : version.getManifestedAs()) {
+				for (Location location : encoding.getAvailableAt()) {
+					if (TransportType.LINK.equals(location.getTransportType())) {
+						return location;
+					}
 				}
 			}
 		}
 		return null;
 	}
 
-	protected Broadcast broadcastFrom(Version version, String broadcaster) {
-		for (Broadcast broadcast : version.getBroadcasts()) {
-			if (broadcaster.equals(broadcast.getBroadcastOn())) {
-				return broadcast;
+	protected Broadcast broadcastFrom(Item item, String broadcaster) {
+		for (Version version : item.getVersions()) {			
+			for (Broadcast broadcast : version.getBroadcasts()) {
+				if (broadcaster.equals(broadcast.getBroadcastOn())) {
+					return broadcast;
+				}
 			}
 		}
 		return null;

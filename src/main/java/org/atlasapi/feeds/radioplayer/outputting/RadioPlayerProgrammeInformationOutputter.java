@@ -14,7 +14,6 @@ import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
-import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.ISOPeriodFormat;
@@ -53,17 +52,14 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		schedule.appendChild(scopeElement(day, id));
 		
 		for (Item item : items) {
-			Version version = versionFrom(item);
-			if (version != null) {
-				schedule.appendChild(createProgrammeElement(item, version, day, id));
-			}
+			schedule.appendChild(createProgrammeElement(item, day, id));
 		}
 		
 		epgElem.appendChild(schedule);
 		return epgElem;
 	}
 
-	private Element createProgrammeElement(Item item, Version version, DateTime day, RadioPlayerServiceIdentifier id) {
+	private Element createProgrammeElement(Item item, DateTime day, RadioPlayerServiceIdentifier id) {
 		Element programme = createElement("programme", EPGSCHEDULE);
 		programme.addAttribute(new Attribute("shortId","0"));
 		programme.addAttribute(new Attribute("id", item.getCanonicalUri().replace("http://","crid://")));
@@ -72,7 +68,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		programme.appendChild(stringElement("mediumName", EPGDATATYPES, MEDIUM_TITLE.truncatePossibleNull(title)));
 		programme.appendChild(stringElement("longName", EPGDATATYPES, LONG_TITLE.truncatePossibleNull(title)));
 		
-		Broadcast broadcast = broadcastFrom(version, id.getBroadcastUri());
+		Broadcast broadcast = broadcastFrom(item, id.getBroadcastUri());
 		programme.appendChild(locationElement(item, broadcast, day,id));
 		programme.appendChild(descriptionElement(item,day,id));
 		
@@ -80,7 +76,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 //			//add genres
 //		}
 		
-		Location location = locationFrom(version);
+		Location location = locationFrom(item);
 		if(location != null){
 			programme.appendChild(ondemandElement(item, location, day, id));
 		}
