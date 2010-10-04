@@ -8,9 +8,11 @@ import java.util.List;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerServiceIdentifier;
 import org.atlasapi.media.TransportType;
+import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Encoding;
+import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
@@ -33,7 +35,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 	@Test
 	public void testOutputtingASitemap() throws Exception {
 
-		Item testItem = new Item("http://www.bbc.co.uk/programmes/b00f4d9c",
+		Item testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c",
 				"bbc:b00f4d9c", Publisher.BBC);
 		testItem.setTitle("BBC Electric Proms: Saturday Night Fever");
 		testItem.setDescription("Another chance to hear Robin Gibb perform the Bee Gees' classic disco album with the BBC Concert Orchestra. It was recorded" +
@@ -45,8 +47,11 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 				"http://www.bbc.co.uk/programmes/genres/music",
 				"http://ref.atlasapi.org/genres/atlas/music"));
 		
-		Version version = new Version();
+		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
+		brand.setTitle("Electric Proms");
+		((Episode)testItem).setBrand(brand);
 		
+		Version version = new Version();
 		
 		Broadcast broadcast = new Broadcast("http://www.bbc.co.uk/services/radio2", new DateTime(2008,10,25,18,30,0,0, TIMEZONE), new DateTime(2008,10,25,20,0,0,0, TIMEZONE));
 		version.addBroadcast(broadcast);
@@ -62,6 +67,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		location.setTransportType(TransportType.LINK);
 		encoding.addAvailableAt(location);
 		version.addManifestedAs(encoding);
+		
 		testItem.addVersion(version);
 
 		assertEquals(expectedFeed("20100906_e1_ce15_c221_0_PI.xml"), output(ImmutableList.of(testItem)));

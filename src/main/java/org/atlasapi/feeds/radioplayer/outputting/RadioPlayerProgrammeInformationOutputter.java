@@ -6,9 +6,11 @@ import nu.xom.Attribute;
 import nu.xom.Element;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerServiceIdentifier;
+import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Country;
+import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
@@ -18,6 +20,7 @@ import org.joda.time.Duration;
 import org.joda.time.format.ISOPeriodFormat;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {
@@ -65,8 +68,9 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		programme.addAttribute(new Attribute("shortId","0"));
 		programme.addAttribute(new Attribute("id", item.getCanonicalUri().replace("http://","crid://")));
 		
-		programme.appendChild(stringElement("mediumName", EPGDATATYPES, MEDIUM_TITLE.truncatePossibleNull(item.getTitle())));
-		programme.appendChild(stringElement("longName", EPGDATATYPES, LONG_TITLE.truncatePossibleNull(item.getTitle())));
+		String title = itemTitle(item);
+		programme.appendChild(stringElement("mediumName", EPGDATATYPES, MEDIUM_TITLE.truncatePossibleNull(title)));
+		programme.appendChild(stringElement("longName", EPGDATATYPES, LONG_TITLE.truncatePossibleNull(title)));
 		
 		Broadcast broadcast = broadcastFrom(version, id.getBroadcastUri());
 		programme.appendChild(locationElement(item, broadcast, day,id));
@@ -82,6 +86,20 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		}
 		
 		return programme;
+	}
+	
+	private String itemTitle(Item item) {
+		String title = Strings.nullToEmpty(item.getTitle());
+		if (item instanceof Episode) {
+			Brand brand = ((Episode) item).getBrand();
+			if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
+				String brandTitle = brand.getTitle();
+				if (!brandTitle.equals(title)) {
+					title = brandTitle + " : " + title;
+				}
+			}
+		}
+		return title;
 	}
 
 	private Element locationElement(Item item, Broadcast broadcast, DateTime day, RadioPlayerServiceIdentifier id) {
