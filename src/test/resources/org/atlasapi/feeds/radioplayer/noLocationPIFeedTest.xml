@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <epg xsi:schemaLocation="http://www.radioplayer.co.uk/schemas/10/epgSchedule http://www.radioplayer.co.uk/schemas/10/epgSchedule_10.xsd" system="DAB" xml:lang="en" xmlns="http://www.radioplayer.co.uk/schemas/10/epgSchedule" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:epg="http://www.radioplayer.co.uk/schemas/10/epgDataTypes" xmlns:radioplayer="http://www.radioplayer.co.uk/schemas/10/rpDataTypes">
-    <schedule originator="MBST" version="1" creationTime="2010-09-06T00:00:00Z">
+    <schedule originator="Metabroadcast" version="1" creationTime="2010-09-06T00:00:00Z">
         <scope startTime="2010-09-06T00:00:00Z" stopTime="2010-09-07T00:00:00Z">
             <serviceScope id="00.0000.0000.0" radioplayerId="502"/>
         </scope>
