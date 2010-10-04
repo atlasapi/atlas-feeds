@@ -47,7 +47,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		schedule.addAttribute(new Attribute("version", "1"));
 		schedule.addAttribute(new Attribute("creationTime", DATE_TIME_FORMAT.print(day)));
 		
-		schedule.appendChild(scopeElement(day, id.getServiceID().replaceAll("_", ".")));
+		schedule.appendChild(scopeElement(day, id));
 		
 		for (Item item : items) {
 			Version version = versionFrom(item);
@@ -117,16 +117,6 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 
 		Policy policy = location.getPolicy();
 		if (policy != null) {
-			DateTime availableTill = policy.getAvailabilityEnd();
-			DateTime availableFrom = policy.getAvailabilityStart();
-			if (availableTill != null && availableFrom != null) {
-				Element availabilityElem = createElement("availability", RADIOPLAYER);
-				Element availabilityScopeElem = createElement("scope", RADIOPLAYER);
-				availabilityScopeElem.addAttribute(new Attribute("startTime", DATE_TIME_FORMAT.print(availableFrom)));
-				availabilityScopeElem.addAttribute(new Attribute("endTime", DATE_TIME_FORMAT.print(availableTill)));
-				availabilityElem.appendChild(availabilityScopeElem);
-				ondemandElement.appendChild(availabilityElem);
-			}
 			Set<Country> countries = policy.getAvailableCountries();
 			if (!countries.contains(Countries.ALL)) {
 				String spaceDelimted = Joiner.on(' ').join(Iterables.transform(countries, Country.UNPACK_COUNTRY_CODE));
@@ -139,19 +129,31 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 				restrictionElem.addAttribute(new Attribute("relationship","deny"));
 				ondemandElement.appendChild(restrictionElem);
 			}
+			
+			DateTime availableTill = policy.getAvailabilityEnd();
+			DateTime availableFrom = policy.getAvailabilityStart();
+			if (availableTill != null && availableFrom != null) {
+				Element availabilityElem = createElement("availability", RADIOPLAYER);
+				Element availabilityScopeElem = createElement("scope", RADIOPLAYER);
+				availabilityScopeElem.addAttribute(new Attribute("startTime", DATE_TIME_FORMAT.print(availableFrom)));
+				availabilityScopeElem.addAttribute(new Attribute("stopTime", DATE_TIME_FORMAT.print(availableTill)));
+				availabilityElem.appendChild(availabilityScopeElem);
+				ondemandElement.appendChild(availabilityElem);
+			}
 
 		}
 		
 		return ondemandElement;
 	}
 
-	private Element scopeElement(DateTime day, String stationId) {
+	private Element scopeElement(DateTime day, RadioPlayerServiceIdentifier id) {
 		Element scope = createElement("scope", EPGSCHEDULE);
 		scope.addAttribute(new Attribute("startTime",DATE_TIME_FORMAT.print(day)));
 		scope.addAttribute(new Attribute("stopTime", DATE_TIME_FORMAT.print(day.plusDays(1))));
 		
 		Element service = createElement("serviceScope", EPGSCHEDULE);
-		service.addAttribute(new Attribute("id",stationId));
+		service.addAttribute(new Attribute("id",id.getServiceID().replaceAll("_", ".")));
+		service.addAttribute(new Attribute("radioplayerId",String.valueOf(id.getRadioplayerId())));
 		scope.appendChild(service);
 		return scope;
 	}
