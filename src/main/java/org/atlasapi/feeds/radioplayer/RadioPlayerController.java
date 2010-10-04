@@ -24,7 +24,7 @@ public class RadioPlayerController {
 		this.queryExecutor = queryExecutor;
 	}
 
-	@RequestMapping("/radioplayer/{filename}.xml")
+	@RequestMapping("feeds/ukradioplayer/{filename}.xml")
 	public String xmlForFilename(@PathVariable("filename") String filename, HttpServletResponse response) throws IOException {
 		
 		Maybe<RadioPlayerFeedCompilerMatch> possibleCompiler = RadioPlayerFeedCompilers.findByFilename(filename);

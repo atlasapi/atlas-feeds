@@ -32,6 +32,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 	 * />
 	 */
 
+	private static final String ORIGINATOR = "Metabroadcast";
 	private static final String ONDEMAND_LOCATION = "http://bbcradioplayer.metabroadcast.com/";
 
 	@Override
@@ -45,7 +46,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		epgElem.addAttribute(new Attribute("xml:lang", "http://www.w3.org/XML/1998/namespace", "en"));
 		
 		Element schedule = createElement("schedule", EPGSCHEDULE );
-		schedule.addAttribute(new Attribute("originator", "MBST"));
+		schedule.addAttribute(new Attribute("originator", ORIGINATOR));
 		schedule.addAttribute(new Attribute("version", "1"));
 		schedule.addAttribute(new Attribute("creationTime", DATE_TIME_FORMAT.print(day)));
 		
