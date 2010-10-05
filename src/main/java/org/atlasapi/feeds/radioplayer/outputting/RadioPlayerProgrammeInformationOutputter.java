@@ -132,18 +132,18 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 
 		Policy policy = location.getPolicy();
 		if (policy != null) {
-			Set<Country> countries = policy.getAvailableCountries();
-			if (!countries.contains(Countries.ALL)) {
-				String spaceDelimted = Joiner.on(' ').join(Iterables.transform(countries, Country.UNPACK_COUNTRY_CODE));
-				Element restrictionElem = createElement("restriction", RADIOPLAYER);
-				restrictionElem.addAttribute(new Attribute("relationship","allow"));
-				restrictionElem.appendChild(spaceDelimted);
-				ondemandElement.appendChild(restrictionElem);
-			} else {
-				Element restrictionElem = createElement("restriction", RADIOPLAYER);
-				restrictionElem.addAttribute(new Attribute("relationship","deny"));
-				ondemandElement.appendChild(restrictionElem);
-			}
+//			Set<Country> countries = policy.getAvailableCountries();
+//			if (!countries.contains(Countries.ALL)) {
+//				String spaceDelimted = Joiner.on(' ').join(Iterables.transform(countries, Country.UNPACK_COUNTRY_CODE));
+//				Element restrictionElem = createElement("restriction", RADIOPLAYER);
+//				restrictionElem.addAttribute(new Attribute("relationship","allow"));
+//				restrictionElem.appendChild(spaceDelimted);
+//				ondemandElement.appendChild(restrictionElem);
+//			} else {
+//				Element restrictionElem = createElement("restriction", RADIOPLAYER);
+//				restrictionElem.addAttribute(new Attribute("relationship","deny"));
+//				ondemandElement.appendChild(restrictionElem);
+//			}
 			
 			DateTime availableTill = policy.getAvailabilityEnd();
 			DateTime availableFrom = policy.getAvailabilityStart();

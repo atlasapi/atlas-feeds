@@ -16,7 +16,6 @@
             </epg:mediaDescription>
             <epg:ondemand>
                 <radioplayer:player>http://bbcradioplayer.metabroadcast.com/e1_ce15_c222_0/b00f4d9c</radioplayer:player>
-                <radioplayer:restriction relationship="allow">GB</radioplayer:restriction>
                 <radioplayer:availability>
                     <radioplayer:scope startTime="2010-09-04T23:02:00+08:00" stopTime="2010-08-28T23:40:19+08:00"/>
                 </radioplayer:availability>
