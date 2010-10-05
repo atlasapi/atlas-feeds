@@ -47,9 +47,10 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 	
 	private final Truncator descriptionTruncator = new Truncator()
         .withMaxLength(180)
+        .withOmissionMarker("...")
         .onlyTruncateAtAWordBoundary()
         .omitTrailingPunctuationWhenTruncated()
-        .onlyStartANewSentenceIfTheSentenceIsAtLeastPercentComplete(50).withOmissionMarker("...");
+        .onlyStartANewSentenceIfTheSentenceIsAtLeastPercentComplete(50);
     
     public InterlinkFeed fromBrands(String id, Publisher publisher, DateTime from, DateTime to, List<Brand> brands) {
         InterlinkFeed feed = feed(id, publisher);
@@ -90,7 +91,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     private InterlinkFeed feed(String id, Publisher publisher) {
         InterlinkFeed feed = new InterlinkFeed(id);
 
-        feed.withAuthor(new InterlinkFeedAuthor(publisher.key(), publisher.key()));
+        feed.withAuthor(new InterlinkFeedAuthor(publisher.key(), publisher.key().split(".")[0]));
         feed.withUpdatedAt(new DateTime());
         
         return feed;
@@ -108,7 +109,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 	private void populateFeedWithItem(InterlinkFeed feed, Item item, DateTime from, DateTime to, InterlinkContent parent) {
         InterlinkEpisode episode = new InterlinkEpisode(idFrom(item), operationFor(item, from, to), itemIndexFrom(item), item.getCanonicalUri(), parent)
             .withTitle(item.getTitle())
-            .withDescription(item.getDescription())
+            .withDescription(toDescription(item))
             .withLastUpdated(item.getLastUpdated())
             .withSummary(toSummary(item))
             .withThumbnail(item.getImage());
