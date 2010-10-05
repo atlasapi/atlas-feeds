@@ -90,6 +90,13 @@ public class SiteMapOutputter {
 		if (duration != null) {
 			videoElem.appendChild(stringElement("duration", VIDEO, String.valueOf(duration)));
 		}
+		
+		if (Publisher.C4.equals(item.getPublisher())) {
+			if (item instanceof Episode) {
+				c4playerLoc(videoElem, item, location);
+			}
+		}
+		
 		Policy policy = location.getPolicy();
 		if (policy != null) {
 			DateTime availableTill = policy.getAvailabilityEnd();
@@ -106,13 +113,6 @@ public class SiteMapOutputter {
 			}
 
 		}
-		
-		if (Publisher.C4.equals(item.getPublisher())) {
-			if (item instanceof Episode) {
-				c4playerLoc(videoElem, item, location);
-			}
-		}
-		
 		return videoElem;
 	}
 
@@ -133,7 +133,7 @@ public class SiteMapOutputter {
 
 	private void c4playerLoc(Element videoElem, Item item, Location location) {
 		Element playerLocElem = createElement("player_loc", VIDEO);
-		playerLocElem.addAttribute(new Attribute("allow_embed","false"));
+		playerLocElem.addAttribute(new Attribute("allow_embed","no"));
 		Brand brand = ((Episode)item).getBrand();
 		String playerLoc = "http://www.channel4.com/static/programmes/asset/flash/swf/4odplayer-4.71.swf?brandTitle="+
 							brand.getTitle()+ 

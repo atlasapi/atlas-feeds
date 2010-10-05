@@ -5,9 +5,17 @@ import static org.hamcrest.Matchers.is;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
 
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.SchemaFactory;
+
 import junit.framework.TestCase;
+import nu.xom.Builder;
 
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
@@ -21,6 +29,10 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.XMLReader;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -56,6 +68,42 @@ public class SiteMapOutputterTest extends TestCase {
 		glee.addVersion(version);
 		
 		assertThat(output(ImmutableList.of(glee)), is(expectedFeed("sitemap-a.xml")));
+	}
+	
+	public void testThatTheTestDataValidates() throws Exception {
+		SAXParserFactory factory = SAXParserFactory.newInstance();
+		// set to false because we are using external xsds
+		factory.setValidating(false);
+		factory.setNamespaceAware(true);
+		
+		SchemaFactory schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
+		factory.setSchema(schemaFactory.newSchema(
+				new Source[] {new StreamSource("http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"), 
+							  new StreamSource("http://www.google.com/schemas/sitemap-video/1.1/sitemap-video.xsd"), 
+							  new StreamSource("http://www.sitemaps.org/schemas/sitemap/0.9/siteindex.xsd")}));
+		
+		SAXParser parser = factory.newSAXParser();
+		XMLReader reader = parser.getXMLReader();
+		
+		reader.setErrorHandler(new ErrorHandler() {
+			
+			@Override
+			public void warning(SAXParseException e) throws SAXException {
+				throw e;
+			}
+			
+			@Override
+			public void fatalError(SAXParseException e) throws SAXException {
+				throw e;
+			}
+			
+			@Override
+			public void error(SAXParseException e) throws SAXException {
+				throw e;
+			}
+		});
+		Builder builder = new Builder(reader);
+		builder.build(new StringReader(expectedFeed("sitemap-a.xml")));
 	}
 	
 	private String output(List<Item> items) throws IOException {

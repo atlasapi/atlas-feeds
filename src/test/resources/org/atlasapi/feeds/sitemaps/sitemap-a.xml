@@ -6,9 +6,9 @@
             <video:thumbnail_loc>granddesignsThumbnail</video:thumbnail_loc>
             <video:title>Grand Designs</video:title>
             <video:description>Building builds</video:description>
+            <video:player_loc allow_embed="no">http://www.channel4.com/static/programmes/asset/flash/swf/4odplayer-4.71.swf?brandTitle=Grand Designs&amp;wsBrandTitle=grand-designs&amp;primaryColor=0x0087E1&amp;secondaryColor=0x0096FF&amp;invertSkin=false&amp;preSelectAsset=3121617&amp;preSelectAssetGuidance=&amp;preSelectAssetImageURL=/assets/programmes/images/grand-designs/series-7/9867d8e4-1c2e-422c-a99d-96257bd0e4ae_625x352.jpg&amp;pinRequestCallback=C4.PinController.doPinChecks</video:player_loc>
             <video:expiration_date>2007-07-16T19:20:30+08:00</video:expiration_date>
             <video:restriction relationship="allow">GB IT</video:restriction>
-            <video:player_loc allow_embed="false">http://www.channel4.com/static/programmes/asset/flash/swf/4odplayer-4.71.swf?brandTitle=Grand Designs&amp;wsBrandTitle=grand-designs&amp;primaryColor=0x0087E1&amp;secondaryColor=0x0096FF&amp;invertSkin=false&amp;preSelectAsset=3121617&amp;preSelectAssetGuidance=&amp;preSelectAssetImageURL=/assets/programmes/images/grand-designs/series-7/9867d8e4-1c2e-422c-a99d-96257bd0e4ae_625x352.jpg&amp;pinRequestCallback=C4.PinController.doPinChecks</video:player_loc>
         </video:video>
     </url>
 </urlset>
