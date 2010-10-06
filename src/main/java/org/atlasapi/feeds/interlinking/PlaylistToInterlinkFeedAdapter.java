@@ -91,11 +91,15 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     private InterlinkFeed feed(String id, Publisher publisher) {
         InterlinkFeed feed = new InterlinkFeed(id);
 
-        feed.withAuthor(new InterlinkFeedAuthor(publisher.key(), publisher.key().split("\\.")[0]));
+        feed.withAuthor(new InterlinkFeedAuthor(toPublisherName(publisher), toPublisherName(publisher)));
         feed.withUpdatedAt(new DateTime());
         
         return feed;
     }
+
+	private String toPublisherName(Publisher publisher) {
+		return publisher.key().split("\\.")[0];
+	}
 
     private InterlinkSeries fromSeries(Series series, InterlinkBrand linkBrand, Brand brand, DateTime from, DateTime to) {
         return new InterlinkSeries(idFrom(series), operationFor(series, brand, from, to), series.getSeriesNumber(), linkBrand)
