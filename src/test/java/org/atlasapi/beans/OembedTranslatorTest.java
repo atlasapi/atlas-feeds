@@ -20,7 +20,6 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
-import org.atlasapi.beans.OembedTranslator;
 import org.atlasapi.beans.OembedTranslator.OutputFactory;
 import org.atlasapi.feeds.OembedOutput;
 import org.atlasapi.media.entity.Encoding;

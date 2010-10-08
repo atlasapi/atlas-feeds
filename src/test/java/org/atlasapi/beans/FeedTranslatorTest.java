@@ -18,7 +18,6 @@ package org.atlasapi.beans;
 import java.io.ByteArrayOutputStream;
 import java.util.Set;
 
-import org.atlasapi.beans.FeedTranslator;
 import org.atlasapi.beans.FeedTranslator.FeedFactory;
 import org.atlasapi.feeds.SyndicationFeed;
 import org.atlasapi.feeds.modules.AtlasFeedModule;

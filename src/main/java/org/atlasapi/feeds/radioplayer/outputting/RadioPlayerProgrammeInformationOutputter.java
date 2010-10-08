@@ -1,15 +1,11 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
-import java.util.Set;
-
 import nu.xom.Attribute;
 import nu.xom.Element;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerServiceIdentifier;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
-import org.atlasapi.media.entity.Countries;
-import org.atlasapi.media.entity.Country;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
@@ -18,9 +14,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.ISOPeriodFormat;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
 
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {
 	

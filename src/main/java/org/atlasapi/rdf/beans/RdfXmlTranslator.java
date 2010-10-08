@@ -20,7 +20,6 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
-
 import com.hp.hpl.jena.ontology.OntModel;
 
 /**

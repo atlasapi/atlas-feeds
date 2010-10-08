@@ -22,8 +22,6 @@ import java.io.ByteArrayOutputStream;
 
 import junit.framework.TestCase;
 
-import org.atlasapi.feeds.RomeSyndicationFeed;
-import org.atlasapi.feeds.SyndicationFeed;
 import org.atlasapi.feeds.SyndicationFeed.Item;
 
 /**
