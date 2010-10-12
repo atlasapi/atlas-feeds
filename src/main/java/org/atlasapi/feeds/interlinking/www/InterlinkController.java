@@ -36,7 +36,7 @@ import com.metabroadcast.common.time.DateTimeZones;
 @Controller
 public class InterlinkController {
     
-    private final static String FEED_ID = "https://www.channel4.com/linking/";
+    private final static String FEED_ID = "http://interlinking.channel4.com/feeds/bbc-interlinking/";
     private final ContentResolver resolver;
     private final InterlinkFeedOutputter outputter = new InterlinkFeedOutputter();
     private final PlaylistToInterlinkFeed adapter;
@@ -84,7 +84,7 @@ public class InterlinkController {
     }
     
     @RequestMapping("/feeds/bbc-interlinking/validate")
-    public void valiudateFeed(HttpServletResponse response, @RequestParam String uri) throws Exception {
+    public void validateFeed(HttpServletResponse response, @RequestParam String uri) throws Exception {
         response.setStatus(HttpServletResponse.SC_OK);
         
         ByteArrayOutputStream out = new ByteArrayOutputStream();
