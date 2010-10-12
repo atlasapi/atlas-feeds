@@ -36,6 +36,7 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Country;
 import org.atlasapi.media.entity.Description;
+import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Function;
@@ -268,6 +269,9 @@ public class QueryStringBackedQueryBuilder {
 
 	@SuppressWarnings("unchecked")
 	private Enum<?> coerceToEnumValue(String paramValue, Class<?> type) {
+		if (type.equals(Publisher.class)){
+			return Publisher.fromKey(paramValue).requireValue();
+		}
 		return Enum.valueOf((Class) type, paramValue.toUpperCase());
 	}
 

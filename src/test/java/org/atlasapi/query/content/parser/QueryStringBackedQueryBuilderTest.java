@@ -47,6 +47,7 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Playlist;
+import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -171,8 +172,8 @@ public class QueryStringBackedQueryBuilderTest  {
 	public void testTitleAndPublisherEqualityConjunction() throws Exception {
 		Map<String, String[]> params = Maps.newHashMap();
 		params.put("item.title", new String[] { "bob" });
-		params.put("item.publisher", new String[] { "bbc" });
-		check(params, query().equalTo(ITEM_PUBLISHER, "bbc").searchFor(ITEM_TITLE, "bob"));
+		params.put("item.publisher", new String[] { "bbc.co.uk" });
+		check(params, query().equalTo(ITEM_PUBLISHER, Publisher.BBC).searchFor(ITEM_TITLE, "bob"));
 	}
 	
 	@Test
@@ -185,8 +186,8 @@ public class QueryStringBackedQueryBuilderTest  {
 	@Test
 	public void testTitleAndPublisherEqualityDisjunction() throws Exception {
 		Map<String, String[]> params = Maps.newHashMap();
-		params.put("item.publisher", new String[] { "bbc,channel4" });
-		check(params, query().equalTo(ITEM_PUBLISHER, "bbc", "channel4"));
+		params.put("item.publisher", new String[] { "bbc.co.uk,channel4.com" });
+		check(params, query().equalTo(ITEM_PUBLISHER, Publisher.BBC, Publisher.C4));
 	}
 	
 	@Test
