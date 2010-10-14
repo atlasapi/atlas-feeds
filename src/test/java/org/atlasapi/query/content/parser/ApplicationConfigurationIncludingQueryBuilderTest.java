@@ -40,6 +40,7 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 		
 		
 		context.checking(new Expectations(){{
+			oneOf(reader).applications();
 			oneOf(reader).applicationForKey(testApiKey);
 			will(returnValue(testApp));
 		}});
