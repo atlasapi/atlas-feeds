@@ -86,4 +86,9 @@ public class OembedTranslator implements BeanGraphWriter {
 		return unescaped.replace("\"", "\\\"");
 	}
 
+	@Override
+	public void writeError(AtlasErrorSummary exception, OutputStream oStream) {
+		//no-op
+	}
+
 }
