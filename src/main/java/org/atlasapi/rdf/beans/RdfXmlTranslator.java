@@ -20,6 +20,8 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
+import org.atlasapi.beans.AtlasErrorSummary;
+
 import com.hp.hpl.jena.ontology.OntModel;
 
 /**
@@ -64,5 +66,10 @@ public class RdfXmlTranslator extends JenaRdfTranslator {
 			throw new RuntimeException(uee);
 		}
 		rdf.write(writer, outputFormat);
+	}
+
+	@Override
+	public void writeError(AtlasErrorSummary exception, OutputStream oStream) {
+		//no-op
 	}
 }

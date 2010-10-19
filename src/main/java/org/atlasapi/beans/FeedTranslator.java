@@ -128,4 +128,9 @@ public class FeedTranslator implements BeanGraphWriter {
 		}
 		return allLocations;
 	}
+
+	@Override
+	public void writeError(AtlasErrorSummary exception, OutputStream oStream) {
+		//no-op
+	}
 }

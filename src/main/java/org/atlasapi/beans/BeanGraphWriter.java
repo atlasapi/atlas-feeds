@@ -23,5 +23,6 @@ import java.util.Collection;
 public interface BeanGraphWriter {
 	
 	public void writeTo(Collection<Object> graph, OutputStream oStream);
+	public void writeError(AtlasErrorSummary exception, OutputStream oStream);
 	
 }
