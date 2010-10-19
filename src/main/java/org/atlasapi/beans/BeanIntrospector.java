@@ -21,15 +21,19 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import org.atlasapi.content.rdf.annotations.RdfClass;
 import org.springframework.beans.PropertyAccessorUtils;
 import org.springframework.core.GenericCollectionTypeResolver;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
 public class BeanIntrospector {
 
+	private static final Set<String> RDF_IGNORE_ATTRIBUTES = ImmutableSet.of("isActivelyPublished", "series");
+	
     public static Map<String, PropertyDescriptor> getPropertyDescriptors(Class<?> beanType) throws IntrospectionException {
         Map<String, PropertyDescriptor> result = Maps.newHashMap();
 
@@ -126,6 +130,9 @@ public class BeanIntrospector {
 
         PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
         for (PropertyDescriptor pd : pds) {
+        	if (RDF_IGNORE_ATTRIBUTES.contains(pd.getName())) {
+        		continue;
+        	}
             result.put(prefix + pd.getName(), pd);
         }
     }
