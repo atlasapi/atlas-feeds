@@ -6,6 +6,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Set;
 
+import javax.servlet.ServletOutputStream;
+
 import nu.xom.Attribute;
 import nu.xom.Document;
 import nu.xom.Element;
@@ -47,6 +49,21 @@ public class SiteMapOutputter {
 	public void output(List<Item> feed, OutputStream out) throws IOException {
 		Element feedElem = createFeed(feed);
 	    write(out, feedElem);  
+	}
+	
+	public void outputBrands(List<Brand> brands, String format, ServletOutputStream out) throws IOException {
+		Element feedElem = createFeedOfBrands(brands, format);
+	    write(out, feedElem);  
+	}
+	
+	private Element createFeedOfBrands(List<Brand> brands, String format) {
+		Element feed = new Element("urlset", SITEMAP.getUri());
+		for (Brand brand : brands) {
+			Element urlElement = createElement("url", SITEMAP);
+			urlElement.appendChild(stringElement("loc", SITEMAP, format.replace("{curie}", brand.getCurie())));
+			feed.appendChild(urlElement);
+		}
+		return feed;
 	}
 
 	private Element createFeed(List<Item> items) {
@@ -189,4 +206,6 @@ public class SiteMapOutputter {
 		}
 		return elem;
 	}
+
+	
 }

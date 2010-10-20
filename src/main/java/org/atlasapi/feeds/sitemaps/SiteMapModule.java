@@ -16,4 +16,8 @@ public class SiteMapModule {
 	public @Bean SiteMapController siteMapController() {
 		return new SiteMapController(queryExecutor, localHostName);
 	}
+	
+	public @Bean SiteMapExperimentalController siteMapExperimentalController() {
+		return new SiteMapExperimentalController(queryExecutor, localHostName);
+	}
 }
