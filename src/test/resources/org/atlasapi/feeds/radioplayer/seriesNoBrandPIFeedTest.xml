@@ -5,8 +5,8 @@
             <serviceScope id="00.0000.0000.0" radioplayerId="502"/>
         </scope>
         <programme shortId="0" id="crid://www.bbc.co.uk/programmes/b00f4d9c">
-            <epg:mediumName>Electric Proms</epg:mediumName>
-            <epg:longName>Electric Proms : BBC Electric Proms: Saturday Night Fever</epg:longName>
+            <epg:mediumName>Series Title</epg:mediumName>
+            <epg:longName>Series Title : BBC Electric Proms: Saturday Night Fever</epg:longName>
             <epg:location>
                 <epg:time time="2008-10-25T18:30:00+08:00" duration="PT1H30M"/>
                 <epg:bearer radioplayerId="502" id="00.0000.0000.0"/>

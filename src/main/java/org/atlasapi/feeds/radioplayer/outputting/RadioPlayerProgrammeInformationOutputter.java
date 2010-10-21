@@ -1,5 +1,8 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import nu.xom.Attribute;
 import nu.xom.Element;
 
@@ -10,6 +13,7 @@ import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
+import org.atlasapi.media.entity.Series;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.ISOPeriodFormat;
@@ -65,8 +69,10 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		
 		Broadcast broadcast = broadcastFrom(item, id.getBroadcastUri());
 		programme.appendChild(locationElement(item, broadcast, day,id));
-		programme.appendChild(descriptionElement(item,day,id));
-		
+		programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(item.getDescription()))));
+		if (!Strings.isNullOrEmpty(item.getImage())) {
+			programme.appendChild(mediaDescription(imageDescriptionElem(item)));
+		}
 //		for(String genre : item.getGenres()){
 //			//add genres
 //		}
@@ -86,9 +92,16 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 			if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
 				String brandTitle = brand.getTitle();
 				if (!brandTitle.equals(title)) {
-					title = brandTitle + " : " + title;
+					return brandTitle + " : " + title;
 				}
 			}
+			Series series = ((Episode) item).getSeriesSummary();
+			if (series != null && !Strings.isNullOrEmpty(series.getTitle())) {
+				String seriesTitle = series.getTitle();
+				if (!seriesTitle.equals(title)) {
+					return seriesTitle + " : " + title;
+				}
+			}			
 		}
 		return title;
 	}
@@ -110,15 +123,31 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		locationElement.appendChild(bearerElement);
 		return locationElement;
 	}
-	
-	private Element descriptionElement(Item item, DateTime day, RadioPlayerServiceIdentifier id) {
+
+	private Element mediaDescription(Element childElem) {
 		Element descriptionElement = createElement("mediaDescription", EPGDATATYPES);
-		
-		descriptionElement.appendChild(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(item.getDescription())));
-		
+		descriptionElement.appendChild(childElem);
 		return descriptionElement;
 	}
 	
+	private Element imageDescriptionElem(Item item) {
+		Element imageElement = createElement("multimedia", EPGDATATYPES);
+		imageElement.addAttribute(new Attribute("mimeValue", "image/jpeg"));
+		imageElement.addAttribute(new Attribute("url", imageLocationFrom(item)));
+		imageElement.addAttribute(new Attribute("width", "86"));
+		imageElement.addAttribute(new Attribute("height", "48"));
+		return imageElement;
+	}
+	
+	private String imageLocationFrom(Item item) {
+		Pattern p = Pattern.compile("(.*)_\\d+_\\d+.jpg");
+		Matcher m = p.matcher(item.getImage());
+		if (m.matches()) {
+			return m.group(1) + "_86_48.jpg";
+		}
+		return item.getImage();
+	}
+
 	private Element ondemandElement(Item item, Location location, DateTime day, RadioPlayerServiceIdentifier id) {
 		Element ondemandElement = createElement("ondemand", EPGDATATYPES);
 		

@@ -17,6 +17,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -32,22 +33,17 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 	private static final DateTimeZone TIMEZONE = DateTimeZone.forOffsetHours(8);
 	private static RadioPlayerXMLOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
 	
-	public static List<Item> buildItems(){
+	public static Item buildItem(){
 		Item testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c",
 				"bbc:b00f4d9c", Publisher.BBC);
 		testItem.setTitle("BBC Electric Proms: Saturday Night Fever");
 		testItem.setDescription("Another chance to hear Robin Gibb perform the Bee Gees' classic disco album with the BBC Concert Orchestra. It was recorded" +
-				" for the BBC Electric Proms back in October 2008, marking 30 years since Saturday Night Fever soundtrack topped the UK charts. Robin performs" +
-				" alongside guest artists including Sam Sparro, Sharleen Spiteri, Ronan Keating, Stephen Gateley and Gabriella Cilmi at London's Roundhouse. " +
-				"The show is directed by Oscar-winning composer Anne Dudley, accompanied by the BBC Concert Orchestra, and includes Stayin' Alive, Night Fever," +
-				" Jive Talkin' and More Than A Woman.");
+				" for the BBC Electric Proms back in October 2008, marking 30 years since Saturday Night Fever soundtrack topped the UK charts.");
 		testItem.setGenres(ImmutableSet.of(
 				"http://www.bbc.co.uk/programmes/genres/music",
-				"http://ref.atlasapi.org/genres/atlas/music"));
-		
-		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
-		brand.setTitle("Electric Proms");
-		((Episode)testItem).setBrand(brand);
+				"http://ref.atlasapi.org/genres/atlas/music")
+		);
+		testItem.setImage("http://www.bbc.co.uk/iplayer/images/episode/b00v6bbc_640_360.jpg");
 		
 		Version version = new Version();
 		
@@ -68,12 +64,47 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		testItem.addVersion(version);
 		
-		return ImmutableList.of(testItem);
+		return testItem;
 	}
 
+	public static List<Item> buildItems() {
+		Item testItem = buildItem();
+		
+		Series series = new Series("seriesUri", "seriesCurie");
+		series.setTitle("This is the series title");
+		((Episode)testItem).setSeries(series);
+		
+		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
+		brand.setTitle("Electric Proms");
+		((Episode)testItem).setBrand(brand);
+		
+		return ImmutableList.of(testItem);
+	}
+	
 	@Test
-	public void testOutputtingASitemap() throws Exception {
+	public void testOutputtingAPIFeed() throws Exception {
+		Item testItem = buildItem();
+		
+		Series series = new Series("seriesUri", "seriesCurie");
+		series.setTitle("This is the series title");
+		((Episode)testItem).setSeries(series);
+		
+		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
+		brand.setTitle("Electric Proms");
+		((Episode)testItem).setBrand(brand);
+		
 		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(buildItems()));
+	}
+	
+	@Test
+	public void testOutputtingAPIFeedWithSeriesAndNoBrand() throws Exception {
+		Item testItem = buildItem();
+		
+		Series series = new Series("seriesUri", "seriesCurie");
+		series.setTitle("Series Title");
+		((Episode)testItem).setSeries(series);
+		
+		assertEquals(expectedFeed("seriesNoBrandPIFeedTest.xml"), output(ImmutableList.of(testItem)));
 	}
 
 	private static String output(List<Item> items) throws IOException {
