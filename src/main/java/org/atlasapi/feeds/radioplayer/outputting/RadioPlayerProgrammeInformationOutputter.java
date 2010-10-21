@@ -21,17 +21,11 @@ import org.joda.time.format.ISOPeriodFormat;
 import com.google.common.base.Strings;
 
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {
-	
-	/* <epg xmlns:epg="http://www.radioplayer.co.uk/schemas/10/epgDataTypes" 
-	 *		xmlns="http://www.radioplayer.co.uk/schemas/10/epgSchedule" 
-	 *		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-	 *		xmlns:radioplayer="http://www.radioplayer.co.uk/schemas/10/rpDataTypes"
-	 *		xsi:schemaLocation="http://www.radioplayer.co.uk/schemas/10/epgSchedule http://www.radioplayer.co.uk/schemas/10/epgSchedule_10.xsd"
-	 * />
-	 */
 
 	private static final String ORIGINATOR = "Metabroadcast";
 	private static final String ONDEMAND_LOCATION = "http://bbcradioplayer.metabroadcast.com/";
+	
+	private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
 
 	@Override
 	public Element createFeed(DateTime day, RadioPlayerServiceIdentifier id, Iterable<Item> items) {
@@ -73,9 +67,10 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		if (!Strings.isNullOrEmpty(item.getImage())) {
 			programme.appendChild(mediaDescription(imageDescriptionElem(item)));
 		}
-//		for(String genre : item.getGenres()){
-//			//add genres
-//		}
+		
+		for (Element genreElement : genreElementCreator.genreElementsFor(item)) {
+			programme.appendChild(genreElement);
+		}
 		
 		Location location = locationFrom(item);
 		if(location != null){
@@ -84,7 +79,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		
 		return programme;
 	}
-	
+
 	private String itemTitle(Item item) {
 		String title = Strings.nullToEmpty(item.getTitle());
 		if (item instanceof Episode) {

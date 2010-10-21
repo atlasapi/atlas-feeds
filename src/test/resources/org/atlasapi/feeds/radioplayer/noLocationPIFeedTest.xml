@@ -14,6 +14,8 @@
             <epg:mediaDescription>
                 <epg:shortDescription>Another chance to hear Robin Gibb perform the Bee Gees' classic disco album with the BBC Concert Orchestra. It was recorded for the BBC Electric Proms back in October 2008</epg:shortDescription>
             </epg:mediaDescription>
+            <epg:genre type="main" href="urn:tva:metadata:cs:ContentCS:2007:3.6"/>
+            <epg:genre type="secondary" href="urn:tva:metadata:cs:ContentCS:2007:3.1.4.1"/>
         </programme>
     </schedule>
 </epg>
