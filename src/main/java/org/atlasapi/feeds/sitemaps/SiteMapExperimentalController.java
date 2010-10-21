@@ -6,16 +6,19 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.atlasapi.content.criteria.AtomicQuery;
+import org.atlasapi.content.criteria.operator.Operators;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.MongoDbBackedContentStore;
 import org.atlasapi.query.content.parser.ApplicationConfigurationIncludingQueryBuilder;
-import org.atlasapi.query.content.parser.QueryStringBackedQueryBuilder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.metabroadcast.common.query.Selection;
 
 @Controller
 public class SiteMapExperimentalController {
@@ -48,7 +51,10 @@ public class SiteMapExperimentalController {
 	public String siteMapFofPublisher(@RequestParam(value=HOST_PARAM, required=false) final String host, @RequestParam(value=FORMAT_PARAM, required=false) final String format,  HttpServletRequest request, HttpServletResponse response) throws IOException {
 		List<SiteMapRef> refs = Lists.newArrayList();
 		for (Publisher publisher : Publisher.values()) {
-			refs.add(new SiteMapRef("http://" + hostOrDefault(host) +  "/feeds/experimental/sitemaps/sitemap.xml?publisher=" + publisher.key() + "&format=" + format , null));
+			List<Brand> brands = queryExecutor.dehydratedBrandsMatching(queryBuilder.build(request, ImmutableList.<AtomicQuery>of(org.atlasapi.content.criteria.attribute.Attributes.BRAND_PUBLISHER.createQuery(Operators.EQUALS, ImmutableList.of(publisher))), Selection.limitedTo(1)));
+			if (!brands.isEmpty()) {
+				refs.add(new SiteMapRef("http://" + hostOrDefault(host) +  "/feeds/experimental/sitemaps/sitemap.xml?publisher=" + publisher.key() + "&format=" + format , null));
+			}
 		}
 		response.setStatus(HttpServletResponse.SC_OK);
 		indexOutputter.output(refs, response.getOutputStream());
