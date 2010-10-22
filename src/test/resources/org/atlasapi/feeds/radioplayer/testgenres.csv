@@ -1,0 +1,7 @@
+PIPs TermID,Top-level Decode,Second-Level Decode,Third-Level Decode,Descriptions,Examples,AB's earlier mapping to TVA*,Canvas draft mapping to TVA,1st map,2nd map,3rd map,4th map,1st map decode,2nd map decode,3rd map decode,4th map decode,Mapping notes,1st map raw,2nd map raw,3rd map raw,4th map raw
+PIPs Cate,,,,,,,,,,,,,,,,,,,,
+C00003,Children's,Entertainment & Comedy,,Media assets of a comic nature or for the purpose of pure amusement where the primary intended audience is children.,"ChuckleVision, Dance Factory",3.5,3.5 | 4.2.1,urn:tva:metadata:cs:ContentCS:2007:3.5,urn:tva:metadata:cs:IntendedAudienceCS:2005:4.2.1,,,AMUSEMENT/ENTERTAINMENT,AGE GROUPS: Children,,,,3.5,4.2.1,,
+PIPs Prog,,,,,,,,,,,,,,,,,,
+PT001,Animation,,,"Media assets where the illusion of motion is expressed through the display of consecutive frame by frame images of static elements. The elements can be drawn (traditional animation), computer generated (CGI) or models (stop-motion animation).","Postman Pat, Toy Story",,2.3.3,urn:tva:metadata:cs:FormatCS:2007:2.3.3,,,,CARTOON/ANIMATION/PUPPETRY: Cartoon,,,2.3.3,,,
+
+* i.e. to terms from TVA's genre scheme CategoryCS,,,,,,,,,,,,,,,,,
