@@ -22,8 +22,8 @@ public class RadioPlayerGenreElementCreator {
 
 	private final RadioPlayerGenreMap GENRES = new RadioPlayerGenreMap();
 	protected static final XMLNamespace EPGDATATYPES = new XMLNamespace("epg", "http://www.radioplayer.co.uk/schemas/10/epgDataTypes");
-	private final List<String> genreTypes = ImmutableList.of("main", "secondary", "tertiary", "quarternary");
-	private final Ordering<String> genreTypeComparator = Ordering.explicit(genreTypes);
+	private final List<String> genreTypes = ImmutableList.of("main", "secondary", "secondary", "secondary");
+	private final Ordering<String> genreTypeComparator = Ordering.explicit(genreTypes.subList(0, 2));
 	
 	public List<Element> genreElementsFor(Item item) {
 		//Get the genres without the current ones.
