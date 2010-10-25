@@ -55,7 +55,8 @@ public class AtlasErrorSummary {
 	
 	private static Map<Class<? extends Exception>, AtlasExceptionBuilder> exceptionMap() {
 		return ImmutableMap.<Class<? extends Exception>, AtlasExceptionBuilder>of(
-			IllegalArgumentException.class, new ExceptionExposingAtlasExceptionBuilder("BAD_QUERY_ATTRIBUTE", HttpServletResponse.SC_BAD_REQUEST)
+			IllegalArgumentException.class, new ExceptionExposingAtlasExceptionBuilder("BAD_QUERY_ATTRIBUTE", HttpServletResponse.SC_BAD_REQUEST),
+			ProjectionException.class, new ExceptionExposingAtlasExceptionBuilder("BAD_PROJECTION", HttpServletResponse.SC_BAD_REQUEST)
 		);
 	}
 
