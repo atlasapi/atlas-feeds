@@ -13,11 +13,13 @@ import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Person;
 import org.atlasapi.media.entity.Playlist;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.entity.simple.Aliased;
 import org.atlasapi.media.entity.simple.BrandSummary;
 import org.atlasapi.media.entity.simple.ContentQueryResult;
 import org.atlasapi.media.entity.simple.Description;
@@ -28,6 +30,7 @@ import org.atlasapi.media.util.ChildFinder;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -76,10 +79,15 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 				outputGraph.addItem(simpleItemFrom((org.atlasapi.media.entity.Item) bean));
 				
 			}
-			
 		}
-		
-		outputWriter.writeTo(Sets.newHashSet((Object) outputGraph), stream);
+		outputWriter.writeTo(ImmutableSet.of((Object) outputGraph), stream);
+	}
+	
+	static org.atlasapi.media.entity.simple.Person simplePersonFrom(Person fullPerson) {
+		org.atlasapi.media.entity.simple.Person person = new org.atlasapi.media.entity.simple.Person();
+		copyDescriptionAttributesTo(fullPerson, person);
+		person.setName(fullPerson.getName());
+		return person;
 	}
 
 	static org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Playlist fullPlayList, Set<Object> processed) {
@@ -102,9 +110,7 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 	}
 	
 	private static void copyBasicContentAttributes(Content content, Description simpleDescription) {
-		simpleDescription.setUri(content.getCanonicalUri());
-		simpleDescription.setAliases(content.getAliases());
-		simpleDescription.setCurie(content.getCurie());
+		copyDescriptionAttributesTo(content, simpleDescription);
 		simpleDescription.setTitle(content.getTitle());
 		simpleDescription.setPublisher(toPublisherDetails(content.getPublisher()));
 		simpleDescription.setDescription(content.getDescription());
@@ -116,6 +122,12 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 		simpleDescription.setClips(clipToSimple(content.getClips()));
 		simpleDescription.setSameAs(content.getEquivalentTo());
 		simpleDescription.setContentType(content.getContentType().toString().toLowerCase());
+	}
+
+	private static void copyDescriptionAttributesTo(org.atlasapi.media.entity.Description description, Aliased simpleDescription) {
+		simpleDescription.setUri(description.getCanonicalUri());
+		simpleDescription.setAliases(description.getAliases());
+		simpleDescription.setCurie(description.getCurie());
 	}
 
 	private static List<Item> clipToSimple(List<Clip> clips) {
