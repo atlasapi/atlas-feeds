@@ -21,6 +21,8 @@ import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.text.Truncator;
@@ -37,6 +39,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         channelLookup.put("http://www.e4.com", "E4");
         return channelLookup;
     }
+	
     public static Map<String, String> CHANNEL_LOOKUP = channelLookup(); 
 
 	private final Truncator summaryTruncator = new Truncator()
@@ -216,8 +219,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     	return descriptionTruncator.truncate(description);
     }
 
-    protected InterlinkBroadcast fromBroadcast(Broadcast broadcast, InterlinkEpisode episode) {
-        String id = broadcast.getBroadcastOn() + "-" + broadcast.getTransmissionTime().getMillis();
+    private InterlinkBroadcast fromBroadcast(Broadcast broadcast, InterlinkEpisode episode) {
+        String id = broadcastId(broadcast);
         String service = CHANNEL_LOOKUP.get(broadcast.getBroadcastOn());
         
         Operation operation = broadcastOperation(broadcast);
@@ -228,8 +231,12 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         	.withBroadcastStart(broadcast.getTransmissionTime())
         	.withService(service);
     }
+
+	protected String broadcastId(Broadcast broadcast) {
+		return broadcast.getBroadcastOn() + "-" + broadcast.getTransmissionTime().getMillis();
+	}
     
-    protected Operation broadcastOperation(Broadcast broadcast) {
+    private Operation broadcastOperation(Broadcast broadcast) {
         DateTime thirtyDaysAgo = new DateTime(DateTimeZones.UTC).minusDays(30);
         Operation operation = Operation.STORE;
         if (thirtyDaysAgo.isAfter(broadcast.getTransmissionTime()) || ! broadcast.isActivelyPublished()) {
@@ -238,14 +245,21 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         return operation;
     }
 
-    protected Set<Broadcast> broadcasts(Item item) {
+    private Set<Broadcast> broadcasts(Item item) {
+    	Predicate<Broadcast> predicate = broadcastFilter();
         Set<Broadcast> broadcasts = Sets.newHashSet();
         for (Version version : item.nativeVersions()) {
             for (Broadcast broadcast : version.getBroadcasts()) {
-                broadcasts.add(broadcast);
+            	if (predicate.apply(broadcast)) {
+            		broadcasts.add(broadcast);
+            	}
             }
         }
         return broadcasts;
+    }
+    
+    protected Predicate<Broadcast> broadcastFilter() {
+    	return Predicates.alwaysTrue();
     }
     
     private Location firstQualifyingLocation(Item item, DateTime from, DateTime to) {
@@ -274,8 +288,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         return null;
     }
     
-    protected InterlinkOnDemand fromLocation(Location linkLocation, InterlinkEpisode episode, int d) {
-        Duration duration = new Duration(d*1000);
+    protected InterlinkOnDemand fromLocation(Location linkLocation, InterlinkEpisode episode, Integer durationInSeconds) {
+        Duration duration = durationInSeconds == null ? null : Duration.standardSeconds(durationInSeconds);
         Operation operation = linkLocation.getAvailable() ? Operation.STORE : Operation.DELETE;
         
         return new InterlinkOnDemand(idFrom(linkLocation), operation, linkLocation.getPolicy().getAvailabilityStart(), linkLocation.getPolicy().getAvailabilityEnd(), duration, episode)

@@ -2,6 +2,8 @@ package org.atlasapi.feeds.interlinking;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Description;
@@ -9,11 +11,12 @@ import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.ContentResolver;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.MapMaker;
 
 public class C4PlaylistToInterterlinkFeedAdapter extends PlaylistToInterlinkFeedAdapter {
     
-    private static final String BROADCAST_ID_PREFIX = "tag:";
+    private static final Pattern BROADCAST_ID_PATTERN = Pattern.compile("(?:urn:)?(tag:www\\.channel4\\.com.*)");
     private final ConcurrentMap<String, Series> seriesLookup;
     
     public C4PlaylistToInterterlinkFeedAdapter(final ContentResolver resolver) {
@@ -26,19 +29,30 @@ public class C4PlaylistToInterterlinkFeedAdapter extends PlaylistToInterlinkFeed
     }
     
     @Override
-    protected InterlinkBroadcast fromBroadcast(Broadcast broadcast, InterlinkEpisode episode) {
-        String id = null;
-        for (String alias : broadcast.getAliases()) {
-            if (alias.startsWith(BROADCAST_ID_PREFIX) || alias.startsWith("urn:"+BROADCAST_ID_PREFIX)) {
-                id = alias;
-                break;
-            }
-        }
+    protected String broadcastId(Broadcast broadcast) {
+    	for (String alias : broadcast.getAliases()) {
+			Matcher matcher = BROADCAST_ID_PATTERN.matcher(alias);
+			if (matcher.matches()) {
+				return matcher.group(1);
+			}
+		}
+    	throw new IllegalStateException("Could not find id for broadcast " + broadcast);
+    }
+    
+    @Override
+    protected Predicate<Broadcast> broadcastFilter() {
+    	return new Predicate<Broadcast>() {
 
-        if (id != null) {
-            return new InterlinkBroadcast(id, DEFAULT_OPERATION, episode).withDuration(toDuration(broadcast.getBroadcastDuration())).withBroadcastStart(broadcast.getTransmissionTime()).withLastUpdated(broadcast.getLastUpdated());
-        }
-        return null;
+			@Override
+			public boolean apply(Broadcast broadcast) {
+				for (String alias : broadcast.getAliases()) {
+		            if (BROADCAST_ID_PATTERN.matcher(alias).matches()) {
+		            	return true;
+		            }
+		        }
+				return false;
+			}
+		};
     }
     
     @Override
