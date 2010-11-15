@@ -83,6 +83,21 @@ public class InterlinkController {
         outputter.output(adapter.fromBrands(FEED_ID+date, Publisher.C4, from, to, brands), response.getOutputStream());
     }
     
+    @RequestMapping("/feeds/bbc-interlinking/bootstrap")
+    public void bootstrapFeed(HttpServletResponse response) throws IOException {
+    	response.setContentType(MimeType.APPLICATION_ATOM_XML.toString());
+    	response.setStatus(HttpServletResponse.SC_OK);
+
+    	DateTime from = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.LONDON);
+    	DateTime to = new DateTime(DateTimeZones.LONDON);
+    	
+    	ContentQuery query = ContentQueryBuilder.query()
+    		.equalTo(Attributes.BRAND_PUBLISHER, Publisher.C4)
+    	.build();
+    	List<Brand> brands = executor.executeBrandQuery(query);
+    	outputter.output(adapter.fromBrands(FEED_ID+"bootstrap", Publisher.C4, from, to, brands), response.getOutputStream());
+    }
+    
     @RequestMapping("/feeds/bbc-interlinking/validate")
     public void validateFeed(HttpServletResponse response, @RequestParam String uri) throws Exception {
         response.setStatus(HttpServletResponse.SC_OK);
