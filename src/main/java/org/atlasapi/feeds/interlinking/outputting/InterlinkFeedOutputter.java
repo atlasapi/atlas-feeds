@@ -67,7 +67,9 @@ public class InterlinkFeedOutputter {
 		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, onDemand.episode().id()));
 		mrssContent.appendChild(stringElement("availability_start", NS_ILINK, onDemand.availabilityStart().toString(DATE_TIME_FORMAT)));
 		mrssContent.appendChild(stringElement("availability_end", NS_ILINK, onDemand.availabilityEnd().toString(DATE_TIME_FORMAT)));
-		mrssContent.appendChild(stringElement("duration", NS_ILINK, duration(onDemand.duration())));
+		if (onDemand.duration() != null) {
+			mrssContent.appendChild(stringElement("duration", NS_ILINK, duration(onDemand.duration())));
+		}
 		if (onDemand.service() != null) {
 		    mrssContent.appendChild(stringElement("service", NS_ILINK, onDemand.service()));
 		}
@@ -81,7 +83,6 @@ public class InterlinkFeedOutputter {
 	
 	private String duration(Duration duration) {
 	    Period period = duration.toPeriod();
-	    
 	    return ISOPeriodFormat.standard().print(period);
 	}
 
