@@ -86,8 +86,15 @@ public class InterlinkFeedOutputter {
 	
 	private void addService(String service, Element mrssContent) {
 	    if (service != null) {
-            mrssContent.appendChild(stringElement("service", NS_ILINK, service.toLowerCase()));
+            mrssContent.appendChild(stringElement("service", NS_ILINK, service(service)));
         }
+	}
+	
+	private String service(String service) {
+	    service = service.toLowerCase();
+	    if ("c4".equals(service)) return "4";
+	    if ("m4".equals(service)) return "more4";
+	    return service;
 	}
 	
 	private String duration(Duration duration) {
