@@ -66,22 +66,28 @@ public class InterlinkFeedOutputter {
 		if (onDemand.lastUpdated() != null) {
             entry.appendChild(stringElement("updated", NS_ATOM, onDemand.lastUpdated().toString(DATE_TIME_FORMAT)));
         }
-		Element mrssContent = createElement("content", NS_MRSS);
-		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, onDemand.episode().id()));
-		mrssContent.appendChild(stringElement("availability_start", NS_ILINK, onDemand.availabilityStart().toString(DATE_TIME_FORMAT)));
-		mrssContent.appendChild(stringElement("availability_end", NS_ILINK, onDemand.availabilityEnd().toString(DATE_TIME_FORMAT)));
-		if (onDemand.duration() != null) {
-			mrssContent.appendChild(stringElement("duration", NS_ILINK, duration(onDemand.duration())));
+		if (onDemand.operation() != Operation.DELETE) {
+    		Element mrssContent = createElement("content", NS_MRSS);
+    		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, onDemand.episode().id()));
+    		mrssContent.appendChild(stringElement("availability_start", NS_ILINK, onDemand.availabilityStart().toString(DATE_TIME_FORMAT)));
+    		mrssContent.appendChild(stringElement("availability_end", NS_ILINK, onDemand.availabilityEnd().toString(DATE_TIME_FORMAT)));
+    		if (onDemand.duration() != null) {
+    			mrssContent.appendChild(stringElement("duration", NS_ILINK, duration(onDemand.duration())));
+    		}
+    		addService(onDemand.service(), mrssContent);
+    		
+    		// TODO: Static attributes for now
+    		mrssContent.appendChild(stringElement("platform_code", NS_ILINK, "pc"));
+    		mrssContent.appendChild(stringElement("payment_type", NS_ILINK, "free"));
+    		entry.appendChild(atomContentElementContaining(mrssContent));
 		}
-		if (onDemand.service() != null) {
-		    mrssContent.appendChild(stringElement("service", NS_ILINK, onDemand.service()));
-		}
-		
-		// TODO: Static attributes for now
-		mrssContent.appendChild(stringElement("platform_code", NS_ILINK, "pc"));
-		mrssContent.appendChild(stringElement("payment_type", NS_ILINK, "free"));
-		entry.appendChild(atomContentElementContaining(mrssContent));
 		return entry;
+	}
+	
+	private void addService(String service, Element mrssContent) {
+	    if (service != null) {
+            mrssContent.appendChild(stringElement("service", NS_ILINK, service.toLowerCase()));
+        }
 	}
 	
 	private String duration(Duration duration) {
@@ -98,21 +104,22 @@ public class InterlinkFeedOutputter {
 		if (broadcast.lastUpdated() != null) {
             entry.appendChild(stringElement("updated", NS_ATOM, broadcast.lastUpdated().toString(DATE_TIME_FORMAT)));
         }
-		Element mrssContent = createElement("content", NS_MRSS);
-		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, broadcast.episode().id()));
 		
-		DateTime broadcastStart = broadcast.broadcastStart();
-		if (broadcastStart != null) {
-			mrssContent.appendChild(stringElement("broadcast_start", NS_ILINK, broadcastStart.toString(DATE_TIME_FORMAT)));
+		if (broadcast.operation() != Operation.DELETE) {
+    		Element mrssContent = createElement("content", NS_MRSS);
+    		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, broadcast.episode().id()));
+    		
+    		DateTime broadcastStart = broadcast.broadcastStart();
+    		if (broadcastStart != null) {
+    			mrssContent.appendChild(stringElement("broadcast_start", NS_ILINK, broadcastStart.toString(DATE_TIME_FORMAT)));
+    		}
+    		
+    		if (broadcast.duration() != null) {
+    			mrssContent.appendChild(stringElement("duration", NS_ILINK, ISOPeriodFormat.standard().print(broadcast.duration().toPeriod())));
+    		}
+    		addService(broadcast.service(), mrssContent);
+    		entry.appendChild(atomContentElementContaining(mrssContent));
 		}
-		
-		if (broadcast.duration() != null) {
-			mrssContent.appendChild(stringElement("duration", NS_ILINK, ISOPeriodFormat.standard().print(broadcast.duration().toPeriod())));
-		}
-		if (broadcast.service() != null) {
-		    mrssContent.appendChild(stringElement("service", NS_ILINK, broadcast.service()));
-		}
-		entry.appendChild(atomContentElementContaining(mrssContent));
 		return entry;
 	}
 
