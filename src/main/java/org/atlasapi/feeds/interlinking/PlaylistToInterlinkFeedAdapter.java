@@ -294,7 +294,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         
         return new InterlinkOnDemand(idFrom(linkLocation), operation, linkLocation.getPolicy().getAvailabilityStart(), linkLocation.getPolicy().getAvailabilityEnd(), duration, episode)
             .withLastUpdated(linkLocation.getLastUpdated())
-            .withService("4oD");
+            .withService("4od");
     }
 
     protected Integer itemIndexFrom(Item item) {

@@ -16,6 +16,7 @@ import org.atlasapi.feeds.interlinking.InterlinkBroadcast;
 import org.atlasapi.feeds.interlinking.InterlinkContent;
 import org.atlasapi.feeds.interlinking.InterlinkEpisode;
 import org.atlasapi.feeds.interlinking.InterlinkFeed;
+import org.atlasapi.feeds.interlinking.InterlinkBase.Operation;
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.atlasapi.feeds.interlinking.InterlinkOnDemand;
 import org.atlasapi.feeds.interlinking.InterlinkSeries;
@@ -38,20 +39,22 @@ public class InterlinkFeedOutputter {
 	private static final XMLNamespace NS_ILINK = new XMLNamespace("ilink", "http://www.bbc.co.uk/developer/interlinking");
 	private static final XMLNamespace NS_MRSS = new XMLNamespace("media", "http://search.yahoo.com/mrss/");
 	
-	public void output(InterlinkFeed feed, OutputStream out) throws IOException {
+	public void output(InterlinkFeed feed, OutputStream out, boolean isBootstrap) throws IOException {
 		Element feedElem = createFeed(feed);
 		for (InterlinkBase entry : feed.entries()) {
-			if (entry instanceof InterlinkBrand) {
-			    feedElem.appendChild(brandToEntry((InterlinkBrand) entry));
-			} else if (entry instanceof InterlinkSeries) {
-			    feedElem.appendChild(seriesToEntry((InterlinkSeries) entry));
-			} else if (entry instanceof InterlinkEpisode) {
-			    feedElem.appendChild(episodeToEntry((InterlinkEpisode) entry));
-			} else if (entry instanceof InterlinkBroadcast) {
-			    feedElem.appendChild(broadcastToEntry((InterlinkBroadcast) entry));
-			} else if (entry instanceof InterlinkOnDemand) {
-			    feedElem.appendChild(onDemandToEntry((InterlinkOnDemand) entry));
-			}
+		    if (! isBootstrap || entry.operation() != Operation.DELETE) {
+    			if (entry instanceof InterlinkBrand) {
+    			    feedElem.appendChild(brandToEntry((InterlinkBrand) entry));
+    			} else if (entry instanceof InterlinkSeries) {
+    			    feedElem.appendChild(seriesToEntry((InterlinkSeries) entry));
+    			} else if (entry instanceof InterlinkEpisode) {
+    			    feedElem.appendChild(episodeToEntry((InterlinkEpisode) entry));
+    			} else if (entry instanceof InterlinkBroadcast) {
+    			    feedElem.appendChild(broadcastToEntry((InterlinkBroadcast) entry));
+    			} else if (entry instanceof InterlinkOnDemand) {
+    			    feedElem.appendChild(onDemandToEntry((InterlinkOnDemand) entry));
+    			}
+		    }
 		}
 	    write(out, feedElem);  
 	}
@@ -178,8 +181,9 @@ public class InterlinkFeedOutputter {
 		    entry.appendChild(stringElement("updated", NS_ATOM, content.lastUpdated().toString(DATE_TIME_FORMAT)));
 		}
 		
-		entry.appendChild(contentElement(content, parent));
-
+		if (content.operation() != Operation.DELETE) {
+		    entry.appendChild(contentElement(content, parent));
+		}
 	}
 
 	private Element createFeed(InterlinkFeed feed) {
