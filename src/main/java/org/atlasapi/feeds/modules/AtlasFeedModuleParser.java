@@ -15,7 +15,7 @@ permissions and limitations under the License. */
 
 package org.atlasapi.feeds.modules;
 
-import org.atlasapi.media.vocabulary.PLAY;
+import org.atlasapi.media.vocabulary.PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY;
 import org.jdom.Element;
 
 import com.sun.syndication.feed.module.Module;
@@ -29,7 +29,7 @@ import com.sun.syndication.io.ModuleParser;
 public class AtlasFeedModuleParser implements ModuleParser {
 
 	public String getNamespaceUri() {
-		return PLAY.NS;
+		return PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS;
 	}
 
 	public Module parse(Element element) {

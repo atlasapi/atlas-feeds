@@ -51,6 +51,7 @@ import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.metabroadcast.common.time.DateTimeZones;
 
@@ -187,7 +188,7 @@ public class QueryStringBackedQueryBuilderTest  {
 	public void testTitleAndPublisherEqualityDisjunction() throws Exception {
 		Map<String, String[]> params = Maps.newHashMap();
 		params.put("item.publisher", new String[] { "bbc.co.uk,channel4.com" });
-		check(params, query().equalTo(ITEM_PUBLISHER, Publisher.BBC, Publisher.C4));
+		check(params, query().isAnEnumIn(ITEM_PUBLISHER, ImmutableList.<Enum<Publisher>>of(Publisher.BBC, Publisher.C4)));
 	}
 	
 	@Test

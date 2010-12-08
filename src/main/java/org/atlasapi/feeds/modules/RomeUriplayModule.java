@@ -15,7 +15,7 @@ permissions and limitations under the License. */
 
 package org.atlasapi.feeds.modules;
 
-import org.atlasapi.media.vocabulary.PLAY;
+import org.atlasapi.media.vocabulary.PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY;
 
 import com.sun.syndication.feed.module.ModuleImpl;
 
@@ -32,7 +32,7 @@ public class RomeUriplayModule extends ModuleImpl implements AtlasFeedModule {
 	private Object bean;
 	
 	public RomeUriplayModule() {
-		super(AtlasFeedModule.class, PLAY.NS);
+		super(AtlasFeedModule.class, PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS);
 	}
 
 	public Class<?> getInterface() {

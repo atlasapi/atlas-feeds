@@ -25,7 +25,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.vocabulary.MEDIA;
-import org.atlasapi.media.vocabulary.PLAY;
+import org.atlasapi.media.vocabulary.PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY;
 import org.atlasapi.media.vocabulary.RDF;
 import org.jdom.Element;
 import org.jdom.Namespace;
@@ -45,7 +45,7 @@ import com.sun.syndication.io.ModuleGenerator;
  */
 public class AtlasFeedModuleGenerator implements ModuleGenerator {
 
-	private static final Namespace PLAY_NS = Namespace.getNamespace(PLAY.PREFIX, PLAY.NS);
+	private static final Namespace PLAY_NS = Namespace.getNamespace(PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.PREFIX, PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS);
 	private static final Namespace MEDIA_NS = Namespace.getNamespace(MEDIA.PREFIX, MEDIA.NS);
 	private static final Namespace RDF_NS = Namespace.getNamespace(RDF.PREFIX, RDF.NS);
 	private static final Set<Namespace> NAMESPACES;
@@ -59,7 +59,7 @@ public class AtlasFeedModuleGenerator implements ModuleGenerator {
 	}
 
 	public String getNamespaceUri() {
-		return PLAY.NS;
+		return PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS;
 	}
 
 	public Set<Namespace> getNamespaces() {

@@ -26,7 +26,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Playlist;
 import org.atlasapi.media.entity.Version;
-import org.atlasapi.media.vocabulary.PLAY;
+import org.atlasapi.media.vocabulary.PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY;
 import org.springframework.web.util.HtmlUtils;
 
 import com.google.common.collect.Lists;
@@ -65,9 +65,9 @@ public class FeedTranslator implements BeanGraphWriter {
 				}
 				feed.setLink(playlist.getCanonicalUri());
 				
-				if (feed.getModule(PLAY.NS) != null
-					&& feed.getModule(PLAY.NS) instanceof AtlasFeedModule) {
-					((AtlasFeedModule) feed.getModule(PLAY.NS)).setBean(bean);
+				if (feed.getModule(PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS) != null
+					&& feed.getModule(PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS) instanceof AtlasFeedModule) {
+					((AtlasFeedModule) feed.getModule(PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS)).setBean(bean);
 				}
 				
 				//FIXME: playlist items are stored in a Set, so inherently unordered, leads to unordered feeds.
@@ -80,9 +80,9 @@ public class FeedTranslator implements BeanGraphWriter {
 					
 					rssItem.setDescription(descriptionOf(item));
 
-					if (rssItem.getModule(PLAY.NS) != null
-						&& rssItem.getModule(PLAY.NS) instanceof AtlasFeedModule) {
-						((AtlasFeedModule) rssItem.getModule(PLAY.NS)).setBean(item);
+					if (rssItem.getModule(PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS) != null
+						&& rssItem.getModule(PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS) instanceof AtlasFeedModule) {
+						((AtlasFeedModule) rssItem.getModule(PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS)).setBean(item);
 					}
 				}
 			}

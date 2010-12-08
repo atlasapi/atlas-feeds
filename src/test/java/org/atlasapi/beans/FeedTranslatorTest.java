@@ -26,7 +26,7 @@ import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Playlist;
 import org.atlasapi.media.entity.Version;
-import org.atlasapi.media.vocabulary.PLAY;
+import org.atlasapi.media.vocabulary.PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.integration.junit4.JMock;
@@ -89,7 +89,7 @@ public class FeedTranslatorTest  {
 		context.checking(new Expectations() {{ 
 			allowing(feedFactory).createFeed(); will(returnValue(rssFeed));
 			allowing(rssFeed).writeTo(outputStream);
-			allowing(rssFeed).getModule(PLAY.NS); will(returnValue(atlasModule));
+			allowing(rssFeed).getModule(PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS); will(returnValue(atlasModule));
 	
 			one(rssFeed).setTitle("Test Title");
 			one(rssFeed).setDescription("Test Description");
@@ -121,8 +121,8 @@ public class FeedTranslatorTest  {
 		context.checking(new Expectations() {{ 
 			allowing(feedFactory).createFeed(); will(returnValue(rssFeed));
 			allowing(rssFeed).writeTo(outputStream);
-			allowing(rssFeed).getModule(PLAY.NS); will(returnValue(atlasModule));
-			allowing(item).getModule(PLAY.NS); will(returnValue(atlasModule));
+			allowing(rssFeed).getModule(PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS); will(returnValue(atlasModule));
+			allowing(item).getModule(PLAY_USE_IN_RDF_FOR_BACKWARD_COMPATIBILITY.NS); will(returnValue(atlasModule));
 	
 			one(rssFeed).setTitle("Test Title");
 			one(rssFeed).setDescription("Test Description");
