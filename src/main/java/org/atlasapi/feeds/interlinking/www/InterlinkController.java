@@ -63,9 +63,10 @@ public class InterlinkController {
             }
         }
         
-        outputter.output(adapter.fromBrands(playlist.getCanonicalUri(), playlist.getPublisher(), null, null, brands), response.getOutputStream());
+        outputter.output(adapter.fromBrands(playlist.getCanonicalUri(), playlist.getPublisher(), null, null, brands), response.getOutputStream(), false);
     }
 
+    @SuppressWarnings("unchecked")
     @RequestMapping("/feeds/bbc-interlinking/{date}")
     public void updatedFeed(HttpServletResponse response, @PathVariable String date) throws IOException {
         DateTime from = fmt.parseDateTime(date);
@@ -80,9 +81,10 @@ public class InterlinkController {
                 .build();
         List<Brand> brands = executor.executeBrandQuery(query);
         
-        outputter.output(adapter.fromBrands(FEED_ID+date, Publisher.C4, from, to, brands), response.getOutputStream());
+        outputter.output(adapter.fromBrands(FEED_ID+date, Publisher.C4, from, to, brands), response.getOutputStream(), false);
     }
     
+    @SuppressWarnings("unchecked")
     @RequestMapping("/feeds/bbc-interlinking/bootstrap")
     public void bootstrapFeed(HttpServletResponse response) throws IOException {
     	response.setContentType(MimeType.APPLICATION_ATOM_XML.toString());
@@ -95,7 +97,7 @@ public class InterlinkController {
     		.equalTo(Attributes.BRAND_PUBLISHER, Publisher.C4)
     	.build();
     	List<Brand> brands = executor.executeBrandQuery(query);
-    	outputter.output(adapter.fromBrands(FEED_ID+"bootstrap", Publisher.C4, from, to, brands), response.getOutputStream());
+    	outputter.output(adapter.fromBrands(FEED_ID+"bootstrap", Publisher.C4, from, to, brands), response.getOutputStream(), true);
     }
     
     @RequestMapping("/feeds/bbc-interlinking/validate")
@@ -112,7 +114,7 @@ public class InterlinkController {
             }
         }
         
-        outputter.output(adapter.fromBrands(playlist.getCanonicalUri(), playlist.getPublisher(), null, null, brands), out);
+        outputter.output(adapter.fromBrands(playlist.getCanonicalUri(), playlist.getPublisher(), null, null, brands), out, false);
         
         validator.validatesAgainstSchema(out.toString(Charsets.UTF_8.toString()), response.getOutputStream());
     }

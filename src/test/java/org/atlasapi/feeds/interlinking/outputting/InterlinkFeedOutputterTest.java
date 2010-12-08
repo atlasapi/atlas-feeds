@@ -79,7 +79,7 @@ public class InterlinkFeedOutputterTest {
 
 	private String output(InterlinkFeed feed) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		outputter.output(feed, out);
+		outputter.output(feed, out, true);
 		return out.toString(Charsets.UTF_8.toString());
 	}
 
