@@ -66,7 +66,6 @@ public class InterlinkController {
         outputter.output(adapter.fromBrands(playlist.getCanonicalUri(), playlist.getPublisher(), null, null, brands), response.getOutputStream(), false);
     }
 
-    @SuppressWarnings("unchecked")
     @RequestMapping("/feeds/bbc-interlinking/{date}")
     public void updatedFeed(HttpServletResponse response, @PathVariable String date) throws IOException {
         DateTime from = fmt.parseDateTime(date);
@@ -84,7 +83,6 @@ public class InterlinkController {
         outputter.output(adapter.fromBrands(FEED_ID+date, Publisher.C4, from, to, brands), response.getOutputStream(), false);
     }
     
-    @SuppressWarnings("unchecked")
     @RequestMapping("/feeds/bbc-interlinking/bootstrap")
     public void bootstrapFeed(HttpServletResponse response) throws IOException {
     	response.setContentType(MimeType.APPLICATION_ATOM_XML.toString());
