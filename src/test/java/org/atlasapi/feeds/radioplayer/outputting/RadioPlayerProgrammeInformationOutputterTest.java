@@ -6,7 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
-import org.atlasapi.feeds.radioplayer.RadioPlayerServiceIdentifier;
+import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
@@ -92,7 +92,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
 		brand.setTitle("Electric Proms");
 		((Episode)testItem).setBrand(brand);
-		
+
 		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(buildItems()));
 	}
 	
@@ -110,7 +110,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 	private static String output(List<Item> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		outputter.output(new DateTime(2010, 9, 6, 0, 0, 0, 0, DateTimeZone.UTC),
-						new RadioPlayerServiceIdentifier(502, "http://www.bbc.co.uk/services/radio2","e1_ce15_c222_0"), items, out);
+						new RadioPlayerService(502, "radio2").withDabServiceId("e1_ce15_c222_0"), items, out);
 		return out.toString(Charsets.UTF_8.toString());
 	}
 

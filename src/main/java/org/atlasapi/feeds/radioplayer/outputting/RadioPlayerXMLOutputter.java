@@ -8,7 +8,7 @@ import nu.xom.Document;
 import nu.xom.Element;
 import nu.xom.Serializer;
 
-import org.atlasapi.feeds.radioplayer.RadioPlayerServiceIdentifier;
+import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.xml.XMLNamespace;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Broadcast;
@@ -27,7 +27,7 @@ public abstract class RadioPlayerXMLOutputter {
 
 	protected static final DateTimeFormatter DATE_TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
 
-	protected abstract Element createFeed(DateTime day, RadioPlayerServiceIdentifier id, Iterable<Item> items);
+	protected abstract Element createFeed(DateTime day, RadioPlayerService id, Iterable<Item> items);
 
 	protected static final Truncator MEDIUM_TITLE = new Truncator().withMaxLength(16).onlyTruncateAtAWordBoundary().omitTrailingPunctuationWhenTruncated();
 	protected static final Truncator LONG_TITLE = new Truncator().withMaxLength(128).onlyTruncateAtAWordBoundary().omitTrailingPunctuationWhenTruncated();
@@ -43,7 +43,7 @@ public abstract class RadioPlayerXMLOutputter {
 		super();
 	}
 
-	public void output(DateTime day, RadioPlayerServiceIdentifier id, Iterable<Item> items, OutputStream out)
+	public void output(DateTime day, RadioPlayerService id, Iterable<Item> items, OutputStream out)
 			throws IOException {
 			    write(out, createFeed(day, id, items));  
 			}

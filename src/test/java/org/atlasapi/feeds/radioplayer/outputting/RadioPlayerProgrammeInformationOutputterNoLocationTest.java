@@ -6,7 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
-import org.atlasapi.feeds.radioplayer.RadioPlayerServiceIdentifier;
+import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Episode;
@@ -71,7 +71,7 @@ public class RadioPlayerProgrammeInformationOutputterNoLocationTest {
 	private String output(List<Item> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		outputter.output(new DateTime(2010, 9, 6, 0, 0, 0, 0, DateTimeZone.UTC),
-						new RadioPlayerServiceIdentifier(502, "http://www.bbc.co.uk/services/radio2","e1_ce15_c222_0"), items, out);
+						new RadioPlayerService(502, "radio2").withDabServiceId("e1.ce15.c222.0"), items, out);
 		return out.toString(Charsets.UTF_8.toString());
 	}
 

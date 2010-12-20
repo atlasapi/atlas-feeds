@@ -18,11 +18,19 @@ import com.google.common.collect.Ordering;
 
 public class RadioPlayerGenreElementCreator {
 
-	private final RadioPlayerCSVReadingGenreMap GENRES = new RadioPlayerCSVReadingGenreMap(RadioPlayerCSVReadingGenreMap.GENRES_FILE);
+	private final RadioPlayerCSVReadingGenreMap GENRES;
 	protected static final XMLNamespace EPGDATATYPES = new XMLNamespace("epg", "http://www.radioplayer.co.uk/schemas/10/epgDataTypes");
 	private final List<String> genreTypes = ImmutableList.of("main", "secondary", "secondary", "secondary");
 	private final Ordering<String> genreTypeComparator = Ordering.explicit(genreTypes.subList(0, 2));
 	
+	public RadioPlayerGenreElementCreator() {
+		this(new RadioPlayerCSVReadingGenreMap(RadioPlayerCSVReadingGenreMap.GENRES_FILE));
+	}
+	
+	public RadioPlayerGenreElementCreator(RadioPlayerCSVReadingGenreMap radioPlayerCSVReadingGenreMap) {
+		this.GENRES = radioPlayerCSVReadingGenreMap;
+	}
+
 	public List<Element> genreElementsFor(Item item) {
 		
 		Iterable<List<String>> mappedGenres = GENRES.map(item.getGenres());
