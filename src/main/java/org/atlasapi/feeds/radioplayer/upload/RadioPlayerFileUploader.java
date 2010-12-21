@@ -62,20 +62,22 @@ public class RadioPlayerFileUploader implements Runnable {
                 throw new RuntimeException("Unable to connect to " + ftpHost + " with username: " + ftpUsername + " and password...");
             }
 			
-            if (!client.changeWorkingDirectory(ftpPath)) {
+            if (!ftpPath.isEmpty() && !client.changeWorkingDirectory(ftpPath)) {
                 throw new RuntimeException("Unable to change working directory to " + ftpPath);
             }
             
-            DateTime today = new DateTime(DateTimeZones.UTC);
-            for (RadioPlayerService service : RadioPlayerServices.services) {
-            	for(RadioPlayerFeedType type : ImmutableSet.of(RadioPlayerFeedType.PI)) {
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
-					type.compileFeedFor(today, service, queryExecutor, baos);
-
-					ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-					client.storeFile(filenameFrom(today, service, type), bais);
-					Closeables.closeQuietly(bais);
-				}
+            DateTime day = new DateTime(DateTimeZones.UTC).minusDays(2);
+            for (int i = 0; i < 10; i++, day = day.plusDays(i)) {
+            	for (RadioPlayerService service : RadioPlayerServices.services) {
+            		for(RadioPlayerFeedType type : ImmutableSet.of(RadioPlayerFeedType.PI)) {
+            			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            			type.compileFeedFor(day, service, queryExecutor, baos);
+            			
+            			ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+            			client.storeFile(filenameFrom(day, service, type), bais);
+            			Closeables.closeQuietly(bais);
+            		}
+            	}
 			}
 
 		} catch (Exception e) {
@@ -85,7 +87,7 @@ public class RadioPlayerFileUploader implements Runnable {
 
 	private String filenameFrom(DateTime today, RadioPlayerService service, RadioPlayerFeedType type) {
 		String date = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZone.UTC).print(today);
-		return String.format("%s_%s_%s.xml", date, service.getName(), type.toString());
+		return String.format("%s_%s_%s.xml", date, service.getRadioplayerId(), type.toString());
 	}
 
 }

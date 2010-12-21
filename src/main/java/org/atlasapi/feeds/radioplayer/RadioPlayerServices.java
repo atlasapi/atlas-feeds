@@ -57,7 +57,7 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(339, "wm")).
 			add(new RadioPlayerService(340, "radio1").withScheduleUri("http://www.bbc.co.uk/radio1/programmes/schedules/england")).
 			add(new RadioPlayerService(341, "1xtra")).
-			add(new RadioPlayerService(502, "radio2").withDabServiceId("e1.ce15.c222.0")).
+			add(new RadioPlayerService(342, "radio2").withDabServiceId("e1.ce15.c222.0")).
 			add(new RadioPlayerService(343, "radio3")).
 			add(new RadioPlayerService(344, "radio4").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/fm")).
 			add(new RadioPlayerService(345, "5live")).
