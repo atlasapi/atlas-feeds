@@ -98,7 +98,7 @@
         	<artifactId>ftpserver</artifactId>
         	<version>1.0.5</version>
         	<type>pom</type>
-        	<scope>compile</scope>
+        	<scope>test</scope>
         </dependency>
     </dependencies>
     <scm>
