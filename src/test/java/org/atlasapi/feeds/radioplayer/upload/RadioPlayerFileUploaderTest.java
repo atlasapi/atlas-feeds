@@ -24,15 +24,28 @@ import org.apache.ftpserver.ftplet.UserManager;
 import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
+import org.apache.xalan.xsltc.runtime.Operators;
 import org.atlasapi.content.criteria.ContentQuery;
+import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.media.TransportType;
+import org.atlasapi.media.entity.Brand;
+import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Countries;
+import org.atlasapi.media.entity.Encoding;
+import org.atlasapi.media.entity.Episode;
+import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Playlist;
+import org.atlasapi.media.entity.Policy;
+import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
-import org.jmock.Expectations;
-import org.jmock.Mockery;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
@@ -55,47 +68,65 @@ public class RadioPlayerFileUploaderTest {
 		try {
 			dir = Files.createTempDir();
 			System.out.println(dir);
-			//dir.deleteOnExit();
+			dir.deleteOnExit();
 			File files = new File(dir.getAbsolutePath() + File.separator + "files");
 			files.mkdir();
-			
+
 			startServer();
 
-			Mockery context = new Mockery();
-
-			final KnownTypeQueryExecutor queryExecutor = context.mock(KnownTypeQueryExecutor.class);
-			final AdapterLog log = context.mock(AdapterLog.class);
-
-			context.checking(new Expectations() {
-				{
-					allowing(queryExecutor).executeItemQuery(with(any(ContentQuery.class)));
-					will(returnValue(ImmutableList.of()));
-					allowing(log).record(with(any(AdapterLogEntry.class)));
+			KnownTypeQueryExecutor queryExecutor = new KnownTypeQueryExecutor() {
+				
+				@Override
+				public List<Playlist> executePlaylistQuery(ContentQuery query) {
+					return null;
 				}
-			});
-
+				
+				@Override
+				public List<Item> executeItemQuery(ContentQuery query) {
+					return ImmutableList.of(buildItem(query));
+				}
+				
+				@Override
+				public List<Brand> executeBrandQuery(ContentQuery query) {
+					return null;
+				}
+			};
+			
+			AdapterLog log = new AdapterLog() {
+				@Override
+				public void record(AdapterLogEntry entry) {
+					System.out.println(entry.description());
+					if (entry.exceptionSummary() != null) {
+						for (String line : entry.exceptionSummary().traceAndMessage()) {
+							System.out.println(line);
+						}
+						System.out.println("\n\n");
+					}
+				}
+			};
+			
 			RadioPlayerFileUploader uploader = new RadioPlayerFileUploader("localhost", 9521, "test", "testpassword", "files", queryExecutor, log);
 
 			Executor executor = MoreExecutors.sameThreadExecutor();
 
 			executor.execute(uploader);
-			
+
 			Set<String> uploaded = ImmutableSet.copyOf(files.list(new FilenameFilter() {
 				@Override
 				public boolean accept(File dir, String name) {
 					return name.endsWith("PI.xml");
 				}
 			}));
-			
+
 			assertThat(uploaded.size(), is(equalTo(RadioPlayerServices.services.size() * 10)));
-			
+
 			DateTime day = new DateTime(DateTimeZones.UTC).minusDays(2);
 			for (int i = 0; i < 10; i++, day = day.plusDays(1)) {
 				for (RadioPlayerService service : RadioPlayerServices.services) {
 					assertThat(uploaded, hasItem(startsWith(String.format("%4d%02d%02d_%s", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth(), service.getRadioplayerId()))));
 				}
 			}
-			
+
 		} finally {
 			server.stop();
 		}
@@ -114,7 +145,7 @@ public class RadioPlayerFileUploaderTest {
 		serverFactory.setUserManager(new TestUserManager());
 
 		server = serverFactory.createServer();
-		
+
 		server.start();
 	}
 
@@ -215,4 +246,37 @@ public class RadioPlayerFileUploaderTest {
 			return dir.getAbsolutePath();
 		}
 	};
+
+	public static Item buildItem(ContentQuery query) {
+		String service = (String) query.operandMap().get(Attributes.BROADCAST_ON).get(0);
+		Item testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c", "bbc:b00f4d9c", Publisher.BBC);
+		testItem.setTitle("BBC Electric Proms: Saturday Night Fever");
+		testItem.setDescription("Another chance to hear Robin Gibb perform the Bee Gees' classic disco album with the BBC Concert Orchestra. It was recorded"
+				+ " for the BBC Electric Proms back in October 2008, marking 30 years since Saturday Night Fever soundtrack topped the UK charts.");
+		testItem.setGenres(ImmutableSet.of("http://www.bbc.co.uk/programmes/genres/music", "http://ref.atlasapi.org/genres/atlas/music"));
+		testItem.setImage("http://www.bbc.co.uk/iplayer/images/episode/b00v6bbc_640_360.jpg");
+
+		Version version = new Version();
+
+		Broadcast broadcast = new Broadcast(service, new DateTime(2008, 10, 25, 18, 30, 0, 0, TIMEZONE), new DateTime(2008, 10, 25, 20, 0, 0, 0, TIMEZONE));
+		version.addBroadcast(broadcast);
+
+		Encoding encoding = new Encoding();
+		Location location = new Location();
+		location.setUri("http://www.bbc.co.uk/iplayer/episode/b00f4d9c");
+		Policy policy = new Policy();
+		policy.setAvailabilityEnd(new DateTime(2010, 8, 28, 23, 40, 19, 0, TIMEZONE));
+		policy.setAvailabilityStart(new DateTime(2010, 9, 4, 23, 02, 00, 0, TIMEZONE));
+		policy.addAvailableCountry(Countries.GB);
+		location.setPolicy(policy);
+		location.setTransportType(TransportType.LINK);
+		encoding.addAvailableAt(location);
+		version.addManifestedAs(encoding);
+
+		testItem.addVersion(version);
+
+		return testItem;
+	}
+
+	private static final DateTimeZone TIMEZONE = DateTimeZone.forOffsetHours(8);
 }

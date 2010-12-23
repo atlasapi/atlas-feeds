@@ -23,27 +23,27 @@ public class RadioPlayerController {
 	}
 
 	@RequestMapping("feeds/ukradioplayer/{filename}.xml")
-	public String xmlForFilename(@PathVariable("filename") String filename, HttpServletResponse response) throws IOException {
+	public void xmlForFilename(@PathVariable("filename") String filename, HttpServletResponse response) throws IOException {
 
 		RadioPlayerFilenameMatcher matcher = RadioPlayerFilenameMatcher.on(filename);
 
 		if (matcher.matches() && Iterables.all(ImmutableSet.of(matcher.date(), matcher.service(), matcher.type()), Maybe.HAS_VALUE)) {
 
 			RadioPlayerFeedType feedType = matcher.type().requireValue();
-			
-			feedType.compileFeedFor(matcher.date().requireValue(), matcher.service().requireValue(), queryExecutor, response.getOutputStream());
+			try {
+				feedType.compileFeedFor(matcher.date().requireValue(), matcher.service().requireValue(), queryExecutor, response.getOutputStream());
+			} catch (Exception e) {
+				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+			}
 
 		} else {
-			return notFound(response);
+			if (matcher.type().isNothing()) {
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognised feed type");
+			} else if (matcher.service().isNothing()) {
+				response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unkown Service");
+			}
+
 		}
-
-		return null;
-	}
-
-	private String notFound(HttpServletResponse response) {
-		response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-		response.setContentLength(0);
-		return null;
 	}
 
 }

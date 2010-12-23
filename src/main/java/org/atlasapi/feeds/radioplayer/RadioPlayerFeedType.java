@@ -56,7 +56,7 @@ public enum RadioPlayerFeedType {
 	
 	public RadioPlayerXMLOutputter getOutputter(){
 		if(outputter == null) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(this.toString() + " feeds are not currently supported");
 		}
 		return outputter;
 	}

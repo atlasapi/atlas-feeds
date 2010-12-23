@@ -45,7 +45,7 @@ public class RadioPlayerFileUploader implements Runnable {
 
 	@Override
 	public void run() {
-		log.record(new AdapterLogEntry(Severity.INFO).withSource(RadioPlayerFileUploader.class).withDescription("RadioPlayerFileUploader started"));
+		log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass()).withDescription("RadioPlayerFileUploader started"));
 		
 		try {
 			checkNotNull(Strings.emptyToNull(ftpHost), "No Radioplayer FTP Host, set rp.ftp.host");
@@ -73,17 +73,22 @@ public class RadioPlayerFileUploader implements Runnable {
             for (int i = 0; i < 10; i++, day = day.plusDays(1)) {
             	for (RadioPlayerService service : RadioPlayerServices.services) {
             		for(RadioPlayerFeedType type : ImmutableSet.of(RadioPlayerFeedType.PI)) {
-            			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            			type.compileFeedFor(day, service, queryExecutor, baos);
-            			
-            			ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-            			client.storeFile(filenameFrom(day, service, type), bais);
-            			Closeables.closeQuietly(bais);
-            			count++;
+            			try {
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							type.compileFeedFor(day, service, queryExecutor, baos);
+							
+							ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+							client.storeFile(filenameFrom(day, service, type), bais);
+							Closeables.closeQuietly(bais);
+							count++;
+						} catch (Exception e) {
+							String desc = String.format("Exception creating %s feed for service %s for %s", type, service.getName(), day.toString("dd/MM/yyyy"));
+							log.record(new AdapterLogEntry(Severity.WARN).withSource(getClass()).withCause(e).withDescription(desc ));
+						}
             		}
             	}
 			}
-            log.record(new AdapterLogEntry(Severity.INFO).withSource(RadioPlayerFileUploader.class).withDescription("RadioPlayerFileUploader finished: "+count+" files uploaded"));
+            log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass()).withDescription("RadioPlayerFileUploader finished: "+count+" files uploaded"));
 		} catch (Exception e) {
 			log.record(new AdapterLogEntry(Severity.WARN).withCause(e).withDescription("Exception running RadioPlayerFileUploader"));
 		}

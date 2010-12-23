@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -21,6 +23,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.Iterables;
 import com.metabroadcast.common.text.Truncator;
 
 public abstract class RadioPlayerXMLOutputter {
@@ -32,7 +35,7 @@ public abstract class RadioPlayerXMLOutputter {
 	protected static final Truncator MEDIUM_TITLE = new Truncator().withMaxLength(16).onlyTruncateAtAWordBoundary().omitTrailingPunctuationWhenTruncated();
 	protected static final Truncator LONG_TITLE = new Truncator().withMaxLength(128).onlyTruncateAtAWordBoundary().omitTrailingPunctuationWhenTruncated();
 	protected static final Truncator SHORT_DESC = new Truncator().withMaxLength(180).onlyTruncateAtAWordBoundary().omitTrailingPunctuationWhenTruncated();
-	
+
 	protected static final XMLNamespace EPGSCHEDULE = new XMLNamespace("", "http://www.radioplayer.co.uk/schemas/10/epgSchedule");
 	protected static final XMLNamespace EPGDATATYPES = new XMLNamespace("epg", "http://www.radioplayer.co.uk/schemas/10/epgDataTypes");
 	protected static final XMLNamespace XSI = new XMLNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
@@ -43,18 +46,21 @@ public abstract class RadioPlayerXMLOutputter {
 		super();
 	}
 
-	public void output(DateTime day, RadioPlayerService id, Iterable<Item> items, OutputStream out)
-			throws IOException {
-			    write(out, createFeed(day, id, items));  
-			}
+	public void output(DateTime day, RadioPlayerService id, Iterable<Item> items, OutputStream out) throws IOException {
+		checkNotNull(items);
+		if (Iterables.size(items) > 0) {
+			write(out, createFeed(day, id, items));
+		} else {
+			throw new IllegalArgumentException("No items to create feed");
+		}
+	}
 
-	private void write(OutputStream out, Element feed)
-			throws UnsupportedEncodingException, IOException {
-				Serializer serializer = new Serializer(out, Charsets.UTF_8.toString());
-			    serializer.setIndent(4);
-			    serializer.setLineSeparator("\n");
-				serializer.write(new Document(feed));
-			}
+	private void write(OutputStream out, Element feed) throws UnsupportedEncodingException, IOException {
+		Serializer serializer = new Serializer(out, Charsets.UTF_8.toString());
+		serializer.setIndent(4);
+		serializer.setLineSeparator("\n");
+		serializer.write(new Document(feed));
+	}
 
 	protected Element stringElement(String name, XMLNamespace ns, String value) {
 		Element elem = createElement(name, ns);
@@ -72,7 +78,7 @@ public abstract class RadioPlayerXMLOutputter {
 
 	protected Version versionFrom(Item item) {
 		for (Version version : item.getVersions()) {
-			if(hasLocation(version) && hasBroadcast(version)){
+			if (hasLocation(version) && hasBroadcast(version)) {
 				return version;
 			}
 		}
@@ -108,7 +114,7 @@ public abstract class RadioPlayerXMLOutputter {
 	}
 
 	protected Broadcast broadcastFrom(Item item, String broadcaster) {
-		for (Version version : item.getVersions()) {			
+		for (Version version : item.getVersions()) {
 			for (Broadcast broadcast : version.getBroadcasts()) {
 				if (broadcaster.equals(broadcast.getBroadcastOn())) {
 					return broadcast;
