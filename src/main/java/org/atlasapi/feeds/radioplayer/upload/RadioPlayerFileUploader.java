@@ -45,6 +45,8 @@ public class RadioPlayerFileUploader implements Runnable {
 
 	@Override
 	public void run() {
+		log.record(new AdapterLogEntry(Severity.WARN).withSource(RadioPlayerFileUploader.class).withDescription("RadioPlayerFileUploader started"));
+		
 		checkNotNull(Strings.emptyToNull(ftpHost), "No Radioplayer FTP Host, set rp.ftp.host");
 		checkNotNull(ftpPort, "No Radioplayer FTP Port, set rp.ftp.port");
 		checkNotNull(Strings.emptyToNull(ftpUsername), "No Radioplayer FTP Username, set rp.ftp.username");
@@ -66,6 +68,7 @@ public class RadioPlayerFileUploader implements Runnable {
                 throw new RuntimeException("Unable to change working directory to " + ftpPath);
             }
             
+            int count = 0;
             DateTime day = new DateTime(DateTimeZones.UTC).minusDays(2);
             for (int i = 0; i < 10; i++, day = day.plusDays(i)) {
             	for (RadioPlayerService service : RadioPlayerServices.services) {
@@ -76,10 +79,11 @@ public class RadioPlayerFileUploader implements Runnable {
             			ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
             			client.storeFile(filenameFrom(day, service, type), bais);
             			Closeables.closeQuietly(bais);
+            			count++;
             		}
             	}
 			}
-
+            log.record(new AdapterLogEntry(Severity.WARN).withSource(RadioPlayerFileUploader.class).withDescription("RadioPlayerFileUploader finished: "+count+" files uploaded"));
 		} catch (Exception e) {
 			log.record(new AdapterLogEntry(Severity.WARN).withCause(e).withDescription("Exception running RadioPlayerFileUploader"));
 		}
