@@ -29,7 +29,7 @@ public class RadioPlayerModule {
     private @Value("${rp.ftp.username}") String ftpUsername;
     private @Value("${rp.ftp.password}") String ftpPassword;
     private @Value("${rp.ftp.host}") String ftpHost;
-    private @Value("${rp.ftp.host}") Integer ftpPort;
+    private @Value("${rp.ftp.port}") Integer ftpPort;
     private @Value("${rp.ftp.path}") String ftpPath;
 	
 	private @Autowired SimpleScheduler scheduler;
