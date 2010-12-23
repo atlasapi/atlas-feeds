@@ -90,7 +90,7 @@ public class RadioPlayerFileUploaderTest {
 			assertThat(uploaded.size(), is(equalTo(RadioPlayerServices.services.size() * 10)));
 			
 			DateTime day = new DateTime(DateTimeZones.UTC).minusDays(2);
-			for (int i = 0; i < 10; i++, day = day.plusDays(i)) {
+			for (int i = 0; i < 10; i++, day = day.plusDays(1)) {
 				for (RadioPlayerService service : RadioPlayerServices.services) {
 					assertThat(uploaded, hasItem(startsWith(String.format("%4d%02d%02d_%s", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth(), service.getRadioplayerId()))));
 				}

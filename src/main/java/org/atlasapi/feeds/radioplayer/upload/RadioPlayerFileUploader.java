@@ -70,7 +70,7 @@ public class RadioPlayerFileUploader implements Runnable {
             
             int count = 0;
             DateTime day = new DateTime(DateTimeZones.UTC).minusDays(2);
-            for (int i = 0; i < 10; i++, day = day.plusDays(i)) {
+            for (int i = 0; i < 10; i++, day = day.plusDays(1)) {
             	for (RadioPlayerService service : RadioPlayerServices.services) {
             		for(RadioPlayerFeedType type : ImmutableSet.of(RadioPlayerFeedType.PI)) {
             			ByteArrayOutputStream baos = new ByteArrayOutputStream();
