@@ -45,17 +45,17 @@ public class RadioPlayerFileUploader implements Runnable {
 
 	@Override
 	public void run() {
-		log.record(new AdapterLogEntry(Severity.WARN).withSource(RadioPlayerFileUploader.class).withDescription("RadioPlayerFileUploader started"));
-		
-		checkNotNull(Strings.emptyToNull(ftpHost), "No Radioplayer FTP Host, set rp.ftp.host");
-		checkNotNull(ftpPort, "No Radioplayer FTP Port, set rp.ftp.port");
-		checkNotNull(Strings.emptyToNull(ftpUsername), "No Radioplayer FTP Username, set rp.ftp.username");
-		checkNotNull(Strings.emptyToNull(ftpPassword), "No Radioplayer FTP Password, set rp.ftp.password");
-		checkNotNull(ftpPath, "No Radioplayer FTP Path, set rp.ftp.path");
-		
-		FTPClient client = new FTPClient();
+		log.record(new AdapterLogEntry(Severity.INFO).withSource(RadioPlayerFileUploader.class).withDescription("RadioPlayerFileUploader started"));
 		
 		try {
+			checkNotNull(Strings.emptyToNull(ftpHost), "No Radioplayer FTP Host, set rp.ftp.host");
+			checkNotNull(ftpPort, "No Radioplayer FTP Port, set rp.ftp.port");
+			checkNotNull(Strings.emptyToNull(ftpUsername), "No Radioplayer FTP Username, set rp.ftp.username");
+			checkNotNull(Strings.emptyToNull(ftpPassword), "No Radioplayer FTP Password, set rp.ftp.password");
+			checkNotNull(ftpPath, "No Radioplayer FTP Path, set rp.ftp.path");
+
+			FTPClient client = new FTPClient();
+		
 			client.connect(ftpHost, ftpPort);
 			
 			client.enterLocalPassiveMode();
@@ -83,7 +83,7 @@ public class RadioPlayerFileUploader implements Runnable {
             		}
             	}
 			}
-            log.record(new AdapterLogEntry(Severity.WARN).withSource(RadioPlayerFileUploader.class).withDescription("RadioPlayerFileUploader finished: "+count+" files uploaded"));
+            log.record(new AdapterLogEntry(Severity.INFO).withSource(RadioPlayerFileUploader.class).withDescription("RadioPlayerFileUploader finished: "+count+" files uploaded"));
 		} catch (Exception e) {
 			log.record(new AdapterLogEntry(Severity.WARN).withCause(e).withDescription("Exception running RadioPlayerFileUploader"));
 		}
