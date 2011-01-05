@@ -92,7 +92,7 @@ public class InterlinkFeedOutputter {
 	
 	private String service(String service) {
 	    service = service.toLowerCase();
-	    if ("c4".equals(service)) return "4";
+	    if ("c4".equals(service)) return "channel4";
 	    if ("m4".equals(service)) return "more4";
 	    return service;
 	}
