@@ -68,7 +68,7 @@ public class InterlinkFeedOutputter {
         }
 		if (onDemand.operation() != Operation.DELETE) {
     		Element mrssContent = createElement("content", NS_MRSS);
-    		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, onDemand.episode().id()));
+    		mrssContent.appendChild(stringElement("parent_id", NS_ILINK, onDemand.parentId()));
     		mrssContent.appendChild(stringElement("availability_start", NS_ILINK, onDemand.availabilityStart().toString(DATE_TIME_FORMAT)));
     		mrssContent.appendChild(stringElement("availability_end", NS_ILINK, onDemand.availabilityEnd().toString(DATE_TIME_FORMAT)));
     		if (onDemand.duration() != null) {
@@ -168,7 +168,7 @@ public class InterlinkFeedOutputter {
 		}
 		if (parent != null) {
 			mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
-			mrssContent.appendChild(stringElement("index", NS_ILINK, String.valueOf(content.indexWithinParent())));
+			//mrssContent.appendChild(stringElement("index", NS_ILINK, String.valueOf(content.indexWithinParent())));
 		}
 		if (content.thumbnail() != null) {
             Element thumbnail = createElement("thumbnail", NS_MRSS);

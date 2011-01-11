@@ -31,7 +31,6 @@
         <content type="application/xml">
             <media:content>
                 <ilink:parent_id>1</ilink:parent_id>
-                <ilink:index>2</ilink:index>
             </media:content>
         </content>
     </entry>
@@ -69,7 +68,6 @@
         <content type="application/xml">
             <media:content>
                 <ilink:parent_id>1</ilink:parent_id>
-                <ilink:index>2</ilink:index>
             </media:content>
         </content>
     </entry>
@@ -83,7 +81,6 @@
         <content type="application/xml">
             <media:content>
                 <ilink:parent_id>series2</ilink:parent_id>
-                <ilink:index>3</ilink:index>
             </media:content>
         </content>
     </entry>
