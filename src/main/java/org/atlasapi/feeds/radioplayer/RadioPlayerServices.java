@@ -55,7 +55,7 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(337, "tees")).
 			add(new RadioPlayerService(338, "threecounties")).
 			add(new RadioPlayerService(339, "wm")).
-			add(new RadioPlayerService(340, "radio1").withScheduleUri("http://www.bbc.co.uk/radio1/programmes/schedules/england")).
+			add(new RadioPlayerService(340, "radio1").withServiceUriSuffix("radio1/england").withScheduleUri("http://www.bbc.co.uk/radio1/programmes/schedules/england")).
 			add(new RadioPlayerService(341, "1xtra")).
 			add(new RadioPlayerService(342, "radio2").withDabServiceId("e1.ce15.c222.0")).
 			add(new RadioPlayerService(343, "radio3")).
@@ -72,7 +72,7 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(354, "radiofoyle")).
 			add(new RadioPlayerService(355, "radiowales")).
 			add(new RadioPlayerService(356, "radiocymru")).
-			add(new RadioPlayerService(357, "radio4lw").withServiceUri("radio4/lw").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/lw")).
+			add(new RadioPlayerService(357, "radio4lw").withServiceUriSuffix("radio4/lw").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/lw")).
 		build();
 		
 		all = Maps.uniqueIndex(services, new Function<RadioPlayerService, String>() {

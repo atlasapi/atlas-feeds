@@ -32,7 +32,7 @@ public class RadioPlayerService {
 		return dabServiceId;
 	}
 	
-	public RadioPlayerService withServiceUri(String serviceUri) {
+	public RadioPlayerService withServiceUriSuffix(String serviceUri) {
 		this.serviceUri = serviceUri;
 		return this;
 	}
