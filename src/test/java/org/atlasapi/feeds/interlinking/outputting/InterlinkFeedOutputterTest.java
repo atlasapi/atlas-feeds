@@ -47,7 +47,7 @@ public class InterlinkFeedOutputterTest {
 			.withSummary("Adaption of Flora Thompson's");
 		
 		InterlinkEpisode episode = new InterlinkEpisode("episode3", Operation.STORE, 3, "link", series)
-            .withTitle("Lark Rise to Candleford Episode 3")
+            .withTitle("Episode 3")
             .withLastUpdated(lastUpdated);
 		
 		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5", "link", Operation.STORE, lastUpdated, lastUpdated, new Duration(1000), "episode3");
