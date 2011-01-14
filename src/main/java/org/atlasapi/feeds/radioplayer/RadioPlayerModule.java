@@ -2,7 +2,9 @@ package org.atlasapi.feeds.radioplayer;
 
 import javax.annotation.PostConstruct;
 
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFTPCredentials;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFileUploader;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerXMLValidator;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
@@ -14,6 +16,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Resources;
 import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.RepetitionRules.RepetitionInterval;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
@@ -42,13 +46,25 @@ public class RadioPlayerModule {
 	@PostConstruct 
 	public void scheduleTasks() {
 		if (Boolean.parseBoolean(upload)) {
-			scheduler.schedule(new RadioPlayerFileUploader(ftpHost, ftpPort, ftpUsername, ftpPassword, ftpPath, queryExecutor, log), UPLOAD);
-			log.record(new AdapterLogEntry(Severity.INFO)
-            .withDescription("Radioplayer uploader scheduled task installed")
-            .withSource(RadioPlayerFileUploader.class));
+			RadioPlayerFTPCredentials credentials = RadioPlayerFTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
+			RadioPlayerXMLValidator validator = createValidator();
+			scheduler.schedule(new RadioPlayerFileUploader(credentials, ftpPath, queryExecutor, log, validator), UPLOAD);
+			log.record(new AdapterLogEntry(Severity.INFO).withDescription("Radioplayer uploader scheduled task installed for:" + credentials).withSource(RadioPlayerFileUploader.class));
 		} else {
 			log.record(new AdapterLogEntry(Severity.INFO)
 			.withDescription("Not installing Radioplayer uploader"));
+		}
+	}
+
+	private RadioPlayerXMLValidator createValidator() {
+		try {
+			return RadioPlayerXMLValidator.forSchemas(ImmutableSet.of(
+				Resources.getResource("epgSI_10.xsd").openStream(), 
+				Resources.getResource("epgSchedule_10.xsd").openStream()
+			));
+		} catch (Exception e) {
+			log.record(new AdapterLogEntry(Severity.WARN).withDescription("Couldn't load schemas for RadioPlayer XML validation").withCause(e));
+			return null;
 		}
 	}
 	

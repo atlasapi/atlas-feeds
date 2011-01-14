@@ -26,6 +26,7 @@ import org.junit.Test;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.io.Resources;
 
 public class RadioPlayerProgrammeInformationOutputterTest {
@@ -67,20 +68,6 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		return testItem;
 	}
 
-	public static List<Item> buildItems() {
-		Item testItem = buildItem();
-		
-		Series series = new Series("seriesUri", "seriesCurie");
-		series.setTitle("This is the series title");
-		((Episode)testItem).setSeries(series);
-		
-		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
-		brand.setTitle("Electric Proms");
-		((Episode)testItem).setBrand(brand);
-		
-		return ImmutableList.of(testItem);
-	}
-	
 	@Test
 	public void testOutputtingAPIFeed() throws Exception {
 		Item testItem = buildItem();
@@ -93,7 +80,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		brand.setTitle("Electric Proms");
 		((Episode)testItem).setBrand(brand);
 
-		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(buildItems()));
+		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(ImmutableList.of(testItem)));
 	}
 	
 	@Test
@@ -104,9 +91,31 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		series.setTitle("Series Title");
 		((Episode)testItem).setSeries(series);
 		
+		//make item available everywhere.
+		getLocation(testItem).getPolicy().setAvailableCountries(ImmutableSet.of(Countries.ALL));
+		
 		assertEquals(expectedFeed("seriesNoBrandPIFeedTest.xml"), output(ImmutableList.of(testItem)));
 	}
 
+	private Location getLocation(Item testItem) {
+		return Iterables.getLast(Iterables.getLast(Iterables.getLast(testItem.getVersions()).getManifestedAs()).getAvailableAt());
+	}
+	
+	@Test
+	public void testOutputtingPIFileWithNoLocation() throws Exception {
+
+		Item testItem = buildItem();
+		
+		Version version = new Version();
+		
+		Broadcast broadcast = new Broadcast("http://www.bbc.co.uk/services/radio2", new DateTime(2008,10,25,18,30,0,0, TIMEZONE), new DateTime(2008,10,25,20,0,0,0, TIMEZONE));
+		version.addBroadcast(broadcast);
+		
+		testItem.setVersions(ImmutableSet.of(version));
+		
+		assertEquals(expectedFeed("noLocationPIFeedTest.xml"), output(ImmutableList.of(testItem)));
+	}
+	
 	private static String output(List<Item> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		outputter.output(new DateTime(2010, 9, 6, 0, 0, 0, 0, DateTimeZone.UTC),

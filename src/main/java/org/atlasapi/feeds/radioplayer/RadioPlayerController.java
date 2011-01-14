@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer;
 
+import static com.metabroadcast.common.base.Maybe.HAS_VALUE;
+
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
@@ -11,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.metabroadcast.common.base.Maybe;
 
 @Controller
 public class RadioPlayerController {
@@ -27,7 +28,7 @@ public class RadioPlayerController {
 
 		RadioPlayerFilenameMatcher matcher = RadioPlayerFilenameMatcher.on(filename);
 
-		if (matcher.matches() && Iterables.all(ImmutableSet.of(matcher.date(), matcher.service(), matcher.type()), Maybe.HAS_VALUE)) {
+		if (matcher.matches() && Iterables.all(ImmutableSet.of(matcher.date(), matcher.service(), matcher.type()), HAS_VALUE)) {
 
 			RadioPlayerFeedType feedType = matcher.type().requireValue();
 			try {
@@ -37,10 +38,10 @@ public class RadioPlayerController {
 			}
 
 		} else {
-			if (matcher.type().isNothing()) {
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognised feed type");
-			} else if (matcher.service().isNothing()) {
+			if (matcher.service().isNothing()) {
 				response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unkown Service");
+			} else {
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognised filename pattern");
 			}
 
 		}

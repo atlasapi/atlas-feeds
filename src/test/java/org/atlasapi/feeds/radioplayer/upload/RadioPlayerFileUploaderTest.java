@@ -2,14 +2,14 @@ package org.atlasapi.feeds.radioplayer.upload;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.Executor;
 
 import org.apache.ftpserver.FtpServer;
@@ -47,8 +47,10 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.metabroadcast.common.time.DateTimeZones;
@@ -103,26 +105,33 @@ public class RadioPlayerFileUploaderTest {
 					}
 				}
 			};
-			
-			RadioPlayerFileUploader uploader = new RadioPlayerFileUploader("localhost", 9521, "test", "testpassword", "files", queryExecutor, log);
+			RadioPlayerFTPCredentials credentials = RadioPlayerFTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
+			RadioPlayerFileUploader uploader = new RadioPlayerFileUploader(credentials, "files", queryExecutor, log, null);
 
 			Executor executor = MoreExecutors.sameThreadExecutor();
 
 			executor.execute(uploader);
 
-			Set<String> uploaded = ImmutableSet.copyOf(files.list(new FilenameFilter() {
+			Map<String, File> uploaded = Maps.uniqueIndex(ImmutableSet.copyOf(files.listFiles(new FilenameFilter() {
 				@Override
 				public boolean accept(File dir, String name) {
 					return name.endsWith("PI.xml");
 				}
-			}));
-
+			})), new Function<File, String>() {
+				@Override
+				public String apply(File input) {
+					return input.getName();
+				}
+			});
+			
 			assertThat(uploaded.size(), is(equalTo(RadioPlayerServices.services.size() * 10)));
 
 			DateTime day = new DateTime(DateTimeZones.UTC).minusDays(2);
 			for (int i = 0; i < 10; i++, day = day.plusDays(1)) {
 				for (RadioPlayerService service : RadioPlayerServices.services) {
-					assertThat(uploaded, hasItem(startsWith(String.format("%4d%02d%02d_%s", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth(), service.getRadioplayerId()))));
+					String filename = String.format("%4d%02d%02d_%s_PI.xml", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth(), service.getRadioplayerId());
+					assertThat(uploaded.keySet(), hasItem(filename));
+					assertThat(uploaded.get(filename).length(), greaterThan(0L));
 				}
 			}
 
@@ -142,7 +151,7 @@ public class RadioPlayerFileUploaderTest {
 		serverFactory.addListener("default", factory.createListener());
 
 		serverFactory.setUserManager(new TestUserManager());
-
+		
 		server = serverFactory.createServer();
 
 		server.start();

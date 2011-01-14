@@ -20,7 +20,8 @@
             <epg:genre type="main" href="urn:tva:metadata:cs:ContentCS:2007:3.6"/>
             <epg:genre type="secondary" href="urn:tva:metadata:cs:ContentCS:2007:3.1.4.1"/>
             <epg:ondemand>
-                <radioplayer:player>http://bbcradioplayer.metabroadcast.com/radio2/b00f4d9c</radioplayer:player>
+                <radioplayer:player>http://www.test.bbc.co.uk/iplayer/radioplayer/radio2/b00f4d9c</radioplayer:player>
+                <radioplayer:restriction relationship="deny"/>
                 <radioplayer:availability>
                     <radioplayer:scope startTime="2010-09-04T23:02:00+08:00" stopTime="2010-08-28T23:40:19+08:00"/>
                 </radioplayer:availability>
