@@ -79,7 +79,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		
 		Location location = locationFrom(item);
 		if(location != null){
-			programme.appendChild(ondemandElement(item, location, day, id));
+			programme.appendChild(ondemandElement(item, location, day));
 		}
 		
 		return programme;
@@ -148,10 +148,10 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		return item.getImage();
 	}
 
-	private Element ondemandElement(Item item, Location location, DateTime day, RadioPlayerService id) {
+	private Element ondemandElement(Item item, Location location, DateTime day) {
 		Element ondemandElement = createElement("ondemand", EPGDATATYPES);
 
-		ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + id.getName() +"/"+ item.getCurie().substring(item.getCurie().indexOf(":")+1)));
+		ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCurie().substring(item.getCurie().indexOf(":")+1)));
 
 		Policy policy = location.getPolicy();
 		if (policy != null) {
