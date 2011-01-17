@@ -16,6 +16,7 @@ import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 
 import com.google.common.base.Strings;
@@ -67,7 +68,7 @@ public class RadioPlayerFileUploader implements Runnable {
             }
             
             int count = 0;
-            DateTime day = new DateTime(DateTimeZones.UTC).minusDays(2);
+            DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(2);
             for (int i = 0; i < 10; i++, day = day.plusDays(1)) {
             	for (RadioPlayerService service : RadioPlayerServices.services) {
             		for(RadioPlayerFeedType type : ImmutableSet.of(RadioPlayerFeedType.PI)) {
