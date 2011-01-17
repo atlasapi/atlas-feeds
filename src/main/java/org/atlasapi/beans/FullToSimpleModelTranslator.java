@@ -25,6 +25,7 @@ import org.atlasapi.media.entity.simple.ContentQueryResult;
 import org.atlasapi.media.entity.simple.Description;
 import org.atlasapi.media.entity.simple.Item;
 import org.atlasapi.media.entity.simple.PublisherDetails;
+import org.atlasapi.media.entity.simple.Restriction;
 import org.atlasapi.media.entity.simple.SeriesSummary;
 import org.atlasapi.media.util.ChildFinder;
 
@@ -245,8 +246,16 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 
 		simpleLocation.setPublishedDuration(version.getPublishedDuration());
 		simpleLocation.setDuration(version.getDuration());
-		simpleLocation.setRating(version.getRating());
-		simpleLocation.setRatingText(version.getRatingText());
+		
+		Restriction restriction = new Restriction();
+		
+		if(version.getRestriction() != null) {
+			restriction.setRestricted(version.getRestriction().isRestricted());
+			restriction.setMinimumAge(version.getRestriction().getMinimumAge());
+			restriction.setMessage(version.getRestriction().getMessage());	
+		}
+		
+		simpleLocation.setRestriction(restriction);
 	}
 
 	private static void copyProperties(Encoding encoding, org.atlasapi.media.entity.simple.Location simpleLocation) {

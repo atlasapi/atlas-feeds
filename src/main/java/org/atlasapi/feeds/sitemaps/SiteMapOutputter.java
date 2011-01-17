@@ -108,11 +108,14 @@ public class SiteMapOutputter {
 			videoElem.appendChild(stringElement("duration", VIDEO, String.valueOf(duration)));
 		}
 		
-		if (Publisher.C4.equals(item.getPublisher())) {
-			if (item instanceof Episode) {
-				c4playerLoc(videoElem, item, location);
-			}
-		}
+//		Unmaintainable / not needed.
+//		if (Publisher.C4.equals(item.getPublisher())) {
+//			if (item instanceof Episode) {
+//				c4playerLoc(videoElem, item, location);
+//			}
+//		}
+		
+		//TODO: family friendly?
 		
 		Policy policy = location.getPolicy();
 		if (policy != null) {
