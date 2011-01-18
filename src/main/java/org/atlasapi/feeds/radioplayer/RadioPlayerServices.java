@@ -66,11 +66,11 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(348, "radio7")).
 			add(new RadioPlayerService(349, "asiannetwork")).
 			add(new RadioPlayerService(350, "worldservice")).
-			add(new RadioPlayerService(351, "radioscotland").withServiceUriSuffix("radioscotland/fm")).
+			add(new RadioPlayerService(351, "radioscotland").withServiceUriSuffix("radioscotland/fm").withScheduleUri("http://www.bbc.co.uk/radioscotland/programmes/schedules/fm")).
 			add(new RadioPlayerService(352, "radionangaidheal")).
 			add(new RadioPlayerService(353, "radioulster")).
 			add(new RadioPlayerService(354, "radiofoyle")).
-			add(new RadioPlayerService(355, "radiowales").withServiceUriSuffix("radiowales/fm")).
+			add(new RadioPlayerService(355, "radiowales").withServiceUriSuffix("radiowales/fm").withScheduleUri("http://www.bbc.co.uk/radiowales/programmes/schedules/fm")).
 			add(new RadioPlayerService(356, "radiocymru")).
 			add(new RadioPlayerService(357, "radio4lw").withServiceUriSuffix("radio4/lw").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/lw")).
 		build();
