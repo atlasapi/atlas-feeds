@@ -25,6 +25,7 @@ import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.atlasapi.content.criteria.ContentQuery;
+import org.atlasapi.content.criteria.attribute.Attribute;
 import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
@@ -41,8 +42,8 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
-import org.atlasapi.persistence.logging.AdapterLog;
-import org.atlasapi.persistence.logging.AdapterLogEntry;
+import org.atlasapi.persistence.content.query.QueryFragmentExtractor;
+import org.atlasapi.persistence.logging.NullAdapterLog;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -93,20 +94,10 @@ public class RadioPlayerFileUploaderTest {
 				}
 			};
 			
-			AdapterLog log = new AdapterLog() {
-				@Override
-				public void record(AdapterLogEntry entry) {
-					System.out.println(entry.description());
-					if (entry.exceptionSummary() != null) {
-						for (String line : entry.exceptionSummary().traceAndMessage()) {
-							System.out.println(line);
-						}
-						System.out.println("\n\n");
-					}
-				}
-			};
+			ImmutableList<RadioPlayerService> services = ImmutableList.of(RadioPlayerServices.all.get("340"));
 			RadioPlayerFTPCredentials credentials = RadioPlayerFTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
-			RadioPlayerFileUploader uploader = new RadioPlayerFileUploader(credentials, "files", queryExecutor, log, null);
+			int lookAhead = 2;
+			RadioPlayerFileUploader uploader = new RadioPlayerFileUploader(credentials, "files", queryExecutor, new NullAdapterLog()).withServices(services).withLookAhead(lookAhead);
 
 			Executor executor = MoreExecutors.sameThreadExecutor();
 
@@ -124,11 +115,11 @@ public class RadioPlayerFileUploaderTest {
 				}
 			});
 			
-			assertThat(uploaded.size(), is(equalTo(RadioPlayerServices.services.size() * 10)));
+			assertThat(uploaded.size(), is(equalTo(lookAhead)));
 
-			DateTime day = new DateTime(DateTimeZones.UTC).minusDays(2);
-			for (int i = 0; i < 10; i++, day = day.plusDays(1)) {
-				for (RadioPlayerService service : RadioPlayerServices.services) {
+			DateTime day = new DateTime(DateTimeZones.UTC).minusDays(lookAhead);
+			for (int i = 0; i < lookAhead; i++, day = day.plusDays(1)) {
+				for (RadioPlayerService service : services) {
 					String filename = String.format("%4d%02d%02d_%s_PI.xml", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth(), service.getRadioplayerId());
 					assertThat(uploaded.keySet(), hasItem(filename));
 					assertThat(uploaded.get(filename).length(), greaterThan(0L));
@@ -256,7 +247,10 @@ public class RadioPlayerFileUploaderTest {
 	};
 
 	public static Item buildItem(ContentQuery query) {
-		String service = (String) query.operandMap().get(Attributes.BROADCAST_ON).get(0);
+		String service = (String) QueryFragmentExtractor.extract(query, ImmutableSet.<Attribute<?>>of(Attributes.BROADCAST_ON)).requireValue().getValue().get(0);
+		DateTime transmissionStart = ((DateTime)QueryFragmentExtractor.extract(query, ImmutableSet.<Attribute<?>>of(Attributes.BROADCAST_TRANSMISSION_TIME)).requireValue().getValue().get(0)).plusHours(18).plusMinutes(30);
+		DateTime transmissionEnd = transmissionStart.plusHours(1);
+		
 		Item testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c", "bbc:b00f4d9c", Publisher.BBC);
 		testItem.setTitle("BBC Electric Proms: Saturday Night Fever");
 		testItem.setDescription("Another chance to hear Robin Gibb perform the Bee Gees' classic disco album with the BBC Concert Orchestra. It was recorded"
@@ -266,7 +260,7 @@ public class RadioPlayerFileUploaderTest {
 
 		Version version = new Version();
 
-		Broadcast broadcast = new Broadcast(service, new DateTime(2008, 10, 25, 18, 30, 0, 0, TIMEZONE), new DateTime(2008, 10, 25, 20, 0, 0, 0, TIMEZONE));
+		Broadcast broadcast = new Broadcast(service, transmissionStart, transmissionEnd);
 		version.addBroadcast(broadcast);
 
 		Encoding encoding = new Encoding();

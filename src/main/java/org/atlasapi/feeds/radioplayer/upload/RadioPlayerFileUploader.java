@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.util.Set;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedType;
@@ -32,14 +33,30 @@ public class RadioPlayerFileUploader implements Runnable {
 	private final AdapterLog log;
 	private final KnownTypeQueryExecutor queryExecutor;
 	
-	private final RadioPlayerXMLValidator validator;
+	private RadioPlayerXMLValidator validator = null;
+	private Set<RadioPlayerService> services = RadioPlayerServices.services;
+	private int lookAhead = 10;
 
-	public RadioPlayerFileUploader(RadioPlayerFTPCredentials credentials, String ftpPath, KnownTypeQueryExecutor queryExecutor, AdapterLog log, RadioPlayerXMLValidator validator) {
+	public RadioPlayerFileUploader(RadioPlayerFTPCredentials credentials, String ftpPath, KnownTypeQueryExecutor queryExecutor, AdapterLog log) {
 		this.credentials = credentials;
 		this.ftpPath = ftpPath;
 		this.queryExecutor = queryExecutor;
 		this.log = log;
+	}
+	
+	public RadioPlayerFileUploader withServices(Iterable<RadioPlayerService> services) {
+		this.services = ImmutableSet.copyOf(services);
+		return this;
+	}
+	
+	public RadioPlayerFileUploader withValidator(RadioPlayerXMLValidator validator) {
 		this.validator = validator;
+		return this;
+	}
+	
+	public RadioPlayerFileUploader withLookAhead(int lookAhead) {
+		this.lookAhead  = lookAhead;
+		return this;
 	}
 	
 	@Override
@@ -69,8 +86,8 @@ public class RadioPlayerFileUploader implements Runnable {
             
             int count = 0;
             DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(2);
-            for (int i = 0; i < 10; i++, day = day.plusDays(1)) {
-            	for (RadioPlayerService service : RadioPlayerServices.services) {
+            for (int i = 0; i < lookAhead; i++, day = day.plusDays(1)) {
+            	for (RadioPlayerService service : services) {
             		for(RadioPlayerFeedType type : ImmutableSet.of(RadioPlayerFeedType.PI)) {
             			try {
 							ByteArrayOutputStream baos = new ByteArrayOutputStream();
