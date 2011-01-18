@@ -59,7 +59,7 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(341, "1xtra")).
 			add(new RadioPlayerService(342, "radio2")).
 			add(new RadioPlayerService(343, "radio3")).
-			add(new RadioPlayerService(344, "radio4").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/fm")).
+			add(new RadioPlayerService(344, "radio4").withServiceUriSuffix("radio4/fm").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/fm")).
 			add(new RadioPlayerService(345, "5live")).
 			add(new RadioPlayerService(346, "5livesportsextra")).
 			add(new RadioPlayerService(347, "6music")).
