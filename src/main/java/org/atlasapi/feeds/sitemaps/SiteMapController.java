@@ -21,12 +21,13 @@ import com.google.common.collect.Iterables;
 @Controller
 public class SiteMapController {
 
-	private static final String HOST_PARAM = "host";
+	private static final String API_KEY_PARAM = "apiKey";
+    private static final String HOST_PARAM = "host";
 	
     private final KnownTypeQueryExecutor queryExecutor;
     private final SiteMapOutputter outputter = new SiteMapOutputter();
     private final SiteMapIndexOutputter indexOutputter = new SiteMapIndexOutputter();
-    private final QueryStringBackedQueryBuilder queryBuilder = new QueryStringBackedQueryBuilder().withIgnoreParams(HOST_PARAM);
+    private final QueryStringBackedQueryBuilder queryBuilder = new QueryStringBackedQueryBuilder().withIgnoreParams(HOST_PARAM,API_KEY_PARAM);
     
     private final String defaultHost;
 
