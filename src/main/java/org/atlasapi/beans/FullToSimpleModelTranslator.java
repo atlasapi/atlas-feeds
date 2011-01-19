@@ -167,7 +167,7 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 	}
 
 	private static org.atlasapi.media.entity.simple.Broadcast simplify(Broadcast broadcast) {
-		return new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime());
+		return new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime(), broadcast.getId());
 	}
 
 	private static void addTo(Item simpleItem, Version version, Encoding encoding) {
