@@ -39,7 +39,7 @@ public class InterlinkFeedOutputterTest {
 		// add an episode directly to the brand
 		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", Operation.STORE, 2, "link", brand).withTitle("Episode not in a series").withLastUpdated(lastUpdated);
 		InterlinkBroadcast broadcastWithoutASeries = new InterlinkBroadcast("broadcastNotInASeries", Operation.STORE, episodeWithoutASeries);
-		InterlinkOnDemand onDemandWithoutASeries = new InterlinkOnDemand("odNotInASeries", Operation.STORE, lastUpdated, lastUpdated, new Duration(1000), episodeWithoutASeries);
+		InterlinkOnDemand onDemandWithoutASeries = new InterlinkOnDemand("odNotInASeries", "link", Operation.STORE, lastUpdated, lastUpdated, new Duration(1000), "notInASeries");
 		
 		InterlinkSeries series = new InterlinkSeries("series2", Operation.STORE, 2, brand)
 
@@ -47,10 +47,10 @@ public class InterlinkFeedOutputterTest {
 			.withSummary("Adaption of Flora Thompson's");
 		
 		InterlinkEpisode episode = new InterlinkEpisode("episode3", Operation.STORE, 3, "link", series)
-            .withTitle("Lark Rise to Candleford Episode 3")
+            .withTitle("Episode 3")
             .withLastUpdated(lastUpdated);
 		
-		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5", Operation.STORE, lastUpdated, lastUpdated, new Duration(1000), episode);
+		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5", "link", Operation.STORE, lastUpdated, lastUpdated, new Duration(1000), "episode3");
 		
 		InterlinkBroadcast broadcast = new InterlinkBroadcast("broadcast4", Operation.STORE, episode)
 			.withBroadcastStart(new DateTime("2010-01-10T21:00:00Z"))

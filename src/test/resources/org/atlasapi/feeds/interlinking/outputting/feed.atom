@@ -74,7 +74,7 @@
         </content>
     </entry>
     <entry>
-        <title>Lark Rise to Candleford Episode 3</title>
+        <title>Episode 3</title>
         <id>episode3</id>
         <ilink:operation>store</ilink:operation>
         <ilink:type>episode</ilink:type>
@@ -84,6 +84,7 @@
             <media:content>
                 <ilink:parent_id>series2</ilink:parent_id>
                 <ilink:index>3</ilink:index>
+                <ilink:presentation_title>Episode 3</ilink:presentation_title>
             </media:content>
         </content>
     </entry>

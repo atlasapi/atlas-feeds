@@ -55,24 +55,24 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(337, "tees")).
 			add(new RadioPlayerService(338, "threecounties")).
 			add(new RadioPlayerService(339, "wm")).
-			add(new RadioPlayerService(340, "radio1").withScheduleUri("http://www.bbc.co.uk/radio1/programmes/schedules/england")).
+			add(new RadioPlayerService(340, "radio1").withServiceUriSuffix("radio1/england").withScheduleUri("http://www.bbc.co.uk/radio1/programmes/schedules/england")).
 			add(new RadioPlayerService(341, "1xtra")).
-			add(new RadioPlayerService(342, "radio2").withDabServiceId("e1.ce15.c222.0")).
+			add(new RadioPlayerService(342, "radio2")).
 			add(new RadioPlayerService(343, "radio3")).
-			add(new RadioPlayerService(344, "radio4").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/fm")).
+			add(new RadioPlayerService(344, "radio4").withServiceUriSuffix("radio4/fm").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/fm")).
 			add(new RadioPlayerService(345, "5live")).
 			add(new RadioPlayerService(346, "5livesportsextra")).
 			add(new RadioPlayerService(347, "6music")).
 			add(new RadioPlayerService(348, "radio7")).
 			add(new RadioPlayerService(349, "asiannetwork")).
 			add(new RadioPlayerService(350, "worldservice")).
-			add(new RadioPlayerService(351, "radioscotland")).
+			add(new RadioPlayerService(351, "radioscotland").withServiceUriSuffix("radioscotland/fm").withScheduleUri("http://www.bbc.co.uk/radioscotland/programmes/schedules/fm")).
 			add(new RadioPlayerService(352, "radionangaidheal")).
 			add(new RadioPlayerService(353, "radioulster")).
 			add(new RadioPlayerService(354, "radiofoyle")).
-			add(new RadioPlayerService(355, "radiowales")).
+			add(new RadioPlayerService(355, "radiowales").withServiceUriSuffix("radiowales/fm").withScheduleUri("http://www.bbc.co.uk/radiowales/programmes/schedules/fm")).
 			add(new RadioPlayerService(356, "radiocymru")).
-			add(new RadioPlayerService(357, "radio4lw").withServiceUri("radio4/lw").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/lw")).
+			add(new RadioPlayerService(357, "radio4lw").withServiceUriSuffix("radio4/lw").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/lw")).
 		build();
 		
 		all = Maps.uniqueIndex(services, new Function<RadioPlayerService, String>() {

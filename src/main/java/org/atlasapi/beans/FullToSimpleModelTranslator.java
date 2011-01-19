@@ -25,6 +25,7 @@ import org.atlasapi.media.entity.simple.ContentQueryResult;
 import org.atlasapi.media.entity.simple.Description;
 import org.atlasapi.media.entity.simple.Item;
 import org.atlasapi.media.entity.simple.PublisherDetails;
+import org.atlasapi.media.entity.simple.Restriction;
 import org.atlasapi.media.entity.simple.SeriesSummary;
 
 import com.google.common.base.Function;
@@ -167,7 +168,7 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 	}
 
 	private static org.atlasapi.media.entity.simple.Broadcast simplify(Broadcast broadcast) {
-		return new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime());
+		return new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime(), broadcast.getId());
 	}
 
 	private static void addTo(Item simpleItem, Version version, Encoding encoding) {
@@ -246,8 +247,16 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 
 		simpleLocation.setPublishedDuration(version.getPublishedDuration());
 		simpleLocation.setDuration(version.getDuration());
-		simpleLocation.setRating(version.getRating());
-		simpleLocation.setRatingText(version.getRatingText());
+		
+		Restriction restriction = new Restriction();
+		
+		if(version.getRestriction() != null) {
+			restriction.setRestricted(version.getRestriction().isRestricted());
+			restriction.setMinimumAge(version.getRestriction().getMinimumAge());
+			restriction.setMessage(version.getRestriction().getMessage());	
+		}
+		
+		simpleLocation.setRestriction(restriction);
 	}
 
 	private static void copyProperties(Encoding encoding, org.atlasapi.media.entity.simple.Location simpleLocation) {

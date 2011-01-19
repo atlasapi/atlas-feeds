@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -9,6 +10,8 @@ import nu.xom.Element;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Countries;
+import org.atlasapi.media.entity.Country;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
@@ -18,12 +21,14 @@ import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.format.ISOPeriodFormat;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
 
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {
 
 	private static final String ORIGINATOR = "Metabroadcast";
-	private static final String ONDEMAND_LOCATION = "http://bbcradioplayer.metabroadcast.com/";
+	private static final String ONDEMAND_LOCATION = "http://www.test.bbc.co.uk/iplayer/radioplayer/";
 	
 	private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
 
@@ -74,7 +79,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		
 		Location location = locationFrom(item);
 		if(location != null){
-			programme.appendChild(ondemandElement(item, location, day, id));
+			programme.appendChild(ondemandElement(item, location, day));
 		}
 		
 		return programme;
@@ -143,26 +148,26 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		return item.getImage();
 	}
 
-	private Element ondemandElement(Item item, Location location, DateTime day, RadioPlayerService id) {
+	private Element ondemandElement(Item item, Location location, DateTime day) {
 		Element ondemandElement = createElement("ondemand", EPGDATATYPES);
-		
-		ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + id.getName() +"/"+ item.getCurie().substring(item.getCurie().indexOf(":")+1)));
+
+		ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCurie().substring(item.getCurie().indexOf(":")+1)));
 
 		Policy policy = location.getPolicy();
 		if (policy != null) {
-//			Set<Country> countries = policy.getAvailableCountries();
-//			if (!countries.contains(Countries.ALL)) {
-//				String spaceDelimted = Joiner.on(' ').join(Iterables.transform(countries, Country.UNPACK_COUNTRY_CODE));
-//				Element restrictionElem = createElement("restriction", RADIOPLAYER);
-//				restrictionElem.addAttribute(new Attribute("relationship","allow"));
-//				restrictionElem.appendChild(spaceDelimted);
-//				ondemandElement.appendChild(restrictionElem);
-//			} else {
-//				Element restrictionElem = createElement("restriction", RADIOPLAYER);
-//				restrictionElem.addAttribute(new Attribute("relationship","deny"));
-//				ondemandElement.appendChild(restrictionElem);
-//			}
-			
+			Set<Country> countries = policy.getAvailableCountries();
+			if (!countries.contains(Countries.ALL)) {
+				String spaceDelimted = Joiner.on(' ').join(Iterables.transform(countries, Country.UNPACK_COUNTRY_CODE));
+				Element restrictionElem = createElement("restriction", RADIOPLAYER);
+				restrictionElem.addAttribute(new Attribute("relationship","allow"));
+				restrictionElem.appendChild(spaceDelimted);
+				ondemandElement.appendChild(restrictionElem);
+			} else {
+				Element restrictionElem = createElement("restriction", RADIOPLAYER);
+				restrictionElem.addAttribute(new Attribute("relationship","deny"));
+				ondemandElement.appendChild(restrictionElem);
+			}
+
 			DateTime availableTill = policy.getAvailabilityEnd();
 			DateTime availableFrom = policy.getAvailabilityStart();
 			if (availableTill != null && availableFrom != null) {
@@ -175,7 +180,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 			}
 
 		}
-		
+
 		return ondemandElement;
 	}
 

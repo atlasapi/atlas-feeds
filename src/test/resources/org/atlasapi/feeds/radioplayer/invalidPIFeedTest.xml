@@ -7,10 +7,10 @@
         <programme shortId="0" id="crid://www.bbc.co.uk/programmes/b00f4d9c">
             <epg:mediumName>Electric Proms</epg:mediumName>
             <epg:longName>Electric Proms : BBC Electric Proms: Saturday Night Fever</epg:longName>
-            <epg:location>
+            <epg:sausage>
                 <epg:time time="2008-10-25T18:30:00+08:00" duration="PT1H30M"/>
                 <epg:bearer radioplayerId="502" id="e1.ce15.c222.0"/>
-            </epg:location>
+            </epg:sausage>
             <epg:mediaDescription>
                 <epg:shortDescription>Another chance to hear Robin Gibb perform the Bee Gees' classic disco album with the BBC Concert Orchestra. It was recorded for the BBC Electric Proms back in October 2008</epg:shortDescription>
             </epg:mediaDescription>
@@ -20,7 +20,7 @@
             <epg:genre type="main" href="urn:tva:metadata:cs:ContentCS:2007:3.6"/>
             <epg:genre type="secondary" href="urn:tva:metadata:cs:ContentCS:2007:3.1.4.1"/>
             <epg:ondemand>
-                <radioplayer:player>http://www.test.bbc.co.uk/iplayer/radioplayer/b00f4d9c</radioplayer:player>
+                <radioplayer:player>http://www.bbc.co.uk/iplayer/console/radio2/b00f4d9c</radioplayer:player>
                 <radioplayer:restriction relationship="allow">GB</radioplayer:restriction>
                 <radioplayer:availability>
                     <radioplayer:scope startTime="2010-09-04T23:02:00+08:00" stopTime="2010-08-28T23:40:19+08:00"/>

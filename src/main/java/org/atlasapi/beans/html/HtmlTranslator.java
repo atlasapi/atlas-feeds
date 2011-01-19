@@ -23,6 +23,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MutableContentList;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Restriction;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.entity.simple.Playlist;
 import org.springframework.core.io.ClassPathResource;
@@ -381,8 +382,8 @@ public class HtmlTranslator implements BeanGraphWriter {
 		
 			defineTerm("published duration", version.getPublishedDuration(), writer);
 			defineTerm("duration", version.getDuration(), writer);
-			defineTerm("rating", version.getRating(), writer);
-			defineTerm("rating text", version.getRatingText(), writer);
+			
+			writeHtmlFor(version.getRestriction(), writer);
 			
 			beginNestedDefinitionList("manifested as", writer);
 			
@@ -393,6 +394,19 @@ public class HtmlTranslator implements BeanGraphWriter {
 			endNestedDefinitionList(writer);
 
 		endNestedDefinitionList(writer);
+	}
+	
+	private static void writeHtmlFor(Restriction restriction, Writer writer) throws IOException {
+		
+		if (restriction != null) {
+			beginNestedDefinitionList("Restriction", writer);
+						
+			defineTerm("restricted", restriction.isRestricted(), writer);
+			defineTerm("minimum age", restriction.getMinimumAge(), writer);
+			defineTerm("message", restriction.getMessage(), writer);
+			
+		} 
+		
 	}
 	
 	private static void writeHtmlFor(Encoding encoding, Writer writer) throws IOException {

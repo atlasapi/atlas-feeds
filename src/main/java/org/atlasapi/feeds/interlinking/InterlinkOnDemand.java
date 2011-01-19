@@ -9,14 +9,16 @@ public class InterlinkOnDemand extends InterlinkBase {
     private final DateTime availabilityEnd;
     private final Duration duration;
     private String service;
-    private final InterlinkEpisode episode;
+    private final String parentId;
+	private final String uri;
 
-    public InterlinkOnDemand(String id, Operation operation, DateTime availabilityStart, DateTime availabilityEnd, Duration duration, InterlinkEpisode episode) {
+    public InterlinkOnDemand(String id, String uri, Operation operation, DateTime availabilityStart, DateTime availabilityEnd, Duration duration, String parentId) {
 		super(id, operation);
+		this.uri = uri;
         this.availabilityStart = availabilityStart;
         this.availabilityEnd = availabilityEnd;
         this.duration = duration;
-        this.episode = episode;
+        this.parentId = parentId;
 	}
 	
 	public InterlinkOnDemand withLastUpdated(DateTime lastUpdated) {
@@ -45,7 +47,11 @@ public class InterlinkOnDemand extends InterlinkBase {
 	    return service;
 	}
 	
-	public InterlinkEpisode episode() {
-        return episode;
+	public String parentId() {
+        return parentId;
     }
+
+	public String uri() {
+		return uri;
+	}
 }

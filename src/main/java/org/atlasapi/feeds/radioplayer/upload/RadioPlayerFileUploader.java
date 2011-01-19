@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.util.Set;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedType;
@@ -15,6 +17,7 @@ import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 
 import com.google.common.base.Strings;
@@ -24,44 +27,57 @@ import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerFileUploader implements Runnable {
 	
-	private final String ftpHost;
-	private final Integer ftpPort;
-	private final String ftpUsername;
-	private final String ftpPassword;
+	private final RadioPlayerFTPCredentials credentials;
 	private final String ftpPath;
 	
 	private final AdapterLog log;
 	private final KnownTypeQueryExecutor queryExecutor;
+	
+	private RadioPlayerXMLValidator validator = null;
+	private Set<RadioPlayerService> services = RadioPlayerServices.services;
+	private int lookAhead = 10;
 
-	public RadioPlayerFileUploader(String ftpHost, Integer ftpPort, String ftpUsername, String ftpPassword, String ftpPath, KnownTypeQueryExecutor queryExecutor, AdapterLog log) {
-		this.ftpHost = ftpHost;
-		this.ftpPort = ftpPort;
-		this.ftpUsername = ftpUsername;
-		this.ftpPassword = ftpPassword;
+	public RadioPlayerFileUploader(RadioPlayerFTPCredentials credentials, String ftpPath, KnownTypeQueryExecutor queryExecutor, AdapterLog log) {
+		this.credentials = credentials;
 		this.ftpPath = ftpPath;
 		this.queryExecutor = queryExecutor;
 		this.log = log;
 	}
-
+	
+	public RadioPlayerFileUploader withServices(Iterable<RadioPlayerService> services) {
+		this.services = ImmutableSet.copyOf(services);
+		return this;
+	}
+	
+	public RadioPlayerFileUploader withValidator(RadioPlayerXMLValidator validator) {
+		this.validator = validator;
+		return this;
+	}
+	
+	public RadioPlayerFileUploader withLookAhead(int lookAhead) {
+		this.lookAhead  = lookAhead;
+		return this;
+	}
+	
 	@Override
 	public void run() {
 		log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass()).withDescription("RadioPlayerFileUploader started"));
 		
 		try {
-			checkNotNull(Strings.emptyToNull(ftpHost), "No Radioplayer FTP Host, set rp.ftp.host");
-			checkNotNull(ftpPort, "No Radioplayer FTP Port, set rp.ftp.port");
-			checkNotNull(Strings.emptyToNull(ftpUsername), "No Radioplayer FTP Username, set rp.ftp.username");
-			checkNotNull(Strings.emptyToNull(ftpPassword), "No Radioplayer FTP Password, set rp.ftp.password");
+			checkNotNull(Strings.emptyToNull(credentials.server()), "No Radioplayer FTP Host, set rp.ftp.host");
+			checkNotNull(Strings.emptyToNull(credentials.username()), "No Radioplayer FTP Username, set rp.ftp.username");
+			checkNotNull(Strings.emptyToNull(credentials.password()), "No Radioplayer FTP Password, set rp.ftp.password");
+			
 			checkNotNull(ftpPath, "No Radioplayer FTP Path, set rp.ftp.path");
 
 			FTPClient client = new FTPClient();
 		
-			client.connect(ftpHost, ftpPort);
+			client.connect(credentials.server(), credentials.port());
 			
 			client.enterLocalPassiveMode();
 			
-			if (!client.login(ftpUsername, ftpPassword)) {
-                throw new RuntimeException("Unable to connect to " + ftpHost + " with username: " + ftpUsername + " and password...");
+			if (!client.login(credentials.username(), credentials.password())) {
+                throw new RuntimeException("Unable to connect to " + credentials.server() + " with username: " + credentials.username() + " and password...");
             }
 			
             if (!ftpPath.isEmpty() && !client.changeWorkingDirectory(ftpPath)) {
@@ -69,22 +85,33 @@ public class RadioPlayerFileUploader implements Runnable {
             }
             
             int count = 0;
-            DateTime day = new DateTime(DateTimeZones.UTC).minusDays(2);
-            for (int i = 0; i < 10; i++, day = day.plusDays(1)) {
-            	for (RadioPlayerService service : RadioPlayerServices.services) {
+            DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(2);
+            for (int i = 0; i < lookAhead; i++, day = day.plusDays(1)) {
+            	for (RadioPlayerService service : services) {
             		for(RadioPlayerFeedType type : ImmutableSet.of(RadioPlayerFeedType.PI)) {
             			try {
 							ByteArrayOutputStream baos = new ByteArrayOutputStream();
 							type.compileFeedFor(day, service, queryExecutor, baos);
 							
-							ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-							client.storeFile(filenameFrom(day, service, type), bais);
-							Closeables.closeQuietly(bais);
-							count++;
+							if(validator == null || validator.validate(new ByteArrayInputStream(baos.toByteArray()))){
+							
+								String filename = filenameFrom(day, service, type);
+								
+								OutputStream toServer = client.storeFileStream(filename);
+								toServer.write(baos.toByteArray());
+								Closeables.closeQuietly(toServer);
+								
+								if(!client.completePendingCommand()) {
+									throw new Exception("Failed to complete pending command");
+								}
+								
+								count++;
+								
+							}
 						} catch (Exception e) {
 							String desc = String.format("Exception creating %s feed for service %s for %s", type, service.getName(), day.toString("dd/MM/yyyy"));
 							log.record(new AdapterLogEntry(Severity.WARN).withSource(getClass()).withCause(e).withDescription(desc ));
-						}
+						} 
             		}
             	}
 			}

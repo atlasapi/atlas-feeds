@@ -3,6 +3,8 @@ package org.atlasapi.feeds.interlinking;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.atlasapi.feeds.interlinking.InterlinkBase.Operation;
 import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
@@ -113,16 +115,30 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 
     private InterlinkSeries fromSeries(Series series, InterlinkBrand linkBrand, Brand brand, DateTime from, DateTime to) {
         return new InterlinkSeries(idFrom(series), operationFor(series, brand, from, to), series.getSeriesNumber(), linkBrand)
-        	.withTitle(series.getTitle())
+        	.withTitle(extractSeriesTitle(series))
         	.withDescription(toDescription(series))
         	.withLastUpdated(series.getLastUpdated())
         	.withSummary(toSummary(series))
         	.withThumbnail(series.getImage());
     }
 
+	private String extractSeriesTitle(Series series) {
+		String title = series.getTitle();
+		Pattern pattern = Pattern.compile(".*(Series\\s*\\d+).*");
+		Matcher match = pattern.matcher(title);
+		if(match.matches()) {
+			return match.group(1);
+		}
+		return title;
+	}
+
 	private void populateFeedWithItem(InterlinkFeed feed, Item item, DateTime from, DateTime to, InterlinkContent parent) {
-        InterlinkEpisode episode = new InterlinkEpisode(idFrom(item), operationFor(item, from, to), itemIndexFrom(item), item.getCanonicalUri(), parent)
-            .withTitle(item.getTitle())
+		String episodeId = idFrom(item);
+		
+		InterlinkOnDemand onDemand = firstLinkLocation(item, from, to, episodeId);
+		
+		InterlinkEpisode episode = new InterlinkEpisode(episodeId, operationFor(item, from, to), itemIndexFrom(item), onDemand == null ? item.getCanonicalUri() : onDemand.uri(), parent)
+            .withTitle(extractItemTitle(item))
             .withDescription(toDescription(item))
             .withLastUpdated(item.getLastUpdated())
             .withSummary(toSummary(item))
@@ -141,11 +157,21 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
             }
         }
 
-        InterlinkOnDemand onDemand = firstLinkLocation(item, from, to, episode);
+        
         if (onDemand != null) {
             feed.addEntry(onDemand);
         }
     }
+
+	private String extractItemTitle(Item item) {
+		String title = item.getTitle();
+		Pattern pattern = Pattern.compile(".*(Episode\\s*\\d+).*");
+		Matcher match = pattern.matcher(title);
+		if(match.matches()) {
+			return match.group(1);
+		}
+		return title;
+	}
 
     private InterlinkBrand fromBrand(Brand brand, DateTime from, DateTime to) {
         return new InterlinkBrand(idFrom(brand), operationFor(brand, from, to))
@@ -282,12 +308,12 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 	   return null;
     }
     
-    protected InterlinkOnDemand firstLinkLocation(Item item, DateTime from, DateTime to, InterlinkEpisode episode) {
+    protected InterlinkOnDemand firstLinkLocation(Item item, DateTime from, DateTime to, String parentId) {
         for (Version version : item.nativeVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
                     if (TransportType.LINK.equals(location.getTransportType()) && qualifies(from, to, location)) {
-                        return fromLocation(location, episode, version.getDuration());
+                        return fromLocation(location, parentId, version.getDuration());
                     }
                 }
             }
@@ -295,11 +321,11 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         return null;
     }
     
-    protected InterlinkOnDemand fromLocation(Location linkLocation, InterlinkEpisode episode, Integer durationInSeconds) {
+    protected InterlinkOnDemand fromLocation(Location linkLocation, String parentId, Integer durationInSeconds) {
         Duration duration = durationInSeconds == null ? null : Duration.standardSeconds(durationInSeconds);
         Operation operation = linkLocation.getAvailable() ? Operation.STORE : Operation.DELETE;
         
-        return new InterlinkOnDemand(idFrom(linkLocation), operation, linkLocation.getPolicy().getAvailabilityStart(), linkLocation.getPolicy().getAvailabilityEnd(), duration, episode)
+        return new InterlinkOnDemand(idFrom(linkLocation), linkLocation.getUri(), operation, linkLocation.getPolicy().getAvailabilityStart(), linkLocation.getPolicy().getAvailabilityEnd(), duration, parentId)
             .withLastUpdated(linkLocation.getLastUpdated())
             .withService("4od");
     }
