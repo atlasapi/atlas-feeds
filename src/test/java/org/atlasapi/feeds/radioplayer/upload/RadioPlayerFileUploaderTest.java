@@ -24,22 +24,22 @@ import org.apache.ftpserver.ftplet.UserManager;
 import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
-import org.apache.xalan.xsltc.runtime.Operators;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.media.TransportType;
-import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
-import org.atlasapi.media.entity.Playlist;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
@@ -75,20 +75,20 @@ public class RadioPlayerFileUploaderTest {
 			startServer();
 
 			KnownTypeQueryExecutor queryExecutor = new KnownTypeQueryExecutor() {
-				
+
 				@Override
-				public List<Playlist> executePlaylistQuery(ContentQuery query) {
-					return null;
+				public List<Content> discover(ContentQuery query) {
+					return ImmutableList.<Content>of(buildItem(query));
 				}
-				
+
 				@Override
-				public List<Item> executeItemQuery(ContentQuery query) {
-					return ImmutableList.of(buildItem(query));
+				public List<Identified> executeUriQuery(Iterable<String> uris, ContentQuery query) {
+					throw new UnsupportedOperationException();
 				}
-				
+
 				@Override
-				public List<Brand> executeBrandQuery(ContentQuery query) {
-					return null;
+				public Schedule schedule(ContentQuery query) {
+					throw new UnsupportedOperationException();
 				}
 			};
 			

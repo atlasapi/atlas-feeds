@@ -26,7 +26,7 @@ import java.util.Set;
 import org.atlasapi.beans.BeanGraphWriter;
 import org.atlasapi.beans.BeanIntrospector;
 import org.atlasapi.content.rdf.annotations.RdfProperty;
-import org.atlasapi.media.entity.Description;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.vocabulary.RDF;
 import org.atlasapi.rdf.RdfIntrospector;
 import org.springframework.beans.BeanWrapperImpl;
@@ -201,7 +201,7 @@ public abstract class AbstractRdfTranslator<ModelType, ResourceType, PropertyTyp
     }
     
 	private String uriOf(Object bean) {
-		return (bean instanceof Description) ? ((Description) bean).getCanonicalUri() : null;
+		return (bean instanceof Identified) ? ((Identified) bean).getCanonicalUri() : null;
 	}
 
     protected void addCollectionPropertyValue(

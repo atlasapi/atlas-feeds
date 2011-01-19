@@ -44,7 +44,7 @@ public class RadioPlayerProgrammeInformationOutputterNoLocationTest {
 		
 		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
 		brand.setTitle("Electric Proms");
-		((Episode)testItem).setBrand(brand);
+		((Episode)testItem).setContainer(brand);
 		
 		Version version = new Version();
 		

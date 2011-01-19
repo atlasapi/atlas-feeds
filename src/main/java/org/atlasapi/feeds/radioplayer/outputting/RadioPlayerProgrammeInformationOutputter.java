@@ -83,7 +83,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 	private String itemTitle(Item item) {
 		String title = Strings.nullToEmpty(item.getTitle());
 		if (item instanceof Episode) {
-			Brand brand = ((Episode) item).getBrand();
+			Brand brand = ((Episode) item).getContainer();
 			if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
 				String brandTitle = brand.getTitle();
 				if (!brandTitle.equals(title)) {

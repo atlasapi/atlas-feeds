@@ -6,7 +6,6 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
@@ -37,15 +36,15 @@ public class SiteMapController {
 	
 	@RequestMapping("/feeds/sitemaps/sitemap.xml")
 	public String siteMapForBrand(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		List<Item> brands = queryExecutor.executeItemQuery(queryBuilder.build(request, Item.class));
+		List<Content> brands = queryExecutor.discover(queryBuilder.build(request));
 		response.setStatus(HttpServletResponse.SC_OK);
-		outputter.output(brands, response.getOutputStream());
+		outputter.output(Iterables.filter(brands, Item.class), response.getOutputStream());
 		return null;
 	}
 	
 	@RequestMapping("/feeds/sitemaps/index.xml")
 	public String siteMapFofPublisher(@RequestParam(value=HOST_PARAM, required=false) final String host, HttpServletRequest request, HttpServletResponse response) throws IOException {
-		List<? extends Content> brands = queryExecutor.executeBrandQuery(queryBuilder.build(request, Brand.class));
+		List<? extends Content> brands = queryExecutor.discover(queryBuilder.build(request));
 		
 		Iterable<SiteMapRef> refs = Iterables.transform(brands, new Function<Content, SiteMapRef>() {
 

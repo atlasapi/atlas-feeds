@@ -20,11 +20,11 @@ import java.util.Set;
 
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
-import org.atlasapi.media.entity.Playlist;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.rdf.beans.TypeMap;
@@ -51,7 +51,7 @@ public class NaiveTypeMap implements TypeMap {
 		map.put(Broadcast.class, Collections.singleton("http://purl.org/ontology/po/Broadcast"));
 		map.put(Brand.class, Collections.singleton("http://purl.org/ontology/po/Brand"));
 		map.put(Item.class, Collections.singleton("http://uriplay.org/elements/Item"));
-		map.put(Playlist.class, Collections.singleton("http://uriplay.org/elements/List"));
+		map.put(Container.class, Collections.singleton("http://uriplay.org/elements/List"));
 		map.put(Policy.class, Collections.singleton("http://uriplay.org/elements/Policy"));
 	}
 		

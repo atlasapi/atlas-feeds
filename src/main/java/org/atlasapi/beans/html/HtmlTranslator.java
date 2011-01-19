@@ -14,19 +14,20 @@ import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.atlasapi.beans.AtlasErrorSummary;
 import org.atlasapi.beans.BeanGraphWriter;
-import org.atlasapi.media.entity.Description;
+import org.atlasapi.media.entity.Container;
+import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Described;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
-import org.atlasapi.media.entity.Playlist;
+import org.atlasapi.media.entity.MutableContentList;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
-import org.atlasapi.media.util.ChildFinder;
+import org.atlasapi.media.entity.simple.Playlist;
 import org.springframework.core.io.ClassPathResource;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.url.UrlEncoding;
@@ -48,25 +49,16 @@ public class HtmlTranslator implements BeanGraphWriter {
 		footer = readHtmlFrom("/html/footer.htmlf"); 
 	}
 	
-	private Iterable<Object> rootsOf(Collection<Object> beans) {
-		return Iterables.filter(beans, Predicates.not(new ChildFinder(beans)));
-	}
-	
 	public void writeTo(Collection<Object> fullGraph, OutputStream stream) {
-		Iterable<Object> beansToProcess = beansToProcess(fullGraph);
 		Writer writer = new OutputStreamWriter(stream, Charsets.UTF_8);
 		try {
-			
 			beginPage(writer);
-			
-			if (beansToProcess != null && beansToProcess.iterator().hasNext()) {
-				writeSummaryOf(beansToProcess, writer);
-				writeFullDescriptionOf(beansToProcess, writer);
+			if (fullGraph != null && !Iterables.isEmpty(fullGraph)) {
+				writeFullDescriptionOf(fullGraph, writer);
 			} else {
 				writeNoBeansFound(writer);
 			}
 			endPage(writer);
-			
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -83,46 +75,34 @@ public class HtmlTranslator implements BeanGraphWriter {
 	private void writeNoBeansFound(Writer writer) throws IOException {
 		writer.write("<h1>Nothing matched your query :(</h1>");
 	}
-
-	private Iterable<Object> beansToProcess(Collection<Object> fullGraph) {
-		if (fullGraph == null) {
-			return null;
-		} else {
-			return rootsOf(fullGraph);
-		}
-	}
-
-	private void writeSummaryOf(Iterable<Object> beansToProcess, Writer writer) throws IOException {
-
-		if (totalNumberOfPlaylistsIn(beansToProcess) > 1) {
-			return; // don't output summary
-		}
-		
-		for (Object bean : beansToProcess) {
-
-			Description description = (Description) bean;
-			
-			bold(htmlEscape(description.getCanonicalUri()), writer);
-			writer.write("<br />");
-			
-			if (bean instanceof Playlist) {
-
-				Playlist playlist = (Playlist) bean;
-				writeSummaryBox("Playlist", playlist.getTitle(), playlist.getDescription(), firstEmbedCodeFrom(playlist), writer);
-				return;
-				
-			} 
-			
-			if (bean instanceof Item) {
-
-				Item item = (Item) bean;
-				writeSummaryBox("Item", item.getTitle(), item.getDescription(), firstEmbedCodeFrom(item), writer);
-				return;
-				
-			} 
-		}
-		
-	}
+//
+//	private void writeSummaryOf(Iterable<Object> beansToProcess, Writer writer) throws IOException {
+//
+//		if (totalNumberOfPlaylistsIn(beansToProcess) > 1) {
+//			return; // don't output summary
+//		}
+//		
+//		for (Object bean : beansToProcess) {
+//
+//			Identified description = (Identified) bean;
+//			
+//			bold(htmlEscape(description.getCanonicalUri()), writer);
+//			writer.write("<br />");
+//			
+//			if (bean instanceof Playlist) {
+//
+//				Playlist playlist = (Playlist) bean;
+//				writeSummaryBox("Playlist", playlist.getTitle(), playlist.getDescription(), firstEmbedCodeFrom(playlist), writer);
+//				return;
+//			} 
+//			
+//			if (bean instanceof Item) {
+//				Item item = (Item) bean;
+//				writeSummaryBox("Item", item.getTitle(), item.getDescription(), firstEmbedCodeFrom(item), writer);
+//				return;
+//			} 
+//		}
+//	}
 
 	private int totalNumberOfPlaylistsIn(Iterable<Object> beansToProcess) {
 		
@@ -135,22 +115,15 @@ public class HtmlTranslator implements BeanGraphWriter {
 		return count;
 	}
 
-	private String firstEmbedCodeFrom(Playlist playlist) {
+	private String firstEmbedCodeFrom(Container<?> playlist) {
 		
-		for (Item item : playlist.getItems()) {
+		for (Item item : playlist.getContents()) {
 			String embedCode = firstEmbedCodeFrom(item);
 			if (!StringUtils.isEmpty(embedCode)) {
 				return embedCode;
 			}
 		}
-		
-		for (Playlist innerPlaylist : playlist.getPlaylists()) {
-			String embedCode = firstEmbedCodeFrom(innerPlaylist);
-			if (!StringUtils.isEmpty(embedCode)) {
-				return embedCode;
-			}
-		}
-		
+
 		return null;
 	}
 
@@ -192,29 +165,14 @@ public class HtmlTranslator implements BeanGraphWriter {
 		writer.write(" ");
 	}
 
-	private void writeFullDescriptionOf(Iterable<Object> beansToProcess, Writer writer) throws IOException {
-		
-		Set<Object> processed = Sets.newHashSet();
-		
+	private static void writeFullDescriptionOf(Iterable<?> beansToProcess, Writer writer) throws IOException {
 		for (Object bean : beansToProcess) {
-
-			if (bean instanceof Playlist && !processed.contains(bean)) {
-
-				Playlist playList = (Playlist) bean;
-				writeHtmlForPlaylist(playList, writer, processed);
-				processed.add(playList);
-				processed.addAll(playList.getItems());
-			} 
-		}
-		
-		for (Object bean : beansToProcess) {
-
-			if (bean instanceof Item && !processed.contains(bean)) {
-
+			if (bean instanceof Item) {
 				Item item = (Item) bean;
 				writeHtmlFor(item, writer, true);
-				processed.add(item);
-			} 
+			} else {
+				writeHtmlForPlaylist((Described) bean, writer);
+			}
 		}
 	}
 
@@ -239,35 +197,23 @@ public class HtmlTranslator implements BeanGraphWriter {
 		return header;
 	}
 	
-	static void writeHtmlForPlaylist(Playlist playlist, Writer writer, Set<Object> processed) throws IOException {
-
-		beginDefinitionList("playlist", writer);
+	static void writeHtmlForPlaylist(Described playlist, Writer writer) throws IOException {
+		beginDefinitionList("list", writer);
 
 		defineTerm("<strong>Playlist :</strong> canonical URI", atlasLink(playlist.getCanonicalUri()), writer);
 		defineTerm("aliases", listOf(playlist.getAliases()), writer);
 		defineTerm("curie", playlist.getCurie(), writer);
 		defineTerm("title", playlist.getTitle(), writer);
 		defineTerm("description", playlist.getDescription(), writer);
-		defineTerm("contained in", listOf(containedInLinksFor(playlist)), writer);
 
-		if (!playlist.getItems().isEmpty()) {
-			beginNestedDefinitionList("Items", writer);
-
-			for (Item item : playlist.getItems()) {
-				writeHtmlFor(item, writer);
+		if (playlist instanceof MutableContentList<?>) {
+			MutableContentList<?> contentList = (MutableContentList<?>) playlist;
+			if (!contentList.getContents().isEmpty()) {
+				beginNestedDefinitionList("Contents", writer);
+				writeFullDescriptionOf(contentList.getContents(), writer);
+				endNestedDefinitionList(writer);
 			}
-			endNestedDefinitionList(writer);
 		}
-		
-		if (!playlist.getPlaylists().isEmpty()) {
-			beginNestedDefinitionList("Playlists", writer);
-
-			for (Playlist subPlaylist : playlist.getPlaylists()) {
-				writeHtmlForPlaylist(subPlaylist, writer, processed);
-			}
-			endNestedDefinitionList(writer);
-		}
-		
 		endDefinitionList(writer);
 	}
 
@@ -401,8 +347,8 @@ public class HtmlTranslator implements BeanGraphWriter {
 		return containedInLinksFor(item.getContainedInUris());
 	}
 	
-	private static Set<String> containedInLinksFor(Playlist playlist) {
-		return containedInLinksFor(playlist.getContainedInUris());
+	private static Set<String> containedInLinksFor(Content content) {
+		return containedInLinksFor(content.getContainedInUris());
 	}
 
 	private static Set<String> containedInLinksFor(Set<String> containedInUris) {

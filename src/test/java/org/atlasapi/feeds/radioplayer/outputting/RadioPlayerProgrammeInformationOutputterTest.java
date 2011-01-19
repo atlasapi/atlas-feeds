@@ -76,7 +76,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
 		brand.setTitle("Electric Proms");
-		((Episode)testItem).setBrand(brand);
+		((Episode)testItem).setContainer(brand);
 		
 		return ImmutableList.of(testItem);
 	}
@@ -91,7 +91,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
 		brand.setTitle("Electric Proms");
-		((Episode)testItem).setBrand(brand);
+		((Episode)testItem).setContainer(brand);
 
 		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(buildItems()));
 	}

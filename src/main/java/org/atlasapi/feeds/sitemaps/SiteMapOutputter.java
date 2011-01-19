@@ -3,7 +3,6 @@ package org.atlasapi.feeds.sitemaps;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.List;
 import java.util.Set;
 
 import javax.servlet.ServletOutputStream;
@@ -46,17 +45,17 @@ public class SiteMapOutputter {
 	private static final Truncator descTruncator = new Truncator().onlyTruncateAtAWordBoundary().withMaxLength(2048);
 	private static final Truncator titleTruncator = new Truncator().onlyTruncateAtAWordBoundary().withMaxLength(100);
 	
-	public void output(List<Item> feed, OutputStream out) throws IOException {
+	public void output(Iterable<Item> feed, OutputStream out) throws IOException {
 		Element feedElem = createFeed(feed);
 	    write(out, feedElem);  
 	}
 	
-	public void outputBrands(List<Brand> brands, String format, ServletOutputStream out) throws IOException {
+	public void outputBrands(Iterable<Brand> brands, String format, ServletOutputStream out) throws IOException {
 		Element feedElem = createFeedOfBrands(brands, format);
 	    write(out, feedElem);  
 	}
 	
-	private Element createFeedOfBrands(List<Brand> brands, String format) {
+	private Element createFeedOfBrands(Iterable<Brand> brands, String format) {
 		Element feed = new Element("urlset", SITEMAP.getUri());
 		for (Brand brand : brands) {
 			Element urlElement = createElement("url", SITEMAP);
@@ -66,7 +65,7 @@ public class SiteMapOutputter {
 		return feed;
 	}
 
-	private Element createFeed(List<Item> items) {
+	private Element createFeed(Iterable<Item> items) {
 		Element feed = new Element("urlset", SITEMAP.getUri());
 		VIDEO.addDeclarationTo(feed);
 		for (Item item : items) {
@@ -136,7 +135,7 @@ public class SiteMapOutputter {
 	private String itemTitle(Item item) {
 		String title = Strings.nullToEmpty(item.getTitle());
 		if (item instanceof Episode) {
-			Brand brand = ((Episode) item).getBrand();
+			Brand brand = ((Episode) item).getContainer();
 			if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
 				String brandTitle = brand.getTitle();
 				if (!brandTitle.equals(title)) {
@@ -151,7 +150,7 @@ public class SiteMapOutputter {
 	private void c4playerLoc(Element videoElem, Item item, Location location) {
 		Element playerLocElem = createElement("player_loc", VIDEO);
 		playerLocElem.addAttribute(new Attribute("allow_embed","no"));
-		Brand brand = ((Episode)item).getBrand();
+		Brand brand = ((Episode)item).getContainer();
 		String playerLoc = "http://www.channel4.com/static/programmes/asset/flash/swf/4odplayer-4.71.swf?brandTitle="+
 							brand.getTitle()+ 
 							"&wsBrandTitle="+

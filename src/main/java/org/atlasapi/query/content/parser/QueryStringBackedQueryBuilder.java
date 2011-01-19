@@ -17,8 +17,8 @@ package org.atlasapi.query.content.parser;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,10 +32,8 @@ import org.atlasapi.content.criteria.attribute.QueryFactory;
 import org.atlasapi.content.criteria.attribute.StringValuedAttribute;
 import org.atlasapi.content.criteria.operator.Operator;
 import org.atlasapi.content.criteria.operator.Operators;
-import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Country;
-import org.atlasapi.media.entity.Description;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 
@@ -80,12 +78,12 @@ public class QueryStringBackedQueryBuilder {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public ContentQuery build(HttpServletRequest request, Class<? extends Content> context) {
-		return build(request.getParameterMap(), context).copyWithSelection(selectionBuilder.build(request));
+	public ContentQuery build(HttpServletRequest request) {
+		return build(request.getParameterMap()).copyWithSelection(selectionBuilder.build(request));
 	}
 	
-	ContentQuery build(Map<String, String[]> params,  Class<? extends Content> context) {
-		return buildFromFilteredMap(filter(params), context);
+	ContentQuery build(Map<String, String[]> params) {
+		return buildFromFilteredMap(filter(params));
 	}
 	
 	private Map<String, String[]> filter(Map<String, String[]> parameterMap) {
@@ -98,7 +96,7 @@ public class QueryStringBackedQueryBuilder {
 		return filtered;
 	}
 	
-	private ContentQuery buildFromFilteredMap(Map<String, String[]> params, Class<? extends Description> context) {
+	private ContentQuery buildFromFilteredMap(Map<String, String[]> params) {
 		if (params.isEmpty()) {
 			throw new IllegalArgumentException("No parameters specified");
 		}
@@ -110,7 +108,7 @@ public class QueryStringBackedQueryBuilder {
 			String attributeName = param.getKey();
 			for (String value : param.getValue()) {
 				
-				AttributeOperatorValues query = toQuery(attributeName, value, context);
+				AttributeOperatorValues query = toQuery(attributeName, value);
 				
 				userSuppliedAttributes.add(query.attribute);
 				
@@ -164,13 +162,13 @@ public class QueryStringBackedQueryBuilder {
 		}
 	}
 	
-	private AttributeOperatorValues toQuery(String paramKey, String paramValue, Class<? extends Description> queryContext) {
+	private AttributeOperatorValues toQuery(String paramKey, String paramValue) {
 		String[] parts = paramKey.split(ATTRIBUTE_OPERATOR_SEPERATOR);
 		if (parts.length > 2) {
 			throw new IllegalArgumentException("Malformed attribute and operator combination");
 		}
 		String attributeName = parts[0];
-		Attribute<?> attribute = Attributes.lookup(attributeName, queryContext);
+		Attribute<?> attribute = Attributes.lookup(attributeName);
         if (attribute == null) {
             throw new IllegalArgumentException(attributeName + " is not a valid attribute");
         }

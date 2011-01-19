@@ -63,7 +63,7 @@ public enum RadioPlayerFeedType {
 
 	public void compileFeedFor(DateTime date, RadioPlayerService service, KnownTypeQueryExecutor queryExecutor, OutputStream out) throws IOException {
 		if(outputter != null) {
-			outputter.output(date, service, queryExecutor.executeItemQuery(queryFor(date, service.getServiceUri())), out);
+			outputter.output(date, service, queryExecutor.schedule(queryFor(date, service.getServiceUri())).getItemsFromOnlyChannel(), out);
 		}
 	}
 }
