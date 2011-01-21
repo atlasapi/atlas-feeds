@@ -10,6 +10,8 @@ import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.FtpException;
 import org.apache.ftpserver.listener.ListenerFactory;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFileUploaderTest.TestUser;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFileUploaderTest.TestUserManager;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

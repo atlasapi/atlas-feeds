@@ -14,8 +14,16 @@ import java.util.concurrent.Executor;
 
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
+import org.apache.ftpserver.ftplet.Authentication;
+import org.apache.ftpserver.ftplet.AuthenticationFailedException;
+import org.apache.ftpserver.ftplet.Authority;
+import org.apache.ftpserver.ftplet.AuthorizationRequest;
 import org.apache.ftpserver.ftplet.FtpException;
+import org.apache.ftpserver.ftplet.User;
+import org.apache.ftpserver.ftplet.UserManager;
 import org.apache.ftpserver.listener.ListenerFactory;
+import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
+import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.attribute.Attribute;
 import org.atlasapi.content.criteria.attribute.Attributes;
@@ -175,4 +183,120 @@ public class RadioPlayerFileUploaderTest {
 	}
 
 	private static final DateTimeZone TIMEZONE = DateTimeZone.forOffsetHours(8);
+	
+	public static class TestUser implements User {
+
+	    private final String TEST_USERNAME;
+	    private final String TEST_PASSWORD;
+	    private final File homeDir;
+
+	    public TestUser(String name, String password, File homeDir) {
+	        this.TEST_USERNAME = name;
+	        this.TEST_PASSWORD = password;
+	        this.homeDir = homeDir;
+	    }
+	    
+	    @Override
+	    public String getName() {
+	        return TEST_USERNAME;
+	    }
+
+	    @Override
+	    public String getPassword() {
+	        return TEST_PASSWORD;
+	    }
+
+	    @Override
+	    public List<Authority> getAuthorities() {
+	        return ImmutableList.<Authority> of(new WritePermission());
+	    }
+
+	    @Override
+	    public List<Authority> getAuthorities(Class<? extends Authority> clazz) {
+	        if (clazz.equals(WritePermission.class)) {
+	            return ImmutableList.<Authority> of(new WritePermission());
+	        }
+	        return ImmutableList.<Authority> of();
+	    }
+
+	    @Override
+	    public AuthorizationRequest authorize(AuthorizationRequest request) {
+	        return new WritePermission().authorize(request);
+	    }
+
+	    @Override
+	    public int getMaxIdleTime() {
+	        return 0;
+	    }
+
+	    @Override
+	    public boolean getEnabled() {
+	        return true;
+	    }
+
+	    @Override
+	    public String getHomeDirectory() {
+	        return homeDir.getAbsolutePath();
+	    }
+	};
+	
+	public static class TestUserManager implements UserManager {
+	    
+	    private final String TEST_USERNAME;
+	    private final User testUser;
+
+	    public TestUserManager(User user) {
+	        this.TEST_USERNAME = user.getName();
+	        this.testUser = user;
+	    }
+
+	    @Override
+	    public User getUserByName(String username) throws FtpException {
+	        if (username == TEST_USERNAME) {
+	            return testUser;
+	        }
+	        return null;
+	    }
+
+	    @Override
+	    public String[] getAllUserNames() throws FtpException {
+	        return new String[] { TEST_USERNAME };
+	    }
+
+	    @Override
+	    public void delete(String username) throws FtpException {
+	        // no-op
+	    }
+
+	    @Override
+	    public void save(User user) throws FtpException {
+	    }
+
+	    @Override
+	    public boolean doesExist(String username) throws FtpException {
+	        return username.equals(TEST_USERNAME);
+	    }
+
+	    @Override
+	    public User authenticate(Authentication authentication) throws AuthenticationFailedException {
+	        if (authentication instanceof UsernamePasswordAuthentication) {
+	            UsernamePasswordAuthentication upauth = (UsernamePasswordAuthentication) authentication;
+	            if (upauth.getUsername().equals(TEST_USERNAME)) {
+	                return testUser;
+	            }
+	        }
+	        throw new AuthenticationFailedException();
+	    }
+
+	    @Override
+	    public String getAdminName() throws FtpException {
+	        return "admin";
+	    }
+
+	    @Override
+	    public boolean isAdmin(String username) throws FtpException {
+	        return username.equals("admin");
+	    }
+
+	}
 }
