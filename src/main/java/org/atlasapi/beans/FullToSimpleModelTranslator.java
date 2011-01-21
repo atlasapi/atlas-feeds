@@ -123,6 +123,9 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 		simpleDescription.setClips(clipToSimple(content.getClips()));
 		simpleDescription.setSameAs(content.getEquivalentTo());
 		simpleDescription.setMediaType(content.getMediaType().toString().toLowerCase());
+		if (content.getSpecialization() != null) {
+		    simpleDescription.setSpecialization(content.getSpecialization().toString().toLowerCase());
+		}
 	}
 
 	private static void copyDescriptionAttributesTo(org.atlasapi.media.entity.Description description, Aliased simpleDescription) {
