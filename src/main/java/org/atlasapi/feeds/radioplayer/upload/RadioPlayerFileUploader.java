@@ -111,8 +111,8 @@ public class RadioPlayerFileUploader implements Runnable {
     }
 
     private void uploadFiles(FTPClient client, FTPClient checkerClient) {
-        RemoteCheckingRadioPlayerUploader uploader = new RemoteCheckingRadioPlayerUploader(checkerClient, new LoggingRadioPlayerUploader(log, new ValidatingRadioPlayerUploader(validator, new BasicRadioPlayerUploader(client))));
-        
+//        RemoteCheckingRadioPlayerUploader uploader = new RemoteCheckingRadioPlayerUploader(checkerClient, new LoggingRadioPlayerUploader(log, new ValidatingRadioPlayerUploader(validator, new BasicRadioPlayerUploader(client))));
+        RadioPlayerUploader uploader = new ValidatingRadioPlayerUploader(validator, new BasicRadioPlayerUploader(client));
         int count = 0;
         DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
         
