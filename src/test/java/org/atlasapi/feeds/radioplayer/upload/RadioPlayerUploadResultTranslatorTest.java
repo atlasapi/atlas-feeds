@@ -22,7 +22,7 @@ public class RadioPlayerUploadResultTranslatorTest {
         
         DateTime time = new DateTime(DateTimeZones.UTC);
         
-        RadioPlayerUploadResult result = DefaultRadioPlayerUploadResult.successfulUpload("success", time).withMessage("SUCCESS");
+        RadioPlayerUploadResult result = DefaultRadioPlayerUploadResult.successfulUpload("success").withUploadTime(time).withMessage("SUCCESS");
         
         DBObject encoded = translator.toDBObject(result);
         
@@ -49,7 +49,7 @@ public class RadioPlayerUploadResultTranslatorTest {
         
         assertThat(exception, is(notNullValue()));
         
-        RadioPlayerUploadResult result = DefaultRadioPlayerUploadResult.failedUpload("failed", time).withMessage("FAILURE").withCause(exception);
+        RadioPlayerUploadResult result = DefaultRadioPlayerUploadResult.failedUpload("failed").withUploadTime(time).withMessage("FAILURE").withCause(exception);
         
         DBObject encoded = translator.toDBObject(result);
         

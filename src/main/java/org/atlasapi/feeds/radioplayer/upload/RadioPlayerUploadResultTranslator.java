@@ -2,8 +2,6 @@ package org.atlasapi.feeds.radioplayer.upload;
 
 import static com.metabroadcast.common.persistence.mongo.MongoConstants.ID;
 
-import org.joda.time.DateTime;
-
 import com.metabroadcast.common.persistence.translator.TranslatorUtils;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -38,11 +36,15 @@ public class RadioPlayerUploadResultTranslator {
 
         Boolean success = TranslatorUtils.toBoolean(dbo, "success");
         String filename = TranslatorUtils.toString(dbo, "filename");
-        DateTime time = TranslatorUtils.toDateTime(dbo, "time");
 
-        DefaultRadioPlayerUploadResult result = success ? DefaultRadioPlayerUploadResult.successfulUpload(filename, time) : DefaultRadioPlayerUploadResult.failedUpload(filename, time);
+        DefaultRadioPlayerUploadResult result = null;
+        if(success == null) {
+            result = DefaultRadioPlayerUploadResult.unknownUpload(filename);
+        }else {
+            result = success ? DefaultRadioPlayerUploadResult.successfulUpload(filename) : DefaultRadioPlayerUploadResult.failedUpload(filename);
+        }
 
-        result.withMessage(TranslatorUtils.toString(dbo, "message"));
+        result.withUploadTime(TranslatorUtils.toDateTime(dbo, "time")).withMessage(TranslatorUtils.toString(dbo, "message"));
 
         if (dbo.containsField("exception")) {
             result.withCause(exceptionTranslator.fromDBObject((DBObject) dbo.get("exception")));

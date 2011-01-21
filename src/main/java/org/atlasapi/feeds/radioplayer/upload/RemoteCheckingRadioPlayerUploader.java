@@ -75,7 +75,7 @@ public class RemoteCheckingRadioPlayerUploader implements RadioPlayerUploader {
         public String message() {
             Boolean success = getSuccess();
             if(success == null){
-                return "Couldn't determine upload success remote server";
+                return "Couldn't determine upload success on remote server";
             } else {
                 return success ? "Uploaded successfully" : "Upload rejected on remote server";
             }
