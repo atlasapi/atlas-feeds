@@ -2,9 +2,10 @@ package org.atlasapi.feeds.radioplayer.upload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
+import java.io.IOException;
+import java.net.SocketException;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.net.ftp.FTPClient;
@@ -22,7 +23,7 @@ import org.joda.time.format.DateTimeFormat;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
+import com.google.common.collect.Lists;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerFileUploader implements Runnable {
@@ -35,7 +36,9 @@ public class RadioPlayerFileUploader implements Runnable {
 	
 	private RadioPlayerXMLValidator validator = null;
 	private Set<RadioPlayerService> services = RadioPlayerServices.services;
-	private int lookAhead = 10;
+	private int lookAhead = 7;
+    private int lookBack = 2;
+    private RadioPlayerUploadResultRecorder recorder;
 
 	public RadioPlayerFileUploader(RadioPlayerFTPCredentials credentials, String ftpPath, KnownTypeQueryExecutor queryExecutor, AdapterLog log) {
 		this.credentials = credentials;
@@ -59,6 +62,16 @@ public class RadioPlayerFileUploader implements Runnable {
 		return this;
 	}
 	
+	public RadioPlayerFileUploader withLookBack(int lookBack) {
+        this.lookBack = lookBack;
+	    return this;
+	}
+	
+	public RadioPlayerFileUploader withResultRecorder(RadioPlayerUploadResultRecorder recorder) {
+	    this.recorder = recorder;
+	    return this;
+	}
+	
 	@Override
 	public void run() {
 		log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass()).withDescription("RadioPlayerFileUploader started"));
@@ -70,56 +83,67 @@ public class RadioPlayerFileUploader implements Runnable {
 			
 			checkNotNull(ftpPath, "No Radioplayer FTP Path, set rp.ftp.path");
 
-			FTPClient client = new FTPClient();
-		
-			client.connect(credentials.server(), credentials.port());
-			
-			client.enterLocalPassiveMode();
-			
-			if (!client.login(credentials.username(), credentials.password())) {
-                throw new RuntimeException("Unable to connect to " + credentials.server() + " with username: " + credentials.username() + " and password...");
-            }
-			
-            if (!ftpPath.isEmpty() && !client.changeWorkingDirectory(ftpPath)) {
-                throw new RuntimeException("Unable to change working directory to " + ftpPath);
-            }
+			FTPClient client = connectAndLogin();
+			FTPClient checkerClient = connectAndLogin();
             
-            int count = 0;
-            DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(2);
-            for (int i = 0; i < lookAhead; i++, day = day.plusDays(1)) {
-            	for (RadioPlayerService service : services) {
-            		for(RadioPlayerFeedType type : ImmutableSet.of(RadioPlayerFeedType.PI)) {
-            			try {
-							ByteArrayOutputStream baos = new ByteArrayOutputStream();
-							type.compileFeedFor(day, service, queryExecutor, baos);
-							
-							if(validator == null || validator.validate(new ByteArrayInputStream(baos.toByteArray()))){
-							
-								String filename = filenameFrom(day, service, type);
-								
-								OutputStream toServer = client.storeFileStream(filename);
-								toServer.write(baos.toByteArray());
-								Closeables.closeQuietly(toServer);
-								
-								if(!client.completePendingCommand()) {
-									throw new Exception("Failed to complete pending command");
-								}
-								
-								count++;
-								
-							}
-						} catch (Exception e) {
-							String desc = String.format("Exception creating %s feed for service %s for %s", type, service.getName(), day.toString("dd/MM/yyyy"));
-							log.record(new AdapterLogEntry(Severity.WARN).withSource(getClass()).withCause(e).withDescription(desc ));
-						} 
-            		}
-            	}
-			}
-            log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass()).withDescription("RadioPlayerFileUploader finished: "+count+" files uploaded"));
+            uploadFiles(client, checkerClient);
+            
 		} catch (Exception e) {
 			log.record(new AdapterLogEntry(Severity.WARN).withCause(e).withDescription("Exception running RadioPlayerFileUploader"));
 		}
 	}
+
+    private FTPClient connectAndLogin() throws SocketException, IOException {
+        FTPClient client = new FTPClient();
+
+        client.connect(credentials.server(), credentials.port());
+        
+        client.enterLocalPassiveMode();
+        
+        if (!client.login(credentials.username(), credentials.password())) {
+            throw new RuntimeException("Unable to connect to " + credentials.server() + " with username: " + credentials.username() + " and password...");
+        }
+        
+        if (!ftpPath.isEmpty() && !client.changeWorkingDirectory(ftpPath)) {
+            throw new RuntimeException("Unable to change working directory to " + ftpPath);
+        }
+        return client;
+    }
+
+    private void uploadFiles(FTPClient client, FTPClient checkerClient) {
+        RemoteCheckingRadioPlayerUploader uploader = new RemoteCheckingRadioPlayerUploader(checkerClient, new LoggingRadioPlayerUploader(log, new ValidatingRadioPlayerUploader(validator, new BasicRadioPlayerUploader(client))));
+        
+        int count = 0;
+        DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
+        
+        List<RadioPlayerUploadResult> results = Lists.newArrayListWithCapacity((lookAhead+lookBack+1) * services.size());
+        
+        for (int i = 0; i < (lookAhead+lookBack+1); i++, day = day.plusDays(1)) {
+        	for (RadioPlayerService service : services) {
+        	    RadioPlayerFeedType type = RadioPlayerFeedType.PI;
+        	    String filename = filenameFrom(day, service, type);
+    			try {
+    				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    type.compileFeedFor(day, service, queryExecutor, baos);
+
+                    results.add(uploader.upload(filename, baos.toByteArray()));
+
+                    count++;
+    					
+    			} catch (Exception e) {
+    				String desc = String.format("Exception creating %s feed for service %s for %s", type, service.getName(), day.toString("dd/MM/yyyy"));
+    				log.record(new AdapterLogEntry(Severity.WARN).withSource(getClass()).withCause(e).withDescription(desc ));
+    				results.add(DefaultRadioPlayerUploadResult.failedUpload(filename).withCause(e).withMessage(e.getMessage()));
+    			} 
+        	}
+        }
+        
+        if (recorder != null) {
+            recorder.record(results);
+        }
+
+        log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass()).withDescription("RadioPlayerFileUploader finished: "+count+" files uploaded"));
+    }
 
 	private String filenameFrom(DateTime today, RadioPlayerService service, RadioPlayerFeedType type) {
 		String date = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZone.UTC).print(today);

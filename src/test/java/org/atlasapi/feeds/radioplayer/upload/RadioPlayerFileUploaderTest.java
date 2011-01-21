@@ -14,16 +14,8 @@ import java.util.concurrent.Executor;
 
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
-import org.apache.ftpserver.ftplet.Authentication;
-import org.apache.ftpserver.ftplet.AuthenticationFailedException;
-import org.apache.ftpserver.ftplet.Authority;
-import org.apache.ftpserver.ftplet.AuthorizationRequest;
 import org.apache.ftpserver.ftplet.FtpException;
-import org.apache.ftpserver.ftplet.User;
-import org.apache.ftpserver.ftplet.UserManager;
 import org.apache.ftpserver.listener.ListenerFactory;
-import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
-import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.attribute.Attribute;
 import org.atlasapi.content.criteria.attribute.Attributes;
@@ -96,8 +88,8 @@ public class RadioPlayerFileUploaderTest {
 			
 			ImmutableList<RadioPlayerService> services = ImmutableList.of(RadioPlayerServices.all.get("340"));
 			RadioPlayerFTPCredentials credentials = RadioPlayerFTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
-			int lookAhead = 2;
-			RadioPlayerFileUploader uploader = new RadioPlayerFileUploader(credentials, "files", queryExecutor, new NullAdapterLog()).withServices(services).withLookAhead(lookAhead);
+			int lookAhead = 0, lookBack = 0;
+			RadioPlayerFileUploader uploader = new RadioPlayerFileUploader(credentials, "files", queryExecutor, new NullAdapterLog()).withServices(services).withLookAhead(lookAhead).withLookBack(lookBack);
 
 			Executor executor = MoreExecutors.sameThreadExecutor();
 
@@ -115,16 +107,13 @@ public class RadioPlayerFileUploaderTest {
 				}
 			});
 			
-			assertThat(uploaded.size(), is(equalTo(lookAhead)));
+			assertThat(uploaded.size(), is(equalTo(1)));
 
-			DateTime day = new DateTime(DateTimeZones.UTC).minusDays(lookAhead);
-			for (int i = 0; i < lookAhead; i++, day = day.plusDays(1)) {
-				for (RadioPlayerService service : services) {
-					String filename = String.format("%4d%02d%02d_%s_PI.xml", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth(), service.getRadioplayerId());
-					assertThat(uploaded.keySet(), hasItem(filename));
-					assertThat(uploaded.get(filename).length(), greaterThan(0L));
-				}
-			}
+			DateTime day = new DateTime(DateTimeZones.UTC);
+		
+			String filename = String.format("%4d%02d%02d_340_PI.xml", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth());
+			assertThat(uploaded.keySet(), hasItem(filename));
+			assertThat(uploaded.get(filename).length(), greaterThan(0L));
 
 		} finally {
 			server.stop();
@@ -141,110 +130,15 @@ public class RadioPlayerFileUploaderTest {
 
 		serverFactory.addListener("default", factory.createListener());
 
-		serverFactory.setUserManager(new TestUserManager());
+		serverFactory.setUserManager(new TestUserManager(new TestUser(TEST_USERNAME, TEST_PASSWORD, dir)));
 		
 		server = serverFactory.createServer();
 
 		server.start();
 	}
 
-	private class TestUserManager implements UserManager {
 
-		@Override
-		public User getUserByName(String username) throws FtpException {
-			if (username == TEST_USERNAME) {
-				return testUser;
-			}
-			return null;
-		}
 
-		@Override
-		public String[] getAllUserNames() throws FtpException {
-			return new String[] { TEST_USERNAME };
-		}
-
-		@Override
-		public void delete(String username) throws FtpException {
-			// no-op
-		}
-
-		@Override
-		public void save(User user) throws FtpException {
-		}
-
-		@Override
-		public boolean doesExist(String username) throws FtpException {
-			return username.equals(TEST_USERNAME);
-		}
-
-		@Override
-		public User authenticate(Authentication authentication) throws AuthenticationFailedException {
-			if (authentication instanceof UsernamePasswordAuthentication) {
-				UsernamePasswordAuthentication upauth = (UsernamePasswordAuthentication) authentication;
-				if (upauth.getUsername().equals(TEST_USERNAME)) {
-					return testUser;
-				}
-			}
-			throw new AuthenticationFailedException();
-		}
-
-		@Override
-		public String getAdminName() throws FtpException {
-			return "admin";
-		}
-
-		@Override
-		public boolean isAdmin(String username) throws FtpException {
-			return username.equals("admin");
-		}
-
-	}
-
-	private final User testUser = new User() {
-
-		@Override
-		public String getName() {
-			return TEST_USERNAME;
-		}
-
-		@Override
-		public String getPassword() {
-			return TEST_PASSWORD;
-		}
-
-		@Override
-		public List<Authority> getAuthorities() {
-			return ImmutableList.<Authority> of(new WritePermission());
-		}
-
-		@Override
-		public List<Authority> getAuthorities(Class<? extends Authority> clazz) {
-			if (clazz.equals(WritePermission.class)) {
-				return ImmutableList.<Authority> of(new WritePermission());
-			}
-			return ImmutableList.<Authority> of();
-		}
-
-		@Override
-		public AuthorizationRequest authorize(AuthorizationRequest request) {
-			return new WritePermission().authorize(request);
-		}
-
-		@Override
-		public int getMaxIdleTime() {
-			return 0;
-		}
-
-		@Override
-		public boolean getEnabled() {
-			return true;
-		}
-
-		@Override
-		public String getHomeDirectory() {
-			return dir.getAbsolutePath();
-		}
-	};
 
 	public static Item buildItem(ContentQuery query) {
 		String service = (String) QueryFragmentExtractor.extract(query, ImmutableSet.<Attribute<?>>of(Attributes.BROADCAST_ON)).requireValue().getValue().get(0);
