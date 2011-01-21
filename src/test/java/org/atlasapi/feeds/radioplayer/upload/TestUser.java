@@ -15,6 +15,12 @@ public class TestUser implements User {
     private final String TEST_USERNAME;
     private final String TEST_PASSWORD;
     private final File homeDir;
+    
+    public TestUser() {
+        TEST_USERNAME = "";
+        TEST_PASSWORD = "";
+        homeDir = null;
+    }
 
     public TestUser(String name, String password, File homeDir) {
         this.TEST_USERNAME = name;

@@ -11,6 +11,11 @@ public class TestUserManager implements UserManager {
     
     private final String TEST_USERNAME;
     private final User testUser;
+    
+    public TestUserManager() {
+        TEST_USERNAME = "";
+        testUser = null;
+    }
 
     public TestUserManager(User user) {
         this.TEST_USERNAME = user.getName();
