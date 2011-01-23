@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Test;
@@ -23,7 +24,7 @@ public class RadioPlayerUploadHealthProbeTest {
 //    private static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
     public final DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     public final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(mongo, ImmutableList.of(RadioPlayerServices.all.get("340"))).withLookAhead(0).withLookBack(0);
-    private RadioPlayerUploadResultRecorder recorder = new MongoRadioPlayerUploadResultRecorder(mongo);
+    private FTPUploadResultRecorder recorder = new MongoFTPUploadResultRecorder(mongo);
     
     @After
     public void tearDown() {
@@ -40,7 +41,7 @@ public class RadioPlayerUploadHealthProbeTest {
         assertThat(Iterables.getOnlyElement(result.entries()).getValue(), is(equalTo("No Data.")));
         
         DateTime succssDate = new DateTime(DateTimeZones.UTC);
-        recorder.record(ImmutableList.<RadioPlayerUploadResult>of(DefaultRadioPlayerUploadResult.successfulUpload(String.format("%s_340_PI.xml", succssDate.toString("yyyyMMdd"))).withUploadTime(succssDate)));
+        recorder.record(new DefaultFTPUploadResult(String.format("%s_340_PI.xml", succssDate.toString("yyyyMMdd")), succssDate, FTPUploadResultType.SUCCESS).withMessage("FAIL"));
         
         result = probe.probe();
         
@@ -49,8 +50,8 @@ public class RadioPlayerUploadHealthProbeTest {
 //        assertThat(Iterables.getOnlyElement(result.entries()).getValue(), endsWith(String.format("%s. No failures.", succssDate.toString(DATE_TIME))));
         
         DateTime failureDate = new DateTime(DateTimeZones.UTC);
-        recorder.record(ImmutableList.<RadioPlayerUploadResult>of(DefaultRadioPlayerUploadResult.failedUpload(String.format("%s_340_PI.xml", failureDate.toString("yyyyMMdd"))).withUploadTime(failureDate).withMessage("FAIL")));
-        
+        recorder.record(new DefaultFTPUploadResult(String.format("%s_340_PI.xml", failureDate.toString("yyyyMMdd")), failureDate, FTPUploadResultType.FAILURE).withMessage("FAIL"));
+         
         result = probe.probe();
         
         assertThat(Iterables.size(result.entries()), is(equalTo(1)));
@@ -62,7 +63,7 @@ public class RadioPlayerUploadHealthProbeTest {
     public void testFailureFirst() {
         
         DateTime failureDate = new DateTime(DateTimeZones.UTC);
-        recorder.record(ImmutableList.<RadioPlayerUploadResult>of(DefaultRadioPlayerUploadResult.failedUpload(String.format("%s_340_PI.xml", failureDate.toString("yyyyMMdd"))).withUploadTime(failureDate).withMessage("FAIL")));
+        recorder.record(new DefaultFTPUploadResult(String.format("%s_340_PI.xml", failureDate.toString("yyyyMMdd")), failureDate, FTPUploadResultType.FAILURE).withMessage("FAIL"));
         
         ProbeResult result = probe.probe();
         

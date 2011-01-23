@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import java.util.ArrayList;
 
+import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -15,20 +16,20 @@ import com.mongodb.DBObject;
 
 public class RadioPlayerUploadResultTranslatorTest {
 
-    private final RadioPlayerUploadResultTranslator translator = new RadioPlayerUploadResultTranslator();
+    private final FTPUploadResultTranslator translator = new FTPUploadResultTranslator();
     
     @Test
     public void testCodingOfSuccessResult() {
         
         DateTime time = new DateTime(DateTimeZones.UTC);
         
-        RadioPlayerUploadResult result = DefaultRadioPlayerUploadResult.successfulUpload("success").withUploadTime(time).withMessage("SUCCESS");
+        FTPUploadResult result = new DefaultFTPUploadResult("success", time, FTPUploadResultType.SUCCESS).withMessage("SUCCESS");
         
         DBObject encoded = translator.toDBObject(result);
         
-        RadioPlayerUploadResult decoded = translator.fromDBObject(encoded);
+        FTPUploadResult decoded = translator.fromDBObject(encoded);
         
-        assertThat(decoded.wasSuccessful(), is(equalTo(result.wasSuccessful())));
+        assertThat(decoded.type(), is(equalTo(result.type())));
         assertThat(decoded.filename(), is(equalTo(result.filename())));
         assertThat(decoded.uploadTime(), is(equalTo(result.uploadTime())));
         assertThat(decoded.message(), is(equalTo(result.message())));
@@ -49,19 +50,19 @@ public class RadioPlayerUploadResultTranslatorTest {
         
         assertThat(exception, is(notNullValue()));
         
-        RadioPlayerUploadResult result = DefaultRadioPlayerUploadResult.failedUpload("failed").withUploadTime(time).withMessage("FAILURE").withCause(exception);
+        FTPUploadResult result = new DefaultFTPUploadResult("failed", time, FTPUploadResultType.FAILURE).withMessage("FAILURE").withCause(exception);
         
         DBObject encoded = translator.toDBObject(result);
         
-        RadioPlayerUploadResult decoded = translator.fromDBObject(encoded);
+        FTPUploadResult decoded = translator.fromDBObject(encoded);
         
-        assertThat(decoded.wasSuccessful(), is(equalTo(result.wasSuccessful())));
+        assertThat(decoded.type(), is(equalTo(result.type())));
         assertThat(decoded.filename(), is(equalTo(result.filename())));
         assertThat(decoded.uploadTime(), is(equalTo(result.uploadTime())));
         assertThat(decoded.message(), is(equalTo(result.message())));
         
-        assertThat(decoded.exception().className(), is(equalTo(result.exception().className())));
-        assertThat(decoded.exception().message(), is(equalTo(result.exception().message())));
-        assertThat(decoded.exception().fullTrace(), is(equalTo(result.exception().fullTrace())));
+        assertThat(decoded.exceptionSummary().className(), is(equalTo(result.exceptionSummary().className())));
+        assertThat(decoded.exceptionSummary().message(), is(equalTo(result.exceptionSummary().message())));
+        assertThat(decoded.exceptionSummary().fullTrace(), is(equalTo(result.exceptionSummary().fullTrace())));
     }
 }

@@ -3,6 +3,7 @@ package org.atlasapi.feeds.radioplayer.upload;
 import java.util.List;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -22,7 +23,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     private static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
 
     private DBCollection results;
-    private RadioPlayerUploadResultTranslator translator;
+    private FTPUploadResultTranslator translator;
     private final Iterable<RadioPlayerService> services;
     private int lookBack = 2;
     private int lookAhead = 7;
@@ -30,7 +31,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     public RadioPlayerUploadHealthProbe(DatabasedMongo mongo, Iterable<RadioPlayerService> services) {
         this.services = services;
         this.results = mongo.collection("radioplayer");
-        this.translator = new RadioPlayerUploadResultTranslator();
+        this.translator = new FTPUploadResultTranslator();
     }
 
     public RadioPlayerUploadHealthProbe withLookBack(int lookBack) {
@@ -48,8 +49,8 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         ProbeResult result = new ProbeResult("UK Radioplayer");
 
         DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
-        for (RadioPlayerService service : services) {
-            for (int i = 0; i < (lookAhead + lookBack + 1); i++, day = day.plusDays(1)) {
+        for(RadioPlayerService service : services) {
+            for(int i = 0; i < (lookAhead + lookBack + 1); i++, day = day.plusDays(1)) {
                 addEntry(result, service, day);
             }
         }
@@ -60,51 +61,45 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     private void addEntry(ProbeResult result, RadioPlayerService service, DateTime day) {
         boolean success = true, failure = true, unknown = true;
         DBCursor resultsForServiceDay = results.find(new BasicDBObject("filename", filenameFor(service, day))).sort(new BasicDBObject("time", -1));
-        List<RadioPlayerUploadResult> results = Lists.newArrayList();
-        for (DBObject dbo : resultsForServiceDay) {
-            RadioPlayerUploadResult translated = translator.fromDBObject(dbo);
-            if (translated.wasSuccessful() == null) { 
-                if(unknown) {
-                    results.add(translated);
-                    unknown = false;
-                }
-            } else if (translated.wasSuccessful() && success) {
+        List<FTPUploadResult> results = Lists.newArrayList();
+        for(DBObject dbo : resultsForServiceDay) {
+            FTPUploadResult translated = translator.fromDBObject(dbo);
+            if(FTPUploadResultType.UNKNOWN.equals(translated.type()) && unknown) {
+                results.add(translated);
+                unknown = false;
+            } else if(FTPUploadResultType.SUCCESS.equals(translated.type()) && success) {
                 results.add(translated);
                 success = false;
-            } else if (!translated.wasSuccessful() && failure) {
+            } else if(FTPUploadResultType.FAILURE.equals(translated.type()) && failure) {
                 results.add(translated);
                 failure = false;
             }
-            if (!success && !failure && !unknown) {
+            if(!success && !failure && !unknown) {
                 break;
             }
         }
         addEntry(result, String.format("%s %s", service.getName(), day.toString("dd/MM/yyyy")), results);
     }
 
-    private void addEntry(ProbeResult result, String key, List<RadioPlayerUploadResult> results) {
-        if (results.isEmpty()) {
+    private void addEntry(ProbeResult result, String key, List<FTPUploadResult> results) {
+        if(results.isEmpty()) {
             result.addInfo(key, "No Data.");
             return;
         }
         String value = buildValue(results);
-        Boolean first = results.get(0).wasSuccessful();
-        if (first == null) {
+        FTPUploadResultType first = results.get(0).type();
+        if(FTPUploadResultType.UNKNOWN.equals(first)) {
             result.addInfo(key, value);
         } else {
-            result.add(key, value, first);
+            result.add(key, value, FTPUploadResultType.SUCCESS.equals(first));
         }
     }
 
-    private String buildValue(List<RadioPlayerUploadResult> results) {
+    private String buildValue(List<FTPUploadResult> results) {
         StringBuilder builder = new StringBuilder("<table>");
-        for (RadioPlayerUploadResult result : results) {
+        for(FTPUploadResult result : results) {
             builder.append("<tr><td>");
-            if (result.wasSuccessful() == null) {
-                builder.append("Unknown");
-            } else {
-                builder.append(result.wasSuccessful() ? "Success :" : "Failure :");
-            }
+            builder.append(result.type().toNiceString());
             builder.append(result.uploadTime().toString(DATE_TIME));
             builder.append("</td><td>");
             if(result.message() != null) {
