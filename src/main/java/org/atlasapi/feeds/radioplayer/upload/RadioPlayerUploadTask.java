@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedType;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
@@ -43,6 +44,7 @@ public class RadioPlayerUploadTask implements Runnable {
         
         CompletionService<FTPUploadResult> uploadRunner = new ExecutorCompletionService<FTPUploadResult>(Executors.newFixedThreadPool(2));
         int submissions = 0;
+        int successes = 0;
 
         try {
             FTPClient client = connectAndLogin();
@@ -59,7 +61,9 @@ public class RadioPlayerUploadTask implements Runnable {
                         byte[] bytes = out.toByteArray();
                         
                         submissions++;
-                        uploadRunner.submit(new LoggingFTPUpload(log, new RemoteCheckingFTPFileUpload(client, filename, new ValidatingFTPFileUpload(validator, filename, bytes, new FTPFileUpload(client, filename, bytes)))));
+                        FTPUpload delegate = new ValidatingFTPFileUpload(validator, filename, bytes, new FTPFileUpload(client, filename, bytes));
+                        //delegate = new RemoteCheckingFTPFileUpload(client, filename, delegate);
+                        uploadRunner.submit(new LoggingFTPUpload(log, delegate));
                         
                     } catch (Exception e) {
                         log("Exception uploading file " + filename, e);
@@ -67,10 +71,15 @@ public class RadioPlayerUploadTask implements Runnable {
                 }
             }
             
+            successes = submissions;
             List<FTPUploadResult> results = Lists.newArrayListWithCapacity(submissions);
             for(int i = 0; i < submissions; i++) {
                 try {
-                    results.add(uploadRunner.take().get());
+                    FTPUploadResult result = uploadRunner.take().get();
+                    if(!FTPUploadResultType.SUCCESS.equals(result.type())){
+                        successes--;
+                    }
+                    results.add(result);
                 } catch(Exception e) {
                     log("Couldn't record FTP Upload result", e);
                 }
@@ -88,7 +97,7 @@ public class RadioPlayerUploadTask implements Runnable {
         } catch (Exception e) {
             log("Exception running RadioPlayerUploadTask", e);
         }
-        log("RadioPlayerUploadTask finished. " + submissions + " files uploaded", null, Severity.INFO);
+        log("RadioPlayerUploadTask finished. " + successes + " files uploaded", null, Severity.INFO);
     }
 
     private FTPClient connectAndLogin() throws Exception {
@@ -142,10 +151,6 @@ public class RadioPlayerUploadTask implements Runnable {
     
     public RadioPlayerUploadTask withLog(AdapterLog log) {
         this.log = log;
-        return this;
-    }
-    
-    public RadioPlayerUploadTask withCompletionService(CompletionService<FTPUploadResult> service) {
         return this;
     }
     

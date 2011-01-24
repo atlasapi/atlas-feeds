@@ -90,7 +90,7 @@ public class RadioPlayerFileUploaderTest {
 			startServer();
 
 			final RadioPlayerService service = RadioPlayerServices.all.get("340");
-			final DateTime day = new DateTime(2011, 1, 23, 0, 0, 0, 0, DateTimeZones.UTC);
+			final DateTime day = new DateTime(DateTimeZones.UTC);
 
 			Mockery context = new Mockery();
 			final KnownTypeQueryExecutor queryExecutor = context.mock(KnownTypeQueryExecutor.class);            
@@ -98,7 +98,7 @@ public class RadioPlayerFileUploaderTest {
 			
 			context.checking(new Expectations(){{
 			    oneOf(queryExecutor).executeItemQuery(with(any(ContentQuery.class))); 
-			        will(returnValue(ImmutableList.of(buildItem(service.getServiceUri(), day, day.plusHours(1)))));
+			        will(returnValue(ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1)))));
 			    oneOf(recorder).record(with(unknownUploadResult()));
 			}});
 			
@@ -153,7 +153,7 @@ public class RadioPlayerFileUploaderTest {
 
             @Override
             public boolean matchesSafely(FTPUploadResult upload) {
-                return FTPUploadResultType.UNKNOWN.equals(upload.type());
+                return FTPUploadResultType.SUCCESS.equals(upload.type());
             }
         };
     }
