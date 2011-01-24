@@ -20,7 +20,9 @@ public class ValidatingFTPFileUpload implements FTPUpload {
     @Override
     public FTPUploadResult call() throws Exception {
         try{
-            validator.validate(new ByteArrayInputStream(fileData));
+            if(validator != null) {
+                validator.validate(new ByteArrayInputStream(fileData));
+            }
         } catch (Exception e) {
             return DefaultFTPUploadResult.failedUpload(filename).withMessage("Failed to validate file").withCause(e);
         }

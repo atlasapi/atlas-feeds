@@ -49,9 +49,10 @@ public class RemoteCheckingFTPFileUpload implements FTPUpload {
     private Boolean checkForFile(String pathname) throws IOException {
         FTPFile[] listFiles = null;
         synchronized (client) {
-            client.changeWorkingDirectory(pathname);
-            listFiles = client.listFiles(filename);
-            client.changeToParentDirectory();
+            if(client.changeWorkingDirectory(pathname)) {
+                listFiles = client.listFiles(filename);
+                client.changeToParentDirectory();
+            }
         }
         if(listFiles != null && listFiles.length == 1 && filename.equals(listFiles[0].getName())) {
             return true;

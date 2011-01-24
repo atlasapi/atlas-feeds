@@ -8,6 +8,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 import nu.xom.Builder;
@@ -40,7 +41,7 @@ public class RadioPlayerXMLValidator {
 				throw new ValidityException("IO Exception whilst validating input", e);
 			}
 		}
-
+		
 	public static RadioPlayerXMLValidator forSchemas(Iterable<InputStream> schemas) throws SAXException, ParserConfigurationException {
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			factory.setValidating(false);
@@ -48,12 +49,13 @@ public class RadioPlayerXMLValidator {
 
 			if(!Iterables.isEmpty(schemas)) {
 				SchemaFactory schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
-				factory.setSchema(schemaFactory.newSchema(Iterables.toArray(Iterables.transform(schemas, new Function<InputStream, Source>(){
+				Schema schema = schemaFactory.newSchema(Iterables.toArray(Iterables.transform(schemas, new Function<InputStream, Source>(){
 					@Override
 					public Source apply(InputStream input) {
 						return new StreamSource(input);
 					}
-				}),Source.class)));
+				}),Source.class));
+				factory.setSchema(schema);
 			}
 
 			SAXParser parser = factory.newSAXParser();

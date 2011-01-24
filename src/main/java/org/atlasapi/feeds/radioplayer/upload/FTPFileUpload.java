@@ -20,8 +20,9 @@ public class FTPFileUpload implements FTPUpload {
     public FTPUploadResult call() throws Exception {
         try{
             synchronized (client) {
-                OutputStream output = client.storeFileStream(filename);
-                output.write(fileData);
+                OutputStream stream = client.storeFileStream(filename);
+                stream.write(fileData);
+                stream.close();
                 if(!client.completePendingCommand()) {
                     throw new Exception("Couldn't complete file upload");
                 }

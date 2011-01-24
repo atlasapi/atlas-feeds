@@ -8,10 +8,13 @@ import static org.hamcrest.Matchers.is;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
+import org.apache.ftpserver.DataConnectionConfiguration;
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.Authentication;
@@ -21,29 +24,39 @@ import org.apache.ftpserver.ftplet.AuthorizationRequest;
 import org.apache.ftpserver.ftplet.FtpException;
 import org.apache.ftpserver.ftplet.User;
 import org.apache.ftpserver.ftplet.UserManager;
+import org.apache.ftpserver.impl.FtpIoSession;
+import org.apache.ftpserver.impl.FtpServerContext;
+import org.apache.ftpserver.ipfilter.IpFilter;
+import org.apache.ftpserver.listener.Listener;
 import org.apache.ftpserver.listener.ListenerFactory;
+import org.apache.ftpserver.ssl.SslConfiguration;
 import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
+import org.apache.mina.filter.firewall.Subnet;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.attribute.Attribute;
 import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.atlasapi.media.TransportType;
-import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
-import org.atlasapi.media.entity.Playlist;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.content.query.QueryFragmentExtractor;
-import org.atlasapi.persistence.logging.NullAdapterLog;
+import org.atlasapi.persistence.logging.SystemOutAdapterLog;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
+import org.jmock.Expectations;
+import org.jmock.Mockery;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -58,7 +71,7 @@ import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerFileUploaderTest {
 
-	private static final String TEST_PASSWORD = "testpassword";
+    private static final String TEST_PASSWORD = "testpassword";
 	private static final String TEST_USERNAME = "test";
 
 	private static File dir;
@@ -67,67 +80,83 @@ public class RadioPlayerFileUploaderTest {
 
 	@Test
 	public void testRun() throws Exception {
-//		try {
-//			dir = Files.createTempDir();
-//			System.out.println(dir);
-//			dir.deleteOnExit();
-//			File files = new File(dir.getAbsolutePath() + File.separator + "files");
-//			files.mkdir();
-//
-//			startServer();
-//
-//			KnownTypeQueryExecutor queryExecutor = new KnownTypeQueryExecutor() {
-//				
-//				@Override
-//				public List<Playlist> executePlaylistQuery(ContentQuery query) {
-//					return null;
-//				}
-//				
-//				@Override
-//				public List<Item> executeItemQuery(ContentQuery query) {
-//					return ImmutableList.of(buildItem(query));
-//				}
-//				
-//				@Override
-//				public List<Brand> executeBrandQuery(ContentQuery query) {
-//					return null;
-//				}
-//			};
-//			
-//			ImmutableList<RadioPlayerService> services = ImmutableList.of(RadioPlayerServices.all.get("340"));
-//			RadioPlayerFTPCredentials credentials = RadioPlayerFTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
-//			int lookAhead = 0, lookBack = 0;
-//			RadioPlayerFileUploader uploader = new RadioPlayerFileUploader(credentials, "files", queryExecutor, new NullAdapterLog()).withServices(services).withLookAhead(lookAhead).withLookBack(lookBack);
-//
-//			Executor executor = MoreExecutors.sameThreadExecutor();
-//
-//			executor.execute(uploader);
-//
-//			Map<String, File> uploaded = Maps.uniqueIndex(ImmutableSet.copyOf(files.listFiles(new FilenameFilter() {
-//				@Override
-//				public boolean accept(File dir, String name) {
-//					return name.endsWith("PI.xml");
-//				}
-//			})), new Function<File, String>() {
-//				@Override
-//				public String apply(File input) {
-//					return input.getName();
-//				}
-//			});
-//			
-//			assertThat(uploaded.size(), is(equalTo(1)));
-//
-//			DateTime day = new DateTime(DateTimeZones.UTC);
-//		
-//			String filename = String.format("%4d%02d%02d_340_PI.xml", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth());
-//			assertThat(uploaded.keySet(), hasItem(filename));
-//			assertThat(uploaded.get(filename).length(), greaterThan(0L));
-//
-//		} finally {
-//			server.stop();
-//		}
+		try {
+			dir = Files.createTempDir();
+			System.out.println(dir);
+			dir.deleteOnExit();
+			//new File(dir.getAbsolutePath() + File.separator + "Processed").mkdir();
+			//new File(dir.getAbsolutePath() + File.separator + "Failed").mkdir();
+
+			startServer();
+
+			final RadioPlayerService service = RadioPlayerServices.all.get("340");
+			final DateTime day = new DateTime(2011, 1, 23, 0, 0, 0, 0, DateTimeZones.UTC);
+
+			Mockery context = new Mockery();
+			final KnownTypeQueryExecutor queryExecutor = context.mock(KnownTypeQueryExecutor.class);            
+			final FTPUploadResultRecorder recorder = context.mock(FTPUploadResultRecorder.class);
+			
+			context.checking(new Expectations(){{
+			    oneOf(queryExecutor).executeItemQuery(with(any(ContentQuery.class))); 
+			        will(returnValue(ImmutableList.of(buildItem(service.getServiceUri(), day, day.plusHours(1)))));
+			    oneOf(recorder).record(with(unknownUploadResult()));
+			}});
+			
+            ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
+			FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
+			int lookAhead = 0, lookBack = 0;
+			
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(queryExecutor, credentials, services)
+			    .withResultRecorder(recorder)
+			    .withLookAhead(lookAhead)
+			    .withLookBack(lookBack)
+			    .withLog(new SystemOutAdapterLog());
+
+			Executor executor = MoreExecutors.sameThreadExecutor();
+			executor.execute(uploader);
+			
+			Map<String, File> uploaded = uploadedFiles();
+			assertThat(uploaded.size(), is(equalTo(1)));
+
+			String filename = String.format("%4d%02d%02d_340_PI.xml", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth());
+			assertThat(uploaded.keySet(), hasItem(filename));
+			assertThat(uploaded.get(filename).length(), greaterThan(0L));
+
+		} finally {
+			server.stop();
+		}
 
 	}
+
+    private Map<String, File> uploadedFiles() {
+        Map<String, File> uploaded = Maps.uniqueIndex(ImmutableSet.copyOf(dir.listFiles(new FilenameFilter() {
+        	@Override
+        	public boolean accept(File dir, String name) {
+        		return name.endsWith("_PI.xml");
+        	}
+        })), new Function<File, String>() {
+        	@Override
+        	public String apply(File input) {
+        		return input.getName();
+        	}
+        });
+        return uploaded;
+    }
+	
+	private Matcher<FTPUploadResult> unknownUploadResult() {
+        // TODO Auto-generated method stub
+        return new TypeSafeMatcher<FTPUploadResult>() {
+            @Override
+            public void describeTo(Description desc) {
+                desc.appendText("unknown upload");
+            }
+
+            @Override
+            public boolean matchesSafely(FTPUploadResult upload) {
+                return FTPUploadResultType.UNKNOWN.equals(upload.type());
+            }
+        };
+    }
 
 	private void startServer() throws FtpException {
 		FtpServerFactory serverFactory = new FtpServerFactory();
@@ -145,13 +174,7 @@ public class RadioPlayerFileUploaderTest {
 		server.start();
 	}
 
-
-
-
-	public static Item buildItem(ContentQuery query) {
-		String service = (String) QueryFragmentExtractor.extract(query, ImmutableSet.<Attribute<?>>of(Attributes.BROADCAST_ON)).requireValue().getValue().get(0);
-		DateTime transmissionStart = ((DateTime)QueryFragmentExtractor.extract(query, ImmutableSet.<Attribute<?>>of(Attributes.BROADCAST_TRANSMISSION_TIME)).requireValue().getValue().get(0)).plusHours(18).plusMinutes(30);
-		DateTime transmissionEnd = transmissionStart.plusHours(1);
+	public static Item buildItem(String service, DateTime transmissionStart, DateTime transmissionEnd) {
 		
 		Item testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c", "bbc:b00f4d9c", Publisher.BBC);
 		testItem.setTitle("BBC Electric Proms: Saturday Night Fever");

@@ -2,10 +2,9 @@ package org.atlasapi.feeds.radioplayer;
 
 import javax.annotation.PostConstruct;
 
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResultRecorder;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadService;
-import org.atlasapi.feeds.radioplayer.upload.MongoFTPUploadResultRecorder;
 import org.atlasapi.feeds.radioplayer.upload.FTPCredentials;
+import org.atlasapi.feeds.radioplayer.upload.FTPUploadResultRecorder;
+import org.atlasapi.feeds.radioplayer.upload.MongoFTPUploadResultRecorder;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTask;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerXMLValidator;
@@ -56,8 +55,7 @@ public class RadioPlayerModule {
 			FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
 			RadioPlayerXMLValidator validator = createValidator();
 			FTPUploadResultRecorder recorder = new MongoFTPUploadResultRecorder(mongo);
-			FTPUploadService ftpService = new FTPUploadService(credentials, ftpPath);
-			scheduler.schedule(new RadioPlayerUploadTask(queryExecutor, ftpService, RadioPlayerServices.services).withResultRecorder(recorder).withValidator(validator).withLog(log), UPLOAD);
+			scheduler.schedule(new RadioPlayerUploadTask(queryExecutor, credentials, RadioPlayerServices.services).withResultRecorder(recorder).withValidator(validator).withLog(log), UPLOAD);
 			log.record(new AdapterLogEntry(Severity.INFO).withDescription("Radioplayer uploader scheduled task installed for:" + credentials).withSource(getClass()));
 		} else {
 			log.record(new AdapterLogEntry(Severity.INFO)

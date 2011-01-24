@@ -3,6 +3,7 @@ package org.atlasapi.feeds.radioplayer.upload;
 import org.atlasapi.persistence.logging.AdapterLogEntry.ExceptionSummary;
 import org.joda.time.DateTime;
 
+import com.google.inject.internal.Objects;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class DefaultFTPUploadResult implements FTPUploadResult {
@@ -78,5 +79,25 @@ public class DefaultFTPUploadResult implements FTPUploadResult {
         return this;
     }
 
-
+    @Override
+    public boolean equals(Object that) {
+        if (this == that) {
+            return true;
+        }
+        if(that instanceof DefaultFTPUploadResult) {
+            DefaultFTPUploadResult other = (DefaultFTPUploadResult) that;
+            return Objects.equal(dateTime, other.dateTime) && Objects.equal(filename, filename) && Objects.equal(success, other.success);
+        }
+        return false;
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(dateTime, filename, success);
+    }
+    
+    @Override
+    public String toString() {
+        return String.format("%s: %s upload of %s", dateTime.toString("dd/MM/yy HH:mm:ss"), success.toNiceString(), filename);
+    }
 }
