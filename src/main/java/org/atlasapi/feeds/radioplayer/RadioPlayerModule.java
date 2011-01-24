@@ -19,7 +19,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.io.Resources;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
@@ -40,7 +43,6 @@ public class RadioPlayerModule {
     private @Value("${rp.ftp.password}") String ftpPassword;
     private @Value("${rp.ftp.host}") String ftpHost;
     private @Value("${rp.ftp.port}") Integer ftpPort;
-    private @Value("${rp.ftp.path}") String ftpPath;
 	
 	private @Autowired SimpleScheduler scheduler;
 	private @Autowired AdapterLog log;
@@ -53,6 +55,7 @@ public class RadioPlayerModule {
 	
 	@PostConstruct 
 	public void scheduleTasks() {
+	    health.addProbes(Iterables.concat(Iterables.transform(RadioPlayerServices.services, serviceHealthProbe()), ImmutableList.of(new RadioPlayerUploadHealthProbe(mongo, "FTP", ftpHost+":"+ftpPort))));
 		if (Boolean.parseBoolean(upload)) {
 			FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
 			RadioPlayerXMLValidator validator = createValidator();
@@ -65,7 +68,16 @@ public class RadioPlayerModule {
 		}
 	}
 
-	private RadioPlayerXMLValidator createValidator() {
+	private Function<? super RadioPlayerService, ? extends HealthProbe> serviceHealthProbe() {
+        return new Function<RadioPlayerService, HealthProbe>(){
+            @Override
+            public HealthProbe apply(RadioPlayerService service) {
+                return new RadioPlayerUploadHealthProbe(mongo, service.getName(), "%1$tY%1$tm%1$te_"+service.getRadioplayerId()+"_PI.xml");
+            }
+        };
+    }
+
+    private RadioPlayerXMLValidator createValidator() {
 		try {
 			return RadioPlayerXMLValidator.forSchemas(ImmutableSet.of(
 				Resources.getResource("epgSI_10.xsd").openStream(), 
@@ -75,10 +87,6 @@ public class RadioPlayerModule {
 			log.record(new AdapterLogEntry(Severity.WARN).withDescription("Couldn't load schemas for RadioPlayer XML validation").withCause(e));
 			return null;
 		}
-	}
-	
-	@Bean HealthProbe radioPlayerProbe() {
-	    return new RadioPlayerUploadHealthProbe(mongo, RadioPlayerServices.services);
 	}
 	
 	public @Bean RadioPlayerHealthController radioPlayerHealthController() {

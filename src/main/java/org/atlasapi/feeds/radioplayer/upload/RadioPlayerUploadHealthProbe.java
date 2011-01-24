@@ -2,8 +2,8 @@ package org.atlasapi.feeds.radioplayer.upload;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
-import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -11,6 +11,7 @@ import org.joda.time.LocalDate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
+import com.google.common.collect.Sets;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
@@ -22,21 +23,40 @@ import com.mongodb.DBObject;
 
 public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
-    private static final String DATE = "yyyyMMdd";
     private static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
 
-    private DBCollection results;
-    private FTPUploadResultTranslator translator;
-    private final Iterable<RadioPlayerService> services;
+    private final DBCollection results;
+    private final FTPUploadResultTranslator translator;
+    private final String title;
+    private final String filenamePattern;
+
     private int lookBack = 2;
     private int lookAhead = 7;
-
-    public RadioPlayerUploadHealthProbe(DatabasedMongo mongo, Iterable<RadioPlayerService> services) {
-        this.services = services;
+    
+    public RadioPlayerUploadHealthProbe(DatabasedMongo mongo, String title, String filenamePattern) {
         this.results = mongo.collection("radioplayer");
+        this.title = title;
+        this.filenamePattern = filenamePattern;
         this.translator = new FTPUploadResultTranslator();
     }
 
+    @Override
+    public ProbeResult probe() {
+        ProbeResult result = new ProbeResult(title);
+        
+        Set<String> filenames = Sets.newHashSetWithExpectedSize((lookAhead + lookBack + 1));
+        
+        DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
+        for(int i = 0; i < (lookAhead + lookBack + 1); i++, day = day.plusDays(1)) {
+            filenames.add(String.format(filenamePattern, day.toDate()));
+        }
+        for (String filename : Ordering.natural().immutableSortedCopy(filenames)) {
+            addEntry(result, filename);
+        }
+        
+        return result;
+    }
+    
     public RadioPlayerUploadHealthProbe withLookBack(int lookBack) {
         this.lookBack = lookBack;
         return this;
@@ -47,23 +67,9 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         return this;
     }
 
-    @Override
-    public ProbeResult probe() {
-        ProbeResult result = new ProbeResult("UK Radioplayer");
-
-        for(RadioPlayerService service : services) {
-            DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
-            for(int i = 0; i < (lookAhead + lookBack + 1); i++, day = day.plusDays(1)) {
-                addEntry(result, service, day);
-            }
-        }
-
-        return result;
-    }
-
-    private void addEntry(ProbeResult result, RadioPlayerService service, DateTime day) {
+    private void addEntry(ProbeResult result, String filename) {
         boolean success = true, failure = true, unknown = true;
-        DBCursor resultsForServiceDay = results.find(new BasicDBObject("filename", filenameFor(service, day))).sort(new BasicDBObject("time", -1));
+        DBCursor resultsForServiceDay = results.find(new BasicDBObject("filename", filename)).sort(new BasicDBObject("time", -1));
         List<FTPUploadResult> results = Lists.newArrayList();
         for(DBObject dbo : resultsForServiceDay) {
             FTPUploadResult translated = translator.fromDBObject(dbo);
@@ -81,7 +87,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
                 break;
             }
         }
-        addEntry(result, String.format("%s %s", service.getName(), day.toString("dd/MM/yyyy")), results);
+        addEntry(result, filename, results);
     }
 
     private void addEntry(ProbeResult result, String key, List<FTPUploadResult> results) {
@@ -125,19 +131,15 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
                 return c;
             }}).immutableSortedCopy(results);
     }
-
-    private String filenameFor(RadioPlayerService service, DateTime day) {
-        return String.format("%s_%s_PI.xml", day.toString(DATE), service.getRadioplayerId());
-    }
-
+    
     @Override
     public String title() {
-        return "UK Radioplayer";
+        return title;
     }
 
     @Override
     public String slug() {
-        return "ukrpfiles";
+        return "ukrp"+title;
     }
 
 }

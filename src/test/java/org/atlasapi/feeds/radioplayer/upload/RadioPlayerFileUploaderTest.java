@@ -87,7 +87,8 @@ public class RadioPlayerFileUploaderTest {
 			context.checking(new Expectations(){{
 			    oneOf(queryExecutor).executeItemQuery(with(any(ContentQuery.class))); 
 			        will(returnValue(ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1)))));
-			    oneOf(recorder).record(with(unknownUploadResult()));
+			    oneOf(recorder).record(with(successfulUploadResult()));
+			    oneOf(recorder).record(with(successfulUploadResult()));
 			}});
 			
             ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
@@ -131,20 +132,33 @@ public class RadioPlayerFileUploaderTest {
         return uploaded;
     }
 	
-	private Matcher<FTPUploadResult> unknownUploadResult() {
-        // TODO Auto-generated method stub
-        return new TypeSafeMatcher<FTPUploadResult>() {
-            @Override
-            public void describeTo(Description desc) {
-                desc.appendText("unknown upload");
-            }
-
-            @Override
-            public boolean matchesSafely(FTPUploadResult upload) {
-                return FTPUploadResultType.SUCCESS.equals(upload.type());
-            }
-        };
+    private Matcher<FTPUploadResult> unknownUploadResult() {
+        return new FTPUploadResultTypeMatcher(FTPUploadResultType.UNKNOWN);
     }
+
+    private Matcher<FTPUploadResult> successfulUploadResult() {
+        return new FTPUploadResultTypeMatcher(FTPUploadResultType.SUCCESS);
+    }
+	
+	private static class FTPUploadResultTypeMatcher extends TypeSafeMatcher<FTPUploadResult> {
+	    
+	    private final FTPUploadResultType type;
+
+        public FTPUploadResultTypeMatcher(FTPUploadResultType type) {
+            this.type = type;
+        }
+	    
+        @Override
+        public void describeTo(Description desc) {
+            desc.appendText(type.toNiceString());
+            desc.appendText(" upload");
+        }
+
+        @Override
+        public boolean matchesSafely(FTPUploadResult upload) {
+            return type.equals(upload.type());
+        }
+    };
 
 	private void startServer() throws FtpException {
 		FtpServerFactory serverFactory = new FtpServerFactory();

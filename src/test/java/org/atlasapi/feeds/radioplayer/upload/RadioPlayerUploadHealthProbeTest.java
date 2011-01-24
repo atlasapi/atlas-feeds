@@ -4,13 +4,11 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
-import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultType;
@@ -23,7 +21,7 @@ public class RadioPlayerUploadHealthProbeTest {
 
 //    private static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
     public final DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
-    public final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(mongo, ImmutableList.of(RadioPlayerServices.all.get("340"))).withLookAhead(0).withLookBack(0);
+    public final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(mongo, "radio1", "%1$tY%1$tm%1$te_340_PI.xml").withLookAhead(0).withLookBack(0);
     private FTPUploadResultRecorder recorder = new MongoFTPUploadResultRecorder(mongo);
     
     @After

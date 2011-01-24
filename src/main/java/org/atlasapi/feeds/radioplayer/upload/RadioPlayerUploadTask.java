@@ -49,7 +49,13 @@ public class RadioPlayerUploadTask implements Runnable {
         List<FTPUploadResult> results = Lists.newArrayList();
 
         try {
-            FTPClient client = connectAndLogin();
+            FTPClient client = null;
+            try{
+                client = connectAndLogin();
+                recorder.record(DefaultFTPUploadResult.successfulUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Connected and logged-in successully"));
+            } catch (Exception e) {
+                recorder.record(DefaultFTPUploadResult.failedUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Failed to connect/login to server").withCause(e));
+            }
             
             int days = lookBack + lookAhead + 1;
     
@@ -92,9 +98,11 @@ public class RadioPlayerUploadTask implements Runnable {
                     recorder.record(result);
                 }
             }
-
-            client.logout();
-            client.disconnect();
+            
+            if(client != null) {
+                client.logout();
+                client.disconnect();
+            }
             
         } catch (Exception e) {
             log("Exception running RadioPlayerUploadTask", e);
