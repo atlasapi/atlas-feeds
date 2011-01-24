@@ -45,6 +45,8 @@ public class RadioPlayerUploadTask implements Runnable {
         CompletionService<FTPUploadResult> uploadRunner = new ExecutorCompletionService<FTPUploadResult>(Executors.newFixedThreadPool(2));
         int submissions = 0;
         int successes = 0;
+        
+        List<FTPUploadResult> results = Lists.newArrayList();
 
         try {
             FTPClient client = connectAndLogin();
@@ -67,12 +69,12 @@ public class RadioPlayerUploadTask implements Runnable {
                         
                     } catch (Exception e) {
                         log("Exception uploading file " + filename, e);
+                        results.add(DefaultFTPUploadResult.failedUpload(filename).withCause(e).withMessage(e.getMessage()));
                     }
                 }
             }
             
             successes = submissions;
-            List<FTPUploadResult> results = Lists.newArrayListWithCapacity(submissions);
             for(int i = 0; i < submissions; i++) {
                 try {
                     FTPUploadResult result = uploadRunner.take().get();
@@ -97,7 +99,7 @@ public class RadioPlayerUploadTask implements Runnable {
         } catch (Exception e) {
             log("Exception running RadioPlayerUploadTask", e);
         }
-        log("RadioPlayerUploadTask finished. " + successes + " files uploaded", null, Severity.INFO);
+        log("RadioPlayerUploadTask finished. " + successes + " files uploaded successfully", null, Severity.INFO);
     }
 
     private FTPClient connectAndLogin() throws Exception {
