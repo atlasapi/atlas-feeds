@@ -51,8 +51,8 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     public ProbeResult probe() {
         ProbeResult result = new ProbeResult("UK Radioplayer");
 
-        DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
         for(RadioPlayerService service : services) {
+            DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
             for(int i = 0; i < (lookAhead + lookBack + 1); i++, day = day.plusDays(1)) {
                 addEntry(result, service, day);
             }
@@ -102,8 +102,9 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         StringBuilder builder = new StringBuilder("<table>");
         for(FTPUploadResult result : Iterables.limit(sort(results),2)) {
             builder.append("<tr><td>");
-            builder.append(result.type().toNiceString());
             builder.append(result.uploadTime().toString(DATE_TIME));
+            builder.append(" ");
+            builder.append(result.type().toNiceString());
             builder.append("</td><td>");
             if(result.message() != null) {
                 builder.append(result.message());
