@@ -31,7 +31,7 @@ public class RadioPlayerXMLValidator {
 			this.builder = builder;
 		}
 
-		public boolean validate(InputStream input) throws ValidityException {
+		public synchronized boolean validate(InputStream input) throws ValidityException {
 			try {
 				builder.build(input);
 				return true;
