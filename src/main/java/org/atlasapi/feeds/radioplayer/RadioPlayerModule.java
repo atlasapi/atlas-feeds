@@ -26,6 +26,7 @@ import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.RepetitionRules.RepetitionInterval;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
+import com.metabroadcast.common.webapp.health.HealthController;
 
 @Configuration
 public class RadioPlayerModule {
@@ -44,6 +45,7 @@ public class RadioPlayerModule {
 	private @Autowired SimpleScheduler scheduler;
 	private @Autowired AdapterLog log;
 	private @Autowired DatabasedMongo mongo;
+	private @Autowired HealthController health;
 
 	public @Bean RadioPlayerController radioPlayerController() {
 		return new RadioPlayerController(queryExecutor);
@@ -77,6 +79,10 @@ public class RadioPlayerModule {
 	
 	@Bean HealthProbe radioPlayerProbe() {
 	    return new RadioPlayerUploadHealthProbe(mongo, RadioPlayerServices.services);
+	}
+	
+	public @Bean RadioPlayerHealthController radioPlayerHealthController() {
+	    return new RadioPlayerHealthController(health);
 	}
 	
 }

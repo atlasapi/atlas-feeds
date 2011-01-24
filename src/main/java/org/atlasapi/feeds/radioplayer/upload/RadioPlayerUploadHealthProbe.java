@@ -135,4 +135,9 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         return "UK Radioplayer";
     }
 
+    @Override
+    public String slug() {
+        return "ukrpfiles";
+    }
+
 }
