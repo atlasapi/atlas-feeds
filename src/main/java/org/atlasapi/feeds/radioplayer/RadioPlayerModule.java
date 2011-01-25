@@ -60,7 +60,7 @@ public class RadioPlayerModule {
 			FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
 			RadioPlayerXMLValidator validator = createValidator();
 			FTPUploadResultRecorder recorder = new MongoFTPUploadResultRecorder(mongo);
-			scheduler.schedule(new RadioPlayerUploadTask(queryExecutor, credentials, ImmutableList.of(RadioPlayerServices.all.get("340"))).withResultRecorder(recorder).withValidator(validator).withLog(log), UPLOAD);
+			scheduler.schedule(new RadioPlayerUploadTask(queryExecutor, credentials, RadioPlayerServices.services).withResultRecorder(recorder).withValidator(validator).withLog(log), UPLOAD);
 			log.record(new AdapterLogEntry(Severity.INFO).withDescription("Radioplayer uploader scheduled task installed for:" + credentials).withSource(getClass()));
 		} else {
 			log.record(new AdapterLogEntry(Severity.INFO)
