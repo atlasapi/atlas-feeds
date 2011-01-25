@@ -14,6 +14,7 @@ import org.atlasapi.media.entity.Described;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Person;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
@@ -122,7 +123,11 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 		simpleDescription.setGenres(content.getGenres());
 		simpleDescription.setTags(content.getTags());
 		simpleDescription.setSameAs(content.getEquivalentTo());
-		simpleDescription.setContentType(content.getContentType().toString().toLowerCase());
+		
+		MediaType mediaType = content.getMediaType();
+		if (mediaType != null) {
+			simpleDescription.setMediaType(mediaType.toString().toLowerCase());
+		}
 	}
 
 	private static void copyDescriptionAttributesTo(org.atlasapi.media.entity.Identified description, Aliased simpleDescription) {
