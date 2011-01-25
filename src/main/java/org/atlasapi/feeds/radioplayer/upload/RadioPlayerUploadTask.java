@@ -42,7 +42,7 @@ public class RadioPlayerUploadTask implements Runnable {
     public void run() {
         log("RadioPlayerUploadTask started.", null, Severity.INFO);
         
-        CompletionService<FTPUploadResult> uploadRunner = new ExecutorCompletionService<FTPUploadResult>(Executors.newFixedThreadPool(2));
+        CompletionService<FTPUploadResult> uploadRunner = new ExecutorCompletionService<FTPUploadResult>(Executors.newFixedThreadPool(5));
         int submissions = 0;
         int successes = 0;
         
