@@ -95,7 +95,7 @@ public class RadioPlayerFileUploaderTest {
 			FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
 			int lookAhead = 0, lookBack = 0;
 			
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(queryExecutor, credentials, services)
+			RadioPlayerUploadTaskRunner uploader = new RadioPlayerUploadTaskRunner(queryExecutor, credentials, services)
 			    .withResultRecorder(recorder)
 			    .withLookAhead(lookAhead)
 			    .withLookBack(lookBack)

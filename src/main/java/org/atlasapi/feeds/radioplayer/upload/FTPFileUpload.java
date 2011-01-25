@@ -6,18 +6,11 @@ import org.apache.commons.net.ftp.FTPClient;
 
 public class FTPFileUpload implements FTPUpload {
 
-    private final String filename;
-    private final byte[] fileData;
-    private final FTPClient client;
-
-    public FTPFileUpload(FTPClient client, String filename, byte[] fileData) {
-        this.client = client;
-        this.filename = filename;
-        this.fileData = fileData;
+    public FTPFileUpload() {
     }
 
     @Override
-    public FTPUploadResult call() throws Exception {
+    public FTPUploadResult upload(FTPClient client, String filename, byte[] fileData) {
         try{
             synchronized (client) {
                 OutputStream stream = client.storeFileStream(filename);

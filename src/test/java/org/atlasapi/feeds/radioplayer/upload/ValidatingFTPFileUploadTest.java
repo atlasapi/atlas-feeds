@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.is;
 
 import java.io.IOException;
 
+import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -32,13 +33,14 @@ public class ValidatingFTPFileUploadTest {
         final FTPUploadResult successfulUpload = DefaultFTPUploadResult.successfulUpload(filename);
         byte[] fileData = bytesFromResource("org/atlasapi/feeds/radioplayer/basicPIFeedTest.xml");
         
-        ValidatingFTPFileUpload uploadTask = new ValidatingFTPFileUpload(validator, filename , fileData, delegate);
+        ValidatingFTPFileUpload uploadTask = new ValidatingFTPFileUpload(validator, delegate);
         
         context.checking(new Expectations(){{
-            one(delegate).call(); will(returnValue(successfulUpload));
+            one(delegate).upload(with(any(FTPClient.class)),with(any(String.class)),with(any(byte[].class))); 
+                will(returnValue(successfulUpload));
         }});
         
-        FTPUploadResult result = uploadTask.call();
+        FTPUploadResult result = uploadTask.upload(new FTPClient(), filename , fileData);
         
         assertThat(result, is(equalTo(successfulUpload)));
     }
@@ -61,13 +63,13 @@ public class ValidatingFTPFileUploadTest {
         String filename = "test";
         byte[] fileData = bytesFromResource("org/atlasapi/feeds/radioplayer/invalidPIFeedTest.xml");
         
-        ValidatingFTPFileUpload uploadTask = new ValidatingFTPFileUpload(validator, filename , fileData, delegate);
+        ValidatingFTPFileUpload uploadTask = new ValidatingFTPFileUpload(validator, delegate);
         
         context.checking(new Expectations(){{
-            never(delegate).call();
+            never(delegate).upload(with(any(FTPClient.class)),with(any(String.class)),with(any(byte[].class)));
         }});
         
-        FTPUploadResult result = uploadTask.call();
+        FTPUploadResult result = uploadTask.upload(new FTPClient(),  filename, fileData);
         assertThat(result.type(), is(equalTo(FTPUploadResultType.FAILURE)));
     }
 

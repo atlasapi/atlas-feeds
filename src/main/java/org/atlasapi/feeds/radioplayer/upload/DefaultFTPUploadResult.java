@@ -3,11 +3,12 @@ package org.atlasapi.feeds.radioplayer.upload;
 import org.atlasapi.persistence.logging.AdapterLogEntry.ExceptionSummary;
 import org.joda.time.DateTime;
 
+import com.google.common.base.Predicate;
 import com.google.inject.internal.Objects;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class DefaultFTPUploadResult implements FTPUploadResult {
-    
+
     private final String filename;
     private final DateTime dateTime;
     private final FTPUploadResultType success;
@@ -58,7 +59,7 @@ public class DefaultFTPUploadResult implements FTPUploadResult {
     public static DefaultFTPUploadResult failedUpload(String filename) {
         return new DefaultFTPUploadResult(filename, new DateTime(DateTimeZones.UTC), FTPUploadResultType.FAILURE);
     }
-    
+
     public static DefaultFTPUploadResult unknownUpload(String filename) {
         return new DefaultFTPUploadResult(filename, new DateTime(DateTimeZones.UTC), FTPUploadResultType.UNKNOWN);
     }
@@ -81,7 +82,7 @@ public class DefaultFTPUploadResult implements FTPUploadResult {
 
     @Override
     public boolean equals(Object that) {
-        if (this == that) {
+        if(this == that) {
             return true;
         }
         if(that instanceof DefaultFTPUploadResult) {
@@ -90,14 +91,21 @@ public class DefaultFTPUploadResult implements FTPUploadResult {
         }
         return false;
     }
-    
+
     @Override
     public int hashCode() {
         return Objects.hashCode(dateTime, filename, success);
     }
-    
+
     @Override
     public String toString() {
         return String.format("%s: %s upload of %s", dateTime.toString("dd/MM/yy HH:mm:ss"), success.toNiceString(), filename);
     }
+
+    public static final Predicate<FTPUploadResult> IS_SUCCESS = new Predicate<FTPUploadResult>() {
+        @Override
+        public boolean apply(FTPUploadResult input) {
+            return FTPUploadResultType.SUCCESS.equals(input.type());
+        }
+    };
 }

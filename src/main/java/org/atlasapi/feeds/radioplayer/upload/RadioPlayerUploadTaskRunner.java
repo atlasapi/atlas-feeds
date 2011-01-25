@@ -1,15 +1,12 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.net.ftp.FTPClient;
-import org.atlasapi.feeds.radioplayer.RadioPlayerFeedType;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
@@ -17,11 +14,13 @@ import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metabroadcast.common.time.DateTimeZones;
 
-public class RadioPlayerUploadTask implements Runnable {
+public class RadioPlayerUploadTaskRunner implements Runnable {
 
+    private static final int THREADS = 5;
     private final KnownTypeQueryExecutor queryExecutor;
     private final Iterable<RadioPlayerService> services;
 
@@ -32,7 +31,7 @@ public class RadioPlayerUploadTask implements Runnable {
     private int lookBack = 2;
     private AdapterLog log;
 
-    public RadioPlayerUploadTask(KnownTypeQueryExecutor queryExecutor, FTPCredentials credentials, Iterable<RadioPlayerService> services) {
+    public RadioPlayerUploadTaskRunner(KnownTypeQueryExecutor queryExecutor, FTPCredentials credentials, Iterable<RadioPlayerService> services) {
         this.queryExecutor = queryExecutor;
         this.credentials = credentials;
         this.services = services;
@@ -42,9 +41,8 @@ public class RadioPlayerUploadTask implements Runnable {
     public void run() {
         log("RadioPlayerUploadTask started.", null, Severity.INFO);
         
-        CompletionService<FTPUploadResult> uploadRunner = new ExecutorCompletionService<FTPUploadResult>(Executors.newFixedThreadPool(5));
+        CompletionService<FTPUploadResult> uploadRunner = new ExecutorCompletionService<FTPUploadResult>(Executors.newFixedThreadPool(THREADS));
         int submissions = 0;
-        int successes = 0;
         
         List<FTPUploadResult> results = Lists.newArrayList();
 
@@ -62,32 +60,14 @@ public class RadioPlayerUploadTask implements Runnable {
             for(RadioPlayerService service : services) {
                 DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
                 for(int i = 0; i < days; i++, day = day.plusDays(1)) {
-                    String filename = filename(service,day);
-                    try {
-                        ByteArrayOutputStream out = new ByteArrayOutputStream();
-                        RadioPlayerFeedType.PI.compileFeedFor(day, service, queryExecutor, out);
-                        byte[] bytes = out.toByteArray();
-                        
                         submissions++;
-                        FTPUpload delegate = new ValidatingFTPFileUpload(validator, filename, bytes, new FTPFileUpload(client, filename, bytes));
-                        //delegate = new RemoteCheckingFTPFileUpload(client, filename, delegate);
-                        uploadRunner.submit(new LoggingFTPUpload(log, delegate));
-                        
-                    } catch (Exception e) {
-                        log("Exception uploading file " + filename, e);
-                        results.add(DefaultFTPUploadResult.failedUpload(filename).withCause(e).withMessage(e.getMessage()));
-                    }
+                        uploadRunner.submit(new RadioPlayerFTPUploadTask(client, day, service, queryExecutor).withValidator(validator).withLog(log));
                 }
             }
             
-            successes = submissions;
             for(int i = 0; i < submissions; i++) {
                 try {
-                    FTPUploadResult result = uploadRunner.take().get();
-                    if(!FTPUploadResultType.SUCCESS.equals(result.type())){
-                        successes--;
-                    }
-                    results.add(result);
+                    results.add(uploadRunner.take().get());
                 } catch(Exception e) {
                     log("Couldn't record FTP Upload result", e);
                 }
@@ -107,7 +87,11 @@ public class RadioPlayerUploadTask implements Runnable {
         } catch (Exception e) {
             log("Exception running RadioPlayerUploadTask", e);
         }
-        log("RadioPlayerUploadTask finished. " + successes + " files uploaded successfully", null, Severity.INFO);
+        log("RadioPlayerUploadTask finished. " + successes(results) + " files uploaded successfully", null, Severity.INFO);
+    }
+
+    private int successes(List<FTPUploadResult> results) {
+        return Iterables.size(Iterables.filter(results, DefaultFTPUploadResult.IS_SUCCESS));
     }
 
     private FTPClient connectAndLogin() throws Exception {
@@ -134,32 +118,28 @@ public class RadioPlayerUploadTask implements Runnable {
             log.record(e == null ? entry : entry.withCause(e));
         }
     }
-
-    private String filename(RadioPlayerService service, DateTime day) {
-        return String.format("%s_%s_PI.xml", day.toString("yyyyMMdd"), service.getRadioplayerId());
-    }
-
-    public RadioPlayerUploadTask withResultRecorder(FTPUploadResultRecorder recorder) {
+    
+    public RadioPlayerUploadTaskRunner withResultRecorder(FTPUploadResultRecorder recorder) {
         this.recorder = recorder;
         return this;
     }
 
-    public RadioPlayerUploadTask withValidator(RadioPlayerXMLValidator validator) {
+    public RadioPlayerUploadTaskRunner withValidator(RadioPlayerXMLValidator validator) {
         this.validator = validator;
         return this;
     }
 
-    public RadioPlayerUploadTask withLookAhead(int lookAhead) {
+    public RadioPlayerUploadTaskRunner withLookAhead(int lookAhead) {
         this.lookAhead = lookAhead;
         return this;
     }
 
-    public RadioPlayerUploadTask withLookBack(int lookBack) {
+    public RadioPlayerUploadTaskRunner withLookBack(int lookBack) {
         this.lookBack = lookBack;
         return this;
     }
     
-    public RadioPlayerUploadTask withLog(AdapterLog log) {
+    public RadioPlayerUploadTaskRunner withLog(AdapterLog log) {
         this.log = log;
         return this;
     }

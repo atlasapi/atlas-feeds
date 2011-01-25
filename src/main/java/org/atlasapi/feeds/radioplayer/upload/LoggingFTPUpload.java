@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
@@ -16,8 +17,8 @@ public class LoggingFTPUpload implements FTPUpload {
     }
     
     @Override
-    public FTPUploadResult call() throws Exception {
-        FTPUploadResult result = delegate.call();
+    public FTPUploadResult upload(FTPClient client, String filename, byte[] fileData) {
+        FTPUploadResult result = delegate.upload(client, filename, fileData);
         if(FTPUploadResultType.FAILURE.equals(result.type())) {
             log(result);
         }

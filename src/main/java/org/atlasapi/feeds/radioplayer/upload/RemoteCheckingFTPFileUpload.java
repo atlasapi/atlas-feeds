@@ -8,33 +8,29 @@ import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType
 
 public class RemoteCheckingFTPFileUpload implements FTPUpload {
 
-    private final FTPClient client;
-    private final String filename;
     private final FTPUpload delegate;
 
-    public RemoteCheckingFTPFileUpload(FTPClient client, String filename, FTPUpload delegate) {
-        this.client = client;
-        this.filename = filename;
+    public RemoteCheckingFTPFileUpload(FTPUpload delegate) {
         this.delegate = delegate;
     }
 
     @Override
-    public FTPUploadResult call() throws Exception {
-        FTPUploadResult delegateResult = delegate.call();
+    public FTPUploadResult upload(FTPClient client, String filename, byte[] fileData) {
+        FTPUploadResult delegateResult = delegate.upload(client, filename, fileData);
         if(FTPUploadResultType.SUCCESS.equals(delegateResult.type())) {
-            return remoteCheck();
+            return remoteCheck(client, filename);
         }
         return delegateResult;
     }
 
-    private FTPUploadResult remoteCheck() {
+    private FTPUploadResult remoteCheck(FTPClient client, String filename) {
         try {
             for(int i = 0; i < 5; i++) {
-                if(checkForFile("Processed")) {
+                if(checkForFile("Processed", client, filename)) {
                     return DefaultFTPUploadResult.successfulUpload(filename).withMessage("Success verified on remote host");
                 }
                 
-                if(checkForFile("Failed")) {
+                if(checkForFile("Failed", client, filename)) {
                     return DefaultFTPUploadResult.failedUpload(filename).withMessage("Processing failed on remote host");
                 }
                 
@@ -46,7 +42,7 @@ public class RemoteCheckingFTPFileUpload implements FTPUpload {
         return DefaultFTPUploadResult.unknownUpload(filename).withMessage("Couldn't verify success on remote host");
     }
     
-    private Boolean checkForFile(String pathname) throws IOException {
+    private Boolean checkForFile(String pathname, FTPClient client, String filename) throws IOException {
         FTPFile[] listFiles = null;
         synchronized (client) {
             if(client.changeWorkingDirectory(pathname)) {
