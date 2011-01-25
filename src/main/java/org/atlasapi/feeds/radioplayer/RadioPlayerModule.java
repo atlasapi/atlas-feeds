@@ -72,7 +72,7 @@ public class RadioPlayerModule {
         return new Function<RadioPlayerService, HealthProbe>(){
             @Override
             public HealthProbe apply(RadioPlayerService service) {
-                return new RadioPlayerUploadHealthProbe(mongo, service.getName(), "%1$tY%1$tm%1$te_"+service.getRadioplayerId()+"_PI.xml");
+                return new RadioPlayerUploadHealthProbe(mongo, service.getName(), "%1$tY%1$tm%1$td_"+service.getRadioplayerId()+"_PI.xml");
             }
         };
     }
