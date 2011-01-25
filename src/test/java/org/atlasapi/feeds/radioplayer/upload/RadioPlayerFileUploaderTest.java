@@ -25,17 +25,14 @@ import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.atlasapi.content.criteria.ContentQuery;
-import org.atlasapi.content.criteria.attribute.Attribute;
-import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Broadcast;
-import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
-import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
@@ -43,8 +40,12 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
-import org.atlasapi.persistence.content.query.QueryFragmentExtractor;
-import org.atlasapi.persistence.logging.NullAdapterLog;
+import org.atlasapi.persistence.logging.SystemOutAdapterLog;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
+import org.jmock.Expectations;
+import org.jmock.Mockery;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
@@ -59,7 +60,7 @@ import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerFileUploaderTest {
 
-	private static final String TEST_PASSWORD = "testpassword";
+    private static final String TEST_PASSWORD = "testpassword";
 	private static final String TEST_USERNAME = "test";
 
 	private static File dir;
@@ -77,61 +78,83 @@ public class RadioPlayerFileUploaderTest {
 
 			startServer();
 
-			KnownTypeQueryExecutor queryExecutor = new KnownTypeQueryExecutor() {
+			final RadioPlayerService service = RadioPlayerServices.all.get("340");
+			final DateTime day = new DateTime(DateTimeZones.UTC);
 
-				@Override
-				public List<Content> discover(ContentQuery query) {
-					return ImmutableList.<Content>of(buildItem(query));
-				}
-
-				@Override
-				public List<Identified> executeUriQuery(Iterable<String> uris, ContentQuery query) {
-					throw new UnsupportedOperationException();
-				}
-
-				@Override
-				public Schedule schedule(ContentQuery query) {
-					throw new UnsupportedOperationException();
-				}
-			};
+			Mockery context = new Mockery();
+			final KnownTypeQueryExecutor queryExecutor = context.mock(KnownTypeQueryExecutor.class);            
+			final FTPUploadResultRecorder recorder = context.mock(FTPUploadResultRecorder.class);
 			
-			ImmutableList<RadioPlayerService> services = ImmutableList.of(RadioPlayerServices.all.get("340"));
-			RadioPlayerFTPCredentials credentials = RadioPlayerFTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
-			int lookAhead = 2;
-			RadioPlayerFileUploader uploader = new RadioPlayerFileUploader(credentials, "files", queryExecutor, new NullAdapterLog()).withServices(services).withLookAhead(lookAhead);
+			context.checking(new Expectations(){{
+			    oneOf(queryExecutor).schedule(with(any(ContentQuery.class))); 
+			    will(returnValue(Schedule.fromItems(ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1))))));
+			    oneOf(recorder).record(with(successfulUploadResult()));
+			    oneOf(recorder).record(with(successfulUploadResult()));
+			}});
+			
+            ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
+			FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
+			int lookAhead = 0, lookBack = 0;
+			
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(queryExecutor, credentials, services)
+			    .withResultRecorder(recorder)
+			    .withLookAhead(lookAhead)
+			    .withLookBack(lookBack)
+			    .withLog(new SystemOutAdapterLog());
 
 			Executor executor = MoreExecutors.sameThreadExecutor();
-
 			executor.execute(uploader);
-
-			Map<String, File> uploaded = Maps.uniqueIndex(ImmutableSet.copyOf(files.listFiles(new FilenameFilter() {
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.endsWith("PI.xml");
-				}
-			})), new Function<File, String>() {
-				@Override
-				public String apply(File input) {
-					return input.getName();
-				}
-			});
 			
-			assertThat(uploaded.size(), is(equalTo(lookAhead)));
+			Map<String, File> uploaded = uploadedFiles();
+			assertThat(uploaded.size(), is(equalTo(1)));
 
-			DateTime day = new DateTime(DateTimeZones.UTC).minusDays(lookAhead);
-			for (int i = 0; i < lookAhead; i++, day = day.plusDays(1)) {
-				for (RadioPlayerService service : services) {
-					String filename = String.format("%4d%02d%02d_%s_PI.xml", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth(), service.getRadioplayerId());
-					assertThat(uploaded.keySet(), hasItem(filename));
-					assertThat(uploaded.get(filename).length(), greaterThan(0L));
-				}
-			}
+			String filename = String.format("%4d%02d%02d_340_PI.xml", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth());
+			assertThat(uploaded.keySet(), hasItem(filename));
+			assertThat(uploaded.get(filename).length(), greaterThan(0L));
 
 		} finally {
 			server.stop();
 		}
-
 	}
+
+    private Map<String, File> uploadedFiles() {
+        Map<String, File> uploaded = Maps.uniqueIndex(ImmutableSet.copyOf(dir.listFiles(new FilenameFilter() {
+        	@Override
+        	public boolean accept(File dir, String name) {
+        		return name.endsWith("_PI.xml");
+        	}
+        })), new Function<File, String>() {
+        	@Override
+        	public String apply(File input) {
+        		return input.getName();
+        	}
+        });
+        return uploaded;
+    }
+  
+    private Matcher<FTPUploadResult> successfulUploadResult() {
+        return new FTPUploadResultTypeMatcher(FTPUploadResultType.SUCCESS);
+    }
+	
+	private static class FTPUploadResultTypeMatcher extends TypeSafeMatcher<FTPUploadResult> {
+	    
+	    private final FTPUploadResultType type;
+
+        public FTPUploadResultTypeMatcher(FTPUploadResultType type) {
+            this.type = type;
+        }
+	    
+        @Override
+        public void describeTo(Description desc) {
+            desc.appendText(type.toNiceString());
+            desc.appendText(" upload");
+        }
+
+        @Override
+        public boolean matchesSafely(FTPUploadResult upload) {
+            return type.equals(upload.type());
+        }
+    };
 
 	private void startServer() throws FtpException {
 		FtpServerFactory serverFactory = new FtpServerFactory();
@@ -142,115 +165,14 @@ public class RadioPlayerFileUploaderTest {
 
 		serverFactory.addListener("default", factory.createListener());
 
-		serverFactory.setUserManager(new TestUserManager());
+		serverFactory.setUserManager(new TestUserManager(new TestUser(TEST_USERNAME, TEST_PASSWORD, dir)));
 		
 		server = serverFactory.createServer();
 
 		server.start();
 	}
 
-	private class TestUserManager implements UserManager {
-
-		@Override
-		public User getUserByName(String username) throws FtpException {
-			if (username == TEST_USERNAME) {
-				return testUser;
-			}
-			return null;
-		}
-
-		@Override
-		public String[] getAllUserNames() throws FtpException {
-			return new String[] { TEST_USERNAME };
-		}
-
-		@Override
-		public void delete(String username) throws FtpException {
-			// no-op
-		}
-
-		@Override
-		public void save(User user) throws FtpException {
-		}
-
-		@Override
-		public boolean doesExist(String username) throws FtpException {
-			return username.equals(TEST_USERNAME);
-		}
-
-		@Override
-		public User authenticate(Authentication authentication) throws AuthenticationFailedException {
-			if (authentication instanceof UsernamePasswordAuthentication) {
-				UsernamePasswordAuthentication upauth = (UsernamePasswordAuthentication) authentication;
-				if (upauth.getUsername().equals(TEST_USERNAME)) {
-					return testUser;
-				}
-			}
-			throw new AuthenticationFailedException();
-		}
-
-		@Override
-		public String getAdminName() throws FtpException {
-			return "admin";
-		}
-
-		@Override
-		public boolean isAdmin(String username) throws FtpException {
-			return username.equals("admin");
-		}
-
-	}
-
-	private final User testUser = new User() {
-
-		@Override
-		public String getName() {
-			return TEST_USERNAME;
-		}
-
-		@Override
-		public String getPassword() {
-			return TEST_PASSWORD;
-		}
-
-		@Override
-		public List<Authority> getAuthorities() {
-			return ImmutableList.<Authority> of(new WritePermission());
-		}
-
-		@Override
-		public List<Authority> getAuthorities(Class<? extends Authority> clazz) {
-			if (clazz.equals(WritePermission.class)) {
-				return ImmutableList.<Authority> of(new WritePermission());
-			}
-			return ImmutableList.<Authority> of();
-		}
-
-		@Override
-		public AuthorizationRequest authorize(AuthorizationRequest request) {
-			return new WritePermission().authorize(request);
-		}
-
-		@Override
-		public int getMaxIdleTime() {
-			return 0;
-		}
-
-		@Override
-		public boolean getEnabled() {
-			return true;
-		}
-
-		@Override
-		public String getHomeDirectory() {
-			return dir.getAbsolutePath();
-		}
-	};
-
-	public static Item buildItem(ContentQuery query) {
-		String service = (String) QueryFragmentExtractor.extract(query, ImmutableSet.<Attribute<?>>of(Attributes.BROADCAST_ON)).requireValue().getValue().get(0);
-		DateTime transmissionStart = ((DateTime)QueryFragmentExtractor.extract(query, ImmutableSet.<Attribute<?>>of(Attributes.BROADCAST_TRANSMISSION_TIME)).requireValue().getValue().get(0)).plusHours(18).plusMinutes(30);
-		DateTime transmissionEnd = transmissionStart.plusHours(1);
+	public static Item buildItem(String service, DateTime transmissionStart, DateTime transmissionEnd) {
 		
 		Item testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c", "bbc:b00f4d9c", Publisher.BBC);
 		testItem.setTitle("BBC Electric Proms: Saturday Night Fever");
@@ -282,4 +204,120 @@ public class RadioPlayerFileUploaderTest {
 	}
 
 	private static final DateTimeZone TIMEZONE = DateTimeZone.forOffsetHours(8);
+	
+	public static class TestUser implements User {
+
+	    private final String TEST_USERNAME;
+	    private final String TEST_PASSWORD;
+	    private final File homeDir;
+
+	    public TestUser(String name, String password, File homeDir) {
+	        this.TEST_USERNAME = name;
+	        this.TEST_PASSWORD = password;
+	        this.homeDir = homeDir;
+	    }
+	    
+	    @Override
+	    public String getName() {
+	        return TEST_USERNAME;
+	    }
+
+	    @Override
+	    public String getPassword() {
+	        return TEST_PASSWORD;
+	    }
+
+	    @Override
+	    public List<Authority> getAuthorities() {
+	        return ImmutableList.<Authority> of(new WritePermission());
+	    }
+
+	    @Override
+	    public List<Authority> getAuthorities(Class<? extends Authority> clazz) {
+	        if (clazz.equals(WritePermission.class)) {
+	            return ImmutableList.<Authority> of(new WritePermission());
+	        }
+	        return ImmutableList.<Authority> of();
+	    }
+
+	    @Override
+	    public AuthorizationRequest authorize(AuthorizationRequest request) {
+	        return new WritePermission().authorize(request);
+	    }
+
+	    @Override
+	    public int getMaxIdleTime() {
+	        return 0;
+	    }
+
+	    @Override
+	    public boolean getEnabled() {
+	        return true;
+	    }
+
+	    @Override
+	    public String getHomeDirectory() {
+	        return homeDir.getAbsolutePath();
+	    }
+	};
+	
+	public static class TestUserManager implements UserManager {
+	    
+	    private final String TEST_USERNAME;
+	    private final User testUser;
+
+	    public TestUserManager(User user) {
+	        this.TEST_USERNAME = user.getName();
+	        this.testUser = user;
+	    }
+
+	    @Override
+	    public User getUserByName(String username) throws FtpException {
+	        if (username == TEST_USERNAME) {
+	            return testUser;
+	        }
+	        return null;
+	    }
+
+	    @Override
+	    public String[] getAllUserNames() throws FtpException {
+	        return new String[] { TEST_USERNAME };
+	    }
+
+	    @Override
+	    public void delete(String username) throws FtpException {
+	        // no-op
+	    }
+
+	    @Override
+	    public void save(User user) throws FtpException {
+	    }
+
+	    @Override
+	    public boolean doesExist(String username) throws FtpException {
+	        return username.equals(TEST_USERNAME);
+	    }
+
+	    @Override
+	    public User authenticate(Authentication authentication) throws AuthenticationFailedException {
+	        if (authentication instanceof UsernamePasswordAuthentication) {
+	            UsernamePasswordAuthentication upauth = (UsernamePasswordAuthentication) authentication;
+	            if (upauth.getUsername().equals(TEST_USERNAME)) {
+	                return testUser;
+	            }
+	        }
+	        throw new AuthenticationFailedException();
+	    }
+
+	    @Override
+	    public String getAdminName() throws FtpException {
+	        return "admin";
+	    }
+
+	    @Override
+	    public boolean isAdmin(String username) throws FtpException {
+	        return username.equals("admin");
+	    }
+
+	}
 }

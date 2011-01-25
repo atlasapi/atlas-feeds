@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.radioplayer.outputting;
+package org.atlasapi.feeds.radioplayer.upload;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

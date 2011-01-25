@@ -2,14 +2,14 @@ package org.atlasapi.feeds.radioplayer.upload;
 
 import com.google.common.base.Objects;
 
-public class RadioPlayerFTPCredentials {
+public class FTPCredentials {
 
 	private final String server;
 	private final int port;
 	private final String username;
 	private final String password;
 
-	private RadioPlayerFTPCredentials(String server, int port, String username, String password) {
+	private FTPCredentials(String server, int port, String username, String password) {
 		this.server = server;
 		this.port = port;
 		this.username = username;
@@ -37,8 +37,8 @@ public class RadioPlayerFTPCredentials {
 		if(this == that) {
 			return true;
 		}
-		if(that instanceof RadioPlayerFTPCredentials) {
-			RadioPlayerFTPCredentials other = (RadioPlayerFTPCredentials) that;
+		if(that instanceof FTPCredentials) {
+			FTPCredentials other = (FTPCredentials) that;
 			return Objects.equal(other.server, server) && other.port == port && Objects.equal(other.username, username) && Objects.equal(other.password, password);
 		}
 		return false;
@@ -69,8 +69,8 @@ public class RadioPlayerFTPCredentials {
 			this.server = server;
 		}
 		
-		public RadioPlayerFTPCredentials build() {
-			return new RadioPlayerFTPCredentials(server, port, username, password);
+		public FTPCredentials build() {
+			return new FTPCredentials(server, port, username, password);
 		}
 		
 		public RadioPlayerFTPCredentialsBuilder withPort(int port) {
