@@ -70,8 +70,8 @@ public class RadioPlayerFileUploaderTest {
 	public void testRun() throws Exception {
 		try {
 			dir = Files.createTempDir();
-			System.out.println(dir);
 			dir.deleteOnExit();
+
 			File files = new File(dir.getAbsolutePath() + File.separator + "files");
 			files.mkdir();
 

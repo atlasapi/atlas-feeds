@@ -125,5 +125,4 @@ public class RadioPlayerFileUploader implements Runnable {
 		String date = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZone.UTC).print(today);
 		return String.format("%s_%s_%s.xml", date, service.getRadioplayerId(), type.toString());
 	}
-
 }

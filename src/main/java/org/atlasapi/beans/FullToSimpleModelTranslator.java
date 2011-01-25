@@ -84,7 +84,7 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 		copyBasicContentAttributes(fullPlayList, simplePlaylist);
 		
 		for (org.atlasapi.media.entity.Item fullItem : fullPlayList.getContents()) {
-			simplePlaylist.addItem(simpleItemFrom(fullItem));
+			simplePlaylist.add(simpleItemFrom(fullItem));
 		}
 		return simplePlaylist;
 	}
@@ -97,9 +97,9 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 		
 		for (Content fullContent : fullPlayList.getContents()) {
 			if (fullContent instanceof org.atlasapi.media.entity.Item) {
-				simplePlaylist.addItem(simpleItemFrom((org.atlasapi.media.entity.Item) fullContent));
+				simplePlaylist.add(simpleItemFrom((org.atlasapi.media.entity.Item) fullContent));
 			} else if (fullContent instanceof org.atlasapi.media.entity.Container<?>) {
-				simplePlaylist.addPlaylist(simplePlaylistFrom((org.atlasapi.media.entity.Container<?>) fullContent));
+				simplePlaylist.add(simplePlaylistFrom((org.atlasapi.media.entity.Container<?>) fullContent));
 			} else {
 				throw new IllegalArgumentException("Cannot convert Content of type " + fullContent.getClass().getSimpleName() + " to a simple format");
 			}
@@ -109,7 +109,6 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 	
 	private static void copyBasicContentAttributes(Content content, Description simpleDescription) {
 		copyBasicDescribedAttributes(content, simpleDescription);
-		simpleDescription.setContainedIn(content.getContainedInUris());
 		simpleDescription.setClips(clipToSimple(content.getClips()));
 	}
 

@@ -15,7 +15,6 @@ import org.apache.commons.lang.StringUtils;
 import org.atlasapi.beans.AtlasErrorSummary;
 import org.atlasapi.beans.BeanGraphWriter;
 import org.atlasapi.media.entity.Container;
-import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Described;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
@@ -294,8 +293,6 @@ public class HtmlTranslator implements BeanGraphWriter {
 			defineTerm("episode number", episode.getEpisodeNumber(), writer);
 		}
 
-		defineTerm("contained in", listOf(containedInLinksFor(item)), writer);
-
 		beginNestedDefinitionList("versions", writer);
 
 		for (Version version : item.getVersions()) {
@@ -342,22 +339,6 @@ public class HtmlTranslator implements BeanGraphWriter {
 			links.add(externalLink(url));
 		}
 		return links;
-	}
-
-	private static Set<String> containedInLinksFor(Item item) {
-		return containedInLinksFor(item.getContainedInUris());
-	}
-	
-	private static Set<String> containedInLinksFor(Content content) {
-		return containedInLinksFor(content.getContainedInUris());
-	}
-
-	private static Set<String> containedInLinksFor(Set<String> containedInUris) {
-		Set<String> atlasLinks = Sets.newHashSet();
-		for (String containingPlaylist : containedInUris) {
-			atlasLinks.add(atlasLink(containingPlaylist));
-		}
-		return atlasLinks;
 	}
 
 	private static void defineTerm(String term, Object description1, Object description2, Writer writer) throws IOException {

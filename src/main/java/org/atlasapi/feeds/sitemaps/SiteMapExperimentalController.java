@@ -1,25 +1,15 @@
 package org.atlasapi.feeds.sitemaps;
 
 import java.io.IOException;
-import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.content.criteria.AtomicQuery;
-import org.atlasapi.content.criteria.attribute.Attributes;
-import org.atlasapi.content.criteria.operator.Operators;
-import org.atlasapi.media.entity.Brand;
-import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.MongoDbBackedContentStore;
 import org.atlasapi.query.content.parser.ApplicationConfigurationIncludingQueryBuilder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.metabroadcast.common.query.Selection;
 
 @Controller
 public class SiteMapExperimentalController {
