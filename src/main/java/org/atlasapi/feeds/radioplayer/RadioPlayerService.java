@@ -9,6 +9,7 @@ public class RadioPlayerService {
 	private String serviceUri;
 	private String dabServiceId = "00.0000.0000.0";
 	private String scheduleUri;
+    private String ionId;
 	
 	public RadioPlayerService(int radioplayerId, String name) {
 		this.radioplayerId = radioplayerId;
@@ -30,6 +31,15 @@ public class RadioPlayerService {
 	
 	public String getDabServiceId() {
 		return dabServiceId;
+	}
+	
+	public RadioPlayerService withIonServiceId(String id) {
+	    this.ionId = id;
+	    return this;
+	}
+	
+	public String getIonId() {
+	    return ionId == null ? "bbc_radio_" + name : ionId;
 	}
 	
 	public RadioPlayerService withServiceUriSuffix(String serviceUri) {

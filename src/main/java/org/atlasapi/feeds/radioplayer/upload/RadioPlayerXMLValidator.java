@@ -25,24 +25,56 @@ import com.google.common.collect.Iterables;
 
 public class RadioPlayerXMLValidator {
 		
-		private final Builder builder;
 
-		public RadioPlayerXMLValidator(Builder builder) {
-			this.builder = builder;
+		private final SAXParserFactory factory;
+
+        public RadioPlayerXMLValidator(SAXParserFactory factory) {
+            this.factory = factory;
 		}
 
-		public synchronized boolean validate(InputStream input) throws ValidityException {
+		public boolean validate(InputStream input) throws ValidityException {
 			try {
-				builder.build(input);
+				buildBuilder().build(input);
 				return true;
 			} catch (ParsingException e) {
 				throw new ValidityException(String.format("Parsing exception whilst validating input: %s [%d:%d]", e.getLocalizedMessage(), e.getLineNumber(), e.getColumnNumber()), e);
 			} catch (IOException e) {
 				throw new ValidityException("IO Exception whilst validating input", e);
+			} catch(ParserConfigurationException pce) {
+			    throw new ValidityException("Couldn't build validator", pce);
+			} catch(SAXException saxe) {
+                throw new ValidityException("Couldn't build validator", saxe);
 			}
 		}
 		
-	public static RadioPlayerXMLValidator forSchemas(Iterable<InputStream> schemas) throws SAXException, ParserConfigurationException {
+    private Builder buildBuilder() throws ParserConfigurationException, SAXException {
+        SAXParser parser = factory.newSAXParser();
+
+        XMLReader reader = parser.getXMLReader();
+
+        reader.setErrorHandler(new ErrorHandler() {
+
+            @Override
+            public void error(SAXParseException spe) throws SAXException {
+                throw spe;
+            }
+
+            @Override
+            public void fatalError(SAXParseException spe) throws SAXException {
+                throw spe;
+            }
+
+            @Override
+            public void warning(SAXParseException spe) throws SAXException {
+                throw spe;
+            }
+
+        });
+
+        return new Builder(reader);
+    }
+
+    public static RadioPlayerXMLValidator forSchemas(Iterable<InputStream> schemas) throws SAXException, ParserConfigurationException {
 			SAXParserFactory factory = SAXParserFactory.newInstance();
 			factory.setValidating(false);
 			factory.setNamespaceAware(true);
@@ -58,30 +90,8 @@ public class RadioPlayerXMLValidator {
 				factory.setSchema(schema);
 			}
 
-			SAXParser parser = factory.newSAXParser();
 
-			XMLReader reader = parser.getXMLReader();
-
-			reader.setErrorHandler(new ErrorHandler() {
-
-				@Override
-				public void error(SAXParseException spe) throws SAXException {
-					throw spe;
-				}
-
-				@Override
-				public void fatalError(SAXParseException spe) throws SAXException {
-					throw spe;
-				}
-
-				@Override
-				public void warning(SAXParseException spe) throws SAXException {
-					throw spe;
-				}
-
-			});
-
-			return new RadioPlayerXMLValidator(new Builder(reader));
+			return new RadioPlayerXMLValidator(factory);
 	}
 
 	
