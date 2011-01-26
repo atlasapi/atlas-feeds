@@ -16,6 +16,7 @@ import org.atlasapi.feeds.xml.XMLNamespace;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Clip;
+import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Country;
 import org.atlasapi.media.entity.Encoding;
@@ -23,7 +24,6 @@ import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
-import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
@@ -138,7 +138,7 @@ public class SiteMapOutputter {
 	private String itemTitle(Item item) {
 		String title = Strings.nullToEmpty(item.getTitle());
 		if (item instanceof Episode) {
-			Brand brand = ((Episode) item).getContainer();
+			Container<?> brand = ((Episode) item).getContainer();
 			if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
 				String brandTitle = brand.getTitle();
 				if (!brandTitle.equals(title)) {
@@ -153,7 +153,7 @@ public class SiteMapOutputter {
 	private void c4playerLoc(Element videoElem, Item item, Location location) {
 		Element playerLocElem = createElement("player_loc", VIDEO);
 		playerLocElem.addAttribute(new Attribute("allow_embed","no"));
-		Brand brand = ((Episode)item).getContainer();
+		Container<?> brand = ((Episode)item).getContainer();
 		String playerLoc = "http://www.channel4.com/static/programmes/asset/flash/swf/4odplayer-4.71.swf?brandTitle="+
 							brand.getTitle()+ 
 							"&wsBrandTitle="+

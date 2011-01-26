@@ -34,8 +34,8 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 	private static final DateTimeZone TIMEZONE = DateTimeZone.forOffsetHours(8);
 	private static RadioPlayerXMLOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
 	
-	public static Item buildItem(){
-		Item testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c",
+	public static Episode buildItem(){
+		Episode testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c",
 				"bbc:b00f4d9c", Publisher.BBC);
 		testItem.setTitle("BBC Electric Proms: Saturday Night Fever");
 		testItem.setDescription("Another chance to hear Robin Gibb perform the Bee Gees' classic disco album with the BBC Concert Orchestra. It was recorded" +
@@ -70,31 +70,31 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 
 	@Test
 	public void testOutputtingAPIFeed() throws Exception {
-		Item testItem = buildItem();
+		Episode testItem = buildItem();
 		
-		Series series = new Series("seriesUri", "seriesCurie");
+		Series series = new Series("seriesUri", "seriesCurie", Publisher.BBC);
 		series.setTitle("This is the series title");
-		((Episode)testItem).setSeries(series);
+		series.addContents(testItem);
 		
 		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
 		brand.setTitle("Electric Proms");
 		((Episode)testItem).setContainer(brand);
 
-		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(ImmutableList.of(testItem)));
+		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(ImmutableList.<Item>of(testItem)));
 	}
 	
 	@Test
 	public void testOutputtingAPIFeedWithSeriesAndNoBrand() throws Exception {
-		Item testItem = buildItem();
+		Episode testItem = buildItem();
 		
-		Series series = new Series("seriesUri", "seriesCurie");
+		Series series = new Series("seriesUri", "seriesCurie", Publisher.BBC);
 		series.setTitle("Series Title");
-		((Episode)testItem).setSeries(series);
+		series.addContents(testItem);
 		
 		//make item available everywhere.
 		getLocation(testItem).getPolicy().setAvailableCountries(ImmutableSet.of(Countries.ALL));
 		
-		assertEquals(expectedFeed("seriesNoBrandPIFeedTest.xml"), output(ImmutableList.of(testItem)));
+		assertEquals(expectedFeed("seriesNoBrandPIFeedTest.xml"), output(ImmutableList.<Item>of(testItem)));
 	}
 
 	private Location getLocation(Item testItem) {

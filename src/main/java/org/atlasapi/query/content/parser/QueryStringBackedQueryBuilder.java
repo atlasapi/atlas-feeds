@@ -98,7 +98,7 @@ public class QueryStringBackedQueryBuilder {
 	
 	private ContentQuery buildFromFilteredMap(Map<String, String[]> params) {
 		if (params.isEmpty()) {
-			throw new IllegalArgumentException("No parameters specified");
+			return new ContentQuery(ImmutableList.<AtomicQuery>of());
 		}
 				
 		Set<Attribute<?>> userSuppliedAttributes = Sets.newHashSet();
@@ -143,8 +143,6 @@ public class QueryStringBackedQueryBuilder {
 		
 		return new ContentQuery(operands);
 	}
-	
-
 	
 	private class AttributeOperatorValues {
 		
