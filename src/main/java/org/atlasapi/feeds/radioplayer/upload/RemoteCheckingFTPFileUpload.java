@@ -1,10 +1,14 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.failedUpload;
+import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.successfulUpload;
+import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.unknownUpload;
+import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType.SUCCESS;
+
 import java.io.IOException;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 
 public class RemoteCheckingFTPFileUpload implements FTPUpload {
 
@@ -17,7 +21,7 @@ public class RemoteCheckingFTPFileUpload implements FTPUpload {
     @Override
     public FTPUploadResult upload(FTPClient client, String filename, byte[] fileData) {
         FTPUploadResult delegateResult = delegate.upload(client, filename, fileData);
-        if(FTPUploadResultType.SUCCESS.equals(delegateResult.type())) {
+        if(SUCCESS.equals(delegateResult.type())) {
             return remoteCheck(client, filename);
         }
         return delegateResult;
@@ -27,19 +31,19 @@ public class RemoteCheckingFTPFileUpload implements FTPUpload {
         try {
             for(int i = 0; i < 5; i++) {
                 if(checkForFile("Processed", client, filename)) {
-                    return DefaultFTPUploadResult.successfulUpload(filename).withMessage("Success verified on remote host");
+                    return successfulUpload(filename).withMessage("Success verified on remote host");
                 }
                 
                 if(checkForFile("Failed", client, filename)) {
-                    return DefaultFTPUploadResult.failedUpload(filename).withMessage("Processing failed on remote host");
+                    return failedUpload(filename).withMessage("Processing failed on remote host");
                 }
                 
                 Thread.sleep(5000);
             }
         } catch (Exception e) {
-            return DefaultFTPUploadResult.unknownUpload(filename).withMessage("Couldn't verify success on remote host").withCause(e);
+            return unknownUpload(filename).withMessage("Couldn't verify success on remote host").withCause(e);
         }
-        return DefaultFTPUploadResult.unknownUpload(filename).withMessage("Couldn't verify success on remote host");
+        return unknownUpload(filename).withMessage("Couldn't verify success on remote host");
     }
     
     private Boolean checkForFile(String pathname, FTPClient client, String filename) throws IOException {

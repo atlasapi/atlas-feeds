@@ -50,8 +50,10 @@ import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -132,15 +134,15 @@ public class RadioPlayerFileUploaderTest {
         return uploaded;
     }
 	
-    private Matcher<FTPUploadResult> unknownUploadResult() {
-        return new FTPUploadResultTypeMatcher(FTPUploadResultType.UNKNOWN);
-    }
+//    private Matcher<? extends Iterable<FTPUploadResult>> unknownUploadResult() {
+//        return new FTPUploadResultTypeMatcher(FTPUploadResultType.UNKNOWN);
+//    }
 
-    private Matcher<FTPUploadResult> successfulUploadResult() {
+    private Matcher<? extends Iterable<FTPUploadResult>> successfulUploadResult() {
         return new FTPUploadResultTypeMatcher(FTPUploadResultType.SUCCESS);
     }
 	
-	private static class FTPUploadResultTypeMatcher extends TypeSafeMatcher<FTPUploadResult> {
+	private static class FTPUploadResultTypeMatcher extends TypeSafeMatcher<List<FTPUploadResult>> {
 	    
 	    private final FTPUploadResultType type;
 
@@ -155,8 +157,13 @@ public class RadioPlayerFileUploaderTest {
         }
 
         @Override
-        public boolean matchesSafely(FTPUploadResult upload) {
-            return type.equals(upload.type());
+        public boolean matchesSafely(List<FTPUploadResult> upload) {
+            return Iterables.all(upload, new Predicate<FTPUploadResult>() {
+                @Override
+                public boolean apply(FTPUploadResult input) {
+                    return type.equals(input.type());
+                }
+            });
         }
     };
 

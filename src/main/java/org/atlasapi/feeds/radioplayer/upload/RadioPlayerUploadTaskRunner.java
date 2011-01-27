@@ -1,5 +1,12 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import static com.google.common.base.Predicates.notNull;
+import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.SUCCESSFUL;
+import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.failedUpload;
+import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.successfulUpload;
+import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.ERROR;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
@@ -14,6 +21,7 @@ import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metabroadcast.common.time.DateTimeZones;
@@ -47,12 +55,12 @@ public class RadioPlayerUploadTaskRunner implements Runnable {
         List<FTPUploadResult> results = Lists.newArrayList();
 
         try {
-            FTPClient client = null;
-            try{
-                client = connectAndLogin();
-                recorder.record(DefaultFTPUploadResult.successfulUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Connected and logged-in successully"));
-            } catch (Exception e) {
-                recorder.record(DefaultFTPUploadResult.failedUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Failed to connect/login to server").withCause(e));
+            List<FTPClient> clients = connectClients(2);
+            int connections = clients.size();
+            if(connections > 0) {
+                recorder.record(ImmutableList.of(successfulUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Connected and logged-in successully")));
+            } else {
+                recorder.record(ImmutableList.of(failedUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Failed to connect/login to server")));
             }
             
             int days = lookBack + lookAhead + 1;
@@ -60,7 +68,7 @@ public class RadioPlayerUploadTaskRunner implements Runnable {
             for(RadioPlayerService service : services) {
                 DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
                 for(int i = 0; i < days; i++, day = day.plusDays(1)) {
-                        submissions++;
+                        FTPClient client = clients.get(submissions++ % connections);
                         uploadRunner.submit(new RadioPlayerFTPUploadTask(client, day, service, queryExecutor).withValidator(validator).withLog(log));
                 }
             }
@@ -69,19 +77,18 @@ public class RadioPlayerUploadTaskRunner implements Runnable {
                 try {
                     results.add(uploadRunner.take().get());
                 } catch(Exception e) {
-                    log("Couldn't record FTP Upload result", e);
+                    log("Couldn't retrieve FTP Upload result", e);
+                    recorder.record(ImmutableList.of(failedUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Retrieving upload result failed").withCause(e)));
                 }
             }
     
             if(recorder != null) {
-                for(FTPUploadResult result : results) {
-                    recorder.record(result);
-                }
+                recorder.record(results);
             }
             
-            if(client != null) {
-                client.logout();
-                client.disconnect();
+            for (FTPClient ftpClient : clients) {
+                ftpClient.logout();
+                ftpClient.disconnect();
             }
             
         } catch (Exception e) {
@@ -89,27 +96,40 @@ public class RadioPlayerUploadTaskRunner implements Runnable {
         }
         log("RadioPlayerUploadTask finished. " + successes(results) + " files uploaded successfully", null, Severity.INFO);
     }
-
+    
     private int successes(List<FTPUploadResult> results) {
-        return Iterables.size(Iterables.filter(results, DefaultFTPUploadResult.IS_SUCCESS));
+        return Iterables.size(Iterables.filter(results, SUCCESSFUL));
     }
 
-    private FTPClient connectAndLogin() throws Exception {
-        FTPClient client = new FTPClient();
-
-        client.connect(credentials.server(), credentials.port());
-        
-        client.enterLocalPassiveMode();
-        
-        if (!client.login(credentials.username(), credentials.password())) {
-            throw new RuntimeException("Unable to connect to " + credentials.server() + " with username: " + credentials.username() + " and password...");
+    private List<FTPClient> connectClients(int count) {
+        ArrayList<FTPClient> clientList = Lists.newArrayListWithCapacity(count);
+        for (int i = 0; i < count; i++) {
+            clientList.add(connectAndLogin());
         }
-        
-        return client;
+        return ImmutableList.copyOf(Iterables.filter(clientList, notNull()));
+    }
+
+    private FTPClient connectAndLogin() {
+        try {
+            FTPClient client = new FTPClient();
+            
+            client.connect(credentials.server(), credentials.port());
+            
+            client.enterLocalPassiveMode();
+            
+            if (!client.login(credentials.username(), credentials.password())) {
+                return null;
+            }
+            
+            return client;
+        } catch (Exception e) {
+            return null;
+        }
+
     }
 
     private void log(String desc, Exception e) {
-        log(desc, e, Severity.ERROR);
+        log(desc, e, ERROR);
     }
     
     private void log(String desc, Exception e, Severity s) {

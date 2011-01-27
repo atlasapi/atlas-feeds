@@ -102,7 +102,7 @@ public class DefaultFTPUploadResult implements FTPUploadResult {
         return String.format("%s: %s upload of %s", dateTime.toString("dd/MM/yy HH:mm:ss"), success.toNiceString(), filename);
     }
 
-    public static final Predicate<FTPUploadResult> IS_SUCCESS = new Predicate<FTPUploadResult>() {
+    public static final Predicate<FTPUploadResult> SUCCESSFUL = new Predicate<FTPUploadResult>() {
         @Override
         public boolean apply(FTPUploadResult input) {
             return FTPUploadResultType.SUCCESS.equals(input.type());

@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.failedUpload;
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.ERROR;
 
 import java.io.ByteArrayOutputStream;
@@ -42,7 +43,7 @@ public class RadioPlayerFTPUploadTask implements Callable<FTPUploadResult> {
             if(log != null) {
                 log.record(new AdapterLogEntry(ERROR).withDescription("Exception uploading file " + filename).withSource(getClass()).withCause(e));
             }
-            return DefaultFTPUploadResult.failedUpload(filename).withCause(e).withMessage(e.getMessage());
+            return failedUpload(filename).withCause(e).withMessage(e.getMessage());
         }
 
     }
