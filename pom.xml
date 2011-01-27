@@ -131,6 +131,6 @@
     
     <properties>
         <atlas.version>${project.version}</atlas.version>
-        <spring.version>3.0.2.RELEASE</spring.version>
+        <spring.version>3.0.5.RELEASE</spring.version>
     </properties>
 </project>
