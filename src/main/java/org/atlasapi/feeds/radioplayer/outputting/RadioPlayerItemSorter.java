@@ -12,7 +12,7 @@ import org.joda.time.DateTime;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
-public class RadioPlayerItemSorter implements RadioPlayerItemFilter {
+public class RadioPlayerItemSorter {
 	
 	private final Comparator<? super Broadcast> broadcastComparator = new Comparator<Broadcast>() {
 		@Override
@@ -20,19 +20,21 @@ public class RadioPlayerItemSorter implements RadioPlayerItemFilter {
 			return b1.getTransmissionTime().compareTo(b2.getTransmissionTime());
 		}};
 
-	public List<Item> filter(Iterable<Item> items, String service, DateTime day) {
+	public List<RadioPlayerBroadcastItem> sortAndTransform(Iterable<Item> items, String service, DateTime day) {
 		
-		SortedMap<Broadcast,Item> broadcastItems = Maps.newTreeMap(broadcastComparator);
+		SortedMap<Broadcast,RadioPlayerBroadcastItem> broadcastItems = Maps.newTreeMap(broadcastComparator);
 		
 		for (Item item : items) {
 			for (Version version : item.getVersions()) {
 				for (Broadcast broadcast : version.getBroadcasts()) {
-					broadcastItems.put(broadcast, item);
+					broadcastItems.put(broadcast, new RadioPlayerBroadcastItem(item, version, broadcast));
 				}
 			}
 		}
 		
 		return ImmutableList.copyOf(broadcastItems.values());
 	}
+	
+	
 	
 }

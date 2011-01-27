@@ -13,6 +13,7 @@ import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Country;
+import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
@@ -34,7 +35,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 	private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
 
 	@Override
-	public Element createFeed(DateTime day, RadioPlayerService id, Iterable<Item> items) {
+	public Element createFeed(DateTime day, RadioPlayerService id, Iterable<RadioPlayerBroadcastItem> items) {
 		Element epgElem = createElement("epg", EPGSCHEDULE);
 		EPGDATATYPES.addDeclarationTo(epgElem);
 		XSI.addDeclarationTo(epgElem);
@@ -50,7 +51,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		
 		schedule.appendChild(scopeElement(day, id));
 		
-		for (Item item : items) {
+		for (RadioPlayerBroadcastItem item : items) {
 			schedule.appendChild(createProgrammeElement(item, day, id));
 		}
 		
@@ -58,30 +59,31 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		return epgElem;
 	}
 
-	private Element createProgrammeElement(Item item, DateTime day, RadioPlayerService id) {
+	private Element createProgrammeElement(RadioPlayerBroadcastItem broadcastItem, DateTime day, RadioPlayerService id) {
 		Element programme = createElement("programme", EPGSCHEDULE);
 		programme.addAttribute(new Attribute("shortId","0"));
-		programme.addAttribute(new Attribute("id", item.getCanonicalUri().replace("http://","crid://")));
+		programme.addAttribute(new Attribute("id", broadcastItem.getItem().getCanonicalUri().replace("http://","crid://")));
 		
-		String title = itemTitle(item);
+		String title = itemTitle(broadcastItem.getItem());
 		programme.appendChild(stringElement("mediumName", EPGDATATYPES, MEDIUM_TITLE.truncatePossibleNull(title)));
 		programme.appendChild(stringElement("longName", EPGDATATYPES, LONG_TITLE.truncatePossibleNull(title)));
 		
-		Broadcast broadcast = broadcastFrom(item, id.getServiceUri());
-		programme.appendChild(locationElement(item, broadcast, day,id));
-		programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(item.getDescription()))));
-		if (!Strings.isNullOrEmpty(item.getImage())) {
-			programme.appendChild(mediaDescription(imageDescriptionElem(item)));
+		Broadcast broadcast = broadcastItem.getBroadcast();
+		programme.appendChild(locationElement(broadcastItem.getItem(), broadcast, day,id));
+		programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(broadcastItem.getItem().getDescription()))));
+		if (!Strings.isNullOrEmpty(broadcastItem.getItem().getImage())) {
+			programme.appendChild(mediaDescription(imageDescriptionElem(broadcastItem.getItem())));
 		}
 		
-		for (Element genreElement : genreElementCreator.genreElementsFor(item)) {
+		for (Element genreElement : genreElementCreator.genreElementsFor(broadcastItem.getItem())) {
 			programme.appendChild(genreElement);
 		}
 		
-		Location location = locationFrom(item);
-		if(location != null){
-			programme.appendChild(ondemandElement(item, location, day));
-		}
+		for (Encoding encoding : broadcastItem.getVersion().getManifestedAs()) {
+            for(Location location : encoding.getAvailableAt()) {
+                programme.appendChild(ondemandElement(broadcastItem.getItem(), location));
+            }
+        }
 		
 		return programme;
 	}
@@ -149,7 +151,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		return item.getImage();
 	}
 
-	private Element ondemandElement(Item item, Location location, DateTime day) {
+	private Element ondemandElement(Item item, Location location) {
 		Element ondemandElement = createElement("ondemand", EPGDATATYPES);
 
 		ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCurie().substring(item.getCurie().indexOf(":")+1)));
@@ -157,17 +159,17 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		Policy policy = location.getPolicy();
 		if (policy != null) {
 			Set<Country> countries = policy.getAvailableCountries();
-//			if (!countries.contains(Countries.ALL)) {
-//				String spaceDelimted = Joiner.on(' ').join(Iterables.transform(countries, Country.UNPACK_COUNTRY_CODE));
-//				Element restrictionElem = createElement("restriction", RADIOPLAYER);
-//				restrictionElem.addAttribute(new Attribute("relationship","allow"));
-//				restrictionElem.appendChild(spaceDelimted);
-//				ondemandElement.appendChild(restrictionElem);
-//			} else {
-//				Element restrictionElem = createElement("restriction", RADIOPLAYER);
-//				restrictionElem.addAttribute(new Attribute("relationship","deny"));
-//				ondemandElement.appendChild(restrictionElem);
-//			}
+			if (!countries.contains(Countries.ALL)) {
+				String spaceDelimted = Joiner.on(' ').join(Iterables.transform(countries, Country.UNPACK_COUNTRY_CODE));
+				Element restrictionElem = createElement("restriction", RADIOPLAYER);
+				restrictionElem.addAttribute(new Attribute("relationship","allow"));
+				restrictionElem.appendChild(spaceDelimted);
+				ondemandElement.appendChild(restrictionElem);
+			} else {
+				Element restrictionElem = createElement("restriction", RADIOPLAYER);
+				restrictionElem.addAttribute(new Attribute("relationship","deny"));
+				ondemandElement.appendChild(restrictionElem);
+			}
 
 			DateTime availableTill = policy.getAvailabilityEnd();
 			DateTime availableFrom = policy.getAvailabilityStart();

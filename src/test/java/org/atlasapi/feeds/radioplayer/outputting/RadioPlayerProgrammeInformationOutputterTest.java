@@ -80,7 +80,9 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		brand.setTitle("Electric Proms");
 		((Episode)testItem).setContainer(brand);
 
-		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(ImmutableList.<Item>of(testItem)));
+        Version version = Iterables.getOnlyElement(testItem.getVersions());
+        Broadcast broadcast = Iterables.getOnlyElement(version.getBroadcasts());
+		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast))));
 	}
 	
 	@Test
@@ -94,7 +96,9 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		//make item available everywhere.
 		getLocation(testItem).getPolicy().setAvailableCountries(ImmutableSet.of(Countries.ALL));
 		
-		assertEquals(expectedFeed("seriesNoBrandPIFeedTest.xml"), output(ImmutableList.<Item>of(testItem)));
+		Version version = Iterables.getOnlyElement(testItem.getVersions());
+        Broadcast broadcast = Iterables.getOnlyElement(version.getBroadcasts());
+        assertEquals(expectedFeed("seriesNoBrandPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast))));
 	}
 
 	private Location getLocation(Item testItem) {
@@ -113,10 +117,10 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		testItem.setVersions(ImmutableSet.of(version));
 		
-		assertEquals(expectedFeed("noLocationPIFeedTest.xml"), output(ImmutableList.of(testItem)));
+		assertEquals(expectedFeed("noLocationPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast))));
 	}
 	
-	private static String output(List<Item> items) throws IOException {
+	private static String output(List<RadioPlayerBroadcastItem> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		outputter.output(new DateTime(2010, 9, 6, 0, 0, 0, 0, DateTimeZone.UTC),
 						new RadioPlayerService(502, "radio2").withDabServiceId("e1_ce15_c222_0"), items, out);

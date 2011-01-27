@@ -8,8 +8,6 @@ import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.content.criteria.operator.Operators;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerBroadcastFilter;
-import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerDelegatingItemFilter;
-import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerItemFilter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerItemSorter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerProgrammeInformationOutputter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter;
@@ -52,7 +50,8 @@ public enum RadioPlayerFeedType {
 	};
 
 	private final RadioPlayerXMLOutputter outputter;
-	private final RadioPlayerItemFilter itemFilter = RadioPlayerDelegatingItemFilter.from(ImmutableSet.of(new RadioPlayerBroadcastFilter(), new RadioPlayerItemSorter()));
+	private final RadioPlayerItemSorter sorter = new RadioPlayerItemSorter();
+	private final RadioPlayerBroadcastFilter broadcastFilter = new RadioPlayerBroadcastFilter();
 
 	RadioPlayerFeedType(RadioPlayerXMLOutputter outputter) {
 		this.outputter = outputter;
@@ -70,7 +69,7 @@ public enum RadioPlayerFeedType {
 	public void compileFeedFor(DateTime date, RadioPlayerService service, KnownTypeQueryExecutor queryExecutor, OutputStream out) throws IOException {
 		if(outputter != null) {
 			String serviceUri = service.getServiceUri();
-			outputter.output(date, service, itemFilter.filter(queryExecutor.schedule(queryFor(date, serviceUri)).getItemsFromOnlyChannel(), serviceUri, date), out);
+			outputter.output(date, service, sorter.sortAndTransform(broadcastFilter.filter(queryExecutor.schedule(queryFor(date, serviceUri)).getItemsFromOnlyChannel(), serviceUri, date), serviceUri, date), out);
 		}
 	}
 }
