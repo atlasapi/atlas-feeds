@@ -30,7 +30,7 @@ public abstract class RadioPlayerXMLOutputter {
 
 	protected static final DateTimeFormatter DATE_TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
 
-	protected abstract Element createFeed(DateTime day, RadioPlayerService id, Iterable<Item> items);
+	protected abstract Element createFeed(DateTime day, RadioPlayerService id, Iterable<RadioPlayerBroadcastItem> items);
 
 	protected static final Truncator MEDIUM_TITLE = new Truncator().withMaxLength(16).onlyTruncateAtAWordBoundary().omitTrailingPunctuationWhenTruncated();
 	protected static final Truncator LONG_TITLE = new Truncator().withMaxLength(128).onlyTruncateAtAWordBoundary().omitTrailingPunctuationWhenTruncated();
@@ -46,7 +46,7 @@ public abstract class RadioPlayerXMLOutputter {
 		super();
 	}
 
-	public void output(DateTime day, RadioPlayerService id, Iterable<Item> items, OutputStream out) throws IOException {
+	public void output(DateTime day, RadioPlayerService id, Iterable<RadioPlayerBroadcastItem> items, OutputStream out) throws IOException {
 		checkNotNull(items);
 		if (Iterables.size(items) > 0) {
 			write(out, createFeed(day, id, items));
