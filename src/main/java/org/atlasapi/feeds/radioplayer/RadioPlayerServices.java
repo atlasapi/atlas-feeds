@@ -67,7 +67,7 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(349, "asiannetwork").withIonServiceId("bbc_asian_network")).
 			add(new RadioPlayerService(350, "worldservice").withIonServiceId("bbc_world_service")).
 			add(new RadioPlayerService(351, "radioscotland").withServiceUriSuffix("radioscotland/fm").withScheduleUri("http://www.bbc.co.uk/radioscotland/programmes/schedules/fm").withIonServiceId("bbc_radio_scotland")).
-			add(new RadioPlayerService(352, "radionangaidheal").withIonServiceId("bbc_radio_nangaidheal").withIonServiceId("bbc_radio_nan_gaidheal")).
+			add(new RadioPlayerService(352, "radionangaidheal").withIonServiceId("bbc_radio_nan_gaidheal")).
 			add(new RadioPlayerService(353, "radioulster").withIonServiceId("bbc_radio_ulster")).
 			add(new RadioPlayerService(354, "radiofoyle").withIonServiceId("bbc_radio_foyle")).
 			add(new RadioPlayerService(355, "radiowales").withServiceUriSuffix("radiowales/fm").withScheduleUri("http://www.bbc.co.uk/radiowales/programmes/schedules/fm").withIonServiceId("bbc_radio_wales")).
