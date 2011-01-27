@@ -26,6 +26,9 @@ import java.util.Collection;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.JAXBException;
 
+import org.atlasapi.media.entity.simple.Description;
+import org.atlasapi.media.entity.simple.Item;
+import org.atlasapi.media.entity.simple.Playlist;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.base.Charsets;
@@ -39,7 +42,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 /**
- * Outputs simple URIplay model in plain XML format using JAXB.
+ * Outputs simple URIplay model in Json.
  * 
  * @author Robert Chatley (robert@metabroadcast.com)
  */
@@ -58,6 +61,7 @@ public class JsonTranslator implements BeanGraphWriter {
 					.setDateFormat(DateFormat.LONG)
 					.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
 					.registerTypeAdapter(AtlasErrorSummary.class, new AtlasExceptionJsonSerializer())
+					.registerTypeAdapter(Description.class, new DescriptionSerializer())
 					.create();
 	}
 
@@ -142,5 +146,19 @@ public class JsonTranslator implements BeanGraphWriter {
 			return serialized;// ;
 		}
 
+	}
+	
+	private static final class DescriptionSerializer implements JsonSerializer<Description> {
+
+		@Override
+		public JsonElement serialize(Description description, Type type, JsonSerializationContext context) {
+			JsonElement element = null;
+			if (description instanceof Item) {
+				element = context.serialize(description, Item.class);
+			} else {
+				element = context.serialize(description, Playlist.class);
+			}
+			return element;
+		}
 	}
 }
