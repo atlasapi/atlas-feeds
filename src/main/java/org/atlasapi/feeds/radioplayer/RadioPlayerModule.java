@@ -34,7 +34,7 @@ import com.metabroadcast.common.webapp.health.HealthController;
 @Configuration
 public class RadioPlayerModule {
 
-	private static final RepetitionInterval UPLOAD = RepetitionRules.atInterval(new Duration(5 * 60 * 60 * 1000));
+	private static final RepetitionInterval UPLOAD_EVERY_HOUR = RepetitionRules.atInterval(Duration.standardHours(1));
 
 	private @Autowired @Qualifier("mongoDbQueryExcutorThatFiltersUriQueries") KnownTypeQueryExecutor queryExecutor;
 	
@@ -60,7 +60,8 @@ public class RadioPlayerModule {
 			FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
 			RadioPlayerXMLValidator validator = createValidator();
 			FTPUploadResultRecorder recorder = new MongoFTPUploadResultRecorder(mongo);
-			scheduler.schedule(new RadioPlayerUploadTask(queryExecutor, credentials, RadioPlayerServices.services).withResultRecorder(recorder).withValidator(validator).withLog(log), UPLOAD);
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(queryExecutor, credentials, RadioPlayerServices.services).withResultRecorder(recorder).withValidator(validator).withLog(log);
+            scheduler.schedule(uploader, UPLOAD_EVERY_HOUR);
 			log.record(new AdapterLogEntry(Severity.INFO).withDescription("Radioplayer uploader scheduled task installed for:" + credentials).withSource(getClass()));
 		} else {
 			log.record(new AdapterLogEntry(Severity.INFO)
