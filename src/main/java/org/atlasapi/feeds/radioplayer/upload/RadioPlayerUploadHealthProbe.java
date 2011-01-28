@@ -30,7 +30,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     private final String title;
     private final String filenamePattern;
 
-    private int lookBack = 2;
+    private int lookBack = 7;
     private int lookAhead = 7;
     
     public RadioPlayerUploadHealthProbe(DatabasedMongo mongo, String title, String filenamePattern) {
