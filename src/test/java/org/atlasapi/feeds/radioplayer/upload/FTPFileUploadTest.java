@@ -44,9 +44,9 @@ public class FTPFileUploadTest {
         client.connect("localhost", 9521);
         client.login(TEST_USERNAME, TEST_PASSWORD);
         
-        FTPUpload upload = new FTPFileUpload(client, "success", Resources.toByteArray(Resources.getResource("org/atlasapi/feeds/radioplayer/basicPIFeedTest.xml")));
+        FTPUpload upload = new FTPFileUpload();
         
-        FTPUploadResult result = upload.call();
+        FTPUploadResult result = upload.upload(client, "success", Resources.toByteArray(Resources.getResource("org/atlasapi/feeds/radioplayer/basicPIFeedTest.xml")));
         
         assertThat(result.type(), is(equalTo(FTPUploadResultType.SUCCESS)));
         assertThat(dir.listFiles().length, is(1));
