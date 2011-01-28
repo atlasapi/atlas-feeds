@@ -29,7 +29,7 @@ public class RadioPlayerUploadTask implements Runnable {
     private final FTPCredentials credentials;
     private RadioPlayerXMLValidator validator;
     private int lookAhead = 7;
-    private int lookBack = 2;
+    private int lookBack = 7;
     private AdapterLog log;
 
     public RadioPlayerUploadTask(KnownTypeQueryExecutor queryExecutor, FTPCredentials credentials, Iterable<RadioPlayerService> services) {
