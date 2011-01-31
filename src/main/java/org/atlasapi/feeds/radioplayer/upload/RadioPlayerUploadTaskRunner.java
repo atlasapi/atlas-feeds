@@ -37,7 +37,7 @@ public class RadioPlayerUploadTaskRunner implements Runnable {
     private final FTPCredentials credentials;
     private RadioPlayerXMLValidator validator;
     private int lookAhead = 7;
-    private int lookBack = 2;
+    private int lookBack = 7;
     private AdapterLog log;
 
     public RadioPlayerUploadTaskRunner(KnownTypeQueryExecutor queryExecutor, FTPCredentials credentials, Iterable<RadioPlayerService> services) {

@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer;
 
+import static org.atlasapi.feeds.radioplayer.RadioPlayerServices.all;
+
 import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.radioplayer.upload.FTPCredentials;
@@ -66,7 +68,7 @@ public class RadioPlayerModule {
 
             log.record(new AdapterLogEntry(Severity.INFO).withDescription("Radioplayer uploader scheduled task installed for:" + credentials).withSource(getClass()));
 		} else {
-			log.record(new AdapterLogEntry(Severity.INFO)
+			log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
 			.withDescription("Not installing Radioplayer uploader"));
 		}
 	}
