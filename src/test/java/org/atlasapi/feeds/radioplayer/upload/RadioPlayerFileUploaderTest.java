@@ -48,6 +48,7 @@ import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
 import org.junit.Test;
 
 import com.google.common.base.Function;
@@ -89,7 +90,7 @@ public class RadioPlayerFileUploaderTest {
 			
 			context.checking(new Expectations(){{
 			    oneOf(queryExecutor).schedule(with(any(ContentQuery.class))); 
-			    will(returnValue(Schedule.fromItems(ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1))))));
+			    will(returnValue(Schedule.fromItems(service.getServiceUri(), new Interval(day, day.plusDays(1)), ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1))))));
 			    oneOf(recorder).record(with(successfulUploadResult()));
 			    oneOf(recorder).record(with(successfulUploadResult()));
 			}});
