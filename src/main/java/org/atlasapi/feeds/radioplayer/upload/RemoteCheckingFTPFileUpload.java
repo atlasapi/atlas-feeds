@@ -28,22 +28,25 @@ public class RemoteCheckingFTPFileUpload implements FTPUpload {
     }
 
     private FTPUploadResult remoteCheck(FTPClient client, String filename) {
+        boolean connected = client != null && client.isConnected();
         try {
-            for(int i = 0; i < 5; i++) {
-                if(checkForFile("Processed", client, filename)) {
-                    return successfulUpload(filename).withMessage("Success verified on remote host");
+            if(connected) {
+                for(int i = 0; i < 5; i++) {
+                    if(checkForFile("Processed", client, filename)) {
+                        return successfulUpload(filename).withMessage("Success verified on remote host");
+                    }
+                    
+                    if(checkForFile("Failed", client, filename)) {
+                        return failedUpload(filename).withMessage("Processing failed on remote host");
+                    }
+                    
+                    Thread.sleep(5000);
                 }
-                
-                if(checkForFile("Failed", client, filename)) {
-                    return failedUpload(filename).withMessage("Processing failed on remote host");
-                }
-                
-                Thread.sleep(5000);
             }
         } catch (Exception e) {
             return unknownUpload(filename).withMessage("Couldn't verify success on remote host").withCause(e);
         }
-        return unknownUpload(filename).withMessage("Couldn't verify success on remote host");
+        return unknownUpload(filename).withMessage("Couldn't verify success on remote host" + (connected ? "" : " (client not connected)"));
     }
     
     private Boolean checkForFile(String pathname, FTPClient client, String filename) throws IOException {
