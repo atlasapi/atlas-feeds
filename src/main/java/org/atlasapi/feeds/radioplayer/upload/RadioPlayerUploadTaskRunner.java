@@ -21,6 +21,8 @@ import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -45,9 +47,10 @@ public class RadioPlayerUploadTaskRunner implements Runnable {
         this.credentials = credentials;
         this.services = services;
     }
-
+    
     @Override
     public void run() {
+        DateTime start = new DateTime(DateTimeZones.UTC);
         log("RadioPlayerUploadTask started.", null, Severity.INFO);
         
         CompletionService<FTPUploadResult> uploadRunner = new ExecutorCompletionService<FTPUploadResult>(Executors.newFixedThreadPool(THREADS));
@@ -95,7 +98,8 @@ public class RadioPlayerUploadTaskRunner implements Runnable {
         } catch (Exception e) {
             log("Exception running RadioPlayerUploadTask", e);
         }
-        log("RadioPlayerUploadTask finished. " + successes(results) + " files uploaded successfully", null, Severity.INFO);
+        String length = new Period(start, new DateTime(DateTimeZones.UTC)).toString(PeriodFormat.getDefault());
+        log("RadioPlayerUploadTask finished. " + successes(results) + " files uploaded successfully in " + length, null, Severity.INFO);
     }
     
     private int successes(List<FTPUploadResult> results) {
