@@ -15,15 +15,19 @@ public class FTPFileUpload implements FTPUpload {
     @Override
     public FTPUploadResult upload(FTPClient client, String filename, byte[] fileData) {
         try{
-            synchronized (client) {
-                OutputStream stream = client.storeFileStream(filename);
-                stream.write(fileData);
-                stream.close();
-                if(!client.completePendingCommand()) {
-                    throw new Exception("Couldn't complete file upload");
+            if(client != null && client.isConnected()) {
+                synchronized (client) {
+                    OutputStream stream = client.storeFileStream(filename);
+                    stream.write(fileData);
+                    stream.close();
+                    if(!client.completePendingCommand()) {
+                        throw new Exception("Couldn't complete file upload");
+                    }
                 }
+                return successfulUpload(filename).withMessage("File uploaded successfully");
+            } else {
+                return failedUpload(filename).withMessage("FTP client not connected");
             }
-            return successfulUpload(filename).withMessage("File uploaded successfully");
         } catch (Exception e) {
             return failedUpload(filename).withMessage(e.getMessage()).withCause(e);
         }

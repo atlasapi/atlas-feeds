@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPReply;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
@@ -55,10 +56,10 @@ public class RadioPlayerUploadTaskRunner implements Runnable {
         List<FTPUploadResult> results = Lists.newArrayList();
 
         try {
-            List<FTPClient> clients = connectClients(2);
+            List<FTPClient> clients = connectClients(10);
             int connections = clients.size();
             if(connections > 0) {
-                recorder.record(ImmutableList.of(successfulUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Connected and logged-in successully")));
+                recorder.record(ImmutableList.of(successfulUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Connected and logged-in successully (" + connections+")")));
             } else {
                 recorder.record(ImmutableList.of(failedUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Failed to connect/login to server")));
             }
@@ -68,7 +69,7 @@ public class RadioPlayerUploadTaskRunner implements Runnable {
             for(RadioPlayerService service : services) {
                 DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
                 for(int i = 0; i < days; i++, day = day.plusDays(1)) {
-                        FTPClient client = clients.get(submissions++ % connections);
+                        FTPClient client = connections > 0 ? clients.get(submissions++ % connections) : null;
                         uploadRunner.submit(new RadioPlayerFTPUploadTask(client, day, service, queryExecutor).withValidator(validator).withLog(log));
                 }
             }
@@ -115,9 +116,15 @@ public class RadioPlayerUploadTaskRunner implements Runnable {
             
             client.connect(credentials.server(), credentials.port());
             
+            if(!FTPReply.isPositiveCompletion(client.getReplyCode())) {
+                client.disconnect();
+                return null;
+            }
+            
             client.enterLocalPassiveMode();
             
             if (!client.login(credentials.username(), credentials.password())) {
+                client.disconnect();
                 return null;
             }
             
