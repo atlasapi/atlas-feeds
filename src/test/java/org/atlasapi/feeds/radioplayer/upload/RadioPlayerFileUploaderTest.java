@@ -25,6 +25,7 @@ import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.atlasapi.content.criteria.ContentQuery;
+import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
@@ -94,12 +95,14 @@ public class RadioPlayerFileUploaderTest {
 			    oneOf(recorder).record(with(successfulUploadResult()));
 			}});
 			
+			RadioPlayerFeedCompiler.init(queryExecutor);
+			
 			AdapterLog log = new SystemOutAdapterLog();
             ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
 			FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
 			int lookAhead = 0, lookBack = 0;
 			
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(new RadioPlayerUploadTaskRunner(credentials, recorder, log), services, queryExecutor)
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(new RadioPlayerUploadTaskRunner(credentials, recorder, log), services)
 			    .withResultRecorder(recorder)
 			    .withLookAhead(lookAhead)
 			    .withLookBack(lookBack)

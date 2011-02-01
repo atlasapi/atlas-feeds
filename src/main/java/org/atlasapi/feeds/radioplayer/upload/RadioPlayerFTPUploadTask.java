@@ -7,9 +7,8 @@ import java.io.ByteArrayOutputStream;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.net.ftp.FTPClient;
-import org.atlasapi.feeds.radioplayer.RadioPlayerFeedType;
+import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.joda.time.DateTime;
@@ -21,13 +20,11 @@ public class RadioPlayerFTPUploadTask implements Callable<FTPUploadResult> {
     private AdapterLog log;
     private final DateTime day;
     private final RadioPlayerService service;
-    private final KnownTypeQueryExecutor queryExecutor;
 
-    public RadioPlayerFTPUploadTask(FTPClient client, DateTime day, RadioPlayerService service, KnownTypeQueryExecutor queryExecutor) {
+    public RadioPlayerFTPUploadTask(FTPClient client, DateTime day, RadioPlayerService service) {
         this.client = client;
         this.day = day;
         this.service = service;
-        this.queryExecutor = queryExecutor;
     }
 
     @Override
@@ -35,7 +32,7 @@ public class RadioPlayerFTPUploadTask implements Callable<FTPUploadResult> {
         String filename = filename(service, day);
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            RadioPlayerFeedType.PI.compileFeedFor(day, service, queryExecutor, out);
+            RadioPlayerFeedCompiler.valueOf("PI").compileFeedFor(day, service, out);
             FTPUpload delegate = new LoggingFTPUpload(log, new ValidatingFTPFileUpload(validator, new FTPFileUpload()));
             // delegate = new RemoteCheckingFTPFileUpload(delegate);
             return delegate.upload(client, filename, out.toByteArray()); 

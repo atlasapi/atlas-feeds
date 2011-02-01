@@ -51,20 +51,22 @@ public class RadioPlayerModule {
 	private @Autowired HealthController health;
 
 	public @Bean RadioPlayerController radioPlayerController() {
-		return new RadioPlayerController(queryExecutor);
+		return new RadioPlayerController();
 	}
 	
 	@PostConstruct 
 	public void scheduleTasks() {
+	    RadioPlayerFeedCompiler.init(queryExecutor);
 	    health.addProbes(Iterables.concat(Iterables.transform(RadioPlayerServices.services, serviceHealthProbe()), ImmutableList.of(new RadioPlayerUploadHealthProbe(mongo, "FTP", ftpHost+":"+ftpPort))));
 		if (Boolean.parseBoolean(upload)) {
 			FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
-			RadioPlayerXMLValidator validator = createValidator();
 			
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerUploadTaskRunner(), RadioPlayerServices.services, queryExecutor)
+			RadioPlayerUploadTaskRunner radioPlayerUploadTaskRunner = new RadioPlayerUploadTaskRunner(credentials, uploadResultRecorder(), log);
+			
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerUploadTaskRunner, RadioPlayerServices.services)
 			    .withLookAhead(7).withLookBack(7)
 			    .withResultRecorder(uploadResultRecorder())
-			    .withValidator(validator)
+			    .withValidator(createValidator())
 			    .withLog(log);
             scheduler.schedule(uploader, UPLOAD_EVERY_HOUR);
 
@@ -98,11 +100,6 @@ public class RadioPlayerModule {
     
     public @Bean FTPUploadResultRecorder uploadResultRecorder() {
         return new MongoFTPUploadResultRecorder(mongo);
-    }
-    
-    public @Bean RadioPlayerUploadTaskRunner radioPlayerUploadTaskRunner() {
-        FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
-        return new RadioPlayerUploadTaskRunner(credentials, uploadResultRecorder(), log);
     }
 	
 	public @Bean RadioPlayerHealthController radioPlayerHealthController() {

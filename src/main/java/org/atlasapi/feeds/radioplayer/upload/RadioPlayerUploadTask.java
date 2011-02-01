@@ -12,7 +12,6 @@ import java.util.concurrent.ExecutorCompletionService;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
@@ -33,12 +32,10 @@ public class RadioPlayerUploadTask implements Runnable {
     private AdapterLog log;
     private int lookAhead = 0;
     private int lookBack = 0;
-    private final KnownTypeQueryExecutor queryExecutor;
 
-    public RadioPlayerUploadTask(RadioPlayerUploadTaskRunner runner, Iterable<RadioPlayerService> services, KnownTypeQueryExecutor queryExecutor) {
+    public RadioPlayerUploadTask(RadioPlayerUploadTaskRunner runner, Iterable<RadioPlayerService> services) {
         this.runner = runner;
         this.services = services;
-        this.queryExecutor = queryExecutor;
     }
     
     @Override
@@ -60,7 +57,7 @@ public class RadioPlayerUploadTask implements Runnable {
             DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
             for(int i = 0; i < days; i++, day = day.plusDays(1)) {
                     FTPClient client = connections > 0 ? clients.get(submissions++ % connections) : null;
-                    resultRunner.submit(new RadioPlayerFTPUploadTask(client, day, service, queryExecutor).withValidator(validator).withLog(log));
+                    resultRunner.submit(new RadioPlayerFTPUploadTask(client, day, service).withValidator(validator).withLog(log));
             }
         }
         
