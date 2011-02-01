@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import static com.metabroadcast.common.persistence.mongo.MongoConstants.ID;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -8,8 +10,10 @@ import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.health.HealthProbe;
@@ -18,7 +22,6 @@ import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.time.DateTimeZones;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 
 public class RadioPlayerUploadHealthProbe implements HealthProbe {
@@ -32,6 +35,8 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
     private int lookBack = 7;
     private int lookAhead = 7;
+
+    private static final ImmutableList<FTPUploadResultType> RESULT_TYPES = ImmutableList.copyOf(FTPUploadResultType.values());
     
     public RadioPlayerUploadHealthProbe(DatabasedMongo mongo, String title, String filenamePattern) {
         this.results = mongo.collection("radioplayer");
@@ -67,27 +72,27 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         return this;
     }
 
-    private void addEntry(ProbeResult result, String filename) {
-        boolean success = true, failure = true, unknown = true;
-        DBCursor resultsForServiceDay = results.find(new BasicDBObject("filename", filename)).sort(new BasicDBObject("time", -1));
-        List<FTPUploadResult> results = Lists.newArrayList();
-        for(DBObject dbo : resultsForServiceDay) {
-            FTPUploadResult translated = translator.fromDBObject(dbo);
-            if(FTPUploadResultType.UNKNOWN.equals(translated.type()) && unknown) {
-                results.add(translated);
-                unknown = false;
-            } else if(FTPUploadResultType.SUCCESS.equals(translated.type()) && success) {
-                results.add(translated);
-                success = false;
-            } else if(FTPUploadResultType.FAILURE.equals(translated.type()) && failure) {
-                results.add(translated);
-                failure = false;
+    private void addEntry(ProbeResult result, final String filename) {
+        Iterable<FTPUploadResult> fileResults = Iterables.filter(Iterables.transform(RESULT_TYPES, new Function<FTPUploadResultType, FTPUploadResult>() {
+            @Override
+            public FTPUploadResult apply(FTPUploadResultType input) {
+                DBObject dboResult = results.findOne(new BasicDBObject(ID, input+":"+filename));
+                if(dboResult != null) {
+                    return translator.fromDBObject(dboResult);
+                }
+                return null;
             }
-            if(!success && !failure && !unknown) {
-                break;
+        }), Predicates.notNull());
+        addEntry(result, filename, sort(fileResults));
+    }
+
+    private List<FTPUploadResult> sort(Iterable<FTPUploadResult> fileResults) {
+        return Ordering.from(new Comparator<FTPUploadResult>() {
+            @Override
+            public int compare(FTPUploadResult r1, FTPUploadResult r2) {
+                return r2.type().compareTo(r1.type());
             }
-        }
-        addEntry(result, filename, results);
+        }).immutableSortedCopy(fileResults);
     }
 
     private void addEntry(ProbeResult result, String key, List<FTPUploadResult> results) {
@@ -107,10 +112,10 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     private String buildValue(List<FTPUploadResult> results) {
         StringBuilder builder = new StringBuilder("<table>");
         for(FTPUploadResult result : Iterables.limit(sort(results),2)) {
-            builder.append("<tr><td>");
-            builder.append(result.uploadTime().toString(DATE_TIME));
-            builder.append(" ");
+            builder.append("<tr><td>Last ");
             builder.append(result.type().toNiceString());
+            builder.append(": ");
+            builder.append(result.uploadTime().toString(DATE_TIME));
             builder.append("</td><td>");
             if(result.message() != null) {
                 builder.append(result.message());

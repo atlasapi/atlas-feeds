@@ -52,10 +52,8 @@ import org.joda.time.Interval;
 import org.junit.Test;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -90,7 +88,7 @@ public class RadioPlayerFileUploaderTest {
 			
 			context.checking(new Expectations(){{
 			    oneOf(queryExecutor).schedule(with(any(ContentQuery.class))); 
-			    will(returnValue(Schedule.fromItems(service.getServiceUri(), new Interval(day, day.plusDays(1)), ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1))))));
+			    will(returnValue(Schedule.fromItems(ImmutableList.of(service.getServiceUri()), new Interval(day, day.plusDays(1)), ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1))))));
 			    oneOf(recorder).record(with(successfulUploadResult()));
 			    oneOf(recorder).record(with(successfulUploadResult()));
 			}});
@@ -99,7 +97,7 @@ public class RadioPlayerFileUploaderTest {
 			FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
 			int lookAhead = 0, lookBack = 0;
 			
-			RadioPlayerUploadTaskRunner uploader = new RadioPlayerUploadTaskRunner(queryExecutor, credentials, services)
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(new RadioPlayerUploadTaskRunner(credentials), services, queryExecutor)
 			    .withResultRecorder(recorder)
 			    .withLookAhead(lookAhead)
 			    .withLookBack(lookBack)
@@ -135,11 +133,11 @@ public class RadioPlayerFileUploaderTest {
         return uploaded;
     }
 
-    private Matcher<? extends Iterable<FTPUploadResult>> successfulUploadResult() {
+    private Matcher<FTPUploadResult> successfulUploadResult() {
         return new FTPUploadResultTypeMatcher(FTPUploadResultType.SUCCESS);
     }
 	
-	private static class FTPUploadResultTypeMatcher extends TypeSafeMatcher<List<FTPUploadResult>> {
+	private static class FTPUploadResultTypeMatcher extends TypeSafeMatcher<FTPUploadResult> {
 	    
 	    private final FTPUploadResultType type;
 
@@ -154,13 +152,8 @@ public class RadioPlayerFileUploaderTest {
         }
 
         @Override
-        public boolean matchesSafely(List<FTPUploadResult> upload) {
-            return Iterables.all(upload, new Predicate<FTPUploadResult>() {
-                @Override
-                public boolean apply(FTPUploadResult input) {
-                    return type.equals(input.type());
-                }
-            });
+        public boolean matchesSafely(FTPUploadResult upload) {
+            return type == upload.type();
         }
     };
 
