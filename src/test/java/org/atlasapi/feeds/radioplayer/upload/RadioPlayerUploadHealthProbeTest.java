@@ -21,7 +21,7 @@ public class RadioPlayerUploadHealthProbeTest {
 
 //    private static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
     public final DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
-    public final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(mongo, "radio1", "%1$tY%1$tm%1$te_340_PI.xml").withLookAhead(0).withLookBack(0);
+    public final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(mongo, "radio1", "%1$tY%1$tm%1$td_340_PI.xml").withLookAhead(0).withLookBack(0);
     private FTPUploadResultRecorder recorder = new MongoFTPUploadResultRecorder(mongo);
     
     @After
