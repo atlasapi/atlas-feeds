@@ -1,7 +1,11 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import static com.metabroadcast.common.persistence.mongo.MongoConstants.ID;
+
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
 
 public class MongoFTPUploadResultRecorder implements FTPUploadResultRecorder {
 
@@ -15,7 +19,11 @@ public class MongoFTPUploadResultRecorder implements FTPUploadResultRecorder {
     
     @Override
     public void record(FTPUploadResult result) {
-        this.recordings.insert(translator.toDBObject(result));
+            this.recordings.update(query(result), translator.toDBObject(result), true, false);
+    }
+
+    private DBObject query(FTPUploadResult result) {
+        return new BasicDBObject(ID, result.type()+":"+result.filename());
     }
 
 }

@@ -40,6 +40,7 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
+import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.SystemOutAdapterLog;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -48,6 +49,7 @@ import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
 import org.junit.Test;
 
 import com.google.common.base.Function;
@@ -87,16 +89,17 @@ public class RadioPlayerFileUploaderTest {
 			
 			context.checking(new Expectations(){{
 			    oneOf(queryExecutor).schedule(with(any(ContentQuery.class))); 
-			    will(returnValue(Schedule.fromItems(ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1))))));
+			    will(returnValue(Schedule.fromItems(ImmutableList.of(service.getServiceUri()), new Interval(day, day.plusDays(1)), ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1))))));
 			    oneOf(recorder).record(with(successfulUploadResult()));
 			    oneOf(recorder).record(with(successfulUploadResult()));
 			}});
 			
+			AdapterLog log = new SystemOutAdapterLog();
             ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
 			FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
 			int lookAhead = 0, lookBack = 0;
 			
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(queryExecutor, credentials, services)
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(new RadioPlayerUploadTaskRunner(credentials, recorder, log), services, queryExecutor)
 			    .withResultRecorder(recorder)
 			    .withLookAhead(lookAhead)
 			    .withLookBack(lookBack)
@@ -131,7 +134,7 @@ public class RadioPlayerFileUploaderTest {
         });
         return uploaded;
     }
-  
+
     private Matcher<FTPUploadResult> successfulUploadResult() {
         return new FTPUploadResultTypeMatcher(FTPUploadResultType.SUCCESS);
     }
@@ -152,7 +155,7 @@ public class RadioPlayerFileUploaderTest {
 
         @Override
         public boolean matchesSafely(FTPUploadResult upload) {
-            return type.equals(upload.type());
+            return type == upload.type();
         }
     };
 

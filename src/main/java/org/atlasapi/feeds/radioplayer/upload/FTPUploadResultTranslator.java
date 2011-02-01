@@ -31,7 +31,7 @@ public class FTPUploadResultTranslator {
     }
 
     private String id(FTPUploadResult result) {
-        return result.uploadTime().getMillis() + ":" + result.filename();
+        return result.type()+":"+result.filename();
     }
 
     public FTPUploadResult fromDBObject(DBObject dbo) {

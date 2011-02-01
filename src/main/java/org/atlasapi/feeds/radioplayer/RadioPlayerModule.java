@@ -7,6 +7,7 @@ import org.atlasapi.feeds.radioplayer.upload.FTPUploadResultRecorder;
 import org.atlasapi.feeds.radioplayer.upload.MongoFTPUploadResultRecorder;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTask;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskRunner;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerXMLValidator;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
@@ -59,12 +60,17 @@ public class RadioPlayerModule {
 		if (Boolean.parseBoolean(upload)) {
 			FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
 			RadioPlayerXMLValidator validator = createValidator();
-			FTPUploadResultRecorder recorder = new MongoFTPUploadResultRecorder(mongo);
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(queryExecutor, credentials, RadioPlayerServices.services).withResultRecorder(recorder).withValidator(validator).withLog(log);
+			
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerUploadTaskRunner(), RadioPlayerServices.services, queryExecutor)
+			    .withLookAhead(7).withLookBack(7)
+			    .withResultRecorder(uploadResultRecorder())
+			    .withValidator(validator)
+			    .withLog(log);
             scheduler.schedule(uploader, UPLOAD_EVERY_HOUR);
-			log.record(new AdapterLogEntry(Severity.INFO).withDescription("Radioplayer uploader scheduled task installed for:" + credentials).withSource(getClass()));
+
+            log.record(new AdapterLogEntry(Severity.INFO).withDescription("Radioplayer uploader scheduled task installed for:" + credentials).withSource(getClass()));
 		} else {
-			log.record(new AdapterLogEntry(Severity.INFO)
+			log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
 			.withDescription("Not installing Radioplayer uploader"));
 		}
 	}
@@ -89,6 +95,15 @@ public class RadioPlayerModule {
 			return null;
 		}
 	}
+    
+    public @Bean FTPUploadResultRecorder uploadResultRecorder() {
+        return new MongoFTPUploadResultRecorder(mongo);
+    }
+    
+    public @Bean RadioPlayerUploadTaskRunner radioPlayerUploadTaskRunner() {
+        FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
+        return new RadioPlayerUploadTaskRunner(credentials, uploadResultRecorder(), log);
+    }
 	
 	public @Bean RadioPlayerHealthController radioPlayerHealthController() {
 	    return new RadioPlayerHealthController(health);
