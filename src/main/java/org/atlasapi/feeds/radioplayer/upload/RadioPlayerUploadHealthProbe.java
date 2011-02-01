@@ -117,7 +117,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
     private String buildValue(List<FTPUploadResult> results) {
         StringBuilder builder = new StringBuilder("<table>");
-        for(FTPUploadResult result : Iterables.limit(sort(results),2)) {
+        for(FTPUploadResult result : Iterables.limit(results,2)) {
             builder.append("<tr><td>Last ");
             builder.append(result.type().toNiceString());
             builder.append(": ");
@@ -129,18 +129,6 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
             builder.append("</td></tr>");
         }
         return builder.append("</table>").toString();
-    }
-
-    private List<FTPUploadResult> sort(List<FTPUploadResult> results) {
-        return Ordering.from(new Comparator<FTPUploadResult>(){
-            @Override
-            public int compare(FTPUploadResult r1, FTPUploadResult r2) {
-                int c = r1.type().compareTo(r2.type());
-                if(c == 0) {
-                    c = r1.uploadTime().compareTo(r2.uploadTime());
-                }
-                return c;
-            }}).immutableSortedCopy(results);
     }
     
     @Override
