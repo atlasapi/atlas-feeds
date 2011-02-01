@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static com.metabroadcast.common.persistence.mongo.MongoConstants.ID;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -9,6 +7,7 @@ import java.util.Set;
 import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.base.AbstractDateTime;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
@@ -20,7 +19,6 @@ import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.time.DateTimeZones;
-import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 
@@ -83,14 +81,14 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
                 return null;
             }
         }), Predicates.notNull());
-        addEntry(result, filename, sort(fileResults));
+        addEntry(result, filename, sortByType(fileResults));
     }
 
-    private List<FTPUploadResult> sort(Iterable<FTPUploadResult> fileResults) {
+    private List<FTPUploadResult> sortByType(Iterable<FTPUploadResult> fileResults) {
         return Ordering.from(new Comparator<FTPUploadResult>() {
             @Override
             public int compare(FTPUploadResult r1, FTPUploadResult r2) {
-                return r2.type().compareTo(r1.type());
+                return r1.type().compareTo(r2.type());
             }
         }).immutableSortedCopy(fileResults);
     }
@@ -101,12 +99,21 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
             return;
         }
         String value = buildValue(results);
-        FTPUploadResultType first = results.get(0).type();
+        FTPUploadResultType first = sortByDate(results).get(0).type();
         if(FTPUploadResultType.UNKNOWN.equals(first)) {
             result.addInfo(key, value);
         } else {
             result.add(key, value, FTPUploadResultType.SUCCESS.equals(first));
         }
+    }
+
+    private List<FTPUploadResult> sortByDate(Iterable<FTPUploadResult> results) {
+        return Ordering.from(new Comparator<FTPUploadResult>() {
+            @Override
+            public int compare(FTPUploadResult r1, FTPUploadResult r2) {
+                return r2.uploadTime().compareTo(r1.uploadTime());
+            }
+        }).immutableSortedCopy(results);
     }
 
     private String buildValue(List<FTPUploadResult> results) {
