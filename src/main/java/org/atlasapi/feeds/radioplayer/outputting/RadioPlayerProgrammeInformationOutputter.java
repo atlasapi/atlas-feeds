@@ -24,7 +24,7 @@ import com.google.common.base.Strings;
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {
 
 	private static final String ORIGINATOR = "Metabroadcast";
-	private static final String ONDEMAND_LOCATION = "http://www.test.bbc.co.uk/iplayer/radioplayer/";
+	private static final String ONDEMAND_LOCATION = "http://www.bbc.co.uk/iplayer/console/";
 	
 	private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
 
