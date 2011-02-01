@@ -76,7 +76,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         Iterable<FTPUploadResult> fileResults = Iterables.filter(Iterables.transform(RESULT_TYPES, new Function<FTPUploadResultType, FTPUploadResult>() {
             @Override
             public FTPUploadResult apply(FTPUploadResultType input) {
-                DBObject dboResult = results.findOne(new BasicDBObject(ID, input+":"+filename));
+                DBObject dboResult = results.findOne(input+":"+filename);
                 if(dboResult != null) {
                     return translator.fromDBObject(dboResult);
                 }

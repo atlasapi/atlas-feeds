@@ -4,6 +4,7 @@ import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.SUCCE
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.INFO;
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.WARN;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -69,7 +70,6 @@ public class RadioPlayerUploadTask implements Runnable {
             FTPUploadResult result = null;
             try {
                 result = futureEntry.getValue().get();
-                recorder.record(result);
                 if(SUCCESSFUL.apply(result)) {
                     successes++;
                 }
@@ -82,14 +82,28 @@ public class RadioPlayerUploadTask implements Runnable {
                 recorder.record(result);
             }
         }
+        
+        for (FTPClient ftpClient : clients) {
+            try {
+                ftpClient.logout();
+                ftpClient.disconnect();
+            } catch (IOException e) {
+                log("RadioPlayerUploader failed to disconnect FTP client", Severity.WARN, e);
+            }
+        }
 
         String runTime = new Period(start, new DateTime(DateTimeZones.UTC)).toString(PeriodFormat.getDefault());
         log(String.format("Radioplayer Uploader finished in %s, %s/%s successful.", runTime, successes, submissions), INFO);
     }
     
     private void log(String desc, Severity s) {
+        log(desc, s, null);
+    }
+    
+    private void log(String desc, Severity s, Exception e) {
         if(log != null) {
-            log.record(new AdapterLogEntry(s).withDescription(desc).withSource(getClass()));
+            AdapterLogEntry entry = new AdapterLogEntry(s).withDescription(desc).withSource(getClass());
+            log.record(e != null ? entry.withCause(e) : entry);
         }
     }
 
