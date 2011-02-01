@@ -5,18 +5,13 @@ import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.WARN;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
-import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -31,7 +26,6 @@ public class RadioPlayerUploadTaskRunner {
     private final FTPUploadResultRecorder recorder;
     private final AdapterLog log;
     
-    private final CompletionService<FTPUploadResult> uploadRunner;
     private final ExecutorService executor;
 
 
@@ -40,11 +34,10 @@ public class RadioPlayerUploadTaskRunner {
         this.recorder = recorder;
         this.log = log;
         this.executor = Executors.newFixedThreadPool(THREADS, new ThreadFactoryBuilder().setNameFormat("RadioPlayerUploader: %s").build());
-        this.uploadRunner = new ExecutorCompletionService<FTPUploadResult>(executor);
     }
     
-    public Future<FTPUploadResult> submit(Callable<FTPUploadResult> uploadTask) {
-        return uploadRunner.submit(uploadTask);
+    public ExecutorService getExecutorService() {
+        return executor;
     }
 
     public List<FTPClient> getClients(int count) {

@@ -6,10 +6,9 @@ import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.WARN;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.ExecutorCompletionService;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
@@ -23,7 +22,6 @@ import org.joda.time.Period;
 import org.joda.time.format.PeriodFormat;
 
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerUploadTask implements Runnable {
@@ -51,35 +49,33 @@ public class RadioPlayerUploadTask implements Runnable {
 
         log(String.format("Radioplayer Uploader starting for %s services for %s days", serviceCount, days), INFO);
         
-        Map<String, Future<FTPUploadResult>> results = Maps.newHashMapWithExpectedSize(serviceCount * days);
-        
         List<FTPClient> clients = runner.getClients(10);
         int connections = clients.size();
+        
         int submissions = 0;
+        
+        CompletionService<FTPUploadResult> resultRunner = new ExecutorCompletionService<FTPUploadResult>(runner.getExecutorService());
         
         for(RadioPlayerService service : services) {
             DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
             for(int i = 0; i < days; i++, day = day.plusDays(1)) {
                     FTPClient client = connections > 0 ? clients.get(submissions++ % connections) : null;
-                    results.put(filename(service, day), runner.submit(new RadioPlayerFTPUploadTask(client, day, service, queryExecutor).withValidator(validator).withLog(log)));
+                    resultRunner.submit(new RadioPlayerFTPUploadTask(client, day, service, queryExecutor).withValidator(validator).withLog(log));
             }
         }
         
         int successes = 0;
-        for (Entry<String,Future<FTPUploadResult>> futureEntry : results.entrySet()) {
-            FTPUploadResult result = null;
+        for (int i = 0; i < submissions; i++) {
             try {
-                result = futureEntry.getValue().get();
+                FTPUploadResult result = resultRunner.take().get();
+                recorder.record(result);
                 if(SUCCESSFUL.apply(result)) {
                     successes++;
                 }
             } catch (InterruptedException e) {
-                log("Radioplayer Uploader interrupted waiting for result.", WARN);
+                log("Radioplayer Uploader interrupted waiting for result.", WARN, e);
             } catch (ExecutionException e) {
-                result = DefaultFTPUploadResult.failedUpload(futureEntry.getKey()).withCause(e).withMessage("Error running uploader");
-            }
-            if(result != null) {
-                recorder.record(result);
+                log("Radioplayer Uploader exception retrieving result", WARN, e);
             }
         }
         
@@ -131,9 +127,4 @@ public class RadioPlayerUploadTask implements Runnable {
         this.log = log;
         return this;
     }
-
-    private String filename(RadioPlayerService service, DateTime day) {
-        return String.format("%s_%s_PI.xml", day.toString("yyyyMMdd"), service.getRadioplayerId());
-    }
-    
 }
