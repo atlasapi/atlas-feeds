@@ -25,7 +25,7 @@ public abstract class RadioPlayerFilenameMatcher {
 	
 	public abstract Maybe<RadioPlayerService> service();
 	
-	public abstract Maybe<RadioPlayerFeedType> type();
+	public abstract Maybe<RadioPlayerFeedCompiler> type();
 	
 	public abstract boolean matches();
 	
@@ -33,12 +33,12 @@ public abstract class RadioPlayerFilenameMatcher {
 
 		private final DateTime date;
 		private Maybe<RadioPlayerService> service;
-		private RadioPlayerFeedType type;
+		private RadioPlayerFeedCompiler type;
 
 		public RadioPlayerFilenameMatch(String date, String service, String feedType) {
 			this.date = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZone.UTC).parseDateTime(date);
 			this.service = Maybe.fromPossibleNullValue(RadioPlayerServices.all.get(service));
-			this.type = RadioPlayerFeedType.valueOf(feedType);
+			this.type = RadioPlayerFeedCompiler.valueOf(feedType);
 		}
 
 		@Override
@@ -52,7 +52,7 @@ public abstract class RadioPlayerFilenameMatcher {
 		}
 
 		@Override
-		public Maybe<RadioPlayerFeedType> type() {
+		public Maybe<RadioPlayerFeedCompiler> type() {
 			return Maybe.just(type);
 		}
 
@@ -76,7 +76,7 @@ public abstract class RadioPlayerFilenameMatcher {
 		}
 
 		@Override
-		public Maybe<RadioPlayerFeedType> type() {
+		public Maybe<RadioPlayerFeedCompiler> type() {
 			return Maybe.nothing();
 		}
 

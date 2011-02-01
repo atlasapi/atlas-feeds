@@ -28,7 +28,6 @@ public class RadioPlayerUploadTaskRunner {
     
     private final ExecutorService executor;
 
-
     public RadioPlayerUploadTaskRunner(FTPCredentials credentials, FTPUploadResultRecorder recorder, AdapterLog log) {
         this.credentials = credentials;
         this.recorder = recorder;
@@ -79,6 +78,5 @@ public class RadioPlayerUploadTaskRunner {
             log.record(new AdapterLogEntry(WARN).withCause(e).withSource(getClass()).withDescription("RadioPlayerUploader failed to connect client"));
             return null;
         }
-
     }
 }

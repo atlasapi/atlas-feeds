@@ -7,7 +7,6 @@ import java.util.Set;
 import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.joda.time.base.AbstractDateTime;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
