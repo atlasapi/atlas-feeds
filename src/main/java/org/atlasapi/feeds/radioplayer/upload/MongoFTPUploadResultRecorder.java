@@ -14,8 +14,10 @@ public class MongoFTPUploadResultRecorder implements FTPUploadResultRecorder {
     }
     
     @Override
-    public void record(FTPUploadResult result) {
-        this.recordings.insert(translator.toDBObject(result));
+    public void record(Iterable<? extends FTPUploadResult> result) {
+        for (FTPUploadResult ftpUploadResult : result) {
+            this.recordings.insert(translator.toDBObject(ftpUploadResult));
+        }
     }
 
 }

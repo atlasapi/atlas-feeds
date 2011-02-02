@@ -9,6 +9,7 @@ import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultType;
@@ -39,7 +40,7 @@ public class RadioPlayerUploadHealthProbeTest {
         assertThat(Iterables.getOnlyElement(result.entries()).getValue(), is(equalTo("No Data.")));
         
         DateTime succssDate = new DateTime(DateTimeZones.UTC);
-        recorder.record(new DefaultFTPUploadResult(String.format("%s_340_PI.xml", succssDate.toString("yyyyMMdd")), succssDate, FTPUploadResultType.SUCCESS).withMessage("FAIL"));
+        recorder.record(ImmutableList.of(new DefaultFTPUploadResult(String.format("%s_340_PI.xml", succssDate.toString("yyyyMMdd")), succssDate, FTPUploadResultType.SUCCESS).withMessage("FAIL")));
         
         result = probe.probe();
         
@@ -48,7 +49,7 @@ public class RadioPlayerUploadHealthProbeTest {
 //        assertThat(Iterables.getOnlyElement(result.entries()).getValue(), endsWith(String.format("%s. No failures.", succssDate.toString(DATE_TIME))));
         
         DateTime failureDate = new DateTime(DateTimeZones.UTC);
-        recorder.record(new DefaultFTPUploadResult(String.format("%s_340_PI.xml", failureDate.toString("yyyyMMdd")), failureDate, FTPUploadResultType.FAILURE).withMessage("FAIL"));
+        recorder.record(ImmutableList.of(new DefaultFTPUploadResult(String.format("%s_340_PI.xml", failureDate.toString("yyyyMMdd")), failureDate, FTPUploadResultType.FAILURE).withMessage("FAIL")));
          
         result = probe.probe();
         
@@ -61,7 +62,7 @@ public class RadioPlayerUploadHealthProbeTest {
     public void testFailureFirst() {
         
         DateTime failureDate = new DateTime(DateTimeZones.UTC);
-        recorder.record(new DefaultFTPUploadResult(String.format("%s_340_PI.xml", failureDate.toString("yyyyMMdd")), failureDate, FTPUploadResultType.FAILURE).withMessage("FAIL"));
+        recorder.record(ImmutableList.of(new DefaultFTPUploadResult(String.format("%s_340_PI.xml", failureDate.toString("yyyyMMdd")), failureDate, FTPUploadResultType.FAILURE).withMessage("FAIL")));
         
         ProbeResult result = probe.probe();
         

@@ -73,12 +73,13 @@ public class RemoteCheckingFTPUploadTest {
         final FTPUpload delegate = context.mock(FTPUpload.class);
         
         context.checking(new Expectations(){{
-            one(delegate).call(); will(returnValue(successful));
+            one(delegate).upload(with(any(FTPClient.class)),with(any(String.class)),with(any(byte[].class)));
+                will(returnValue(successful));
         }});
             
-        RemoteCheckingFTPFileUpload uploader = new RemoteCheckingFTPFileUpload(client, "success",  delegate);
+        RemoteCheckingFTPFileUpload uploader = new RemoteCheckingFTPFileUpload(delegate);
 
-        FTPUploadResult result = uploader.call();
+        FTPUploadResult result = uploader.upload(client, "success", new byte[]{});
 
         assertThat(result.type(), is(equalTo(FTPUploadResultType.SUCCESS)));
 
@@ -92,12 +93,13 @@ public class RemoteCheckingFTPUploadTest {
         final FTPUpload delegate = context.mock(FTPUpload.class);
         
         context.checking(new Expectations(){{
-            one(delegate).call(); will(returnValue(successful));
+            one(delegate).upload(with(any(FTPClient.class)),with(any(String.class)),with(any(byte[].class))); 
+                will(returnValue(successful));
         }});
             
-        RemoteCheckingFTPFileUpload uploader = new RemoteCheckingFTPFileUpload(client, "failure",  delegate);
+        RemoteCheckingFTPFileUpload uploader = new RemoteCheckingFTPFileUpload(delegate);
 
-        FTPUploadResult result = uploader.call();
+        FTPUploadResult result = uploader.upload(client, "failure",  new byte[]{});
 
         assertThat(result.type(), is(equalTo(FTPUploadResultType.FAILURE)));
         
