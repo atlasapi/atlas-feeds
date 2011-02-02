@@ -12,6 +12,7 @@ import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerBroadcastFilter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerItemSorter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerProgrammeInformationOutputter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.joda.time.DateTime;
 
@@ -52,6 +53,7 @@ public abstract class RadioPlayerFeedCompiler {
         @Override
         public ContentQuery queryFor(DateTime date, String serviceUri) {
             Iterable<AtomicQuery> queryAtoms = ImmutableSet.of((AtomicQuery)
+                    Attributes.DESCRIPTION_PUBLISHER.createQuery(Operators.EQUALS, ImmutableList.of(Publisher.BBC)),
                     Attributes.BROADCAST_ON.createQuery(Operators.EQUALS, ImmutableList.of(serviceUri)),
                     Attributes.BROADCAST_TRANSMISSION_TIME.createQuery(Operators.AFTER, ImmutableList.of(date)),
                     Attributes.BROADCAST_TRANSMISSION_TIME.createQuery(Operators.BEFORE, ImmutableList.of(date.plusDays(1)))
