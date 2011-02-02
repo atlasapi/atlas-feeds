@@ -99,7 +99,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         case SUCCESS:
             return new ProbeResultEntry(SUCCESS, filename, value);
         case FAILURE:
-            if(day.isAfter(new LocalDate(DateTimeZones.UTC))) {
+            if(day.isAfter(new LocalDate(DateTimeZones.UTC)) || serviceName.equals("5livesportsextra")) {
                 return new ProbeResultEntry(INFO, filename, value);
             } else {
                 return new ProbeResultEntry(FAILURE, filename, value);
