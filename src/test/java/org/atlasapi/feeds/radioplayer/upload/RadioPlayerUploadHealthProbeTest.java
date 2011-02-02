@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.is;
 
 import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 import org.junit.After;
 import org.junit.Test;
 
@@ -15,14 +16,19 @@ import com.metabroadcast.common.health.ProbeResult.ProbeResultType;
 import com.metabroadcast.common.persistence.MongoTestHelper;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.DayRangeGenerator;
 import com.mongodb.BasicDBObject;
 
 public class RadioPlayerUploadHealthProbeTest {
 
-//    private static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
+    private static final String DATE_FORMAT = "yyyyMMdd";
+    private static final String SERVICE_NAME = "radio1";
+    private static final String SERVICE_ID = "340";
+    
+    //    private static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
     public final DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
-    public final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(mongo, "radio1", "%1$tY%1$tm%1$td_340_PI.xml").withLookAhead(0).withLookBack(0);
-    private FTPUploadResultRecorder recorder = new MongoFTPUploadResultRecorder(mongo);
+    public final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(mongo, SERVICE_NAME, SERVICE_ID, new DayRangeGenerator().withLookAhead(0).withLookBack(0));
+    private RadioPlayerFTPUploadResultRecorder recorder = new MongoFTPUploadResultRecorder(mongo);
     
     @After
     public void tearDown() {
@@ -39,7 +45,8 @@ public class RadioPlayerUploadHealthProbeTest {
         assertThat(Iterables.getOnlyElement(result.entries()).getValue(), is(equalTo("No Data.")));
         
         DateTime succssDate = new DateTime(DateTimeZones.UTC );
-        recorder.record(new DefaultFTPUploadResult(String.format("%s_340_PI.xml", succssDate.toString("yyyyMMdd")), succssDate, FTPUploadResultType.SUCCESS).withMessage("SUCCESS"));
+        DefaultFTPUploadResult uploadResult = new DefaultFTPUploadResult(String.format("%s_340_PI.xml", succssDate.toString(DATE_FORMAT)), succssDate, FTPUploadResultType.SUCCESS).withMessage("SUCCESS");
+        recorder.record(new RadioPlayerFTPUploadResult(uploadResult, SERVICE_ID, new LocalDate(DateTimeZones.UTC).toString(DATE_FORMAT)));
         
         result = probe.probe();
         
@@ -48,7 +55,8 @@ public class RadioPlayerUploadHealthProbeTest {
 //        assertThat(Iterables.getOnlyElement(result.entries()).getValue(), endsWith(String.format("%s. No failures.", succssDate.toString(DATE_TIME))));
         
         DateTime failureDate = new DateTime(DateTimeZones.UTC);
-        recorder.record(new DefaultFTPUploadResult(String.format("%s_340_PI.xml", failureDate.toString("yyyyMMdd")), failureDate, FTPUploadResultType.FAILURE).withMessage("FAIL"));
+        uploadResult = new DefaultFTPUploadResult(String.format("%s_340_PI.xml", failureDate.toString(DATE_FORMAT)), failureDate, FTPUploadResultType.FAILURE).withMessage("FAIL");
+        recorder.record(new RadioPlayerFTPUploadResult(uploadResult, SERVICE_ID, new LocalDate(DateTimeZones.UTC).toString(DATE_FORMAT)));
          
         result = probe.probe();
         
@@ -61,7 +69,8 @@ public class RadioPlayerUploadHealthProbeTest {
     public void testFailureFirst() {
         
         DateTime failureDate = new DateTime(DateTimeZones.UTC);
-        recorder.record(new DefaultFTPUploadResult(String.format("%s_340_PI.xml", failureDate.toString("yyyyMMdd")), failureDate, FTPUploadResultType.FAILURE).withMessage("FAIL"));
+        DefaultFTPUploadResult uploadResult = new DefaultFTPUploadResult(String.format("%s_340_PI.xml", failureDate.toString(DATE_FORMAT)), failureDate, FTPUploadResultType.FAILURE).withMessage("FAIL");
+        recorder.record(new RadioPlayerFTPUploadResult(uploadResult, SERVICE_ID, new LocalDate(DateTimeZones.UTC).toString(DATE_FORMAT)));
         
         ProbeResult result = probe.probe();
         

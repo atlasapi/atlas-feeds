@@ -3,8 +3,9 @@ package org.atlasapi.feeds.radioplayer;
 import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.radioplayer.upload.FTPCredentials;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResultRecorder;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFTPUploadResultRecorder;
 import org.atlasapi.feeds.radioplayer.upload.MongoFTPUploadResultRecorder;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTask;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskRunner;
@@ -30,6 +31,7 @@ import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.RepetitionRules.RepetitionInterval;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
+import com.metabroadcast.common.time.DayRangeGenerator;
 import com.metabroadcast.common.webapp.health.HealthController;
 
 @Configuration
@@ -57,13 +59,16 @@ public class RadioPlayerModule {
 	@PostConstruct 
 	public void scheduleTasks() {
 	    RadioPlayerFeedCompiler.init(queryExecutor);
-	    health.addProbes(Iterables.concat(Iterables.transform(RadioPlayerServices.services, serviceHealthProbe()), ImmutableList.of(new RadioPlayerUploadHealthProbe(mongo, "FTP", ftpHost+":"+ftpPort))));
+        health.addProbes(Iterables.concat(
+                Iterables.transform(RadioPlayerServices.services, serviceHealthProbe()),
+                ImmutableList.of(new RadioPlayerServerHealthProbe(mongo, "FTP", ftpHost + ":" + ftpPort, dayRangeGenerator()))
+        ));
 		if (Boolean.parseBoolean(upload)) {
 			FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
 			
 			RadioPlayerUploadTaskRunner radioPlayerUploadTaskRunner = new RadioPlayerUploadTaskRunner(credentials, uploadResultRecorder(), log);
 			
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerUploadTaskRunner, RadioPlayerServices.services)
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerUploadTaskRunner, ImmutableList.of(RadioPlayerServices.all.get("300")))
 			    .withLookAhead(7).withLookBack(7)
 			    .withResultRecorder(uploadResultRecorder())
 			    .withValidator(createValidator())
@@ -81,10 +86,14 @@ public class RadioPlayerModule {
         return new Function<RadioPlayerService, HealthProbe>(){
             @Override
             public HealthProbe apply(RadioPlayerService service) {
-                return new RadioPlayerUploadHealthProbe(mongo, service.getName(), "%1$tY%1$tm%1$td_"+service.getRadioplayerId()+"_PI.xml");
+                return new RadioPlayerUploadHealthProbe(mongo, service.getName(), new Integer(service.getRadioplayerId()).toString(), dayRangeGenerator());
             }
         };
     }
+	
+	@Bean public DayRangeGenerator dayRangeGenerator() {
+	    return new DayRangeGenerator().withLookAhead(7).withLookBack(7);
+	}
 
     private RadioPlayerXMLValidator createValidator() {
 		try {
@@ -98,7 +107,7 @@ public class RadioPlayerModule {
 		}
 	}
     
-    public @Bean FTPUploadResultRecorder uploadResultRecorder() {
+    public @Bean RadioPlayerFTPUploadResultRecorder uploadResultRecorder() {
         return new MongoFTPUploadResultRecorder(mongo);
     }
 	

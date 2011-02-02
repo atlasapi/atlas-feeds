@@ -13,7 +13,7 @@ import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.joda.time.DateTime;
 
-public class RadioPlayerFTPUploadTask implements Callable<FTPUploadResult> {
+public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadResult> {
 
     private final FTPClient client;
     private RadioPlayerXMLValidator validator;
@@ -28,21 +28,24 @@ public class RadioPlayerFTPUploadTask implements Callable<FTPUploadResult> {
     }
 
     @Override
-    public FTPUploadResult call() throws Exception {
+    public RadioPlayerFTPUploadResult call() throws Exception {
         String filename = filename(service, day);
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             RadioPlayerFeedCompiler.valueOf("PI").compileFeedFor(day, service, out);
             FTPUpload delegate = new LoggingFTPUpload(log, new ValidatingFTPFileUpload(validator, new FTPFileUpload()));
-            // delegate = new RemoteCheckingFTPFileUpload(delegate);
-            return delegate.upload(client, filename, out.toByteArray()); 
+            return wrap(delegate.upload(client, filename, out.toByteArray()));
         } catch (Exception e) {
-            if(log != null) {
+            if (log != null) {
                 log.record(new AdapterLogEntry(ERROR).withDescription("Exception uploading file " + filename).withSource(getClass()).withCause(e));
             }
-            return failedUpload(filename).withCause(e).withMessage(e.getMessage());
+            return wrap(failedUpload(filename).withCause(e).withMessage(e.getMessage()));
         }
 
+    }
+
+    public RadioPlayerFTPUploadResult wrap(FTPUploadResult upload) {
+        return new RadioPlayerFTPUploadResult(upload, Integer.toString(service.getRadioplayerId()), day.toString("yyyyMMdd"));
     }
 
     private String filename(RadioPlayerService service, DateTime day) {
@@ -53,7 +56,7 @@ public class RadioPlayerFTPUploadTask implements Callable<FTPUploadResult> {
         this.validator = validator;
         return this;
     }
-    
+
     public RadioPlayerFTPUploadTask withLog(AdapterLog log) {
         this.log = log;
         return this;

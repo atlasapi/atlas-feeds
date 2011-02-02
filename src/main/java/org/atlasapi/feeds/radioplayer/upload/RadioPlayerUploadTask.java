@@ -28,7 +28,7 @@ public class RadioPlayerUploadTask implements Runnable {
     private final RadioPlayerUploadTaskRunner runner;
     private final Iterable<RadioPlayerService> services;
     private RadioPlayerXMLValidator validator;
-    private FTPUploadResultRecorder recorder;
+    private RadioPlayerFTPUploadResultRecorder recorder;
     private AdapterLog log;
     private int lookAhead = 0;
     private int lookBack = 0;
@@ -51,7 +51,7 @@ public class RadioPlayerUploadTask implements Runnable {
         
         int submissions = 0;
         
-        CompletionService<FTPUploadResult> resultRunner = new ExecutorCompletionService<FTPUploadResult>(runner.getExecutorService());
+        CompletionService<RadioPlayerFTPUploadResult> resultRunner = new ExecutorCompletionService<RadioPlayerFTPUploadResult>(runner.getExecutorService());
         
         for(RadioPlayerService service : services) {
             DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
@@ -64,7 +64,7 @@ public class RadioPlayerUploadTask implements Runnable {
         int successes = 0;
         for (int i = 0; i < submissions; i++) {
             try {
-                FTPUploadResult result = resultRunner.take().get();
+                RadioPlayerFTPUploadResult result = resultRunner.take().get();
                 recorder.record(result);
                 if(SUCCESSFUL.apply(result)) {
                     successes++;
@@ -100,7 +100,7 @@ public class RadioPlayerUploadTask implements Runnable {
         }
     }
 
-    public RadioPlayerUploadTask withResultRecorder(FTPUploadResultRecorder recorder) {
+    public RadioPlayerUploadTask withResultRecorder(RadioPlayerFTPUploadResultRecorder recorder) {
         this.recorder = recorder;
         return this;
     }

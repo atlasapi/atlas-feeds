@@ -7,18 +7,18 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 
-public class MongoFTPUploadResultRecorder implements FTPUploadResultRecorder {
+public class MongoFTPUploadResultRecorder implements RadioPlayerFTPUploadResultRecorder {
 
     private DBCollection recordings;
-    private FTPUploadResultTranslator translator;
+    private RadioPlayerFTPUploadResultTranslator translator;
 
     public MongoFTPUploadResultRecorder(DatabasedMongo mongo) {
         this.recordings = mongo.collection("radioplayer");
-        this.translator = new FTPUploadResultTranslator();
+        this.translator = new RadioPlayerFTPUploadResultTranslator();
     }
     
     @Override
-    public void record(FTPUploadResult result) {
+    public void record(RadioPlayerFTPUploadResult result) {
             this.recordings.update(query(result), translator.toDBObject(result), true, false);
     }
 

@@ -1,6 +1,8 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
 import static com.google.common.base.Predicates.notNull;
+import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.failedUpload;
+import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.successfulUpload;
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.WARN;
 
 import java.util.ArrayList;
@@ -23,12 +25,12 @@ public class RadioPlayerUploadTaskRunner {
     private static final int THREADS = 5;
 
     private final FTPCredentials credentials;
-    private final FTPUploadResultRecorder recorder;
+    private final RadioPlayerFTPUploadResultRecorder recorder;
     private final AdapterLog log;
     
     private final ExecutorService executor;
 
-    public RadioPlayerUploadTaskRunner(FTPCredentials credentials, FTPUploadResultRecorder recorder, AdapterLog log) {
+    public RadioPlayerUploadTaskRunner(FTPCredentials credentials, RadioPlayerFTPUploadResultRecorder recorder, AdapterLog log) {
         this.credentials = credentials;
         this.recorder = recorder;
         this.log = log;
@@ -46,11 +48,13 @@ public class RadioPlayerUploadTaskRunner {
         }
         ImmutableList<FTPClient> connections = ImmutableList.copyOf(Iterables.filter(clientList, notNull()));
 
+        FTPUploadResult result;
         if(connections.isEmpty()) {
-            recorder.record(DefaultFTPUploadResult.failedUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Failed to connect/login to server"));
+            result = failedUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Failed to connect/login to server");
         } else {
-            recorder.record(DefaultFTPUploadResult.successfulUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Connected and logged-in successully"));
+            result = successfulUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Connected and logged-in successully");
         }
+        recorder.record(new RadioPlayerFTPUploadResult(result,credentials.server() + ":" + credentials.port(), ""));
         
         return connections;
     }

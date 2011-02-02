@@ -86,7 +86,7 @@ public class RadioPlayerFileUploaderTest {
 
 			Mockery context = new Mockery();
 			final KnownTypeQueryExecutor queryExecutor = context.mock(KnownTypeQueryExecutor.class);            
-			final FTPUploadResultRecorder recorder = context.mock(FTPUploadResultRecorder.class);
+			final RadioPlayerFTPUploadResultRecorder recorder = context.mock(RadioPlayerFTPUploadResultRecorder.class);
 			
 			context.checking(new Expectations(){{
 			    oneOf(queryExecutor).schedule(with(any(ContentQuery.class))); 
@@ -138,11 +138,11 @@ public class RadioPlayerFileUploaderTest {
         return uploaded;
     }
 
-    private Matcher<FTPUploadResult> successfulUploadResult() {
-        return new FTPUploadResultTypeMatcher(FTPUploadResultType.SUCCESS);
+    private Matcher<RadioPlayerFTPUploadResult> successfulUploadResult() {
+        return new FTPUploadResultTypeMatcher<RadioPlayerFTPUploadResult>(FTPUploadResultType.SUCCESS);
     }
 	
-	private static class FTPUploadResultTypeMatcher extends TypeSafeMatcher<FTPUploadResult> {
+	private static class FTPUploadResultTypeMatcher<T extends FTPUploadResult> extends TypeSafeMatcher<T> {
 	    
 	    private final FTPUploadResultType type;
 
@@ -157,7 +157,7 @@ public class RadioPlayerFileUploaderTest {
         }
 
         @Override
-        public boolean matchesSafely(FTPUploadResult upload) {
+        public boolean matchesSafely(T upload) {
             return type == upload.type();
         }
     };
