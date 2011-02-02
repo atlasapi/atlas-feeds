@@ -68,7 +68,7 @@ public class RadioPlayerModule {
 			
 			RadioPlayerUploadTaskRunner radioPlayerUploadTaskRunner = new RadioPlayerUploadTaskRunner(credentials, uploadResultRecorder(), log);
 			
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerUploadTaskRunner, ImmutableList.of(RadioPlayerServices.all.get("300")))
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerUploadTaskRunner, RadioPlayerServices.services)
 			    .withLookAhead(7).withLookBack(7)
 			    .withResultRecorder(uploadResultRecorder())
 			    .withValidator(createValidator())
