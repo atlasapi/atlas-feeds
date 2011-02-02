@@ -8,7 +8,6 @@ import org.atlasapi.content.criteria.AtomicQuery;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.content.criteria.operator.Operators;
-import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerBroadcastFilter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerItemSorter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerProgrammeInformationOutputter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter;
@@ -26,7 +25,6 @@ public abstract class RadioPlayerFeedCompiler {
     private final KnownTypeQueryExecutor executor;
 
     private final RadioPlayerItemSorter sorter = new RadioPlayerItemSorter();
-    private final RadioPlayerBroadcastFilter broadcastFilter = new RadioPlayerBroadcastFilter();
     
     public RadioPlayerFeedCompiler(RadioPlayerXMLOutputter outputter, KnownTypeQueryExecutor executor) {
         this.outputter = outputter;
@@ -90,7 +88,7 @@ public abstract class RadioPlayerFeedCompiler {
 	public void compileFeedFor(DateTime date, RadioPlayerService service, OutputStream out) throws IOException {
 		if(outputter != null) {
 			String serviceUri = service.getServiceUri();
-			outputter.output(date, service, sorter.sortAndTransform(broadcastFilter.filter(executor.schedule(queryFor(date, serviceUri)).getItemsFromOnlyChannel(), serviceUri, date), serviceUri, date), out);
+			outputter.output(date, service, sorter.sortAndTransform(executor.schedule(queryFor(date, serviceUri)).getItemsFromOnlyChannel(), serviceUri, date), out);
 		}
 	}
 }
