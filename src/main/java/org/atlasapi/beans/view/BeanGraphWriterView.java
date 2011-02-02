@@ -23,7 +23,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.beans.AtlasErrorSummary;
 import org.atlasapi.beans.BeanGraphWriter;
-import org.atlasapi.persistence.servlet.RequestNs;
 import org.springframework.web.servlet.View;
 
 import com.metabroadcast.common.media.MimeType;
