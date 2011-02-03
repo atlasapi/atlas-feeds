@@ -28,7 +28,8 @@ public class LoggingFTPUpload implements FTPUpload {
 
     private void log(FTPUploadResult result) {
         if(log != null) {
-            log.record(new AdapterLogEntry(ERROR).withCause(result.exception()).withDescription(result.filename() + ":" + result.message()).withSource(getClass()));
+            AdapterLogEntry entry = new AdapterLogEntry(ERROR).withDescription(result.filename() + ":" + result.message()).withSource(getClass());
+            log.record(result.exception() == null ? entry : entry.withCause(result.exception()));
         }
     }
 
