@@ -80,7 +80,7 @@ public class RadioPlayerModule {
 			    .withLog(log);
             scheduler.schedule(uploader, UPLOAD_EVERY_TEN_MINUTES);
 
-            log.record(new AdapterLogEntry(Severity.INFO)
+            log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
             .withDescription(String.format("Radioplayer uploader installed for: %s. Frequency: %s",credentials,UPLOAD_EVERY_TEN_MINUTES)));
 		} else {
 			log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
