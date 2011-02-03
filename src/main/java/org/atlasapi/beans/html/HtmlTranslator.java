@@ -5,16 +5,16 @@ import static org.springframework.web.util.HtmlUtils.htmlEscape;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Collection;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.atlasapi.beans.AtlasErrorSummary;
-import org.atlasapi.beans.BeanGraphWriter;
-import org.atlasapi.media.entity.Container;
+import org.atlasapi.beans.AtlasModelWriter;
 import org.atlasapi.media.entity.Described;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
@@ -24,7 +24,6 @@ import org.atlasapi.media.entity.MutableContentList;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Restriction;
 import org.atlasapi.media.entity.Version;
-import org.atlasapi.media.entity.simple.Playlist;
 import org.springframework.core.io.ClassPathResource;
 
 import com.google.common.base.Charsets;
@@ -33,24 +32,28 @@ import com.google.common.collect.Sets;
 import com.metabroadcast.common.url.UrlEncoding;
 
 /**
- * {@link BeanGraphWriter} that translates the full URIplay object model
+ * {@link AtlasModelWriter} that translates the full URIplay object model
  * into a simplified form and renders that as XML.
  *  
  * @author Robert Chatley (robert@metabroadcast.com)
  */
-public class HtmlTranslator implements BeanGraphWriter {
+public class HtmlTranslator implements AtlasModelWriter {
 
 	private static final String NEW_LINE = "\n";
 	private final String header;
 	private final String footer;
 
-	public HtmlTranslator() throws IOException {
-		header = readHtmlFrom("/html/header.htmlf");
-		footer = readHtmlFrom("/html/footer.htmlf"); 
+	public HtmlTranslator() {
+		try {
+			header = readHtmlFrom("/html/header.htmlf");
+			footer = readHtmlFrom("/html/footer.htmlf"); 
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
-	public void writeTo(Collection<Object> fullGraph, OutputStream stream) {
-		Writer writer = new OutputStreamWriter(stream, Charsets.UTF_8);
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> fullGraph) throws IOException {
+		Writer writer = new OutputStreamWriter(response.getOutputStream(), Charsets.UTF_8);
 		try {
 			beginPage(writer);
 			if (fullGraph != null && !Iterables.isEmpty(fullGraph)) {
@@ -74,95 +77,6 @@ public class HtmlTranslator implements BeanGraphWriter {
 
 	private void writeNoBeansFound(Writer writer) throws IOException {
 		writer.write("<h1>Nothing matched your query :(</h1>");
-	}
-//
-//	private void writeSummaryOf(Iterable<Object> beansToProcess, Writer writer) throws IOException {
-//
-//		if (totalNumberOfPlaylistsIn(beansToProcess) > 1) {
-//			return; // don't output summary
-//		}
-//		
-//		for (Object bean : beansToProcess) {
-//
-//			Identified description = (Identified) bean;
-//			
-//			bold(htmlEscape(description.getCanonicalUri()), writer);
-//			writer.write("<br />");
-//			
-//			if (bean instanceof Playlist) {
-//
-//				Playlist playlist = (Playlist) bean;
-//				writeSummaryBox("Playlist", playlist.getTitle(), playlist.getDescription(), firstEmbedCodeFrom(playlist), writer);
-//				return;
-//			} 
-//			
-//			if (bean instanceof Item) {
-//				Item item = (Item) bean;
-//				writeSummaryBox("Item", item.getTitle(), item.getDescription(), firstEmbedCodeFrom(item), writer);
-//				return;
-//			} 
-//		}
-//	}
-
-	private int totalNumberOfPlaylistsIn(Iterable<Object> beansToProcess) {
-		
-		int count = 0;
-		for (Object bean : beansToProcess) {
-			if (bean instanceof Playlist) {
-				count++;
-			}
-		}
-		return count;
-	}
-
-	private String firstEmbedCodeFrom(Container<?> playlist) {
-		
-		for (Item item : playlist.getContents()) {
-			String embedCode = firstEmbedCodeFrom(item);
-			if (!StringUtils.isEmpty(embedCode)) {
-				return embedCode;
-			}
-		}
-
-		return null;
-	}
-
-	private String firstEmbedCodeFrom(Item item) {
-		
-		for (Version version : item.getVersions()) {
-			for (Encoding encoding : version.getManifestedAs()) {
-				for (Location location : encoding.getAvailableAt()) {
-					if (!StringUtils.isEmpty(location.getEmbedCode())) {
-						return location.getEmbedCode();
-					}
-				}
-			}
-		}
-		
-		return null;
-	}
-
-	private void writeSummaryBox(String type, String title, String description, String embedCode, Writer writer) throws IOException {
-
-		bold(type, title, writer);
-		
-		if (description != null) {
-			writer.write(description);
-		}
-
-		writer.write("<br />");
-		if (embedCode != null) {
-			writer.write(embedCode);
-		}
-		
-		writer.write("<hr />");
-	}
-
-	private static void bold(String title, Writer writer) throws IOException {
-		writer.write("<strong>");
-		writer.write(title == null ? "" : title);
-		writer.write("</strong>");
-		writer.write(" ");
 	}
 
 	private static void writeFullDescriptionOf(Iterable<?> beansToProcess, Writer writer) throws IOException {
@@ -216,15 +130,7 @@ public class HtmlTranslator implements BeanGraphWriter {
 		}
 		endDefinitionList(writer);
 	}
-
-	private static void bold(String title, String subtitle, Writer writer) throws IOException {
-		if (subtitle == null) {
-			bold(title, writer);
-		} else {
-			bold(title + " - " + subtitle, writer);
-		}
-	}
-
+	
 	private static String externalLink(String url) {
 		if (url == null) { return null; }
 		return String.format("<a href=\"%s\">%s</a> (ext)", url, url);
@@ -480,8 +386,8 @@ public class HtmlTranslator implements BeanGraphWriter {
 	}
 
 	@Override
-	public void writeError(AtlasErrorSummary exception, OutputStream stream) {
-		Writer writer = new OutputStreamWriter(stream, Charsets.UTF_8);
+	public void writeError(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary exception) throws IOException {
+		Writer writer = new OutputStreamWriter(response.getOutputStream(), Charsets.UTF_8);
 		try {
 			
 			beginPage(writer);

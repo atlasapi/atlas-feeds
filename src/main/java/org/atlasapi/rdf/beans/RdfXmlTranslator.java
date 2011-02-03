@@ -19,9 +19,15 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.beans.AtlasErrorSummary;
+import org.atlasapi.beans.NaiveTypeMap;
 
+import com.google.common.collect.ImmutableMap;
 import com.hp.hpl.jena.ontology.OntModel;
 
 /**
@@ -37,8 +43,24 @@ public class RdfXmlTranslator extends JenaRdfTranslator {
 	private static final String RDF_XML = "RDF/XML";
 
 	private static final String XML_VERSION = "<?xml version=\"1.0\"?>";
+
+	private static final Map<String, String> PREFIXES = ImmutableMap.<String, String>builder()
+		.put("http://uriplay.org/elements/", "play")
+        .put("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf")
+        .put("http://www.w3.org/2000/01/rdf-schema#", "rdfs")
+        .put("http://purl.org/dc/elements/1.1/", "dc")
+        .put("http://purl.org/ontology/po/", "po")
+        .put("http://xmlns.com/foaf/0.1/", "foaf")
+        .put("http://rdfs.org/sioc/ns#", "sioc")
+        .put("http://purl.org/dc/terms/", "dcterms")
+    .build();
 	
 	private String outputFormat;
+	
+	public RdfXmlTranslator() {
+		this(new NaiveTypeMap());
+		setNsPrefixes(PREFIXES);
+	}
 	
 	public RdfXmlTranslator(TypeMap typeMap) {
 		this(typeMap, RDF_XML);
@@ -69,7 +91,7 @@ public class RdfXmlTranslator extends JenaRdfTranslator {
 	}
 
 	@Override
-	public void writeError(AtlasErrorSummary exception, OutputStream oStream) {
+	public void writeError(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary exception) {
 		//no-op
 	}
 }

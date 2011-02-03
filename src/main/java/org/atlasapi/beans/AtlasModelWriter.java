@@ -14,16 +14,19 @@ permissions and limitations under the License. */
 
 package org.atlasapi.beans;
 
-import java.io.OutputStream;
+import java.io.IOException;
 import java.util.Collection;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * @author Lee Denison (lee@metabroadcast.com)
  */
-public interface BeanGraphWriter {
+public interface AtlasModelWriter {
 	
-	public void writeTo(Collection<Object> graph, OutputStream oStream);
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph) throws IOException;
 	
-	public void writeError(AtlasErrorSummary exception, OutputStream oStream);
+	public void writeError(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary exception) throws IOException;
 	
 }

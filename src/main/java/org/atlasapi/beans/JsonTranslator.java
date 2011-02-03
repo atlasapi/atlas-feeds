@@ -15,7 +15,6 @@ permissions and limitations under the License. */
 package org.atlasapi.beans;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
@@ -24,12 +23,12 @@ import java.text.DateFormat;
 import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBException;
 
 import org.atlasapi.media.entity.simple.Description;
 import org.atlasapi.media.entity.simple.Item;
 import org.atlasapi.media.entity.simple.Playlist;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Iterables;
@@ -46,16 +45,13 @@ import com.google.gson.JsonSerializer;
  * 
  * @author Robert Chatley (robert@metabroadcast.com)
  */
-public class JsonTranslator implements BeanGraphWriter {
+public class JsonTranslator implements AtlasModelWriter {
 
 	public static final String CALLBACK = "callback";
 
-	@Autowired
-	private HttpServletRequest request;
+	private final Gson gson;
 
-	private Gson gson;
-
-	public JsonTranslator() throws JAXBException {
+	public JsonTranslator() {
 		gson = new GsonBuilder()
 					.disableHtmlEscaping()
 					.setDateFormat(DateFormat.LONG)
@@ -65,11 +61,12 @@ public class JsonTranslator implements BeanGraphWriter {
 					.create();
 	}
 
-	public void writeTo(Collection<Object> graph, OutputStream stream) {
+	@Override
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph) throws IOException {
 
 		String callback = callback(request);
 
-		OutputStreamWriter writer = new OutputStreamWriter(stream, Charsets.UTF_8);
+		OutputStreamWriter writer = new OutputStreamWriter(response.getOutputStream(), Charsets.UTF_8);
 
 		try {
 			if (callback != null) {
@@ -108,10 +105,10 @@ public class JsonTranslator implements BeanGraphWriter {
 	}
 
 	@Override
-	public void writeError(AtlasErrorSummary exception, OutputStream stream) {
+	public void writeError(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary exception) throws IOException {
 		String callback = callback(request);
 
-		OutputStreamWriter writer = new OutputStreamWriter(stream, Charsets.UTF_8);
+		OutputStreamWriter writer = new OutputStreamWriter(response.getOutputStream(), Charsets.UTF_8);
 
 		try {
 			if (callback != null) {
