@@ -3,6 +3,6 @@ package org.atlasapi.feeds.radioplayer.upload;
 
 public interface RadioPlayerFTPUploadResultRecorder {
 
-    void record(RadioPlayerFTPUploadResult result);
+    <T extends FTPUploadResult> void  record(T result);
 
 }

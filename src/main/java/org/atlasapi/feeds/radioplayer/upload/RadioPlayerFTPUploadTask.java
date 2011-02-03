@@ -45,7 +45,7 @@ public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadRe
     }
 
     public RadioPlayerFTPUploadResult wrap(FTPUploadResult upload) {
-        return new RadioPlayerFTPUploadResult(upload, Integer.toString(service.getRadioplayerId()), day.toString("yyyyMMdd"));
+        return new RadioPlayerFTPUploadResult(upload, service, day.toLocalDate());
     }
 
     private String filename(RadioPlayerService service, DateTime day) {

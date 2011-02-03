@@ -50,11 +50,11 @@ public class RadioPlayerUploadTaskRunner {
 
         FTPUploadResult result;
         if(connections.isEmpty()) {
-            result = failedUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Failed to connect/login to server");
+            result = failedUpload(credentials.toString()).withMessage("Failed to connect/login to server");
         } else {
-            result = successfulUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Connected and logged-in successully");
+            result = successfulUpload(credentials.toString()).withMessage("Connected and logged-in successully");
         }
-        recorder.record(new RadioPlayerFTPUploadResult(result,credentials.server() + ":" + credentials.port(), ""));
+        recorder.record(result);
         
         return connections;
     }

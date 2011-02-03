@@ -1,17 +1,19 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.persistence.logging.AdapterLogEntry.ExceptionSummary;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 public class RadioPlayerFTPUploadResult implements FTPUploadResult {
 
     private final FTPUploadResult delegate;
-    private final String service;
-    private final String day;
+    private RadioPlayerService service;
+    private LocalDate day;
 
-    public RadioPlayerFTPUploadResult(FTPUploadResult delegate, String serviceId, String day) {
+    public RadioPlayerFTPUploadResult(FTPUploadResult delegate, RadioPlayerService service, LocalDate day) {
         this.delegate = delegate;
-        this.service = serviceId;
+        this.service = service;
         this.day = day;
     }
     
@@ -45,11 +47,11 @@ public class RadioPlayerFTPUploadResult implements FTPUploadResult {
         return delegate.exception();
     }
 
-    public String service() {
+    public RadioPlayerService service() {
         return service;
     }
 
-    public String day() {
+    public LocalDate day() {
         return day;
     }
 

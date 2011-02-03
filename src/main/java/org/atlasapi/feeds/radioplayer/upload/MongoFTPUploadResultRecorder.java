@@ -14,7 +14,7 @@ public class MongoFTPUploadResultRecorder implements RadioPlayerFTPUploadResultR
     }
     
     @Override
-    public void record(RadioPlayerFTPUploadResult result) {
+    public <T extends FTPUploadResult> void record(T result) {
     	this.recordings.save(translator.toDBObject(result));
     }
 }

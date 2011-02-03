@@ -63,12 +63,13 @@ public class RadioPlayerModule {
 	@PostConstruct 
 	public void scheduleTasks() {
 	    RadioPlayerFeedCompiler.init(queryExecutor);
-        health.addProbes(Iterables.concat(
-                Iterables.transform(RadioPlayerServices.services, serviceHealthProbe()),
-                ImmutableList.of(new RadioPlayerServerHealthProbe(mongo, "FTP", ftpHost + ":" + ftpPort, dayRangeGenerator()))
-        ));
 		if (Boolean.parseBoolean(upload)) {
-			FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
+		    FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
+		    
+		    health.addProbes(Iterables.concat(
+		            Iterables.transform(RadioPlayerServices.services, serviceHealthProbe()),
+		            ImmutableList.of(new RadioPlayerServerHealthProbe(mongo, credentials))
+		    ));
 			
 			RadioPlayerUploadTaskRunner radioPlayerUploadTaskRunner = new RadioPlayerUploadTaskRunner(credentials, uploadResultRecorder(), log);
 			
@@ -103,7 +104,7 @@ public class RadioPlayerModule {
         return new Function<RadioPlayerService, HealthProbe>(){
             @Override
             public HealthProbe apply(RadioPlayerService service) {
-                return new RadioPlayerUploadHealthProbe(mongo, service.getName(), new Integer(service.getRadioplayerId()).toString(), dayRangeGenerator());
+                return new RadioPlayerUploadHealthProbe(mongo, service, dayRangeGenerator());
             }
         };
     }
