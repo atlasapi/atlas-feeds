@@ -22,6 +22,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicates;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -42,6 +45,7 @@ public class RadioPlayerModule {
 	private @Autowired @Qualifier("mongoDbQueryExcutorThatFiltersUriQueries") KnownTypeQueryExecutor queryExecutor;
 	
 	private @Value("${rp.ftp.enabled}") String upload;
+	private @Value("${rp.ftp.services}") String uploadServices;
     private @Value("${rp.ftp.username}") String ftpUsername;
     private @Value("${rp.ftp.password}") String ftpPassword;
     private @Value("${rp.ftp.host}") String ftpHost;
@@ -68,7 +72,7 @@ public class RadioPlayerModule {
 			
 			RadioPlayerUploadTaskRunner radioPlayerUploadTaskRunner = new RadioPlayerUploadTaskRunner(credentials, uploadResultRecorder(), log);
 			
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerUploadTaskRunner, RadioPlayerServices.services)
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerUploadTaskRunner, uploadServices())
 			    .withLookAhead(7).withLookBack(7)
 			    .withResultRecorder(uploadResultRecorder())
 			    .withValidator(createValidator())
@@ -81,6 +85,19 @@ public class RadioPlayerModule {
 			.withDescription("Not installing Radioplayer uploader"));
 		}
 	}
+	
+    private Iterable<RadioPlayerService> uploadServices() {
+        if (Strings.isNullOrEmpty(uploadServices) || uploadServices.toLowerCase().equals("all")) {
+            return RadioPlayerServices.services;
+        } else {
+            return Iterables.filter(Iterables.transform(Splitter.on(',').split(uploadServices), new Function<String, RadioPlayerService>() {
+                @Override
+                public RadioPlayerService apply(String input) {
+                    return RadioPlayerServices.all.get(input);
+                }
+            }), Predicates.notNull());
+        }
+    }
 
 	private Function<? super RadioPlayerService, ? extends HealthProbe> serviceHealthProbe() {
         return new Function<RadioPlayerService, HealthProbe>(){
@@ -91,7 +108,7 @@ public class RadioPlayerModule {
         };
     }
 	
-	@Bean public DayRangeGenerator dayRangeGenerator() {
+	private DayRangeGenerator dayRangeGenerator() {
 	    return new DayRangeGenerator().withLookAhead(7).withLookBack(7);
 	}
 
