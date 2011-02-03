@@ -37,7 +37,7 @@ import com.metabroadcast.common.webapp.health.HealthController;
 @Configuration
 public class RadioPlayerModule {
 
-	private static final RepetitionInterval UPLOAD_EVERY_HOUR = RepetitionRules.atInterval(Duration.standardHours(1));
+	private static final RepetitionInterval UPLOAD_EVERY_TEN_MINUTES = RepetitionRules.atInterval(Duration.standardMinutes(10));
 
 	private @Autowired @Qualifier("mongoDbQueryExcutorThatFiltersUriQueries") KnownTypeQueryExecutor queryExecutor;
 	
@@ -73,7 +73,7 @@ public class RadioPlayerModule {
 			    .withResultRecorder(uploadResultRecorder())
 			    .withValidator(createValidator())
 			    .withLog(log);
-            scheduler.schedule(uploader, UPLOAD_EVERY_HOUR);
+            scheduler.schedule(uploader, UPLOAD_EVERY_TEN_MINUTES);
 
             log.record(new AdapterLogEntry(Severity.INFO).withDescription("Radioplayer uploader scheduled task installed for:" + credentials).withSource(getClass()));
 		} else {
