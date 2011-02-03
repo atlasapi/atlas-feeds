@@ -3,8 +3,8 @@ package org.atlasapi.feeds.radioplayer;
 import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.radioplayer.upload.FTPCredentials;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFTPUploadResultRecorder;
 import org.atlasapi.feeds.radioplayer.upload.MongoFTPUploadResultRecorder;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFTPUploadResultRecorder;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTask;
@@ -80,7 +80,8 @@ public class RadioPlayerModule {
 			    .withLog(log);
             scheduler.schedule(uploader, UPLOAD_EVERY_TEN_MINUTES);
 
-            log.record(new AdapterLogEntry(Severity.INFO).withDescription("Radioplayer uploader scheduled task installed for:" + credentials).withSource(getClass()));
+            log.record(new AdapterLogEntry(Severity.INFO)
+            .withDescription(String.format("Radioplayer uploader installed for: %s. Frequency: %s",credentials,UPLOAD_EVERY_TEN_MINUTES)));
 		} else {
 			log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
 			.withDescription("Not installing Radioplayer uploader"));

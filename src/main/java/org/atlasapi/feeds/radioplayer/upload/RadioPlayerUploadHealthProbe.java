@@ -5,24 +5,23 @@ import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCESS;
 import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.DATE_ORDERING;
 import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.TYPE_ORDERING;
-import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType.RESULT_TYPES;
 
 import java.util.List;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.joda.time.LocalDate;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultEntry;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultType;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.metabroadcast.common.persistence.translator.TranslatorUtils;
 import com.metabroadcast.common.time.DateTimeZones;
 import com.metabroadcast.common.time.DayRangeGenerator;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 
@@ -55,21 +54,20 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     }
 
     private ProbeResultEntry entryFor(final LocalDate day) {
-        Iterable<RadioPlayerFTPUploadResult> fileResults = Iterables.filter(Iterables.transform(RESULT_TYPES, new Function<FTPUploadResultType, RadioPlayerFTPUploadResult>() {
+        Iterable<RadioPlayerFTPUploadResult> fileResults = Iterables.transform(results.find(queryFor(day)), new Function<DBObject, RadioPlayerFTPUploadResult>() {
             @Override
-            public RadioPlayerFTPUploadResult apply(FTPUploadResultType input) {
-                DBObject dboResult = results.findOne(id(input, service.getRadioplayerId(), day));
-                if(dboResult != null) {
+            public RadioPlayerFTPUploadResult apply(DBObject dboResult) {
                     return translator.fromDBObject(dboResult);
-                }
-                return null;
             }
-        }), Predicates.notNull());
+        });
         return entryFor(day, fileResults);
     }
     
-    private String id(FTPUploadResultType type, int serviceId, LocalDate day) {
-        return String.format("%s:%s:%s", type, serviceId, day.toString("yyyyMMdd"));
+    private DBObject queryFor(LocalDate day) {
+        BasicDBObject dbo = new BasicDBObject();
+        TranslatorUtils.from(dbo, "serviceId", service.getRadioplayerId());
+        TranslatorUtils.fromLocalDate(dbo, "day", day);
+        return dbo;
     }
     
     private ProbeResultEntry entryFor(LocalDate day, Iterable<? extends FTPUploadResult> results) {
