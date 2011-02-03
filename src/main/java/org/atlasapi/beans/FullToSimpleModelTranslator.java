@@ -1,8 +1,11 @@
 package org.atlasapi.beans;
 
-import java.io.OutputStream;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Clip;
@@ -34,24 +37,24 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 /**
- * {@link BeanGraphWriter} that translates the full URIplay object model
+ * {@link AtlasModelWriter} that translates the full URIplay object model
  * into a simplified form and renders that as XML.
  *  
  * @author Robert Chatley (robert@metabroadcast.com)
  */
-public class FullToSimpleModelTranslator implements BeanGraphWriter {
+public class FullToSimpleModelTranslator implements AtlasModelWriter {
 
-	private final BeanGraphWriter outputWriter;
+	private final AtlasModelWriter outputWriter;
 
-	public FullToSimpleModelTranslator(BeanGraphWriter outputter) {
+	public FullToSimpleModelTranslator(AtlasModelWriter outputter) {
 		this.outputWriter = outputter;
 	}
 	
 	@Override
-	public void writeTo(Collection<Object> fullGraph, OutputStream stream) {
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> fullGraph) throws IOException {
 		ContentQueryResult outputGraph = new ContentQueryResult();
 		writeOut(fullGraph, outputGraph);
-		outputWriter.writeTo(ImmutableSet.of((Object) outputGraph), stream);
+		outputWriter.writeTo(request, response, ImmutableSet.of((Object) outputGraph));
 	}
 
 	private void writeOut(Collection<Object> fullGraph, ContentQueryResult outputGraph) {
@@ -331,7 +334,7 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 	}
 
 	@Override
-	public void writeError(AtlasErrorSummary exception, OutputStream oStream) {
-		outputWriter.writeError(exception, oStream);
+	public void writeError(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary exception) throws IOException {
+		outputWriter.writeError(request, response, exception);
 	}
 }
