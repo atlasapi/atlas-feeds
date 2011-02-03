@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPReply;
 
 public class FTPFileUpload implements FTPUpload {
 
@@ -20,14 +19,13 @@ public class FTPFileUpload implements FTPUpload {
             synchronized (client) {
                     try {
                         OutputStream stream = client.storeFileStream(filename);
-                        if(!FTPReply.isPositiveIntermediate(client.getReplyCode())) {
-                            String message = String.format("Couldn't open stream to server. FTP Response: %s %s", client.getReplyCode(), client.getReplyString());
-                            return failedUpload(filename).withMessage(message);
+                        if(stream == null) {
+                            return failedUpload(filename).withMessage(String.format("Failed to open stream to server. FTP Response: %s", client.getReplyString()));
                         } else {
                             stream.write(fileData);
                             stream.close();
                             if (!client.completePendingCommand()) {
-                                return failedUpload(filename).withMessage(String.format("Failed to complete upload to server. FTP Response: %s %s", client.getReplyCode(), client.getReplyString()));
+                                return failedUpload(filename).withMessage(String.format("Failed to complete upload to server. FTP Response: %s", client.getReplyString()));
                             }
                         }
                     } catch (IOException e) {
