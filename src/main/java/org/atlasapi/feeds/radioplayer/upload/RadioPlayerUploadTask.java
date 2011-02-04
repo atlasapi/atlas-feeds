@@ -4,14 +4,14 @@ import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.SUCCE
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.INFO;
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.WARN;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.CompletionService;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 
 import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpAwareExecutor.CallableWithClient;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
@@ -21,21 +21,22 @@ import org.joda.time.Period;
 import org.joda.time.format.PeriodFormat;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerUploadTask implements Runnable {
 
-    private final RadioPlayerUploadTaskRunner runner;
     private final Iterable<RadioPlayerService> services;
     private RadioPlayerXMLValidator validator;
     private RadioPlayerFTPUploadResultRecorder recorder;
     private AdapterLog log;
     private int lookAhead = 0;
     private int lookBack = 0;
-
-    public RadioPlayerUploadTask(RadioPlayerUploadTaskRunner runner, Iterable<RadioPlayerService> services) {
-        this.runner = runner;
-        this.services = services;
+	private final RadioPlayerFtpAwareExecutor excutor;
+    
+    public RadioPlayerUploadTask(RadioPlayerFtpAwareExecutor excutor, Iterable<RadioPlayerService> services) {
+        this.excutor = excutor;
+		this.services = services;
     }
     
     @Override
@@ -46,25 +47,21 @@ public class RadioPlayerUploadTask implements Runnable {
 
         log(String.format("Radioplayer Uploader starting for %s services for %s days", serviceCount, days), INFO);
         
-        List<FTPClient> clients = runner.getClients(10);
-        int connections = clients.size();
         
-        int submissions = 0;
-        
-        CompletionService<RadioPlayerFTPUploadResult> resultRunner = new ExecutorCompletionService<RadioPlayerFTPUploadResult>(runner.getExecutorService());
-        
-        for(RadioPlayerService service : services) {
+        List<CallableWithClient<RadioPlayerFTPUploadResult>> uploadTasks = Lists.newArrayList();
+        for (RadioPlayerService service : services) {
             DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
-            for(int i = 0; i < days; i++, day = day.plusDays(1)) {
-                    FTPClient client = connections > 0 ? clients.get(submissions++ % connections) : null;
-                    resultRunner.submit(new RadioPlayerFTPUploadTask(client, day, service).withValidator(validator).withLog(log));
+            for (int i = 0; i < days; i++, day = day.plusDays(1)) {
+            	uploadTasks.add(buildTask(service, day));
             }
         }
         
+        ExecutorCompletionService<RadioPlayerFTPUploadResult> results = excutor.submit(uploadTasks);
+
         int successes = 0;
-        for (int i = 0; i < submissions; i++) {
+        for (int i = 0; i < uploadTasks.size(); i++) {
             try {
-                RadioPlayerFTPUploadResult result = resultRunner.take().get();
+				RadioPlayerFTPUploadResult result = results.take().get();
                 recorder.record(result);
                 if(SUCCESSFUL.apply(result)) {
                     successes++;
@@ -75,19 +72,20 @@ public class RadioPlayerUploadTask implements Runnable {
                 log("Radioplayer Uploader exception retrieving result", WARN, e);
             }
         }
-        
-        for (FTPClient ftpClient : clients) {
-            try {
-                ftpClient.logout();
-                ftpClient.disconnect();
-            } catch (IOException e) {
-                log("RadioPlayerUploader failed to disconnect FTP client", Severity.WARN, e);
-            }
-        }
 
         String runTime = new Period(start, new DateTime(DateTimeZones.UTC)).toString(PeriodFormat.getDefault());
-        log(String.format("Radioplayer Uploader finished in %s, %s/%s successful.", runTime, successes, submissions), INFO);
+        log(String.format("Radioplayer Uploader finished in %s, %s/%s successful.", runTime, successes, uploadTasks.size()), INFO);
     }
+
+	private CallableWithClient<RadioPlayerFTPUploadResult> buildTask(final RadioPlayerService service, final DateTime day) {
+		return new CallableWithClient<RadioPlayerFTPUploadResult>() {
+
+			@Override
+			public Callable<RadioPlayerFTPUploadResult> create(FTPClient client) {
+				return new RadioPlayerFTPUploadTask(client, day, service).withValidator(validator).withLog(log);
+			}
+		};
+	}
     
     private void log(String desc, Severity s) {
         log(desc, s, null);

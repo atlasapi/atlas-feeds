@@ -8,7 +8,7 @@ import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFTPUploadResultRecorder;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTask;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskRunner;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpAwareExecutor;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerXMLValidator;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
@@ -71,7 +71,7 @@ public class RadioPlayerModule {
 		            ImmutableList.of(new RadioPlayerServerHealthProbe(mongo, credentials))
 		    ));
 			
-			RadioPlayerUploadTaskRunner radioPlayerUploadTaskRunner = new RadioPlayerUploadTaskRunner(credentials, uploadResultRecorder(), log);
+			RadioPlayerFtpAwareExecutor radioPlayerUploadTaskRunner = new RadioPlayerFtpAwareExecutor(credentials, uploadResultRecorder(), log);
 			
 			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerUploadTaskRunner, uploadServices())
 			    .withLookAhead(7).withLookBack(7)
