@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.google.common.collect.ImmutableList;
 import com.metabroadcast.common.http.HttpStatusCode;
 import com.metabroadcast.common.time.DateTimeZones;
-import com.metabroadcast.common.time.DayRange;
 import com.metabroadcast.common.time.DayRangeGenerator;
 
 @Controller
@@ -32,8 +31,6 @@ public class RadioPlayerUploadController {
     private final DayRangeGenerator rangedGenerator;
     private final RadioPlayerXMLValidator validator;
     private final AdapterLog log;
-
-    private final DayRangeGenerator todayGenerator;
     private final ScheduledExecutorService uploadExecutor;
     
     private RadioPlayerFtpAwareExecutor radioPlayerUploadTaskRunner;
@@ -42,12 +39,11 @@ public class RadioPlayerUploadController {
         this.rangedGenerator = rangedGenerator;
         this.validator = validator;
         this.log = log;
-        this.todayGenerator = new DayRangeGenerator();
         this.uploadExecutor = Executors.newSingleThreadScheduledExecutor();
     }
 
     @RequestMapping("feeds/ukradioplayer/upload/{id}/{day}")
-    public void upload(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String  serviceId, @PathVariable("day") String day) throws IOException {
+    public void uploadDay(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String  serviceId, @PathVariable("day") String day) throws IOException {
         
         if(radioPlayerUploadTaskRunner == null) {
             response.sendError(SERVICE_UNAVAILABLE.code(),"Upload service not configured");
@@ -65,12 +61,17 @@ public class RadioPlayerUploadController {
             return;
         }
         
-        DayRange days = day != null ? todayGenerator.generate(DateTimeFormat.forPattern("yyyyMMdd").parseDateTime(day).toLocalDate()) : rangedGenerator.generate(new LocalDate(DateTimeZones.UTC));
+        Iterable<LocalDate> days = day != null ? ImmutableList.of(DateTimeFormat.forPattern("yyyyMMdd").parseDateTime(day).toLocalDate()) : rangedGenerator.generate(new LocalDate(DateTimeZones.UTC));
         
         uploadExecutor.submit(new RadioPlayerUploadTask(radioPlayerUploadTaskRunner, ImmutableList.of(service), days).withLog(log).withValidator(validator));
         
         response.setStatus(HttpStatusCode.OK.code());
         response.setContentLength(0);
+    }
+    
+    @RequestMapping("feeds/ukradioplayer/upload/{id}")
+    public void uploadDays(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String  serviceId) throws IOException {
+        uploadDay(request, response, serviceId, null);
     }
 
     public RadioPlayerUploadController withUploadExecutor(RadioPlayerFtpAwareExecutor radioPlayerUploadTaskRunner) {

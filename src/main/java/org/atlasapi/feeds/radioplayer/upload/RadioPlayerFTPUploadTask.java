@@ -19,10 +19,11 @@ import com.metabroadcast.common.time.DateTimeZones;
 public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadResult> {
 
     private final FTPClient client;
-    private RadioPlayerXMLValidator validator;
-    private AdapterLog log;
     private final DateTime day;
     private final RadioPlayerService service;
+
+    private RadioPlayerXMLValidator validator;
+    private AdapterLog log;
 
     public RadioPlayerFTPUploadTask(FTPClient client, DateTime day, RadioPlayerService service) {
         this.client = client;

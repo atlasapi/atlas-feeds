@@ -23,7 +23,6 @@ import org.joda.time.format.PeriodFormat;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metabroadcast.common.time.DateTimeZones;
-import com.metabroadcast.common.time.DayRange;
 import com.metabroadcast.common.time.DayRangeGenerator;
 
 public class RadioPlayerUploadTask implements Runnable {
@@ -32,7 +31,7 @@ public class RadioPlayerUploadTask implements Runnable {
     private final RadioPlayerFtpAwareExecutor executor;
     
     private DayRangeGenerator dayRangeGenerator;
-    private DayRange dayRange;
+    private Iterable<LocalDate> dayRange;
 
     private RadioPlayerXMLValidator validator;
     private AdapterLog log;
@@ -43,7 +42,7 @@ public class RadioPlayerUploadTask implements Runnable {
         this.dayRangeGenerator = dayRangeGenerator;
     }
     
-    public RadioPlayerUploadTask(RadioPlayerFtpAwareExecutor excutor, Iterable<RadioPlayerService> services, DayRange dayRange) {
+    public RadioPlayerUploadTask(RadioPlayerFtpAwareExecutor excutor, Iterable<RadioPlayerService> services, Iterable<LocalDate> dayRange) {
         this.executor = excutor;
         this.services = services;
         this.dayRange = dayRange;
@@ -54,7 +53,7 @@ public class RadioPlayerUploadTask implements Runnable {
         DateTime start = new DateTime(DateTimeZones.UTC);
         
         int serviceCount = Iterables.size(services);
-        DayRange days = dayRange != null ? dayRange : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
+        Iterable<LocalDate> days = dayRange != null ? dayRange : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
         log(String.format("Radioplayer Uploader starting for %s services for %s days", serviceCount, Iterables.size(days)), INFO);
         
         List<CallableWithClient<RadioPlayerFTPUploadResult>> uploadTasks = Lists.newArrayList();
