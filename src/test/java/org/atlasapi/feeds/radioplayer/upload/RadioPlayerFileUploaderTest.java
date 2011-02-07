@@ -60,6 +60,7 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.DayRangeGenerator;
 
 public class RadioPlayerFileUploaderTest {
 
@@ -100,12 +101,8 @@ public class RadioPlayerFileUploaderTest {
 			AdapterLog log = new SystemOutAdapterLog();
             ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
 			FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
-			int lookAhead = 0, lookBack = 0;
 			
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(new RadioPlayerFtpAwareExecutor(credentials, recorder, log), services)
-			    .withResultRecorder(recorder)
-			    .withLookAhead(lookAhead)
-			    .withLookBack(lookBack)
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(new RadioPlayerFtpAwareExecutor(credentials, recorder, log), services, new DayRangeGenerator())
 			    .withLog(new SystemOutAdapterLog());
 
 			Executor executor = MoreExecutors.sameThreadExecutor();

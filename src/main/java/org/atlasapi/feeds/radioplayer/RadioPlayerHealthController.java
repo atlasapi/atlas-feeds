@@ -34,11 +34,11 @@ public class RadioPlayerHealthController {
         slugs = Iterables.concat(ImmutableList.of("ukrpFTP"), Iterables.transform(RadioPlayerServices.services, new Function<RadioPlayerService, String>() {
             @Override
             public String apply(RadioPlayerService service) {
-                return "ukrp"+service.getName();
+                return "ukrp" + service.getName();
             }
         }));
     }
-    
+
     @RequestMapping("feeds/ukradioplayer/health")
     public String radioplayerHealth(HttpServletRequest request, HttpServletResponse response) throws IOException {
     	if (checker == null) {
@@ -53,5 +53,5 @@ public class RadioPlayerHealthController {
     	HttpBasicAuthChecker.requestAuth(response, "Heath Page");
     	return null;
     }
-    
+
 }

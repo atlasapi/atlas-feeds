@@ -43,7 +43,7 @@ public class RadioPlayerFtpAwareExecutor {
     	
     }
     
-	public <T> ExecutorCompletionService<T> submit(final Iterable<CallableWithClient<T>> callables) {
+	public <T extends RadioPlayerFTPUploadResult> ExecutorCompletionService<T> submit(final Iterable<CallableWithClient<T>> callables) {
 		ExecutorCompletionService<T> completionService = new ExecutorCompletionService<T>(executor);
 
 		for (final CallableWithClient<T> callable : callables) {
@@ -53,7 +53,9 @@ public class RadioPlayerFtpAwareExecutor {
 				public T call() throws Exception {
 					FTPClient client = createClient();
 					try {
-						return callable.create(client).call();
+					    T result = callable.create(client).call();
+					    recorder.record(result);
+                        return result;
 					} finally {
 						try {
 							client.disconnect();
