@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.is;
 
 import java.io.IOException;
 
-import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -27,20 +26,20 @@ public class ValidatingFTPFileUploadTest {
         
         Mockery context = new Mockery();
         
-        final FTPUpload delegate = context.mock(FTPUpload.class);
+        final FTPFileUploader delegate = context.mock(FTPFileUploader.class);
         
         String filename = "test";
-        final FTPUploadResult successfulUpload = DefaultFTPUploadResult.successfulUpload(filename);
+        final FTPUploadResult successfulUpload = FTPUploadResult.successfulUpload(filename);
         byte[] fileData = bytesFromResource("org/atlasapi/feeds/radioplayer/basicPIFeedTest.xml");
         
         ValidatingFTPFileUpload uploadTask = new ValidatingFTPFileUpload(validator, delegate);
         
         context.checking(new Expectations(){{
-            one(delegate).upload(with(any(FTPClient.class)),with(any(String.class)),with(any(byte[].class))); 
+            one(delegate).upload(with(any(FTPUpload.class))); 
                 will(returnValue(successfulUpload));
         }});
         
-        FTPUploadResult result = uploadTask.upload(new FTPClient(), filename , fileData);
+        FTPUploadResult result = uploadTask.upload(new FTPUpload(filename , fileData));
         
         assertThat(result, is(equalTo(successfulUpload)));
     }
@@ -58,7 +57,7 @@ public class ValidatingFTPFileUploadTest {
         
         Mockery context = new Mockery();
         
-        final FTPUpload delegate = context.mock(FTPUpload.class);
+        final FTPFileUploader delegate = context.mock(FTPFileUploader.class);
         
         String filename = "test";
         byte[] fileData = bytesFromResource("org/atlasapi/feeds/radioplayer/invalidPIFeedTest.xml");
@@ -66,10 +65,10 @@ public class ValidatingFTPFileUploadTest {
         ValidatingFTPFileUpload uploadTask = new ValidatingFTPFileUpload(validator, delegate);
         
         context.checking(new Expectations(){{
-            never(delegate).upload(with(any(FTPClient.class)),with(any(String.class)),with(any(byte[].class)));
+            never(delegate).upload(with(any(FTPUpload.class)));
         }});
         
-        FTPUploadResult result = uploadTask.upload(new FTPClient(),  filename, fileData);
+        FTPUploadResult result = uploadTask.upload(new FTPUpload(filename, fileData));
         assertThat(result.type(), is(equalTo(FTPUploadResultType.FAILURE)));
     }
 

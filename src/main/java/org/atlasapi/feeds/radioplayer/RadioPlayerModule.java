@@ -2,10 +2,12 @@ package org.atlasapi.feeds.radioplayer;
 
 import javax.annotation.PostConstruct;
 
+import org.atlasapi.feeds.radioplayer.upload.CommonsFTPFileUploader;
 import org.atlasapi.feeds.radioplayer.upload.FTPCredentials;
+import org.atlasapi.feeds.radioplayer.upload.FTPFileUploader;
 import org.atlasapi.feeds.radioplayer.upload.MongoFTPUploadResultRecorder;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFTPUploadResultRecorder;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpAwareExecutor;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
@@ -68,7 +70,11 @@ public class RadioPlayerModule {
     }
     
     public @Bean RadioPlayerUploadController radioPlayerUploadController() {
-        return new RadioPlayerUploadController(dayRangeGenerator, radioPlayerValidator(), log);
+        return new RadioPlayerUploadController(radioPlayerFileUploader(), dayRangeGenerator, radioPlayerValidator(), log);
+    }
+    
+    @Bean FTPFileUploader radioPlayerFileUploader(){
+        return new CommonsFTPFileUploader(FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build());
     }
     
     @Bean RadioPlayerFTPUploadResultRecorder uploadResultRecorder() {
@@ -95,11 +101,11 @@ public class RadioPlayerModule {
 		    
 		    createHealthProbes(credentials);
 			
-			RadioPlayerFtpAwareExecutor radioPlayerUploadTaskRunner = new RadioPlayerFtpAwareExecutor(credentials, uploadResultRecorder(), log);
+			RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner = new RadioPlayerRecordingExecutor(uploadResultRecorder());
 			
 			radioPlayerUploadController().withUploadExecutor(radioPlayerUploadTaskRunner);
 			
-            RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerUploadTaskRunner, uploadServices(), dayRangeGenerator)
+            RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner, uploadServices(), dayRangeGenerator)
 			    .withValidator(radioPlayerValidator())
 			    .withLog(log);
             scheduler.schedule(uploader, UPLOAD_EVERY_TEN_MINUTES);

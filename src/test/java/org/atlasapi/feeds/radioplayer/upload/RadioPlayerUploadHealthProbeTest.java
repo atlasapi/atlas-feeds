@@ -84,8 +84,8 @@ public class RadioPlayerUploadHealthProbeTest {
     public void testFutureFailureIsInfo() {
         
         DateTime futureDay = new DateTime().plusDays(4);
-        FTPUploadResult upResult = new DefaultFTPUploadResult(String.format("%s_%s_PI.xml", futureDay.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), new DateTime(DateTimeZones.UTC), FAILURE);
-        RadioPlayerFTPUploadResult rpResult = new RadioPlayerFTPUploadResult(upResult, SERVICE, futureDay.toLocalDate());
+        FTPUploadResult upResult = new FTPUploadResult(String.format("%s_%s_PI.xml", futureDay.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), new DateTime(DateTimeZones.UTC), FAILURE);
+        RadioPlayerFTPUploadResult rpResult = new RadioPlayerFTPUploadResult(upResult.filename(), upResult.uploadTime(), upResult.type(), SERVICE, futureDay.toLocalDate());
         
         recorder.record(rpResult);
         
@@ -96,14 +96,14 @@ public class RadioPlayerUploadHealthProbeTest {
     }
     
     public RadioPlayerFTPUploadResult successfulResult(DateTime successDate) {
-        return new RadioPlayerFTPUploadResult(result(successDate, SUCCESS), SERVICE, successDate.toLocalDate());
+        return result(successDate, SUCCESS);
     }
     
     public RadioPlayerFTPUploadResult failedResult(DateTime successDate) {
-        return new RadioPlayerFTPUploadResult(result(successDate, FAILURE), SERVICE, successDate.toLocalDate());
+        return result(successDate, FAILURE);
     }
 
-    public DefaultFTPUploadResult result(DateTime successDate, FTPUploadResultType type) {
-        return new DefaultFTPUploadResult(String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type);
+    public RadioPlayerFTPUploadResult result(DateTime successDate, FTPUploadResultType type) {
+        return new RadioPlayerFTPUploadResult(String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type, SERVICE, successDate.toLocalDate());
     }
 }

@@ -28,14 +28,16 @@ import com.metabroadcast.common.time.DayRangeGenerator;
 @Controller
 public class RadioPlayerUploadController {
     
+    private final FTPFileUploader uploader;
     private final DayRangeGenerator rangedGenerator;
     private final RadioPlayerXMLValidator validator;
     private final AdapterLog log;
     private final ScheduledExecutorService uploadExecutor;
     
-    private RadioPlayerFtpAwareExecutor radioPlayerUploadTaskRunner;
+    private RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner;
 
-    public RadioPlayerUploadController(DayRangeGenerator rangedGenerator, RadioPlayerXMLValidator validator, AdapterLog log) {
+    public RadioPlayerUploadController(FTPFileUploader uploader, DayRangeGenerator rangedGenerator, RadioPlayerXMLValidator validator, AdapterLog log) {
+        this.uploader = uploader;
         this.rangedGenerator = rangedGenerator;
         this.validator = validator;
         this.log = log;
@@ -63,7 +65,7 @@ public class RadioPlayerUploadController {
         
         Iterable<LocalDate> days = day != null ? ImmutableList.of(DateTimeFormat.forPattern("yyyyMMdd").parseDateTime(day).toLocalDate()) : rangedGenerator.generate(new LocalDate(DateTimeZones.UTC));
         
-        uploadExecutor.submit(new RadioPlayerUploadTask(radioPlayerUploadTaskRunner, ImmutableList.of(service), days).withLog(log).withValidator(validator));
+        uploadExecutor.submit(new RadioPlayerUploadTask(uploader, radioPlayerUploadTaskRunner, ImmutableList.of(service), days).withLog(log).withValidator(validator));
         
         response.setStatus(HttpStatusCode.OK.code());
         response.setContentLength(0);
@@ -74,7 +76,7 @@ public class RadioPlayerUploadController {
         uploadDay(request, response, serviceId, null);
     }
 
-    public RadioPlayerUploadController withUploadExecutor(RadioPlayerFtpAwareExecutor radioPlayerUploadTaskRunner) {
+    public RadioPlayerUploadController withUploadExecutor(RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner) {
         this.radioPlayerUploadTaskRunner = radioPlayerUploadTaskRunner;
         return this;
     }

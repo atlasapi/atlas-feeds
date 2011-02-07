@@ -1,10 +1,21 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import org.apache.commons.net.ftp.FTPClient;
+public class FTPUpload {
 
+    private final String filename;
+    private final byte[] fileData;
 
-public interface FTPUpload {
+    public FTPUpload(String filename, byte[] fileData) {
+        this.filename = filename;
+        this.fileData = fileData;
+    }
 
-    FTPUploadResult upload(FTPClient client, String filename, byte[] fileData);
+    public String getFilename() {
+        return filename;
+    }
+
+    public byte[] getFileData() {
+        return fileData;
+    }
     
 }

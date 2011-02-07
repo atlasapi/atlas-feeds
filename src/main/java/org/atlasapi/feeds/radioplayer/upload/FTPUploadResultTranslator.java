@@ -22,6 +22,8 @@ public class FTPUploadResultTranslator {
         TranslatorUtils.fromDateTime(dbo, "time", result.uploadTime());
 
         TranslatorUtils.from(dbo, "message", result.message());
+        
+        TranslatorUtils.from(dbo, "connected", result.successfulConnection());
 
         if (result.exception() != null) {
             TranslatorUtils.from(dbo, "exception", exceptionTranslator.toDBObject(result.exceptionSummary()));
@@ -36,9 +38,10 @@ public class FTPUploadResultTranslator {
 
     public FTPUploadResult fromDBObject(DBObject dbo) {
 
-        DefaultFTPUploadResult result = new DefaultFTPUploadResult(TranslatorUtils.toString(dbo, "filename"), TranslatorUtils.toDateTime(dbo, "time"), FTPUploadResultType.valueOf(TranslatorUtils.toString(dbo, "type")));
+        FTPUploadResult result = new FTPUploadResult(TranslatorUtils.toString(dbo, "filename"), TranslatorUtils.toDateTime(dbo, "time"), FTPUploadResultType.valueOf(TranslatorUtils.toString(dbo, "type")));
 
         result.withMessage(TranslatorUtils.toString(dbo, "message"));
+        result.withConnectionSuccess(TranslatorUtils.toBoolean(dbo, "connected"));
 
         if (dbo.containsField("exception")) {
             result.withExceptionSummary(exceptionTranslator.fromDBObject((DBObject) dbo.get("exception")));

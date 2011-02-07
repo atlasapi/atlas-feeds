@@ -3,23 +3,22 @@ package org.atlasapi.feeds.radioplayer.upload;
 import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType.FAILURE;
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.ERROR;
 
-import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 
-public class LoggingFTPUpload implements FTPUpload {
+public class LoggingFTPUpload implements FTPFileUploader {
 
     private final AdapterLog log;
-    private final FTPUpload delegate;
+    private final FTPFileUploader delegate;
 
-    public LoggingFTPUpload(AdapterLog log, FTPUpload delegate) {
+    public LoggingFTPUpload(AdapterLog log, FTPFileUploader delegate) {
         this.log = log;
         this.delegate = delegate;
     }
     
     @Override
-    public FTPUploadResult upload(FTPClient client, String filename, byte[] fileData) {
-        FTPUploadResult result = delegate.upload(client, filename, fileData);
+    public FTPUploadResult upload(FTPUpload upload) {
+        FTPUploadResult result = delegate.upload(upload);
         if(FAILURE.equals(result.type())) {
             log(result);
         }

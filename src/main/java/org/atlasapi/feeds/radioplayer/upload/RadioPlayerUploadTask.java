@@ -9,9 +9,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 
-import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpAwareExecutor.CallableWithClient;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
@@ -28,7 +26,8 @@ import com.metabroadcast.common.time.DayRangeGenerator;
 public class RadioPlayerUploadTask implements Runnable {
 
     private final Iterable<RadioPlayerService> services;
-    private final RadioPlayerFtpAwareExecutor executor;
+    private final RadioPlayerRecordingExecutor executor;
+    private final FTPFileUploader uploader;
     
     private DayRangeGenerator dayRangeGenerator;
     private Iterable<LocalDate> dayRange;
@@ -36,14 +35,16 @@ public class RadioPlayerUploadTask implements Runnable {
     private RadioPlayerXMLValidator validator;
     private AdapterLog log;
     
-    public RadioPlayerUploadTask(RadioPlayerFtpAwareExecutor excutor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator) {
-        this.executor = excutor;
+    public RadioPlayerUploadTask(FTPFileUploader uploader, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator) {
+        this.uploader = uploader;
+        this.executor = executor;
 		this.services = services;
         this.dayRangeGenerator = dayRangeGenerator;
     }
     
-    public RadioPlayerUploadTask(RadioPlayerFtpAwareExecutor excutor, Iterable<RadioPlayerService> services, Iterable<LocalDate> dayRange) {
-        this.executor = excutor;
+    public RadioPlayerUploadTask(FTPFileUploader uploader, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, Iterable<LocalDate> dayRange) {
+        this.uploader = uploader;
+        this.executor = executor;
         this.services = services;
         this.dayRange = dayRange;
     }
@@ -56,10 +57,10 @@ public class RadioPlayerUploadTask implements Runnable {
         Iterable<LocalDate> days = dayRange != null ? dayRange : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
         log(String.format("Radioplayer Uploader starting for %s services for %s days", serviceCount, Iterables.size(days)), INFO);
         
-        List<CallableWithClient<RadioPlayerFTPUploadResult>> uploadTasks = Lists.newArrayList();
+        List<Callable<RadioPlayerFTPUploadResult>> uploadTasks = Lists.newArrayListWithCapacity(Iterables.size(days) * serviceCount);
         for (RadioPlayerService service : services) {
             for(LocalDate day : days) {
-            	uploadTasks.add(buildTask(service, day.toDateTimeAtCurrentTime(DateTimeZones.UTC)));
+            	uploadTasks.add(new RadioPlayerFTPUploadTask(uploader, day.toDateTimeAtCurrentTime(DateTimeZones.UTC), service).withValidator(validator).withLog(log));
             }
         }
         
@@ -82,16 +83,6 @@ public class RadioPlayerUploadTask implements Runnable {
         String runTime = new Period(start, new DateTime(DateTimeZones.UTC)).toString(PeriodFormat.getDefault());
         log(String.format("Radioplayer Uploader finished in %s, %s/%s successful.", runTime, successes, uploadTasks.size()), INFO);
     }
-
-	private CallableWithClient<RadioPlayerFTPUploadResult> buildTask(final RadioPlayerService service, final DateTime day) {
-		return new CallableWithClient<RadioPlayerFTPUploadResult>() {
-
-			@Override
-			public Callable<RadioPlayerFTPUploadResult> create(FTPClient client) {
-				return new RadioPlayerFTPUploadTask(client, day, service).withValidator(validator).withLog(log);
-			}
-		};
-	}
     
     private void log(String desc, Severity s) {
         log(desc, s, null);

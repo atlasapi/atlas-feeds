@@ -1,31 +1,29 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.failedUpload;
+import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.failedUpload;
 
 import java.io.ByteArrayInputStream;
 
-import org.apache.commons.net.ftp.FTPClient;
-
-public class ValidatingFTPFileUpload implements FTPUpload {
+public class ValidatingFTPFileUpload implements FTPFileUploader {
 
     private final RadioPlayerXMLValidator validator;
-    private final FTPUpload delegate;
+    private final FTPFileUploader delegate;
 
-    public ValidatingFTPFileUpload(RadioPlayerXMLValidator validator, FTPUpload delegate) {
+    public ValidatingFTPFileUpload(RadioPlayerXMLValidator validator, FTPFileUploader delegate) {
         this.validator = validator;
         this.delegate = delegate;
     }
 
     @Override
-    public FTPUploadResult upload(FTPClient client, String filename, byte[] fileData) {
+    public FTPUploadResult upload(FTPUpload upload) {
         try{
             if(validator != null) {
-                validator.validate(new ByteArrayInputStream(fileData));
+                validator.validate(new ByteArrayInputStream(upload.getFileData()));
             }
         } catch (Exception e) {
-            return failedUpload(filename).withMessage("Failed to validate file").withCause(e);
+            return failedUpload(upload.getFilename()).withMessage("Failed to validate file").withCause(e).withConnectionSuccess(null);
         }
-        return delegate.upload(client, filename, fileData);
+        return delegate.upload(upload);
     }
 
 }

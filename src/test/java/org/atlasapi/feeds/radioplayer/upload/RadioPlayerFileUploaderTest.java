@@ -41,7 +41,6 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
-import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.SystemOutAdapterLog;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -98,11 +97,11 @@ public class RadioPlayerFileUploaderTest {
 			
 			RadioPlayerFeedCompiler.init(queryExecutor);
 			
-			AdapterLog log = new SystemOutAdapterLog();
             ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
 			FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
+			FTPFileUploader fileUploader = new CommonsFTPFileUploader(credentials);
 			
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(new RadioPlayerFtpAwareExecutor(credentials, recorder, log), services, new DayRangeGenerator())
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(fileUploader, new RadioPlayerRecordingExecutor(recorder), services, new DayRangeGenerator())
 			    .withLog(new SystemOutAdapterLog());
 
 			Executor executor = MoreExecutors.sameThreadExecutor();

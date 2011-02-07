@@ -1,12 +1,11 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static org.atlasapi.feeds.radioplayer.upload.DefaultFTPUploadResult.failedUpload;
+import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.failedUpload;
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.ERROR;
 
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.Callable;
 
-import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
@@ -18,15 +17,15 @@ import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadResult> {
 
-    private final FTPClient client;
+    private final FTPFileUploader uploader;
     private final DateTime day;
     private final RadioPlayerService service;
 
     private RadioPlayerXMLValidator validator;
     private AdapterLog log;
 
-    public RadioPlayerFTPUploadTask(FTPClient client, DateTime day, RadioPlayerService service) {
-        this.client = client;
+    public RadioPlayerFTPUploadTask(FTPFileUploader uploader, DateTime day, RadioPlayerService service) {
+        this.uploader = uploader;
         this.day = day;
         this.service = service;
     }
@@ -37,8 +36,8 @@ public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadRe
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             RadioPlayerFeedCompiler.valueOf("PI").compileFeedFor(day, service, out);
-            FTPUpload delegate = new LoggingFTPUpload(log, new ValidatingFTPFileUpload(validator, new FTPFileUpload()));
-            return wrap(delegate.upload(client, filename, out.toByteArray()));
+            FTPFileUploader delegate = new LoggingFTPUpload(log, new ValidatingFTPFileUpload(validator, uploader));
+            return wrap(delegate.upload(new FTPUpload(filename, out.toByteArray())));
         } catch (NoItemsException e) {
             if(log != null && !day.isAfter(new DateTime(DateTimeZones.UTC).plusDays(1)) && !service.getName().equals("5livesportextra")) {
                 log.record(new AdapterLogEntry(ERROR).withDescription("Exception uploading file " + filename).withSource(getClass()).withCause(e));
