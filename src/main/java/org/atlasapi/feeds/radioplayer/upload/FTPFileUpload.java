@@ -10,28 +10,23 @@ import org.apache.commons.net.ftp.FTPClient;
 
 public class FTPFileUpload implements FTPUpload {
 
-    public FTPFileUpload() {
-    }
-
     @Override
     public FTPUploadResult upload(FTPClient client, String filename, byte[] fileData) {
         if (client != null && client.isConnected()) {
-            synchronized (client) {
-                    try {
-                        OutputStream stream = client.storeFileStream(filename);
-                        if(stream == null) {
-                            return failedUpload(filename).withMessage(String.format("Failed to open stream to server. FTP Response: %s", client.getReplyString()));
-                        } else {
-                            stream.write(fileData);
-                            stream.close();
-                            if (!client.completePendingCommand()) {
-                                return failedUpload(filename).withMessage(String.format("Failed to complete upload to server. FTP Response: %s", client.getReplyString()));
-                            }
+                try {
+                    OutputStream stream = client.storeFileStream(filename);
+                    if(stream == null) {
+                        return failedUpload(filename).withMessage(String.format("Failed to open stream to server. FTP Response: %s", client.getReplyString()));
+                    } else {
+                        stream.write(fileData);
+                        stream.close();
+                        if (!client.completePendingCommand()) {
+                            return failedUpload(filename).withMessage(String.format("Failed to complete upload to server. FTP Response: %s", client.getReplyString()));
                         }
-                    } catch (IOException e) {
-                        return failedUpload(filename).withMessage("Connection to server failed: " + e.getMessage()).withCause(e);
                     }
-            }
+                } catch (IOException e) {
+                    return failedUpload(filename).withMessage("Connection to server failed: " + e.getMessage()).withCause(e);
+                }
             return successfulUpload(filename).withMessage("File uploaded successfully");
         } else {
             return failedUpload(filename).withMessage("No connection to server");
