@@ -91,7 +91,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
             }
             return SUCCESS;
         case FAILURE:
-            if(day.isAfter(mostRecent.uploadTime().toLocalDate()) || service.getName().equals("5livesportsextra")) {
+            if(day.isAfter(mostRecent.uploadTime().toLocalDate().plusDays(1)) || service.getName().equals("5livesportsextra")) {
                 return INFO;
             } else {
                 return FAILURE;
