@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -23,7 +21,6 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.Iterables;
 import com.metabroadcast.common.text.Truncator;
 
 public abstract class RadioPlayerXMLOutputter {
@@ -47,12 +44,7 @@ public abstract class RadioPlayerXMLOutputter {
 	}
 
 	public void output(DateTime day, RadioPlayerService id, Iterable<RadioPlayerBroadcastItem> items, OutputStream out) throws IOException {
-		checkNotNull(items);
-		if (Iterables.size(items) > 0) {
-			write(out, createFeed(day, id, items));
-		} else {
-			throw new IllegalArgumentException("No items to create feed");
-		}
+	    write(out, createFeed(day, id, items));
 	}
 
 	private void write(OutputStream out, Element feed) throws UnsupportedEncodingException, IOException {
