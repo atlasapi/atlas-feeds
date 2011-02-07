@@ -20,7 +20,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class RadioPlayerFtpAwareExecutor {
 
-    private static final int MAX_CONNECTIONS = 10;
+    private static final int MAX_CONNECTIONS = 5;
 	private static final Duration RECONNECT_DELAY = Duration.standardSeconds(5);
 	private static final int RECONNECT_ATTEMPTS = 5;
     
