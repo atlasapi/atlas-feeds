@@ -1,31 +1,41 @@
 package org.atlasapi.feeds.radioplayer;
 
+import static com.google.common.collect.Iterables.concat;
+
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.atlasapi.content.criteria.AtomicQuery;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.content.criteria.operator.Operators;
-import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerItemSorter;
+import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
+import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerBroadcastItem;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerProgrammeInformationOutputter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter;
+import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.joda.time.DateTime;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 
 public abstract class RadioPlayerFeedCompiler {
     
     private final RadioPlayerXMLOutputter outputter;
     private final KnownTypeQueryExecutor executor;
 
-    private final RadioPlayerItemSorter sorter = new RadioPlayerItemSorter();
-    
     public RadioPlayerFeedCompiler(RadioPlayerXMLOutputter outputter, KnownTypeQueryExecutor executor) {
         this.outputter = outputter;
         this.executor = executor;
@@ -88,7 +98,30 @@ public abstract class RadioPlayerFeedCompiler {
 	public void compileFeedFor(DateTime date, RadioPlayerService service, OutputStream out) throws IOException {
 		if(outputter != null) {
 			String serviceUri = service.getServiceUri();
-			outputter.output(date, service, sorter.sortAndTransform(executor.schedule(queryFor(date, serviceUri)).getItemsFromOnlyChannel(), serviceUri, date), out);
+			List<Item> items = executor.schedule(queryFor(date, serviceUri)).getItemsFromOnlyChannel();
+			if(items.isEmpty()) {
+			    throw new NoItemsException(date, service);
+			}
+            outputter.output(date, service, sort(transform(items, serviceUri, date)), out);
 		}
 	}
+
+    private List<RadioPlayerBroadcastItem> sort(Iterable<RadioPlayerBroadcastItem> broadcastItems) {
+        return Ordering.natural().immutableSortedCopy(broadcastItems);
+    }
+
+    private List<RadioPlayerBroadcastItem> transform(List<Item> items, String serviceUri, DateTime date) {
+        return ImmutableList.copyOf(concat(Iterables.transform(items, new Function<Item, Iterable<RadioPlayerBroadcastItem>>() {
+            @Override
+            public Iterable<RadioPlayerBroadcastItem> apply(Item item) {
+                ArrayList<RadioPlayerBroadcastItem> broadcastItems = Lists.newArrayList();
+                for (Version version : item.getVersions()) {
+                    for (Broadcast broadcast : version.getBroadcasts()) {
+                        broadcastItems.add(new RadioPlayerBroadcastItem(item, version, broadcast));
+                    }
+                }
+                return broadcastItems;
+            }
+        })));
+    }
 }

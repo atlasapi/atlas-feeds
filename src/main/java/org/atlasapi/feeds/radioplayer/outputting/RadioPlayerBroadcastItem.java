@@ -4,7 +4,7 @@ import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 
-public class RadioPlayerBroadcastItem {
+public class RadioPlayerBroadcastItem implements Comparable<RadioPlayerBroadcastItem> {
 
     private final Item item;
     private final Version version;
@@ -26,6 +26,11 @@ public class RadioPlayerBroadcastItem {
 
     public Broadcast getBroadcast() {
         return broadcast;
+    }
+
+    @Override
+    public int compareTo(RadioPlayerBroadcastItem that) {
+        return this.broadcast.getTransmissionTime().compareTo(that.getBroadcast().getTransmissionTime());
     }
     
 }
