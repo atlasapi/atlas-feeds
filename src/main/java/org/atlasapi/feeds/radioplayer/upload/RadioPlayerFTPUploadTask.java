@@ -39,7 +39,7 @@ public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadRe
             FTPUpload delegate = new LoggingFTPUpload(log, new ValidatingFTPFileUpload(validator, new FTPFileUpload()));
             return wrap(delegate.upload(client, filename, out.toByteArray()));
         } catch (NoItemsException e) {
-            if(log != null && !day.isAfter(new DateTime(DateTimeZones.UTC).plusDays(1))) {
+            if(log != null && !day.isAfter(new DateTime(DateTimeZones.UTC).plusDays(1)) && !service.getName().equals("5livesportextra")) {
                 log.record(new AdapterLogEntry(ERROR).withDescription("Exception uploading file " + filename).withSource(getClass()).withCause(e));
             }
             return wrap(failedUpload(filename).withCause(e).withMessage(e.getMessage()));
