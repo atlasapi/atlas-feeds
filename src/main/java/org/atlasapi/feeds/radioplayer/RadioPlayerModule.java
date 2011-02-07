@@ -31,6 +31,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.Resources;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.metabroadcast.common.properties.Configurer;
+import com.metabroadcast.common.properties.Parameter;
 import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.RepetitionRules.RepetitionInterval;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
@@ -130,8 +132,7 @@ public class RadioPlayerModule {
         return new MongoFTPUploadResultRecorder(mongo);
     }
 	
-	public @Bean RadioPlayerHealthController radioPlayerHealthController() {
-	    return new RadioPlayerHealthController(health);
+	public @Bean Object radioPlayerHealthController() {
+	    return new RadioPlayerHealthController(health, Configurer.get("rp.health.password", "").get());
 	}
-	
 }
