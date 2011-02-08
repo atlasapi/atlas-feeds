@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
 import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.failedUpload;
+import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.DEBUG;
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.ERROR;
 
 import java.io.ByteArrayOutputStream;
@@ -11,6 +12,7 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
+import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 import org.joda.time.DateTime;
 
 import com.metabroadcast.common.time.DateTimeZones;
@@ -39,8 +41,12 @@ public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadRe
             FTPFileUploader delegate = new LoggingFTPUploader(log, new ValidatingFTPFileUploader(validator, uploader));
             return wrap(delegate.upload(new FTPUpload(filename, out.toByteArray())));
         } catch (NoItemsException e) {
-            if (log != null && !day.isAfter(new DateTime(DateTimeZones.UTC).plusDays(1)) && !service.getName().equals("5livesportextra")) {
-                log.record(new AdapterLogEntry(ERROR).withDescription("Exception uploading file " + filename).withSource(getClass()).withCause(e));
+            if( log != null) {
+                if (!day.isAfter(new DateTime(DateTimeZones.UTC).plusDays(1)) && !service.getName().equals("5livesportsextra")) {
+                    log.record(new AdapterLogEntry(ERROR).withDescription("Exception uploading file " + filename).withSource(getClass()).withCause(e));
+                } else {
+                    log.record(new AdapterLogEntry(DEBUG).withDescription("Exception uploading file " + filename).withSource(getClass()).withCause(e));
+                }
             }
             return wrap(failedUpload(filename).withCause(e).withMessage(e.getMessage()));
         } catch (Exception e) {
