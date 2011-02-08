@@ -132,18 +132,18 @@ public class RadioPlayerModule {
     }
 
     private void createHealthProbes(FTPCredentials credentials) {
-        
-        Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>(){
+
+        Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>() {
             @Override
             public HealthProbe apply(RadioPlayerService service) {
                 return new RadioPlayerUploadHealthProbe(mongo, service, dayRangeGenerator);
             }
         };
-        
-        health.addProbes(Iterables.concat(
-                Iterables.transform(RadioPlayerServices.services, createProbe),
-                ImmutableList.of(new RadioPlayerServerHealthProbe(mongo, credentials))
-        ));
+
+        health.addProbes(
+                Iterables.concat(Iterables.transform(RadioPlayerServices.services, createProbe),
+                ImmutableList.of(new RadioPlayerServerHealthProbe(mongo, credentials)))
+        );
     }
     
 }

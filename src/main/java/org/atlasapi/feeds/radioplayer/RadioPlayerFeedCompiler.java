@@ -88,23 +88,23 @@ public abstract class RadioPlayerFeedCompiler {
 
 	public abstract ContentQuery queryFor(DateTime date, String serviceUri);
 	
-	public RadioPlayerXMLOutputter getOutputter(){
-		if(outputter == null) {
-			throw new UnsupportedOperationException(this.toString() + " feeds are not currently supported");
-		}
-		return outputter;
-	}
+    public RadioPlayerXMLOutputter getOutputter() {
+        if (outputter == null) {
+            throw new UnsupportedOperationException(this.toString() + " feeds are not currently supported");
+        }
+        return outputter;
+    }
 
-	public void compileFeedFor(DateTime date, RadioPlayerService service, OutputStream out) throws IOException {
-		if(outputter != null) {
-			String serviceUri = service.getServiceUri();
-			List<Item> items = executor.schedule(queryFor(date, serviceUri)).getItemsFromOnlyChannel();
-			if(items.isEmpty()) {
-			    throw new NoItemsException(date, service);
-			}
+    public void compileFeedFor(DateTime date, RadioPlayerService service, OutputStream out) throws IOException {
+        if (outputter != null) {
+            String serviceUri = service.getServiceUri();
+            List<Item> items = executor.schedule(queryFor(date, serviceUri)).getItemsFromOnlyChannel();
+            if (items.isEmpty()) {
+                throw new NoItemsException(date, service);
+            }
             outputter.output(date, service, sort(transform(items, serviceUri, date)), out);
-		}
-	}
+        }
+    }
 
     private List<RadioPlayerBroadcastItem> sort(Iterable<RadioPlayerBroadcastItem> broadcastItems) {
         return Ordering.natural().immutableSortedCopy(broadcastItems);

@@ -36,7 +36,7 @@ public class RadioPlayerServerHealthProbe implements HealthProbe {
     }
 
     private FTPUploadResult connection(boolean successfulConnection) {
-        DBObject first = Iterables.getFirst(results.find( new BasicDBObject("connected", successfulConnection)).sort(new BasicDBObject("time", -1)).limit(1), null);
+        DBObject first = Iterables.getFirst(results.find(new BasicDBObject("connected", successfulConnection)).sort(new BasicDBObject("time", -1)).limit(1), null);
         if (first != null) {
             return translator.fromDBObject(first);
         }
@@ -55,7 +55,7 @@ public class RadioPlayerServerHealthProbe implements HealthProbe {
     }
 
     private ProbeResultType resultType(FTPUploadResult mostRecent) {
-        if(mostRecent.successfulConnection()) {
+        if (mostRecent.successfulConnection()) {
             return SUCCESS;
         } else {
             return FAILURE;
@@ -64,10 +64,10 @@ public class RadioPlayerServerHealthProbe implements HealthProbe {
 
     private String buildValue(FTPUploadResult success, FTPUploadResult failure) {
         StringBuilder builder = new StringBuilder("<table>");
-        if(success != null) {
+        if (success != null) {
             buildResult(builder, success);
         }
-        if(failure != null) {
+        if (failure != null) {
             buildResult(builder, failure);
         }
         return builder.append("</table>").toString();
@@ -79,7 +79,7 @@ public class RadioPlayerServerHealthProbe implements HealthProbe {
         builder.append(": ");
         builder.append(result.uploadTime().toString("dd/MM/yy HH:mm:ss"));
         builder.append("</td><td>");
-        if(result.successfulConnection()) {
+        if (result.successfulConnection()) {
             builder.append("Connected successfully");
         } else if (result.message() != null && !result.successfulConnection()) {
             builder.append(result.message());

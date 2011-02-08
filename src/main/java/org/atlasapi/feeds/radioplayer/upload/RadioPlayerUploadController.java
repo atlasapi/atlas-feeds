@@ -27,13 +27,13 @@ import com.metabroadcast.common.time.DayRangeGenerator;
 
 @Controller
 public class RadioPlayerUploadController {
-    
+
     private final FTPFileUploader uploader;
     private final DayRangeGenerator rangedGenerator;
     private final RadioPlayerXMLValidator validator;
     private final AdapterLog log;
     private final ScheduledExecutorService uploadExecutor;
-    
+
     private RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner;
 
     public RadioPlayerUploadController(FTPFileUploader uploader, DayRangeGenerator rangedGenerator, RadioPlayerXMLValidator validator, AdapterLog log) {
@@ -45,34 +45,34 @@ public class RadioPlayerUploadController {
     }
 
     @RequestMapping("feeds/ukradioplayer/upload/{id}/{day}")
-    public void uploadDay(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String  serviceId, @PathVariable("day") String day) throws IOException {
-        
-        if(radioPlayerUploadTaskRunner == null) {
-            response.sendError(SERVICE_UNAVAILABLE.code(),"Upload service not configured");
+    public void uploadDay(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String serviceId, @PathVariable("day") String day) throws IOException {
+
+        if (radioPlayerUploadTaskRunner == null) {
+            response.sendError(SERVICE_UNAVAILABLE.code(), "Upload service not configured");
             return;
         }
-        
+
         RadioPlayerService service = RadioPlayerServices.all.get(serviceId);
-        if(service == null) {
-            response.sendError(NOT_FOUND.code(),"Unkown service " + serviceId);
+        if (service == null) {
+            response.sendError(NOT_FOUND.code(), "Unkown service " + serviceId);
             return;
         }
-        
-        if(day != null && !day.matches("\\d{8}")) {
+
+        if (day != null && !day.matches("\\d{8}")) {
             response.sendError(BAD_REQUEST.code(), "Bad Date Format");
             return;
         }
-        
+
         Iterable<LocalDate> days = day != null ? ImmutableList.of(DateTimeFormat.forPattern("yyyyMMdd").parseDateTime(day).toLocalDate()) : rangedGenerator.generate(new LocalDate(DateTimeZones.UTC));
-        
+
         uploadExecutor.submit(new RadioPlayerUploadTask(uploader, radioPlayerUploadTaskRunner, ImmutableList.of(service), days).withLog(log).withValidator(validator));
-        
+
         response.setStatus(HttpStatusCode.OK.code());
         response.setContentLength(0);
     }
-    
+
     @RequestMapping("feeds/ukradioplayer/upload/{id}")
-    public void uploadDays(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String  serviceId) throws IOException {
+    public void uploadDays(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String serviceId) throws IOException {
         uploadDay(request, response, serviceId, null);
     }
 

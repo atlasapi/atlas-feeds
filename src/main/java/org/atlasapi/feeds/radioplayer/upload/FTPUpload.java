@@ -17,5 +17,5 @@ public class FTPUpload {
     public byte[] getFileData() {
         return fileData;
     }
-    
+
 }

@@ -34,7 +34,6 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     protected final DayRangeGenerator rangeGenerator;
     protected final RadioPlayerFTPUploadResultTranslator translator;
 
-    
     public RadioPlayerUploadHealthProbe(DatabasedMongo mongo, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
         this.results = mongo.collection("radioplayer");
         this.service = service;
@@ -57,41 +56,41 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         Iterable<RadioPlayerFTPUploadResult> fileResults = Iterables.transform(results.find(queryFor(day)), new Function<DBObject, RadioPlayerFTPUploadResult>() {
             @Override
             public RadioPlayerFTPUploadResult apply(DBObject dboResult) {
-                    return translator.fromDBObject(dboResult);
+                return translator.fromDBObject(dboResult);
             }
         });
         return entryFor(day, fileResults);
     }
-    
+
     private DBObject queryFor(LocalDate day) {
         BasicDBObject dbo = new BasicDBObject();
         TranslatorUtils.from(dbo, "serviceId", service.getRadioplayerId());
         TranslatorUtils.fromLocalDate(dbo, "day", day);
         return dbo;
     }
-    
+
     private ProbeResultEntry entryFor(LocalDate day, Iterable<? extends FTPUploadResult> results) {
         String filename = String.format("%s_%s_PI.xml", day.toString("yyyyMMdd"), service.getRadioplayerId());
-        if(Iterables.isEmpty(results)) {
+        if (Iterables.isEmpty(results)) {
             return new ProbeResultEntry(INFO, filename, "No Data");
         }
         String value = buildValue(TYPE_ORDERING.immutableSortedCopy(results));
-        
+
         FTPUploadResult mostRecent = DATE_ORDERING.reverse().immutableSortedCopy(results).get(0);
         return new ProbeResultEntry(resultType(mostRecent, day), filename, value);
     }
-    
+
     private ProbeResultType resultType(FTPUploadResult mostRecent, LocalDate day) {
         switch (mostRecent.type()) {
         case UNKNOWN:
             return INFO;
         case SUCCESS:
-            if(mostRecent.uploadTime().plusMinutes(20).isBeforeNow()) {
+            if (mostRecent.uploadTime().plusMinutes(20).isBeforeNow()) {
                 return FAILURE;
             }
             return SUCCESS;
         case FAILURE:
-            if(day.isAfter(mostRecent.uploadTime().toLocalDate().plusDays(1)) || service.getName().equals("5livesportsextra")) {
+            if (day.isAfter(mostRecent.uploadTime().toLocalDate().plusDays(1)) || service.getName().equals("5livesportsextra")) {
                 return INFO;
             } else {
                 return FAILURE;
@@ -103,20 +102,20 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
     protected String buildValue(List<? extends FTPUploadResult> results) {
         StringBuilder builder = new StringBuilder("<table>");
-        for(FTPUploadResult result : Iterables.limit(results,2)) {
+        for (FTPUploadResult result : Iterables.limit(results, 2)) {
             builder.append("<tr><td>Last ");
             builder.append(result.type().toNiceString());
             builder.append(": ");
             builder.append(result.uploadTime().toString(DATE_TIME));
             builder.append("</td><td>");
-            if(result.message() != null) {
+            if (result.message() != null) {
                 builder.append(result.message());
             }
             builder.append("</td></tr>");
         }
         return builder.append("</table>").toString();
     }
-    
+
     @Override
     public String title() {
         return service.getName();
@@ -124,7 +123,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
     @Override
     public String slug() {
-        return "ukrp"+service.getName();
+        return "ukrp" + service.getName();
     }
 
 }

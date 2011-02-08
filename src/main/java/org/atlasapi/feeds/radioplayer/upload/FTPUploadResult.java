@@ -15,38 +15,37 @@ import com.metabroadcast.common.time.DateTimeZones;
 public class FTPUploadResult {
 
     public enum FTPUploadResultType {
-        SUCCESS("Success"),
-        FAILURE("Failure"),
+        SUCCESS("Success"), 
+        FAILURE("Failure"), 
         UNKNOWN("Unknown");
-        
+
         private final String niceName;
 
         FTPUploadResultType(String niceName) {
             this.niceName = niceName;
         }
-        
+
         public String toNiceString() {
             return niceName;
         }
-        
+
         public static final List<FTPUploadResultType> RESULT_TYPES = Arrays.asList(values());
     }
-    
+
     public static final Ordering<FTPUploadResult> DATE_ORDERING = Ordering.from(new Comparator<FTPUploadResult>() {
         @Override
         public int compare(FTPUploadResult r1, FTPUploadResult r2) {
             return r1.uploadTime().compareTo(r2.uploadTime());
         }
     });
-    
+
     public static final Ordering<FTPUploadResult> TYPE_ORDERING = Ordering.from(new Comparator<FTPUploadResult>() {
         @Override
         public int compare(FTPUploadResult r1, FTPUploadResult r2) {
             return r1.type().compareTo(r2.type());
         }
     });
-    
-    
+
     private final String filename;
     private final DateTime dateTime;
     private final FTPUploadResultType success;
@@ -108,7 +107,7 @@ public class FTPUploadResult {
 
     public FTPUploadResult withCause(Exception e) {
         this.exception = e;
-        if(e != null) {
+        if (e != null) {
             this.exceptionSummary = new ExceptionSummary(e);
         }
         return this;
@@ -126,10 +125,10 @@ public class FTPUploadResult {
 
     @Override
     public boolean equals(Object that) {
-        if(this == that) {
+        if (this == that) {
             return true;
         }
-        if(that instanceof FTPUploadResult) {
+        if (that instanceof FTPUploadResult) {
             FTPUploadResult other = (FTPUploadResult) that;
             return Objects.equal(dateTime, other.dateTime) && Objects.equal(filename, filename) && Objects.equal(success, other.success);
         }

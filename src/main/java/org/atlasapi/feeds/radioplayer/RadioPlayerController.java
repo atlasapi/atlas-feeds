@@ -16,28 +16,28 @@ import com.google.common.collect.Iterables;
 @Controller
 public class RadioPlayerController {
 
-	@RequestMapping("feeds/ukradioplayer/{filename}.xml")
-	public void xmlForFilename(@PathVariable("filename") String filename, HttpServletResponse response) throws IOException {
+    @RequestMapping("feeds/ukradioplayer/{filename}.xml")
+    public void xmlForFilename(@PathVariable("filename") String filename, HttpServletResponse response) throws IOException {
 
-		RadioPlayerFilenameMatcher matcher = RadioPlayerFilenameMatcher.on(filename);
+        RadioPlayerFilenameMatcher matcher = RadioPlayerFilenameMatcher.on(filename);
 
-		if (matcher.matches() && Iterables.all(ImmutableSet.of(matcher.date(), matcher.service(), matcher.type()), HAS_VALUE)) {
+        if (matcher.matches() && Iterables.all(ImmutableSet.of(matcher.date(), matcher.service(), matcher.type()), HAS_VALUE)) {
 
-			RadioPlayerFeedCompiler feedType = matcher.type().requireValue();
-			try {
-				feedType.compileFeedFor(matcher.date().requireValue(), matcher.service().requireValue(), response.getOutputStream());
-			} catch (Exception e) {
-				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-			}
+            RadioPlayerFeedCompiler feedType = matcher.type().requireValue();
+            try {
+                feedType.compileFeedFor(matcher.date().requireValue(), matcher.service().requireValue(), response.getOutputStream());
+            } catch (Exception e) {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            }
 
-		} else {
-			if (matcher.service().isNothing()) {
-				response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unkown Service");
-			} else {
-				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognised filename pattern");
-			}
+        } else {
+            if (matcher.service().isNothing()) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unkown Service");
+            } else {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unrecognised filename pattern");
+            }
 
-		}
-	}
+        }
+    }
 
 }
