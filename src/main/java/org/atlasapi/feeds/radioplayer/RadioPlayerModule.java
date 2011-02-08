@@ -75,7 +75,11 @@ public class RadioPlayerModule {
     }
     
     @Bean FTPFileUploader radioPlayerFileUploader(){
-        return new CommonsFTPFileUploader(FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build());
+        if(ftpHost != null && ftpPort != null && ftpUsername != null && ftpPassword != null) {
+            return new CommonsFTPFileUploader(FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build());
+        } else {
+            return new CommonsFTPFileUploader(FTPCredentials.forServer("Credentials").withUsername("Set").build());
+        }
     }
     
     @Bean RadioPlayerFTPUploadResultRecorder uploadResultRecorder() {

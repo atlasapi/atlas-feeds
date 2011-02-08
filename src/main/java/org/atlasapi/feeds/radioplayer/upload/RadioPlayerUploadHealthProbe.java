@@ -44,14 +44,15 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     @Override
     public ProbeResult probe() {
         ProbeResult result = new ProbeResult(service.getName());
-
         for (LocalDate day : rangeGenerator.generate(new LocalDate(DateTimeZones.UTC))) {
             result.addEntry(entryFor(day));
         }
 
+        result.addEntry(uploadAll());
+
         return result;
     }
-
+    
     private ProbeResultEntry entryFor(final LocalDate day) {
         Iterable<RadioPlayerFTPUploadResult> fileResults = Iterables.transform(results.find(queryFor(day)), new Function<DBObject, RadioPlayerFTPUploadResult>() {
             @Override
@@ -70,7 +71,8 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     }
 
     private ProbeResultEntry entryFor(LocalDate day, Iterable<? extends FTPUploadResult> results) {
-        String filename = String.format("%s_%s_PI.xml", day.toString("yyyyMMdd"), service.getRadioplayerId());
+        String filename = String.format("<a style=\"text-decoration:none\" href=\"/feeds/ukradioplayer/%1$s_%2$s_PI.xml\">%1$s_%2$s_PI.xml</a>", day.toString("yyyyMMdd"), service.getRadioplayerId());
+        filename += uploadButton(day);
         if (Iterables.isEmpty(results)) {
             return new ProbeResultEntry(INFO, filename, "No Data");
         }
@@ -118,6 +120,19 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         }
         return builder.append("</table>").toString();
     }
+
+    private String uploadButton(LocalDate day) {
+        String postTarget = String.format("/feeds/ukradioplayer/upload/%s", service.getRadioplayerId());
+        if(day != null) {
+            postTarget += "/" + day.toString("yyyyMMdd");
+        }
+        return "<form style=\"text-align:center\" action=\""+postTarget+"\" method=\"post\"><input type=\"submit\" value=\"Update\"/></form>";
+    }
+
+    private ProbeResultEntry uploadAll() {
+        return new ProbeResultEntry(INFO, "Update All", uploadButton(null));
+    }
+
 
     @Override
     public String title() {
