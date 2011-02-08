@@ -60,7 +60,7 @@ public class RadioPlayerUploadTask implements Runnable {
         List<Callable<RadioPlayerFTPUploadResult>> uploadTasks = Lists.newArrayListWithCapacity(Iterables.size(days) * serviceCount);
         for (RadioPlayerService service : services) {
             for (LocalDate day : days) {
-                uploadTasks.add(new RadioPlayerFTPUploadTask(uploader, day.toDateTimeAtCurrentTime(DateTimeZones.UTC), service).withValidator(validator).withLog(log));
+                uploadTasks.add(new RadioPlayerFTPUploadTask(uploader, day, service).withValidator(validator).withLog(log));
             }
         }
 

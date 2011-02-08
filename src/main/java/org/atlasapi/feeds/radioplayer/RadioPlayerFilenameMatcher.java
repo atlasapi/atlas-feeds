@@ -3,15 +3,17 @@ package org.atlasapi.feeds.radioplayer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import com.metabroadcast.common.base.Maybe;
 
 public abstract class RadioPlayerFilenameMatcher {
 
     private static Pattern pattern = Pattern.compile("([0-9]{8})_([0-9A-Za-z\\_]+)_(PI|SI|OD)");
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZone.UTC);
 
     public static RadioPlayerFilenameMatcher on(String filename) {
         Matcher m = pattern.matcher(filename);
@@ -21,7 +23,7 @@ public abstract class RadioPlayerFilenameMatcher {
         return new RadioPlayerFilenameMiss();
     }
 
-    public abstract Maybe<DateTime> date();
+    public abstract Maybe<LocalDate> date();
 
     public abstract Maybe<RadioPlayerService> service();
 
@@ -31,18 +33,18 @@ public abstract class RadioPlayerFilenameMatcher {
 
     private static class RadioPlayerFilenameMatch extends RadioPlayerFilenameMatcher {
 
-        private final DateTime date;
+        private final LocalDate date;
         private Maybe<RadioPlayerService> service;
         private RadioPlayerFeedCompiler type;
 
         public RadioPlayerFilenameMatch(String date, String service, String feedType) {
-            this.date = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZone.UTC).parseDateTime(date);
+            this.date = DATE_FORMAT.parseDateTime(date).toLocalDate();
             this.service = Maybe.fromPossibleNullValue(RadioPlayerServices.all.get(service));
             this.type = RadioPlayerFeedCompiler.valueOf(feedType);
         }
 
         @Override
-        public Maybe<DateTime> date() {
+        public Maybe<LocalDate> date() {
             return Maybe.just(date);
         }
 
@@ -66,7 +68,7 @@ public abstract class RadioPlayerFilenameMatcher {
     private static class RadioPlayerFilenameMiss extends RadioPlayerFilenameMatcher {
 
         @Override
-        public Maybe<DateTime> date() {
+        public Maybe<LocalDate> date() {
             return Maybe.nothing();
         }
 

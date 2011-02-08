@@ -17,9 +17,11 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Series;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.joda.time.LocalDate;
 import org.joda.time.format.ISOPeriodFormat;
 
 import com.google.common.base.Strings;
+import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {
 
@@ -29,7 +31,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
     private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
 
     @Override
-    public Element createFeed(DateTime day, RadioPlayerService id, Iterable<RadioPlayerBroadcastItem> items) {
+    public Element createFeed(LocalDate day, RadioPlayerService id, Iterable<RadioPlayerBroadcastItem> items) {
         Element epgElem = createElement("epg", EPGSCHEDULE);
         EPGDATATYPES.addDeclarationTo(epgElem);
         XSI.addDeclarationTo(epgElem);
@@ -41,19 +43,19 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         Element schedule = createElement("schedule", EPGSCHEDULE);
         schedule.addAttribute(new Attribute("originator", ORIGINATOR));
         schedule.addAttribute(new Attribute("version", "1"));
-        schedule.addAttribute(new Attribute("creationTime", DATE_TIME_FORMAT.print(day)));
+        schedule.addAttribute(new Attribute("creationTime", DATE_TIME_FORMAT.print(new DateTime(DateTimeZones.UTC))));
 
         schedule.appendChild(scopeElement(day, id));
 
         for (RadioPlayerBroadcastItem item : items) {
-            schedule.appendChild(createProgrammeElement(item, day, id));
+            schedule.appendChild(createProgrammeElement(item, id));
         }
 
         epgElem.appendChild(schedule);
         return epgElem;
     }
 
-    private Element createProgrammeElement(RadioPlayerBroadcastItem broadcastItem, DateTime day, RadioPlayerService id) {
+    private Element createProgrammeElement(RadioPlayerBroadcastItem broadcastItem, RadioPlayerService id) {
         Element programme = createElement("programme", EPGSCHEDULE);
         programme.addAttribute(new Attribute("shortId", "0"));
         programme.addAttribute(new Attribute("id", broadcastItem.getItem().getCanonicalUri().replace("http://", "crid://")));
@@ -63,7 +65,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         programme.appendChild(stringElement("longName", EPGDATATYPES, LONG_TITLE.truncatePossibleNull(title)));
 
         Broadcast broadcast = broadcastItem.getBroadcast();
-        programme.appendChild(locationElement(broadcastItem.getItem(), broadcast, day, id));
+        programme.appendChild(locationElement(broadcastItem.getItem(), broadcast, id));
         programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(broadcastItem.getItem().getDescription()))));
         if (!Strings.isNullOrEmpty(broadcastItem.getItem().getImage())) {
             programme.appendChild(mediaDescription(imageDescriptionElem(broadcastItem.getItem())));
@@ -103,7 +105,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         return title;
     }
 
-    private Element locationElement(Item item, Broadcast broadcast, DateTime day, RadioPlayerService id) {
+    private Element locationElement(Item item, Broadcast broadcast, RadioPlayerService id) {
         Element locationElement = createElement("location", EPGDATATYPES);
 
         Element timeElement = createElement("time", EPGDATATYPES);
@@ -187,10 +189,10 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         return ondemandElement;
     }
 
-    private Element scopeElement(DateTime day, RadioPlayerService id) {
+    private Element scopeElement(LocalDate day, RadioPlayerService id) {
         Element scope = createElement("scope", EPGSCHEDULE);
-        scope.addAttribute(new Attribute("startTime", DATE_TIME_FORMAT.print(day)));
-        scope.addAttribute(new Attribute("stopTime", DATE_TIME_FORMAT.print(day.plusDays(1))));
+        scope.addAttribute(new Attribute("startTime", DATE_TIME_FORMAT.print(day.toDateTimeAtStartOfDay(DateTimeZones.UTC))));
+        scope.addAttribute(new Attribute("stopTime", DATE_TIME_FORMAT.print(day.toDateTimeAtStartOfDay(DateTimeZones.UTC).plusDays(1))));
 
         Element service = createElement("serviceScope", EPGSCHEDULE);
         service.addAttribute(new Attribute("id", id.getDabServiceId().replaceAll("_", ".")));
