@@ -45,6 +45,7 @@ import com.metabroadcast.common.webapp.health.HealthController;
 public class RadioPlayerModule {
 
 	private static final RepetitionInterval UPLOAD_EVERY_TEN_MINUTES = RepetitionRules.atInterval(Duration.standardMinutes(10));
+	private static final RepetitionInterval UPLOAD_EVERY_TWO_HOURS = RepetitionRules.atInterval(Duration.standardHours(2));
 
 	private @Value("${rp.ftp.enabled}") String upload;
 	private @Value("${rp.ftp.services}") String uploadServices;
@@ -105,10 +106,17 @@ public class RadioPlayerModule {
 			
 			radioPlayerUploadController().withUploadExecutor(radioPlayerUploadTaskRunner);
 			
-            RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner, uploadServices(), dayRangeGenerator)
+            RadioPlayerUploadTask bihourly = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner, uploadServices(), dayRangeGenerator)
 			    .withValidator(radioPlayerValidator())
 			    .withLog(log);
-            scheduler.schedule(uploader, UPLOAD_EVERY_TEN_MINUTES);
+            
+            scheduler.schedule(bihourly, UPLOAD_EVERY_TWO_HOURS);
+            
+            RadioPlayerUploadTask today = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner, uploadServices(), new DayRangeGenerator())
+                .withValidator(radioPlayerValidator())
+                .withLog(log);
+            
+            scheduler.schedule(today, UPLOAD_EVERY_TEN_MINUTES);
 
             log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
             .withDescription(String.format("Radioplayer uploader installed for: %s. Frequency: %s",credentials,UPLOAD_EVERY_TEN_MINUTES)));

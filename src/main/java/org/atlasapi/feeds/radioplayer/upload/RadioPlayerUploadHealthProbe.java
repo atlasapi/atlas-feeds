@@ -85,7 +85,10 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         case UNKNOWN:
             return INFO;
         case SUCCESS:
-            if (mostRecent.uploadTime().plusMinutes(20).isBeforeNow()) {
+            if(day.isEqual(new LocalDate(DateTimeZones.UTC)) && mostRecent.uploadTime().plusMinutes(20).isBeforeNow()) {
+                return FAILURE;
+            }
+            if (mostRecent.uploadTime().plusHours(4).isBeforeNow()) {
                 return FAILURE;
             }
             return SUCCESS;
