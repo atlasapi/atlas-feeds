@@ -14,17 +14,20 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SiteMapModule {
 
-	private @Autowired @Qualifier("mongoDbQueryExcutorThatFiltersUriQueries") KnownTypeQueryExecutor queryExecutor;
+	private @Autowired @Qualifier("queryExecutor") KnownTypeQueryExecutor queryExecutor;
 	private @Autowired MongoDbBackedContentStore mongoStore;
 	private @Value("${local.host.name}") String localHostName;
 	private @Autowired ApplicationConfigurationFetcher configFetcher;
+
+    public @Bean ApplicationConfigurationIncludingQueryBuilder sitemapQueryBuilder() {
+        return new ApplicationConfigurationIncludingQueryBuilder(new QueryStringBackedQueryBuilder().withIgnoreParams("format", "host"), configFetcher);
+    }
 	
 	public @Bean SiteMapController siteMapController() {
-		return new SiteMapController(queryExecutor, localHostName);
+		return new SiteMapController(queryExecutor, sitemapQueryBuilder(), localHostName);
 	}
 	
 	public @Bean SiteMapExperimentalController siteMapExperimentalController() {
-		ApplicationConfigurationIncludingQueryBuilder queryBuilder = new ApplicationConfigurationIncludingQueryBuilder(new QueryStringBackedQueryBuilder().withIgnoreParams("format", "host"), configFetcher);
-		return new SiteMapExperimentalController(mongoStore, queryBuilder, localHostName);
+		return new SiteMapExperimentalController(mongoStore, sitemapQueryBuilder(), localHostName);
 	}
 }
