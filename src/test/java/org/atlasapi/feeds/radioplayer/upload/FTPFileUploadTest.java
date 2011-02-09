@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.is;
 
 import java.io.File;
 
-import org.apache.commons.net.ftp.FTPClient;
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.FtpException;
@@ -39,22 +38,14 @@ public class FTPFileUploadTest {
         
         startServer();
         
-        FTPClient client = new FTPClient();
+        FTPFileUploader upload = new CommonsFTPFileUploader(FTPCredentials.forServer("localhost").withPort(9521).withUsername(TEST_USERNAME).withPassword(TEST_USERNAME).build());
         
-        client.connect("localhost", 9521);
-        client.login(TEST_USERNAME, TEST_PASSWORD);
-        
-        FTPUpload upload = new FTPFileUpload();
-        
-        FTPUploadResult result = upload.upload(client, "success", Resources.toByteArray(Resources.getResource("org/atlasapi/feeds/radioplayer/basicPIFeedTest.xml")));
+        FTPUploadResult result = upload.upload(new FTPUpload("success", Resources.toByteArray(Resources.getResource("org/atlasapi/feeds/radioplayer/basicPIFeedTest.xml"))));
         
         assertThat(result.type(), is(equalTo(FTPUploadResultType.SUCCESS)));
         assertThat(dir.listFiles().length, is(1));
-        
-        client.logout();
-        client.disconnect();
+
         server.stop();
-        
     }
 
     private void startServer() throws FtpException {

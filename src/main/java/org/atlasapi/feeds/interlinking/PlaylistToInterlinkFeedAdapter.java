@@ -12,7 +12,8 @@ import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
-import org.atlasapi.media.entity.Description;
+import org.atlasapi.media.entity.Described;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
@@ -57,17 +58,23 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         .omitTrailingPunctuationWhenTruncated()
         .onlyStartANewSentenceIfTheSentenceIsAtLeastPercentComplete(50);
     
-    public InterlinkFeed fromBrands(String id, Publisher publisher, DateTime from, DateTime to, List<Brand> brands) {
+    public InterlinkFeed fromBrands(String id, Publisher publisher, DateTime from, DateTime to, List<Content> contents) {
         InterlinkFeed feed = feed(id, publisher);
         
-        for (Brand brand: brands) {
+        for (Content content : contents) {
+        	if (!(content instanceof Brand)) {
+        		// ignore non-brands for now, all C4 content is in brands
+        		continue;
+        	}
+        	Brand brand = (Brand) content;
+        	
             InterlinkBrand interlinkBrand = fromBrand(brand, from, to);
             if (qualifies(from, to, brand)) {
                 feed.addEntry(interlinkBrand);
             }
             
             Map<String, InterlinkSeries> seriesLookup = Maps.newHashMap();
-            for (Item item : brand.getItems()) {
+            for (Item item : brand.getContents()) {
                 InterlinkSeries linkSeries = null;
                 if (item instanceof Episode) {
                     Episode episode = (Episode) item;
@@ -89,7 +96,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         return feed;
     }
     
-    static boolean qualifies(DateTime from, DateTime to, Description description) {
+    static boolean qualifies(DateTime from, DateTime to, Identified description) {
         return ((from == null && to == null) || (description != null && description.getLastUpdated() != null && description.getLastUpdated().isAfter(from) && description.getLastUpdated().isBefore(to)));
     }
     
@@ -177,7 +184,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
     
     private Operation operationFor(Series series, Brand brand, DateTime from, DateTime to) {
-    	for (Item item : brand.getItems()) {
+    	for (Item item : brand.getContents()) {
     		if (!(item instanceof Episode)) {
     			continue;
     		}
@@ -197,7 +204,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
 	private Operation operationFor(Brand brand, DateTime from, DateTime to) {
-		for (Item item : brand.getItems()) {
+		for (Item item : brand.getContents()) {
 			if (Operation.STORE.equals(operationFor(item, from, to))) {
 				return Operation.STORE;
 			}
@@ -225,11 +232,11 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 		}
 	}
 
-	protected String idFrom(Description description) {
+	protected String idFrom(Identified description) {
 		return description.getCanonicalUri();
 	}
 
-	private String toSummary(Content content) {
+	private String toSummary(Described content) {
     	String description = content.getDescription();
 		if (description == null) {
     		return null;
@@ -237,7 +244,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     	return summaryTruncator.truncate(description);
     }
 	
-	private String toDescription(Content content) {
+	private String toDescription(Described content) {
     	String description = content.getDescription();
 		if (description == null) {
     		return null;

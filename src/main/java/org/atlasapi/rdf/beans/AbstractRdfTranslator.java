@@ -22,16 +22,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Map.Entry;
 
-import org.atlasapi.beans.BeanGraphWriter;
+import org.atlasapi.beans.AtlasModelWriter;
 import org.atlasapi.beans.BeanIntrospector;
 import org.atlasapi.content.rdf.annotations.RdfProperty;
-import org.atlasapi.media.entity.Description;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.vocabulary.RDF;
 import org.atlasapi.rdf.RdfIntrospector;
 import org.springframework.beans.BeanWrapperImpl;
 
-public abstract class AbstractRdfTranslator<ModelType, ResourceType, PropertyType, ReferenceType, LiteralType> implements  BeanGraphWriter {
+public abstract class AbstractRdfTranslator<ModelType, ResourceType, PropertyType, ReferenceType, LiteralType> implements  AtlasModelWriter {
 
 	protected TypeMap typeMap = null;
 	
@@ -51,11 +52,11 @@ public abstract class AbstractRdfTranslator<ModelType, ResourceType, PropertyTyp
 	    return this.nsPrefixes;
 	}
 
-	public void setNsPrefixes(Properties nsPrefixes) {
-	    for (Map.Entry<Object, Object> nsPrefix : nsPrefixes.entrySet()) {
+	public void setNsPrefixes(Map<String, String> nsPrefixes) {
+	    for (Entry<String, String> nsPrefix : nsPrefixes.entrySet()) {
 	        this.nsPrefixes.put(
-	            (String) nsPrefix.getKey(), 
-	            (String) nsPrefix.getValue());
+	           nsPrefix.getKey(), 
+	           nsPrefix.getValue());
 	    }
 	}
 
@@ -201,7 +202,7 @@ public abstract class AbstractRdfTranslator<ModelType, ResourceType, PropertyTyp
     }
     
 	private String uriOf(Object bean) {
-		return (bean instanceof Description) ? ((Description) bean).getCanonicalUri() : null;
+		return (bean instanceof Identified) ? ((Identified) bean).getCanonicalUri() : null;
 	}
 
     protected void addCollectionPropertyValue(

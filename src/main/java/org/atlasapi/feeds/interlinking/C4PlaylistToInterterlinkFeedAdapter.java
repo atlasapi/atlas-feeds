@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.atlasapi.media.entity.Broadcast;
-import org.atlasapi.media.entity.Description;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.ContentResolver;
 
@@ -23,7 +23,7 @@ public class C4PlaylistToInterterlinkFeedAdapter extends PlaylistToInterlinkFeed
     	seriesLookup = new MapMaker().expiration(10, TimeUnit.MINUTES).makeComputingMap(new Function<String, Series>() {
 			@Override
 			public Series apply(String uri) {
-				return (Series) resolver.findByUri(uri);
+				return (Series) resolver.findByCanonicalUri(uri);
 			}
     	});
     }
@@ -56,7 +56,7 @@ public class C4PlaylistToInterterlinkFeedAdapter extends PlaylistToInterlinkFeed
     }
     
     @Override
-    protected String idFrom(Description description) {
+    protected String idFrom(Identified description) {
     	// Lookup full series if it is an embedded series
     	if (description instanceof Series) {
     	    description = seriesLookup.get(description.getCanonicalUri());

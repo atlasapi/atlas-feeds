@@ -23,7 +23,7 @@ public class RadioPlayerUploadResultTranslatorTest {
         
         DateTime time = new DateTime(DateTimeZones.UTC);
         
-        FTPUploadResult result = new DefaultFTPUploadResult("success", time, FTPUploadResultType.SUCCESS).withMessage("SUCCESS");
+        FTPUploadResult result = new FTPUploadResult("success", time, FTPUploadResultType.SUCCESS).withMessage("SUCCESS");
         
         DBObject encoded = translator.toDBObject(result);
         
@@ -50,7 +50,7 @@ public class RadioPlayerUploadResultTranslatorTest {
         
         assertThat(exception, is(notNullValue()));
         
-        FTPUploadResult result = new DefaultFTPUploadResult("failed", time, FTPUploadResultType.FAILURE).withMessage("FAILURE").withCause(exception);
+        FTPUploadResult result = new FTPUploadResult("failed", time, FTPUploadResultType.FAILURE).withMessage("FAILURE").withCause(exception);
         
         DBObject encoded = translator.toDBObject(result);
         

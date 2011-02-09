@@ -10,7 +10,6 @@ import org.atlasapi.application.persistence.ApplicationReader;
 import org.atlasapi.application.query.ApiKeyConfigurationFetcher;
 import org.atlasapi.application.query.ApplicationConfigurationFetcher;
 import org.atlasapi.content.criteria.ContentQuery;
-import org.atlasapi.media.entity.Brand;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.junit.AfterClass;
@@ -49,7 +48,7 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 		ApplicationConfigurationIncludingQueryBuilder builder = new ApplicationConfigurationIncludingQueryBuilder(new QueryStringBackedQueryBuilder(new WebProfileDefaultQueryAttributesSetter()), configFetcher) ;
 
 		HttpServletRequest request = new StubHttpServletRequest().withParam("title", "East").withParam("apiKey", testApiKey);
-		ContentQuery query = builder.build(request, Brand.class);
+		ContentQuery query = builder.build(request);
 		
 		assertEquals(testApp.getConfiguration(), query.getConfiguration());		
 	}

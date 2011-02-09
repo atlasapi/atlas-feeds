@@ -15,8 +15,11 @@ permissions and limitations under the License. */
 
 package org.atlasapi.beans;
 
-import java.io.OutputStream;
+import java.io.IOException;
 import java.util.Collection;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.OembedOutput;
 import org.atlasapi.media.entity.Encoding;
@@ -29,7 +32,7 @@ import org.atlasapi.media.entity.Version;
  *  
  * @author Robert Chatley (robert@metabroadcast.com)
  */
-public class OembedTranslator implements BeanGraphWriter {
+public class OembedTranslator implements AtlasModelWriter {
 
 	interface OutputFactory {
 		OembedOutput createOutput();
@@ -41,7 +44,8 @@ public class OembedTranslator implements BeanGraphWriter {
 		this.feedFactory = outputFactory;
 	}
 
-	public void writeTo(Collection<Object> graph, OutputStream stream) {
+	@Override
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph) throws IOException {
 
 		OembedOutput output = feedFactory.createOutput();
 		
@@ -77,7 +81,7 @@ public class OembedTranslator implements BeanGraphWriter {
 			}
 		}
 		
-		output.writeTo(stream);
+		output.writeTo(response.getOutputStream());
 	}
 
 
@@ -87,7 +91,7 @@ public class OembedTranslator implements BeanGraphWriter {
 	}
 
 	@Override
-	public void writeError(AtlasErrorSummary exception, OutputStream oStream) {
+	public void writeError(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary exception) {
 		//no-op
 	}
 

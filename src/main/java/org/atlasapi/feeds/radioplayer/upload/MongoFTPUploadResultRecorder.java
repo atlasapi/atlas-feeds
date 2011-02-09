@@ -3,21 +3,18 @@ package org.atlasapi.feeds.radioplayer.upload;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.mongodb.DBCollection;
 
-public class MongoFTPUploadResultRecorder implements FTPUploadResultRecorder {
+public class MongoFTPUploadResultRecorder implements RadioPlayerFTPUploadResultRecorder {
 
-    private DBCollection recordings;
-    private FTPUploadResultTranslator translator;
+    private final DBCollection recordings;
+    private final RadioPlayerFTPUploadResultTranslator translator;
 
     public MongoFTPUploadResultRecorder(DatabasedMongo mongo) {
         this.recordings = mongo.collection("radioplayer");
-        this.translator = new FTPUploadResultTranslator();
-    }
-    
-    @Override
-    public void record(Iterable<? extends FTPUploadResult> result) {
-        for (FTPUploadResult ftpUploadResult : result) {
-            this.recordings.insert(translator.toDBObject(ftpUploadResult));
-        }
+        this.translator = new RadioPlayerFTPUploadResultTranslator();
     }
 
+    @Override
+    public void record(RadioPlayerFTPUploadResult result) {
+        this.recordings.save(translator.toDBObject(result));
+    }
 }

@@ -2,11 +2,16 @@ package org.atlasapi.feeds.radioplayer;
 
 import javax.annotation.PostConstruct;
 
+import org.atlasapi.feeds.radioplayer.upload.CommonsFTPFileUploader;
 import org.atlasapi.feeds.radioplayer.upload.FTPCredentials;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResultRecorder;
+import org.atlasapi.feeds.radioplayer.upload.FTPFileUploader;
 import org.atlasapi.feeds.radioplayer.upload.MongoFTPUploadResultRecorder;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFTPUploadResultRecorder;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskRunner;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTask;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerXMLValidator;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
@@ -20,77 +25,137 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicates;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Resources;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.RepetitionRules.RepetitionInterval;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
+import com.metabroadcast.common.time.DayRangeGenerator;
 import com.metabroadcast.common.webapp.health.HealthController;
 
 @Configuration
 public class RadioPlayerModule {
 
-	private static final RepetitionInterval UPLOAD = RepetitionRules.atInterval(new Duration(5 * 60 * 60 * 1000));
+	private static final RepetitionInterval UPLOAD_EVERY_TEN_MINUTES = RepetitionRules.atInterval(Duration.standardMinutes(10));
+	private static final RepetitionInterval UPLOAD_EVERY_TWO_HOURS = RepetitionRules.atInterval(Duration.standardHours(2));
 
-	private @Autowired @Qualifier("mongoDbQueryExcutorThatFiltersUriQueries") KnownTypeQueryExecutor queryExecutor;
-	
 	private @Value("${rp.ftp.enabled}") String upload;
+	private @Value("${rp.ftp.services}") String uploadServices;
     private @Value("${rp.ftp.username}") String ftpUsername;
     private @Value("${rp.ftp.password}") String ftpPassword;
     private @Value("${rp.ftp.host}") String ftpHost;
     private @Value("${rp.ftp.port}") Integer ftpPort;
 	
+    private @Autowired @Qualifier("mongoDbQueryExcutorThatFiltersUriQueries") KnownTypeQueryExecutor queryExecutor;
 	private @Autowired SimpleScheduler scheduler;
 	private @Autowired AdapterLog log;
 	private @Autowired DatabasedMongo mongo;
 	private @Autowired HealthController health;
+	
+	private static DayRangeGenerator dayRangeGenerator = new DayRangeGenerator().withLookAhead(7).withLookBack(7);
 
 	public @Bean RadioPlayerController radioPlayerController() {
-		return new RadioPlayerController(queryExecutor);
+		return new RadioPlayerController();
 	}
-	
+	   
+    public @Bean RadioPlayerHealthController radioPlayerHealthController() {
+        return new RadioPlayerHealthController(health, Configurer.get("rp.health.password", "").get());
+    }
+    
+    public @Bean RadioPlayerUploadController radioPlayerUploadController() {
+        return new RadioPlayerUploadController(radioPlayerFileUploader(), dayRangeGenerator, radioPlayerValidator(), log);
+    }
+    
+    @Bean FTPFileUploader radioPlayerFileUploader(){
+        if(ftpHost != null && ftpPort != null && ftpUsername != null && ftpPassword != null) {
+            return new CommonsFTPFileUploader(FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build());
+        } else {
+            return new CommonsFTPFileUploader(FTPCredentials.forServer("Credentials").withUsername("Set").build());
+        }
+    }
+    
+    @Bean RadioPlayerFTPUploadResultRecorder uploadResultRecorder() {
+        return new MongoFTPUploadResultRecorder(mongo);
+    }
+
+    @Bean RadioPlayerXMLValidator radioPlayerValidator() {
+        try {
+            return RadioPlayerXMLValidator.forSchemas(ImmutableSet.of(
+                Resources.getResource("epgSI_10.xsd").openStream(), 
+                Resources.getResource("epgSchedule_10.xsd").openStream()
+            ));
+        } catch (Exception e) {
+            log.record(new AdapterLogEntry(Severity.WARN).withDescription("Couldn't load schemas for RadioPlayer XML validation").withCause(e));
+            return null;
+        }
+    }
+    
 	@PostConstruct 
 	public void scheduleTasks() {
-	    health.addProbes(Iterables.concat(Iterables.transform(RadioPlayerServices.services, serviceHealthProbe()), ImmutableList.of(new RadioPlayerUploadHealthProbe(mongo, "FTP", ftpHost+":"+ftpPort))));
+	    RadioPlayerFeedCompiler.init(queryExecutor);
 		if (Boolean.parseBoolean(upload)) {
-			FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
-			RadioPlayerXMLValidator validator = createValidator();
-			FTPUploadResultRecorder recorder = new MongoFTPUploadResultRecorder(mongo);
-			scheduler.schedule(new RadioPlayerUploadTaskRunner(queryExecutor, credentials, RadioPlayerServices.services).withResultRecorder(recorder).withValidator(validator).withLog(log), UPLOAD);
-			log.record(new AdapterLogEntry(Severity.INFO).withDescription("Radioplayer uploader scheduled task installed for:" + credentials).withSource(getClass()));
+		    FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
+		    
+		    createHealthProbes(credentials);
+			
+			RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner = new RadioPlayerRecordingExecutor(uploadResultRecorder());
+			
+			radioPlayerUploadController().withUploadExecutor(radioPlayerUploadTaskRunner);
+			
+            RadioPlayerUploadTask bihourly = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner, uploadServices(), dayRangeGenerator)
+			    .withValidator(radioPlayerValidator())
+			    .withLog(log);
+            
+            scheduler.schedule(bihourly, UPLOAD_EVERY_TWO_HOURS);
+            
+            RadioPlayerUploadTask today = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner, uploadServices(), new DayRangeGenerator())
+                .withValidator(radioPlayerValidator())
+                .withLog(log);
+            
+            scheduler.schedule(today, UPLOAD_EVERY_TEN_MINUTES);
+
+            log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
+            .withDescription(String.format("Radioplayer uploader installed for: %s. Frequency: %s",credentials,UPLOAD_EVERY_TEN_MINUTES)));
 		} else {
-			log.record(new AdapterLogEntry(Severity.INFO)
+			log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
 			.withDescription("Not installing Radioplayer uploader"));
 		}
 	}
 
-	private Function<? super RadioPlayerService, ? extends HealthProbe> serviceHealthProbe() {
-        return new Function<RadioPlayerService, HealthProbe>(){
-            @Override
-            public HealthProbe apply(RadioPlayerService service) {
-                return new RadioPlayerUploadHealthProbe(mongo, service.getName(), "%1$tY%1$tm%1$td_"+service.getRadioplayerId()+"_PI.xml");
-            }
-        };
+    private Iterable<RadioPlayerService> uploadServices() {
+        if (Strings.isNullOrEmpty(uploadServices) || uploadServices.toLowerCase().equals("all")) {
+            return RadioPlayerServices.services;
+        } else {
+            return Iterables.filter(Iterables.transform(Splitter.on(',').split(uploadServices), new Function<String, RadioPlayerService>() {
+                @Override
+                public RadioPlayerService apply(String input) {
+                    return RadioPlayerServices.all.get(input);
+                }
+            }), Predicates.notNull());
+        }
     }
 
-    private RadioPlayerXMLValidator createValidator() {
-		try {
-			return RadioPlayerXMLValidator.forSchemas(ImmutableSet.of(
-				Resources.getResource("epgSI_10.xsd").openStream(), 
-				Resources.getResource("epgSchedule_10.xsd").openStream()
-			));
-		} catch (Exception e) {
-			log.record(new AdapterLogEntry(Severity.WARN).withDescription("Couldn't load schemas for RadioPlayer XML validation").withCause(e));
-			return null;
-		}
-	}
-	
-	public @Bean RadioPlayerHealthController radioPlayerHealthController() {
-	    return new RadioPlayerHealthController(health);
-	}
-	
+    private void createHealthProbes(FTPCredentials credentials) {
+
+        Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>() {
+            @Override
+            public HealthProbe apply(RadioPlayerService service) {
+                return new RadioPlayerUploadHealthProbe(mongo, service, dayRangeGenerator);
+            }
+        };
+
+        health.addProbes(
+                Iterables.concat(Iterables.transform(RadioPlayerServices.services, createProbe),
+                ImmutableList.of(new RadioPlayerServerHealthProbe(mongo, credentials)))
+        );
+    }
+    
 }

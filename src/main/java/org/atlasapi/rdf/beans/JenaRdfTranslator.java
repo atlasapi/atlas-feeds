@@ -16,11 +16,15 @@ package org.atlasapi.rdf.beans;
 
 import static com.hp.hpl.jena.ontology.OntModelSpec.OWL_MEM;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.InitializingBean;
 
@@ -72,7 +76,7 @@ public abstract class JenaRdfTranslator extends AbstractRdfTranslator<OntModel, 
     }
 
 	@Override
-    public void writeTo(Collection<Object> graph, OutputStream stream) {
+    public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph) throws IOException {
 		OntModel rdf = ModelFactory.createOntologyModel(OWL_MEM);
 
 		loadOntologies(rdf);
@@ -87,7 +91,7 @@ public abstract class JenaRdfTranslator extends AbstractRdfTranslator<OntModel, 
 			addBean(rdf, workList, references, bean);
 		}
 
-		writeOut(rdf, stream);
+		writeOut(rdf, response.getOutputStream());
 	}
 
 	public void afterPropertiesSet() throws Exception {
