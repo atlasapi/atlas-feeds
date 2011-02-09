@@ -1,20 +1,24 @@
 package org.atlasapi.beans;
 
-import java.io.OutputStream;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
-import org.atlasapi.media.entity.Brand;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Clip;
+import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.ContentGroup;
 import org.atlasapi.media.entity.Countries;
+import org.atlasapi.media.entity.Described;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Person;
-import org.atlasapi.media.entity.Playlist;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
@@ -27,62 +31,48 @@ import org.atlasapi.media.entity.simple.Item;
 import org.atlasapi.media.entity.simple.PublisherDetails;
 import org.atlasapi.media.entity.simple.Restriction;
 import org.atlasapi.media.entity.simple.SeriesSummary;
-import org.atlasapi.media.util.ChildFinder;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 /**
- * {@link BeanGraphWriter} that translates the full URIplay object model
+ * {@link AtlasModelWriter} that translates the full URIplay object model
  * into a simplified form and renders that as XML.
  *  
  * @author Robert Chatley (robert@metabroadcast.com)
  */
-public class FullToSimpleModelTranslator implements BeanGraphWriter {
+public class FullToSimpleModelTranslator implements AtlasModelWriter {
 
-	private final BeanGraphWriter outputWriter;
+	private final AtlasModelWriter outputWriter;
 
-	public FullToSimpleModelTranslator(BeanGraphWriter xmlOutputter) {
-		this.outputWriter = xmlOutputter;
-	}
-
-	private Iterable<Object> rootsOf(Collection<Object> beans) {
-		return Iterables.filter(beans, Predicates.not(new ChildFinder(beans)));
+	public FullToSimpleModelTranslator(AtlasModelWriter outputter) {
+		this.outputWriter = outputter;
 	}
 	
 	@Override
-	public void writeTo(Collection<Object> fullGraph, OutputStream stream) {
-		
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> fullGraph) throws IOException {
 		ContentQueryResult outputGraph = new ContentQueryResult();
-		Set<Object> processed = Sets.newHashSet();
-		
-		Iterable<Object> beansToProcess = rootsOf(fullGraph);
-		
-		for (Object bean : beansToProcess) {
-			
-			if (bean instanceof org.atlasapi.media.entity.Playlist && !processed.contains(bean)) {
-				
-				org.atlasapi.media.entity.Playlist playList = (org.atlasapi.media.entity.Playlist) bean;
-				outputGraph.addPlaylist(simplePlaylistFrom(playList, processed));
-				processed.add(playList);
-			}
-			
-		}
-	
-		for (Object bean : fullGraph) {
-			
-			if (bean instanceof org.atlasapi.media.entity.Item && !processed.contains(bean)) {
-				
-				outputGraph.addItem(simpleItemFrom((org.atlasapi.media.entity.Item) bean));
-				
-			}
-		}
-		outputWriter.writeTo(ImmutableSet.of((Object) outputGraph), stream);
+		writeOut(fullGraph, outputGraph);
+		outputWriter.writeTo(request, response, ImmutableSet.of((Object) outputGraph));
 	}
+
+	private void writeOut(Collection<Object> fullGraph, ContentQueryResult outputGraph) {
+		for (Object bean : fullGraph) {
+			if (bean instanceof Container<?>) {
+				Container<?> playList = (Container<?>) bean;
+				outputGraph.add(simplePlaylistFrom(playList));
+			}
+			if (bean instanceof ContentGroup) {
+				ContentGroup group = (ContentGroup) bean;
+				outputGraph.add(simplePlaylistFrom(group));
+			}
+			if (bean instanceof org.atlasapi.media.entity.Item) {
+				outputGraph.add(simpleItemFrom((org.atlasapi.media.entity.Item) bean));
+			}
+		}
+	}
+	
 	
 	static org.atlasapi.media.entity.simple.Person simplePersonFrom(Person fullPerson) {
 		org.atlasapi.media.entity.simple.Person person = new org.atlasapi.media.entity.simple.Person();
@@ -91,44 +81,62 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 		return person;
 	}
 
-	static org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Playlist fullPlayList, Set<Object> processed) {
-
+	private static org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Container<?> fullPlayList) {
+		
 		org.atlasapi.media.entity.simple.Playlist simplePlaylist = new org.atlasapi.media.entity.simple.Playlist();
 		
 		copyBasicContentAttributes(fullPlayList, simplePlaylist);
 		
-		for (Playlist fullSubList : fullPlayList.getPlaylists()) {
-			simplePlaylist.addPlaylist(simplePlaylistFrom(fullSubList, processed));
-			processed.add(fullSubList);
+		for (org.atlasapi.media.entity.Item fullItem : fullPlayList.getContents()) {
+			simplePlaylist.add(simpleItemFrom(fullItem));
 		}
+		return simplePlaylist;
+	}
+	
+	private static org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(ContentGroup fullPlayList) {
 		
-		for (org.atlasapi.media.entity.Item fullItem : fullPlayList.getItems()) {
-			simplePlaylist.addItem(simpleItemFrom(fullItem));
-			processed.add(fullItem);
+		org.atlasapi.media.entity.simple.Playlist simplePlaylist = new org.atlasapi.media.entity.simple.Playlist();
+		
+		copyBasicDescribedAttributes(fullPlayList, simplePlaylist);
+		
+		for (Content fullContent : fullPlayList.getContents()) {
+			if (fullContent instanceof org.atlasapi.media.entity.Item) {
+				simplePlaylist.add(simpleItemFrom((org.atlasapi.media.entity.Item) fullContent));
+			} else if (fullContent instanceof org.atlasapi.media.entity.Container<?>) {
+				simplePlaylist.add(simplePlaylistFrom((org.atlasapi.media.entity.Container<?>) fullContent));
+			} else {
+				throw new IllegalArgumentException("Cannot convert Content of type " + fullContent.getClass().getSimpleName() + " to a simple format");
+			}
 		}
-		
 		return simplePlaylist;
 	}
 	
 	private static void copyBasicContentAttributes(Content content, Description simpleDescription) {
+		copyBasicDescribedAttributes(content, simpleDescription);
+		simpleDescription.setClips(clipToSimple(content.getClips()));
+	}
+
+	private static void copyBasicDescribedAttributes(Described content, Description simpleDescription) {
 		copyDescriptionAttributesTo(content, simpleDescription);
 		simpleDescription.setTitle(content.getTitle());
 		simpleDescription.setPublisher(toPublisherDetails(content.getPublisher()));
 		simpleDescription.setDescription(content.getDescription());
 		simpleDescription.setImage(content.getImage());
 		simpleDescription.setThumbnail(content.getThumbnail());
-		simpleDescription.setContainedIn(content.getContainedInUris());
 		simpleDescription.setGenres(content.getGenres());
 		simpleDescription.setTags(content.getTags());
-		simpleDescription.setClips(clipToSimple(content.getClips()));
 		simpleDescription.setSameAs(content.getEquivalentTo());
-		simpleDescription.setMediaType(content.getMediaType().toString().toLowerCase());
+		
+		MediaType mediaType = content.getMediaType();
+		if (mediaType != null) {
+			simpleDescription.setMediaType(mediaType.toString().toLowerCase());
+		}
 		if (content.getSpecialization() != null) {
 		    simpleDescription.setSpecialization(content.getSpecialization().toString().toLowerCase());
 		}
 	}
 
-	private static void copyDescriptionAttributesTo(org.atlasapi.media.entity.Description description, Aliased simpleDescription) {
+	private static void copyDescriptionAttributesTo(org.atlasapi.media.entity.Identified description, Aliased simpleDescription) {
 		simpleDescription.setUri(description.getCanonicalUri());
 		simpleDescription.setAliases(description.getAliases());
 		simpleDescription.setCurie(description.getCurie());
@@ -199,8 +207,8 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 			simpleItem.setEpisodeNumber(episode.getEpisodeNumber());
 			simpleItem.setSeriesNumber(episode.getSeriesNumber());
 			
-			if (episode.getBrand() != null) {
-				Brand brand = episode.getBrand();
+			if (episode.getContainer() != null) {
+				Container<?> brand = episode.getContainer();
 				BrandSummary brandSummary = new BrandSummary();
 
 				brandSummary.setUri(brand.getCanonicalUri());
@@ -326,7 +334,7 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 	}
 
 	@Override
-	public void writeError(AtlasErrorSummary exception, OutputStream oStream) {
-		outputWriter.writeError(exception, oStream);
+	public void writeError(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary exception) throws IOException {
+		outputWriter.writeError(request, response, exception);
 	}
 }

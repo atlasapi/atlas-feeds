@@ -1,6 +1,5 @@
 /* Copyright 2009 British Broadcasting Corporation
-   Copyright 2009 Meta Broadcast Ltd
-
+ 
 Licensed under the Apache License, Version 2.0 (the "License"); you
 may not use this file except in compliance with the License. You may
 obtain a copy of the License at
@@ -15,24 +14,19 @@ permissions and limitations under the License. */
 
 package org.atlasapi.beans;
 
-import org.atlasapi.feeds.RomeSyndicationFeed;
-import org.atlasapi.feeds.SyndicationFeed;
+import java.io.IOException;
+import java.util.Collection;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
- * Specialisation of {@link FeedTranslator} that outputs Atom 1.0
- * 
- * @author Robert Chatley (robert@metabroadcast.com)
+ * @author Lee Denison (lee@metabroadcast.com)
  */
-public class AtomFeedTranslator extends FeedTranslator {
-
-	static class RomeRssFeedFactory implements FeedFactory {
-
-		public SyndicationFeed createFeed() {
-			return new RomeSyndicationFeed("atom_1.0");
-		}
-	}
+public interface AtlasModelWriter {
 	
-	public AtomFeedTranslator() {
-		super(new RomeRssFeedFactory());
-	}
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph) throws IOException;
+	
+	public void writeError(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary exception) throws IOException;
+	
 }

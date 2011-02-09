@@ -1,7 +1,21 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import java.util.concurrent.Callable;
+public class FTPUpload {
 
-public interface FTPUpload extends Callable<FTPUploadResult> {
+    private final String filename;
+    private final byte[] fileData;
+
+    public FTPUpload(String filename, byte[] fileData) {
+        this.filename = filename;
+        this.fileData = fileData;
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public byte[] getFileData() {
+        return fileData;
+    }
 
 }

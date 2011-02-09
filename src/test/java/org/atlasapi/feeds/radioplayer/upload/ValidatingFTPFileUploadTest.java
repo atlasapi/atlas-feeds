@@ -26,19 +26,20 @@ public class ValidatingFTPFileUploadTest {
         
         Mockery context = new Mockery();
         
-        final FTPUpload delegate = context.mock(FTPUpload.class);
+        final FTPFileUploader delegate = context.mock(FTPFileUploader.class);
         
         String filename = "test";
-        final FTPUploadResult successfulUpload = DefaultFTPUploadResult.successfulUpload(filename);
+        final FTPUploadResult successfulUpload = FTPUploadResult.successfulUpload(filename);
         byte[] fileData = bytesFromResource("org/atlasapi/feeds/radioplayer/basicPIFeedTest.xml");
         
-        ValidatingFTPFileUpload uploadTask = new ValidatingFTPFileUpload(validator, filename , fileData, delegate);
+        ValidatingFTPFileUploader uploadTask = new ValidatingFTPFileUploader(validator, delegate);
         
         context.checking(new Expectations(){{
-            one(delegate).call(); will(returnValue(successfulUpload));
+            one(delegate).upload(with(any(FTPUpload.class))); 
+                will(returnValue(successfulUpload));
         }});
         
-        FTPUploadResult result = uploadTask.call();
+        FTPUploadResult result = uploadTask.upload(new FTPUpload(filename , fileData));
         
         assertThat(result, is(equalTo(successfulUpload)));
     }
@@ -56,18 +57,18 @@ public class ValidatingFTPFileUploadTest {
         
         Mockery context = new Mockery();
         
-        final FTPUpload delegate = context.mock(FTPUpload.class);
+        final FTPFileUploader delegate = context.mock(FTPFileUploader.class);
         
         String filename = "test";
         byte[] fileData = bytesFromResource("org/atlasapi/feeds/radioplayer/invalidPIFeedTest.xml");
         
-        ValidatingFTPFileUpload uploadTask = new ValidatingFTPFileUpload(validator, filename , fileData, delegate);
+        ValidatingFTPFileUploader uploadTask = new ValidatingFTPFileUploader(validator, delegate);
         
         context.checking(new Expectations(){{
-            never(delegate).call();
+            never(delegate).upload(with(any(FTPUpload.class)));
         }});
         
-        FTPUploadResult result = uploadTask.call();
+        FTPUploadResult result = uploadTask.upload(new FTPUpload(filename, fileData));
         assertThat(result.type(), is(equalTo(FTPUploadResultType.FAILURE)));
     }
 

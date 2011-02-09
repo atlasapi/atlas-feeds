@@ -1,118 +1,119 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.FAILURE;
+import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
+import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCESS;
+import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.DATE_ORDERING;
+import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.TYPE_ORDERING;
 
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
-import org.joda.time.DateTime;
+import java.util.List;
+
+import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.joda.time.LocalDate;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
-import com.google.common.collect.Sets;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
+import com.metabroadcast.common.health.ProbeResult.ProbeResultEntry;
+import com.metabroadcast.common.health.ProbeResult.ProbeResultType;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.metabroadcast.common.persistence.translator.TranslatorUtils;
 import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.DayRangeGenerator;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 
 public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
-    private static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
+    protected static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
 
-    private final DBCollection results;
-    private final FTPUploadResultTranslator translator;
-    private final String title;
-    private final String filenamePattern;
+    protected final DBCollection results;
+    private final RadioPlayerService service;
+    protected final DayRangeGenerator rangeGenerator;
+    protected final RadioPlayerFTPUploadResultTranslator translator;
 
-    private int lookBack = 2;
-    private int lookAhead = 7;
-    
-    public RadioPlayerUploadHealthProbe(DatabasedMongo mongo, String title, String filenamePattern) {
+    public RadioPlayerUploadHealthProbe(DatabasedMongo mongo, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
         this.results = mongo.collection("radioplayer");
-        this.title = title;
-        this.filenamePattern = filenamePattern;
-        this.translator = new FTPUploadResultTranslator();
+        this.service = service;
+        this.rangeGenerator = dayRangeGenerator;
+        this.translator = new RadioPlayerFTPUploadResultTranslator();
     }
 
     @Override
     public ProbeResult probe() {
-        ProbeResult result = new ProbeResult(title);
-        
-        Set<String> filenames = Sets.newHashSetWithExpectedSize((lookAhead + lookBack + 1));
-        
-        DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
-        for(int i = 0; i < (lookAhead + lookBack + 1); i++, day = day.plusDays(1)) {
-            filenames.add(String.format(filenamePattern, day.toDate()));
+        ProbeResult result = new ProbeResult(service.getName());
+        for (LocalDate day : rangeGenerator.generate(new LocalDate(DateTimeZones.UTC))) {
+            result.addEntry(entryFor(day));
         }
-        for (String filename : Ordering.natural().immutableSortedCopy(filenames)) {
-            addEntry(result, filename);
-        }
-        
+
+        result.addEntry(uploadAll());
+
         return result;
     }
     
-    public RadioPlayerUploadHealthProbe withLookBack(int lookBack) {
-        this.lookBack = lookBack;
-        return this;
-    }
-
-    public RadioPlayerUploadHealthProbe withLookAhead(int lookAhead) {
-        this.lookAhead = lookAhead;
-        return this;
-    }
-
-    private void addEntry(ProbeResult result, String filename) {
-        boolean success = true, failure = true, unknown = true;
-        DBCursor resultsForServiceDay = results.find(new BasicDBObject("filename", filename)).sort(new BasicDBObject("time", -1));
-        List<FTPUploadResult> results = Lists.newArrayList();
-        for(DBObject dbo : resultsForServiceDay) {
-            FTPUploadResult translated = translator.fromDBObject(dbo);
-            if(FTPUploadResultType.UNKNOWN.equals(translated.type()) && unknown) {
-                results.add(translated);
-                unknown = false;
-            } else if(FTPUploadResultType.SUCCESS.equals(translated.type()) && success) {
-                results.add(translated);
-                success = false;
-            } else if(FTPUploadResultType.FAILURE.equals(translated.type()) && failure) {
-                results.add(translated);
-                failure = false;
+    private ProbeResultEntry entryFor(final LocalDate day) {
+        Iterable<RadioPlayerFTPUploadResult> fileResults = Iterables.transform(results.find(queryFor(day)), new Function<DBObject, RadioPlayerFTPUploadResult>() {
+            @Override
+            public RadioPlayerFTPUploadResult apply(DBObject dboResult) {
+                return translator.fromDBObject(dboResult);
             }
-            if(!success && !failure && !unknown) {
-                break;
+        });
+        return entryFor(day, fileResults);
+    }
+
+    private DBObject queryFor(LocalDate day) {
+        BasicDBObject dbo = new BasicDBObject();
+        TranslatorUtils.from(dbo, "serviceId", service.getRadioplayerId());
+        TranslatorUtils.fromLocalDate(dbo, "day", day);
+        return dbo;
+    }
+
+    private ProbeResultEntry entryFor(LocalDate day, Iterable<? extends FTPUploadResult> results) {
+        String filename = String.format("<a style=\"text-decoration:none\" href=\"/feeds/ukradioplayer/%1$s_%2$s_PI.xml\">%1$s_%2$s_PI.xml</a>", day.toString("yyyyMMdd"), service.getRadioplayerId());
+        filename += uploadButton(day);
+        if (Iterables.isEmpty(results)) {
+            return new ProbeResultEntry(INFO, filename, "No Data");
+        }
+        String value = buildValue(TYPE_ORDERING.immutableSortedCopy(results));
+
+        FTPUploadResult mostRecent = DATE_ORDERING.reverse().immutableSortedCopy(results).get(0);
+        return new ProbeResultEntry(resultType(mostRecent, day), filename, value);
+    }
+
+    private ProbeResultType resultType(FTPUploadResult mostRecent, LocalDate day) {
+        switch (mostRecent.type()) {
+        case UNKNOWN:
+            return INFO;
+        case SUCCESS:
+            if(day.isEqual(new LocalDate(DateTimeZones.UTC)) && mostRecent.uploadTime().plusMinutes(20).isBeforeNow()) {
+                return FAILURE;
             }
-        }
-        addEntry(result, filename, results);
-    }
-
-    private void addEntry(ProbeResult result, String key, List<FTPUploadResult> results) {
-        if(results.isEmpty()) {
-            result.addInfo(key, "No Data.");
-            return;
-        }
-        String value = buildValue(results);
-        FTPUploadResultType first = results.get(0).type();
-        if(FTPUploadResultType.UNKNOWN.equals(first)) {
-            result.addInfo(key, value);
-        } else {
-            result.add(key, value, FTPUploadResultType.SUCCESS.equals(first));
+            if (mostRecent.uploadTime().plusHours(4).isBeforeNow()) {
+                return FAILURE;
+            }
+            return SUCCESS;
+        case FAILURE:
+            if (day.isAfter(mostRecent.uploadTime().toLocalDate().plusDays(1)) || service.getName().equals("5livesportsextra")) {
+                return INFO;
+            } else {
+                return FAILURE;
+            }
+        default:
+            return INFO;
         }
     }
 
-    private String buildValue(List<FTPUploadResult> results) {
+    protected String buildValue(List<? extends FTPUploadResult> results) {
         StringBuilder builder = new StringBuilder("<table>");
-        for(FTPUploadResult result : Iterables.limit(sort(results),2)) {
-            builder.append("<tr><td>");
-            builder.append(result.uploadTime().toString(DATE_TIME));
-            builder.append(" ");
+        for (FTPUploadResult result : Iterables.limit(results, 2)) {
+            builder.append("<tr><td>Last ");
             builder.append(result.type().toNiceString());
+            builder.append(": ");
+            builder.append(result.uploadTime().toString(DATE_TIME));
             builder.append("</td><td>");
-            if(result.message() != null) {
+            if (result.message() != null) {
                 builder.append(result.message());
             }
             builder.append("</td></tr>");
@@ -120,26 +121,27 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         return builder.append("</table>").toString();
     }
 
-    private List<FTPUploadResult> sort(List<FTPUploadResult> results) {
-        return Ordering.from(new Comparator<FTPUploadResult>(){
-            @Override
-            public int compare(FTPUploadResult r1, FTPUploadResult r2) {
-                int c = r1.type().compareTo(r2.type());
-                if(c == 0) {
-                    c = r1.uploadTime().compareTo(r2.uploadTime());
-                }
-                return c;
-            }}).immutableSortedCopy(results);
+    private String uploadButton(LocalDate day) {
+        String postTarget = String.format("/feeds/ukradioplayer/upload/%s", service.getRadioplayerId());
+        if(day != null) {
+            postTarget += "/" + day.toString("yyyyMMdd");
+        }
+        return "<form style=\"text-align:center\" action=\""+postTarget+"\" method=\"post\"><input type=\"submit\" value=\"Update\"/></form>";
     }
-    
+
+    private ProbeResultEntry uploadAll() {
+        return new ProbeResultEntry(INFO, "Update All", uploadButton(null));
+    }
+
+
     @Override
     public String title() {
-        return title;
+        return service.getName();
     }
 
     @Override
     public String slug() {
-        return "ukrp"+title;
+        return "ukrp" + service.getName();
     }
 
 }

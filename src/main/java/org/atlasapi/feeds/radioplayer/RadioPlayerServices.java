@@ -75,12 +75,12 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(357, "radio4lw").withServiceUriSuffix("radio4/lw").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/lw").withIonServiceId("bbc_radio_fourlw")).
 		build();
 		
-		all = Maps.uniqueIndex(services, new Function<RadioPlayerService, String>() {
-			@Override
-			public String apply(RadioPlayerService input) {
-				return String.valueOf(input.getRadioplayerId());
-			}
-		});
+        all = Maps.uniqueIndex(services, new Function<RadioPlayerService, String>() {
+            @Override
+            public String apply(RadioPlayerService input) {
+                return String.valueOf(input.getRadioplayerId());
+            }
+        });
 	};
 
 }

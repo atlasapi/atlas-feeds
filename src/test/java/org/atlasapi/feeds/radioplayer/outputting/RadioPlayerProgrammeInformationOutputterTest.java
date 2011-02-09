@@ -21,6 +21,7 @@ import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
@@ -34,8 +35,8 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 	private static final DateTimeZone TIMEZONE = DateTimeZone.forOffsetHours(8);
 	private static RadioPlayerXMLOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
 	
-	public static Item buildItem(){
-		Item testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c",
+	public static Episode buildItem(){
+		Episode testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c",
 				"bbc:b00f4d9c", Publisher.BBC);
 		testItem.setTitle("BBC Electric Proms: Saturday Night Fever");
 		testItem.setDescription("Another chance to hear Robin Gibb perform the Bee Gees' classic disco album with the BBC Concert Orchestra. It was recorded" +
@@ -70,15 +71,15 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 
 	@Test
 	public void testOutputtingAPIFeed() throws Exception {
-		Item testItem = buildItem();
+		Episode testItem = buildItem();
 		
-		Series series = new Series("seriesUri", "seriesCurie");
+		Series series = new Series("seriesUri", "seriesCurie", Publisher.BBC);
 		series.setTitle("This is the series title");
-		((Episode)testItem).setSeries(series);
+		series.addContents(testItem);
 		
 		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
 		brand.setTitle("Electric Proms");
-		((Episode)testItem).setBrand(brand);
+		((Episode)testItem).setContainer(brand);
 
         Version version = Iterables.getOnlyElement(testItem.getVersions());
         Broadcast broadcast = Iterables.getOnlyElement(version.getBroadcasts());
@@ -87,11 +88,11 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 	
 	@Test
 	public void testOutputtingAPIFeedWithSeriesAndNoBrand() throws Exception {
-		Item testItem = buildItem();
+		Episode testItem = buildItem();
 		
-		Series series = new Series("seriesUri", "seriesCurie");
+		Series series = new Series("seriesUri", "seriesCurie", Publisher.BBC);
 		series.setTitle("Series Title");
-		((Episode)testItem).setSeries(series);
+		series.addContents(testItem);
 		
 		//make item available everywhere.
 		getLocation(testItem).getPolicy().setAvailableCountries(ImmutableSet.of(Countries.ALL));
@@ -122,15 +123,15 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 	
 	private static String output(List<RadioPlayerBroadcastItem> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		outputter.output(new DateTime(2010, 9, 6, 0, 0, 0, 0, DateTimeZone.UTC),
+		outputter.output(new LocalDate(2010, 9, 6),
 						new RadioPlayerService(502, "radio2").withDabServiceId("e1_ce15_c222_0"), items, out);
-		return out.toString(Charsets.UTF_8.toString());
+		return out.toString(Charsets.UTF_8.toString()).substring(550);
 	}
 
-	private String expectedFeed(String filename) throws IOException {
+	private String expectedFeed( String filename) throws IOException {
 		return Resources.toString(
 				Resources.getResource("org/atlasapi/feeds/radioplayer/"
-						+ filename), Charsets.UTF_8);
+						+ filename), Charsets.UTF_8).substring(550);
 	}
 
 }

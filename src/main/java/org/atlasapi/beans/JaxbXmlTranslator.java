@@ -16,12 +16,16 @@ package org.atlasapi.beans;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 
 import nu.xom.Document;
 import nu.xom.Element;
@@ -49,21 +53,35 @@ import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
  * 
  * @author Robert Chatley (robert@metabroadcast.com)
  */
-public class JaxbXmlTranslator implements BeanGraphWriter {
+public class JaxbXmlTranslator implements AtlasModelWriter {
 
 	private JAXBContext context;
 
-	public JaxbXmlTranslator() throws JAXBException {
-		context = JAXBContext.newInstance(ContentQueryResult.class, Playlist.class, Item.class, Location.class, Broadcast.class, PublisherDetails.class);
+	public JaxbXmlTranslator() {
+		try {
+			context = JAXBContext.newInstance(ContentQueryResult.class, Playlist.class, Item.class, Location.class, Broadcast.class, PublisherDetails.class);
+		} catch (JAXBException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
-	public void writeTo(Collection<Object> graph, OutputStream stream) {
+	public ContentQueryResult readFrom(String data) {
+		Unmarshaller unmarshaller;
+		try {
+			unmarshaller = context.createUnmarshaller();
+			return (ContentQueryResult) unmarshaller.unmarshal(new StringReader(data));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph) {
 		
 		try {
 			Marshaller m = context.createMarshaller();
 			m.setProperty("com.sun.xml.bind.namespacePrefixMapper", new UriplayNamespacePrefixMapper());
 
-			XMLSerializer serializer = getXMLSerializer(stream);
+			XMLSerializer serializer = getXMLSerializer(response.getOutputStream());
 			m.marshal(Iterables.getOnlyElement(graph), serializer.asContentHandler());
 			
 		} catch (JAXBException e) {
@@ -108,9 +126,9 @@ public class JaxbXmlTranslator implements BeanGraphWriter {
 	}
 	
 	@Override
-	public void writeError(AtlasErrorSummary exception, OutputStream stream) {
+	public void writeError(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary exception) {
 		try {
-			write(stream, xmlFrom(exception));
+			write(response.getOutputStream(), xmlFrom(exception));
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		} catch (IOException e) {

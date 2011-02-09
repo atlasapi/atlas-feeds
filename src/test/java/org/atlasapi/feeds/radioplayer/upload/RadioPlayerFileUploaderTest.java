@@ -25,6 +25,7 @@ import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.atlasapi.content.criteria.ContentQuery;
+import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
@@ -37,6 +38,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.SystemOutAdapterLog;
@@ -47,6 +49,7 @@ import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
 import org.junit.Test;
 
 import com.google.common.base.Function;
@@ -56,6 +59,7 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.DayRangeGenerator;
 
 public class RadioPlayerFileUploaderTest {
 
@@ -70,10 +74,10 @@ public class RadioPlayerFileUploaderTest {
 	public void testRun() throws Exception {
 		try {
 			dir = Files.createTempDir();
-			System.out.println(dir);
 			dir.deleteOnExit();
-			//new File(dir.getAbsolutePath() + File.separator + "Processed").mkdir();
-			//new File(dir.getAbsolutePath() + File.separator + "Failed").mkdir();
+
+			File files = new File(dir.getAbsolutePath() + File.separator + "files");
+			files.mkdir();
 
 			startServer();
 
@@ -82,23 +86,22 @@ public class RadioPlayerFileUploaderTest {
 
 			Mockery context = new Mockery();
 			final KnownTypeQueryExecutor queryExecutor = context.mock(KnownTypeQueryExecutor.class);            
-			final FTPUploadResultRecorder recorder = context.mock(FTPUploadResultRecorder.class);
+			final RadioPlayerFTPUploadResultRecorder recorder = context.mock(RadioPlayerFTPUploadResultRecorder.class);
 			
 			context.checking(new Expectations(){{
-			    oneOf(queryExecutor).executeItemQuery(with(any(ContentQuery.class))); 
-			        will(returnValue(ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1)))));
+			    oneOf(queryExecutor).schedule(with(any(ContentQuery.class))); 
+			    will(returnValue(Schedule.fromItems(ImmutableList.of(service.getServiceUri()), new Interval(day, day.plusDays(1)), ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1))))));
 			    oneOf(recorder).record(with(successfulUploadResult()));
 			    oneOf(recorder).record(with(successfulUploadResult()));
 			}});
 			
+			RadioPlayerFeedCompiler.init(queryExecutor);
+			
             ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
 			FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
-			int lookAhead = 0, lookBack = 0;
+			FTPFileUploader fileUploader = new CommonsFTPFileUploader(credentials);
 			
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(queryExecutor, credentials, services)
-			    .withResultRecorder(recorder)
-			    .withLookAhead(lookAhead)
-			    .withLookBack(lookBack)
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(fileUploader, new RadioPlayerRecordingExecutor(recorder), services, new DayRangeGenerator())
 			    .withLog(new SystemOutAdapterLog());
 
 			Executor executor = MoreExecutors.sameThreadExecutor();
@@ -114,7 +117,6 @@ public class RadioPlayerFileUploaderTest {
 		} finally {
 			server.stop();
 		}
-
 	}
 
     private Map<String, File> uploadedFiles() {
@@ -131,16 +133,12 @@ public class RadioPlayerFileUploaderTest {
         });
         return uploaded;
     }
-	
-    private Matcher<FTPUploadResult> unknownUploadResult() {
-        return new FTPUploadResultTypeMatcher(FTPUploadResultType.UNKNOWN);
-    }
 
-    private Matcher<FTPUploadResult> successfulUploadResult() {
-        return new FTPUploadResultTypeMatcher(FTPUploadResultType.SUCCESS);
+    private Matcher<RadioPlayerFTPUploadResult> successfulUploadResult() {
+        return new FTPUploadResultTypeMatcher<RadioPlayerFTPUploadResult>(FTPUploadResultType.SUCCESS);
     }
 	
-	private static class FTPUploadResultTypeMatcher extends TypeSafeMatcher<FTPUploadResult> {
+	private static class FTPUploadResultTypeMatcher<T extends FTPUploadResult> extends TypeSafeMatcher<T> {
 	    
 	    private final FTPUploadResultType type;
 
@@ -155,8 +153,8 @@ public class RadioPlayerFileUploaderTest {
         }
 
         @Override
-        public boolean matchesSafely(FTPUploadResult upload) {
-            return type.equals(upload.type());
+        public boolean matchesSafely(T upload) {
+            return type == upload.type();
         }
     };
 

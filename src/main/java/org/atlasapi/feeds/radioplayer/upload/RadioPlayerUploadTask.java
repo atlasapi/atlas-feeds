@@ -1,147 +1,98 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import java.io.ByteArrayOutputStream;
-import java.util.List;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.Executors;
+import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType.SUCCESS;
+import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.INFO;
+import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.WARN;
 
-import org.apache.commons.net.ftp.FTPClient;
-import org.atlasapi.feeds.radioplayer.RadioPlayerFeedType;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
-import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormat;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.DayRangeGenerator;
 
 public class RadioPlayerUploadTask implements Runnable {
 
-    private final KnownTypeQueryExecutor queryExecutor;
     private final Iterable<RadioPlayerService> services;
+    private final RadioPlayerRecordingExecutor executor;
+    private final FTPFileUploader uploader;
 
-    private FTPUploadResultRecorder recorder;
-    private final FTPCredentials credentials;
+    private DayRangeGenerator dayRangeGenerator;
+    private Iterable<LocalDate> dayRange;
+
     private RadioPlayerXMLValidator validator;
-    private int lookAhead = 7;
-    private int lookBack = 2;
     private AdapterLog log;
 
-    public RadioPlayerUploadTask(KnownTypeQueryExecutor queryExecutor, FTPCredentials credentials, Iterable<RadioPlayerService> services) {
-        this.queryExecutor = queryExecutor;
-        this.credentials = credentials;
+    public RadioPlayerUploadTask(FTPFileUploader uploader, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator) {
+        this.uploader = uploader;
+        this.executor = executor;
         this.services = services;
+        this.dayRangeGenerator = dayRangeGenerator;
+    }
+
+    public RadioPlayerUploadTask(FTPFileUploader uploader, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, Iterable<LocalDate> dayRange) {
+        this.uploader = uploader;
+        this.executor = executor;
+        this.services = services;
+        this.dayRange = dayRange;
     }
 
     @Override
     public void run() {
-        log("RadioPlayerUploadTask started.", null, Severity.INFO);
-        
-        CompletionService<FTPUploadResult> uploadRunner = new ExecutorCompletionService<FTPUploadResult>(Executors.newFixedThreadPool(5));
-        int submissions = 0;
+        DateTime start = new DateTime(DateTimeZones.UTC);
+
+        int serviceCount = Iterables.size(services);
+        Iterable<LocalDate> days = dayRange != null ? dayRange : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
+        log(String.format("Radioplayer Uploader starting for %s services for %s days", serviceCount, Iterables.size(days)), INFO);
+
+        List<Callable<RadioPlayerFTPUploadResult>> uploadTasks = Lists.newArrayListWithCapacity(Iterables.size(days) * serviceCount);
+        for (RadioPlayerService service : services) {
+            for (LocalDate day : days) {
+                uploadTasks.add(new RadioPlayerFTPUploadTask(uploader, day, service).withValidator(validator).withLog(log));
+            }
+        }
+
+        ExecutorCompletionService<RadioPlayerFTPUploadResult> results = executor.submit(uploadTasks);
+
         int successes = 0;
-        
-        List<FTPUploadResult> results = Lists.newArrayList();
-
-        try {
-            FTPClient client = null;
-            try{
-                client = connectAndLogin();
-                recorder.record(DefaultFTPUploadResult.successfulUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Connected and logged-in successully"));
-            } catch (Exception e) {
-                recorder.record(DefaultFTPUploadResult.failedUpload(String.format("%s:%s",credentials.server(),credentials.port())).withMessage("Failed to connect/login to server").withCause(e));
-            }
-            
-            int days = lookBack + lookAhead + 1;
-    
-            for(RadioPlayerService service : services) {
-                DateTime day = new LocalDate().toInterval(DateTimeZones.UTC).getStart().minusDays(lookBack);
-                for(int i = 0; i < days; i++, day = day.plusDays(1)) {
-                    String filename = filename(service,day);
-                    try {
-                        ByteArrayOutputStream out = new ByteArrayOutputStream();
-                        RadioPlayerFeedType.PI.compileFeedFor(day, service, queryExecutor, out);
-                        byte[] bytes = out.toByteArray();
-                        
-                        submissions++;
-                        FTPUpload delegate = new ValidatingFTPFileUpload(validator, filename, bytes, new FTPFileUpload(client, filename, bytes));
-                        //delegate = new RemoteCheckingFTPFileUpload(client, filename, delegate);
-                        uploadRunner.submit(new LoggingFTPUpload(log, delegate));
-                        
-                    } catch (Exception e) {
-                        log("Exception uploading file " + filename, e);
-                        results.add(DefaultFTPUploadResult.failedUpload(filename).withCause(e).withMessage(e.getMessage()));
-                    }
+        for (int i = 0; i < uploadTasks.size(); i++) {
+            try {
+                RadioPlayerFTPUploadResult result = results.take().get();
+                if (SUCCESS.equals(result.type())) {
+                    successes++;
                 }
+            } catch (InterruptedException e) {
+                log("Radioplayer Uploader interrupted waiting for result.", WARN, e);
+            } catch (ExecutionException e) {
+                log("Radioplayer Uploader exception retrieving result", WARN, e);
             }
-            
-            successes = submissions;
-            for(int i = 0; i < submissions; i++) {
-                try {
-                    FTPUploadResult result = uploadRunner.take().get();
-                    if(!FTPUploadResultType.SUCCESS.equals(result.type())){
-                        successes--;
-                    }
-                    results.add(result);
-                } catch(Exception e) {
-                    log("Couldn't record FTP Upload result", e);
-                }
-            }
-    
-            if(recorder != null) {
-                for(FTPUploadResult result : results) {
-                    recorder.record(result);
-                }
-            }
-            
-            if(client != null) {
-                client.logout();
-                client.disconnect();
-            }
-            
-        } catch (Exception e) {
-            log("Exception running RadioPlayerUploadTask", e);
         }
-        log("RadioPlayerUploadTask finished. " + successes + " files uploaded successfully", null, Severity.INFO);
+
+        String runTime = new Period(start, new DateTime(DateTimeZones.UTC)).toString(PeriodFormat.getDefault());
+        log(String.format("Radioplayer Uploader finished in %s, %s/%s successful.", runTime, successes, uploadTasks.size()), INFO);
     }
 
-    private FTPClient connectAndLogin() throws Exception {
-        FTPClient client = new FTPClient();
-
-        client.connect(credentials.server(), credentials.port());
-        
-        client.enterLocalPassiveMode();
-        
-        if (!client.login(credentials.username(), credentials.password())) {
-            throw new RuntimeException("Unable to connect to " + credentials.server() + " with username: " + credentials.username() + " and password...");
-        }
-        
-        return client;
+    private void log(String desc, Severity s) {
+        log(desc, s, null);
     }
 
-    private void log(String desc, Exception e) {
-        log(desc, e, Severity.ERROR);
-    }
-    
-    private void log(String desc, Exception e, Severity s) {
-        if(log != null) {
+    private void log(String desc, Severity s, Exception e) {
+        if (log != null) {
             AdapterLogEntry entry = new AdapterLogEntry(s).withDescription(desc).withSource(getClass());
-            log.record(e == null ? entry : entry.withCause(e));
+            log.record(e != null ? entry.withCause(e) : entry);
         }
-    }
-
-    private String filename(RadioPlayerService service, DateTime day) {
-        return String.format("%s_%s_PI.xml", day.toString("yyyyMMdd"), service.getRadioplayerId());
-    }
-
-    public RadioPlayerUploadTask withResultRecorder(FTPUploadResultRecorder recorder) {
-        this.recorder = recorder;
-        return this;
     }
 
     public RadioPlayerUploadTask withValidator(RadioPlayerXMLValidator validator) {
@@ -149,19 +100,8 @@ public class RadioPlayerUploadTask implements Runnable {
         return this;
     }
 
-    public RadioPlayerUploadTask withLookAhead(int lookAhead) {
-        this.lookAhead = lookAhead;
-        return this;
-    }
-
-    public RadioPlayerUploadTask withLookBack(int lookBack) {
-        this.lookBack = lookBack;
-        return this;
-    }
-    
     public RadioPlayerUploadTask withLog(AdapterLog log) {
         this.log = log;
         return this;
     }
-    
 }
