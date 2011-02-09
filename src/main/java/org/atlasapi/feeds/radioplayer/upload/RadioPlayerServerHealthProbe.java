@@ -3,66 +3,98 @@ package org.atlasapi.feeds.radioplayer.upload;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.FAILURE;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCESS;
-import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType.UNKNOWN;
 
-import java.util.List;
-
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
-
-import com.google.common.base.Function;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
+import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultEntry;
+import com.metabroadcast.common.health.ProbeResult.ProbeResultType;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
-import com.metabroadcast.common.time.DayRangeGenerator;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 
-public class RadioPlayerServerHealthProbe extends RadioPlayerUploadHealthProbe {
+public class RadioPlayerServerHealthProbe implements HealthProbe {
 
-    public RadioPlayerServerHealthProbe(DatabasedMongo mongo, String serviceName, String serviceId, DayRangeGenerator dayRangeGenerator) {
-        super(mongo, serviceName, serviceId, dayRangeGenerator);
+    private final DBCollection results;
+    private final FTPCredentials credentials;
+    private final FTPUploadResultTranslator translator;
+
+    public RadioPlayerServerHealthProbe(DatabasedMongo mongo, FTPCredentials credentials) {
+        this.results = mongo.collection("radioplayer");
+        this.credentials = credentials;
+        this.translator = new FTPUploadResultTranslator();
     }
 
     @Override
     public ProbeResult probe() {
-        ProbeResult result = new ProbeResult(title());
-
-        result.addEntry(buildEntry());
-
-        return result;
+        return new ProbeResult(title()).addEntry(buildEntry());
     }
 
     private ProbeResultEntry buildEntry() {
-        Iterable<RadioPlayerFTPUploadResult> fileResults = Iterables.filter(Iterables.transform(RESULT_TYPES, new Function<FTPUploadResultType, RadioPlayerFTPUploadResult>() {
-            @Override
-            public RadioPlayerFTPUploadResult apply(FTPUploadResultType input) {
-                DBObject dboResult = results.findOne(id(input, serviceId));
-                if(dboResult != null) {
-                    return translator.fromDBObject(dboResult);
-                }
-                return null;
-            }
-        }), Predicates.notNull());
-        return entryFor(TYPE_ORDERING.immutableSortedCopy(fileResults));
+        return entryFor(connection(true), connection(false));
     }
-    
-    private String id(FTPUploadResultType type, String serviceId) {
-        return String.format("%s:%s:", type, serviceId);
-    }
-    
-    private ProbeResultEntry entryFor(List<? extends FTPUploadResult> results) {
-        String filename = serviceId;
-        if(results.isEmpty()) {
-            return new ProbeResultEntry(INFO, filename, "No Data.");
+
+    private FTPUploadResult connection(boolean successfulConnection) {
+        DBObject first = Iterables.getFirst(results.find(new BasicDBObject("connected", successfulConnection)).sort(new BasicDBObject("time", -1)).limit(1), null);
+        if (first != null) {
+            return translator.fromDBObject(first);
         }
-        String value = buildValue(results);
-        FTPUploadResultType first = DATE_ORDERING.immutableSortedCopy(results).get(0).type();
-        if(UNKNOWN.equals(first)) {
-            return new ProbeResultEntry(INFO, filename, value);
+        return null;
+    }
+
+    private ProbeResultEntry entryFor(FTPUploadResult success, FTPUploadResult failure) {
+        if (success == null && failure == null) {
+            return new ProbeResultEntry(INFO, credentials.toString(), "No Data");
+        }
+
+        String value = buildValue(success, failure);
+
+        FTPUploadResult mostRecent = failure == null ? success : (success == null ? failure : success.uploadTime().isAfter(failure.uploadTime()) ? success : failure);
+        return new ProbeResultEntry(resultType(mostRecent), credentials.toString(), value);
+    }
+
+    private ProbeResultType resultType(FTPUploadResult mostRecent) {
+        if (mostRecent.successfulConnection()) {
+            return SUCCESS;
         } else {
-            return new ProbeResultEntry(FTPUploadResultType.SUCCESS.equals(first) ? SUCCESS : FAILURE, filename, value);
+            return FAILURE;
         }
+    }
+
+    private String buildValue(FTPUploadResult success, FTPUploadResult failure) {
+        StringBuilder builder = new StringBuilder("<table>");
+        if (success != null) {
+            buildResult(builder, success);
+        }
+        if (failure != null) {
+            buildResult(builder, failure);
+        }
+        return builder.append("</table>").toString();
+    }
+
+    public void buildResult(StringBuilder builder, FTPUploadResult result) {
+        builder.append("<tr><td>Last ");
+        builder.append(result.successfulConnection() ? "Success" : "Failure");
+        builder.append(": ");
+        builder.append(result.uploadTime().toString("dd/MM/yy HH:mm:ss"));
+        builder.append("</td><td>");
+        if (result.successfulConnection()) {
+            builder.append("Connected successfully");
+        } else if (result.message() != null && !result.successfulConnection()) {
+            builder.append(result.message());
+        }
+        builder.append("</td></tr>");
+    }
+
+    @Override
+    public String title() {
+        return "FTP";
+    }
+
+    @Override
+    public String slug() {
+        return "ukrpFTP";
     }
 
 }

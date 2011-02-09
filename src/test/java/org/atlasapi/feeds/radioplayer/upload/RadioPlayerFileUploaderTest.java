@@ -41,7 +41,6 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
-import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.SystemOutAdapterLog;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -60,6 +59,7 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.DayRangeGenerator;
 
 public class RadioPlayerFileUploaderTest {
 
@@ -97,15 +97,11 @@ public class RadioPlayerFileUploaderTest {
 			
 			RadioPlayerFeedCompiler.init(queryExecutor);
 			
-			AdapterLog log = new SystemOutAdapterLog();
             ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
 			FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
-			int lookAhead = 0, lookBack = 0;
+			FTPFileUploader fileUploader = new CommonsFTPFileUploader(credentials);
 			
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(new RadioPlayerUploadTaskRunner(credentials, recorder, log), services)
-			    .withResultRecorder(recorder)
-			    .withLookAhead(lookAhead)
-			    .withLookBack(lookBack)
+			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(fileUploader, new RadioPlayerRecordingExecutor(recorder), services, new DayRangeGenerator())
 			    .withLog(new SystemOutAdapterLog());
 
 			Executor executor = MoreExecutors.sameThreadExecutor();

@@ -1,55 +1,34 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import org.atlasapi.persistence.logging.AdapterLogEntry.ExceptionSummary;
+import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
-public class RadioPlayerFTPUploadResult implements FTPUploadResult {
+public class RadioPlayerFTPUploadResult extends FTPUploadResult {
 
-    private final FTPUploadResult delegate;
-    private final String service;
-    private final String day;
+    private RadioPlayerService service;
+    private LocalDate day;
 
-    public RadioPlayerFTPUploadResult(FTPUploadResult delegate, String serviceId, String day) {
-        this.delegate = delegate;
-        this.service = serviceId;
+    public RadioPlayerFTPUploadResult(String filename, DateTime dateTime, FTPUploadResultType success, RadioPlayerService service, LocalDate day) {
+        super(filename, dateTime, success);
+        this.service = service;
         this.day = day;
     }
-    
-    @Override
-    public String filename() {
-        return delegate.filename();
+
+    public RadioPlayerFTPUploadResult(FTPUploadResult upload, RadioPlayerService service, LocalDate localDate) {
+        super(upload.filename(), upload.uploadTime(), upload.type());
+        this.service = service;
+        this.day = localDate;
+        withCause(upload.exception());
+        withConnectionSuccess(upload.successfulConnection());
+        withMessage(upload.message());
     }
 
-    @Override
-    public FTPUploadResultType type() {
-        return delegate.type();
-    }
-
-    @Override
-    public DateTime uploadTime() {
-        return delegate.uploadTime();
-    }
-
-    @Override
-    public String message() {
-        return delegate.message();
-    }
-
-    @Override
-    public ExceptionSummary exceptionSummary() {
-        return delegate.exceptionSummary();
-    }
-
-    @Override
-    public Exception exception() {
-        return delegate.exception();
-    }
-
-    public String service() {
+    public RadioPlayerService service() {
         return service;
     }
 
-    public String day() {
+    public LocalDate day() {
         return day;
     }
 

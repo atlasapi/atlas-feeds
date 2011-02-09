@@ -15,7 +15,6 @@ permissions and limitations under the License. */
 
 package org.atlasapi.beans;
 
-import java.io.ByteArrayOutputStream;
 import java.util.Set;
 
 import junit.framework.TestCase;
@@ -30,10 +29,13 @@ import org.atlasapi.media.entity.Version;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.integration.junit4.JMock;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.google.common.collect.Sets;
+import com.metabroadcast.common.servlet.StubHttpServletRequest;
+import com.metabroadcast.common.servlet.StubHttpServletResponse;
 
 /**
  * Unit test for {@link OembedTranslator}.
@@ -45,11 +47,20 @@ public class OembedTranslatorTest extends TestCase {
 	
 	private final Mockery context = new Mockery();
 	
-	Set<Object> graph = Sets.<Object>newHashSet();
-	ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+	private final Set<Object> graph = Sets.<Object>newHashSet();
 	
-	OutputFactory outputFactory = context.mock(OutputFactory.class);
-	OembedOutput oembedOutput = context.mock(OembedOutput.class);
+	private final OutputFactory outputFactory = context.mock(OutputFactory.class);
+	private final OembedOutput oembedOutput = context.mock(OembedOutput.class);
+
+	private StubHttpServletRequest request;
+	private StubHttpServletResponse response;
+
+	@Override
+	@Before
+	public void setUp() throws Exception {
+		this.request = new StubHttpServletRequest();
+		this.response = new StubHttpServletResponse();
+	}
 	
 	@Test
 	public void testCreatesFeed() throws Exception {
@@ -58,7 +69,7 @@ public class OembedTranslatorTest extends TestCase {
 			one(outputFactory).createOutput(); 
 		}});
 		
-		new OembedTranslator(outputFactory).writeTo(graph, outputStream);
+		new OembedTranslator(outputFactory).writeTo(request, response, graph);
 	}
 	
 	@Test
@@ -66,10 +77,10 @@ public class OembedTranslatorTest extends TestCase {
 		
 		context.checking(new Expectations() {{ 
 			allowing(outputFactory).createOutput(); will(returnValue(oembedOutput));
-			one(oembedOutput).writeTo(outputStream);
+			one(oembedOutput).writeTo(response.getOutputStream());
 		}});
 		
-		new OembedTranslator(outputFactory).writeTo(graph, outputStream);
+		new OembedTranslator(outputFactory).writeTo(request, response, graph);
 	}
 	
 	@Test
@@ -96,7 +107,7 @@ public class OembedTranslatorTest extends TestCase {
 		
 		context.checking(new Expectations() {{ 
 			allowing(outputFactory).createOutput(); will(returnValue(oembedOutput));
-			allowing(oembedOutput).writeTo(outputStream);
+			allowing(oembedOutput).writeTo(response.getOutputStream());
 	
 			one(oembedOutput).setTitle("Test Title");
 			one(oembedOutput).setProviderUrl("youtube.com");
@@ -106,7 +117,7 @@ public class OembedTranslatorTest extends TestCase {
 			one(oembedOutput).setEmbedCode("<embed src=\\\"a\\\" />");
 		}});
 		
-		new OembedTranslator(outputFactory).writeTo(graph, outputStream);
+		new OembedTranslator(outputFactory).writeTo(request, response, graph);
 	}
 
 }
