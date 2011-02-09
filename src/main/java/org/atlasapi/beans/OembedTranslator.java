@@ -16,7 +16,6 @@ permissions and limitations under the License. */
 package org.atlasapi.beans;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
