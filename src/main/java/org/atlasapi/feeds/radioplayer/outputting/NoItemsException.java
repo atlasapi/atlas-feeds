@@ -1,17 +1,17 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 public class NoItemsException extends IllegalStateException {
 
     private static final long serialVersionUID = 1L;
 
-    private final DateTime date;
+    private final LocalDate date;
     private final RadioPlayerService service;
 
-    public NoItemsException(DateTime date, RadioPlayerService service) {
-        this.date = date;
+    public NoItemsException(LocalDate day, RadioPlayerService service) {
+        this.date = day;
         this.service = service;
     }
 

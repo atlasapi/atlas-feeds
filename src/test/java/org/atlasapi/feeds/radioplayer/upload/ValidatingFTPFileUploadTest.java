@@ -32,7 +32,7 @@ public class ValidatingFTPFileUploadTest {
         final FTPUploadResult successfulUpload = FTPUploadResult.successfulUpload(filename);
         byte[] fileData = bytesFromResource("org/atlasapi/feeds/radioplayer/basicPIFeedTest.xml");
         
-        ValidatingFTPFileUpload uploadTask = new ValidatingFTPFileUpload(validator, delegate);
+        ValidatingFTPFileUploader uploadTask = new ValidatingFTPFileUploader(validator, delegate);
         
         context.checking(new Expectations(){{
             one(delegate).upload(with(any(FTPUpload.class))); 
@@ -62,7 +62,7 @@ public class ValidatingFTPFileUploadTest {
         String filename = "test";
         byte[] fileData = bytesFromResource("org/atlasapi/feeds/radioplayer/invalidPIFeedTest.xml");
         
-        ValidatingFTPFileUpload uploadTask = new ValidatingFTPFileUpload(validator, delegate);
+        ValidatingFTPFileUploader uploadTask = new ValidatingFTPFileUploader(validator, delegate);
         
         context.checking(new Expectations(){{
             never(delegate).upload(with(any(FTPUpload.class)));

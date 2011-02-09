@@ -13,18 +13,16 @@ public class RadioPlayerFTPUploadResultTranslator {
 
     FTPUploadResultTranslator basicTranslator = new FTPUploadResultTranslator();
 
-    public <T extends FTPUploadResult> DBObject toDBObject(T result) {
+    public DBObject toDBObject(RadioPlayerFTPUploadResult result) {
 
         DBObject dbo = basicTranslator.toDBObject(result);
 
-        if(result instanceof RadioPlayerFTPUploadResult) {
-            RadioPlayerFTPUploadResult rpResult = (RadioPlayerFTPUploadResult) result;
-            
-            TranslatorUtils.from(dbo, "serviceId", rpResult.service().getRadioplayerId());
-            TranslatorUtils.fromLocalDate(dbo, "day", rpResult.day());
-            
-            dbo.put(ID, id(rpResult));
-        }
+        RadioPlayerFTPUploadResult rpResult = (RadioPlayerFTPUploadResult) result;
+
+        TranslatorUtils.from(dbo, "serviceId", rpResult.service().getRadioplayerId());
+        TranslatorUtils.fromLocalDate(dbo, "day", rpResult.day());
+
+        dbo.put(ID, id(rpResult));
 
         return dbo;
     }
@@ -39,7 +37,7 @@ public class RadioPlayerFTPUploadResultTranslator {
 
         RadioPlayerService service = RadioPlayerServices.all.get(TranslatorUtils.toInteger(dbo, "serviceId").toString());
         LocalDate day = TranslatorUtils.toLocalDate(dbo, "day");
-        
+
         return new RadioPlayerFTPUploadResult(base, service, day);
     }
 

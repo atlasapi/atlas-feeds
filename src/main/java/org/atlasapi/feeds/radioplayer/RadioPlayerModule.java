@@ -45,6 +45,7 @@ import com.metabroadcast.common.webapp.health.HealthController;
 public class RadioPlayerModule {
 
 	private static final RepetitionInterval UPLOAD_EVERY_TEN_MINUTES = RepetitionRules.atInterval(Duration.standardMinutes(10));
+	private static final RepetitionInterval UPLOAD_EVERY_TWO_HOURS = RepetitionRules.atInterval(Duration.standardHours(2));
 
 	private @Value("${rp.ftp.enabled}") String upload;
 	private @Value("${rp.ftp.services}") String uploadServices;
@@ -74,7 +75,11 @@ public class RadioPlayerModule {
     }
     
     @Bean FTPFileUploader radioPlayerFileUploader(){
-        return new CommonsFTPFileUploader(FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build());
+        if(ftpHost != null && ftpPort != null && ftpUsername != null && ftpPassword != null) {
+            return new CommonsFTPFileUploader(FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build());
+        } else {
+            return new CommonsFTPFileUploader(FTPCredentials.forServer("Credentials").withUsername("Set").build());
+        }
     }
     
     @Bean RadioPlayerFTPUploadResultRecorder uploadResultRecorder() {
@@ -105,10 +110,17 @@ public class RadioPlayerModule {
 			
 			radioPlayerUploadController().withUploadExecutor(radioPlayerUploadTaskRunner);
 			
-            RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner, uploadServices(), dayRangeGenerator)
+            RadioPlayerUploadTask bihourly = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner, uploadServices(), dayRangeGenerator)
 			    .withValidator(radioPlayerValidator())
 			    .withLog(log);
-            scheduler.schedule(uploader, UPLOAD_EVERY_TEN_MINUTES);
+            
+            scheduler.schedule(bihourly, UPLOAD_EVERY_TWO_HOURS);
+            
+            RadioPlayerUploadTask today = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner, uploadServices(), new DayRangeGenerator())
+                .withValidator(radioPlayerValidator())
+                .withLog(log);
+            
+            scheduler.schedule(today, UPLOAD_EVERY_TEN_MINUTES);
 
             log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
             .withDescription(String.format("Radioplayer uploader installed for: %s. Frequency: %s",credentials,UPLOAD_EVERY_TEN_MINUTES)));
@@ -132,18 +144,18 @@ public class RadioPlayerModule {
     }
 
     private void createHealthProbes(FTPCredentials credentials) {
-        
-        Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>(){
+
+        Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>() {
             @Override
             public HealthProbe apply(RadioPlayerService service) {
                 return new RadioPlayerUploadHealthProbe(mongo, service, dayRangeGenerator);
             }
         };
-        
-        health.addProbes(Iterables.concat(
-                Iterables.transform(RadioPlayerServices.services, createProbe),
-                ImmutableList.of(new RadioPlayerServerHealthProbe(mongo, credentials))
-        ));
+
+        health.addProbes(
+                Iterables.concat(Iterables.transform(RadioPlayerServices.services, createProbe),
+                ImmutableList.of(new RadioPlayerServerHealthProbe(mongo, credentials)))
+        );
     }
     
 }

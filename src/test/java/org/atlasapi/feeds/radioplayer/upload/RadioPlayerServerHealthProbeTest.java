@@ -36,19 +36,19 @@ public class RadioPlayerServerHealthProbeTest {
     @Test
     public void testProbe() {
         
-        recorder.record(successfulResult(new DateTime(DateTimeZones.UTC)).withConnectionSuccess(true));
+        recorder.record((RadioPlayerFTPUploadResult)successfulResult(new DateTime(DateTimeZones.UTC)).withConnectionSuccess(true));
         
         ProbeResult result = probe.probe();
         
         assertThat(result.isFailure(), is(false));
         
-        recorder.record(successfulResult(new DateTime(DateTimeZones.UTC)).withConnectionSuccess(false));
+        recorder.record((RadioPlayerFTPUploadResult)successfulResult(new DateTime(DateTimeZones.UTC)).withConnectionSuccess(false));
         
         result = probe.probe();
         
         assertThat(result.isFailure(), is(true));
         
-        recorder.record(successfulResult(new DateTime(DateTimeZones.UTC)).withConnectionSuccess(true));
+        recorder.record((RadioPlayerFTPUploadResult)successfulResult(new DateTime(DateTimeZones.UTC)).withConnectionSuccess(true));
         
         result = probe.probe();
         

@@ -12,9 +12,9 @@ public class MongoFTPUploadResultRecorder implements RadioPlayerFTPUploadResultR
         this.recordings = mongo.collection("radioplayer");
         this.translator = new RadioPlayerFTPUploadResultTranslator();
     }
-    
+
     @Override
-    public <T extends FTPUploadResult> void record(T result) {
-    	this.recordings.save(translator.toDBObject(result));
+    public void record(RadioPlayerFTPUploadResult result) {
+        this.recordings.save(translator.toDBObject(result));
     }
 }

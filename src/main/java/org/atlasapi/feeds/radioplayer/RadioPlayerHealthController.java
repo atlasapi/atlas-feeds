@@ -25,11 +25,11 @@ public class RadioPlayerHealthController {
     private final HttpBasicAuthChecker checker;
 
     public RadioPlayerHealthController(HealthController main, String password) {
-    	if (!Strings.isNullOrEmpty(password)) {
-    		this.checker = new HttpBasicAuthChecker(ImmutableList.of(new UsernameAndPassword("bbc", password)));
-    	} else {
-    		this.checker = null;
-    	}
+        if (!Strings.isNullOrEmpty(password)) {
+            this.checker = new HttpBasicAuthChecker(ImmutableList.of(new UsernameAndPassword("bbc", password)));
+        } else {
+            this.checker = null;
+        }
         this.main = main;
         slugs = Iterables.concat(ImmutableList.of("ukrpFTP"), Iterables.transform(RadioPlayerServices.services, new Function<RadioPlayerService, String>() {
             @Override
@@ -41,17 +41,17 @@ public class RadioPlayerHealthController {
 
     @RequestMapping("feeds/ukradioplayer/health")
     public String radioplayerHealth(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    	if (checker == null) {
-    		response.setContentType(MimeType.TEXT_PLAIN.toString());
-    		response.getOutputStream().print("No password set up, health page cannot be viewed");
-    		return null;
-    	}
-    	boolean allowed = checker.check(request);
-    	if (allowed) {
-    		return main.showHealthPageForSlugs(response, slugs);
-    	}
-    	HttpBasicAuthChecker.requestAuth(response, "Heath Page");
-    	return null;
+        if (checker == null) {
+            response.setContentType(MimeType.TEXT_PLAIN.toString());
+            response.getOutputStream().print("No password set up, health page cannot be viewed");
+            return null;
+        }
+        boolean allowed = checker.check(request);
+        if (allowed) {
+            return main.showHealthPageForSlugs(response, slugs);
+        }
+        HttpBasicAuthChecker.requestAuth(response, "Heath Page");
+        return null;
     }
 
 }

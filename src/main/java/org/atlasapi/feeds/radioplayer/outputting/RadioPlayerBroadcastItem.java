@@ -32,5 +32,5 @@ public class RadioPlayerBroadcastItem implements Comparable<RadioPlayerBroadcast
     public int compareTo(RadioPlayerBroadcastItem that) {
         return this.broadcast.getTransmissionTime().compareTo(that.getBroadcast().getTransmissionTime());
     }
-    
+
 }
