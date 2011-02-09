@@ -63,7 +63,7 @@ public class SiteMapController {
 
 			@Override
 			public SiteMapRef apply(Content brand) {
-				return new SiteMapRef("http://" + hostOrDefault(host) +  "/feeds/sitemaps/sitemap.xml?brand.uri=" + brand.getCurie(), brand.getLastUpdated());
+				return new SiteMapRef("http://" + hostOrDefault(host) +  "/feeds/sitemaps/sitemap.xml?uri=" + brand.getCurie(), brand.getLastUpdated());
 			}
 
 		});
