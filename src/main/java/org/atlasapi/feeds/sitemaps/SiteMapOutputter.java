@@ -35,6 +35,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.text.Truncator;
+import com.metabroadcast.common.time.DateTimeZones;
 
 public class SiteMapOutputter {
 
@@ -120,7 +121,7 @@ public class SiteMapOutputter {
 		Policy policy = location.getPolicy();
 		if (policy != null) {
 			DateTime availableTill = policy.getAvailabilityEnd();
-			if (availableTill != null) {
+			if (availableTill != null && availableTill.isBefore(new DateTime(DateTimeZones.UTC).plusYears(10))) {
 				videoElem.appendChild(stringElement("expiration_date", VIDEO, DATE_TIME_FORMAT.print(availableTill)));
 			}
 			Set<Country> countries = policy.getAvailableCountries();
