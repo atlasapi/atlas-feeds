@@ -24,7 +24,6 @@ import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.bind.JAXBException;
 
 import org.atlasapi.media.entity.simple.Description;
 import org.atlasapi.media.entity.simple.Item;

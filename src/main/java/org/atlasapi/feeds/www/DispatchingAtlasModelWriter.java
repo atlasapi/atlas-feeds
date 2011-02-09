@@ -36,11 +36,11 @@ public class DispatchingAtlasModelWriter implements AtlasModelWriter {
 	
 	public DispatchingAtlasModelWriter() {
 		add("json", APPLICATION_JSON,  new FullToSimpleModelTranslator(new JsonTranslator()));
+		add("rdf.xml", APPLICATION_RDF_XML, new RdfXmlTranslator());
+		add("oembed.xml", APPLICATION_OEMBED_XML,  new OembedXmlTranslator());
+		add("oembed.json",APPLICATION_OEMBED_JSON,  new OembedJsonTranslator());
 		add("xml", APPLICATION_XML,  new FullToSimpleModelTranslator(new JaxbXmlTranslator()));
 		add("html", TEXT_HTML, new HtmlTranslator());
-		add("oembed.json",APPLICATION_OEMBED_JSON,  new OembedJsonTranslator());
-		add("oembed.xml", APPLICATION_OEMBED_XML,  new OembedXmlTranslator());
-		add("rdf.xml", APPLICATION_RDF_XML, new RdfXmlTranslator());
 	}
 
 	private void add(String extension, MimeType mimeType, AtlasModelWriter writer) {
