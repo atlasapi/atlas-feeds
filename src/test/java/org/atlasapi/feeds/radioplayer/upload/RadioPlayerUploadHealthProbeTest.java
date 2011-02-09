@@ -42,30 +42,30 @@ public class RadioPlayerUploadHealthProbeTest {
 
         ProbeResult result = probe.probe();
         
-        assertThat(Iterables.size(result.entries()), is(equalTo(1)));
-        assertThat(Iterables.getOnlyElement(result.entries()).getType(), is(equalTo(ProbeResultType.INFO)));
-        assertThat(Iterables.getOnlyElement(result.entries()).getValue(), is(equalTo("No Data")));
+        assertThat(Iterables.size(result.entries()), is(equalTo(2)));
+        assertThat(Iterables.getFirst(result.entries(), null).getType(), is(equalTo(ProbeResultType.INFO)));
+        assertThat(Iterables.getFirst(result.entries(), null).getValue(), is(equalTo("No Data")));
         
         recorder.record(successfulResult(new DateTime(DateTimeZones.UTC)));
         
         result = probe.probe();
         
-        assertThat(Iterables.size(result.entries()), is(equalTo(1)));
-        assertThat(Iterables.getOnlyElement(result.entries()).getType(), is(equalTo(ProbeResultType.SUCCESS)));
+        assertThat(Iterables.size(result.entries()), is(equalTo(2)));
+        assertThat(Iterables.getFirst(result.entries(), null).getType(), is(equalTo(ProbeResultType.SUCCESS)));
         
         recorder.record(failedResult(new DateTime(DateTimeZones.UTC)));
          
         result = probe.probe();
         
-        assertThat(Iterables.size(result.entries()), is(equalTo(1)));
-        assertThat(Iterables.getOnlyElement(result.entries()).getType(), is(equalTo(ProbeResultType.FAILURE)));
+        assertThat(Iterables.size(result.entries()), is(equalTo(2)));
+        assertThat(Iterables.getFirst(result.entries(), null).getType(), is(equalTo(ProbeResultType.FAILURE)));
         
         recorder.record(successfulResult(new DateTime(DateTimeZones.UTC)));
         
         result = probe.probe();
         
-        assertThat(Iterables.size(result.entries()), is(equalTo(1)));
-        assertThat(Iterables.getOnlyElement(result.entries()).getType(), is(equalTo(ProbeResultType.SUCCESS)));    
+        assertThat(Iterables.size(result.entries()), is(equalTo(2)));
+        assertThat(Iterables.getFirst(result.entries(), null).getType(), is(equalTo(ProbeResultType.SUCCESS)));    
     }
 
     @Test
@@ -75,8 +75,8 @@ public class RadioPlayerUploadHealthProbeTest {
         
         ProbeResult result = probe.probe();
         
-        assertThat(Iterables.size(result.entries()), is(equalTo(1)));
-        assertThat(Iterables.getOnlyElement(result.entries()).getType(), is(equalTo(ProbeResultType.FAILURE)));
+        assertThat(Iterables.size(result.entries()), is(equalTo(2)));
+        assertThat(Iterables.getFirst(result.entries(), null).getType(), is(equalTo(ProbeResultType.FAILURE)));
         
     }
     
@@ -91,8 +91,8 @@ public class RadioPlayerUploadHealthProbeTest {
         
         ProbeResult result = probe.probe();
         
-        assertThat(Iterables.size(result.entries()), is(equalTo(1)));
-        assertThat(Iterables.getOnlyElement(result.entries()).getType(), is(equalTo(ProbeResultType.INFO)));
+        assertThat(Iterables.size(result.entries()), is(equalTo(2)));
+        assertThat(Iterables.getFirst(result.entries(), null).getType(), is(equalTo(ProbeResultType.INFO)));
     }
     
     public RadioPlayerFTPUploadResult successfulResult(DateTime successDate) {
