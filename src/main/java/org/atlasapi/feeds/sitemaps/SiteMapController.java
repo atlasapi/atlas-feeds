@@ -12,6 +12,7 @@ import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.content.criteria.operator.Operators;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.query.content.parser.ApplicationConfigurationIncludingQueryBuilder;
@@ -20,8 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Function;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.metabroadcast.common.query.Selection;
 
 @Controller
 public class SiteMapController {
@@ -42,7 +45,8 @@ public class SiteMapController {
 	
 	@RequestMapping("/feeds/sitemaps/sitemap.xml")
 	public String siteMapForBrand(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		List<Content> brands = queryExecutor.discover(queryBuilder.build(request));
+		ContentQuery query = queryBuilder.build(request);
+        List<Identified> brands = queryExecutor.executeUriQuery(uris(request,query), query);
 		response.setStatus(HttpServletResponse.SC_OK);
 		outputter.output(Iterables.filter(brands, Item.class), response.getOutputStream());
 		return null;
@@ -71,7 +75,24 @@ public class SiteMapController {
 		indexOutputter.output(refs, response.getOutputStream());
 		return null;
 	}
-
+	
+	private static List<String> uris(HttpServletRequest request, ContentQuery filter) {
+	    if (!Selection.ALL.equals(filter.getSelection())) {
+            throw new IllegalArgumentException("Cannot specifiy a limit or offset here");
+        }
+        String commaSeperatedUris = request.getParameter("uri");
+        if (commaSeperatedUris == null) {
+            throw new IllegalArgumentException("No uris specified");
+        }
+        List<String> uris = ImmutableList.copyOf(URI_SPLITTER.split(commaSeperatedUris));
+        if (Iterables.isEmpty(uris)) {
+            throw new IllegalArgumentException("No uris specified");
+        }
+        return uris;
+	}
+	
+	private static final Splitter URI_SPLITTER = Splitter.on(",").omitEmptyStrings().trimResults();
+	
 	private String hostOrDefault(String host) {
 		return host == null ? defaultHost : host;
 	}

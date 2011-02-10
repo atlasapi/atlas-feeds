@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.atlasapi.application.ApplicationConfiguration;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.ContentQueryBuilder;
 import org.atlasapi.content.criteria.attribute.Attributes;
@@ -26,6 +27,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.time.DateTimeZones;
@@ -87,7 +90,7 @@ public class InterlinkController {
     	ContentQuery query = ContentQueryBuilder.query()
     		.equalTo(Attributes.DESCRIPTION_PUBLISHER, Publisher.C4)
     	.build();
-    	List<Content> brands = executor.discover(query);
+    	List<Content> brands = executor.discover(query.copyWithApplicationConfiguration(query.getConfiguration().copyWithIncludedPublishers(ImmutableList.of(Publisher.C4))));
     	outputter.output(adapter.fromBrands(FEED_ID+"bootstrap", Publisher.C4, from, to, brands), response.getOutputStream(), true);
     }
 }
