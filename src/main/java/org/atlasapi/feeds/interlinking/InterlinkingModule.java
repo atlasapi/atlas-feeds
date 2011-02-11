@@ -18,6 +18,6 @@ public class InterlinkingModule {
 	private @Autowired @Qualifier("mongoDbQueryExcutorThatFiltersUriQueries") KnownTypeQueryExecutor executor;
 
 	public @Bean InterlinkController feedController() {
-		return new InterlinkController(resolver, executor, ImmutableMap.<Publisher, PlaylistToInterlinkFeed>of(Publisher.C4, new C4PlaylistToInterterlinkFeedAdapter(resolver)));
+		return new InterlinkController(resolver, executor, ImmutableMap.<Publisher, PlaylistToInterlinkFeed>of(Publisher.C4, new C4PlaylistToInterlinkFeedAdapter(resolver)));
 	}
 }

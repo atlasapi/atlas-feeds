@@ -1,5 +1,12 @@
 package org.atlasapi.feeds.interlinking;
 
+import static org.atlasapi.media.entity.Channel.CHANNEL_FOUR;
+import static org.atlasapi.media.entity.Channel.E_FOUR;
+import static org.atlasapi.media.entity.Channel.FILM_4;
+import static org.atlasapi.media.entity.Channel.FOUR_MUSIC;
+import static org.atlasapi.media.entity.Channel.MORE_FOUR;
+
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -12,14 +19,19 @@ import org.atlasapi.persistence.content.ContentResolver;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapMaker;
 
-public class C4PlaylistToInterterlinkFeedAdapter extends PlaylistToInterlinkFeedAdapter {
+public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAdapter {
     
     private static final Pattern BROADCAST_ID_PATTERN = Pattern.compile("(?:urn:)?(tag:www\\.channel4\\.com.*)");
-    private final ConcurrentMap<String, Series> seriesLookup;
+    private static Set<String> BROADCAST_SERVICES = ImmutableSet.of(CHANNEL_FOUR.uri(), E_FOUR.uri(), MORE_FOUR.uri(), FOUR_MUSIC.uri(), FILM_4.uri());
     
-    public C4PlaylistToInterterlinkFeedAdapter(final ContentResolver resolver) {
+    private final ConcurrentMap<String, Series> seriesLookup;
+
+    protected static final Pattern SYNTHESIZED_PATTERN = Pattern.compile("http://www.channel4.com/programmes/synthesized/[^/]+/(\\d+)");
+    
+    public C4PlaylistToInterlinkFeedAdapter(final ContentResolver resolver) {
     	seriesLookup = new MapMaker().expiration(10, TimeUnit.MINUTES).makeComputingMap(new Function<String, Series>() {
 			@Override
 			public Series apply(String uri) {
@@ -30,13 +42,16 @@ public class C4PlaylistToInterterlinkFeedAdapter extends PlaylistToInterlinkFeed
     
     @Override
     protected String broadcastId(Broadcast broadcast) {
+        if(broadcast.getId() != null) {
+            return broadcast.getId();
+        }
     	for (String alias : broadcast.getAliases()) {
 			Matcher matcher = BROADCAST_ID_PATTERN.matcher(alias);
 			if (matcher.matches()) {
 				return matcher.group(1);
 			}
 		}
-    	throw new IllegalStateException("Could not find id for broadcast " + broadcast);
+    	return super.broadcastId(broadcast);
     }
     
     @Override
@@ -50,7 +65,7 @@ public class C4PlaylistToInterterlinkFeedAdapter extends PlaylistToInterlinkFeed
 		            	return true;
 		            }
 		        }
-				return false;
+				return BROADCAST_SERVICES.contains(broadcast.getBroadcastOn());
 			}
 		};
     }
@@ -67,5 +82,14 @@ public class C4PlaylistToInterterlinkFeedAdapter extends PlaylistToInterlinkFeed
 			}
 		}
     	return description.getCanonicalUri();
+    }
+    
+    @Override
+    protected String linkFrom(String canonicalUri) {
+        Matcher matcher = SYNTHESIZED_PATTERN.matcher(canonicalUri);
+        if(matcher.matches()) {
+            return "http://www.channel4.com/tv-listings#" + matcher.group(1);
+        }
+        return canonicalUri;
     }
 }
