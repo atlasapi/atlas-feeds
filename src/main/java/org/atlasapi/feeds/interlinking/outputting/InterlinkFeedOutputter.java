@@ -29,6 +29,8 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.joda.time.format.ISOPeriodFormat;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
+import com.metabroadcast.common.time.DateTimeZones;
 
 public class InterlinkFeedOutputter {
 
@@ -193,12 +195,10 @@ public class InterlinkFeedOutputter {
 
 
 	private void addCommonContentFieldsTo(InterlinkContent content, Element entry, InterlinkContent parent) {
-		if (content.summary() != null) {
-			entry.appendChild(stringElement("summary", NS_ATOM, content.summary()));
-		}
-		if (content.lastUpdated() != null) {
-		    entry.appendChild(stringElement("updated", NS_ATOM, content.lastUpdated().toString(DATE_TIME_FORMAT)));
-		}
+	    entry.appendChild(stringElement("summary", NS_ATOM, Strings.nullToEmpty(content.summary())));
+
+	    DateTime updated = content.lastUpdated() != null ? content.lastUpdated() : new DateTime(DateTimeZones.UTC);
+	    entry.appendChild(stringElement("updated", NS_ATOM, updated.toString(DATE_TIME_FORMAT)));
 		
 		if (content.operation() != Operation.DELETE) {
 		    entry.appendChild(contentElement(content, parent));

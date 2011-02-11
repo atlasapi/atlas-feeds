@@ -11,6 +11,7 @@ import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Described;
 import org.atlasapi.media.entity.Identified;
@@ -68,8 +69,11 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         	}
         	Brand brand = (Brand) content;
         	
+        	boolean synthesized = brand.getCanonicalUri().startsWith("http://www.channel4.com/programmes/synthesized");
+        	boolean includeBrand = containerQualifies(from, to, brand) && (!synthesized || (synthesized && brand.getContents().size() > 1));
+        	
             InterlinkBrand interlinkBrand = fromBrand(brand, from, to);
-            if (qualifies(from, to, brand)) {
+            if (includeBrand) {
                 feed.addEntry(interlinkBrand);
             }
             
@@ -79,7 +83,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
                 if (item instanceof Episode) {
                     Episode episode = (Episode) item;
                     Series series = episode.getSeriesSummary();
-                    if (series != null && qualifies(from, to, series)) {
+                    if (series != null && containerQualifies(from, to, series)) {
                         linkSeries = seriesLookup.get(series.getCanonicalUri());
                         if (linkSeries == null) {
                             linkSeries = fromSeries(series, interlinkBrand, brand, from, to);
@@ -89,11 +93,15 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
                     }
                 }
                 
-                populateFeedWithItem(feed, item, from, to, (linkSeries != null ? linkSeries : interlinkBrand));
+                populateFeedWithItem(feed, item, from, to, (linkSeries != null ? linkSeries : includeBrand ? interlinkBrand : null));
             }
         }
         
         return feed;
+    }
+    
+    static boolean containerQualifies(DateTime from, DateTime to, Container<?> description) {
+        return ((from == null && to == null) || (description != null && description.getThisOrChildLastUpdated() != null && description.getThisOrChildLastUpdated().isAfter(from) && description.getThisOrChildLastUpdated().isBefore(to)));
     }
     
     static boolean qualifies(DateTime from, DateTime to, Identified description) {
@@ -137,7 +145,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 		
 		InterlinkOnDemand onDemand = firstLinkLocation(item, from, to, episodeId);
 		
-		InterlinkEpisode episode = new InterlinkEpisode(episodeId, operationFor(item, from, to), itemIndexFrom(item), onDemand == null ? item.getCanonicalUri() : onDemand.uri(), parent)
+		InterlinkEpisode episode = new InterlinkEpisode(episodeId, operationFor(item, from, to), itemIndexFrom(item), onDemand == null ? linkFrom(item.getCanonicalUri()) : onDemand.uri(), parent)
             .withTitle(extractItemTitle(item))
             .withDescription(toDescription(item))
             .withLastUpdated(item.getLastUpdated())
@@ -163,7 +171,11 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         }
     }
 
-	private String extractItemTitle(Item item) {
+	protected String linkFrom(String canonicalUri) {
+	    return canonicalUri;
+    }
+
+    private String extractItemTitle(Item item) {
 		String title = item.getTitle();
 		Pattern pattern = Pattern.compile(".*(Episode\\s*\\d+).*");
 		Matcher match = pattern.matcher(title);
@@ -247,7 +259,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 	private String toDescription(Described content) {
     	String description = content.getDescription();
 		if (description == null) {
-    		return null;
+    		return "";
     	}
     	return descriptionTruncator.truncate(description);
     }

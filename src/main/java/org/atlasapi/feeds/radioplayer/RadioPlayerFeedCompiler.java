@@ -66,7 +66,7 @@ public abstract class RadioPlayerFeedCompiler {
             Iterable<AtomicQuery> queryAtoms = ImmutableSet.of((AtomicQuery)
                     Attributes.DESCRIPTION_PUBLISHER.createQuery(Operators.EQUALS, ImmutableList.of(Publisher.BBC)),
                     Attributes.BROADCAST_ON.createQuery(Operators.EQUALS, ImmutableList.of(serviceUri)),
-                    Attributes.BROADCAST_TRANSMISSION_TIME.createQuery(Operators.AFTER, ImmutableList.of(date)),
+                    Attributes.BROADCAST_TRANSMISSION_TIME.createQuery(Operators.AFTER, ImmutableList.of(date.minusMillis(1))),
                     Attributes.BROADCAST_TRANSMISSION_TIME.createQuery(Operators.BEFORE, ImmutableList.of(date.plusDays(1)))
             );
 
