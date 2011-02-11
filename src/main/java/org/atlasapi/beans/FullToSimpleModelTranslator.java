@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Channel;
 import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
@@ -23,6 +24,7 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.entity.Schedule.ScheduleChannel;
 import org.atlasapi.media.entity.simple.Aliased;
 import org.atlasapi.media.entity.simple.BrandSummary;
 import org.atlasapi.media.entity.simple.ContentQueryResult;
@@ -30,11 +32,14 @@ import org.atlasapi.media.entity.simple.Description;
 import org.atlasapi.media.entity.simple.Item;
 import org.atlasapi.media.entity.simple.PublisherDetails;
 import org.atlasapi.media.entity.simple.Restriction;
+import org.atlasapi.media.entity.simple.ScheduleQueryResult;
 import org.atlasapi.media.entity.simple.SeriesSummary;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.metabroadcast.common.base.Maybe;
 
 /**
  * {@link AtlasModelWriter} that translates the full URIplay object model
@@ -53,11 +58,30 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	@Override
 	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> fullGraph) throws IOException {
 		ContentQueryResult outputGraph = new ContentQueryResult();
-		writeOut(fullGraph, outputGraph);
+		writeOutContent(fullGraph, outputGraph);
+		
+		if (outputGraph.isEmpty()) {
+		    ScheduleQueryResult scheduleQueryResult = new ScheduleQueryResult();
+		    writeOutSchedule(fullGraph, scheduleQueryResult);
+		    
+		    if (! scheduleQueryResult.isEmpty()) {
+		        outputWriter.writeTo(request, response, ImmutableSet.of((Object) scheduleQueryResult));
+		        return;
+		    }
+		}
+		
 		outputWriter.writeTo(request, response, ImmutableSet.of((Object) outputGraph));
 	}
+	
+	private void writeOutSchedule(Collection<Object> fullGraph, ScheduleQueryResult outputGraph) {
+	    for (Object bean : fullGraph) {
+	        if (bean instanceof ScheduleChannel) {
+	            outputGraph.add(scheduleChannelFrom((ScheduleChannel) bean));
+	        }
+	    }
+	}
 
-	private void writeOut(Collection<Object> fullGraph, ContentQueryResult outputGraph) {
+	private void writeOutContent(Collection<Object> fullGraph, ContentQueryResult outputGraph) {
 		for (Object bean : fullGraph) {
 			if (bean instanceof Container<?>) {
 				Container<?> playList = (Container<?>) bean;
@@ -73,6 +97,23 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		}
 	}
 	
+	static org.atlasapi.media.entity.simple.ScheduleChannel scheduleChannelFrom(ScheduleChannel scheduleChannel) {
+	    org.atlasapi.media.entity.simple.ScheduleChannel newScheduleChannel = new org.atlasapi.media.entity.simple.ScheduleChannel();
+	    Maybe<Channel> channel = Channel.fromUri(scheduleChannel.channel());
+	    newScheduleChannel.setChannelUri(scheduleChannel.channel());
+	    if (! channel.isNothing()) {
+	        newScheduleChannel.setChannelKey(channel.requireValue().key());
+	        newScheduleChannel.setChannelTitle(channel.requireValue().title());
+	    }
+	    
+	    ImmutableList.Builder<org.atlasapi.media.entity.simple.Item> items = ImmutableList.builder();
+	    for (org.atlasapi.media.entity.Item item: scheduleChannel.items()) {
+	        items.add(simpleItemFrom(item));
+	    }
+	    
+	    newScheduleChannel.setItems(items.build());
+	    return newScheduleChannel;
+	}
 	
 	static org.atlasapi.media.entity.simple.Person simplePersonFrom(Person fullPerson) {
 		org.atlasapi.media.entity.simple.Person person = new org.atlasapi.media.entity.simple.Person();

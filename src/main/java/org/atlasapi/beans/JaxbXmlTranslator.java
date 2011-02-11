@@ -39,6 +39,8 @@ import org.atlasapi.media.entity.simple.Item;
 import org.atlasapi.media.entity.simple.Location;
 import org.atlasapi.media.entity.simple.Playlist;
 import org.atlasapi.media.entity.simple.PublisherDetails;
+import org.atlasapi.media.entity.simple.ScheduleChannel;
+import org.atlasapi.media.entity.simple.ScheduleQueryResult;
 import org.atlasapi.media.vocabulary.DC;
 import org.atlasapi.media.vocabulary.PLAY_SIMPLE_XML;
 import org.atlasapi.media.vocabulary.PO;
@@ -59,7 +61,7 @@ public class JaxbXmlTranslator implements AtlasModelWriter {
 
 	public JaxbXmlTranslator() {
 		try {
-			context = JAXBContext.newInstance(ContentQueryResult.class, Playlist.class, Item.class, Location.class, Broadcast.class, PublisherDetails.class);
+			context = JAXBContext.newInstance(ContentQueryResult.class, ScheduleQueryResult.class, ScheduleChannel.class, Playlist.class, Item.class, Location.class, Broadcast.class, PublisherDetails.class);
 		} catch (JAXBException e) {
 			throw new RuntimeException(e);
 		}
