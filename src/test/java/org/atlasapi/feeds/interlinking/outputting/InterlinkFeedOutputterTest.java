@@ -34,21 +34,23 @@ public class InterlinkFeedOutputterTest {
 			.withTitle("Lark Rise to Candleford")
 			.withDescription("Adaption of Flora Thompson's memoir of her Oxfordshire childhood")
 			.withLastUpdated(lastUpdated)
+			.withSummary("summary")
 			.withThumbnail("thumbnail");
 		
 		// add an episode directly to the brand
-		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", Operation.STORE, 2, "link", brand).withTitle("Episode not in a series").withLastUpdated(lastUpdated);
+		InterlinkEpisode episodeWithoutASeries = new InterlinkEpisode("notInASeries", Operation.STORE, 2, "link", brand).withTitle("Episode not in a series").withLastUpdated(lastUpdated).withSummary("summary");
 		InterlinkBroadcast broadcastWithoutASeries = new InterlinkBroadcast("broadcastNotInASeries", Operation.STORE, episodeWithoutASeries);
 		InterlinkOnDemand onDemandWithoutASeries = new InterlinkOnDemand("odNotInASeries", "link", Operation.STORE, lastUpdated, lastUpdated, new Duration(1000), "notInASeries");
 		
 		InterlinkSeries series = new InterlinkSeries("series2", Operation.STORE, 2, brand)
 
 			.withTitle("Lark Rise to Candleford Series 2")
-			.withSummary("Adaption of Flora Thompson's");
+			.withSummary("Adaption of Flora Thompson's").withLastUpdated(new DateTime(2011,02,11,22,00,00,00,DateTimeZones.UTC));
+		    
 		
 		InterlinkEpisode episode = new InterlinkEpisode("episode3", Operation.STORE, 3, "link", series)
             .withTitle("Episode 3")
-            .withLastUpdated(lastUpdated);
+            .withLastUpdated(lastUpdated).withSummary("summary");
 		
 		InterlinkOnDemand onDemand = new InterlinkOnDemand("ondemand5", "link", Operation.STORE, lastUpdated, lastUpdated, new Duration(1000), "episode3");
 		
