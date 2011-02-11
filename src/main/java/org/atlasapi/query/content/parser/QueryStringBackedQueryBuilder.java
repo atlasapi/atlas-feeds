@@ -56,8 +56,9 @@ public class QueryStringBackedQueryBuilder {
 	
 	public static final String TO_PARAM = "to";
     public static final String FROM_PARAM = "from";
+    public static final String ON_PARAM = "on";
 	
-	private final Set<String> ignoreParams = Sets.newHashSet(Selection.START_INDEX_REQUEST_PARAM, Selection.LIMIT_REQUEST_PARAM, CALLBACK, TO_PARAM, FROM_PARAM); 
+	private final Set<String> ignoreParams = Sets.newHashSet(Selection.START_INDEX_REQUEST_PARAM, Selection.LIMIT_REQUEST_PARAM, CALLBACK, TO_PARAM, FROM_PARAM, ON_PARAM); 
 
 	private final DateTimeInQueryParser dateTimeParser = new DateTimeInQueryParser();
 	
