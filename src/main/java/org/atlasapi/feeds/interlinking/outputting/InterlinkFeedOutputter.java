@@ -167,8 +167,10 @@ public class InterlinkFeedOutputter {
 			mrssContent.appendChild(stringElement("description", NS_MRSS, content.description()));
 		}
 		if (parent != null) {
-			mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
-			mrssContent.appendChild(stringElement("index", NS_ILINK, String.valueOf(content.indexWithinParent())));
+            mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
+			if(content.indexWithinParent() != null) {
+			    mrssContent.appendChild(stringElement("index", NS_ILINK, String.valueOf(content.indexWithinParent())));
+			}
 		}
 		if (content.title().matches("Episode \\d+")) {
 			mrssContent.appendChild(stringElement("presentation_title", NS_ILINK, content.title()));
