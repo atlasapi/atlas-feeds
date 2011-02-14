@@ -72,7 +72,7 @@ public class InterlinkController {
                 .after(Attributes.BRAND_THIS_OR_CHILD_LAST_UPDATED, from)
                 .before(Attributes.BRAND_THIS_OR_CHILD_LAST_UPDATED, to)
                 .build();
-        List<Content> brands = executor.discover(query);
+        List<Content> brands = executor.discover(query.copyWithApplicationConfiguration(query.getConfiguration().copyWithIncludedPublishers(ImmutableList.of(Publisher.C4))));
         
         outputter.output(adapter.fromBrands(FEED_ID+date, Publisher.C4, from, to, brands), response.getOutputStream(), false);
     }
