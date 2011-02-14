@@ -86,7 +86,7 @@ public class RadioPlayerFileUploaderTest {
 
 			Mockery context = new Mockery();
 			final KnownTypeQueryExecutor queryExecutor = context.mock(KnownTypeQueryExecutor.class);            
-			final RadioPlayerFTPUploadResultRecorder recorder = context.mock(RadioPlayerFTPUploadResultRecorder.class);
+			final RadioPlayerFTPUploadResultStore recorder = context.mock(RadioPlayerFTPUploadResultStore.class);
 			
 			context.checking(new Expectations(){{
 			    oneOf(queryExecutor).schedule(with(any(ContentQuery.class))); 

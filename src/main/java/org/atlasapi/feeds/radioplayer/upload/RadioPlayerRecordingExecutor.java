@@ -11,12 +11,12 @@ public class RadioPlayerRecordingExecutor {
 
     private static final int MAX_CONNECTIONS = 5;
 
-    private final RadioPlayerFTPUploadResultRecorder recorder;
+    private final RadioPlayerFTPUploadResultStore recorder;
 
     // static to avoid multiple pools
     private static ExecutorService executor = Executors.newFixedThreadPool(MAX_CONNECTIONS, new ThreadFactoryBuilder().setNameFormat("RadioPlayerUploader: %s").build());
 
-    public RadioPlayerRecordingExecutor(RadioPlayerFTPUploadResultRecorder recorder) {
+    public RadioPlayerRecordingExecutor(RadioPlayerFTPUploadResultStore recorder) {
         this.recorder = recorder;
     }
 

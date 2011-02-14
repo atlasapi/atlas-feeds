@@ -26,7 +26,7 @@ public class RadioPlayerServerHealthProbeTest {
     
     public final DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     public final RadioPlayerServerHealthProbe probe = new RadioPlayerServerHealthProbe(mongo, FTPCredentials.forServer("hello").build());
-    private RadioPlayerFTPUploadResultRecorder recorder = new MongoFTPUploadResultRecorder(mongo);
+    private RadioPlayerFTPUploadResultStore recorder = new MongoFTPUploadResultStore(mongo);
     
     @After
     public void tearDown() {

@@ -2,11 +2,12 @@ package org.atlasapi.feeds.radioplayer;
 
 import javax.annotation.PostConstruct;
 
+import org.atlasapi.feeds.radioplayer.upload.CachingFTPUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.CommonsFTPFileUploader;
 import org.atlasapi.feeds.radioplayer.upload.FTPCredentials;
 import org.atlasapi.feeds.radioplayer.upload.FTPFileUploader;
-import org.atlasapi.feeds.radioplayer.upload.MongoFTPUploadResultRecorder;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFTPUploadResultRecorder;
+import org.atlasapi.feeds.radioplayer.upload.MongoFTPUploadResultStore;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFTPUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
@@ -82,8 +83,8 @@ public class RadioPlayerModule {
         }
     }
     
-    @Bean RadioPlayerFTPUploadResultRecorder uploadResultRecorder() {
-        return new MongoFTPUploadResultRecorder(mongo);
+    @Bean RadioPlayerFTPUploadResultStore uploadResultRecorder() {
+        return new CachingFTPUploadResultStore(new MongoFTPUploadResultStore(mongo));
     }
 
     @Bean RadioPlayerXMLValidator radioPlayerValidator() {
@@ -148,7 +149,7 @@ public class RadioPlayerModule {
         Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>() {
             @Override
             public HealthProbe apply(RadioPlayerService service) {
-                return new RadioPlayerUploadHealthProbe(mongo, service, dayRangeGenerator);
+                return new RadioPlayerUploadHealthProbe(uploadResultRecorder(), service, dayRangeGenerator);
             }
         };
 

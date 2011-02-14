@@ -29,8 +29,8 @@ public class RadioPlayerUploadHealthProbeTest {
     
     //    private static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
     public final DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
-    public final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(mongo, SERVICE, new DayRangeGenerator().withLookAhead(0).withLookBack(0));
-    private RadioPlayerFTPUploadResultRecorder recorder = new MongoFTPUploadResultRecorder(mongo);
+    public final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(new MongoFTPUploadResultStore(mongo), SERVICE, new DayRangeGenerator().withLookAhead(0).withLookBack(0));
+    private RadioPlayerFTPUploadResultStore recorder = new MongoFTPUploadResultStore(mongo);
     
     @After
     public void tearDown() {

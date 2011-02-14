@@ -31,5 +31,5 @@ public class RadioPlayerFTPUploadResult extends FTPUploadResult {
     public LocalDate day() {
         return day;
     }
-
+    
 }
