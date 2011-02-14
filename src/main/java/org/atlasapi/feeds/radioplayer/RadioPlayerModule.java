@@ -36,7 +36,7 @@ import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.scheduling.RepetitionRules;
-import com.metabroadcast.common.scheduling.RepetitionRules.RepetitionInterval;
+import com.metabroadcast.common.scheduling.RepetitionRules.Every;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
 import com.metabroadcast.common.time.DayRangeGenerator;
 import com.metabroadcast.common.webapp.health.HealthController;
@@ -44,8 +44,8 @@ import com.metabroadcast.common.webapp.health.HealthController;
 @Configuration
 public class RadioPlayerModule {
 
-	private static final RepetitionInterval UPLOAD_EVERY_TEN_MINUTES = RepetitionRules.atInterval(Duration.standardMinutes(10));
-	private static final RepetitionInterval UPLOAD_EVERY_TWO_HOURS = RepetitionRules.atInterval(Duration.standardHours(2));
+	private static final Every UPLOAD_EVERY_TEN_MINUTES = RepetitionRules.every(Duration.standardMinutes(10)).withOffset(Duration.standardMinutes(5));
+	private static final Every UPLOAD_EVERY_TWO_HOURS = RepetitionRules.every(Duration.standardHours(2));
 
 	private @Value("${rp.ftp.enabled}") String upload;
 	private @Value("${rp.ftp.services}") String uploadServices;
@@ -120,7 +120,7 @@ public class RadioPlayerModule {
                 .withValidator(radioPlayerValidator())
                 .withLog(log);
             
-            scheduler.schedule(today, UPLOAD_EVERY_TEN_MINUTES, Duration.standardMinutes(5));
+            scheduler.schedule(today, UPLOAD_EVERY_TEN_MINUTES);
 
             log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
             .withDescription(String.format("Radioplayer uploader installed for: %s. Frequency: %s",credentials,UPLOAD_EVERY_TEN_MINUTES)));
