@@ -25,6 +25,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.query.Selection;
+import com.metabroadcast.common.webapp.http.CacheHeaderWriter;
 
 @Controller
 public class SiteMapController {
@@ -36,6 +37,7 @@ public class SiteMapController {
     private final SiteMapIndexOutputter indexOutputter = new SiteMapIndexOutputter();
     private final String defaultHost;
     private final ApplicationConfigurationIncludingQueryBuilder queryBuilder;
+    private final CacheHeaderWriter cacheHeaderWriter = CacheHeaderWriter.neverCache();
 
     public SiteMapController(KnownTypeQueryExecutor queryExecutor, ApplicationConfigurationIncludingQueryBuilder queryBuilder, String defaultHost) {
 		this.queryExecutor = queryExecutor;
@@ -48,6 +50,7 @@ public class SiteMapController {
 		ContentQuery query = queryBuilder.build(request);
         List<Identified> brands = queryExecutor.executeUriQuery(uris(request,query), query);
 		response.setStatus(HttpServletResponse.SC_OK);
+        cacheHeaderWriter.writeHeaders(request, response);
 		outputter.output(Iterables.filter(brands, Item.class), response.getOutputStream());
 		return null;
 	}
@@ -72,6 +75,7 @@ public class SiteMapController {
 
 		});
 		response.setStatus(HttpServletResponse.SC_OK);
+		cacheHeaderWriter.writeHeaders(request, response);
 		indexOutputter.output(refs, response.getOutputStream());
 		return null;
 	}
