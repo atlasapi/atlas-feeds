@@ -89,7 +89,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
     protected String buildEntryValue(Iterable<? extends FTPUploadResult> results) {
         StringBuilder builder = new StringBuilder("<table>");
-        for (FTPUploadResult result : Iterables.limit(FTPUploadResult.TYPE_ORDERING.immutableSortedCopy(results),2)) {
+        for (FTPUploadResult result : Iterables.limit(results,2)) {
             appendResult(builder, result);
         }
         return builder.append("</table>").toString();
