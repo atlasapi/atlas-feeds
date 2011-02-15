@@ -82,7 +82,7 @@ public class CachingFTPUploadResultStore implements RadioPlayerFTPUploadResultSt
         this.cache = new MapMaker().softValues().expireAfterAccess(30, TimeUnit.MINUTES).makeComputingMap(new Function<RadioPlayerServiceDay, Set<RadioPlayerUploadResultWrapper>>() {
             @Override
             public Set<RadioPlayerUploadResultWrapper> apply(RadioPlayerServiceDay serviceDay) {
-                return ImmutableSet.copyOf(Iterables.transform(delegate.resultsFor(serviceDay.service, serviceDay.day), wrap));
+                return Sets.newHashSet(Iterables.transform(delegate.resultsFor(serviceDay.service, serviceDay.day), wrap));
             }
         });
     }
