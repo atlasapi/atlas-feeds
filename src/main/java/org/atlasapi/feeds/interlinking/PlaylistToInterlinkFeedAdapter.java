@@ -41,6 +41,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         channelLookup.put("http://www.channel4.com", "C4");
         channelLookup.put("http://www.channel4.com/more4", "M4");
         channelLookup.put("http://www.e4.com", "E4");
+        channelLookup.put("http://film4.com", "F4");
+        channelLookup.put("http://www.4music.com", "4M");
         return channelLookup;
     }
 	

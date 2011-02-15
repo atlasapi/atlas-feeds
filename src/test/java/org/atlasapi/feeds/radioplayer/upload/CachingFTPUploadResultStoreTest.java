@@ -4,7 +4,6 @@ import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadRes
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 import java.util.Set;
 
