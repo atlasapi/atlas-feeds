@@ -32,7 +32,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
     protected static final Pattern SYNTHESIZED_PATTERN = Pattern.compile("http://www.channel4.com/programmes/synthesized/[^/]+/(\\d+)");
     
     public C4PlaylistToInterlinkFeedAdapter(final ContentResolver resolver) {
-    	seriesLookup = new MapMaker().expiration(10, TimeUnit.MINUTES).makeComputingMap(new Function<String, Series>() {
+    	seriesLookup = new MapMaker().expireAfterAccess(10, TimeUnit.MINUTES).makeComputingMap(new Function<String, Series>() {
 			@Override
 			public Series apply(String uri) {
 				return (Series) resolver.findByCanonicalUri(uri);
@@ -76,11 +76,11 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
     	if (description instanceof Series) {
     	    description = seriesLookup.get(description.getCanonicalUri());
     	}
-    	for (String alias : description.getAliases()) {
-			if (alias.startsWith("tag:www.channel4.com") || alias.startsWith("urn:tag:www.channel4.com")) {
-				return alias;
-			}
-		}
+//    	for (String alias : description.getAliases()) {
+//			if (alias.startsWith("tag:www.channel4.com") || alias.startsWith("urn:tag:www.channel4.com")) {
+//				return alias;
+//			}
+//		}
     	return description.getCanonicalUri();
     }
     
