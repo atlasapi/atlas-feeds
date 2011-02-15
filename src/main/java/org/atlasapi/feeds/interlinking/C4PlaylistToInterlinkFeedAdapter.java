@@ -76,11 +76,11 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
     	if (description instanceof Series) {
     	    description = seriesLookup.get(description.getCanonicalUri());
     	}
-//    	for (String alias : description.getAliases()) {
-//			if (alias.startsWith("tag:www.channel4.com") || alias.startsWith("urn:tag:www.channel4.com")) {
-//				return alias;
-//			}
-//		}
+    	for (String alias : description.getAliases()) {
+			if (alias.startsWith("tag:www.channel4.com") || alias.startsWith("urn:tag:www.channel4.com")) {
+				return alias;
+			}
+		}
     	return description.getCanonicalUri();
     }
     
