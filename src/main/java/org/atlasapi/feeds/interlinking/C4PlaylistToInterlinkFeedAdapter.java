@@ -42,15 +42,15 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
     
     @Override
     protected String broadcastId(Broadcast broadcast) {
-        if(broadcast.getId() != null) {
-            return broadcast.getId();
-        }
     	for (String alias : broadcast.getAliases()) {
 			Matcher matcher = BROADCAST_ID_PATTERN.matcher(alias);
 			if (matcher.matches()) {
 				return matcher.group(1);
 			}
 		}
+    	if(broadcast.getId() != null) {
+    	    return broadcast.getId();
+    	}
     	return super.broadcastId(broadcast);
     }
     
