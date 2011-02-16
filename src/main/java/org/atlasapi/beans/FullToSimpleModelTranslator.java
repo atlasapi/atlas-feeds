@@ -118,7 +118,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	static org.atlasapi.media.entity.simple.Person simplePersonFrom(Person fullPerson) {
 		org.atlasapi.media.entity.simple.Person person = new org.atlasapi.media.entity.simple.Person();
 		copyDescriptionAttributesTo(fullPerson, person);
-		person.setName(fullPerson.getName());
+		person.setName(fullPerson.name());
 		return person;
 	}
 
