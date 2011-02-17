@@ -27,14 +27,14 @@ import com.google.common.io.Resources;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.scheduling.RepetitionRules;
-import com.metabroadcast.common.scheduling.RepetitionRules.RepetitionInterval;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
+import com.metabroadcast.common.scheduling.RepetitionRules.Every;
 import com.metabroadcast.common.webapp.health.HealthController;
 
 @Configuration
 public class RadioPlayerModule {
 
-	private static final RepetitionInterval UPLOAD = RepetitionRules.atInterval(new Duration(5 * 60 * 60 * 1000));
+	private static final Every UPLOAD = RepetitionRules.every(new Duration(5 * 60 * 60 * 1000));
 
 	private @Autowired @Qualifier("mongoDbQueryExcutorThatFiltersUriQueries") KnownTypeQueryExecutor queryExecutor;
 	
