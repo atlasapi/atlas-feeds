@@ -93,9 +93,12 @@ public class InterlinkFeedOutputter {
 	}
 	
 	private String service(String service) {
-	    //service = service.toLowerCase();
-	    //if ("c4".equals(service)) return "channel4";
-	    //if ("m4".equals(service)) return "more4";
+	    service = service.toLowerCase();
+	    if ("c4".equals(service)) return "channel4";
+	    if ("m4".equals(service)) return "more4";
+	    if ("f4".equals(service)) return "film4";
+	    if ("e4".equals(service)) return "e4";
+	    if ("4m".equals(service)) return "4music";
 	    return service;
 	}
 	
