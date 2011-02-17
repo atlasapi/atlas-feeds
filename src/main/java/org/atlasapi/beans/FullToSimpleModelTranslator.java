@@ -5,11 +5,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.atlasapi.media.entity.Actor;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Countries;
+import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
@@ -84,11 +86,27 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 		outputWriter.writeTo(ImmutableSet.of((Object) outputGraph), stream);
 	}
 	
-	static org.atlasapi.media.entity.simple.Person simplePersonFrom(Person fullPerson) {
-		org.atlasapi.media.entity.simple.Person person = new org.atlasapi.media.entity.simple.Person();
-		copyDescriptionAttributesTo(fullPerson, person);
-		person.setName(fullPerson.getName());
-		return person;
+	private static org.atlasapi.media.entity.simple.Person simplePersonFrom(Person fullPerson) {
+	    if (fullPerson instanceof Actor) {
+	        Actor fullActor = (Actor) fullPerson;
+	        org.atlasapi.media.entity.simple.Actor actor = new org.atlasapi.media.entity.simple.Actor();
+	        copyPersonAttributesTo(fullPerson, actor);
+	        actor.withCharacter(fullActor.character());
+	        return actor;
+	    } else if (fullPerson instanceof CrewMember){
+	        CrewMember fullCrew = (CrewMember) fullPerson;
+            org.atlasapi.media.entity.simple.CrewMember crew = new org.atlasapi.media.entity.simple.CrewMember();
+            copyPersonAttributesTo(fullCrew, crew);
+            crew.withRole(fullCrew.role().key());
+            return crew;
+	    }
+	    return null;
+	}
+	
+	private static void copyPersonAttributesTo(Person fullPerson, org.atlasapi.media.entity.simple.Person person) {
+	    copyDescriptionAttributesTo(fullPerson, person);
+	    person.setName(fullPerson.name());
+	    person.setProfileLink(fullPerson.profileLink());
 	}
 
 	static org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Playlist fullPlayList, Set<Object> processed) {
@@ -150,6 +168,15 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 		for (Version version : fullItem.getVersions()) {
 			addTo(simpleItem, version);
 		}
+		
+		Set<org.atlasapi.media.entity.simple.Person> people = Sets.newHashSet();
+		for (Person person : fullItem.people()) {
+		    org.atlasapi.media.entity.simple.Person simplePerson = simplePersonFrom(person);
+		    if (simplePerson != null) {
+		        people.add(simplePerson);
+		    }
+		}
+		simpleItem.setPeople(people);
 		
 		copyProperties(fullItem, simpleItem);
 		
