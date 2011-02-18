@@ -86,13 +86,11 @@ public class FullToSimpleModelTranslator implements BeanGraphWriter {
 	}
 	
 	private static org.atlasapi.media.entity.simple.Person simplePersonFrom(CrewMember fullCrew) {
-	    org.atlasapi.media.entity.simple.Person person = null;
+	    org.atlasapi.media.entity.simple.Person person = new org.atlasapi.media.entity.simple.Person();
 	    
 	    if (fullCrew instanceof Actor) {
 	        Actor fullActor = (Actor) fullCrew;
-	        person = new org.atlasapi.media.entity.simple.Actor().withCharacter(fullActor.character());
-	    } else {
-	        person = new org.atlasapi.media.entity.simple.CrewMember();
+	        person.setCharacter(fullActor.character());
 	    }
 	    
 	    copyDescriptionAttributesTo(fullCrew, person);
