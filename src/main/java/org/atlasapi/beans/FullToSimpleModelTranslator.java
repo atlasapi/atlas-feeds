@@ -22,7 +22,6 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
-import org.atlasapi.media.entity.Person;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
@@ -119,27 +118,22 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    return newScheduleChannel;
 	}
 	
-	private static org.atlasapi.media.entity.simple.Person simplePersonFrom(Person fullPerson) {
-	    if (fullPerson instanceof Actor) {
-	        Actor fullActor = (Actor) fullPerson;
-	        org.atlasapi.media.entity.simple.Actor actor = new org.atlasapi.media.entity.simple.Actor();
-	        copyPersonAttributesTo(fullPerson, actor);
-	        actor.withCharacter(fullActor.character());
-	        return actor;
-	    } else if (fullPerson instanceof CrewMember){
-	        CrewMember fullCrew = (CrewMember) fullPerson;
-            org.atlasapi.media.entity.simple.CrewMember crew = new org.atlasapi.media.entity.simple.CrewMember();
-            copyPersonAttributesTo(fullCrew, crew);
-            crew.withRole(fullCrew.role().key());
-            return crew;
+	private static org.atlasapi.media.entity.simple.Person simplePersonFrom(CrewMember fullCrew) {
+	    org.atlasapi.media.entity.simple.Person person = null;
+	    
+	    if (fullCrew instanceof Actor) {
+	        Actor fullActor = (Actor) fullCrew;
+	        person = new org.atlasapi.media.entity.simple.Actor().withCharacter(fullActor.character());
+	    } else {
+	        person = new org.atlasapi.media.entity.simple.CrewMember();
 	    }
-	    return null;
-	}
-	
-	private static void copyPersonAttributesTo(Person fullPerson, org.atlasapi.media.entity.simple.Person person) {
-	    copyDescriptionAttributesTo(fullPerson, person);
-	    person.setName(fullPerson.name());
-	    person.setProfileLink(fullPerson.profileLink());
+	    
+	    copyDescriptionAttributesTo(fullCrew, person);
+	    person.setName(fullCrew.name());
+	    person.setProfileLinks(fullCrew.profileLinks());
+	    person.setRole(fullCrew.role().key());
+        
+	    return person;
 	}
 
 	private static org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Container<?> fullPlayList) {
@@ -221,8 +215,8 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		}
 		
 		Set<org.atlasapi.media.entity.simple.Person> people = Sets.newHashSet();
-		for (Person person : fullItem.people()) {
-		    org.atlasapi.media.entity.simple.Person simplePerson = simplePersonFrom(person);
+		for (CrewMember crew : fullItem.people()) {
+		    org.atlasapi.media.entity.simple.Person simplePerson = simplePersonFrom(crew);
 		    if (simplePerson != null) {
 		        people.add(simplePerson);
 		    }
