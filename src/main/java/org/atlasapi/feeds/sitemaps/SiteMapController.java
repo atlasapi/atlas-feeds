@@ -15,6 +15,7 @@ import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.content.criteria.operator.Operators;
 import org.atlasapi.media.TransportType;
+import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
@@ -29,6 +30,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.common.webapp.http.CacheHeaderWriter;
@@ -57,10 +59,21 @@ public class SiteMapController {
         SitemapHackHttpRequest hackedRequest = new SitemapHackHttpRequest(request, brandUri);
 
         ContentQuery query = queryBuilder.build(hackedRequest);
-        List<Identified> brands = queryExecutor.executeUriQuery(uris(hackedRequest, query), query);
+        List<Identified> content = queryExecutor.executeUriQuery(uris(hackedRequest, query), query);
+        if (content.isEmpty()) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return null;
+        }
+        
+        List<Item> contents = Lists.newArrayList();
+        List<Brand> brands = ImmutableList.copyOf(Iterables.filter(content, Brand.class));
+        for (Brand brand: brands) {
+            contents.addAll(brand.getContents());
+        }
+        
         response.setStatus(HttpServletResponse.SC_OK);
         cacheHeaderWriter.writeHeaders(hackedRequest, response);
-        outputter.output(Iterables.filter(brands, Item.class), response.getOutputStream());
+        outputter.output(contents, response.getOutputStream());
         return null;
     }
 
