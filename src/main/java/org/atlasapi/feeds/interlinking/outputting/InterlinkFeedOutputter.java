@@ -177,7 +177,7 @@ public class InterlinkFeedOutputter {
 			    mrssContent.appendChild(stringElement("index", NS_ILINK, String.valueOf(content.indexWithinParent())));
 			}
 		}
-		if (content.title().matches("Episode \\d+")) {
+		if (! Strings.isNullOrEmpty(content.title()) && content.title().matches("Episode \\d+")) {
 			mrssContent.appendChild(stringElement("presentation_title", NS_ILINK, content.title()));
 		}
 		if (content.thumbnail() != null) {

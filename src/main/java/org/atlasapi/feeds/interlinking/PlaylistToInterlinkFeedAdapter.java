@@ -27,6 +27,7 @@ import org.joda.time.Duration;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.text.Truncator;
@@ -134,10 +135,14 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 
 	private String extractSeriesTitle(Series series) {
 		String title = series.getTitle();
-		Pattern pattern = Pattern.compile(".*(Series\\s*\\d+).*");
-		Matcher match = pattern.matcher(title);
-		if(match.matches()) {
-			return match.group(1);
+		if (! Strings.isNullOrEmpty(title)) {
+    		Pattern pattern = Pattern.compile(".*(Series\\s*\\d+).*");
+    		Matcher match = pattern.matcher(title);
+    		if(match.matches()) {
+    			return match.group(1);
+    		}
+		} else if (series.getSeriesNumber() != null && series.getSeriesNumber() > 0) {
+		    return "Series "+series.getSeriesNumber();
 		}
 		return title;
 	}

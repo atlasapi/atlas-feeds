@@ -24,7 +24,7 @@ import com.google.common.collect.MapMaker;
 
 public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAdapter {
     
-    private static final Pattern BROADCAST_ID_PATTERN = Pattern.compile("(?:urn:)?(tag:www\\.channel4\\.com.*)");
+    private static final Pattern BROADCAST_ID_PATTERN = Pattern.compile("(?:urn:)?(tag:www\\.[channel4|e4]\\.com.*)");
     private static Set<String> BROADCAST_SERVICES = ImmutableSet.of(CHANNEL_FOUR.uri(), E_FOUR.uri(), MORE_FOUR.uri(), FOUR_MUSIC.uri(), FILM_4.uri());
     
     private final ConcurrentMap<String, Series> seriesLookup;
