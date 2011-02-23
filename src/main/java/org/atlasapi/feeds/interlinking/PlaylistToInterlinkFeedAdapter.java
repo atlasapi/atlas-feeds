@@ -84,7 +84,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
                 InterlinkSeries linkSeries = null;
                 if (item instanceof Episode) {
                     Episode episode = (Episode) item;
-                    Series series = episode.getSeriesSummary();
+                    Series series = episode.getSeries();
                     if (series != null && containerQualifies(from, to, series)) {
                         linkSeries = seriesLookup.get(series.getCanonicalUri());
                         if (linkSeries == null) {
