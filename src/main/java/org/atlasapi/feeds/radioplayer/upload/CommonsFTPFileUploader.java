@@ -23,10 +23,21 @@ public class CommonsFTPFileUploader implements FTPFileUploader {
     }
 
     @Override
-    public FTPUploadResult upload(FTPUpload upload) {
+    public FTPUploadResult upload(FTPUpload upload) throws Exception {
         return attemptUpload(upload);
     }
+    
+    private FTPUploadResult attemptUpload(FTPUpload upload) throws InterruptedException {
+        FTPUploadResult uploadResult = doUpload(upload);
 
+        for (int i = 0; i < UPLOAD_ATTEMPTS && !uploadResult.type().equals(FTPUploadResultType.SUCCESS); i++) {
+            Thread.sleep(RECONNECT_DELAY.getMillis());
+            uploadResult = doUpload(upload);
+        }
+
+        return uploadResult;
+    }
+    
     public FTPUploadResult doUpload(FTPUpload upload) {
         String filename = upload.getFilename();
         FTPClient client = tryToConnectAndLogin();
@@ -55,29 +66,6 @@ public class CommonsFTPFileUploader implements FTPFileUploader {
         }
     }
 
-    public void disconnectQuietly(FTPClient client) {
-        try {
-            client.disconnect();
-        } catch (IOException e) {
-            // ignore failure...
-        }
-    }
-
-    private FTPUploadResult attemptUpload(FTPUpload upload) {
-        FTPUploadResult uploadResult = doUpload(upload);
-
-        for (int i = 0; i < UPLOAD_ATTEMPTS && !uploadResult.type().equals(FTPUploadResultType.SUCCESS); i++) {
-            try {
-                Thread.sleep(RECONNECT_DELAY.getMillis());
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            uploadResult = doUpload(upload);
-        }
-
-        return uploadResult;
-    }
-
     private FTPClient tryToConnectAndLogin() {
         try {
             FTPClient client = new FTPClient();
@@ -97,8 +85,16 @@ public class CommonsFTPFileUploader implements FTPFileUploader {
             }
 
             return client;
-        } catch (Exception e) {
+        } catch (IOException e) {
             return null;
+        }
+    }
+
+    public void disconnectQuietly(FTPClient client) {
+        try {
+            client.disconnect();
+        } catch (IOException e) {
+            // ignore failure...
         }
     }
 

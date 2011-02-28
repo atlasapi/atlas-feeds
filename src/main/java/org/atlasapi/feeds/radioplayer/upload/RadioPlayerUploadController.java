@@ -38,8 +38,9 @@ public class RadioPlayerUploadController {
 
     private RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner;
 
-    public RadioPlayerUploadController(FTPFileUploader uploader, DayRangeGenerator rangedGenerator, RadioPlayerXMLValidator validator, AdapterLog log) {
+    public RadioPlayerUploadController(FTPFileUploader uploader, RadioPlayerRecordingExecutor radioPlayerRecordingExecutor, DayRangeGenerator rangedGenerator, RadioPlayerXMLValidator validator, AdapterLog log) {
         this.uploader = uploader;
+        radioPlayerUploadTaskRunner = radioPlayerRecordingExecutor;
         this.rangedGenerator = rangedGenerator;
         this.validator = validator;
         this.log = log;
@@ -83,11 +84,6 @@ public class RadioPlayerUploadController {
     @RequestMapping("feeds/ukradioplayer/upload/{id}")
     public String uploadDays(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String serviceId) throws IOException {
         return uploadDay(request, response, serviceId, null);
-    }
-
-    public RadioPlayerUploadController withUploadExecutor(RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner) {
-        this.radioPlayerUploadTaskRunner = radioPlayerUploadTaskRunner;
-        return this;
     }
 
 }

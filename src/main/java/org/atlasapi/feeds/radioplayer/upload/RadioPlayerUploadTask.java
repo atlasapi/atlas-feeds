@@ -7,7 +7,8 @@ import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.WARN;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.persistence.logging.AdapterLog;
@@ -64,7 +65,7 @@ public class RadioPlayerUploadTask implements Runnable {
             }
         }
 
-        ExecutorCompletionService<RadioPlayerFTPUploadResult> results = executor.submit(uploadTasks);
+        LinkedBlockingQueue<Future<RadioPlayerFTPUploadResult>> results = executor.submit(uploadTasks);
 
         int successes = 0;
         for (int i = 0; i < uploadTasks.size(); i++) {
@@ -73,7 +74,7 @@ public class RadioPlayerUploadTask implements Runnable {
                 if (SUCCESS.equals(result.type())) {
                     successes++;
                 }
-            } catch (InterruptedException e) {
+            }catch (InterruptedException e) {
                 log("Radioplayer Uploader interrupted waiting for result.", WARN, e);
             } catch (ExecutionException e) {
                 log("Radioplayer Uploader exception retrieving result", WARN, e);
