@@ -17,9 +17,12 @@ import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerBroadcastItem;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerProgrammeInformationOutputter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Channel;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -36,19 +39,21 @@ import com.metabroadcast.common.time.DateTimeZones;
 public abstract class RadioPlayerFeedCompiler {
     
     private final RadioPlayerXMLOutputter outputter;
-    private final KnownTypeQueryExecutor executor;
+    protected final KnownTypeQueryExecutor executor;
+    protected final ScheduleResolver scheduleResolver;
 
-    public RadioPlayerFeedCompiler(RadioPlayerXMLOutputter outputter, KnownTypeQueryExecutor executor) {
+    public RadioPlayerFeedCompiler(RadioPlayerXMLOutputter outputter, KnownTypeQueryExecutor executor, ScheduleResolver scheduleResolver) {
         this.outputter = outputter;
         this.executor = executor;
+        this.scheduleResolver = scheduleResolver;
     }
     
     private static Map<String, RadioPlayerFeedCompiler> compilerMap;
     
-    public static void init(KnownTypeQueryExecutor queryExecutor) {
+    public static void init(KnownTypeQueryExecutor queryExecutor, ScheduleResolver scheduleResolver) {
         compilerMap = ImmutableMap.of(
-                "PI",new RadioPlayerProgrammeInformationFeedCompiler(queryExecutor),
-                "OD",new RadioPlayerOnDemandFeedCompiler(queryExecutor));
+                "PI",new RadioPlayerProgrammeInformationFeedCompiler(queryExecutor, scheduleResolver),
+                "OD",new RadioPlayerOnDemandFeedCompiler(queryExecutor, scheduleResolver));
     }
     
     public static RadioPlayerFeedCompiler valueOf(String type) {
@@ -56,40 +61,35 @@ public abstract class RadioPlayerFeedCompiler {
     }
 	
     private static class RadioPlayerProgrammeInformationFeedCompiler extends RadioPlayerFeedCompiler {
-        public RadioPlayerProgrammeInformationFeedCompiler(KnownTypeQueryExecutor executor) {
-            super(new RadioPlayerProgrammeInformationOutputter(), executor);
+        public RadioPlayerProgrammeInformationFeedCompiler(KnownTypeQueryExecutor executor, ScheduleResolver scheduleResolver) {
+            super(new RadioPlayerProgrammeInformationOutputter(), executor, scheduleResolver);
         }
 
         @Override
-        public ContentQuery queryFor(LocalDate day, String serviceUri) {
+        public List<Item> queryFor(LocalDate day, String serviceUri) {
             DateTime date = day.toDateTimeAtStartOfDay(DateTimeZones.UTC);
-            Iterable<AtomicQuery> queryAtoms = ImmutableSet.of((AtomicQuery)
-                    Attributes.DESCRIPTION_PUBLISHER.createQuery(Operators.EQUALS, ImmutableList.of(Publisher.BBC)),
-                    Attributes.BROADCAST_ON.createQuery(Operators.EQUALS, ImmutableList.of(serviceUri)),
-                    Attributes.BROADCAST_TRANSMISSION_TIME.createQuery(Operators.AFTER, ImmutableList.of(date.minusMillis(1))),
-                    Attributes.BROADCAST_TRANSMISSION_TIME.createQuery(Operators.BEFORE, ImmutableList.of(date.plusDays(1)))
-            );
-
-            return new ContentQuery(queryAtoms);
+            Channel channel = Channel.fromUri(serviceUri).requireValue();
+            Schedule schedule = scheduleResolver.schedule(date.minusMillis(1), date.plusDays(1), ImmutableSet.of(channel), ImmutableSet.of(Publisher.BBC));
+            return Iterables.getOnlyElement(schedule.scheduleChannels()).items();
         }
     }
     
     private static class RadioPlayerOnDemandFeedCompiler extends RadioPlayerFeedCompiler {
-        public RadioPlayerOnDemandFeedCompiler(KnownTypeQueryExecutor executor) {
-            super(null, executor);
+        public RadioPlayerOnDemandFeedCompiler(KnownTypeQueryExecutor executor, ScheduleResolver scheduleResolver) {
+            super(null, executor, scheduleResolver);
         }
 
         @Override
-        public ContentQuery queryFor(LocalDate broadcastOn, String serviceUri) {
+        public List<Item> queryFor(LocalDate broadcastOn, String serviceUri) {
             Iterable<AtomicQuery> queryAtoms = ImmutableSet.of((AtomicQuery)
                     Attributes.BROADCAST_ON.createQuery(Operators.EQUALS, ImmutableList.of(serviceUri)),
                     Attributes.LOCATION_AVAILABLE.createQuery(Operators.EQUALS, ImmutableList.of(Boolean.TRUE))
             );
-            return new ContentQuery(queryAtoms);
+            return ImmutableList.copyOf(Iterables.filter(executor.discover(new ContentQuery(queryAtoms)), Item.class));
         }
     }
 
-	public abstract ContentQuery queryFor(LocalDate date, String serviceUri);
+	public abstract List<Item> queryFor(LocalDate date, String serviceUri);
 	
     public RadioPlayerXMLOutputter getOutputter() {
         if (outputter == null) {
@@ -101,7 +101,7 @@ public abstract class RadioPlayerFeedCompiler {
     public void compileFeedFor(LocalDate day, RadioPlayerService service, OutputStream out) throws IOException {
         if (outputter != null) {
             String serviceUri = service.getServiceUri();
-            List<Item> items = executor.schedule(queryFor(day, serviceUri)).getItemsFromOnlyChannel();
+            List<Item> items = queryFor(day, serviceUri);
             if (items.isEmpty()) {
                 throw new NoItemsException(day, service);
             }

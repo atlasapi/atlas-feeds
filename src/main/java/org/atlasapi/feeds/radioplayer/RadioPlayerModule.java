@@ -14,6 +14,7 @@ import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTask;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerXMLValidator;
+import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
@@ -37,8 +38,8 @@ import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.scheduling.RepetitionRules;
-import com.metabroadcast.common.scheduling.RepetitionRules.Every;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
+import com.metabroadcast.common.scheduling.RepetitionRules.Every;
 import com.metabroadcast.common.time.DayRangeGenerator;
 import com.metabroadcast.common.webapp.health.HealthController;
 
@@ -60,6 +61,7 @@ public class RadioPlayerModule {
 	private @Autowired AdapterLog log;
 	private @Autowired DatabasedMongo mongo;
 	private @Autowired HealthController health;
+	private @Autowired ScheduleResolver scheduleResolver;
 	
 	private static DayRangeGenerator dayRangeGenerator = new DayRangeGenerator().withLookAhead(7).withLookBack(7);
 
@@ -101,7 +103,7 @@ public class RadioPlayerModule {
     
 	@PostConstruct 
 	public void scheduleTasks() {
-	    RadioPlayerFeedCompiler.init(queryExecutor);
+	    RadioPlayerFeedCompiler.init(queryExecutor, scheduleResolver);
 		if (Boolean.parseBoolean(upload)) {
 		    FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
 		    

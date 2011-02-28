@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
 import org.apache.ftpserver.FtpServer;
@@ -24,13 +25,13 @@ import org.apache.ftpserver.ftplet.UserManager;
 import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
-import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Channel;
 import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
@@ -40,6 +41,7 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.SystemOutAdapterLog;
 import org.hamcrest.Description;
@@ -50,6 +52,8 @@ import org.jmock.Mockery;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.base.Function;
@@ -65,58 +69,68 @@ public class RadioPlayerFileUploaderTest {
 
     private static final String TEST_PASSWORD = "testpassword";
 	private static final String TEST_USERNAME = "test";
+	
+	private final Mockery context = new Mockery();
+	private final KnownTypeQueryExecutor queryExecutor = context.mock(KnownTypeQueryExecutor.class);            
+	private final ScheduleResolver scheduleResolver = context.mock(ScheduleResolver.class);
+	private final RadioPlayerFTPUploadResultStore recorder = context.mock(RadioPlayerFTPUploadResultStore.class);
+	
+	private final RadioPlayerService service = RadioPlayerServices.all.get("340");
+    private final DateTime day = new DateTime(DateTimeZones.UTC);
+    private final Channel channel = Channel.fromUri(service.getServiceUri()).requireValue();
+    private final Set<Channel> channels = ImmutableSet.of(channel);
+    private final Set<Publisher> publishers = ImmutableSet.of(Publisher.BBC);
 
 	private static File dir;
 
 	private FtpServer server;
+	
+	@Before
+	public void setUp() throws Exception {
+	    dir = Files.createTempDir();
+        dir.deleteOnExit();
+
+        File files = new File(dir.getAbsolutePath() + File.separator + "files");
+        files.mkdir();
+
+        startServer();
+	}
+	
+	@After
+	public void shutdown() throws Exception {
+	    server.stop();
+	}
 
 	@Test
 	public void testRun() throws Exception {
-		try {
-			dir = Files.createTempDir();
-			dir.deleteOnExit();
+	    Map<Channel, List<Item>> channelMap = Maps.newHashMap();
+	    channelMap.put(channel, ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1))));
+	    
+	    final Schedule schedule = Schedule.fromChannelMap(channelMap, new Interval(day, day.plusDays(1)));
+		context.checking(new Expectations(){{
+		    oneOf(scheduleResolver).schedule(with(any(DateTime.class)), with(any(DateTime.class)), with(channels), with(publishers)); will(returnValue(schedule));
+		    oneOf(recorder).record(with(successfulUploadResult()));
+		    oneOf(recorder).record(with(successfulUploadResult()));
+		}});
+		
+		RadioPlayerFeedCompiler.init(queryExecutor, scheduleResolver);
+		
+        ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
+		FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
+		FTPFileUploader fileUploader = new CommonsFTPFileUploader(credentials);
+		
+		RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(fileUploader, new RadioPlayerRecordingExecutor(recorder), services, new DayRangeGenerator())
+		    .withLog(new SystemOutAdapterLog());
 
-			File files = new File(dir.getAbsolutePath() + File.separator + "files");
-			files.mkdir();
+		Executor executor = MoreExecutors.sameThreadExecutor();
+		executor.execute(uploader);
+		
+		Map<String, File> uploaded = uploadedFiles();
+		assertThat(uploaded.size(), is(equalTo(1)));
 
-			startServer();
-
-			final RadioPlayerService service = RadioPlayerServices.all.get("340");
-			final DateTime day = new DateTime(DateTimeZones.UTC);
-
-			Mockery context = new Mockery();
-			final KnownTypeQueryExecutor queryExecutor = context.mock(KnownTypeQueryExecutor.class);            
-			final RadioPlayerFTPUploadResultStore recorder = context.mock(RadioPlayerFTPUploadResultStore.class);
-			
-			context.checking(new Expectations(){{
-			    oneOf(queryExecutor).schedule(with(any(ContentQuery.class))); 
-			    will(returnValue(Schedule.fromItems(ImmutableList.of(service.getServiceUri()), new Interval(day, day.plusDays(1)), ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1))))));
-			    oneOf(recorder).record(with(successfulUploadResult()));
-			    oneOf(recorder).record(with(successfulUploadResult()));
-			}});
-			
-			RadioPlayerFeedCompiler.init(queryExecutor);
-			
-            ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
-			FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
-			FTPFileUploader fileUploader = new CommonsFTPFileUploader(credentials);
-			
-			RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(fileUploader, new RadioPlayerRecordingExecutor(recorder), services, new DayRangeGenerator())
-			    .withLog(new SystemOutAdapterLog());
-
-			Executor executor = MoreExecutors.sameThreadExecutor();
-			executor.execute(uploader);
-			
-			Map<String, File> uploaded = uploadedFiles();
-			assertThat(uploaded.size(), is(equalTo(1)));
-
-			String filename = String.format("%4d%02d%02d_340_PI.xml", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth());
-			assertThat(uploaded.keySet(), hasItem(filename));
-			assertThat(uploaded.get(filename).length(), greaterThan(0L));
-
-		} finally {
-			server.stop();
-		}
+		String filename = String.format("%4d%02d%02d_340_PI.xml", day.getYear(), day.getMonthOfYear(), day.getDayOfMonth());
+		assertThat(uploaded.keySet(), hasItem(filename));
+		assertThat(uploaded.get(filename).length(), greaterThan(0L));
 	}
 
     private Map<String, File> uploadedFiles() {
