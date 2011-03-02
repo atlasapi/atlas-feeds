@@ -70,9 +70,12 @@ public class RadioPlayerUploadTask implements Runnable {
         int successes = 0;
         for (int i = 0; i < uploadTasks.size(); i++) {
             try {
-                RadioPlayerFTPUploadResult result = results.take().get();
-                if (SUCCESS.equals(result.type())) {
-                    successes++;
+                Future<RadioPlayerFTPUploadResult> futureResult = results.take();
+                if(!futureResult.isCancelled()) {
+                    RadioPlayerFTPUploadResult result = futureResult.get();
+                    if (SUCCESS.equals(result.type())) {
+                        successes++;
+                    }
                 }
             }catch (InterruptedException e) {
                 log("Radioplayer Uploader interrupted waiting for result.", WARN, e);
