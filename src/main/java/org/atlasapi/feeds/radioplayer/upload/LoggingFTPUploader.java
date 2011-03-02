@@ -17,7 +17,7 @@ public class LoggingFTPUploader implements FTPFileUploader {
     }
 
     @Override
-    public FTPUploadResult upload(FTPUpload upload) {
+    public FTPUploadResult upload(FTPUpload upload) throws Exception {
         FTPUploadResult result = delegate.upload(upload);
         if (FAILURE.equals(result.type())) {
             log(result);

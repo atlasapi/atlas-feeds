@@ -74,7 +74,7 @@ public class RadioPlayerModule {
     }
     
     public @Bean RadioPlayerUploadController radioPlayerUploadController() {
-        return new RadioPlayerUploadController(radioPlayerFileUploader(), dayRangeGenerator, radioPlayerValidator(), log);
+        return new RadioPlayerUploadController(radioPlayerFileUploader(), radioPlayerUploadTaskRunner(), dayRangeGenerator, radioPlayerValidator(), log);
     }
     
     @Bean FTPFileUploader radioPlayerFileUploader(){
@@ -101,6 +101,10 @@ public class RadioPlayerModule {
         }
     }
     
+    @Bean RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner() {
+        return new RadioPlayerRecordingExecutor(uploadResultRecorder());
+    }
+    
 	@PostConstruct 
 	public void scheduleTasks() {
 	    RadioPlayerFeedCompiler.init(queryExecutor, scheduleResolver);
@@ -109,17 +113,13 @@ public class RadioPlayerModule {
 		    
 		    createHealthProbes(credentials);
 			
-			RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner = new RadioPlayerRecordingExecutor(uploadResultRecorder());
-			
-			radioPlayerUploadController().withUploadExecutor(radioPlayerUploadTaskRunner);
-			
-            RadioPlayerUploadTask bihourly = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner, uploadServices(), dayRangeGenerator)
+            RadioPlayerUploadTask bihourly = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner(), uploadServices(), dayRangeGenerator)
 			    .withValidator(radioPlayerValidator())
 			    .withLog(log);
             
             scheduler.schedule(bihourly, UPLOAD_EVERY_TWO_HOURS);
             
-            RadioPlayerUploadTask today = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner, uploadServices(), new DayRangeGenerator())
+            RadioPlayerUploadTask today = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner(), uploadServices(), new DayRangeGenerator())
                 .withValidator(radioPlayerValidator())
                 .withLog(log);
             
@@ -133,7 +133,7 @@ public class RadioPlayerModule {
 		}
 	}
 
-    private Iterable<RadioPlayerService> uploadServices() {
+    @Bean Iterable<RadioPlayerService> uploadServices() {
         if (Strings.isNullOrEmpty(uploadServices) || uploadServices.toLowerCase().equals("all")) {
             return RadioPlayerServices.services;
         } else {
@@ -156,7 +156,7 @@ public class RadioPlayerModule {
         };
 
         health.addProbes(
-                Iterables.concat(Iterables.transform(RadioPlayerServices.services, createProbe),
+                Iterables.concat(Iterables.transform(uploadServices(), createProbe),
                 ImmutableList.of(new RadioPlayerServerHealthProbe(mongo, credentials)))
         );
     }

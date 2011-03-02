@@ -33,32 +33,40 @@ public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadRe
 
     @Override
     public RadioPlayerFTPUploadResult call() throws Exception {
+        return new RadioPlayerFTPUploadResult(compileAndUpload(), service, day);
+    }
+
+    private FTPUploadResult compileAndUpload() {
         String filename = String.format("%s_%s_PI.xml", day.toString("yyyyMMdd"), service.getRadioplayerId());
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             RadioPlayerFeedCompiler.valueOf("PI").compileFeedFor(day, service, out);
+            
             FTPFileUploader delegate = new LoggingFTPUploader(log, new ValidatingFTPFileUploader(validator, uploader));
-            return wrap(delegate.upload(new FTPUpload(filename, out.toByteArray())));
-        } catch (NoItemsException e) {
-            if( log != null) {
-                if (!day.isAfter(new LocalDate(DateTimeZones.UTC).plusDays(1)) && !service.getName().equals("5livesportsextra")) {
-                    log.record(new AdapterLogEntry(ERROR).withDescription("Exception uploading file " + filename).withSource(getClass()).withCause(e));
-                } else {
-                    log.record(new AdapterLogEntry(DEBUG).withDescription("Exception uploading file " + filename).withSource(getClass()).withCause(e));
-                }
-            }
-            return wrap(failedUpload(filename).withCause(e).withMessage(e.getMessage()));
+            return delegate.upload(new FTPUpload(filename, out.toByteArray()));
+            
+        } catch (InterruptedException e) {
+            log.record(new AdapterLogEntry(ERROR).withCause(e).withDescription("Upload of " + filename + " was interrupted").withSource(getClass()));
+            return failedUpload(filename).withCause(e).withMessage("Task timed-out");
+        }catch (NoItemsException e) {
+            logNotItemsException(filename, e);
+            return failedUpload(filename).withCause(e).withMessage(e.getMessage());
         } catch (Exception e) {
             if (log != null) {
                 log.record(new AdapterLogEntry(ERROR).withDescription("Exception uploading file " + filename).withSource(getClass()).withCause(e));
             }
-            return wrap(failedUpload(filename).withCause(e).withMessage(e.getMessage()));
+            return failedUpload(filename).withCause(e).withMessage(e.getMessage());
         }
-
     }
 
-    public RadioPlayerFTPUploadResult wrap(FTPUploadResult upload) {
-        return new RadioPlayerFTPUploadResult(upload, service, day);
+    private void logNotItemsException(String filename, NoItemsException e) {
+        if( log != null) {
+            if (!day.isAfter(new LocalDate(DateTimeZones.UTC).plusDays(1)) && !service.getName().equals("5livesportsextra")) {
+                log.record(new AdapterLogEntry(ERROR).withDescription("No items for " + filename).withSource(getClass()).withCause(e));
+            } else {
+                log.record(new AdapterLogEntry(DEBUG).withDescription("No items for " + filename).withSource(getClass()).withCause(e));
+            }
+        }
     }
 
     public RadioPlayerFTPUploadTask withValidator(RadioPlayerXMLValidator validator) {
