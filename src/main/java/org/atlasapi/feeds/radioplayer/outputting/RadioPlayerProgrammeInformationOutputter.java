@@ -94,7 +94,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
                     return brandTitle + " : " + title;
                 }
             }
-            Series series = ((Episode) item).getSeriesSummary();
+            Series series = ((Episode) item).getSeries();
             if (series != null && !Strings.isNullOrEmpty(series.getTitle())) {
                 String seriesTitle = series.getTitle();
                 if (!seriesTitle.equals(title)) {
