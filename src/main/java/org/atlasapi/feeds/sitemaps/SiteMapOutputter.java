@@ -150,24 +150,6 @@ public class SiteMapOutputter {
 		return titleTruncator.truncate(title);
 	}
 
-
-	private void c4playerLoc(Element videoElem, Item item, Location location) {
-		Element playerLocElem = createElement("player_loc", VIDEO);
-		playerLocElem.addAttribute(new Attribute("allow_embed","no"));
-		Container<?> brand = ((Episode)item).getContainer();
-		String playerLoc = "http://www.channel4.com/static/programmes/asset/flash/swf/4odplayer-4.71.swf?brandTitle="+
-							brand.getTitle()+ 
-							"&wsBrandTitle="+
-							brand.getCanonicalUri().substring(brand.getCanonicalUri().lastIndexOf('/')+1) +
-							"&primaryColor=0x0087E1&secondaryColor=0x0096FF&invertSkin=false&preSelectAsset=" +
-							location.getUri().substring(location.getUri().lastIndexOf('#')+1) + 
-							"&preSelectAssetGuidance=&preSelectAssetImageURL="+
-							item.getImage().replace("http://www.channel4.com", "") + 
-							"&pinRequestCallback=C4.PinController.doPinChecks";
-		playerLocElem.appendChild(playerLoc);
-		videoElem.appendChild(playerLocElem);
-	}
-
 	private Integer getDuration(Item item) {
 		for(Version version : item.nativeVersions()){
 			return version.getDuration();

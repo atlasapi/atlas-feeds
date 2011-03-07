@@ -208,7 +208,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     			continue;
     		}
     		Episode episode = (Episode) item;
-    		Series seriesSummary = episode.getSeriesSummary();
+    		Series seriesSummary = episode.getSeries();
     		if (seriesSummary == null) {
     			continue;
     		}

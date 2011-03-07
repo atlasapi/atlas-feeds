@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.media.entity.Actor;
 import org.atlasapi.media.entity.Broadcast;
-import org.atlasapi.media.entity.Channel;
 import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
@@ -42,7 +41,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.metabroadcast.common.base.Maybe;
 
 /**
  * {@link AtlasModelWriter} that translates the full URIplay object model
@@ -102,12 +100,9 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	
 	static org.atlasapi.media.entity.simple.ScheduleChannel scheduleChannelFrom(ScheduleChannel scheduleChannel) {
 	    org.atlasapi.media.entity.simple.ScheduleChannel newScheduleChannel = new org.atlasapi.media.entity.simple.ScheduleChannel();
-	    Maybe<Channel> channel = Channel.fromUri(scheduleChannel.channel());
-	    newScheduleChannel.setChannelUri(scheduleChannel.channel());
-	    if (! channel.isNothing()) {
-	        newScheduleChannel.setChannelKey(channel.requireValue().key());
-	        newScheduleChannel.setChannelTitle(channel.requireValue().title());
-	    }
+	    newScheduleChannel.setChannelUri(scheduleChannel.channel().uri());
+	    newScheduleChannel.setChannelKey(scheduleChannel.channel().key());
+	    newScheduleChannel.setChannelTitle(scheduleChannel.channel().title());
 	    
 	    ImmutableList.Builder<org.atlasapi.media.entity.simple.Item> items = ImmutableList.builder();
 	    for (org.atlasapi.media.entity.Item item: scheduleChannel.items()) {
@@ -281,7 +276,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 				simpleItem.setBrandSummary(brandSummary);
 			}
 			
-			Series series = episode.getSeriesSummary();
+			Series series = episode.getSeries();
 			if (series != null) {
 				
 				SeriesSummary seriesSummary = new SeriesSummary();
