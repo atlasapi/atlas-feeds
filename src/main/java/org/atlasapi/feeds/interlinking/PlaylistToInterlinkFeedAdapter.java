@@ -72,8 +72,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         	}
         	Brand brand = (Brand) content;
         	
-        	boolean synthesized = brand.getCanonicalUri().startsWith("http://www.channel4.com/programmes/synthesized");
-        	boolean includeBrand = containerQualifies(from, to, brand) && (!synthesized || (synthesized && brand.getContents().size() > 1));
+        	boolean includeBrand = containerQualifies(from, to, brand);
         	
             InterlinkBrand interlinkBrand = fromBrand(brand, from, to);
             if (includeBrand) {
@@ -289,9 +288,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 	}
     
     private Operation broadcastOperation(Broadcast broadcast) {
-        DateTime thirtyDaysAgo = new DateTime(DateTimeZones.UTC).minusDays(30);
         Operation operation = Operation.STORE;
-        if (thirtyDaysAgo.isAfter(broadcast.getTransmissionTime()) || ! broadcast.isActivelyPublished()) {
+        if (Boolean.FALSE.equals(broadcast.isActivelyPublished())) {
             operation = Operation.DELETE;
         }
         return operation;
