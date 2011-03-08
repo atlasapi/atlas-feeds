@@ -30,7 +30,7 @@ public class CachingFTPUploadResultStore implements RadioPlayerFTPUploadResultSt
 
     private void loadCache() {
         for (final RadioPlayerService service : RadioPlayerServices.services) {
-            cache.put(service, new MapMaker().softValues().expireAfterAccess(30, TimeUnit.MINUTES).<LocalDate, Set<RadioPlayerFTPUploadResult>>makeComputingMap(new Function<LocalDate, Set<RadioPlayerFTPUploadResult>>() {
+            cache.put(service, new MapMaker().softValues().expireAfterWrite(30, TimeUnit.MINUTES).makeComputingMap(new Function<LocalDate, Set<RadioPlayerFTPUploadResult>>() {
                 @Override
                 public Set<RadioPlayerFTPUploadResult> apply(LocalDate day) {
                     TreeSet<RadioPlayerFTPUploadResult> set = Sets.newTreeSet(resultComparator);
