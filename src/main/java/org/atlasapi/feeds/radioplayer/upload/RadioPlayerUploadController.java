@@ -2,59 +2,56 @@ package org.atlasapi.feeds.radioplayer.upload;
 
 import static com.metabroadcast.common.http.HttpStatusCode.BAD_REQUEST;
 import static com.metabroadcast.common.http.HttpStatusCode.NOT_FOUND;
-import static com.metabroadcast.common.http.HttpStatusCode.SERVICE_UNAVAILABLE;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
-import org.atlasapi.persistence.logging.AdapterLog;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.metabroadcast.common.media.MimeType;
+import com.metabroadcast.common.security.HttpBasicAuthChecker;
+import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.time.DateTimeZones;
 import com.metabroadcast.common.time.DayRangeGenerator;
 
 @Controller
 public class RadioPlayerUploadController {
 
-    private final FTPFileUploader uploader;
-    private final DayRangeGenerator rangedGenerator;
-    private final RadioPlayerXMLValidator validator;
-    private final AdapterLog log;
-    private final ScheduledExecutorService uploadExecutor;
+    private static final DateTimeFormatter DATE_PATTERN = DateTimeFormat.forPattern("yyyyMMdd");
+    private HttpBasicAuthChecker checker;
+    private final RadioPlayerUploadTaskBuilder radioPlayerUploadTaskBuilder;
+    private final DayRangeGenerator dayRangeGenerator;
 
-    private RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner;
-
-    public RadioPlayerUploadController(FTPFileUploader uploader, RadioPlayerRecordingExecutor radioPlayerRecordingExecutor, DayRangeGenerator rangedGenerator, RadioPlayerXMLValidator validator, AdapterLog log) {
-        this.uploader = uploader;
-        radioPlayerUploadTaskRunner = radioPlayerRecordingExecutor;
-        this.rangedGenerator = rangedGenerator;
-        this.validator = validator;
-        this.log = log;
-        this.uploadExecutor = Executors.newSingleThreadScheduledExecutor();
+    public RadioPlayerUploadController(RadioPlayerUploadTaskBuilder radioPlayerUploadTaskBuilder, DayRangeGenerator dayRangeGenerator, String password) {
+        this.radioPlayerUploadTaskBuilder = radioPlayerUploadTaskBuilder;
+        this.dayRangeGenerator = dayRangeGenerator;
+        if (!Strings.isNullOrEmpty(password)) {
+            this.checker = new HttpBasicAuthChecker(ImmutableList.of(new UsernameAndPassword("bbc", password)));
+        } else {
+            this.checker = null;
+        }
     }
 
     @RequestMapping(value = "feeds/ukradioplayer/upload/{id}/{day}", method = RequestMethod.POST)
     public String uploadDay(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String serviceId, @PathVariable("day") String day) throws IOException {
-
-        if (radioPlayerUploadTaskRunner == null) {
-            response.sendError(SERVICE_UNAVAILABLE.code(), "Upload service not configured");
+        if (checker == null) {
+            response.setContentType(MimeType.TEXT_PLAIN.toString());
+            response.getOutputStream().print("No password set up, uploader can't be used");
             return null;
         }
-
+        
         RadioPlayerService service = RadioPlayerServices.all.get(serviceId);
         if (service == null) {
             response.sendError(NOT_FOUND.code(), "Unkown service " + serviceId);
@@ -66,18 +63,10 @@ public class RadioPlayerUploadController {
             return null;
         }
 
-        Iterable<LocalDate> days = day != null ? ImmutableList.of(DateTimeFormat.forPattern("yyyyMMdd").parseDateTime(day).toLocalDate()) : rangedGenerator.generate(new LocalDate(DateTimeZones.UTC));
+        Iterable<LocalDate> days = day != null ? ImmutableList.of(DATE_PATTERN.parseDateTime(day).toLocalDate()) : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
 
-        Future<?> result = uploadExecutor.submit(new RadioPlayerUploadTask(uploader, radioPlayerUploadTaskRunner, ImmutableList.of(service), days).withLog(log).withValidator(validator));
+        radioPlayerUploadTaskBuilder.newTask(ImmutableList.of(service), days).run();
 
-        try {
-            result.get();
-        } catch (InterruptedException e) {
-            
-        } catch (ExecutionException e) {
-            
-        }
-        
         return "redirect:/feeds/ukradioplayer/health";
     }
 
@@ -85,5 +74,4 @@ public class RadioPlayerUploadController {
     public String uploadDays(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String serviceId) throws IOException {
         return uploadDay(request, response, serviceId, null);
     }
-
 }
