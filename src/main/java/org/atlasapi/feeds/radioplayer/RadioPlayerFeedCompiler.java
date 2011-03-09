@@ -118,7 +118,7 @@ public abstract class RadioPlayerFeedCompiler {
             @Override
             public Iterable<RadioPlayerBroadcastItem> apply(Item item) {
                 ArrayList<RadioPlayerBroadcastItem> broadcastItems = Lists.newArrayList();
-                for (Version version : item.getVersions()) {
+                for (Version version : item.nativeVersions()) {
                     for (Broadcast broadcast : version.getBroadcasts()) {
                         broadcastItems.add(new RadioPlayerBroadcastItem(item, version, broadcast));
                     }
