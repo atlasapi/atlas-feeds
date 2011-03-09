@@ -12,7 +12,7 @@ import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTask;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskBuilder;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerXMLValidator;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
@@ -38,8 +38,8 @@ import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.scheduling.RepetitionRules;
-import com.metabroadcast.common.scheduling.SimpleScheduler;
 import com.metabroadcast.common.scheduling.RepetitionRules.Every;
+import com.metabroadcast.common.scheduling.SimpleScheduler;
 import com.metabroadcast.common.time.DayRangeGenerator;
 import com.metabroadcast.common.webapp.health.HealthController;
 
@@ -74,7 +74,7 @@ public class RadioPlayerModule {
     }
     
     public @Bean RadioPlayerUploadController radioPlayerUploadController() {
-        return new RadioPlayerUploadController(radioPlayerFileUploader(), radioPlayerUploadTaskRunner(), dayRangeGenerator, radioPlayerValidator(), log);
+        return new RadioPlayerUploadController(radioPlayerUploadTaskBuilder(), dayRangeGenerator, Configurer.get("rp.health.password", "").get());
     }
     
     @Bean FTPFileUploader radioPlayerFileUploader(){
@@ -101,6 +101,10 @@ public class RadioPlayerModule {
         }
     }
     
+    @Bean RadioPlayerUploadTaskBuilder radioPlayerUploadTaskBuilder() {
+        return new RadioPlayerUploadTaskBuilder(radioPlayerFileUploader(), radioPlayerUploadTaskRunner()).withLog(log).withValidator(radioPlayerValidator());
+    }
+    
     @Bean RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner() {
         return new RadioPlayerRecordingExecutor(uploadResultRecorder());
     }
@@ -113,17 +117,8 @@ public class RadioPlayerModule {
 		    
 		    createHealthProbes(credentials);
 			
-            RadioPlayerUploadTask bihourly = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner(), uploadServices(), dayRangeGenerator)
-			    .withValidator(radioPlayerValidator())
-			    .withLog(log);
-            
-            scheduler.schedule(bihourly, UPLOAD_EVERY_TWO_HOURS);
-            
-            RadioPlayerUploadTask today = new RadioPlayerUploadTask(radioPlayerFileUploader(), radioPlayerUploadTaskRunner(), uploadServices(), new DayRangeGenerator())
-                .withValidator(radioPlayerValidator())
-                .withLog(log);
-            
-            scheduler.schedule(today, UPLOAD_EVERY_TEN_MINUTES);
+            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), dayRangeGenerator), UPLOAD_EVERY_TWO_HOURS);
+            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), new DayRangeGenerator()), UPLOAD_EVERY_TEN_MINUTES);
 
             log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
             .withDescription(String.format("Radioplayer uploader installed for: %s. Frequency: %s",credentials,UPLOAD_EVERY_TEN_MINUTES)));

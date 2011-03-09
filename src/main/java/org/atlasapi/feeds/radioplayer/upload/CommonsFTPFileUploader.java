@@ -13,6 +13,7 @@ import org.joda.time.Duration;
 
 public class CommonsFTPFileUploader implements FTPFileUploader {
 
+    private static final int TIMEOUT = 15*1000; //15 seconds
     private static final Duration RECONNECT_DELAY = Duration.standardSeconds(5);
     private static final int UPLOAD_ATTEMPTS = 5;
 
@@ -69,8 +70,11 @@ public class CommonsFTPFileUploader implements FTPFileUploader {
     private FTPClient tryToConnectAndLogin() {
         try {
             FTPClient client = new FTPClient();
+            client.setConnectTimeout(TIMEOUT);
 
             client.connect(credentials.server(), credentials.port());
+
+            client.setSoTimeout(TIMEOUT);
 
             if (!FTPReply.isPositiveCompletion(client.getReplyCode())) {
                 client.disconnect();
