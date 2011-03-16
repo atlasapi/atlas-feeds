@@ -96,7 +96,7 @@ public class DispatchingAtlasModelWriter implements AtlasModelWriter {
 		}
 		
 		void write(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary error) throws IOException {
-			response.setStatus(error.statusCode());
+			response.setStatus(error.statusCode().code());
 			response.setCharacterEncoding(Charsets.UTF_8.toString());
 			response.setContentType(mimeType.toString());
 			writer.writeError(request, response, error);

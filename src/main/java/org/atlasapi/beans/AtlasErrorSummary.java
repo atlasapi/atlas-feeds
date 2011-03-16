@@ -3,18 +3,17 @@ package org.atlasapi.beans;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.servlet.http.HttpServletResponse;
-
 import com.google.common.collect.ImmutableMap;
+import com.metabroadcast.common.http.HttpStatusCode;
 
 public class AtlasErrorSummary {
 	
 	private static class AtlasExceptionBuilder {
 		
 		private final String friendly;
-		private final int httpStatus;
+		private final HttpStatusCode httpStatus;
 
-		public AtlasExceptionBuilder(String friendlyCode, int httpStatusCode) {
+		public AtlasExceptionBuilder(String friendlyCode, HttpStatusCode httpStatusCode) {
 			this.friendly = friendlyCode;
 			this.httpStatus = httpStatusCode;
 		}
@@ -23,7 +22,7 @@ public class AtlasErrorSummary {
 			return friendly;
 		}
 
-		public int httpStatus() {
+		public HttpStatusCode httpStatus() {
 			return httpStatus;
 		}
 		
@@ -34,7 +33,7 @@ public class AtlasErrorSummary {
 	
 	private static class ExceptionExposingAtlasExceptionBuilder extends AtlasExceptionBuilder{
 
-		public ExceptionExposingAtlasExceptionBuilder(String friendlyCode, int httpStatusCode) {
+		public ExceptionExposingAtlasExceptionBuilder(String friendlyCode, HttpStatusCode httpStatusCode) {
 			super(friendlyCode, httpStatusCode);
 		}
 		
@@ -56,14 +55,14 @@ public class AtlasErrorSummary {
 	
 	private static Map<Class<? extends Exception>, AtlasExceptionBuilder> exceptionMap() {
 		return ImmutableMap.<Class<? extends Exception>, AtlasExceptionBuilder>of(
-			IllegalArgumentException.class, new ExceptionExposingAtlasExceptionBuilder("BAD_QUERY_ATTRIBUTE", HttpServletResponse.SC_BAD_REQUEST)
+			IllegalArgumentException.class, new ExceptionExposingAtlasExceptionBuilder("BAD_QUERY_ATTRIBUTE", HttpStatusCode.BAD_REQUEST)
 		);
 	}
 
 	private String id;
 	private Exception exception;
 	private String errorCode = "INTERNAL_ERROR";
-	private int statusCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+	private HttpStatusCode statusCode = HttpStatusCode.SERVER_ERROR;
 	private String message = "An internal server error occurred";
 	
 	public AtlasErrorSummary(Exception exception) {
@@ -81,12 +80,12 @@ public class AtlasErrorSummary {
 		return exception;
 	}
 
-	public AtlasErrorSummary withStatusCode(int statusCode) {
+	public AtlasErrorSummary withStatusCode(HttpStatusCode statusCode) {
 		this.statusCode = statusCode;
 		return this;
 	}
 
-	public int statusCode() {
+	public HttpStatusCode statusCode() {
 		return statusCode;
 	}
 	
