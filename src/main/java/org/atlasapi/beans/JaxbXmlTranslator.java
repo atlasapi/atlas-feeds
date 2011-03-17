@@ -19,6 +19,8 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,6 +33,8 @@ import nu.xom.Document;
 import nu.xom.Element;
 import nu.xom.Serializer;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.xml.serialize.OutputFormat;
 import org.apache.xml.serialize.XMLSerializer;
 import org.atlasapi.media.entity.simple.Broadcast;
@@ -48,6 +52,8 @@ import org.xml.sax.SAXException;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import com.google.common.util.concurrent.UncheckedTimeoutException;
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 
 /**
@@ -57,7 +63,10 @@ import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
  */
 public class JaxbXmlTranslator implements AtlasModelWriter {
 
-	private JAXBContext context;
+	private static final String NS_MAPPER = "com.sun.xml.bind.namespacePrefixMapper";
+	
+	private final Log log = LogFactory.getLog(getClass());
+	private final JAXBContext context;
 
 	public JaxbXmlTranslator() {
 		try {
@@ -77,34 +86,41 @@ public class JaxbXmlTranslator implements AtlasModelWriter {
 		}
 	}
 	
-	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph) {
-		
+	private final SimpleTimeLimiter limiter = new SimpleTimeLimiter();
+	
+	public void writeTo(final HttpServletRequest request, final HttpServletResponse response, Collection<Object> graph) throws IOException {
+		final Object result = Iterables.getOnlyElement(graph);
 		try {
-			Marshaller m = context.createMarshaller();
-			m.setProperty("com.sun.xml.bind.namespacePrefixMapper", new UriplayNamespacePrefixMapper());
-
-			XMLSerializer serializer = getXMLSerializer(response.getOutputStream());
-			m.marshal(Iterables.getOnlyElement(graph), serializer.asContentHandler());
-			
-		} catch (JAXBException e) {
-			throw new RuntimeException(e);
+			limiter.callWithTimeout(writeOut(response, result), 60, TimeUnit.SECONDS, true);
 		} catch (IOException e) {
-			throw new RuntimeException(e);
-		} catch (SAXException e) {
+			throw e;
+		} catch (UncheckedTimeoutException timeout) { 
+			log.error("Timed out writing " + request.getRequestURI() + "?" + request.getQueryString());
+			writeError(request, response, AtlasErrorSummary.forException(timeout));
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		
+	}
+
+	private Callable<Void> writeOut(final HttpServletResponse response, final Object result) {
+		return new Callable<Void>() {
+			@Override
+			public Void call() throws Exception {
+				Marshaller m = context.createMarshaller();
+				m.setProperty(NS_MAPPER, new UriplayNamespacePrefixMapper());
+
+				XMLSerializer serializer = getXMLSerializer(response.getOutputStream());
+				m.marshal(result, serializer.asContentHandler());
+				return null;
+			}
+		};
 	}
 	
 	private static XMLSerializer getXMLSerializer(OutputStream oStream) throws SAXException {
-     
         OutputFormat of = new OutputFormat();
-
         of.setCDataElements(new String[] { "^embedCode" });  
-        
         XMLSerializer serializer = new XMLSerializer(of);
         serializer.setOutputByteStream(oStream);
-
         return serializer;
     }
 	
