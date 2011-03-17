@@ -14,6 +14,7 @@ permissions and limitations under the License. */
 
 package org.atlasapi.beans;
 
+import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
@@ -31,6 +32,7 @@ import org.atlasapi.media.entity.simple.Playlist;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Iterables;
+import com.google.common.io.Flushables;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -71,19 +73,12 @@ public class JsonTranslator implements AtlasModelWriter {
 			if (callback != null) {
 				writer.write(callback + "(");
 			}
-			writer.write(gson.toJson(Iterables.getOnlyElement(graph)));
-
+			gson.toJson(Iterables.getOnlyElement(graph), writer);
 			if (callback != null) {
 				writer.write(");");
 			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
 		} finally {
-			try {
-				writer.flush();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+			Flushables.flushQuietly(writer);
 		}
 	}
 
