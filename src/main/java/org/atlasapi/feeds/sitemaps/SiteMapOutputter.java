@@ -70,37 +70,37 @@ public class SiteMapOutputter {
         Element feed = new Element("urlset", SITEMAP.getUri());
         VIDEO.addDeclarationTo(feed);
         for (Item item : items) {
-            entryForItem(feed, item);
+            entryForItem(feed, item, itemTitle(item));
             for (Clip clip : item.getClips()) {
-                entryForItem(feed, clip);
+                entryForItem(feed, clip, clipTitle(clip, item));
             }
         }
         return feed;
     }
 
-    private void entryForItem(Element feed, Item item) {
+    private void entryForItem(Element feed, Item item, String title) {
         Location location = locationFrom(item);
         if (location != null && item.getThumbnail() != null) {
-            feed.appendChild(urlEntry(item, location));
+            feed.appendChild(urlEntry(item, location, title));
         }
     }
 
-    private Element urlEntry(Item item, Location location) {
+    private Element urlEntry(Item item, Location location, String title) {
         Element urlElement = createElement("url", SITEMAP);
         urlElement.appendChild(stringElement("loc", SITEMAP, location.getUri()));
         if (item.getLastUpdated() != null) {
             urlElement.appendChild(stringElement("lastmod", SITEMAP, DATE_TIME_FORMAT.print(item.getLastUpdated())));
         }
         if (location.getAvailable()) {
-            urlElement.appendChild(videoElem(item, location));
+            urlElement.appendChild(videoElem(item, location, title));
         }
         return urlElement;
     }
 
-    private Element videoElem(Item item, Location location) {
+    private Element videoElem(Item item, Location location, String title) {
         Element videoElem = createElement("video", VIDEO);
         videoElem.appendChild(stringElement("thumbnail_loc", VIDEO, item.getThumbnail()));
-        videoElem.appendChild(stringElement("title", VIDEO, itemTitle(item)));
+        videoElem.appendChild(stringElement("title", VIDEO, title));
         videoElem.appendChild(stringElement("description", VIDEO, descTruncator.truncatePossibleNull(item.getDescription())));
 
         Integer duration = getDuration(item);
@@ -124,7 +124,7 @@ public class SiteMapOutputter {
                 videoElem.appendChild(stringElement("expiration_date", VIDEO, DATE_TIME_FORMAT.print(availableTill)));
             }
             Set<Country> countries = policy.getAvailableCountries();
-            if (!countries.contains(Countries.ALL)) {
+            if (countries != null && !countries.contains(Countries.ALL)) {
                 String spaceDelimted = Joiner.on(' ').join(Iterables.transform(countries, Country.UNPACK_COUNTRY_CODE));
                 Element restrictionElem = createElement("restriction", VIDEO);
                 restrictionElem.addAttribute(new Attribute("relationship", "allow"));
@@ -138,6 +138,20 @@ public class SiteMapOutputter {
 
     private String itemTitle(Item item) {
         String title = Strings.nullToEmpty(item.getTitle());
+        if (item instanceof Episode) {
+            Container<?> brand = ((Episode) item).getContainer();
+            if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
+                String brandTitle = brand.getTitle();
+                if (!brandTitle.equals(title)) {
+                    title = brandTitle + " : " + title;
+                }
+            }
+        }
+        return titleTruncator.truncate(title);
+    }
+    
+    private String clipTitle(Clip clip, Item item) {
+        String title = Strings.nullToEmpty(clip.getTitle());
         if (item instanceof Episode) {
             Container<?> brand = ((Episode) item).getContainer();
             if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
