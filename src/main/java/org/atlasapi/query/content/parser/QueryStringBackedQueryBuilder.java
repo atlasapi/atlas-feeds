@@ -39,7 +39,6 @@ import org.joda.time.DateTime;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -116,18 +115,6 @@ public class QueryStringBackedQueryBuilder {
 				
 				userSuppliedAttributes.add(query.attribute);
 				
-				if (Attributes.BROADCAST_TRANSMISSION_TIME.equals(query.attribute) && Operators.EQUALS.equals(query.op)) {
-					DateTime when = Iterables.getOnlyElement(coerceListToType(query.values, DateTime.class));
-					
-					operands.add(Attributes.BROADCAST_TRANSMISSION_TIME.createQuery(Operators.BEFORE, ImmutableList.of(when.plusSeconds(1))));
-					operands.add(Attributes.BROADCAST_TRANSMISSION_END_TIME.createQuery(Operators.AFTER, ImmutableList.of(when)));
-
-					// hack to show unavailable broadcasts
-					userSuppliedAttributes.add(Attributes.LOCATION_AVAILABLE);
-					
-					continue;
-				}
-				
 				AttributeQuery<?> attributeQuery = query.toAttributeQuery();
 				
 				if (attributeQuery instanceof BooleanAttributeQuery && ((BooleanAttributeQuery) attributeQuery).isUnconditionallyTrue()) {
@@ -175,7 +162,7 @@ public class QueryStringBackedQueryBuilder {
             throw new IllegalArgumentException(attributeName + " is not a valid attribute");
         }
         
-		Operator op = defaultOperator(attribute);
+		Operator op = DEFAULT_OPERATOR;
 		if (parts.length == 2) {
 			op = Operators.lookup(parts[1]);
 			if (op == null) {
@@ -190,16 +177,6 @@ public class QueryStringBackedQueryBuilder {
 			values = Arrays.asList(paramValue.split(OPERAND_SEPERATOR));
 		}
 		return new AttributeOperatorValues(attribute, op, formatValues(attribute, values));
-	}
-	
-	private Operator defaultOperator(QueryFactory<?> attribute) {
-	    if (attribute instanceof StringValuedAttribute) {
-	        String attributeName = ((StringValuedAttribute) attribute).javaAttributeName();
-	        if ("title".equals(attributeName)) {
-	            return Operators.SEARCH;
-	        }
-	    }
-	    return DEFAULT_OPERATOR;
 	}
 	
 	private List<String> formatValues(QueryFactory<?> attribute, List<String> values) {

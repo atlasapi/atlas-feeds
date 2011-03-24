@@ -56,7 +56,7 @@ public class RadioPlayerModule {
     private @Value("${rp.ftp.host}") String ftpHost;
     private @Value("${rp.ftp.port}") Integer ftpPort;
 	
-    private @Autowired @Qualifier("mongoDbQueryExcutorThatFiltersUriQueries") KnownTypeQueryExecutor queryExecutor;
+    private @Autowired KnownTypeQueryExecutor queryExecutor;
 	private @Autowired SimpleScheduler scheduler;
 	private @Autowired AdapterLog log;
 	private @Autowired DatabasedMongo mongo;
