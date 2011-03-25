@@ -386,6 +386,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    }
 	    simpleLocation.setUri(location.getUri());
 	    simpleLocation.setEmbedCode(location.getEmbedCode());
+	    simpleLocation.setEmbedId(location.getEmbedId());
 	    simpleLocation.setAvailable(location.getAvailable());
 	    
 	}
