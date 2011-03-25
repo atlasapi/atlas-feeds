@@ -16,6 +16,7 @@ import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.content.criteria.operator.Operators;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
+import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -86,7 +88,7 @@ public class SiteMapController {
 
         List<? extends Content> brands = queryExecutor.discover(requestQuery);
 
-        Iterable<SiteMapRef> refs = Iterables.transform(brands, new Function<Content, SiteMapRef>() {
+        Iterable<SiteMapRef> refs = Iterables.transform(filter(brands), new Function<Content, SiteMapRef>() {
 
             @Override
             public SiteMapRef apply(Content brand) {
@@ -99,6 +101,26 @@ public class SiteMapController {
         indexOutputter.output(refs, response.getOutputStream());
         return null;
     }
+
+    private Iterable<? extends Content> filter(List<? extends Content> brands) {
+        return Iterables.filter(brands, hasItemWithThumbnail);
+    }
+
+    private static final Predicate<? super Content> hasItemWithThumbnail = new Predicate<Content>(){
+
+        @Override
+        public boolean apply(Content input) {
+            if(input instanceof Container) {
+                for (Item item : ((Container<?>)input).getContents()) {
+                    if (item.getThumbnail() != null) {
+                        return true;
+                    }
+                }
+                return false;
+            } else {
+                return ((Item)input).getThumbnail() != null;
+            }
+        }};
 
     private static List<String> uris(HttpServletRequest request, ContentQuery filter) {
         if (!Selection.ALL.equals(filter.getSelection())) {
