@@ -67,10 +67,11 @@ public class AtlasErrorSummary {
 	
 	public AtlasErrorSummary(Exception exception) {
 		this.exception = exception;
-		this.id = UUID.randomUUID().toString();
 	}
 	
-	public AtlasErrorSummary() { /* for JSON and XML tools */ }
+	public AtlasErrorSummary() { 
+	    this.id = UUID.randomUUID().toString();
+	}
 
 	public String id() {
 		return id;
