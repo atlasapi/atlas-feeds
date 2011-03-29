@@ -6,6 +6,7 @@ import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCES
 import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.DATE_ORDERING;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.joda.time.LocalDate;
 
 import com.google.common.collect.Iterables;
@@ -77,7 +78,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
             }
             return SUCCESS;
         case FAILURE:
-            if (day.isAfter(mostRecent.uploadTime().toLocalDate().plusDays(1)) || service.getName().equals("5livesportsextra")) {
+            if (day.isAfter(mostRecent.uploadTime().toLocalDate().plusDays(1)) || RadioPlayerServices.untracked.contains(service)) {
                 return INFO;
             } else {
                 return FAILURE;

@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
@@ -61,7 +62,7 @@ public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadRe
 
     private void logNotItemsException(String filename, NoItemsException e) {
         if( log != null) {
-            if (!day.isAfter(new LocalDate(DateTimeZones.UTC).plusDays(1)) && !service.getName().equals("5livesportsextra")) {
+            if (!day.isAfter(new LocalDate(DateTimeZones.UTC).plusDays(1)) && !RadioPlayerServices.untracked.contains(service)) {
                 log.record(new AdapterLogEntry(ERROR).withDescription("No items for " + filename).withSource(getClass()).withCause(e));
             } else {
                 log.record(new AdapterLogEntry(DEBUG).withDescription("No items for " + filename).withSource(getClass()).withCause(e));

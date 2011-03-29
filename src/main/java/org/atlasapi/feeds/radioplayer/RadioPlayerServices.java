@@ -13,6 +13,8 @@ public class RadioPlayerServices {
 	
 	public static final Map<String, RadioPlayerService> all;
 	
+	public static final Set<RadioPlayerService> untracked;
+	
 	static {
 		services = ImmutableSet.<RadioPlayerService> builder().
 			add(new RadioPlayerService(300, "london").withIonServiceId("bbc_london")).
@@ -81,6 +83,8 @@ public class RadioPlayerServices {
                 return String.valueOf(input.getRadioplayerId());
             }
         });
+        
+        untracked = ImmutableSet.of(all.get("346"), all.get("358"));
 	};
 
 }
