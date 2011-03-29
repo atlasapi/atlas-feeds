@@ -25,7 +25,9 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Person;
 import org.atlasapi.media.entity.Policy;
+import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.rdf.beans.TypeMap;
 
@@ -53,6 +55,8 @@ public class NaiveTypeMap implements TypeMap {
 		map.put(Item.class, Collections.singleton("http://uriplay.org/elements/Item"));
 		map.put(Container.class, Collections.singleton("http://uriplay.org/elements/List"));
 		map.put(Policy.class, Collections.singleton("http://uriplay.org/elements/Policy"));
+		map.put(Person.class, Collections.singleton("http://uriplay.org/elements/Person"));
+		map.put(Series.class, Collections.singleton("http://uriplay.org/elements/Series"));
 	}
 		
 	public Set<String> rdfTypes(Class<?> beanType) {
