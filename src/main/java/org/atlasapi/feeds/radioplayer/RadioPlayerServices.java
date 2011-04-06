@@ -65,7 +65,6 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(345, "5live").withIonServiceId("bbc_radio_five_live")).
 			add(new RadioPlayerService(346, "5livesportsextra").withIonServiceId("bbc_radio_five_live_sports_extra")).
 			add(new RadioPlayerService(347, "6music").withIonServiceId("bbc_6music")).
-			add(new RadioPlayerService(348, "radio7").withIonServiceId("bbc_7")).
 			add(new RadioPlayerService(349, "asiannetwork").withIonServiceId("bbc_asian_network")).
 			add(new RadioPlayerService(350, "worldservice").withIonServiceId("bbc_world_service")).
 			add(new RadioPlayerService(351, "radioscotland").withServiceUriSuffix("radioscotland/fm").withScheduleUri("http://www.bbc.co.uk/radioscotland/programmes/schedules/fm").withIonServiceId("bbc_radio_scotland_fm")).
