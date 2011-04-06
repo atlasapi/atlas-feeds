@@ -3,7 +3,6 @@ package org.atlasapi.beans;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,7 +39,6 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 /**
  * {@link AtlasModelWriter} that translates the full URIplay object model
@@ -207,7 +205,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 			addTo(simpleItem, version);
 		}
 		
-		Set<org.atlasapi.media.entity.simple.Person> people = Sets.newHashSet();
+		List<org.atlasapi.media.entity.simple.Person> people = Lists.newArrayList();
 		for (CrewMember crew : fullItem.people()) {
 		    org.atlasapi.media.entity.simple.Person simplePerson = simplePersonFrom(crew);
 		    if (simplePerson != null) {
