@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.radioplayer;
 
-import static com.metabroadcast.common.base.Maybe.HAS_VALUE;
-
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
@@ -9,9 +7,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 
 @Controller
 public class RadioPlayerController {
@@ -21,7 +16,7 @@ public class RadioPlayerController {
 
         RadioPlayerFilenameMatcher matcher = RadioPlayerFilenameMatcher.on(filename);
 
-        if (matcher.matches() && Iterables.all(ImmutableSet.of(matcher.date(), matcher.service(), matcher.type()), HAS_VALUE)) {
+        if (RadioPlayerFilenameMatcher.hasMatch(matcher)) {
 
             RadioPlayerFeedCompiler feedType = matcher.type().requireValue();
             try {

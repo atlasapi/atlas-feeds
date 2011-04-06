@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer;
 
+import static com.metabroadcast.common.base.Maybe.HAS_VALUE;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -8,6 +10,8 @@ import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.metabroadcast.common.base.Maybe;
 
 public abstract class RadioPlayerFilenameMatcher {
@@ -21,6 +25,10 @@ public abstract class RadioPlayerFilenameMatcher {
             return new RadioPlayerFilenameMatch(m.group(1), m.group(2), m.group(3));
         }
         return new RadioPlayerFilenameMiss();
+    }
+    
+    public static boolean hasMatch(RadioPlayerFilenameMatcher matcher) {
+        return matcher.matches() && Iterables.all(ImmutableSet.of(matcher.date(), matcher.service(), matcher.type()), HAS_VALUE);
     }
 
     public abstract Maybe<LocalDate> date();
