@@ -95,7 +95,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		series.addContents(testItem);
 		
 		//make item available everywhere.
-		getLocation(testItem).getPolicy().setAvailableCountries(ImmutableSet.of(Countries.ALL));
+		getLocation(testItem).getPolicy().setAvailableCountries(ImmutableSet.of(Countries.GB));
 		
 		Version version = Iterables.getOnlyElement(testItem.getVersions());
         Broadcast broadcast = Iterables.getOnlyElement(version.getBroadcasts());
