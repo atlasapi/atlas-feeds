@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -9,6 +10,8 @@ import nu.xom.Element;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Container;
+import org.atlasapi.media.entity.Countries;
+import org.atlasapi.media.entity.Country;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
@@ -20,7 +23,11 @@ import org.joda.time.Duration;
 import org.joda.time.LocalDate;
 import org.joda.time.format.ISOPeriodFormat;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {
@@ -75,13 +82,36 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
             programme.appendChild(genreElement);
         }
 
+        
+        Set<Country> outputCountries = Sets.newHashSet();
         for (Encoding encoding : broadcastItem.getVersion().getManifestedAs()) {
             for (Location location : encoding.getAvailableAt()) {
-                programme.appendChild(ondemandElement(broadcastItem.getItem(), location));
+            	for (Country country : representedBy(encoding, location)) {
+            		if (!outputCountries.contains(country)) {
+	            		programme.appendChild(ondemandElement(broadcastItem.getItem(), location, country));
+	            		outputCountries.add(country);
+            		}
+            	}
             }
         }
 
         return programme;
+    }
+    
+    private final Set<Country> representedBy(Encoding encoding, Location location) {
+    	Policy policy = location.getPolicy();
+		if (policy == null) {
+    		return ImmutableSet.of();
+    	}
+		Set<Country> countries = Sets.newHashSet();
+		if (policy.getAvailableCountries().contains(Countries.ALL)) {
+			countries.add(Countries.ALL);
+			countries.add(Countries.GB);
+		}
+		if (policy.getAvailableCountries().contains(Countries.GB)) {
+			countries.add(Countries.GB);
+		}
+		return countries;
     }
 
     private String itemTitle(Item item) {
@@ -147,31 +177,16 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         return item.getImage();
     }
 
-    private Element ondemandElement(Item item, Location location) {
+    private Element ondemandElement(Item item, Location location, Country country) {
         Element ondemandElement = createElement("ondemand", EPGDATATYPES);
 
         ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCurie().substring(item.getCurie().indexOf(":") + 1)));
 
         Policy policy = location.getPolicy();
         if (policy != null) {
-            // Set<Country> countries = policy.getAvailableCountries();
-            // if (!countries.contains(Countries.ALL)) {
-            // String spaceDelimted =
-            // Joiner.on(' ').join(Iterables.transform(countries,
-            // Country.UNPACK_COUNTRY_CODE));
-            // Element restrictionElem = createElement("restriction",
-            // RADIOPLAYER);
-            // restrictionElem.addAttribute(new
-            // Attribute("relationship","allow"));
-            // restrictionElem.appendChild(spaceDelimted);
-            // ondemandElement.appendChild(restrictionElem);
-            // } else {
-            // Element restrictionElem = createElement("restriction",
-            // RADIOPLAYER);
-            // restrictionElem.addAttribute(new
-            // Attribute("relationship","deny"));
-            // ondemandElement.appendChild(restrictionElem);
-            // }
+             
+        	// disabled
+        	// addRestriction(ondemandElement, country);
 
             DateTime availableTill = policy.getAvailabilityEnd();
             DateTime availableFrom = policy.getAvailabilityStart();
@@ -188,6 +203,20 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 
         return ondemandElement;
     }
+
+	@SuppressWarnings("unused")
+	private void addRestriction(Element ondemandElement, Country country) {
+		if (!Countries.ALL.equals(country)) {
+			Element restrictionElem = createElement("restriction", RADIOPLAYER);
+			restrictionElem.addAttribute(new Attribute("relationship", "allow"));
+			restrictionElem.appendChild(country.code());
+			ondemandElement.appendChild(restrictionElem);
+		} else {
+			Element restrictionElem = createElement("restriction", RADIOPLAYER);
+			restrictionElem.addAttribute(new Attribute("relationship", "deny"));
+			ondemandElement.appendChild(restrictionElem);
+		}
+	}
 
     private Element scopeElement(LocalDate day, RadioPlayerService id) {
         Element scope = createElement("scope", EPGSCHEDULE);
