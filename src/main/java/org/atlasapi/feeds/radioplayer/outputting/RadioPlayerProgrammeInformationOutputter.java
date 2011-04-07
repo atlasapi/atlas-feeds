@@ -23,10 +23,9 @@ import org.joda.time.Duration;
 import org.joda.time.LocalDate;
 import org.joda.time.format.ISOPeriodFormat;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.time.DateTimeZones;
 
@@ -34,6 +33,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 
     private static final String ORIGINATOR = "Metabroadcast";
     private static final String ONDEMAND_LOCATION = "http://www.bbc.co.uk/iplayer/console/";
+    private static final DateTime MAX_AVAILABLE_TILL = new DateTime(2037, 01, 01, 0, 0, 0, 0, DateTimeZones.UTC);
 
     private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
 
@@ -188,7 +188,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         	// disabled
         	// addRestriction(ondemandElement, country);
 
-            DateTime availableTill = policy.getAvailabilityEnd();
+            DateTime availableTill = Ordering.natural().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
             DateTime availableFrom = policy.getAvailabilityStart();
             if (availableTill != null && availableFrom != null) {
                 Element availabilityElem = createElement("availability", RADIOPLAYER);

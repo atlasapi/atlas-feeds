@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 import java.util.Currency;
+import java.util.List;
 import java.util.Set;
 
 import org.atlasapi.media.TransportSubType;
@@ -116,7 +117,7 @@ public class FullToSimpleModelTranslatorTest {
 		fullItem.addPerson(person);
 		
 		Item simpleItem = FullToSimpleModelTranslator.simpleItemFrom(fullItem);
-		Set<org.atlasapi.media.entity.simple.Person> people = simpleItem.getPeople();
+		List<org.atlasapi.media.entity.simple.Person> people = simpleItem.getPeople();
 		org.atlasapi.media.entity.simple.Person simpleActor = Iterables.getOnlyElement(people);
 		assertThat(simpleActor.getCharacter(), is("Dirt-bag Humperdink"));
 		assertThat(simpleActor.getName(), is("Andrew Collings"));

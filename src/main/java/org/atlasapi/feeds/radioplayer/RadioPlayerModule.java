@@ -5,11 +5,11 @@ import javax.annotation.PostConstruct;
 import org.atlasapi.feeds.radioplayer.upload.CachingFTPUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.CommonsFTPFileUploader;
 import org.atlasapi.feeds.radioplayer.upload.FTPCredentials;
-import org.atlasapi.feeds.radioplayer.upload.FTPFileUploader;
 import org.atlasapi.feeds.radioplayer.upload.MongoFTPUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFTPUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerSuccessChecker;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskBuilder;
@@ -21,7 +21,6 @@ import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 import org.joda.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,8 +37,8 @@ import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.scheduling.RepetitionRules;
-import com.metabroadcast.common.scheduling.RepetitionRules.Every;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
+import com.metabroadcast.common.scheduling.RepetitionRules.Every;
 import com.metabroadcast.common.time.DayRangeGenerator;
 import com.metabroadcast.common.webapp.health.HealthController;
 
@@ -77,7 +76,7 @@ public class RadioPlayerModule {
         return new RadioPlayerUploadController(radioPlayerUploadTaskBuilder(), dayRangeGenerator, Configurer.get("rp.health.password", "").get());
     }
     
-    @Bean FTPFileUploader radioPlayerFileUploader(){
+    @Bean CommonsFTPFileUploader radioPlayerFileUploader(){
         if(ftpHost != null && ftpPort != null && ftpUsername != null && ftpPassword != null) {
             return new CommonsFTPFileUploader(FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build());
         } else {
@@ -116,9 +115,12 @@ public class RadioPlayerModule {
 		    FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
 		    
 		    createHealthProbes(credentials);
+		    
+		    RadioPlayerSuccessChecker checker = new RadioPlayerSuccessChecker(radioPlayerFileUploader(), uploadResultRecorder(), log);
 			
             scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), dayRangeGenerator), UPLOAD_EVERY_TWO_HOURS);
             scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), new DayRangeGenerator()), UPLOAD_EVERY_TEN_MINUTES);
+            scheduler.schedule(checker, UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(3)));
 
             log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
             .withDescription(String.format("Radioplayer uploader installed for: %s. Frequency: %s",credentials,UPLOAD_EVERY_TEN_MINUTES)));
