@@ -4,6 +4,7 @@ import static com.metabroadcast.common.persistence.mongo.MongoConstants.ID;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.joda.time.LocalDate;
 
 import com.metabroadcast.common.persistence.translator.TranslatorUtils;
@@ -21,6 +22,9 @@ public class RadioPlayerFTPUploadResultTranslator {
 
         TranslatorUtils.from(dbo, "serviceId", rpResult.service().getRadioplayerId());
         TranslatorUtils.fromLocalDate(dbo, "day", rpResult.day());
+        if (result.processSuccess() != null) {
+            TranslatorUtils.from(dbo, "processSuccess", result.processSuccess().toString());
+        }
 
         dbo.put(ID, id(rpResult));
 
@@ -37,8 +41,14 @@ public class RadioPlayerFTPUploadResultTranslator {
 
         RadioPlayerService service = RadioPlayerServices.all.get(TranslatorUtils.toInteger(dbo, "serviceId").toString());
         LocalDate day = TranslatorUtils.toLocalDate(dbo, "day");
+        
+        RadioPlayerFTPUploadResult result = new RadioPlayerFTPUploadResult(base, service, day);
+        if (dbo.containsField("processSuccess")) {
+            FTPUploadResultType processSuccess = FTPUploadResultType.valueOf(TranslatorUtils.toString(dbo, "processSuccess"));
+            result.withProcessSuccess(processSuccess);
+        }
 
-        return new RadioPlayerFTPUploadResult(base, service, day);
+        return result;
     }
 
 }

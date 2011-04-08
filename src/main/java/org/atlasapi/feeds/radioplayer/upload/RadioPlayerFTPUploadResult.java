@@ -6,8 +6,9 @@ import org.joda.time.LocalDate;
 
 public class RadioPlayerFTPUploadResult extends FTPUploadResult {
 
-    private RadioPlayerService service;
-    private LocalDate day;
+    private final RadioPlayerService service;
+    private final LocalDate day;
+    private FTPUploadResultType processSuccess;
 
     public RadioPlayerFTPUploadResult(String filename, DateTime dateTime, FTPUploadResultType success, RadioPlayerService service, LocalDate day) {
         super(filename, dateTime, success);
@@ -23,6 +24,11 @@ public class RadioPlayerFTPUploadResult extends FTPUploadResult {
         withConnectionSuccess(upload.successfulConnection());
         withMessage(upload.message());
     }
+    
+    public RadioPlayerFTPUploadResult withProcessSuccess(FTPUploadResultType processSuccess) {
+        this.processSuccess = processSuccess;
+        return this;
+    }
 
     public RadioPlayerService service() {
         return service;
@@ -32,4 +38,7 @@ public class RadioPlayerFTPUploadResult extends FTPUploadResult {
         return day;
     }
     
+    public FTPUploadResultType processSuccess() {
+        return processSuccess;
+    }
 }
