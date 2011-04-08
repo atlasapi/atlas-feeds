@@ -28,7 +28,7 @@ public class CommonsFTPFileUploader implements FTPFileUploader {
     private static final FTPFileFilter ftpFilenameFilter = new FTPFileFilter() {
         @Override
         public boolean accept(FTPFile file) {
-            return file.isFile() && file.getName().endsWith(".xml") && file.getName().startsWith("20");
+            return file.isFile() && file.getName().endsWith(".xml") && file.getName().startsWith("20") && ! file.getName().endsWith("SI.xml");
         }
     };
 
