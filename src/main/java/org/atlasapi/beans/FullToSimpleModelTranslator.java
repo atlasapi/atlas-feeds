@@ -22,9 +22,9 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Schedule.ScheduleChannel;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
-import org.atlasapi.media.entity.Schedule.ScheduleChannel;
 import org.atlasapi.media.entity.simple.Aliased;
 import org.atlasapi.media.entity.simple.BrandSummary;
 import org.atlasapi.media.entity.simple.ContentQueryResult;
@@ -233,7 +233,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	}
 
 	private static org.atlasapi.media.entity.simple.Broadcast simplify(Broadcast broadcast) {
-		return new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime(), broadcast.getId());
+	    return new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime(), broadcast.getId()).withRepeat(broadcast.isRepeat());
 	}
 
 	private static void addTo(Item simpleItem, Version version, Encoding encoding) {
