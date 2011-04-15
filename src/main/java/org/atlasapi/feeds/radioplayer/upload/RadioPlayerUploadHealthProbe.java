@@ -7,6 +7,7 @@ import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.DATE_ORDERIN
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.joda.time.LocalDate;
 
 import com.google.common.collect.Iterables;
@@ -68,6 +69,12 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     }
 
     private ProbeResultType entryResultType(FTPUploadResult mostRecent, LocalDate day) {
+        if (mostRecent instanceof RadioPlayerFTPUploadResult) {
+            RadioPlayerFTPUploadResult rpResult = (RadioPlayerFTPUploadResult) mostRecent;
+            if (rpResult.processSuccess() != null && rpResult.processSuccess() == FTPUploadResultType.FAILURE) {
+                return FAILURE;
+            }
+        }
         switch (mostRecent.type()) {
         case SUCCESS:
             if (day.isEqual(new LocalDate(DateTimeZones.UTC)) && mostRecent.uploadTime().plusMinutes(20).isBeforeNow()) {
@@ -104,6 +111,12 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         builder.append("</td><td>");
         if (result.message() != null) {
             builder.append(result.message());
+        }
+        builder.append("</td><td>");
+        if (result instanceof RadioPlayerFTPUploadResult) {
+            RadioPlayerFTPUploadResult rpResult = (RadioPlayerFTPUploadResult) result;
+            FTPUploadResultType processSuccess = rpResult.processSuccess() == null ? FTPUploadResultType.UNKNOWN : rpResult.processSuccess();
+            builder.append("Processing Result: "+processSuccess.toNiceString());
         }
         builder.append("</td></tr>");
     }
