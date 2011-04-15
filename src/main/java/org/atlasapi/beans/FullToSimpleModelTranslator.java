@@ -256,23 +256,24 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	private static void copyProperties(org.atlasapi.media.entity.Item fullItem, Item simpleItem) {
 		copyBasicContentAttributes(fullItem, simpleItem);
 		
+		if (fullItem.getContainer() != null) {
+			Container<?> brand = fullItem.getContainer();
+			BrandSummary brandSummary = new BrandSummary();
+			
+			brandSummary.setUri(brand.getCanonicalUri());
+			brandSummary.setCurie(brand.getCurie());
+			brandSummary.setTitle(brand.getTitle());
+			brandSummary.setDescription(brand.getDescription());
+			
+			simpleItem.setBrandSummary(brandSummary);
+		}
+		
 		if (fullItem instanceof Episode) {
 			Episode episode = (Episode) fullItem;
 			
 			simpleItem.setEpisodeNumber(episode.getEpisodeNumber());
 			simpleItem.setSeriesNumber(episode.getSeriesNumber());
 			
-			if (episode.getContainer() != null) {
-				Container<?> brand = episode.getContainer();
-				BrandSummary brandSummary = new BrandSummary();
-
-				brandSummary.setUri(brand.getCanonicalUri());
-				brandSummary.setCurie(brand.getCurie());
-				brandSummary.setTitle(brand.getTitle());
-				brandSummary.setDescription(brand.getDescription());
-				
-				simpleItem.setBrandSummary(brandSummary);
-			}
 			
 			Series series = episode.getSeries();
 			if (series != null) {
