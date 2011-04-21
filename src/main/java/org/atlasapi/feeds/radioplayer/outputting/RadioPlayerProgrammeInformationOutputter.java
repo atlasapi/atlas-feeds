@@ -111,6 +111,9 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		if (policy.getAvailableCountries().contains(Countries.GB)) {
 			countries.add(Countries.GB);
 		}
+		if (policy.getAvailableCountries().isEmpty()) {
+			countries.add(Countries.ALL);
+		}
 		return countries;
     }
 
