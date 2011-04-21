@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Identified;
+import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.ContentResolver;
 
@@ -80,8 +81,10 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
         };
     }
 
+    private static final Pattern LOCATION_ID = Pattern.compile(".*(/programmes/.*/4od#\\d+)$");
+    
     @Override
-    protected String idFrom(Identified description) {
+    protected  String idFrom(Identified description) {
         // Lookup full series if it is an embedded series
         if (description instanceof Series) {
             description = seriesLookup.get(description.getCanonicalUri());
@@ -90,6 +93,13 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
             if (alias.startsWith("tag:www.channel4.com") || alias.startsWith("urn:tag:www.channel4.com") || alias.startsWith("tag:www.e4.com")) {
                 return alias;
             }
+        }
+        if (description instanceof Location) {
+        	Location location = (Location) description;
+        	Matcher idMatcher = LOCATION_ID.matcher(location.getUri());
+			if (idMatcher.matches()) {
+				return "tag:www.channel4.com,2009:" + idMatcher.group(1);
+        	}
         }
         return description.getCanonicalUri();
     }
