@@ -14,9 +14,9 @@ import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Described;
-import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Publisher;
@@ -31,7 +31,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.text.Truncator;
-import com.metabroadcast.common.time.DateTimeZones;
 
 public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     
@@ -95,7 +94,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
                     }
                 }
                 
-                populateFeedWithItem(feed, item, from, to, (linkSeries != null ? linkSeries : includeBrand ? interlinkBrand : null));
+                populateFeedWithItem(feed, item, from, to, (linkSeries != null ? linkSeries : interlinkBrand));
             }
         }
         
