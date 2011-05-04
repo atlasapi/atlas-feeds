@@ -14,7 +14,6 @@ permissions and limitations under the License. */
 
 package org.atlasapi.beans;
 
-import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;

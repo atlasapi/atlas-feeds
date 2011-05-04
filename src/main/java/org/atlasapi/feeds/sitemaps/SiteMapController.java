@@ -162,12 +162,12 @@ public class SiteMapController {
             return null;
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("rawtypes")
         public Map getParameterMap() {
             return ImmutableMap.copyOf(this.params);
         }
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("rawtypes")
         public Enumeration getParameterNames() {
             return Collections.enumeration(this.params.keySet());
         }
