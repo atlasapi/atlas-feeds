@@ -28,6 +28,7 @@ import org.joda.time.Duration;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.text.Truncator;
@@ -35,18 +36,14 @@ import com.metabroadcast.common.text.Truncator;
 public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     
     protected static final Operation DEFAULT_OPERATION = Operation.STORE;
-
-	private static Map<String, String> channelLookup() {
-        Map<String, String> channelLookup = Maps.newHashMap();
-        channelLookup.put("http://www.channel4.com", "C4");
-        channelLookup.put("http://www.channel4.com/more4", "M4");
-        channelLookup.put("http://www.e4.com", "E4");
-        channelLookup.put("http://film4.com", "F4");
-        channelLookup.put("http://www.4music.com", "4M");
-        return channelLookup;
-    }
 	
-    public static Map<String, String> CHANNEL_LOOKUP = channelLookup(); 
+    public static Map<String, String> CHANNEL_LOOKUP = ImmutableMap.<String, String>builder()
+		.put("http://www.channel4.com", "C4")
+		.put("http://www.channel4.com/more4", "M4")
+		.put("http://www.e4.com", "E4")
+		.put("http://film4.com", "F4")
+		.put("http://www.4music.com", "4M")
+	.build();
 
 	private final Truncator summaryTruncator = new Truncator()
 		.withMaxLength(90)
