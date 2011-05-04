@@ -3,7 +3,6 @@ package org.atlasapi.feeds.interlinking;
 import static org.atlasapi.media.entity.Channel.CHANNEL_FOUR;
 import static org.atlasapi.media.entity.Channel.E_FOUR;
 import static org.atlasapi.media.entity.Channel.FILM_4;
-import static org.atlasapi.media.entity.Channel.FOUR_MUSIC;
 import static org.atlasapi.media.entity.Channel.MORE_FOUR;
 
 import java.util.Set;
@@ -29,7 +28,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
 
     private final static Pattern CHANNEL_SPECIFIC_ID_PATTERN = Pattern.compile("tag:([^,]+),(\\d{4}):slot/(C4|M4|F4|E4|4M)(\\d+)");
 
-    private static Set<String> BROADCAST_SERVICES = ImmutableSet.of(CHANNEL_FOUR.uri(), E_FOUR.uri(), MORE_FOUR.uri(), FOUR_MUSIC.uri(), FILM_4.uri());
+    private static Set<String> BROADCAST_SERVICES = ImmutableSet.of(CHANNEL_FOUR.uri(), E_FOUR.uri(), MORE_FOUR.uri(), FILM_4.uri());
 
     private final ConcurrentMap<String, Series> seriesLookup;
 
