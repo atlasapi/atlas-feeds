@@ -77,12 +77,16 @@ public class RadioPlayerModule {
     }
     
     @Bean CommonsFTPFileUploader radioPlayerFileUploader(){
-        if(ftpHost != null && ftpPort != null && ftpUsername != null && ftpPassword != null) {
+        if(ftpCredentialsHaveBeenSet()) {
             return new CommonsFTPFileUploader(FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build());
         } else {
             return new CommonsFTPFileUploader(FTPCredentials.forServer("Credentials").withUsername("Set").build());
         }
     }
+
+	private boolean ftpCredentialsHaveBeenSet() {
+		return ftpHost != null && ftpPort != null && ftpUsername != null && ftpPassword != null;
+	}
     
     @Bean RadioPlayerFTPUploadResultStore uploadResultRecorder() {
         return new CachingFTPUploadResultStore(new MongoFTPUploadResultStore(mongo));
@@ -110,23 +114,25 @@ public class RadioPlayerModule {
     
 	@PostConstruct 
 	public void scheduleTasks() {
-	    RadioPlayerFeedCompiler.init(queryExecutor, scheduleResolver);
-		if (Boolean.parseBoolean(upload)) {
+		if (ftpCredentialsHaveBeenSet()) {
+		    RadioPlayerFeedCompiler.init(queryExecutor, scheduleResolver);
 		    FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
-		    
 		    createHealthProbes(credentials);
-		    
-		    RadioPlayerSuccessChecker checker = new RadioPlayerSuccessChecker(radioPlayerFileUploader(), uploadResultRecorder(), log);
-			
-            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), dayRangeGenerator), UPLOAD_EVERY_TWO_HOURS);
-            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), new DayRangeGenerator()), UPLOAD_EVERY_TEN_MINUTES);
-            scheduler.schedule(checker, UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(3)));
-
-            log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
-            .withDescription(String.format("Radioplayer uploader installed for: %s. Frequency: %s",credentials,UPLOAD_EVERY_TEN_MINUTES)));
-		} else {
-			log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
-			.withDescription("Not installing Radioplayer uploader"));
+	
+		    if (Boolean.parseBoolean(upload)) {
+			    
+			    RadioPlayerSuccessChecker checker = new RadioPlayerSuccessChecker(radioPlayerFileUploader(), uploadResultRecorder(), log);
+				
+	            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), dayRangeGenerator), UPLOAD_EVERY_TWO_HOURS);
+	            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), new DayRangeGenerator()), UPLOAD_EVERY_TEN_MINUTES);
+	            scheduler.schedule(checker, UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(3)));
+	
+	            log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
+	            .withDescription(String.format("Radioplayer uploader installed for: %s. Frequency: %s",credentials,UPLOAD_EVERY_TEN_MINUTES)));
+			} else {
+				log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
+				.withDescription("Not installing Radioplayer uploader"));
+			}
 		}
 	}
 
