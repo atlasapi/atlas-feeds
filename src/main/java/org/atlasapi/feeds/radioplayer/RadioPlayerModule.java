@@ -125,7 +125,7 @@ public class RadioPlayerModule {
 				
 	            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), dayRangeGenerator), UPLOAD_EVERY_TWO_HOURS);
 	            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), new DayRangeGenerator()), UPLOAD_EVERY_TEN_MINUTES);
-	            scheduler.schedule(checker, UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(3)));
+	            scheduler.schedule(checker, UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(5)));
 	
 	            log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
 	            .withDescription(String.format("Radioplayer uploader installed for: %s. Frequency: %s",credentials,UPLOAD_EVERY_TEN_MINUTES)));
