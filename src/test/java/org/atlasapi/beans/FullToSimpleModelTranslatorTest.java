@@ -113,7 +113,7 @@ public class FullToSimpleModelTranslatorTest {
 		fullItem.addVersion(version);
 		fullItem.setTitle("Collings and Herrin");
 		
-		CrewMember person = Actor.actor("Andrew Collings", "Dirt-bag Humperdink", Publisher.BBC);
+		CrewMember person = Actor.actor("hisID", "Andrew Collings", "Dirt-bag Humperdink", Publisher.BBC);
 		fullItem.addPerson(person);
 		
 		Item simpleItem = FullToSimpleModelTranslator.simpleItemFrom(fullItem);
