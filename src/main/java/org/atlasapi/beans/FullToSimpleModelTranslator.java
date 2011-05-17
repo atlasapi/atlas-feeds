@@ -20,6 +20,7 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
+import org.atlasapi.media.entity.Person;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule.ScheduleChannel;
@@ -30,6 +31,7 @@ import org.atlasapi.media.entity.simple.BrandSummary;
 import org.atlasapi.media.entity.simple.ContentQueryResult;
 import org.atlasapi.media.entity.simple.Description;
 import org.atlasapi.media.entity.simple.Item;
+import org.atlasapi.media.entity.simple.PeopleQueryResult;
 import org.atlasapi.media.entity.simple.PublisherDetails;
 import org.atlasapi.media.entity.simple.Restriction;
 import org.atlasapi.media.entity.simple.ScheduleQueryResult;
@@ -38,6 +40,7 @@ import org.atlasapi.media.entity.simple.SeriesSummary;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 /**
@@ -55,45 +58,54 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	}
 	
 	@Override
-	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> fullGraph) throws IOException {
-		ContentQueryResult outputGraph = new ContentQueryResult();
-		writeOutContent(fullGraph, outputGraph);
-		
-		if (outputGraph.isEmpty()) {
-		    ScheduleQueryResult scheduleQueryResult = new ScheduleQueryResult();
-		    writeOutSchedule(fullGraph, scheduleQueryResult);
-		    
-		    if (! scheduleQueryResult.isEmpty()) {
-		        outputWriter.writeTo(request, response, ImmutableSet.of((Object) scheduleQueryResult));
-		        return;
-		    }
-		}
-		
-		outputWriter.writeTo(request, response, ImmutableSet.of((Object) outputGraph));
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> fullGraph, AtlasModelType type) throws IOException {
+	    
+	    Object outputGraph;
+	    if (type.equals(AtlasModelType.PEOPLE)) {
+	        outputGraph = writeOutPeople(Iterables.transform(fullGraph, TO_PERSON));
+	    }
+	    else if (type.equals(AtlasModelType.SCHEDULE)) {
+	        outputGraph = writeOutSchedule(Iterables.transform(fullGraph, TO_SCHEDULE_CHANNEL));
+	    }
+	    else {
+	        outputGraph = writeOutContent(Iterables.transform(fullGraph, TO_DESCRIBED));
+	    }
+	    
+	    outputWriter.writeTo(request, response, ImmutableSet.of(outputGraph), type);
 	}
 	
-	private void writeOutSchedule(Collection<Object> fullGraph, ScheduleQueryResult outputGraph) {
-	    for (Object bean : fullGraph) {
-	        if (bean instanceof ScheduleChannel) {
-	            outputGraph.add(scheduleChannelFrom((ScheduleChannel) bean));
-	        }
+	private PeopleQueryResult writeOutPeople(Iterable<Person> people) {
+	    PeopleQueryResult peopleOutputGraph = new PeopleQueryResult();
+        for (Person person : people) {
+            peopleOutputGraph.add(simplePersonFrom(person));
+        }
+        return peopleOutputGraph;
+    }
+
+    private ScheduleQueryResult writeOutSchedule(Iterable<ScheduleChannel> fullGraph) {
+        ScheduleQueryResult outputGraph = new ScheduleQueryResult();
+	    for (ScheduleChannel scheduleChannel : fullGraph) {
+	        outputGraph.add(scheduleChannelFrom(scheduleChannel));
 	    }
+	    return outputGraph;
 	}
 
-	private void writeOutContent(Collection<Object> fullGraph, ContentQueryResult outputGraph) {
-		for (Object bean : fullGraph) {
-			if (bean instanceof Container<?>) {
-				Container<?> playList = (Container<?>) bean;
+	private ContentQueryResult writeOutContent(Iterable<Described> fullGraph) {
+	    ContentQueryResult outputGraph = new ContentQueryResult();
+		for (Described described : fullGraph) {
+			if (described instanceof Container<?>) {
+				Container<?> playList = (Container<?>) described;
 				outputGraph.add(simplePlaylistFrom(playList));
 			}
-			if (bean instanceof ContentGroup) {
-				ContentGroup group = (ContentGroup) bean;
+			if (described instanceof ContentGroup) {
+				ContentGroup group = (ContentGroup) described;
 				outputGraph.add(simplePlaylistFrom(group));
 			}
-			if (bean instanceof org.atlasapi.media.entity.Item) {
-				outputGraph.add(simpleItemFrom((org.atlasapi.media.entity.Item) bean));
+			if (described instanceof org.atlasapi.media.entity.Item) {
+				outputGraph.add(simpleItemFrom((org.atlasapi.media.entity.Item) described));
 			}
 		}
+		return outputGraph;
 	}
 	
 	static org.atlasapi.media.entity.simple.ScheduleChannel scheduleChannelFrom(ScheduleChannel scheduleChannel) {
@@ -109,6 +121,17 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    
 	    newScheduleChannel.setItems(items.build());
 	    return newScheduleChannel;
+	}
+	
+	private static org.atlasapi.media.entity.simple.Person simplePersonFrom(Person fullPerson) {
+	    org.atlasapi.media.entity.simple.Person person = new org.atlasapi.media.entity.simple.Person();
+	    
+	    person.setUri(fullPerson.getCanonicalUri());
+	    person.setCurie(fullPerson.getCurie());
+	    person.setName(fullPerson.getTitle());
+	    person.setProfileLinks(fullPerson.getAliases());
+	    
+	    return person;
 	}
 	
 	private static org.atlasapi.media.entity.simple.Person simplePersonFrom(CrewMember fullCrew) {
@@ -145,16 +168,23 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		
 		copyBasicDescribedAttributes(fullPlayList, simplePlaylist);
 		
-		for (Content fullContent : fullPlayList.getContents()) {
-			if (fullContent instanceof org.atlasapi.media.entity.Item) {
-				simplePlaylist.add(simpleItemFrom((org.atlasapi.media.entity.Item) fullContent));
-			} else if (fullContent instanceof org.atlasapi.media.entity.Container<?>) {
-				simplePlaylist.add(simplePlaylistFrom((org.atlasapi.media.entity.Container<?>) fullContent));
-			} else {
-				throw new IllegalArgumentException("Cannot convert Content of type " + fullContent.getClass().getSimpleName() + " to a simple format");
-			}
-		}
+		simplePlaylist.setContent(simpleContentListFrom(fullPlayList.getContents()));
+		
 		return simplePlaylist;
+	}
+	
+	private static List<Description> simpleContentListFrom(Iterable<Content> contents) {
+	    List<Description> contentList = Lists.newArrayList();
+	    for (Content fullContent : contents) {
+            if (fullContent instanceof org.atlasapi.media.entity.Item) {
+                contentList.add(simpleItemFrom((org.atlasapi.media.entity.Item) fullContent));
+            } else if (fullContent instanceof org.atlasapi.media.entity.Container<?>) {
+                contentList.add(simplePlaylistFrom((org.atlasapi.media.entity.Container<?>) fullContent));
+            } else {
+                throw new IllegalArgumentException("Cannot convert Content of type " + fullContent.getClass().getSimpleName() + " to a simple format");
+            }
+        }
+	    return contentList;
 	}
 	
 	private static void copyBasicContentAttributes(Content content, Description simpleDescription) {
@@ -394,4 +424,25 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	public void writeError(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary exception) throws IOException {
 		outputWriter.writeError(request, response, exception);
 	}
+	
+	private static final Function<Object, Person> TO_PERSON = new Function<Object, Person>() {
+        @Override
+        public Person apply(Object input) {
+            return (Person) input;
+        }
+    };
+    
+    private static final Function<Object, ScheduleChannel> TO_SCHEDULE_CHANNEL = new Function<Object, ScheduleChannel>() {
+        @Override
+        public ScheduleChannel apply(Object input) {
+            return (ScheduleChannel) input;
+        }
+    };
+    
+    private static final Function<Object, Described> TO_DESCRIBED = new Function<Object, Described>() {
+        @Override
+        public Described apply(Object input) {
+            return (Described) input;
+        }
+    };
 }

@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public interface AtlasModelWriter {
 	
-	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph) throws IOException;
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph, AtlasModelType type) throws IOException;
 	
 	public void writeError(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary exception) throws IOException;
 	

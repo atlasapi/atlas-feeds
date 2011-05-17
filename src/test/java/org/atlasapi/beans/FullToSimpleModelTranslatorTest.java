@@ -62,10 +62,10 @@ public class FullToSimpleModelTranslatorTest {
 		graph.add(new Episode());
 		
 		context.checking(new Expectations() {{ 
-			one(xmlOutputter).writeTo(with(request), with(response), with(simpleGraph()));
+			one(xmlOutputter).writeTo(with(request), with(response), with(simpleGraph()), with(AtlasModelType.CONTENT));
 		}});
 		
-		new FullToSimpleModelTranslator(xmlOutputter).writeTo(request, response, graph);
+		new FullToSimpleModelTranslator(xmlOutputter).writeTo(request, response, graph, AtlasModelType.CONTENT);
 	}
 
 	protected Matcher<Set<Object>> simpleGraph() {

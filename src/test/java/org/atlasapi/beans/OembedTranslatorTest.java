@@ -69,7 +69,7 @@ public class OembedTranslatorTest extends TestCase {
 			one(outputFactory).createOutput(); 
 		}});
 		
-		new OembedTranslator(outputFactory).writeTo(request, response, graph);
+		new OembedTranslator(outputFactory).writeTo(request, response, graph, AtlasModelType.CONTENT);
 	}
 	
 	@Test
@@ -80,7 +80,7 @@ public class OembedTranslatorTest extends TestCase {
 			one(oembedOutput).writeTo(response.getOutputStream());
 		}});
 		
-		new OembedTranslator(outputFactory).writeTo(request, response, graph);
+		new OembedTranslator(outputFactory).writeTo(request, response, graph, AtlasModelType.CONTENT);
 	}
 	
 	@Test
@@ -117,7 +117,7 @@ public class OembedTranslatorTest extends TestCase {
 			one(oembedOutput).setEmbedCode("<embed src=\\\"a\\\" />");
 		}});
 		
-		new OembedTranslator(outputFactory).writeTo(request, response, graph);
+		new OembedTranslator(outputFactory).writeTo(request, response, graph, AtlasModelType.CONTENT);
 	}
 
 }

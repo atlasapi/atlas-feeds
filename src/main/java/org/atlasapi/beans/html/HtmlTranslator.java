@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.beans.AtlasErrorSummary;
+import org.atlasapi.beans.AtlasModelType;
 import org.atlasapi.beans.AtlasModelWriter;
 import org.atlasapi.media.entity.Described;
 import org.atlasapi.media.entity.Encoding;
@@ -52,7 +53,7 @@ public class HtmlTranslator implements AtlasModelWriter {
 		}
 	}
 	
-	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> fullGraph) throws IOException {
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> fullGraph, AtlasModelType type) throws IOException {
 		Writer writer = new OutputStreamWriter(response.getOutputStream(), Charsets.UTF_8);
 		try {
 			beginPage(writer);

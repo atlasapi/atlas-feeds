@@ -62,7 +62,7 @@ public class JsonTranslator implements AtlasModelWriter {
 	}
 
 	@Override
-	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph) throws IOException {
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph, AtlasModelType type) throws IOException {
 
 		String callback = callback(request);
 

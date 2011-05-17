@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.beans.AtlasErrorSummary;
+import org.atlasapi.beans.AtlasModelType;
 import org.atlasapi.beans.AtlasModelWriter;
 import org.atlasapi.beans.FullToSimpleModelTranslator;
 import org.atlasapi.beans.JaxbXmlTranslator;
@@ -56,10 +57,10 @@ public class DispatchingAtlasModelWriter implements AtlasModelWriter {
 	}
 
 	@Override
-	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph) throws IOException {
+	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph, AtlasModelType type) throws IOException {
 		MappedWriter writer = findWriterOrWriteNotFound(request, response);
 		if (writer != null) {
-			writer.write(request, response, graph);
+			writer.write(request, response, graph, type);
 		}
 	}
 
@@ -88,11 +89,11 @@ public class DispatchingAtlasModelWriter implements AtlasModelWriter {
 			this.writer = writer;
 		}
 		
-		void write(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph) throws IOException {
+		void write(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph, AtlasModelType type) throws IOException {
 			response.setStatus(HttpStatusCode.OK.code());
 			response.setCharacterEncoding(Charsets.UTF_8.toString());
 			response.setContentType(mimeType.toString());
-			writer.writeTo(request, response, graph);
+			writer.writeTo(request, response, graph, type);
 		}
 		
 		void write(HttpServletRequest request, HttpServletResponse response, AtlasErrorSummary error) throws IOException {

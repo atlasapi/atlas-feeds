@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.atlasapi.beans.AtlasModelType;
 import org.atlasapi.beans.JsonTranslator;
 import org.atlasapi.media.entity.simple.Item;
 import org.atlasapi.media.entity.simple.Playlist;
@@ -41,14 +42,14 @@ public class AtlasContentCopyTest {
         
         ByteArrayOutputStream outputStream1 = new ByteArrayOutputStream();
         
-        translator.writeTo(request, response, ImmutableList.<Object>of(item));
+        translator.writeTo(request, response, ImmutableList.<Object>of(item), AtlasModelType.CONTENT);
         
         String itemOriginalString = outputStream1.toString(Charsets.UTF_8.name());
         outputStream1.close();
         
         ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
         
-        translator.writeTo(request, response, ImmutableList.<Object>of(item.copy()));
+        translator.writeTo(request, response, ImmutableList.<Object>of(item.copy()), AtlasModelType.CONTENT);
         
         String itemCopyString = outputStream2.toString(Charsets.UTF_8.name());
         outputStream2.close();
@@ -84,14 +85,14 @@ public class AtlasContentCopyTest {
         
         ByteArrayOutputStream outputStream1 = new ByteArrayOutputStream();
         
-        translator.writeTo(request, response, ImmutableList.<Object>of(playlist));
+        translator.writeTo(request, response, ImmutableList.<Object>of(playlist), AtlasModelType.CONTENT);
         
         String playlistOriginalString = outputStream1.toString(Charsets.UTF_8.name());
         outputStream1.close();
         
         ByteArrayOutputStream outputStream2 = new ByteArrayOutputStream();
         
-        translator.writeTo(request, response, ImmutableList.<Object>of(playlist.copy()));
+        translator.writeTo(request, response, ImmutableList.<Object>of(playlist.copy()), AtlasModelType.CONTENT);
         
         String playlistCopyString = outputStream2.toString(Charsets.UTF_8.name());
         outputStream2.close();

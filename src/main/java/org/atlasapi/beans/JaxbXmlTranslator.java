@@ -87,7 +87,8 @@ public class JaxbXmlTranslator implements AtlasModelWriter {
 	
 	private final SimpleTimeLimiter limiter = new SimpleTimeLimiter();
 	
-	public void writeTo(final HttpServletRequest request, final HttpServletResponse response, Collection<Object> graph) throws IOException {
+	@Override
+	public void writeTo(final HttpServletRequest request, final HttpServletResponse response, Collection<Object> graph, AtlasModelType type) throws IOException {
 		final Object result = Iterables.getOnlyElement(graph);
 		try {
 			limiter.callWithTimeout(writeOut(response, result), 60, TimeUnit.SECONDS, true);

@@ -26,6 +26,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.atlasapi.beans.AtlasModelType;
 import org.springframework.beans.factory.InitializingBean;
 
 import com.google.common.collect.Lists;
@@ -76,7 +77,7 @@ public abstract class JenaRdfTranslator extends AbstractRdfTranslator<OntModel, 
     }
 
 	@Override
-    public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph) throws IOException {
+    public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph, AtlasModelType type) throws IOException {
 		OntModel rdf = ModelFactory.createOntologyModel(OWL_MEM);
 
 		loadOntologies(rdf);
