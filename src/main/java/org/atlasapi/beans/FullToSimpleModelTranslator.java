@@ -130,6 +130,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    person.setCurie(fullPerson.getCurie());
 	    person.setName(fullPerson.getTitle());
 	    person.setProfileLinks(fullPerson.getAliases());
+	    person.setContent(simpleContentListFrom(fullPerson.getContents()));
 	    
 	    return person;
 	}
