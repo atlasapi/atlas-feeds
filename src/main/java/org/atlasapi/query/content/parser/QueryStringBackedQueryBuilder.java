@@ -17,8 +17,8 @@ package org.atlasapi.query.content.parser;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,8 +32,6 @@ import org.atlasapi.content.criteria.attribute.QueryFactory;
 import org.atlasapi.content.criteria.attribute.StringValuedAttribute;
 import org.atlasapi.content.criteria.operator.Operator;
 import org.atlasapi.content.criteria.operator.Operators;
-import org.atlasapi.media.entity.Countries;
-import org.atlasapi.media.entity.Country;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 
@@ -62,21 +60,13 @@ public class QueryStringBackedQueryBuilder {
 	private final DateTimeInQueryParser dateTimeParser = new DateTimeInQueryParser();
 	
 	private static final SelectionBuilder selectionBuilder = Selection.builder();
-	private final DefaultQueryAttributesSetter defaults;
+	private final ContentQuery defaults;
 
-	private static final DefaultQueryAttributesSetter NO_DEFAULTS = new DefaultQueryAttributesSetter() {
-		
-		@Override
-		public ContentQuery withDefaults() {
-			return ContentQuery.MATCHES_EVERYTHING;
-		}
-	};
-	
 	public QueryStringBackedQueryBuilder() {
-		this(NO_DEFAULTS);
+		this(ContentQuery.MATCHES_EVERYTHING);
 	}
 	
-	public QueryStringBackedQueryBuilder(DefaultQueryAttributesSetter defaults) {
+	public QueryStringBackedQueryBuilder(ContentQuery defaults) {
 		this.defaults = defaults;
 	}
 	
@@ -125,7 +115,7 @@ public class QueryStringBackedQueryBuilder {
 			}
 		}
 		
-		for (AtomicQuery atomicQuery : defaults.withDefaults().operands()) {
+		for (AtomicQuery atomicQuery : defaults.operands()) {
 			if (atomicQuery instanceof AttributeQuery<?> && userSuppliedAttributes.contains(((AttributeQuery<?>) atomicQuery).getAttribute())) {
 				continue;
 			}
@@ -185,11 +175,11 @@ public class QueryStringBackedQueryBuilder {
 	        return values;
 	    }
 	    
-	    if (Attributes.POLICY_AVAILABLE_COUNTRY.equals(attribute)) {
-	    	Set<Country> withAll = Sets.newHashSet(Countries.fromCodes(values));
-	    	withAll.add(Countries.ALL);
-	    	return ImmutableList.copyOf(Countries.toCodes(withAll));
-	    }
+//	    if (Attributes.POLICY_AVAILABLE_COUNTRY.equals(attribute)) {
+//	    	Set<Country> withAll = Sets.newHashSet(Countries.fromCodes(values));
+//	    	withAll.add(Countries.ALL);
+//	    	return ImmutableList.copyOf(Countries.toCodes(withAll));
+//	    }
 	    
 	    String attributeName = ((StringValuedAttribute) attribute).javaAttributeName();
 	    

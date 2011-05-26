@@ -45,7 +45,7 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 		}});
 		
 		ApplicationConfigurationFetcher configFetcher = new ApiKeyConfigurationFetcher(reader);
-		ApplicationConfigurationIncludingQueryBuilder builder = new ApplicationConfigurationIncludingQueryBuilder(new QueryStringBackedQueryBuilder(new WebProfileDefaultQueryAttributesSetter()), configFetcher) ;
+		ApplicationConfigurationIncludingQueryBuilder builder = new ApplicationConfigurationIncludingQueryBuilder(new QueryStringBackedQueryBuilder(), configFetcher) ;
 
 		HttpServletRequest request = new StubHttpServletRequest().withParam("tag", "East").withParam("apiKey", testApiKey);
 		ContentQuery query = builder.build(request);

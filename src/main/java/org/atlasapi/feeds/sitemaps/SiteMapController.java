@@ -12,9 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.content.criteria.AtomicQuery;
 import org.atlasapi.content.criteria.ContentQuery;
-import org.atlasapi.content.criteria.attribute.Attributes;
-import org.atlasapi.content.criteria.operator.Operators;
-import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
@@ -83,8 +80,8 @@ public class SiteMapController {
     public String siteMapFofPublisher(@RequestParam(value = HOST_PARAM, required = false) final String host, HttpServletRequest request, HttpServletResponse response) throws IOException {
         ContentQuery query = queryBuilder.build(request);
 
-        ContentQuery requestQuery = new ContentQuery(Iterables.concat(query.operands(), ImmutableList.<AtomicQuery> of(Attributes.LOCATION_TRANSPORT_TYPE.createQuery(Operators.EQUALS, ImmutableList
-                .of(TransportType.LINK))))).copyWithApplicationConfiguration(query.getConfiguration());
+        ContentQuery requestQuery = new ContentQuery(Iterables.concat(query.operands(), ImmutableList.<AtomicQuery> of(/*Attributes.LOCATION_TRANSPORT_TYPE.createQuery(Operators.EQUALS, ImmutableList
+                .of(TransportType.LINK))*/))).copyWithApplicationConfiguration(query.getConfiguration());
 
         List<? extends Content> brands = queryExecutor.discover(requestQuery);
 

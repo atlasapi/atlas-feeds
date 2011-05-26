@@ -8,10 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.atlasapi.content.criteria.AtomicQuery;
-import org.atlasapi.content.criteria.ContentQuery;
-import org.atlasapi.content.criteria.attribute.Attributes;
-import org.atlasapi.content.criteria.operator.Operators;
 import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerBroadcastItem;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerProgrammeInformationOutputter;
@@ -51,9 +47,9 @@ public abstract class RadioPlayerFeedCompiler {
     private static Map<String, RadioPlayerFeedCompiler> compilerMap;
     
     public static void init(KnownTypeQueryExecutor queryExecutor, ScheduleResolver scheduleResolver) {
-        compilerMap = ImmutableMap.of(
-                "PI",new RadioPlayerProgrammeInformationFeedCompiler(queryExecutor, scheduleResolver),
-                "OD",new RadioPlayerOnDemandFeedCompiler(queryExecutor, scheduleResolver));
+        compilerMap = ImmutableMap.<String, RadioPlayerFeedCompiler>of(
+                "PI",new RadioPlayerProgrammeInformationFeedCompiler(queryExecutor, scheduleResolver)
+            );
     }
     
     public static RadioPlayerFeedCompiler valueOf(String type) {
@@ -74,21 +70,6 @@ public abstract class RadioPlayerFeedCompiler {
         }
     }
     
-    private static class RadioPlayerOnDemandFeedCompiler extends RadioPlayerFeedCompiler {
-        public RadioPlayerOnDemandFeedCompiler(KnownTypeQueryExecutor executor, ScheduleResolver scheduleResolver) {
-            super(null, executor, scheduleResolver);
-        }
-
-        @Override
-        public List<Item> queryFor(LocalDate broadcastOn, String serviceUri) {
-            Iterable<AtomicQuery> queryAtoms = ImmutableSet.of((AtomicQuery)
-                    Attributes.BROADCAST_ON.createQuery(Operators.EQUALS, ImmutableList.of(serviceUri)),
-                    Attributes.LOCATION_AVAILABLE.createQuery(Operators.EQUALS, ImmutableList.of(Boolean.TRUE))
-            );
-            return ImmutableList.copyOf(Iterables.filter(executor.discover(new ContentQuery(queryAtoms)), Item.class));
-        }
-    }
-
 	public abstract List<Item> queryFor(LocalDate date, String serviceUri);
 	
     public RadioPlayerXMLOutputter getOutputter() {

@@ -18,10 +18,7 @@ import static org.atlasapi.content.criteria.ContentQueryBuilder.query;
 import static org.atlasapi.content.criteria.attribute.Attributes.DESCRIPTION_GENRE;
 import static org.atlasapi.content.criteria.attribute.Attributes.DESCRIPTION_PUBLISHER;
 import static org.atlasapi.content.criteria.attribute.Attributes.DESCRIPTION_TAG;
-import static org.atlasapi.content.criteria.attribute.Attributes.LOCATION_AVAILABLE;
-import static org.atlasapi.content.criteria.attribute.Attributes.LOCATION_TRANSPORT_TYPE;
-import static org.atlasapi.content.criteria.attribute.Attributes.POLICY_AVAILABLE_COUNTRY;
-import static org.atlasapi.content.criteria.attribute.Attributes.VERSION_DURATION;
+import static org.atlasapi.content.criteria.attribute.Attributes.DESCRIPTION_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -30,8 +27,7 @@ import java.util.Map;
 
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.ContentQueryBuilder;
-import org.atlasapi.media.TransportType;
-import org.atlasapi.media.entity.Countries;
+import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Publisher;
 import org.junit.Test;
 
@@ -44,28 +40,23 @@ public class QueryStringBackedQueryBuilderTest  {
 	private final QueryStringBackedQueryBuilder builder = new QueryStringBackedQueryBuilder();
 	
 	@Test
-	public void testAvailableCountrySearch() throws Exception {
+	public void testPublisherSearch() throws Exception {
 		Map<String, String[]> params = Maps.newHashMap();
 		
 		params = Maps.newHashMap();
-		params.put("availableCountries", new String[] { "gb" });
-		check(params, query().equalTo(POLICY_AVAILABLE_COUNTRY, Countries.GB.code(), Countries.ALL.code()));
-		
-
-		params = Maps.newHashMap();
-		params.put("availableCountries", new String[] { "all" });
-		check(params, query().equalTo(POLICY_AVAILABLE_COUNTRY, Countries.ALL.code()));
+		params.put("publisher", new String[] { "bbc.co.uk" });
+		check(params, query().equalTo(DESCRIPTION_PUBLISHER, Publisher.BBC));
 	}
 	
 	@Test
-	public void testAvailability() throws Exception {
+	public void testDescriptionType() throws Exception {
 		Map<String, String[]> params = Maps.newHashMap();
-		params.put("available", new String[] { "true" });
-		check(params, query().equalTo(LOCATION_AVAILABLE, true));
+		params.put("mediaType", new String[] { "AUDIO" });
+		check(params, query().equalTo(DESCRIPTION_TYPE, MediaType.AUDIO));
 		
 		params = Maps.newHashMap();
-		params.put("available", new String[] { "false" });
-		check(params, query().equalTo(LOCATION_AVAILABLE, false));
+		params.put("mediaType", new String[] { "VIDEO" });
+		check(params, query().equalTo(DESCRIPTION_TYPE, MediaType.VIDEO));
 	}
 	
 	@Test
@@ -86,21 +77,21 @@ public class QueryStringBackedQueryBuilderTest  {
 		check(params, query().equalTo(DESCRIPTION_TAG, "http://ref.atlasapi.org/tags/bob"));
 	}
 	
-	@Test
-	public void testDurationEquals() throws Exception {
-		Map<String, String[]> params = Maps.newHashMap();
-
-		params = Maps.newHashMap();
-		params.put("duration", new String[] { "10" });
-		check(params, query().equalTo(VERSION_DURATION, 10));
-	}
+//	@Test
+//	public void testDurationEquals() throws Exception {
+//		Map<String, String[]> params = Maps.newHashMap();
+//
+//		params = Maps.newHashMap();
+//		params.put("duration", new String[] { "10" });
+//		check(params, query().equalTo(VERSION_DURATION, 10));
+//	}
 	
-	@Test
-	public void testTransportType() throws Exception {
-		Map<String, String[]> params = Maps.newHashMap();
-		params.put("transportType", new String[] { "link" });
-		check(params, query().equalTo(LOCATION_TRANSPORT_TYPE, TransportType.LINK));
-	}
+//	@Test
+//	public void testTransportType() throws Exception {
+//		Map<String, String[]> params = Maps.newHashMap();
+//		params.put("transportType", new String[] { "link" });
+//		check(params, query().equalTo(LOCATION_TRANSPORT_TYPE, TransportType.LINK));
+//	}
 	
 	@Test
 	public void testTitleAndPublisherEqualityDisjunction() throws Exception {
@@ -109,19 +100,19 @@ public class QueryStringBackedQueryBuilderTest  {
 		check(params, query().isAnEnumIn(DESCRIPTION_PUBLISHER, ImmutableList.<Enum<Publisher>>of(Publisher.BBC, Publisher.C4)));
 	}
 	
-	@Test
-	public void testDurationGreaterThan() {
-		Map<String, String[]> params = Maps.newHashMap();
-		params.put("duration-greaterThan", new String[] {"10"});
-		check(params, query().greaterThan(VERSION_DURATION, 10));
-	}
+//	@Test
+//	public void testDurationGreaterThan() {
+//		Map<String, String[]> params = Maps.newHashMap();
+//		params.put("duration-greaterThan", new String[] {"10"});
+//		check(params, query().greaterThan(VERSION_DURATION, 10));
+//	}
 	
-	@Test
-	public void testDurationLessThan() {
-		Map<String, String[]> params = Maps.newHashMap();
-		params.put("duration-lessThan", new String[] {"10"});
-		check(params, query().lessThan(VERSION_DURATION, 10));
-	}
+//	@Test
+//	public void testDurationLessThan() {
+//		Map<String, String[]> params = Maps.newHashMap();
+//		params.put("duration-lessThan", new String[] {"10"});
+//		check(params, query().lessThan(VERSION_DURATION, 10));
+//	}
 	
 	@Test
 	public void testInvalidAttribute() {
