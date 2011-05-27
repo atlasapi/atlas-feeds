@@ -31,12 +31,12 @@ import java.util.Map;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.ContentQueryBuilder;
 import org.atlasapi.media.TransportType;
-import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.Publisher;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.metabroadcast.common.intl.Countries;
 
 
 public class QueryStringBackedQueryBuilderTest  {

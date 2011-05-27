@@ -10,8 +10,6 @@ import nu.xom.Element;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Container;
-import org.atlasapi.media.entity.Countries;
-import org.atlasapi.media.entity.Country;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
@@ -27,6 +25,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
+import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.intl.Country;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {

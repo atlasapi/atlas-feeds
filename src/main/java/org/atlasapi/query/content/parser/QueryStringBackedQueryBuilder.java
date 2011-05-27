@@ -17,8 +17,8 @@ package org.atlasapi.query.content.parser;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,8 +32,6 @@ import org.atlasapi.content.criteria.attribute.QueryFactory;
 import org.atlasapi.content.criteria.attribute.StringValuedAttribute;
 import org.atlasapi.content.criteria.operator.Operator;
 import org.atlasapi.content.criteria.operator.Operators;
-import org.atlasapi.media.entity.Countries;
-import org.atlasapi.media.entity.Country;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 
@@ -42,6 +40,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.intl.Country;
 import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.common.query.Selection.SelectionBuilder;
 

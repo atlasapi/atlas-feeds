@@ -13,7 +13,6 @@ import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.ContentGroup;
-import org.atlasapi.media.entity.Countries;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Described;
 import org.atlasapi.media.entity.Encoding;
@@ -42,6 +41,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.metabroadcast.common.intl.Countries;
 
 /**
  * {@link AtlasModelWriter} that translates the full URIplay object model
@@ -264,7 +264,15 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	}
 
 	private static org.atlasapi.media.entity.simple.Broadcast simplify(Broadcast broadcast) {
-	    return new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime(), broadcast.getId()).withRepeat(broadcast.isRepeat());
+	    return new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime(), broadcast.getId())
+	        .withRepeat(broadcast.isRepeat())
+	        .withSubtitled(broadcast.isSubtitled())
+	        .withSigned(broadcast.isSigned())
+	        .withAudioDescribed(broadcast.isAudioDescribed())
+	        .withHighDefinition(broadcast.isHighDefinition())
+	        .withWidescreen(broadcast.isWidescreen())
+	        .withSurround(broadcast.isSurround())
+	        .withLive(broadcast.isLive());
 	}
 
 	private static void addTo(Item simpleItem, Version version, Encoding encoding) {
@@ -286,6 +294,9 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 
 	private static void copyProperties(org.atlasapi.media.entity.Item fullItem, Item simpleItem) {
 		copyBasicContentAttributes(fullItem, simpleItem);
+		
+		simpleItem.setBlackAndWhite(fullItem.isBlackAndWhite());
+		simpleItem.setCountriesOfOrigin(fullItem.getCountriesOfOrigin());
 		
 		if (fullItem.getContainer() != null) {
 			Container<?> brand = fullItem.getContainer();
