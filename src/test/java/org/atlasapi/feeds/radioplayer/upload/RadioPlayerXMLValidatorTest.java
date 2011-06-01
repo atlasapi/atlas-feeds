@@ -9,7 +9,6 @@ import java.io.InputStream;
 
 import nu.xom.ValidityException;
 
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerXMLValidator;
 import org.junit.Before;
 import org.junit.Test;
 
