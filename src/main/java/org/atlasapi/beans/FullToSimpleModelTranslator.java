@@ -31,6 +31,7 @@ import org.atlasapi.media.entity.simple.BrandSummary;
 import org.atlasapi.media.entity.simple.ContentQueryResult;
 import org.atlasapi.media.entity.simple.Description;
 import org.atlasapi.media.entity.simple.Item;
+import org.atlasapi.media.entity.simple.ContentIdentifier;
 import org.atlasapi.media.entity.simple.PeopleQueryResult;
 import org.atlasapi.media.entity.simple.PublisherDetails;
 import org.atlasapi.media.entity.simple.Restriction;
@@ -158,7 +159,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		copyBasicContentAttributes(fullPlayList, simplePlaylist);
 		
 		for (org.atlasapi.media.entity.Item fullItem : fullPlayList.getContents()) {
-			simplePlaylist.add(simpleItemFrom(fullItem));
+			simplePlaylist.add(contentIdentifierFrom(fullItem));
 		}
 		return simplePlaylist;
 	}
@@ -174,13 +175,13 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		return simplePlaylist;
 	}
 	
-	private static List<Description> simpleContentListFrom(Iterable<Content> contents) {
-	    List<Description> contentList = Lists.newArrayList();
+	private static List<ContentIdentifier> simpleContentListFrom(Iterable<Content> contents) {
+	    List<ContentIdentifier> contentList = Lists.newArrayList();
 	    for (Content fullContent : contents) {
             if (fullContent instanceof org.atlasapi.media.entity.Item) {
-                contentList.add(simpleItemFrom((org.atlasapi.media.entity.Item) fullContent));
+                contentList.add(contentIdentifierFrom((org.atlasapi.media.entity.Item) fullContent));
             } else if (fullContent instanceof org.atlasapi.media.entity.Container<?>) {
-                contentList.add(simplePlaylistFrom((org.atlasapi.media.entity.Container<?>) fullContent));
+                contentList.add(contentIdentifierFrom((org.atlasapi.media.entity.Container<?>) fullContent));
             } else {
                 throw new IllegalArgumentException("Cannot convert Content of type " + fullContent.getClass().getSimpleName() + " to a simple format");
             }
@@ -227,6 +228,10 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 			}
 		});
 	}
+
+    static ContentIdentifier contentIdentifierFrom(org.atlasapi.media.entity.Described content) {
+        return ContentIdentifier.identifierFor(content);
+    }
 
 	static org.atlasapi.media.entity.simple.Item simpleItemFrom(org.atlasapi.media.entity.Item fullItem) {
 		

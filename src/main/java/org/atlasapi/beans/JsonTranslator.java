@@ -21,6 +21,7 @@ import java.lang.reflect.Type;
 import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.util.Collection;
+import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,6 +29,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.atlasapi.media.entity.simple.Description;
 import org.atlasapi.media.entity.simple.Item;
 import org.atlasapi.media.entity.simple.Playlist;
+import org.joda.time.DateTime;
+import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Iterables;
@@ -37,8 +40,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.metabroadcast.common.time.DateTimeZones;
 
 /**
  * Outputs simple URIplay model in Json.
@@ -57,6 +62,7 @@ public class JsonTranslator implements AtlasModelWriter {
 					.setDateFormat(DateFormat.LONG)
 					.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
 					.registerTypeAdapter(AtlasErrorSummary.class, new AtlasExceptionJsonSerializer())
+					.registerTypeAdapter(Date.class, new DateTimeSerializer())
 					.registerTypeAdapter(Description.class, new DescriptionSerializer())
 					.create();
 	}
@@ -151,4 +157,13 @@ public class JsonTranslator implements AtlasModelWriter {
 			return element;
 		}
 	}
+
+    private static final class DateTimeSerializer implements JsonSerializer<Date> {
+
+        @Override
+        public JsonElement serialize(Date date, Type type, JsonSerializationContext context) {
+            return new JsonPrimitive(new DateTime(date,DateTimeZones.UTC).toString(ISODateTimeFormat.dateTimeNoMillis()));
+        }
+    }
+    
 }
