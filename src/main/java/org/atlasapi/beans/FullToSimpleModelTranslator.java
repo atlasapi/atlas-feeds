@@ -269,15 +269,18 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	}
 
 	private static org.atlasapi.media.entity.simple.Broadcast simplify(Broadcast broadcast) {
-	    return new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime(), broadcast.getId())
-	        .withRepeat(broadcast.isRepeat())
-	        .withSubtitled(broadcast.isSubtitled())
-	        .withSigned(broadcast.isSigned())
-	        .withAudioDescribed(broadcast.isAudioDescribed())
-	        .withHighDefinition(broadcast.isHighDefinition())
-	        .withWidescreen(broadcast.isWidescreen())
-	        .withSurround(broadcast.isSurround())
-	        .withLive(broadcast.isLive());
+	    org.atlasapi.media.entity.simple.Broadcast simpleModel = new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime(), broadcast.getId());
+	    
+	    simpleModel.setRepeat(broadcast.isRepeat());
+	    simpleModel.setSubtitled(broadcast.isSubtitled());
+	    simpleModel.setSigned(broadcast.isSigned());
+        simpleModel.setAudioDescribed(broadcast.isAudioDescribed());
+        simpleModel.setHighDefinition(broadcast.isHighDefinition());
+        simpleModel.setWidescreen(broadcast.isWidescreen());
+        simpleModel.setSurround(broadcast.isSurround());
+        simpleModel.setLive(broadcast.isLive());
+	    
+	    return simpleModel; 
 	}
 
 	private static void addTo(Item simpleItem, Version version, Encoding encoding) {
