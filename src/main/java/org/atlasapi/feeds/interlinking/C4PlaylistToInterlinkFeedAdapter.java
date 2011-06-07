@@ -19,6 +19,7 @@ import org.atlasapi.persistence.content.ContentResolver;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapMaker;
 
@@ -38,7 +39,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
         seriesLookup = new MapMaker().expireAfterAccess(10, TimeUnit.MINUTES).makeComputingMap(new Function<String, Series>() {
             @Override
             public Series apply(String uri) {
-                return (Series) resolver.findByCanonicalUri(uri);
+                return (Series) resolver.findByCanonicalUris(ImmutableList.of(uri)).get(uri).requireValue();
             }
         });
     }
