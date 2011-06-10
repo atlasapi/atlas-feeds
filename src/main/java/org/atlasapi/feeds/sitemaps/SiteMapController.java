@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.atlasapi.content.criteria.AtomicQuery;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.media.entity.Brand;
+import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Identified;
@@ -67,7 +68,8 @@ public class SiteMapController {
         List<Item> contents = Lists.newArrayList();
         List<Brand> brands = ImmutableList.copyOf(Iterables.filter(Iterables.concat(content.values()), Brand.class));
         for (Brand brand: brands) {
-            contents.addAll(brand.getContents());
+            Map<String, List<Identified>> childContent = queryExecutor.executeUriQuery(Iterables.transform(brand.getChildRefs(), ChildRef.TO_URI), query);
+            contents.addAll(ImmutableList.copyOf(Iterables.filter(Iterables.concat(childContent.values()), Item.class)));
         }
         
         response.setStatus(HttpServletResponse.SC_OK);
@@ -111,12 +113,13 @@ public class SiteMapController {
         @Override
         public boolean apply(Content input) {
             if(input instanceof Container) {
-                for (Item item : ((Container<?>)input).getContents()) {
-                    if (item.getThumbnail() != null) {
-                        return true;
-                    }
-                }
-                return false;
+//                for (Item item : ((Container<?>)input).getContents()) {
+//                    if (item.getThumbnail() != null) {
+//                        return true;
+//                    }
+//                }
+//                return false;
+                throw new IllegalArgumentException("Can't tell if a container has a child with a thumbnail");
             } else {
                 return ((Item)input).getThumbnail() != null;
             }

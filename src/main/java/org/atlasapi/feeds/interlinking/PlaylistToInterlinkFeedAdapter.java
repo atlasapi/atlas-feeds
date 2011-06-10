@@ -61,40 +61,42 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     public InterlinkFeed fromBrands(String id, Publisher publisher, DateTime from, DateTime to, List<Content> contents) {
         InterlinkFeed feed = feed(id, publisher);
         
-        for (Content content : contents) {
-        	if (!(content instanceof Brand)) {
-        		// ignore non-brands for now, all C4 content is in brands
-        		continue;
-        	}
-        	Brand brand = (Brand) content;
-        	
-        	boolean includeBrand = containerQualifies(from, to, brand);
-        	
-            InterlinkBrand interlinkBrand = fromBrand(brand, from, to);
-            if (includeBrand) {
-                feed.addEntry(interlinkBrand);
-            }
-            
-            Map<String, InterlinkSeries> seriesLookup = Maps.newHashMap();
-            for (Item item : brand.getContents()) {
-                InterlinkSeries linkSeries = null;
-                if (item instanceof Episode) {
-                    Episode episode = (Episode) item;
-                    Series series = episode.getSeries();
-                    if (series != null && containerQualifies(from, to, series)) {
-                        linkSeries = seriesLookup.get(series.getCanonicalUri());
-                        if (linkSeries == null) {
-                            linkSeries = fromSeries(series, interlinkBrand, brand, from, to);
-                            feed.addEntry(linkSeries);
-                            seriesLookup.put(series.getCanonicalUri(), linkSeries);
-                        }
-                    }
-                }
-                
-                populateFeedWithItem(feed, item, from, to, (linkSeries != null ? linkSeries : interlinkBrand));
-            }
+//        for (Content content : contents) {
+//        	if (!(content instanceof Brand)) {
+//        		// ignore non-brands for now, all C4 content is in brands
+//        		continue;
+//        	}
+//        	Brand brand = (Brand) content;
+//        	
+//        	boolean includeBrand = containerQualifies(from, to, brand);
+//        	
+//            InterlinkBrand interlinkBrand = fromBrand(brand, from, to);
+//            if (includeBrand) {
+//                feed.addEntry(interlinkBrand);
+//            }
+//            
+//            Map<String, InterlinkSeries> seriesLookup = Maps.newHashMap();
+//            for (Item item : brand.getContents()) {
+//                InterlinkSeries linkSeries = null;
+//                if (item instanceof Episode) {
+//                    Episode episode = (Episode) item;
+//                    Series series = episode.getSeries();
+//                    if (series != null && containerQualifies(from, to, series)) {
+//                        linkSeries = seriesLookup.get(series.getCanonicalUri());
+//                        if (linkSeries == null) {
+//                            linkSeries = fromSeries(series, interlinkBrand, brand, from, to);
+//                            feed.addEntry(linkSeries);
+//                            seriesLookup.put(series.getCanonicalUri(), linkSeries);
+//                        }
+//                    }
+//                }
+//                
+//                populateFeedWithItem(feed, item, from, to, (linkSeries != null ? linkSeries : interlinkBrand));
+//            }
+//        }
+        if(true) {
+            throw new UnsupportedOperationException();
         }
-        
         return feed;
     }
     
@@ -198,31 +200,37 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
     
     private Operation operationFor(Series series, Brand brand, DateTime from, DateTime to) {
-    	for (Item item : brand.getContents()) {
-    		if (!(item instanceof Episode)) {
-    			continue;
-    		}
-    		Episode episode = (Episode) item;
-    		Series seriesSummary = episode.getSeries();
-    		if (seriesSummary == null) {
-    			continue;
-    		}
-			if (!seriesSummary.getCanonicalUri().equals(series.getCanonicalUri())) {
-    			continue;
-    		}
-			if (Operation.STORE.equals(operationFor(item, from, to))) {
-				return Operation.STORE;
-			}
-		}
+        if(true) {
+            throw new UnsupportedOperationException();
+        }
+//    	for (Item item : brand.getContents()) {
+//    		if (!(item instanceof Episode)) {
+//    			continue;
+//    		}
+//    		Episode episode = (Episode) item;
+//    		Series seriesSummary = episode.getSeries();
+//    		if (seriesSummary == null) {
+//    			continue;
+//    		}
+//			if (!seriesSummary.getCanonicalUri().equals(series.getCanonicalUri())) {
+//    			continue;
+//    		}
+//			if (Operation.STORE.equals(operationFor(item, from, to))) {
+//				return Operation.STORE;
+//			}
+//		}
 		return Operation.DELETE;
     }
 
 	private Operation operationFor(Brand brand, DateTime from, DateTime to) {
-		for (Item item : brand.getContents()) {
-			if (Operation.STORE.equals(operationFor(item, from, to))) {
-				return Operation.STORE;
-			}
-		}
+        if(true) {
+            throw new UnsupportedOperationException();
+        }
+//		for (Item item : brand.getContents()) {
+//			if (Operation.STORE.equals(operationFor(item, from, to))) {
+//				return Operation.STORE;
+//			}
+//		}
 		return Operation.DELETE;
 	}
 

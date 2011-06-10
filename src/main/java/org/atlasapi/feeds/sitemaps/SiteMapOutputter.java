@@ -16,7 +16,6 @@ import org.atlasapi.feeds.xml.XMLNamespace;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Clip;
-import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
@@ -139,13 +138,14 @@ public class SiteMapOutputter {
     private String itemTitle(Item item) {
         String title = Strings.nullToEmpty(item.getTitle());
         if (item instanceof Episode) {
-            Container<?> brand = ((Episode) item).getContainer();
-            if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
-                String brandTitle = brand.getTitle();
-                if (!brandTitle.equals(title)) {
-                    title = brandTitle + " : " + title;
-                }
-            }
+            throw new IllegalArgumentException("Can't compile title for episode");
+//            Container<?> brand = ((Episode) item).getContainer();
+//            if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
+//                String brandTitle = brand.getTitle();
+//                if (!brandTitle.equals(title)) {
+//                    title = brandTitle + " : " + title;
+//                }
+//            }
         }
         return titleTruncator.truncate(title);
     }
@@ -153,13 +153,14 @@ public class SiteMapOutputter {
     private String clipTitle(Clip clip, Item item) {
         String title = Strings.nullToEmpty(clip.getTitle());
         if (item instanceof Episode) {
-            Container<?> brand = ((Episode) item).getContainer();
-            if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
-                String brandTitle = brand.getTitle();
-                if (!brandTitle.equals(title)) {
-                    title = brandTitle + " : " + title;
-                }
-            }
+            throw new IllegalArgumentException("Can't compile title for episode");
+//            Container<?> brand = ((Episode) item).getContainer();
+//            if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
+//                String brandTitle = brand.getTitle();
+//                if (!brandTitle.equals(title)) {
+//                    title = brandTitle + " : " + title;
+//                }
+//            }
         }
         return titleTruncator.truncate(title);
     }

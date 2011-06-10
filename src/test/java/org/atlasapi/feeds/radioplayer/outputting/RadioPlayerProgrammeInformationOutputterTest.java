@@ -75,7 +75,8 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		Series series = new Series("seriesUri", "seriesCurie", Publisher.BBC);
 		series.setTitle("This is the series title");
-		series.addContents(testItem);
+		testItem.setSeries(series);
+		series.setChildRefs(ImmutableList.of(testItem.childRef()));
 		
 		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
 		brand.setTitle("Electric Proms");
@@ -92,7 +93,8 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		Series series = new Series("seriesUri", "seriesCurie", Publisher.BBC);
 		series.setTitle("Series Title");
-		series.addContents(testItem);
+        testItem.setSeries(series);
+        series.setChildRefs(ImmutableList.of(testItem.childRef()));
 		
 		//make item available everywhere.
 		getLocation(testItem).getPolicy().setAvailableCountries(ImmutableSet.of(Countries.GB));
