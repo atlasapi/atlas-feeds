@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.media.entity.Actor;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
@@ -19,18 +20,18 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
+import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Person;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule.ScheduleChannel;
-import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.entity.simple.Aliased;
 import org.atlasapi.media.entity.simple.BrandSummary;
+import org.atlasapi.media.entity.simple.ContentIdentifier;
 import org.atlasapi.media.entity.simple.ContentQueryResult;
 import org.atlasapi.media.entity.simple.Description;
 import org.atlasapi.media.entity.simple.Item;
-import org.atlasapi.media.entity.simple.ContentIdentifier;
 import org.atlasapi.media.entity.simple.PeopleQueryResult;
 import org.atlasapi.media.entity.simple.PublisherDetails;
 import org.atlasapi.media.entity.simple.Restriction;
@@ -158,8 +159,8 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		
 		copyBasicContentAttributes(fullPlayList, simplePlaylist);
 		
-		for (org.atlasapi.media.entity.Item fullItem : fullPlayList.getContents()) {
-			simplePlaylist.add(contentIdentifierFrom(fullItem));
+		for (ChildRef child : fullPlayList.getChildRefs()) {
+			simplePlaylist.add(contentIdentifierFrom(child));
 		}
 		return simplePlaylist;
 	}
@@ -175,16 +176,10 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		return simplePlaylist;
 	}
 	
-	private static List<ContentIdentifier> simpleContentListFrom(Iterable<Content> contents) {
+	private static List<ContentIdentifier> simpleContentListFrom(Iterable<ChildRef> contents) {
 	    List<ContentIdentifier> contentList = Lists.newArrayList();
-	    for (Content fullContent : contents) {
-            if (fullContent instanceof org.atlasapi.media.entity.Item) {
-                contentList.add(contentIdentifierFrom((org.atlasapi.media.entity.Item) fullContent));
-            } else if (fullContent instanceof org.atlasapi.media.entity.Container<?>) {
-                contentList.add(contentIdentifierFrom((org.atlasapi.media.entity.Container<?>) fullContent));
-            } else {
-                throw new IllegalArgumentException("Cannot convert Content of type " + fullContent.getClass().getSimpleName() + " to a simple format");
-            }
+	    for (ChildRef ref : contents) {
+            contentList.add(ContentIdentifier.identifierFor(ref));
         }
 	    return contentList;
 	}
@@ -229,7 +224,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		});
 	}
 
-    static ContentIdentifier contentIdentifierFrom(org.atlasapi.media.entity.Described content) {
+    static ContentIdentifier contentIdentifierFrom(ChildRef content) {
         return ContentIdentifier.identifierFor(content);
     }
 
@@ -304,14 +299,9 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		simpleItem.setCountriesOfOrigin(fullItem.getCountriesOfOrigin());
 		
 		if (fullItem.getContainer() != null) {
-			Container<?> brand = fullItem.getContainer();
+			ParentRef brand = fullItem.getContainer();
 			BrandSummary brandSummary = new BrandSummary();
-			
-			brandSummary.setUri(brand.getCanonicalUri());
-			brandSummary.setCurie(brand.getCurie());
-			brandSummary.setTitle(brand.getTitle());
-			brandSummary.setDescription(brand.getDescription());
-			
+			brandSummary.setUri(brand.getUri());
 			simpleItem.setBrandSummary(brandSummary);
 		}
 		
@@ -321,23 +311,13 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 			simpleItem.setEpisodeNumber(episode.getEpisodeNumber());
 			simpleItem.setSeriesNumber(episode.getSeriesNumber());
 			
-			
-			Series series = episode.getSeries();
+			ParentRef series = episode.getSeriesRef();
 			if (series != null) {
-				
 				SeriesSummary seriesSummary = new SeriesSummary();
-
-				seriesSummary.setUri(series.getCanonicalUri());
-				seriesSummary.setCurie(series.getCurie());
-				seriesSummary.setTitle(series.getTitle());
-				seriesSummary.setDescription(series.getDescription());
-				
+				seriesSummary.setUri(series.getUri());
 				simpleItem.setSeriesSummary(seriesSummary);
 			}
-			
 		}
-		
-	
 	}
 
 	private static PublisherDetails toPublisherDetails(Publisher publisher) {
