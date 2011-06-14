@@ -297,6 +297,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		
 		simpleItem.setBlackAndWhite(fullItem.isBlackAndWhite());
 		simpleItem.setCountriesOfOrigin(fullItem.getCountriesOfOrigin());
+		simpleItem.setScheduleOnly(fullItem.isScheduleOnly());
 		
 		if (fullItem.getContainer() != null) {
 			ParentRef brand = fullItem.getContainer();
