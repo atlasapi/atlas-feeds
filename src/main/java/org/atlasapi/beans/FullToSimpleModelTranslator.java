@@ -8,7 +8,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.media.entity.Actor;
-import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Clip;
@@ -18,6 +17,7 @@ import org.atlasapi.media.entity.ContentGroup;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Described;
 import org.atlasapi.media.entity.Encoding;
+import org.atlasapi.media.entity.EntityType;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
@@ -25,9 +25,9 @@ import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Person;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Schedule.ScheduleChannel;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
-import org.atlasapi.media.entity.Schedule.ScheduleChannel;
 import org.atlasapi.media.entity.simple.Aliased;
 import org.atlasapi.media.entity.simple.BrandSummary;
 import org.atlasapi.media.entity.simple.ContentIdentifier;
@@ -158,11 +158,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	private static org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Container<?> fullPlayList) {
 		
 		org.atlasapi.media.entity.simple.Playlist simplePlaylist = new org.atlasapi.media.entity.simple.Playlist();
-		if (fullPlayList instanceof Brand) {
-		    simplePlaylist.setType(Brand.class.getSimpleName());
-		} else if (fullPlayList instanceof Series) {
-		    simplePlaylist.setType(Series.class.getSimpleName());
-		}
+		simplePlaylist.setType(EntityType.from(fullPlayList).toString());
 		    
 		copyBasicContentAttributes(fullPlayList, simplePlaylist);
 		
@@ -238,7 +234,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	static org.atlasapi.media.entity.simple.Item simpleItemFrom(org.atlasapi.media.entity.Item fullItem) {
 		
 		org.atlasapi.media.entity.simple.Item simpleItem = new org.atlasapi.media.entity.simple.Item();
-		simpleItem.setType(fullItem.getClass().getSimpleName());
+		simpleItem.setType(EntityType.from(fullItem).toString());
 		
 		for (Version version : fullItem.getVersions()) {
 			addTo(simpleItem, version);
@@ -314,7 +310,6 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 			ParentRef brand = fullItem.getContainer();
 			BrandSummary brandSummary = new BrandSummary();
 			brandSummary.setUri(brand.getUri());
-			brandSummary.setType(Brand.class.getSimpleName());
 			simpleItem.setBrandSummary(brandSummary);
 		}
 		
