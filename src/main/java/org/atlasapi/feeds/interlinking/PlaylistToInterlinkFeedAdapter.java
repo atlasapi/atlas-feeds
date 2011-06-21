@@ -29,7 +29,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.text.Truncator;
 
@@ -100,7 +99,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         return feed;
     }
     
-    static boolean containerQualifies(DateTime from, DateTime to, Container<?> description) {
+    static boolean containerQualifies(DateTime from, DateTime to, Container description) {
         return ((from == null && to == null) || (description != null && description.getThisOrChildLastUpdated() != null && description.getThisOrChildLastUpdated().isAfter(from) && description.getThisOrChildLastUpdated().isBefore(to)));
     }
     
