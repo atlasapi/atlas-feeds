@@ -14,8 +14,8 @@ import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskBuilder;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerXMLValidator;
+import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
-import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
@@ -55,7 +55,7 @@ public class RadioPlayerModule {
     private @Value("${rp.ftp.host}") String ftpHost;
     private @Value("${rp.ftp.port}") Integer ftpPort;
 	
-    private @Autowired KnownTypeQueryExecutor queryExecutor;
+    private @Autowired KnownTypeContentResolver contentResolver;
 	private @Autowired SimpleScheduler scheduler;
 	private @Autowired AdapterLog log;
 	private @Autowired DatabasedMongo mongo;
@@ -115,7 +115,7 @@ public class RadioPlayerModule {
 	@PostConstruct 
 	public void scheduleTasks() {
 		if (ftpCredentialsHaveBeenSet()) {
-		    RadioPlayerFeedCompiler.init(queryExecutor, scheduleResolver);
+		    RadioPlayerFeedCompiler.init(scheduleResolver, contentResolver);
 		    FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
 		    createHealthProbes(credentials);
 	

@@ -11,11 +11,9 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Encoding;
-import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
-import org.atlasapi.media.entity.Series;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.LocalDate;
@@ -67,7 +65,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         programme.addAttribute(new Attribute("shortId", "0"));
         programme.addAttribute(new Attribute("id", broadcastItem.getItem().getCanonicalUri().replace("http://", "crid://")));
 
-        String title = itemTitle(broadcastItem.getItem());
+        String title = itemTitle(broadcastItem);
         programme.appendChild(stringElement("mediumName", EPGDATATYPES, MEDIUM_TITLE.truncatePossibleNull(title)));
         programme.appendChild(stringElement("longName", EPGDATATYPES, LONG_TITLE.truncatePossibleNull(title)));
 
@@ -117,28 +115,17 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 		return countries;
     }
 
-    private String itemTitle(Item item) {
-        String title = Strings.nullToEmpty(item.getTitle());
-        if (item.getContainer() != null) {
-            throw new IllegalStateException("Can't get title from Item in container");
-//            Container<?> brand = item.getContainer();
-//            if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
-//                String brandTitle = brand.getTitle();
-//                if (!brandTitle.equals(title)) {
-//                    return brandTitle + " : " + title;
-//                }
-//            }
+    private String itemTitle(RadioPlayerBroadcastItem broadcastItem) {
+        String title = Strings.nullToEmpty(broadcastItem.getItem().getTitle());
+        if (broadcastItem.hasContainer()) {
+            Container<?> brand = broadcastItem.getContainer();
+            if (!Strings.isNullOrEmpty(brand.getTitle())) {
+                String brandTitle = brand.getTitle();
+                if (!brandTitle.equals(title)) {
+                    return brandTitle + " : " + title;
+                }
+            }
         }
-		if (item instanceof Episode) {
-		    throw new IllegalStateException("Can't get title from Episode in series");
-//			Series series = ((Episode) item).getSeries();
-//			if (series != null && !Strings.isNullOrEmpty(series.getTitle())) {
-//				String seriesTitle = series.getTitle();
-//				if (!seriesTitle.equals(title)) {
-//					return seriesTitle + " : " + title;
-//				}
-//			}
-		}
         return title;
     }
 

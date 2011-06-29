@@ -84,7 +84,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 
         Version version = Iterables.getOnlyElement(testItem.getVersions());
         Broadcast broadcast = Iterables.getOnlyElement(version.getBroadcasts());
-		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast))));
+		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast).withContainer(brand))));
 	}
 	
 	@Test
@@ -101,7 +101,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		Version version = Iterables.getOnlyElement(testItem.getVersions());
         Broadcast broadcast = Iterables.getOnlyElement(version.getBroadcasts());
-        assertEquals(expectedFeed("seriesNoBrandPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast))));
+        assertEquals(expectedFeed("seriesNoBrandPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast).withContainer(series))));
 	}
 
 	private Location getLocation(Item testItem) {
