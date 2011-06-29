@@ -114,8 +114,8 @@ public class RadioPlayerModule {
     
 	@PostConstruct 
 	public void scheduleTasks() {
+	    RadioPlayerFeedCompiler.init(scheduleResolver, contentResolver);
 		if (ftpCredentialsHaveBeenSet()) {
-		    RadioPlayerFeedCompiler.init(scheduleResolver, contentResolver);
 		    FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
 		    createHealthProbes(credentials);
 	

@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.concat;
 
 import java.io.IOException;
@@ -58,7 +60,8 @@ public abstract class RadioPlayerFeedCompiler {
     }
     
     public static RadioPlayerFeedCompiler valueOf(String type) {
-        return compilerMap.get(type);
+        checkState(compilerMap != null, "Compiler map not initialised");
+        return checkNotNull(compilerMap.get(type), "No compiler for type " + type);
     }
 	
     private static class RadioPlayerProgrammeInformationFeedCompiler extends RadioPlayerFeedCompiler {
@@ -136,6 +139,6 @@ public abstract class RadioPlayerFeedCompiler {
             return ImmutableMap.of();
         }
         
-        return contentResolver.findByLookupRefs(containerLookups).asResolvedMap();
+        return contentResolver.findByLookupRefs(ImmutableSet.copyOf(containerLookups)).asResolvedMap();
     }
 }
