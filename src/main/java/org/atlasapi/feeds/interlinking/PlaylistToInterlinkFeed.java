@@ -8,5 +8,5 @@ import org.joda.time.DateTime;
 
 public interface PlaylistToInterlinkFeed {
 
-    public InterlinkFeed fromBrands(String id, Publisher publisher, DateTime from, DateTime to, List<Content> brands);
+    public InterlinkFeed fromContent(String id, Publisher publisher, DateTime from, DateTime to, List<Content> brands);
 }
