@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.interlinking;
 
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.atlasapi.media.entity.Content;
@@ -18,7 +18,7 @@ public class DelegatingPlaylistToInterlinkAdapter implements PlaylistToInterlink
     }
 
     @Override
-    public InterlinkFeed fromContent(String id, Publisher publisher, DateTime from, DateTime to, List<Content> brands) {
+    public InterlinkFeed fromContent(String id, Publisher publisher, DateTime from, DateTime to, Iterator<Content> brands) {
         if (publisher != null && delegates.containsKey(publisher)) {
             return delegates.get(publisher).fromContent(id, publisher, from, to, brands);
         }

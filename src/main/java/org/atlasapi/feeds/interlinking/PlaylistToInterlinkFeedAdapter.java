@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.interlinking;
 
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -58,10 +58,10 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         .omitTrailingPunctuationWhenTruncated()
         .onlyStartANewSentenceIfTheSentenceIsAtLeastPercentComplete(50);
     
-    public InterlinkFeed fromContent(String id, Publisher publisher, DateTime from, DateTime to, List<Content> contents) {
+    public InterlinkFeed fromContent(String id, Publisher publisher, DateTime from, DateTime to, Iterator<Content> contents) {
         InterlinkFeed feed = feed(id, publisher);
-        
-        for (Content content : contents) {
+        while(contents.hasNext()) {
+            Content content = contents.next();
         	if (content instanceof Brand) {
         		Brand brand = (Brand) content;
         		if (containerQualifies(from, to, brand)) {
@@ -80,9 +80,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         	        populateFeedWithItem(feed, item, from, to);
         	    }
         	}
-           
         }
-      
         return feed;
     }
     
@@ -118,8 +116,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         	.withThumbnail(series.getImage());
     }
 
-	private String idFromParentRef(ParentRef parent) {
-	    // this should be the tag: uri
+	protected String idFromParentRef(ParentRef parent) {
         return parent.getUri();
     }
 
