@@ -76,9 +76,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         	}
         	if (content instanceof Item) {
         	    Item item = (Item) content;
-        	    if (qualifies(from, to, item)) {
-        	        populateFeedWithItem(feed, item, from, to);
-        	    }
+        	    populateFeedWithItem(feed, item, from, to);
         	}
         }
         return feed;
