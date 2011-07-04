@@ -19,10 +19,12 @@ import nu.xom.Builder;
 
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
+import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
@@ -35,6 +37,7 @@ import org.xml.sax.XMLReader;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import com.metabroadcast.common.intl.Countries;
 
@@ -108,7 +111,7 @@ public class SiteMapOutputterTest extends TestCase {
 	
 	private String output(List<Item> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		outputter.output(items, out);
+		outputter.output(ImmutableMap.<ParentRef, Container<?>>of(), items, out);
 		return out.toString(Charsets.UTF_8.toString());
 	}
 
