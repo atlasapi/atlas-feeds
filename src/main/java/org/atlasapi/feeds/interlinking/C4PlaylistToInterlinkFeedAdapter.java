@@ -14,15 +14,20 @@ import java.util.regex.Pattern;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.ContentResolver;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapMaker;
 
 public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAdapter {
+
+    private static final String C4_SLASH_PROGRAMMES_PREFIX = "http://www.channel4.com/programmes/";
+    private static final String C4_TAG_PREFIX = "tag:www.channel4.com,2009:/programmes/";
 
     private static final Pattern BROADCAST_ID_PATTERN = Pattern.compile("(?:urn:)?(tag:www\\.\\w+4\\.com.*)");
 
@@ -38,7 +43,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
         seriesLookup = new MapMaker().expireAfterAccess(10, TimeUnit.MINUTES).makeComputingMap(new Function<String, Series>() {
             @Override
             public Series apply(String uri) {
-                return (Series) resolver.findByCanonicalUri(uri);
+                return (Series) resolver.findByCanonicalUris(ImmutableList.of(uri)).get(uri).requireValue();
             }
         });
     }
@@ -101,6 +106,15 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
         	}
         }
         return description.getCanonicalUri();
+    }
+    
+    @Override
+    protected String idFromParentRef(ParentRef parent) {
+        String parentUri = parent.getUri();
+        if (!parentUri.startsWith(C4_SLASH_PROGRAMMES_PREFIX)) {
+            throw new IllegalArgumentException("Parent " + parentUri + " has an invalid C4 canonical uri");
+        }
+        return parentUri.replace(C4_SLASH_PROGRAMMES_PREFIX, C4_TAG_PREFIX);
     }
 
     @Override

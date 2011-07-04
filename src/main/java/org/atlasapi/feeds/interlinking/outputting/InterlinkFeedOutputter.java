@@ -145,7 +145,7 @@ public class InterlinkFeedOutputter {
 		linkElement.addAttribute(new Attribute("rel", "alternate"));
 		entry.appendChild(linkElement);
 		
-		addCommonContentFieldsTo(episode, entry, episode.parent());
+		addCommonContentFieldsTo(episode, entry, episode.parentId());
 		return entry;
 	}
 
@@ -153,7 +153,7 @@ public class InterlinkFeedOutputter {
 		Element entry = createElement("entry", NS_ATOM);
 		addCommonFieldsTo(series, entry);
 		entry.appendChild(stringElement("type", NS_ILINK, "series"));
-		addCommonContentFieldsTo(series, entry, series.brand());
+		addCommonContentFieldsTo(series, entry, series.parentId());
 		return entry;
 	}
 	
@@ -165,14 +165,14 @@ public class InterlinkFeedOutputter {
 		return entry;
 	}
 
-	private Element contentElement(InterlinkContent content, InterlinkContent parent) {
+	private Element contentElement(InterlinkContent content, String parentId) {
 		Element mrssContent = createElement("content", NS_MRSS);
 		
 		if (content.description() != null) {
 			mrssContent.appendChild(stringElement("description", NS_MRSS, content.description()));
 		}
-		if (parent != null) {
-            mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parent.id()));
+		if (parentId != null) {
+            mrssContent.appendChild(stringElement("parent_id", NS_ILINK, parentId));
 			if(content.indexWithinParent() != null) {
 			    mrssContent.appendChild(stringElement("index", NS_ILINK, String.valueOf(content.indexWithinParent())));
 			}
@@ -197,14 +197,14 @@ public class InterlinkFeedOutputter {
 
 
 
-	private void addCommonContentFieldsTo(InterlinkContent content, Element entry, InterlinkContent parent) {
+	private void addCommonContentFieldsTo(InterlinkContent content, Element entry, String parentId) {
 	    entry.appendChild(stringElement("summary", NS_ATOM, Strings.nullToEmpty(content.summary())));
 
 	    DateTime updated = content.lastUpdated() != null ? content.lastUpdated() : new DateTime(DateTimeZones.UTC);
 	    entry.appendChild(stringElement("updated", NS_ATOM, updated.toString(DATE_TIME_FORMAT)));
 		
 		if (content.operation() != Operation.DELETE) {
-		    entry.appendChild(contentElement(content, parent));
+		    entry.appendChild(contentElement(content, parentId));
 		}
 	}
 
