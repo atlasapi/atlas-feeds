@@ -47,7 +47,7 @@ public class SiteMapOutputter {
     private static final Truncator descTruncator = new Truncator().onlyTruncateAtAWordBoundary().withMaxLength(2048);
     private static final Truncator titleTruncator = new Truncator().onlyTruncateAtAWordBoundary().withMaxLength(100);
 
-    public void output(Map<ParentRef, Container<?>> parentLookup, Iterable<Item> feed, OutputStream out) throws IOException {
+    public void output(Map<ParentRef, Container> parentLookup, Iterable<Item> feed, OutputStream out) throws IOException {
         Element feedElem = createFeed(feed, parentLookup);
         write(out, feedElem);
     }
@@ -67,7 +67,7 @@ public class SiteMapOutputter {
         return feed;
     }
 
-    private Element createFeed(Iterable<Item> items, Map<ParentRef, Container<?>> parentLookup) {
+    private Element createFeed(Iterable<Item> items, Map<ParentRef, Container> parentLookup) {
         Element feed = new Element("urlset", SITEMAP.getUri());
         VIDEO.addDeclarationTo(feed);
         for (Item item : items) {
@@ -128,9 +128,9 @@ public class SiteMapOutputter {
         return videoElem;
     }
 
-    private String itemTitle(Item item, Map<ParentRef, Container<?>> parentLookup) {
+    private String itemTitle(Item item, Map<ParentRef, Container> parentLookup) {
         String title = Strings.nullToEmpty(item.getTitle());
-        Container<?> parent = parentLookup.get(item.getContainer());
+        Container parent = parentLookup.get(item.getContainer());
         if (parent != null && !Strings.isNullOrEmpty(parent.getTitle())) {
             String brandTitle = parent.getTitle();
             if (!brandTitle.equals(title)) {
@@ -140,9 +140,9 @@ public class SiteMapOutputter {
         return titleTruncator.truncate(title);
     }
     
-    private String clipTitle(Clip clip, Item item, Map<ParentRef, Container<?>> parentLookup) {
+    private String clipTitle(Clip clip, Item item, Map<ParentRef, Container> parentLookup) {
         String title = Strings.nullToEmpty(clip.getTitle());
-        Container<?> parent = parentLookup.get(item.getContainer());
+        Container parent = parentLookup.get(item.getContainer());
         if (parent != null && !Strings.isNullOrEmpty(parent.getTitle())) {
             String brandTitle = parent.getTitle();
             if (!brandTitle.equals(title)) {

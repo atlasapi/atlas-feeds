@@ -69,7 +69,7 @@ public class SiteMapController {
         List<Item> contents = Lists.newArrayList();
         List<Brand> brands = ImmutableList.copyOf(Iterables.filter(Iterables.concat(content.values()), Brand.class));
         
-        Map<ParentRef, Container<?>> parentLookup = Maps.newHashMap();
+        Map<ParentRef, Container> parentLookup = Maps.newHashMap();
         for (Brand brand: brands) {
             Map<String, List<Identified>> childContent = queryExecutor.executeUriQuery(Iterables.transform(brand.getChildRefs(), ChildRef.TO_URI), query);
             contents.addAll(ImmutableList.copyOf(Iterables.filter(Iterables.concat(childContent.values()), Item.class)));

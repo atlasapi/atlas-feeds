@@ -111,7 +111,7 @@ public class SiteMapOutputterTest extends TestCase {
 	
 	private String output(List<Item> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		outputter.output(ImmutableMap.<ParentRef, Container<?>>of(), items, out);
+		outputter.output(ImmutableMap.<ParentRef, Container>of(), items, out);
 		return out.toString(Charsets.UTF_8.toString());
 	}
 
