@@ -112,7 +112,7 @@ public abstract class RadioPlayerFeedCompiler {
                     for (Broadcast broadcast : version.getBroadcasts()) {
                         RadioPlayerBroadcastItem broadcastItem = new RadioPlayerBroadcastItem(item, version, broadcast);
                         if(item.getContainer() != null && containers.containsKey(item.getContainer().getUri())) {
-                            broadcastItem.withContainer((Container<?>)containers.get(item.getContainer().getUri()));
+                            broadcastItem.withContainer((Container)containers.get(item.getContainer().getUri()));
                         }
                         broadcastItems.add(broadcastItem);
                     }
