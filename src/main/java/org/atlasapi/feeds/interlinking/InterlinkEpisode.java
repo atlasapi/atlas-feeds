@@ -5,12 +5,12 @@ import org.joda.time.DateTime;
 public class InterlinkEpisode extends InterlinkContent {
 
     private final String link;
-    private final InterlinkContent parent;
+    private final String parentId;
 	
-	public InterlinkEpisode(String id, Operation operation, Integer index, String link, InterlinkContent parent) {
+	public InterlinkEpisode(String id, Operation operation, Integer index, String link, String parentId) {
 		super(id, operation, index);
         this.link = link;
-        this.parent = parent;
+        this.parentId = parentId;
 	}
 	
 	public InterlinkEpisode withTitle(String title) {
@@ -42,7 +42,7 @@ public class InterlinkEpisode extends InterlinkContent {
 		return this;
 	}
 	
-	public InterlinkContent parent() {
-        return parent;
+	public String parentId() {
+        return parentId;
     }
 }

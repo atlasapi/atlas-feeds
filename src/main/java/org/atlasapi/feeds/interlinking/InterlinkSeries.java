@@ -4,11 +4,11 @@ import org.joda.time.DateTime;
 
 public class InterlinkSeries extends InterlinkContent {
 
-	private final InterlinkBrand brand;
+	private final String parentId;
 	
-	public InterlinkSeries(String id, Operation operation, Integer index, InterlinkBrand brand) {
+	public InterlinkSeries(String id, Operation operation, Integer index, String parentId) {
 		super(id, operation, index);
-        this.brand = brand;
+        this.parentId = parentId;
 	}
 	
 	public InterlinkSeries withTitle(String title) {
@@ -36,7 +36,7 @@ public class InterlinkSeries extends InterlinkContent {
 		return this;
 	}
 	
-	public InterlinkBrand brand() {
-        return brand;
+	public String parentId() {
+        return parentId;
     }
 }

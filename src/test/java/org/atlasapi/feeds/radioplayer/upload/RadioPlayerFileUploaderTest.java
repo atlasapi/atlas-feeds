@@ -40,8 +40,8 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
-import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.logging.SystemOutAdapterLog;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -71,7 +71,7 @@ public class RadioPlayerFileUploaderTest {
 	private static final String TEST_USERNAME = "test";
 	
 	private final Mockery context = new Mockery();
-	private final KnownTypeQueryExecutor queryExecutor = context.mock(KnownTypeQueryExecutor.class);            
+	private final KnownTypeContentResolver contentResolver = context.mock(KnownTypeContentResolver.class);            
 	private final ScheduleResolver scheduleResolver = context.mock(ScheduleResolver.class);
 	private final RadioPlayerFTPUploadResultStore recorder = context.mock(RadioPlayerFTPUploadResultStore.class);
 	
@@ -113,7 +113,7 @@ public class RadioPlayerFileUploaderTest {
 		    oneOf(recorder).record(with(successfulUploadResult()));
 		}});
 		
-		RadioPlayerFeedCompiler.init(queryExecutor, scheduleResolver);
+		RadioPlayerFeedCompiler.init(scheduleResolver, contentResolver);
 		
         ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
 		FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
