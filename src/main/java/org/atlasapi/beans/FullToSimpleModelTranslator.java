@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.media.entity.Actor;
+import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Container;
@@ -126,7 +127,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	
 	private static org.atlasapi.media.entity.simple.Person simplePersonFrom(Person fullPerson) {
 	    org.atlasapi.media.entity.simple.Person person = new org.atlasapi.media.entity.simple.Person();
-	    
+	    person.setType(Person.class.getSimpleName());
 	    person.setUri(fullPerson.getCanonicalUri());
 	    person.setCurie(fullPerson.getCurie());
 	    person.setName(fullPerson.getTitle());
@@ -138,7 +139,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	
 	private static org.atlasapi.media.entity.simple.Person simplePersonFrom(CrewMember fullCrew) {
 	    org.atlasapi.media.entity.simple.Person person = new org.atlasapi.media.entity.simple.Person();
-	    
+	    person.setType(Person.class.getSimpleName());
 	    if (fullCrew instanceof Actor) {
 	        Actor fullActor = (Actor) fullCrew;
 	        person.setCharacter(fullActor.character());
@@ -155,7 +156,12 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	private static org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Container<?> fullPlayList) {
 		
 		org.atlasapi.media.entity.simple.Playlist simplePlaylist = new org.atlasapi.media.entity.simple.Playlist();
-		
+		if (fullPlayList instanceof Brand) {
+		    simplePlaylist.setType(Brand.class.getSimpleName());
+		} else if (fullPlayList instanceof Series) {
+		    simplePlaylist.setType(Series.class.getSimpleName());
+		}
+		    
 		copyBasicContentAttributes(fullPlayList, simplePlaylist);
 		
 		for (org.atlasapi.media.entity.Item fullItem : fullPlayList.getContents()) {
@@ -236,6 +242,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	static org.atlasapi.media.entity.simple.Item simpleItemFrom(org.atlasapi.media.entity.Item fullItem) {
 		
 		org.atlasapi.media.entity.simple.Item simpleItem = new org.atlasapi.media.entity.simple.Item();
+		simpleItem.setType(fullItem.getClass().getSimpleName());
 		
 		for (Version version : fullItem.getVersions()) {
 			addTo(simpleItem, version);
@@ -269,15 +276,18 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	}
 
 	private static org.atlasapi.media.entity.simple.Broadcast simplify(Broadcast broadcast) {
-	    return new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime(), broadcast.getId())
-	        .withRepeat(broadcast.isRepeat())
-	        .withSubtitled(broadcast.isSubtitled())
-	        .withSigned(broadcast.isSigned())
-	        .withAudioDescribed(broadcast.isAudioDescribed())
-	        .withHighDefinition(broadcast.isHighDefinition())
-	        .withWidescreen(broadcast.isWidescreen())
-	        .withSurround(broadcast.isSurround())
-	        .withLive(broadcast.isLive());
+	    org.atlasapi.media.entity.simple.Broadcast simpleModel = new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime(), broadcast.getId());
+	    
+	    simpleModel.setRepeat(broadcast.isRepeat());
+	    simpleModel.setSubtitled(broadcast.isSubtitled());
+	    simpleModel.setSigned(broadcast.isSigned());
+        simpleModel.setAudioDescribed(broadcast.isAudioDescribed());
+        simpleModel.setHighDefinition(broadcast.isHighDefinition());
+        simpleModel.setWidescreen(broadcast.isWidescreen());
+        simpleModel.setSurround(broadcast.isSurround());
+        simpleModel.setLive(broadcast.isLive());
+	    
+	    return simpleModel; 
 	}
 
 	private static void addTo(Item simpleItem, Version version, Encoding encoding) {
@@ -306,6 +316,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		if (fullItem.getContainer() != null) {
 			Container<?> brand = fullItem.getContainer();
 			BrandSummary brandSummary = new BrandSummary();
+			brandSummary.setType(Brand.class.getSimpleName());
 			
 			brandSummary.setUri(brand.getCanonicalUri());
 			brandSummary.setCurie(brand.getCurie());
@@ -326,6 +337,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 			if (series != null) {
 				
 				SeriesSummary seriesSummary = new SeriesSummary();
+				seriesSummary.setType(Series.class.getSimpleName());
 
 				seriesSummary.setUri(series.getCanonicalUri());
 				seriesSummary.setCurie(series.getCurie());
@@ -334,10 +346,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 				
 				simpleItem.setSeriesSummary(seriesSummary);
 			}
-			
 		}
-		
-	
 	}
 
 	private static PublisherDetails toPublisherDetails(Publisher publisher) {
