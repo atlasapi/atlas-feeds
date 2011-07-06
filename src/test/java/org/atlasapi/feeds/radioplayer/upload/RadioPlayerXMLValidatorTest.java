@@ -25,10 +25,10 @@ public class RadioPlayerXMLValidatorTest {
 			validator.validate(new ByteArrayInputStream("<?xml version=\"1.0\" encoding=\"UTF-8\"?><schema/>".getBytes()));
 	}
 	
-	private RadioPlayerXMLValidator validator;
+	private static RadioPlayerXMLValidator validator;
 	
 	@BeforeClass
-	public void setup() throws Exception {
+	public static void setup() throws Exception {
 		validator = null;/*RadioPlayerXMLValidator.forSchemas(ImmutableSet.of(
 				Resources.getResource("org/atlasapi/feeds/radioplayer/epgSI_10.xsd").openStream(),
 				Resources.getResource("org/atlasapi/feeds/radioplayer/epgSchedule_10.xsd").openStream()

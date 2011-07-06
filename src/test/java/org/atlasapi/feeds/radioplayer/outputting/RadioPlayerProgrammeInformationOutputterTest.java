@@ -75,7 +75,8 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		Series series = new Series("seriesUri", "seriesCurie", Publisher.BBC);
 		series.setTitle("This is the series title");
-		series.addContents(testItem);
+		testItem.setSeries(series);
+		series.setChildRefs(ImmutableList.of(testItem.childRef()));
 		
 		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
 		brand.setTitle("Electric Proms");
@@ -83,7 +84,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 
         Version version = Iterables.getOnlyElement(testItem.getVersions());
         Broadcast broadcast = Iterables.getOnlyElement(version.getBroadcasts());
-		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast))));
+		assertEquals(expectedFeed("basicPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast).withContainer(brand))));
 	}
 	
 	@Test
@@ -92,14 +93,15 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		Series series = new Series("seriesUri", "seriesCurie", Publisher.BBC);
 		series.setTitle("Series Title");
-		series.addContents(testItem);
+        testItem.setSeries(series);
+        series.setChildRefs(ImmutableList.of(testItem.childRef()));
 		
 		//make item available everywhere.
 		getLocation(testItem).getPolicy().setAvailableCountries(ImmutableSet.of(Countries.GB));
 		
 		Version version = Iterables.getOnlyElement(testItem.getVersions());
         Broadcast broadcast = Iterables.getOnlyElement(version.getBroadcasts());
-        assertEquals(expectedFeed("seriesNoBrandPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast))));
+        assertEquals(expectedFeed("seriesNoBrandPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast).withContainer(series))));
 	}
 
 	private Location getLocation(Item testItem) {

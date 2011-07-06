@@ -121,8 +121,8 @@ public class HtmlTranslator implements AtlasModelWriter {
 		defineTerm("title", playlist.getTitle(), writer);
 		defineTerm("description", playlist.getDescription(), writer);
 
-		if (playlist instanceof MutableContentList<?>) {
-			MutableContentList<?> contentList = (MutableContentList<?>) playlist;
+		if (playlist instanceof MutableContentList) {
+			MutableContentList contentList = (MutableContentList) playlist;
 			if (!contentList.getContents().isEmpty()) {
 				beginNestedDefinitionList("Contents", writer);
 				writeFullDescriptionOf(contentList.getContents(), writer);
