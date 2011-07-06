@@ -19,8 +19,7 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -51,8 +50,7 @@ import org.atlasapi.media.vocabulary.PO;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.SimpleTimeLimiter;
-import com.google.common.util.concurrent.UncheckedTimeoutException;
+import com.metabroadcast.common.http.HttpHeaders;
 import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
 
 /**
@@ -62,6 +60,8 @@ import com.sun.xml.bind.marshaller.NamespacePrefixMapper;
  */
 public class JaxbXmlTranslator implements AtlasModelWriter {
 
+    private static final String GZIP_HEADER_VALUE = "gzip";
+    
 	private static final UriplayNamespacePrefixMapper PREFIX_MAPPER = new UriplayNamespacePrefixMapper();
 
 	private static final String NS_MAPPER = "com.sun.xml.bind.namespacePrefixMapper";
@@ -87,33 +87,33 @@ public class JaxbXmlTranslator implements AtlasModelWriter {
 		}
 	}
 	
-	private final SimpleTimeLimiter limiter = new SimpleTimeLimiter();
-	
 	@Override
 	public void writeTo(final HttpServletRequest request, final HttpServletResponse response, Collection<Object> graph, AtlasModelType type) throws IOException {
 		final Object result = Iterables.getOnlyElement(graph);
 		try {
-			limiter.callWithTimeout(writeOut(response, result), 60, TimeUnit.SECONDS, true);
-		} catch (IOException e) {
-			throw e;
-		} catch (UncheckedTimeoutException timeout) { 
-			log.error("Timed out writing " + request.getRequestURI() + "?" + request.getQueryString());
-			writeError(request, response, AtlasErrorSummary.forException(timeout));
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+            writeOut(request, response, result);
+        } catch (JAXBException e) {
+            writeError(request, response, AtlasErrorSummary.forException(e));
+        }
 	}
 
-	private Callable<Void> writeOut(final HttpServletResponse response, final Object result) {
-		return new Callable<Void>() {
-			@Override
-			public Void call() throws Exception {
-				Marshaller m = context.createMarshaller();
-				m.setProperty(NS_MAPPER, PREFIX_MAPPER);
-				m.marshal(result, response.getOutputStream());
-				return null;
-			}
-		};
+	private void writeOut(final HttpServletRequest request, final HttpServletResponse response, final Object result) throws JAXBException, IOException {
+		Marshaller m = context.createMarshaller();
+		m.setProperty(NS_MAPPER, PREFIX_MAPPER);
+		OutputStream out = response.getOutputStream();
+		
+		String accepts = request.getHeader(HttpHeaders.ACCEPT_ENCODING);
+        if (accepts != null && accepts.contains(GZIP_HEADER_VALUE)) {
+            response.setHeader(HttpHeaders.CONTENT_ENCODING, GZIP_HEADER_VALUE);
+            out = new GZIPOutputStream(out);
+        }
+        try {
+            m.marshal(result, out);
+        } finally {
+		    if (out instanceof GZIPOutputStream) {
+                ((GZIPOutputStream) out).finish();
+            }
+		}
 	}
 	
 	private static final class UriplayNamespacePrefixMapper extends NamespacePrefixMapper {
