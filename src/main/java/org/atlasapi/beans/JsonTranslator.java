@@ -15,6 +15,7 @@ permissions and limitations under the License. */
 package org.atlasapi.beans;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
@@ -22,6 +23,7 @@ import java.net.URLEncoder;
 import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -43,6 +45,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.metabroadcast.common.http.HttpHeaders;
 import com.metabroadcast.common.time.DateTimeZones;
 
 /**
@@ -51,6 +54,8 @@ import com.metabroadcast.common.time.DateTimeZones;
  * @author Robert Chatley (robert@metabroadcast.com)
  */
 public class JsonTranslator implements AtlasModelWriter {
+    
+    private static final String GZIP_HEADER_VALUE = "gzip";
 
 	public static final String CALLBACK = "callback";
 
@@ -70,9 +75,17 @@ public class JsonTranslator implements AtlasModelWriter {
 	@Override
 	public void writeTo(HttpServletRequest request, HttpServletResponse response, Collection<Object> graph, AtlasModelType type) throws IOException {
 
-		String callback = callback(request);
+	    OutputStream out = response.getOutputStream();
 
-		OutputStreamWriter writer = new OutputStreamWriter(response.getOutputStream(), Charsets.UTF_8);
+	    String callback = callback(request);
+		
+		String accepts = request.getHeader(HttpHeaders.ACCEPT_ENCODING);
+        if (accepts != null && accepts.contains(GZIP_HEADER_VALUE)) {
+            response.setHeader(HttpHeaders.CONTENT_ENCODING, GZIP_HEADER_VALUE);
+            out = new GZIPOutputStream(out);
+        }
+
+        OutputStreamWriter writer = new OutputStreamWriter(out, Charsets.UTF_8);
 
 		try {
 			if (callback != null) {
@@ -84,6 +97,9 @@ public class JsonTranslator implements AtlasModelWriter {
 			}
 		} finally {
 			Flushables.flushQuietly(writer);
+			if (out instanceof GZIPOutputStream) {
+			    ((GZIPOutputStream) out).finish();
+			}
 		}
 	}
 
