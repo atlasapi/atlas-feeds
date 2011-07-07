@@ -18,6 +18,7 @@ import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.query.content.parser.ApplicationConfigurationIncludingQueryBuilder;
 import org.springframework.stereotype.Controller;
@@ -67,14 +68,17 @@ public class SiteMapController {
         
         List<Item> contents = Lists.newArrayList();
         List<Brand> brands = ImmutableList.copyOf(Iterables.filter(Iterables.concat(content.values()), Brand.class));
+        
+        Map<ParentRef, Container> parentLookup = Maps.newHashMap();
         for (Brand brand: brands) {
             Map<String, List<Identified>> childContent = queryExecutor.executeUriQuery(Iterables.transform(brand.getChildRefs(), ChildRef.TO_URI), query);
             contents.addAll(ImmutableList.copyOf(Iterables.filter(Iterables.concat(childContent.values()), Item.class)));
+            parentLookup.put(ParentRef.parentRefFrom(brand), brand);
         }
         
         response.setStatus(HttpServletResponse.SC_OK);
         cacheHeaderWriter.writeHeaders(hackedRequest, response);
-        outputter.output(contents, response.getOutputStream());
+        outputter.output(parentLookup, contents, response.getOutputStream());
         return null;
     }
 

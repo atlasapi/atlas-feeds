@@ -10,7 +10,7 @@ public class RadioPlayerBroadcastItem implements Comparable<RadioPlayerBroadcast
     private final Item item;
     private final Version version;
     private final Broadcast broadcast;
-    private Container<?> container;
+    private Container container;
 
     public RadioPlayerBroadcastItem(Item item, Version version, Broadcast broadcast) {
         this.item = item;
@@ -35,12 +35,12 @@ public class RadioPlayerBroadcastItem implements Comparable<RadioPlayerBroadcast
         return this.broadcast.getTransmissionTime().compareTo(that.getBroadcast().getTransmissionTime());
     }
 
-    public RadioPlayerBroadcastItem withContainer(Container<?> container) {
+    public RadioPlayerBroadcastItem withContainer(Container container) {
         this.container = container;
         return this;
     }
     
-    public Container<?> getContainer() {
+    public Container getContainer() {
         return this.container;
     }
 

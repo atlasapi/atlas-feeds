@@ -97,8 +97,8 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	private ContentQueryResult writeOutContent(Iterable<Described> fullGraph) {
 	    ContentQueryResult outputGraph = new ContentQueryResult();
 		for (Described described : fullGraph) {
-			if (described instanceof Container<?>) {
-				Container<?> playList = (Container<?>) described;
+			if (described instanceof Container) {
+				Container playList = (Container) described;
 				outputGraph.add(simplePlaylistFrom(playList));
 			}
 			if (described instanceof ContentGroup) {
@@ -155,7 +155,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    return person;
 	}
 
-	private static org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Container<?> fullPlayList) {
+	private static org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Container fullPlayList) {
 		
 		org.atlasapi.media.entity.simple.Playlist simplePlaylist = new org.atlasapi.media.entity.simple.Playlist();
 		simplePlaylist.setType(EntityType.from(fullPlayList).toString());

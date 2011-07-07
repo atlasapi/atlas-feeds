@@ -3,6 +3,7 @@ package org.atlasapi.feeds.sitemaps;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.ServletOutputStream;
@@ -16,10 +17,11 @@ import org.atlasapi.feeds.xml.XMLNamespace;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Clip;
+import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Encoding;
-import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
@@ -45,8 +47,8 @@ public class SiteMapOutputter {
     private static final Truncator descTruncator = new Truncator().onlyTruncateAtAWordBoundary().withMaxLength(2048);
     private static final Truncator titleTruncator = new Truncator().onlyTruncateAtAWordBoundary().withMaxLength(100);
 
-    public void output(Iterable<Item> feed, OutputStream out) throws IOException {
-        Element feedElem = createFeed(feed);
+    public void output(Map<ParentRef, Container> parentLookup, Iterable<Item> feed, OutputStream out) throws IOException {
+        Element feedElem = createFeed(feed, parentLookup);
         write(out, feedElem);
     }
 
@@ -65,13 +67,13 @@ public class SiteMapOutputter {
         return feed;
     }
 
-    private Element createFeed(Iterable<Item> items) {
+    private Element createFeed(Iterable<Item> items, Map<ParentRef, Container> parentLookup) {
         Element feed = new Element("urlset", SITEMAP.getUri());
         VIDEO.addDeclarationTo(feed);
         for (Item item : items) {
-            entryForItem(feed, item, itemTitle(item));
+            entryForItem(feed, item, itemTitle(item, parentLookup));
             for (Clip clip : item.getClips()) {
-                entryForItem(feed, clip, clipTitle(clip, item));
+                entryForItem(feed, clip, clipTitle(clip, item, parentLookup));
             }
         }
         return feed;
@@ -107,15 +109,6 @@ public class SiteMapOutputter {
             videoElem.appendChild(stringElement("duration", VIDEO, String.valueOf(duration)));
         }
 
-        // Unmaintainable / not needed.
-        // if (Publisher.C4.equals(item.getPublisher())) {
-        // if (item instanceof Episode) {
-        // c4playerLoc(videoElem, item, location);
-        // }
-        // }
-
-        // TODO: family friendly?
-
         Policy policy = location.getPolicy();
         if (policy != null) {
             DateTime availableTill = policy.getAvailabilityEnd();
@@ -135,32 +128,26 @@ public class SiteMapOutputter {
         return videoElem;
     }
 
-    private String itemTitle(Item item) {
+    private String itemTitle(Item item, Map<ParentRef, Container> parentLookup) {
         String title = Strings.nullToEmpty(item.getTitle());
-        if (item instanceof Episode) {
-            throw new IllegalArgumentException("Can't compile title for episode");
-//            Container<?> brand = ((Episode) item).getContainer();
-//            if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
-//                String brandTitle = brand.getTitle();
-//                if (!brandTitle.equals(title)) {
-//                    title = brandTitle + " : " + title;
-//                }
-//            }
+        Container parent = parentLookup.get(item.getContainer());
+        if (parent != null && !Strings.isNullOrEmpty(parent.getTitle())) {
+            String brandTitle = parent.getTitle();
+            if (!brandTitle.equals(title)) {
+                title = brandTitle + " : " + title;
+            }
         }
         return titleTruncator.truncate(title);
     }
     
-    private String clipTitle(Clip clip, Item item) {
+    private String clipTitle(Clip clip, Item item, Map<ParentRef, Container> parentLookup) {
         String title = Strings.nullToEmpty(clip.getTitle());
-        if (item instanceof Episode) {
-            throw new IllegalArgumentException("Can't compile title for episode");
-//            Container<?> brand = ((Episode) item).getContainer();
-//            if (brand != null && !Strings.isNullOrEmpty(brand.getTitle())) {
-//                String brandTitle = brand.getTitle();
-//                if (!brandTitle.equals(title)) {
-//                    title = brandTitle + " : " + title;
-//                }
-//            }
+        Container parent = parentLookup.get(item.getContainer());
+        if (parent != null && !Strings.isNullOrEmpty(parent.getTitle())) {
+            String brandTitle = parent.getTitle();
+            if (!brandTitle.equals(title)) {
+                title = brandTitle + " : " + title;
+            }
         }
         return titleTruncator.truncate(title);
     }

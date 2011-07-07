@@ -82,7 +82,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         return feed;
     }
     
-    static boolean containerQualifies(DateTime from, DateTime to, Container<?> description) {
+    static boolean containerQualifies(DateTime from, DateTime to, Container description) {
         return ((from == null && to == null) || (description != null && description.getThisOrChildLastUpdated() != null && description.getThisOrChildLastUpdated().isAfter(from) && description.getThisOrChildLastUpdated().isBefore(to)));
     }
     
