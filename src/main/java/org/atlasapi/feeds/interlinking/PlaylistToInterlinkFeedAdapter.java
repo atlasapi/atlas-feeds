@@ -134,7 +134,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 
 	private void populateFeedWithItem(InterlinkFeed feed, Item item, DateTime from, DateTime to) {
 		String episodeId = idFrom(item);
-		String parentId = item.getContainer() == null ? null : idFromParentRef(item.getContainer());
+		String parentId = parentFromItem(item);
 		
 		InterlinkOnDemand onDemand = firstLinkLocation(item, from, to, episodeId);
 		
@@ -164,7 +164,20 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         }
     }
 
-	protected String linkFrom(String canonicalUri) {
+	private String parentFromItem(Item item) {
+	    if (item instanceof Episode) {
+	        Episode episode = (Episode) item;
+	        if (episode.getSeriesRef() != null) {
+	            return idFromParentRef(episode.getSeriesRef());
+	        }
+	    }
+	    if (item.getContainer() != null) {
+	        return idFromParentRef(item.getContainer());
+	    }
+	    return null;
+    }
+
+    protected String linkFrom(String canonicalUri) {
 	    return canonicalUri;
     }
 
