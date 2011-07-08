@@ -34,15 +34,21 @@ import com.metabroadcast.common.time.DateTimeZones;
 
 public class InterlinkFeedOutputter {
 
-	private static final DateTimeFormatter DATE_TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
+	public static final DateTimeFormatter DATE_TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
 	
-	private static final XMLNamespace NS_ATOM = new XMLNamespace("atom", "http://www.w3.org/2005/Atom");
-	private static final XMLNamespace NS_DC = new XMLNamespace("dc", "http://purl.org/dc/terms");
-	private static final XMLNamespace NS_ILINK = new XMLNamespace("ilink", "http://www.bbc.co.uk/developer/interlinking");
-	private static final XMLNamespace NS_MRSS = new XMLNamespace("media", "http://search.yahoo.com/mrss/");
+	public static final XMLNamespace NS_ATOM = new XMLNamespace("atom", "http://www.w3.org/2005/Atom");
+	public static final XMLNamespace NS_DC = new XMLNamespace("dc", "http://purl.org/dc/terms");
+	public static final XMLNamespace NS_ILINK = new XMLNamespace("ilink", "http://www.bbc.co.uk/developer/interlinking");
+	public static final XMLNamespace NS_MRSS = new XMLNamespace("media", "http://search.yahoo.com/mrss/");
 	
 	public void output(InterlinkFeed feed, OutputStream out, boolean isBootstrap) throws IOException {
 		Element feedElem = createFeed(feed);
+		outputFeedToElements(feed, isBootstrap, feedElem);
+	    write(out, feedElem);  
+	}
+	
+	public void outputFeedToElements(InterlinkFeed feed, boolean isBootstrap,
+			Element feedElem) {
 		for (InterlinkBase entry : feed.entries()) {
 		    if (! isBootstrap || entry.operation() != Operation.DELETE) {
     			if (entry instanceof InterlinkBrand) {
@@ -58,7 +64,6 @@ public class InterlinkFeedOutputter {
     			}
 		    }
 		}
-	    write(out, feedElem);  
 	}
 	
 	private Element onDemandToEntry(InterlinkOnDemand onDemand) {
@@ -194,8 +199,8 @@ public class InterlinkFeedOutputter {
 		atomContent.appendChild(element);
 		return atomContent;
 	}
-
-
+	
+	
 
 	private void addCommonContentFieldsTo(InterlinkContent content, Element entry, String parentId) {
 	    entry.appendChild(stringElement("summary", NS_ATOM, Strings.nullToEmpty(content.summary())));
@@ -208,7 +213,7 @@ public class InterlinkFeedOutputter {
 		}
 	}
 
-	private Element createFeed(InterlinkFeed feed) {
+	public Element createFeed(InterlinkFeed feed) {
 		Element feedElem = new Element("feed", NS_ATOM.getUri());
 
 		NS_DC.addDeclarationTo(feedElem);
@@ -230,7 +235,7 @@ public class InterlinkFeedOutputter {
 		
 		return feedElem;
 	}
-	
+
 	private void addCommonFieldsTo(InterlinkBase base, Element entry) {
 		if (base.title() != null) {
 			entry.appendChild(stringElement("title", NS_ATOM, base.title()));

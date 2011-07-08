@@ -26,7 +26,7 @@ import com.metabroadcast.common.time.DateTimeZones;
 @Controller
 public class InterlinkController {
     
-    private final static String FEED_ID = "http://interlinking.channel4.com/feeds/bbc-interlinking/";
+    public final static String FEED_ID = "http://interlinking.channel4.com/feeds/bbc-interlinking/";
     private final InterlinkFeedOutputter outputter = new InterlinkFeedOutputter();
     private final PlaylistToInterlinkFeed adapter;
     private final DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZones.LONDON);
@@ -47,7 +47,7 @@ public class InterlinkController {
         // NB We don't include the 'to' datetime in the query to
         // avoid newer brand updates masking older item updates 
         Iterator<Content> content = executor.updatedSince(Publisher.C4, from);
-        outputter.output(adapter.fromContent(FEED_ID+date, Publisher.C4, from, to, content), response.getOutputStream(), false);
+		outputter.output(adapter.fromContent(FEED_ID+date, Publisher.C4, from, to, content), response.getOutputStream(), false);
     }
     
     @RequestMapping("/feeds/bbc-interlinking/bootstrap")
