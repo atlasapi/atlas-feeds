@@ -10,6 +10,8 @@ import nu.xom.Element;
 import nu.xom.ParsingException;
 import nu.xom.ValidityException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.atlasapi.feeds.interlinking.InterlinkFeed;
 import org.atlasapi.feeds.interlinking.PlaylistToInterlinkFeed;
 import org.atlasapi.feeds.interlinking.outputting.InterlinkFeedOutputter;
@@ -32,7 +34,8 @@ import com.metabroadcast.common.http.HttpStatusCode;
 public class InterlinkingDeltaUpdater {
     
     public static final String BUCKET_NAME = "bbc-interlinking";
-    public static final String FOLDER_NAME = "/feeds/bbc-interlinking";
+    public static final String FOLDER_NAME = "feeds/bbc-interlinking";
+    private final Log log = LogFactory.getLog(getClass());
     
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
     
@@ -67,7 +70,7 @@ public class InterlinkingDeltaUpdater {
             S3Bucket bucket = s3Service.getBucket(BUCKET_NAME);
             s3Service.putObject(bucket, s3Object);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error writing object to S3", e);
         }
     }
 
