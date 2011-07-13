@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.interlinking.delta;
 
-import nu.xom.Element;
+import nu.xom.Document;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,18 +28,18 @@ public class SinceLastUpdatedInterlinkingDeltaUpdater extends ScheduledTask {
         DateTime endOfDay = startOfDay.plusDays(1);
         
         try {
-            Maybe<Element> existingFeedElement = updater.getExistingFeedElement(now);
+            Maybe<Document> existingFeedElement = updater.getExistingFeedElement(now);
             
             if (existingFeedElement.hasValue()) {
                 updater.updateFeed(existingFeedElement, updater.getLastUpdated(existingFeedElement.requireValue()), endOfDay);
             } else {
                 DateTime yesterday = now.minusDays(1);
-                Maybe<Element> existingPreviousDayFeed = updater.getExistingFeedElement(yesterday);
+                Maybe<Document> existingPreviousDayFeed = updater.getExistingFeedElement(yesterday);
                 if (existingPreviousDayFeed.hasValue()) {
                     updater.updateFeed(existingPreviousDayFeed, updater.getLastUpdated(existingPreviousDayFeed.requireValue()), startOfDay);
                 }
                 
-                updater.updateFeed(Maybe.<Element>nothing(), startOfDay, endOfDay);
+                updater.updateFeed(Maybe.<Document>nothing(), startOfDay, endOfDay);
             }
         }
         catch (Exception e) {

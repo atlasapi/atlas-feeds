@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.interlinking.delta;
 
-import nu.xom.Element;
+import nu.xom.Document;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,10 +28,10 @@ public class CompleteInterlinkingDeltaUpdater extends ScheduledTask {
         for (int i = days; i >= 0; i--) {
             try {
                 DateTime day = now.minusDays(i);
-                Maybe<Element> existingFeedElement = updater.getExistingFeedElement(day);
+                Maybe<Document> existingFeedElement = updater.getExistingFeedElement(day);
                 if (existingFeedElement.isNothing()) {
                     DateTime startOfDay = day.withTime(0, 0, 0, 0);
-                    updater.updateFeed(Maybe.<Element>nothing(), startOfDay, startOfDay.plusDays(1));
+                    updater.updateFeed(Maybe.<Document>nothing(), startOfDay, startOfDay.plusDays(1));
                 }
             } catch (Exception e) {
                 log.error("Exception when updating interlinking deltas", e);
