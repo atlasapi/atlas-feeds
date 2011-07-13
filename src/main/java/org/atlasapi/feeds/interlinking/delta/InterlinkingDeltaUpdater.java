@@ -1,13 +1,16 @@
 package org.atlasapi.feeds.interlinking.delta;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Iterator;
 
 import nu.xom.Builder;
+import nu.xom.Document;
 import nu.xom.Element;
 import nu.xom.ParsingException;
+import nu.xom.Serializer;
 import nu.xom.ValidityException;
 
 import org.apache.commons.logging.Log;
@@ -28,6 +31,7 @@ import org.jets3t.service.model.S3Object;
 import org.jets3t.service.security.AWSCredentials;
 import org.joda.time.DateTime;
 
+import com.google.common.base.Charsets;
 import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.http.HttpStatusCode;
 
@@ -66,12 +70,21 @@ public class InterlinkingDeltaUpdater {
         
         try {
             S3Service s3Service = new RestS3Service(awsCredentials);
-            S3Object s3Object = new S3Object(getFilename(from), feedElem.toXML());
+            S3Object s3Object = new S3Object(getFilename(from), getXmlString(feedElem));
             S3Bucket bucket = s3Service.getBucket(BUCKET_NAME);
             s3Service.putObject(bucket, s3Object);
         } catch (Exception e) {
             log.error("Error writing object to S3", e);
         }
+    }
+    
+    private String getXmlString(Element feedElement) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        String charset = Charsets.UTF_8.name();
+        Serializer serializer = new Serializer(out, charset);
+        serializer.setIndent(2);
+        serializer.write(new Document(feedElement));
+        return out.toString(charset);
     }
 
     public DateTime getLastUpdated(Element feedElem) {
