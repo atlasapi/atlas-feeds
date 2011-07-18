@@ -41,14 +41,22 @@ public class InterlinkFeedOutputter {
 	public static final XMLNamespace NS_ILINK = new XMLNamespace("ilink", "http://www.bbc.co.uk/developer/interlinking");
 	public static final XMLNamespace NS_MRSS = new XMLNamespace("media", "http://search.yahoo.com/mrss/");
 	
-	public void output(InterlinkFeed feed, OutputStream out, boolean isBootstrap) throws IOException {
+	public void output(InterlinkFeed feed, OutputStream out, boolean isBootstrap, DateTime lastUpdate) throws IOException {
 		Element feedElem = createFeed(feed);
-		outputFeedToElements(feed, isBootstrap, feedElem);
+		outputFeedToElements(feed, isBootstrap, feedElem, lastUpdate);
 	    write(out, feedElem);  
 	}
 	
-	public void outputFeedToElements(InterlinkFeed feed, boolean isBootstrap,
-			Element feedElem) {
+	public void outputFeedToElements(InterlinkFeed feed, boolean isBootstrap, Element feedElem, DateTime lastUpdated) {
+	    
+	    DateTime latestUpdate = lastUpdated;
+	    for (InterlinkBase entry : feed.entries()) {
+	        if (entry.lastUpdated().isAfter(latestUpdate)) {
+	            latestUpdate = entry.lastUpdated();
+	        }
+	    }
+	    feed.withUpdatedAt(latestUpdate);
+	    
 		for (InterlinkBase entry : feed.entries()) {
 		    if (! isBootstrap || entry.operation() != Operation.DELETE) {
     			if (entry instanceof InterlinkBrand) {
