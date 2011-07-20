@@ -72,11 +72,6 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
     
     @Override
     protected  String idFrom(Identified description) {
-        for (String alias : description.getAliases()) {
-            if (alias.startsWith("tag:www.channel4.com") || alias.startsWith("urn:tag:www.channel4.com") || alias.startsWith("tag:www.e4.com")) {
-                return alias;
-            }
-        }
         if (description instanceof Location) {
         	Location location = (Location) description;
         	Matcher idMatcher = LOCATION_ID.matcher(location.getUri());
@@ -84,16 +79,19 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
 				return "tag:www.channel4.com,2009:" + idMatcher.group(1);
         	}
         }
-        return description.getCanonicalUri();
+        return extractTagUri(description.getCanonicalUri());
     }
     
     @Override
     protected String idFromParentRef(ParentRef parent) {
-        String parentUri = parent.getUri();
-        if (!parentUri.startsWith(C4_SLASH_PROGRAMMES_PREFIX)) {
-            throw new IllegalArgumentException("Parent " + parentUri + " has an invalid C4 canonical uri");
+        return extractTagUri(parent.getUri());
+    }
+
+    private String extractTagUri(String uri) {
+        if (!uri.startsWith(C4_SLASH_PROGRAMMES_PREFIX)) {
+            throw new IllegalArgumentException("Description with uri " + uri + " has an invalid C4 canonical uri");
         }
-        return parentUri.replace(C4_SLASH_PROGRAMMES_PREFIX, C4_TAG_PREFIX);
+        return uri.replace(C4_SLASH_PROGRAMMES_PREFIX, C4_TAG_PREFIX);
     }
 
     @Override
