@@ -2,7 +2,6 @@ package org.atlasapi.feeds.interlinking.delta;
 
 import org.atlasapi.feeds.interlinking.C4PlaylistToInterlinkFeedAdapter;
 import org.atlasapi.feeds.interlinking.outputting.InterlinkFeedOutputter;
-import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.jets3t.service.security.AWSCredentials;
 import org.joda.time.Duration;
@@ -23,15 +22,13 @@ public class InterlinkingDeltaModule {
     String s3secret;
 
     @Autowired
-    private ContentResolver resolver;
-    @Autowired
     private LastUpdatedContentFinder executor;
     @Autowired
     private SimpleScheduler scheduler;
 
     @Bean
     public InterlinkingDeltaUpdater interlinkingDeltaUpdater() {
-        return new InterlinkingDeltaUpdater(new AWSCredentials(s3access, s3secret), executor, new InterlinkFeedOutputter(), new C4PlaylistToInterlinkFeedAdapter(resolver));
+        return new InterlinkingDeltaUpdater(new AWSCredentials(s3access, s3secret), executor, new InterlinkFeedOutputter(), new C4PlaylistToInterlinkFeedAdapter());
     }
 
     @Bean

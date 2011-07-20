@@ -59,17 +59,14 @@ public class InterlinkingDeltaUpdater {
         InterlinkFeed interlinkFeed = adapter.fromContent(InterlinkController.FEED_ID + getDateString(from), Publisher.C4, from, to, newContent);
 
         Document document;
-        DateTime lastUpdated;
         if (existingFeedElement.hasValue()) {
             document = existingFeedElement.requireValue();
-            lastUpdated = getLastUpdated(document);
+            outputter.updateLastUpdated(interlinkFeed.entries(), getLastUpdated(document), document);
         } else {
-            lastUpdated = from;
-            interlinkFeed.withUpdatedAt(lastUpdated);
-            document = new Document(outputter.createFeed(interlinkFeed));
+            document = new Document(outputter.createFeed(interlinkFeed, from));
         }
-
-        outputter.outputFeedToElements(interlinkFeed, false, document.getRootElement(), lastUpdated);
+        
+        outputter.outputFeedToElements(interlinkFeed.entries(), false, document.getRootElement());
 
         try {
             S3Service s3Service = new RestS3Service(awsCredentials);
