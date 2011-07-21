@@ -61,11 +61,11 @@ public class InterlinkingDeltaUpdater {
         Document document;
         if (existingFeedElement.hasValue()) {
             document = existingFeedElement.requireValue();
-            outputter.updateLastUpdated(interlinkFeed.entries(), getLastUpdated(document), document);
         } else {
             document = new Document(outputter.createFeed(interlinkFeed, from));
         }
         
+        outputter.updateLastUpdated(interlinkFeed.entries(), getLastUpdated(document), document);
         outputter.outputFeedToElements(interlinkFeed.entries(), false, document.getRootElement());
 
         try {
