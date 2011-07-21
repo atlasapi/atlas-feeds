@@ -68,7 +68,7 @@ public class InterlinkFeedOutputter {
 	    Element rootElement = document.getRootElement();
 	    Element updatedElem = rootElement.getFirstChildElement("updated", NS_ATOM.getUri());
 	    updatedElem.removeChildren();
-	    updatedElem.appendChild(lastUpdated.toString(DATE_TIME_FORMAT));
+	    updatedElem.appendChild(extractLastUpdated(entries, lastUpdated).toString(DATE_TIME_FORMAT));
     }
 
     private DateTime extractLastUpdated(List<InterlinkBase> entries, DateTime lastUpdated) {
