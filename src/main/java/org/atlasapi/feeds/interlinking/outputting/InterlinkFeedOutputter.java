@@ -75,7 +75,7 @@ public class InterlinkFeedOutputter {
     private DateTime extractLastUpdated(List<InterlinkBase> entries, DateTime lastUpdated) {
         DateTime latestUpdate = lastUpdated;
 	    for (InterlinkBase entry : entries) {
-	        if (entry.lastUpdated().isAfter(latestUpdate)) {
+	        if (entry.lastUpdated() != null && entry.lastUpdated().isAfter(latestUpdate)) {
 	            latestUpdate = entry.lastUpdated();
 	        }
 	    }
