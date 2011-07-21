@@ -50,19 +50,17 @@ public class InterlinkFeedOutputter {
 	
 	public void outputFeedToElements(List<InterlinkBase> entries, boolean isBootstrap, Element feedElem) {
 		for (InterlinkBase entry : entries) {
-		    if (! isBootstrap || entry.operation() != Operation.DELETE) {
-    			if (entry instanceof InterlinkBrand) {
-    			    feedElem.appendChild(brandToEntry((InterlinkBrand) entry));
-    			} else if (entry instanceof InterlinkSeries) {
-    			    feedElem.appendChild(seriesToEntry((InterlinkSeries) entry));
-    			} else if (entry instanceof InterlinkEpisode) {
-    			    feedElem.appendChild(episodeToEntry((InterlinkEpisode) entry));
-    			} else if (entry instanceof InterlinkBroadcast) {
-    			    feedElem.appendChild(broadcastToEntry((InterlinkBroadcast) entry));
-    			} else if (entry instanceof InterlinkOnDemand) {
-    			    feedElem.appendChild(onDemandToEntry((InterlinkOnDemand) entry));
-    			}
-		    }
+			if (entry instanceof InterlinkBrand) {
+			    feedElem.appendChild(brandToEntry((InterlinkBrand) entry));
+			} else if (entry instanceof InterlinkSeries) {
+			    feedElem.appendChild(seriesToEntry((InterlinkSeries) entry));
+			} else if (entry instanceof InterlinkEpisode) {
+			    feedElem.appendChild(episodeToEntry((InterlinkEpisode) entry));
+			} else if (entry instanceof InterlinkBroadcast) {
+			    feedElem.appendChild(broadcastToEntry((InterlinkBroadcast) entry));
+			} else if (entry instanceof InterlinkOnDemand) {
+			    feedElem.appendChild(onDemandToEntry((InterlinkOnDemand) entry));
+			}
 		}
 	}
 	
