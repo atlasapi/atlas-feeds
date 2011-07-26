@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.interlinking.delta;
 
+import javax.annotation.PostConstruct;
+
 import org.atlasapi.feeds.interlinking.C4PlaylistToInterlinkFeedAdapter;
 import org.atlasapi.feeds.interlinking.outputting.InterlinkFeedOutputter;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
@@ -16,37 +18,29 @@ import com.metabroadcast.common.scheduling.SimpleScheduler;
 @Configuration
 public class InterlinkingDeltaModule {
 
-    private @Value("${s3.access}")
-    String s3access;
-    private @Value("${s3.secret}")
-    String s3secret;
+    private @Value("${s3.access}") String s3access;
+    private @Value("${s3.secret}") String s3secret;
+    
+    private @Value("${interlinking.delta.enabled}") String enabled;
 
-    @Autowired
-    private LastUpdatedContentFinder executor;
-    @Autowired
-    private SimpleScheduler scheduler;
+    @Autowired private LastUpdatedContentFinder executor;
+    @Autowired private SimpleScheduler scheduler;
 
     @Bean
     public InterlinkingDeltaUpdater interlinkingDeltaUpdater() {
         return new InterlinkingDeltaUpdater(new AWSCredentials(s3access, s3secret), executor, new InterlinkFeedOutputter(), new C4PlaylistToInterlinkFeedAdapter());
     }
-
-    @Bean
-    public CompleteInterlinkingDeltaUpdater completeInterlinkingDeltaUpdater() {
-
-        CompleteInterlinkingDeltaUpdater completeInterlinkingDeltaUpdater = new CompleteInterlinkingDeltaUpdater(interlinkingDeltaUpdater(), 30);
-
-        scheduler.schedule(completeInterlinkingDeltaUpdater.withName("Complete interlinking deltas updater"), RepetitionRules.NEVER);
-
-        return completeInterlinkingDeltaUpdater;
-    }
-
-    @Bean
-    public SinceLastUpdatedInterlinkingDeltaUpdater sinceLastUpdatedInterlinkingDeltaUpdater() {
-        SinceLastUpdatedInterlinkingDeltaUpdater sinceLastUpdatedInterlinkingDeltaUpdater = new SinceLastUpdatedInterlinkingDeltaUpdater(interlinkingDeltaUpdater());
-
-        scheduler.schedule(sinceLastUpdatedInterlinkingDeltaUpdater.withName("Last updated interlink deltas updater"), RepetitionRules.every(Duration.standardMinutes(10)));
-
-        return sinceLastUpdatedInterlinkingDeltaUpdater;
+    
+    @PostConstruct
+    public void scheduleTasks() {
+        
+        if(Boolean.parseBoolean(enabled)) {
+            SinceLastUpdatedInterlinkingDeltaUpdater sinceLastUpdatedUpdater = new SinceLastUpdatedInterlinkingDeltaUpdater(interlinkingDeltaUpdater());
+            scheduler.schedule(sinceLastUpdatedUpdater.withName("Last updated interlink deltas updater"), RepetitionRules.every(Duration.standardMinutes(10)));
+            
+            CompleteInterlinkingDeltaUpdater completeUpdater = new CompleteInterlinkingDeltaUpdater(interlinkingDeltaUpdater(), 30);
+            scheduler.schedule(completeUpdater.withName("Complete interlinking deltas updater"), RepetitionRules.NEVER);
+        }
+        
     }
 }
