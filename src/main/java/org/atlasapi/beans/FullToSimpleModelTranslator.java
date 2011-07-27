@@ -45,6 +45,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 import com.metabroadcast.common.intl.Countries;
 
 /**
@@ -237,7 +238,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		simpleItem.setType(EntityType.from(fullItem).toString());
 		
 		for (Version version : fullItem.getVersions()) {
-			addTo(simpleItem, version);
+			addTo(simpleItem, version, fullItem);
 		}
 		
 		List<org.atlasapi.media.entity.simple.Person> people = Lists.newArrayList();
@@ -254,15 +255,15 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		return simpleItem;
 	}
 
-	private static void addTo(Item simpleItem, Version version) {
+	private static void addTo(Item simpleItem, Version version, org.atlasapi.media.entity.Item item) {
 		
 		for (Encoding encoding : version.getManifestedAs()) {
-			addTo(simpleItem, version, encoding);
+			addTo(simpleItem, version, encoding, item);
 		}
 		
 		for (Broadcast broadcast : version.getBroadcasts()) {
 			org.atlasapi.media.entity.simple.Broadcast simpleBroadcast = simplify(broadcast);
-			copyProperties(version, simpleBroadcast);
+			copyProperties(version, simpleBroadcast, item);
 			simpleItem.addBroadcast(simpleBroadcast);
 		}
 	}
@@ -282,17 +283,17 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    return simpleModel; 
 	}
 
-	private static void addTo(Item simpleItem, Version version, Encoding encoding) {
+	private static void addTo(Item simpleItem, Version version, Encoding encoding, org.atlasapi.media.entity.Item item) {
 		for (Location location : encoding.getAvailableAt()) {
-			addTo(simpleItem, version, encoding, location);
+			addTo(simpleItem, version, encoding, location, item);
 		}
 	}
 
-	private static void addTo(Item simpleItem, Version version, Encoding encoding, Location location) {
+	private static void addTo(Item simpleItem, Version version, Encoding encoding, Location location, org.atlasapi.media.entity.Item item) {
 		
 		org.atlasapi.media.entity.simple.Location simpleLocation = new org.atlasapi.media.entity.simple.Location();
 		
-		copyProperties(version, simpleLocation);
+		copyProperties(version, simpleLocation, item);
 		copyProperties(encoding, simpleLocation);
 		copyProperties(location, simpleLocation);
 		
@@ -345,10 +346,10 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		return details;
 	}
 
-	private static void copyProperties(Version version, org.atlasapi.media.entity.simple.Version simpleLocation) {
+	private static void copyProperties(Version version, org.atlasapi.media.entity.simple.Version simpleLocation, org.atlasapi.media.entity.Item item) {
 
 		simpleLocation.setPublishedDuration(version.getPublishedDuration());
-		simpleLocation.setDuration(version.getDuration());
+		simpleLocation.setDuration(durationFrom(item, version));
 		
 		Restriction restriction = new Restriction();
 		
@@ -361,7 +362,29 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		simpleLocation.setRestriction(restriction);
 	}
 
-	private static void copyProperties(Encoding encoding, org.atlasapi.media.entity.simple.Location simpleLocation) {
+	// temporary fix: some versions are missing durations so
+	// we fall back to the broadcast and location durations
+	private static Integer durationFrom(org.atlasapi.media.entity.Item item, Version version) {
+	    if (version.getDuration() != null && version.getDuration() > 0) {
+	        return version.getDuration();
+	    }
+	    Iterable<Broadcast> broadcasts = item.flattenBroadcasts();
+	    if (Iterables.isEmpty(broadcasts)) {
+	        return null;
+	    }
+        return Ordering.natural().max(Iterables.transform(broadcasts, new Function<Broadcast, Integer>() {
+            @Override
+            public Integer apply(Broadcast input) {
+               Integer duration = input.getBroadcastDuration();
+               if (duration == null) {
+                   return 0;
+               }
+               return duration;
+            }
+	    }));
+    }
+
+    private static void copyProperties(Encoding encoding, org.atlasapi.media.entity.simple.Location simpleLocation) {
 
 		simpleLocation.setAdvertisingDuration(encoding.getAdvertisingDuration());
 		simpleLocation.setAudioBitRate(encoding.getAudioBitRate());
