@@ -62,10 +62,11 @@ public class InterlinkingDeltaUpdater {
         if (existingFeedElement.hasValue()) {
             document = existingFeedElement.requireValue();
         } else {
-            document = new Document(outputter.createFeed(interlinkFeed));
+            document = new Document(outputter.createFeed(interlinkFeed, from));
         }
-
-        outputter.outputFeedToElements(interlinkFeed, false, document.getRootElement());
+        
+        outputter.updateLastUpdated(interlinkFeed.entries(), getLastUpdated(document), document);
+        outputter.outputFeedToElements(interlinkFeed.entries(), false, document.getRootElement());
 
         try {
             S3Service s3Service = new RestS3Service(awsCredentials);

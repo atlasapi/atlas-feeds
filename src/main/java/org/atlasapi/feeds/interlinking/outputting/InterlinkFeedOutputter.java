@@ -3,6 +3,7 @@ package org.atlasapi.feeds.interlinking.outputting;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 import nu.xom.Attribute;
 import nu.xom.Document;
@@ -41,30 +42,44 @@ public class InterlinkFeedOutputter {
 	public static final XMLNamespace NS_ILINK = new XMLNamespace("ilink", "http://www.bbc.co.uk/developer/interlinking");
 	public static final XMLNamespace NS_MRSS = new XMLNamespace("media", "http://search.yahoo.com/mrss/");
 	
-	public void output(InterlinkFeed feed, OutputStream out, boolean isBootstrap) throws IOException {
-		Element feedElem = createFeed(feed);
-		outputFeedToElements(feed, isBootstrap, feedElem);
+	public void output(InterlinkFeed feed, OutputStream out, boolean isBootstrap, DateTime lastUpdate) throws IOException {
+		Element feedElem = createFeed(feed,  extractLastUpdated(feed.entries(), lastUpdate));
+		outputFeedToElements(feed.entries(), isBootstrap, feedElem);
 	    write(out, feedElem);  
 	}
 	
-	public void outputFeedToElements(InterlinkFeed feed, boolean isBootstrap,
-			Element feedElem) {
-		for (InterlinkBase entry : feed.entries()) {
-		    if (! isBootstrap || entry.operation() != Operation.DELETE) {
-    			if (entry instanceof InterlinkBrand) {
-    			    feedElem.appendChild(brandToEntry((InterlinkBrand) entry));
-    			} else if (entry instanceof InterlinkSeries) {
-    			    feedElem.appendChild(seriesToEntry((InterlinkSeries) entry));
-    			} else if (entry instanceof InterlinkEpisode) {
-    			    feedElem.appendChild(episodeToEntry((InterlinkEpisode) entry));
-    			} else if (entry instanceof InterlinkBroadcast) {
-    			    feedElem.appendChild(broadcastToEntry((InterlinkBroadcast) entry));
-    			} else if (entry instanceof InterlinkOnDemand) {
-    			    feedElem.appendChild(onDemandToEntry((InterlinkOnDemand) entry));
-    			}
-		    }
+	public void outputFeedToElements(List<InterlinkBase> entries, boolean isBootstrap, Element feedElem) {
+		for (InterlinkBase entry : entries) {
+			if (entry instanceof InterlinkBrand) {
+			    feedElem.appendChild(brandToEntry((InterlinkBrand) entry));
+			} else if (entry instanceof InterlinkSeries) {
+			    feedElem.appendChild(seriesToEntry((InterlinkSeries) entry));
+			} else if (entry instanceof InterlinkEpisode) {
+			    feedElem.appendChild(episodeToEntry((InterlinkEpisode) entry));
+			} else if (entry instanceof InterlinkBroadcast) {
+			    feedElem.appendChild(broadcastToEntry((InterlinkBroadcast) entry));
+			} else if (entry instanceof InterlinkOnDemand) {
+			    feedElem.appendChild(onDemandToEntry((InterlinkOnDemand) entry));
+			}
 		}
 	}
+	
+	public void updateLastUpdated(List<InterlinkBase> entries, DateTime lastUpdated, Document document) {
+	    Element rootElement = document.getRootElement();
+	    Element updatedElem = rootElement.getFirstChildElement("updated", NS_ATOM.getUri());
+	    updatedElem.removeChildren();
+	    updatedElem.appendChild(extractLastUpdated(entries, lastUpdated).toString(DATE_TIME_FORMAT));
+    }
+
+    private DateTime extractLastUpdated(List<InterlinkBase> entries, DateTime lastUpdated) {
+        DateTime latestUpdate = lastUpdated;
+	    for (InterlinkBase entry : entries) {
+	        if (entry.lastUpdated() != null && entry.lastUpdated().isAfter(latestUpdate)) {
+	            latestUpdate = entry.lastUpdated();
+	        }
+	    }
+	    return latestUpdate;
+    }
 	
 	private Element onDemandToEntry(InterlinkOnDemand onDemand) {
 		Element entry = createElement("entry", NS_ATOM);
@@ -206,14 +221,14 @@ public class InterlinkFeedOutputter {
 	    entry.appendChild(stringElement("summary", NS_ATOM, Strings.nullToEmpty(content.summary())));
 
 	    DateTime updated = content.lastUpdated() != null ? content.lastUpdated() : new DateTime(DateTimeZones.UTC);
-	    entry.appendChild(stringElement("updated", NS_ATOM, updated.toString(DATE_TIME_FORMAT)));
+	    appendUpdatedTo(updated, entry);
 		
 		if (content.operation() != Operation.DELETE) {
 		    entry.appendChild(contentElement(content, parentId));
 		}
 	}
 
-	public Element createFeed(InterlinkFeed feed) {
+	public Element createFeed(InterlinkFeed feed, DateTime lastUpdated) {
 		Element feedElem = new Element("feed", NS_ATOM.getUri());
 
 		NS_DC.addDeclarationTo(feedElem);
@@ -224,7 +239,9 @@ public class InterlinkFeedOutputter {
 		
 		feedElem.appendChild(stringElement("title", NS_ATOM, feed.title()));
 		feedElem.appendChild(stringElement("subtitle", NS_ATOM, feed.subtitle()));
-		feedElem.appendChild(stringElement("updated", NS_ATOM, feed.updated().toString(DATE_TIME_FORMAT)));
+		
+		appendUpdatedTo(lastUpdated, feedElem);
+		
 		feedElem.appendChild(stringElement("id", NS_ATOM, feed.id()));
 
 		Element authorElem = createElement("author", NS_ATOM);
@@ -235,6 +252,10 @@ public class InterlinkFeedOutputter {
 		
 		return feedElem;
 	}
+
+    private void appendUpdatedTo(DateTime lastUpdated, Element feedElem) {
+        feedElem.appendChild(stringElement("updated", NS_ATOM, lastUpdated.toString(DATE_TIME_FORMAT)));
+    }
 
 	private void addCommonFieldsTo(InterlinkBase base, Element entry) {
 		if (base.title() != null) {

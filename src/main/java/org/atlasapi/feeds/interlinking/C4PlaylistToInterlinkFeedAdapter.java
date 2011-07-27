@@ -6,8 +6,6 @@ import static org.atlasapi.media.entity.Channel.FILM_4;
 import static org.atlasapi.media.entity.Channel.MORE_FOUR;
 
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,14 +13,9 @@ import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
-import org.atlasapi.media.entity.Series;
-import org.atlasapi.persistence.content.ContentResolver;
 
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.MapMaker;
 
 public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAdapter {
 
@@ -35,18 +28,8 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
 
     private static Set<String> BROADCAST_SERVICES = ImmutableSet.of(CHANNEL_FOUR.uri(), E_FOUR.uri(), MORE_FOUR.uri(), FILM_4.uri());
 
-    private final ConcurrentMap<String, Series> seriesLookup;
-
     protected static final Pattern SYNTHESIZED_PATTERN = Pattern.compile("http://www.channel4.com/programmes/synthesized/[^/]+/(\\d+)");
 
-    public C4PlaylistToInterlinkFeedAdapter(final ContentResolver resolver) {
-        seriesLookup = new MapMaker().expireAfterAccess(10, TimeUnit.MINUTES).makeComputingMap(new Function<String, Series>() {
-            @Override
-            public Series apply(String uri) {
-                return (Series) resolver.findByCanonicalUris(ImmutableList.of(uri)).get(uri).requireValue();
-            }
-        });
-    }
 
     @Override
     protected String broadcastId(Broadcast broadcast) {
@@ -89,15 +72,6 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
     
     @Override
     protected  String idFrom(Identified description) {
-        // Lookup full series if it is an embedded series
-        if (description instanceof Series) {
-            description = seriesLookup.get(description.getCanonicalUri());
-        }
-        for (String alias : description.getAliases()) {
-            if (alias.startsWith("tag:www.channel4.com") || alias.startsWith("urn:tag:www.channel4.com") || alias.startsWith("tag:www.e4.com")) {
-                return alias;
-            }
-        }
         if (description instanceof Location) {
         	Location location = (Location) description;
         	Matcher idMatcher = LOCATION_ID.matcher(location.getUri());
@@ -105,16 +79,19 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
 				return "tag:www.channel4.com,2009:" + idMatcher.group(1);
         	}
         }
-        return description.getCanonicalUri();
+        return extractTagUri(description.getCanonicalUri());
     }
     
     @Override
     protected String idFromParentRef(ParentRef parent) {
-        String parentUri = parent.getUri();
-        if (!parentUri.startsWith(C4_SLASH_PROGRAMMES_PREFIX)) {
-            throw new IllegalArgumentException("Parent " + parentUri + " has an invalid C4 canonical uri");
+        return extractTagUri(parent.getUri());
+    }
+
+    private String extractTagUri(String uri) {
+        if (!uri.startsWith(C4_SLASH_PROGRAMMES_PREFIX)) {
+            throw new IllegalArgumentException("Description with uri " + uri + " has an invalid C4 canonical uri");
         }
-        return parentUri.replace(C4_SLASH_PROGRAMMES_PREFIX, C4_TAG_PREFIX);
+        return uri.replace(C4_SLASH_PROGRAMMES_PREFIX, C4_TAG_PREFIX);
     }
 
     @Override

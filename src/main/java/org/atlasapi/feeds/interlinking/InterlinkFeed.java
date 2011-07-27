@@ -11,7 +11,6 @@ public final class InterlinkFeed {
 	private final String id;
 	private String title;
 	private String subtitle;
-	private DateTime updated; 
 	private InterlinkFeedAuthor author;
 	
 	private List<InterlinkBase> entries = Lists.newArrayList();
@@ -27,11 +26,6 @@ public final class InterlinkFeed {
 	
 	public InterlinkFeed withSubtitle(String subtitle) {
 		this.subtitle = subtitle;
-		return this;
-	}
-	
-	public InterlinkFeed withUpdatedAt(DateTime dateTime) {
-		updated = dateTime;
 		return this;
 	}
 	
@@ -59,10 +53,6 @@ public final class InterlinkFeed {
 	
 	public String title() {
 		return title;
-	}
-	
-	public DateTime updated() {
-		return updated;
 	}
 	
 	public String id() {
