@@ -1,0 +1,577 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- © 2011  Microsoft Corporation.  All rights reserved. -->
+<xs:schema id="Lakeview_v0_4"
+    targetNamespace="http://schemas.microsoft.com/Lakeview/2011/06/13/ingestion"
+    elementFormDefault="qualified"
+    xmlns="http://schemas.microsoft.com/Lakeview/2011/06/13/ingestion"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+>
+
+  <!-- Simple Types -->
+
+  <xs:simpleType name="NonEmptyString">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1" />
+      <xs:pattern value=".*[\S][\s\S]*" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EmptyString">
+    <xs:restriction base="xs:string">
+      <xs:length value="0" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PriceDisplayString">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1" />
+      <xs:maxLength value="60" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PositiveInt">
+    <xs:restriction base="xs:integer">
+      <xs:minInclusive value="1" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="NullablePositiveInt">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="PositiveInt" />
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:maxLength value="0" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+
+  <xs:simpleType name="CombinationDateTime">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:date" />
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:gYear" />
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:dateTime" />
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+  <xs:simpleType name="NullableCombinationDateTime">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="CombinationDateTime" />
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:maxLength value="0" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+  
+  <xs:simpleType name="NullableBool">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:boolean" />
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:maxLength value="0" />
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="True" />
+          <xs:enumeration value="true" />
+          <xs:enumeration value="False" />
+          <xs:enumeration value="false" />
+          <xs:enumeration value="0" />
+          <xs:enumeration value="1" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+  
+  <xs:simpleType name="ImagePurposeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="BoxArt" />
+      <xs:enumeration value="Thumbnail" />
+      <xs:enumeration value="Logo" />
+      <xs:enumeration value="Background" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ContextId">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="http://\w*.com/\w\w-\w\w/Movie/.+" />
+      <xs:pattern value="http://\w*.com/\w\w-\w\w/TVEpisode/.+" />
+      <xs:pattern value="http://\w*.com/\w\w-\w\w/TVShow/.+" />
+      <xs:pattern value="http://\w*.com/\w\w-\w\w/TVSeries/.+" />
+      <xs:pattern value="http://\w*.com/\w\w-\w\w/TVSeason/.+" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DeviceType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Web" />
+      <xs:enumeration value="Xbox360" />
+      <xs:enumeration value="PC" />
+      <xs:enumeration value="Android" />
+      <xs:enumeration value="iOS" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="OfferType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Rent" />
+      <xs:enumeration value="PurchaseToOwn" />
+      <xs:enumeration value="FreeWithAds" />
+      <xs:enumeration value="Free" />
+      <xs:enumeration value="FreeWithSubscription" />
+      <xs:enumeration value="PayPerView" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ResolutionFormatType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="SD" />
+      <xs:enumeration value="HD" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DeliveryFormatType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Streaming" />
+      <xs:enumeration value="Progressive" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="VideoInstanceType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Full" />
+      <xs:enumeration value="Trailer" />
+      <xs:enumeration value="Highlights" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="sportEventTerritoryType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Home" />
+      <xs:enumeration value="Away" />
+      <xs:enumeration value="Neutral" />
+    </xs:restriction>
+  </xs:simpleType>
+  
+
+  <!-- Element Definitions -->
+  <xs:complexType name="elementAlternateIds">
+    <xs:sequence minOccurs="1" maxOccurs="1">
+      <xs:element name="AlternateId" type="NonEmptyString" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementAlternateTitles">
+    <xs:sequence minOccurs="1" maxOccurs="1">
+      <xs:element name="AlternateTitle" type="NonEmptyString" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementKeywords">
+    <xs:sequence minOccurs="1" maxOccurs="1">
+      <xs:element name="Keyword" type="NonEmptyString" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementImages">
+    <xs:sequence minOccurs="1" maxOccurs="1">
+      <xs:element name="Image" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="ImagePurpose" type="ImagePurposeType" minOccurs="1" maxOccurs="1" />
+            <xs:element name="Url"          type="xs:anyURI"        minOccurs="1" maxOccurs="1" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementGenres">
+    <xs:sequence minOccurs="1" maxOccurs="1">
+      <xs:element name="Genre"  type="NonEmptyString" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementDescriptors">
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="Descriptor"  type="NonEmptyString" minOccurs="1" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementParentalControl">
+    <xs:annotation>
+      <xs:documentation>
+        Four possibilities are allowed for parental controls:
+        1. 'NotRated'- Should be used when no parental control is known for the content, however, it is known
+        that the asset is safe to be included in results. The asset will be included in search/browse
+        results.
+        2. 'Unrated'- Should be used when no parental control is known for the content and it is NOT known
+        if the asset is safe to be included in results. The asset will be blocked from search/browse
+        results if, parental controls are set to on and 'show unrated' is set to false.
+        3. 'HasGuidance' - Should be used when the partner does not age rate the content, but has assessed against the guidance
+        content labeling system. If this option is used, it indicates that the asset metadata is safe to be included in search results.
+        The flag is set to false to signal that there is no guidance advice attached. The flag is set to true to signal
+        that there is guidance advice attached to the content, but it is the responsibility of the application to honor this.
+        4. The parental control - when the value is known, it should be specified. It consists of:
+        - the 'system' (e.g. MPAA, BBFC etc)
+        - the value within the system (e.g. '16')
+        - zero or more descriptors
+        A complete example would be {BBFC, 16, “Scenes of intense action, mild violence”}
+
+        The use of 'HasGuidance' is allowed only in regions such as UK, Germany, Australia and Japan, where
+        there is no uniform parental control policy/standard for media.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:choice>
+      <xs:element name="NotRated"     type="EmptyString"  minOccurs="1" maxOccurs="1" />
+      <xs:element name="Unrated"      type="EmptyString"  minOccurs="1" maxOccurs="1" />
+      <xs:element name="HasGuidance"  type="xs:boolean"   minOccurs="1" maxOccurs="1" />
+      <xs:sequence                                        minOccurs="1" maxOccurs="1">
+        <xs:element name="System"       type="NonEmptyString"     minOccurs="1" maxOccurs="1" />
+        <xs:element name="Rating"       type="NonEmptyString"     minOccurs="1" maxOccurs="1" />
+        <xs:element name="Descriptors"  type="elementDescriptors" minOccurs="0" maxOccurs="1" />
+      </xs:sequence>
+    </xs:choice>
+  </xs:complexType>
+
+
+  <xs:complexType name="elementFiles">
+    <xs:sequence minOccurs="0" maxOccurs="1">
+      <xs:element name="File" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="Url"            type="xs:anyURI"  minOccurs="1" maxOccurs="1" />
+            <xs:element name="Size"           type="xs:integer" minOccurs="0" maxOccurs="1" />
+            <xs:element name="SequenceNumber" type="xs:integer" minOccurs="0" maxOccurs="1" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementAvailabilities">
+    <xs:sequence minOccurs="0" maxOccurs="1">
+      <xs:element name="Availability" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="OfferType"            type="OfferType"                       minOccurs="1" maxOccurs="1" />
+            <xs:element name="StartDateTime"        type="NullableCombinationDateTime"     minOccurs="1" maxOccurs="1"/>
+            <xs:element name="EndDateTime"          type="NullableCombinationDateTime"     minOccurs="1" maxOccurs="1"/>
+            <xs:element name="PriceDisplayString"   type="PriceDisplayString"              minOccurs="0" maxOccurs="1"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementSubtitleLanguages">
+    <xs:sequence>
+      <xs:element name="SubtitleLanguage" type="NonEmptyString" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementAdvertisementSlots">
+    <xs:annotation>
+      <xs:documentation>
+        A series of timestamps that indicate the positions within the content that playback
+        should be paused and an advertisment displayed.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Timestamp" type="xs:time" minOccurs="1" maxOccurs="unbounded" />
+    </xs:sequence>
+ </xs:complexType>
+
+  <xs:complexType name="elementInstance" abstract="true" >
+    <xs:annotation>
+      <xs:documentation>
+        An instance is a downloadable/streamable or otherwise obtainable digital entity.
+        A single product may have different instances - for example, a movie may have 
+        an instance that is in the HD format and another that is in SD format.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="Device"                   type="DeviceType"               minOccurs="1" maxOccurs="1" />
+      <xs:element name="Files"                    type="elementFiles"             minOccurs="0" maxOccurs="1" />
+      <xs:element name="Availabilities"           type="elementAvailabilities"    minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementVideoInstance">
+    <xs:annotation>
+      <xs:documentation>Represents an instance of a video. A concrete extension of 'elementInstance'</xs:documentation>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="elementInstance">
+        <xs:sequence>
+          <xs:element name="ResolutionFormat"     type="ResolutionFormatType"       minOccurs="1" maxOccurs="1" />
+          <xs:element name="DeliveryFormat"       type="DeliveryFormatType"         minOccurs="1" maxOccurs="1" />
+          <xs:element name="PrimaryAudioLanguage" type="xs:string"                  minOccurs="1" maxOccurs="1" />
+          <xs:element name="ClosedCaptioning"     type="NullableBool"               minOccurs="0" maxOccurs="1" />
+          <xs:element name="SubtitleLanguages"    type="elementSubtitleLanguages"   minOccurs="0" maxOccurs="1" />
+          <xs:element name="VideoInstanceType"    type="VideoInstanceType"          minOccurs="1" maxOccurs="1" />
+          <xs:element name="AdvertisementSlots"   type="elementAdvertisementSlots"  minOccurs="0" maxOccurs="1" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="elementInstances">
+    <xs:annotation>
+      <xs:documentation>Right now we only have one instance type, but more are expected</xs:documentation>
+    </xs:annotation>
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:choice minOccurs="1" maxOccurs="1">
+        <xs:element name="VideoInstance" type="elementVideoInstance" minOccurs="1" maxOccurs="1" />
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementNames">
+    <xs:sequence minOccurs="1" maxOccurs="1">
+      <xs:element name="Name" type="NonEmptyString" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementDirectors">
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="Director" type="elementNames" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementWriters">
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="Writer" type="elementNames" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementCharacters">
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="Character" type="elementNames" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementActors">
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="Actor" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>
+            Represents an actor in the movie. Optionally, if the character name that the actor portrayed is
+            known, this can be specified. If the actor portrayed multiple characters, then multiple
+            character names can be specified for the single actor.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:complexContent>
+            <xs:extension base="elementNames">
+              <xs:sequence minOccurs="1" maxOccurs="1">
+                <xs:element name="Characters" type="elementCharacters" minOccurs="0" maxOccurs="1" />
+              </xs:sequence>
+            </xs:extension>
+          </xs:complexContent>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementStudios">
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="Studio" type="NonEmptyString" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementAliases">
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="Alias" type="NonEmptyString" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="elementProduct" abstract="true">
+    <xs:sequence minOccurs="1" maxOccurs="1">
+      <xs:element name="Provider"                       type="NonEmptyString"         minOccurs="0" maxOccurs="1" >
+        <xs:annotation>
+          <xs:documentation>
+            Used to identify the provider of this content.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="ItemId"                         type="ContextId"              minOccurs="1" maxOccurs="1" />
+      <xs:element name="Title"                          type="NonEmptyString"         minOccurs="1" maxOccurs="1" />
+      <xs:element name="TitlePronunciation"             type="NonEmptyString"         minOccurs="0" maxOccurs="1" />
+      <xs:element name="SortTitle"                      type="NonEmptyString"         minOccurs="0" maxOccurs="1" />
+      <xs:element name="Description"                    type="NonEmptyString"         minOccurs="0" maxOccurs="1" />
+      <xs:element name="ShortDescription"               type="NonEmptyString"         minOccurs="0" maxOccurs="1" />
+      <xs:element name="AlternateTitles"                type="elementAlternateTitles" minOccurs="0" maxOccurs="1" />
+      <xs:element name="OriginalPublicationRegion"      type="NonEmptyString"         minOccurs="0" maxOccurs="1" />
+      <xs:element name="AlternateIds"                   type="elementAlternateIds"    minOccurs="0" maxOccurs="1" />
+      <xs:element name="Keywords"                       type="elementKeywords"        minOccurs="0" maxOccurs="1" />
+      <xs:element name="IsUserGenerated"                type="xs:boolean"             minOccurs="1" maxOccurs="1" />
+      <xs:element name="Images"                         type="elementImages"          minOccurs="0" maxOccurs="1" />
+      <xs:element name="LastModifiedDate"               type="CombinationDateTime"    minOccurs="1" maxOccurs="1" />
+      <xs:element name="Genres"                         type="elementGenres"          minOccurs="0" maxOccurs="1" />
+      <xs:element name="ParentalControl"                type="elementParentalControl" minOccurs="1" maxOccurs="1" />
+      <xs:element name="Instances"                      type="elementInstances"       minOccurs="0" maxOccurs="1" />
+      <xs:element name="PublicWebUri"                   type="xs:string"              minOccurs="0" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+
+  <xs:complexType name="elementMovie">
+    <xs:complexContent>
+      <xs:extension base="elementProduct">
+        <xs:sequence>
+          <xs:element name="ApplicationSpecificData"        type="NonEmptyString"      minOccurs="1" maxOccurs="1" />
+          <xs:element name="OriginalPublicationDate"        type="CombinationDateTime" minOccurs="1" maxOccurs="1" />
+          <xs:element name="Studios"                        type="elementStudios"      minOccurs="0" maxOccurs="1" />
+          <xs:element name="DurationInSeconds"              type="NullablePositiveInt" minOccurs="0" maxOccurs="1" />
+          <xs:element name="Directors"                      type="elementDirectors"    minOccurs="0" maxOccurs="1" />
+          <xs:element name="Actors"                         type="elementActors"       minOccurs="0" maxOccurs="1" />
+          <xs:element name="Writers"                        type="elementWriters"      minOccurs="0" maxOccurs="1" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  
+  <xs:complexType name="elementTVEpisode">
+    <xs:complexContent>
+      <xs:extension base="elementProduct">
+        <xs:sequence>
+          <xs:element name="ApplicationSpecificData"        type="NonEmptyString"      minOccurs="1" maxOccurs="1" />
+          <xs:element name="OriginalPublicationDate"        type="CombinationDateTime" minOccurs="1" maxOccurs="1" />
+          <xs:element name="EpisodeNumber"                  type="xs:string"           minOccurs="0" maxOccurs="1" />
+          <xs:element name="DurationInSeconds"              type="NullablePositiveInt" minOccurs="0" maxOccurs="1" />
+          <xs:element name="Network"                        type="xs:string"           minOccurs="0" maxOccurs="1" />
+          <xs:element name="Studios"                        type="elementStudios"      minOccurs="0" maxOccurs="1" />
+          <xs:choice>
+            <xs:annotation>
+              <xs:documentation>Require either the seires id or the season id or both of them</xs:documentation>
+            </xs:annotation>
+            <xs:sequence >
+              <xs:element name="SeriesId"                       type="ContextId"           minOccurs="1" maxOccurs="1" />
+              <xs:element name="SeasonId"                       type="ContextId"           minOccurs="0" maxOccurs="1" />
+            </xs:sequence>
+            <xs:sequence>
+              <xs:element name="SeasonId"                       type="ContextId"           minOccurs="1" maxOccurs="1" />
+              <xs:element name="SeriesId"                       type="ContextId"           minOccurs="0" maxOccurs="1" />
+            </xs:sequence>
+          </xs:choice>
+          <xs:element name="Directors"                      type="elementDirectors"    minOccurs="0" maxOccurs="1" />
+          <xs:element name="Actors"                         type="elementActors"       minOccurs="0" maxOccurs="1" />
+          <xs:element name="Writers"                        type="elementWriters"      minOccurs="0" maxOccurs="1" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="elementTVSeason">
+    <xs:complexContent>
+      <xs:extension base="elementProduct">
+        <xs:sequence>
+          <xs:element name="OriginalPublicationDate"        type="CombinationDateTime" minOccurs="0" maxOccurs="1" />
+          <xs:element name="SeasonNumber"                   type="xs:string"           minOccurs="0" maxOccurs="1" />
+          <xs:element name="SeriesId"                       type="ContextId"           minOccurs="1" maxOccurs="1" />
+          <xs:element name="Network"                        type="xs:string"           minOccurs="0" maxOccurs="1" />
+          <xs:element name="Studios"                        type="elementStudios"      minOccurs="0" maxOccurs="1" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+ 
+  <xs:complexType name="elementTVSeries">
+    <xs:complexContent>
+      <xs:extension base="elementProduct">
+        <xs:sequence>
+          <xs:element name="OriginalPublicationDate"        type="CombinationDateTime"  minOccurs="0" maxOccurs="1" />
+          <xs:element name="TotalNumberOfSeasons"           type="xs:integer"           minOccurs="0" maxOccurs="1" />
+          <xs:element name="Network"                        type="xs:string"            minOccurs="0" maxOccurs="1" />
+          <xs:element name="Studios"                        type="elementStudios"       minOccurs="0" maxOccurs="1" />
+          <xs:element name="EndYear"                        type="xs:gYear"             minOccurs="0" maxOccurs="1" >
+            <xs:annotation>
+              <xs:documentation>
+                The last year that the series was produced. For series currently still in production,
+                this will be the current year.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="elementSportTeam">
+    <xs:sequence>
+      <xs:element name="Name"                         type="xs:string"                  minOccurs="1" maxOccurs="1" />
+      <xs:element name="Aliases"                      type="elementAliases"             minOccurs="0" maxOccurs="1" />
+      <xs:element name="City"                         type="xs:string"                  minOccurs="0" maxOccurs="1" />
+      <xs:element name="Territory"                    type="sportEventTerritoryType"    minOccurs="0" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="elementSportTeams" >
+    <xs:sequence minOccurs="2" maxOccurs="unbounded">
+      <xs:element name="Team" type="elementSportTeam" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="elementSport">
+    <xs:annotation>
+      <xs:documentation>Defines information about a sport event video. If teams are specified, there must be 2 or more teams</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="SportType"                        type="xs:string"            minOccurs="1" maxOccurs="1" />
+      <xs:element name="League"                           type="xs:string"            minOccurs="1" maxOccurs="1" />
+      <xs:element name="Teams"                            type="elementSportTeams"    minOccurs="0" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="elementTVShow">
+    <xs:complexContent>
+      <xs:extension base="elementProduct">
+        <xs:sequence>
+          <xs:element name="ApplicationSpecificData"        type="NonEmptyString"      minOccurs="1" maxOccurs="1" />
+          <xs:element name="OriginalPublicationDate"        type="CombinationDateTime" minOccurs="1" maxOccurs="1" />
+          <xs:element name="DurationInSeconds"              type="NullablePositiveInt" minOccurs="0" maxOccurs="1" />
+          <xs:element name="Network"                        type="xs:string"           minOccurs="0" maxOccurs="1" />
+          <xs:element name="Studios"                        type="elementStudios"      minOccurs="0" maxOccurs="1" />
+          <xs:element name="Directors"                      type="elementDirectors"    minOccurs="0" maxOccurs="1" />
+          <xs:element name="Actors"                         type="elementActors"       minOccurs="0" maxOccurs="1" />
+          <xs:element name="Writers"                        type="elementWriters"      minOccurs="0" maxOccurs="1" />
+          <xs:element name="Sport"                          type="elementSport"        minOccurs="0" maxOccurs="1" />
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Root Element -->
+  <xs:element name="Feed">
+    <xs:complexType>
+      <xs:sequence minOccurs="1" maxOccurs="unbounded">
+        <xs:choice>
+          <xs:element name="Movie"      type="elementMovie"     minOccurs="1" maxOccurs="1" />
+          <xs:element name="TVEpisode"  type="elementTVEpisode" minOccurs="1" maxOccurs="1" />
+          <xs:element name="TVSeason"   type="elementTVSeason"  minOccurs="1" maxOccurs="1" />
+          <xs:element name="TVSeries"   type="elementTVSeries"  minOccurs="1" maxOccurs="1" />
+          <xs:element name="TVShow"     type="elementTVShow"    minOccurs="1" maxOccurs="1" />
+        </xs:choice>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

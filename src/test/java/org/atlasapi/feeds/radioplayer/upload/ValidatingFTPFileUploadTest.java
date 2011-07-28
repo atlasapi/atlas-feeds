@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
+import org.atlasapi.feeds.xml.XMLValidator;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.junit.Ignore;
@@ -22,7 +23,7 @@ public class ValidatingFTPFileUploadTest {
     @Ignore
     public void testCallsDelegateOnSuccess() throws Exception {
         
-        RadioPlayerXMLValidator validator = RadioPlayerXMLValidator.forSchemas(ImmutableSet.<InputStream>of(/*
+        XMLValidator validator = XMLValidator.forSchemas(ImmutableSet.<InputStream>of(/*
                 Resources.getResource("org/atlasapi/feeds/radioplayer/epgSI_10.xsd").openStream(),
                 Resources.getResource("org/atlasapi/feeds/radioplayer/epgSchedule_10.xsd").openStream()
         */));
@@ -54,7 +55,7 @@ public class ValidatingFTPFileUploadTest {
     @Test
     @Ignore
     public void testDoesntCallDelegateOnFailure() throws Exception {
-        RadioPlayerXMLValidator validator = RadioPlayerXMLValidator.forSchemas(ImmutableSet.<InputStream>of(/*
+        XMLValidator validator = XMLValidator.forSchemas(ImmutableSet.<InputStream>of(/*
                 Resources.getResource("org/atlasapi/feeds/radioplayer/epgSI_10.xsd").openStream(),
                 Resources.getResource("org/atlasapi/feeds/radioplayer/epgSchedule_10.xsd").openStream()*/
         ));

@@ -4,12 +4,14 @@ import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.failedUpload
 
 import java.io.ByteArrayInputStream;
 
+import org.atlasapi.feeds.xml.XMLValidator;
+
 public class ValidatingFTPFileUploader implements FTPFileUploader {
 
-    private final RadioPlayerXMLValidator validator;
+    private final XMLValidator validator;
     private final FTPFileUploader delegate;
 
-    public ValidatingFTPFileUploader(RadioPlayerXMLValidator validator, FTPFileUploader delegate) {
+    public ValidatingFTPFileUploader(XMLValidator validator, FTPFileUploader delegate) {
         this.validator = validator;
         this.delegate = delegate;
     }
