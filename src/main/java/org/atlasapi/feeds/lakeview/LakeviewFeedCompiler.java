@@ -244,6 +244,17 @@ public class LakeviewFeedCompiler {
         }
         
         element.appendChild(stringElement("LastModifiedDate", LAKEVIEW, lastModified));
+        
+        if(!content.getGenres().isEmpty()) {
+            Element genres = createElement("Genres", LAKEVIEW);
+            for (String genre : content.getGenres()) {
+                if(genre.startsWith("http://www.channel4.com")) {
+                    genres.appendChild(stringElement("Genre", LAKEVIEW, genre));
+                }
+            }
+            element.appendChild(genres);
+        }
+        
         Element pc = createElement("ParentalControl", LAKEVIEW);
         pc.appendChild(stringElement("HasGuidance", LAKEVIEW, String.valueOf(hasGuidance)));
         element.appendChild(pc);
