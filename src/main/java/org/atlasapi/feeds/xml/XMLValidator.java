@@ -8,7 +8,6 @@ import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 
 import nu.xom.ValidityException;
 
@@ -21,10 +20,10 @@ import com.google.common.collect.Iterables;
 
 public class XMLValidator {
 
-    private final Validator validator;
+    private final Schema schema;
 
-    public XMLValidator(Validator validator) {
-        this.validator = validator;
+    public XMLValidator(Schema schema) {
+        this.schema = schema;
     }
 
     public boolean validate(InputStream input) throws ValidityException {
@@ -33,7 +32,7 @@ public class XMLValidator {
     
     public boolean validate(Source input) throws ValidityException {
         try {
-            validator.validate(input);
+            schema.newValidator().validate(input);
             return true;
         } catch (IOException e) {
             throw new ValidityException("IO Exception whilst validating input", e);
@@ -66,8 +65,8 @@ public class XMLValidator {
         } else {
             schema = schemaFactory.newSchema();
         }
-
-        return new XMLValidator(schema.newValidator());
+        
+        return new XMLValidator(schema);
     }
 
 }

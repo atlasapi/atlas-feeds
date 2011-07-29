@@ -33,7 +33,7 @@ public class LakeviewModule {
     }
 
     public @Bean XmlFeedOutputter lakeviewFeedOutputter() {
-        return new ValidatingXmlFeedOutputter(lakeViewValidator(), new SerializingFeedOutputter());
+        return /*new ValidatingXmlFeedOutputter(lakeViewValidator(),*/ new SerializingFeedOutputter()/*)*/;
     }
 
     public @Bean XMLValidator lakeViewValidator() {
