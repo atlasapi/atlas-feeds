@@ -258,7 +258,7 @@ public class LakeviewFeedCompiler {
         Element pc = createElement("ParentalControl", LAKEVIEW);
         pc.appendChild(stringElement("HasGuidance", LAKEVIEW, String.valueOf(hasGuidance)));
         element.appendChild(pc);
-        element.appendChild(stringElement("PublicWebUri", LAKEVIEW, content.getCanonicalUri()));
+        element.appendChild(stringElement("PublicWebUri", LAKEVIEW, String.format("%s.atom", content.getCanonicalUri())));
     }
 
     private static final String ID_PREFIX = "http://channel4.com/en-GB";
