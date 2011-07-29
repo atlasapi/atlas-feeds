@@ -20,7 +20,7 @@ public class LakeviewController {
         this.feedOutputter = feedOutputter;
     }
 
-    @RequestMapping("/feeds/c4-lakeview.xml")
+    @RequestMapping("/feeds/lakeview/c4.xml")
     public void producateOutput(HttpServletResponse response) throws IOException {
         
         feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent()), response.getOutputStream());
