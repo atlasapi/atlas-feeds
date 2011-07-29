@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.lakeview;
 
-import static java.lang.Boolean.TRUE;
-
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -27,7 +25,6 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
-import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -68,10 +65,10 @@ public class LakeviewFeedCompiler {
             feed.appendChild(createBrandElem(content.brand(), lastModified, episodes, content.contents().keySet().size()));
             
             for (Entry<Series, Collection<Episode>> seriesEpisodes : content.contents().entrySet()) {
-                feed.appendChild(createSeriesElem(seriesEpisodes.getKey(), content.brand(), seriesEpisodes.getValue(), lastModified, hasGuidance(seriesEpisodes.getValue())));
+                feed.appendChild(createSeriesElem(seriesEpisodes.getKey(), content.brand(), seriesEpisodes.getValue(), lastModified));
                 
                 for (Episode episode : seriesEpisodes.getValue()) {
-                    feed.appendChild(createEpisodeElem(episode, content.brand(), lastModified, hasGuidance(episode)));
+                    feed.appendChild(createEpisodeElem(episode, content.brand(), lastModified));
                 }
                 
             }
@@ -80,30 +77,12 @@ public class LakeviewFeedCompiler {
         return new Document(feed);
     }
 
-    private boolean hasGuidance(Episode episode) {
-        for (Version version : episode.getVersions()) {
-            if (TRUE.equals(version.getRestriction().isRestricted())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean hasGuidance(Iterable<Episode> episodes) {
-        return Iterables.any(episodes, new Predicate<Episode>() {
-            @Override
-            public boolean apply(Episode input) {
-                return hasGuidance(input);
-            }
-        });
-    }
-
     private Element createBrandElem(Brand brand, String lastModified, Iterable<Episode> episodes, int seasons) {
         Element element = createElement("TVSeries", LAKEVIEW);
         element.appendChild(stringElement("ItemId", LAKEVIEW, brandId(brand.getCanonicalUri())));
         element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY SERIES TITLE" : brand.getTitle()));
         
-        appendCommonElements(element, brand, lastModified, hasGuidance(episodes));
+        appendCommonElements(element, brand, lastModified);
         
         List<Broadcast> broadcasts = extractBroadcasts(episodes);
         appendOriginalBroadcastElement(broadcasts, element);
@@ -125,7 +104,7 @@ public class LakeviewFeedCompiler {
         return Channel.fromUri(TRANSMISSION_ORDERING.min(broadcasts).getBroadcastOn()).requireValue().title();
     }
 
-    private Element createSeriesElem(Series series, Brand parent, Iterable<Episode> episodes, String lastModified, boolean hasGuidance) {
+    private Element createSeriesElem(Series series, Brand parent, Iterable<Episode> episodes, String lastModified) {
         Element element = createElement("TVSeason", LAKEVIEW);
         element.appendChild(stringElement("ItemId", LAKEVIEW, seriesId(series.getCanonicalUri())));
         
@@ -135,7 +114,7 @@ public class LakeviewFeedCompiler {
             element.appendChild(stringElement("Title", LAKEVIEW, series.getTitle()));
         }
         
-        appendCommonElements(element, series, lastModified, hasGuidance);
+        appendCommonElements(element, series, lastModified);
         
         appendOriginalBroadcastElement(extractBroadcasts(episodes), element);
         element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(((Series) series).getSeriesNumber())));
@@ -144,7 +123,7 @@ public class LakeviewFeedCompiler {
         return element;
     }
 
-    private Element createEpisodeElem(Episode episode, Brand container, String lastModified, boolean hasGuidance) {
+    private Element createEpisodeElem(Episode episode, Brand container, String lastModified) {
         Element element = createElement("TVEpisode", LAKEVIEW);
         element.appendChild(stringElement("ItemId", LAKEVIEW, episodeId(episode.getCanonicalUri())));
         
@@ -154,7 +133,7 @@ public class LakeviewFeedCompiler {
             element.appendChild(stringElement("Title", LAKEVIEW, episode.getTitle()));
         }
         
-        appendCommonElements(element, episode, lastModified, hasGuidance);
+        appendCommonElements(element, episode, lastModified);
 
         element.appendChild(stringElement("ApplicationSpecificData", LAKEVIEW, extract4OdId(episode)));
         
@@ -224,7 +203,7 @@ public class LakeviewFeedCompiler {
         return "NONE";
     }
 
-    private void appendCommonElements(Element element, Content content, String lastModified, boolean hasGuidance) {
+    private void appendCommonElements(Element element, Content content, String lastModified) {
         
         if(!Strings.isNullOrEmpty(content.getDescription())) {
             element.appendChild(stringElement("Description", LAKEVIEW, content.getDescription()));
@@ -256,7 +235,7 @@ public class LakeviewFeedCompiler {
         }
         
         Element pc = createElement("ParentalControl", LAKEVIEW);
-        pc.appendChild(stringElement("HasGuidance", LAKEVIEW, String.valueOf(hasGuidance)));
+        pc.appendChild(stringElement("HasGuidance", LAKEVIEW, String.valueOf(true)));
         element.appendChild(pc);
         element.appendChild(stringElement("PublicWebUri", LAKEVIEW, String.format("%s.atom", content.getCanonicalUri())));
     }
