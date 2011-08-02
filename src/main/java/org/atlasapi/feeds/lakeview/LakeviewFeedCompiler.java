@@ -228,7 +228,7 @@ public class LakeviewFeedCompiler {
             Element genres = createElement("Genres", LAKEVIEW);
             for (String genre : content.getGenres()) {
                 if(genre.startsWith("http://www.channel4.com")) {
-                    genres.appendChild(stringElement("Genre", LAKEVIEW, genre));
+                    genres.appendChild(stringElement("Genre", LAKEVIEW, C4GenreTitles.title(genre)));
                 }
             }
             element.appendChild(genres);
