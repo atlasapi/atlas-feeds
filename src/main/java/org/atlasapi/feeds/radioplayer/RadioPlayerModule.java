@@ -13,7 +13,7 @@ import org.atlasapi.feeds.radioplayer.upload.RadioPlayerSuccessChecker;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskBuilder;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerXMLValidator;
+import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.logging.AdapterLog;
@@ -92,9 +92,10 @@ public class RadioPlayerModule {
         return new CachingFTPUploadResultStore(new MongoFTPUploadResultStore(mongo));
     }
 
-    @Bean RadioPlayerXMLValidator radioPlayerValidator() {
+    @Bean XMLValidator radioPlayerValidator() {
         try {
-            return RadioPlayerXMLValidator.forSchemas(ImmutableSet.of(
+            return XMLValidator.forSchemas(ImmutableSet.of(
+                Resources.getResource("xml.xsd").openStream(), 
                 Resources.getResource("epgSI_10.xsd").openStream(), 
                 Resources.getResource("epgSchedule_10.xsd").openStream()
             ));

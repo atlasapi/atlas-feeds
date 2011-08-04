@@ -11,6 +11,7 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
+import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.joda.time.LocalDate;
@@ -23,7 +24,7 @@ public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadRe
     private final LocalDate day;
     private final RadioPlayerService service;
 
-    private RadioPlayerXMLValidator validator;
+    private XMLValidator validator;
     private AdapterLog log;
 
     public RadioPlayerFTPUploadTask(FTPFileUploader uploader, LocalDate day, RadioPlayerService service) {
@@ -70,7 +71,7 @@ public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadRe
         }
     }
 
-    public RadioPlayerFTPUploadTask withValidator(RadioPlayerXMLValidator validator) {
+    public RadioPlayerFTPUploadTask withValidator(XMLValidator validator) {
         this.validator = validator;
         return this;
     }

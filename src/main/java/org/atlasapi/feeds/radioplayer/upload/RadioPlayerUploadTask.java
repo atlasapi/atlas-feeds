@@ -11,6 +11,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
@@ -33,7 +34,7 @@ public class RadioPlayerUploadTask implements Runnable {
     private DayRangeGenerator dayRangeGenerator;
     private Iterable<LocalDate> dayRange;
 
-    private RadioPlayerXMLValidator validator;
+    private XMLValidator validator;
     private AdapterLog log;
 
     public RadioPlayerUploadTask(FTPFileUploader uploader, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator) {
@@ -99,7 +100,7 @@ public class RadioPlayerUploadTask implements Runnable {
         }
     }
 
-    public RadioPlayerUploadTask withValidator(RadioPlayerXMLValidator validator) {
+    public RadioPlayerUploadTask withValidator(XMLValidator validator) {
         this.validator = validator;
         return this;
     }
