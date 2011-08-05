@@ -14,9 +14,11 @@ public class CompleteInterlinkingDeltaUpdater extends ScheduledTask {
     
     private final Log log = LogFactory.getLog(getClass());
     private final InterlinkingDeltaUpdater updater;
+    private final InterlinkingDeltaStore store;
     private final int days;
 
-    public CompleteInterlinkingDeltaUpdater(InterlinkingDeltaUpdater updater, int days) {
+    public CompleteInterlinkingDeltaUpdater(InterlinkingDeltaStore store, InterlinkingDeltaUpdater updater, int days) {
+        this.store = store;
         this.updater = updater;
         this.days = days;
     }
@@ -28,10 +30,10 @@ public class CompleteInterlinkingDeltaUpdater extends ScheduledTask {
         for (int i = days; i >= 0; i--) {
             try {
                 DateTime day = now.minusDays(i);
-                Maybe<Document> existingFeedElement = updater.getExistingFeedElement(day);
+                Maybe<Document> existingFeedElement = store.getExistingFeedElement(day);
                 if (existingFeedElement.isNothing()) {
                     DateTime startOfDay = day.withTime(0, 0, 0, 0);
-                    updater.updateFeed(Maybe.<Document>nothing(), startOfDay, startOfDay.plusDays(1));
+                    store.store(startOfDay, updater.updateFeed(Maybe.<Document>nothing(), startOfDay, startOfDay.plusDays(1)));
                 }
             } catch (Exception e) {
                 log.error("Exception when updating interlinking deltas", e);
