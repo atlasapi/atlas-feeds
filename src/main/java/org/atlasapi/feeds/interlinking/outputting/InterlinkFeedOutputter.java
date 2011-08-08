@@ -35,7 +35,7 @@ import com.metabroadcast.common.time.DateTimeZones;
 
 public class InterlinkFeedOutputter {
 
-	public static final DateTimeFormatter DATE_TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
+	public static final DateTimeFormatter DATE_TIME_FORMAT = ISODateTimeFormat.dateTime();
 	
 	public static final XMLNamespace NS_ATOM = new XMLNamespace("atom", "http://www.w3.org/2005/Atom");
 	public static final XMLNamespace NS_DC = new XMLNamespace("dc", "http://purl.org/dc/terms");

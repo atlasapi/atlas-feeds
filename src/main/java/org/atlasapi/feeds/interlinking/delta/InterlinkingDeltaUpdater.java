@@ -16,11 +16,9 @@ import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 
 import com.metabroadcast.common.base.Maybe;
+import com.metabroadcast.common.time.DateTimeZones;
 
 public class InterlinkingDeltaUpdater {
-
-    public static final String BUCKET_NAME = "bbc-interlinking";
-    public static final String FOLDER_NAME = "feeds/bbc-interlinking";
 
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
@@ -56,7 +54,7 @@ public class InterlinkingDeltaUpdater {
     }
 
     private DateTime getLastUpdated(Document document) {
-        return new DateTime(InterlinkFeedOutputter.DATE_TIME_FORMAT.parseDateTime(document.getRootElement().getFirstChildElement("updated", InterlinkFeedOutputter.NS_ATOM.getUri()).getValue()));
+        return InterlinkFeedOutputter.DATE_TIME_FORMAT.parseDateTime(document.getRootElement().getFirstChildElement("updated", InterlinkFeedOutputter.NS_ATOM.getUri()).getValue()).toDateTime(DateTimeZones.UTC);
     }
     
     private String getDateString(DateTime date) {
