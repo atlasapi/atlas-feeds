@@ -15,9 +15,12 @@ public class SinceLastUpdatedInterlinkingDeltaUpdater extends ScheduledTask {
     
     private final Log log = LogFactory.getLog(getClass());
     private final Clock clock = new SystemClock();
-    private final InterlinkingDeltaUpdater updater; 
     
-    public SinceLastUpdatedInterlinkingDeltaUpdater(InterlinkingDeltaUpdater updater) {
+    private final InterlinkingDeltaUpdater updater;
+    private final InterlinkingDeltaStore store; 
+    
+    public SinceLastUpdatedInterlinkingDeltaUpdater(InterlinkingDeltaStore store, InterlinkingDeltaUpdater updater) {
+        this.store = store;
         this.updater = updater;
     }
 
@@ -28,18 +31,23 @@ public class SinceLastUpdatedInterlinkingDeltaUpdater extends ScheduledTask {
         DateTime endOfDay = startOfDay.plusDays(1);
         
         try {
-            Maybe<Document> existingFeedElement = updater.getExistingFeedElement(now);
+            Maybe<Document> existingFeedElement = store.getExistingFeedElement(now);
             
             if (existingFeedElement.hasValue()) {
-                updater.updateFeed(existingFeedElement, updater.getLastUpdated(existingFeedElement.requireValue()), endOfDay);
+                //update the feed for today.
+                Document updatedFeed = updater.updateFeed(existingFeedElement, endOfDay);
+                store.store(now, updatedFeed);
             } else {
+                //finalize feed for yesterday.
                 DateTime yesterday = now.minusDays(1);
-                Maybe<Document> existingPreviousDayFeed = updater.getExistingFeedElement(yesterday);
+                Maybe<Document> existingPreviousDayFeed = store.getExistingFeedElement(yesterday);
                 if (existingPreviousDayFeed.hasValue()) {
-                    updater.updateFeed(existingPreviousDayFeed, updater.getLastUpdated(existingPreviousDayFeed.requireValue()), startOfDay);
+                    Document yesterdaysFeed = updater.updateFeed(existingPreviousDayFeed, startOfDay);
+                    store.store(yesterday, yesterdaysFeed);
                 }
-                
-                updater.updateFeed(Maybe.<Document>nothing(), startOfDay, endOfDay);
+                // and create new feed for today.
+                Document todaysFeed = updater.updateFeed(Maybe.<Document>nothing(), startOfDay, endOfDay);
+                store.store(now, todaysFeed);
             }
         }
         catch (Exception e) {
