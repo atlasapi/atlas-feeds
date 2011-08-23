@@ -1,12 +1,9 @@
 package org.atlasapi.feeds.interlinking.delta;
 
-import nu.xom.Document;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 
-import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
@@ -31,23 +28,23 @@ public class SinceLastUpdatedInterlinkingDeltaUpdater extends ScheduledTask {
         DateTime endOfDay = startOfDay.plusDays(1);
         
         try {
-            Maybe<Document> existingFeedElement = store.getExistingFeedElement(now);
+            InterlinkingDelta deltaForToday = store.getExistingDelta(now);
             
-            if (existingFeedElement.hasValue()) {
+            if (deltaForToday.exists()) {
                 //update the feed for today.
-                Document updatedFeed = updater.updateFeed(existingFeedElement, endOfDay);
-                store.store(now, updatedFeed);
+                InterlinkingDelta updatedFeed = updater.updateFeed(deltaForToday, endOfDay);
+                store.storeDelta(now, updatedFeed);
             } else {
                 //finalize feed for yesterday.
                 DateTime yesterday = now.minusDays(1);
-                Maybe<Document> existingPreviousDayFeed = store.getExistingFeedElement(yesterday);
-                if (existingPreviousDayFeed.hasValue()) {
-                    Document yesterdaysFeed = updater.updateFeed(existingPreviousDayFeed, startOfDay);
-                    store.store(yesterday, yesterdaysFeed);
+                InterlinkingDelta deltaForYesterday = store.getExistingDelta(yesterday);
+                if (deltaForYesterday.exists()) {
+                    InterlinkingDelta yesterdaysUpdatedDelta = updater.updateFeed(deltaForYesterday, startOfDay);
+                    store.storeDelta(yesterday, yesterdaysUpdatedDelta);
                 }
                 // and create new feed for today.
-                Document todaysFeed = updater.updateFeed(Maybe.<Document>nothing(), startOfDay, endOfDay);
-                store.store(now, todaysFeed);
+                InterlinkingDelta todaysUpdatedFeed = updater.updateFeed(deltaForToday, startOfDay, endOfDay);
+                store.storeDelta(now, todaysUpdatedFeed);
             }
         }
         catch (Exception e) {

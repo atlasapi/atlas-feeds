@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
 
@@ -27,6 +28,7 @@ public class InterlinkingDeltaModule {
 
     @Autowired private LastUpdatedContentFinder contentFinder;
     @Autowired private SimpleScheduler scheduler;
+    @Autowired private DatabasedMongo mongo;
 
     @Bean
     public InterlinkingDeltaUpdater interlinkingDeltaUpdater() {
@@ -35,7 +37,8 @@ public class InterlinkingDeltaModule {
     
     @Bean 
     public InterlinkingDeltaStore interlinkingDeltaStore() {
-        return new InterlinkingDeltaStore(new AWSCredentials(s3access, s3secret), s3bucket, s3folder);
+        InterlinkingDocumentStore documentStore = new S3DocumentStore(new AWSCredentials(s3access, s3secret), s3bucket, s3folder);
+        return new LastUpdatedStoringDeltaStore(documentStore, mongo);
     }
     
     @PostConstruct
