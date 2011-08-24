@@ -17,8 +17,6 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 
-import com.metabroadcast.common.time.DateTimeZones;
-
 public class InterlinkingDeltaUpdater {
 
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
@@ -48,14 +46,10 @@ public class InterlinkingDeltaUpdater {
             document = new Document(outputter.createFeed(interlinkFeed, from));
         }
         
-        DateTime lastUpdated = outputter.updateLastUpdated(interlinkFeed.entries(), getLastUpdated(document), document);
+        DateTime lastUpdated = outputter.updateLastUpdated(interlinkFeed.entries(), delta.exists() ? delta.lastUpdated() : from, document);
         outputter.outputFeedToElements(interlinkFeed.entries(), false, document.getRootElement());
 
         return deltaFor(document, lastUpdated);
-    }
-
-    private DateTime getLastUpdated(Document document) {
-        return InterlinkFeedOutputter.DATE_TIME_FORMAT.parseDateTime(document.getRootElement().getFirstChildElement("updated", InterlinkFeedOutputter.NS_ATOM.getUri()).getValue()).toDateTime(DateTimeZones.UTC);
     }
     
     private String getDateString(DateTime date) {
