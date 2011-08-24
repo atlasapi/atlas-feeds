@@ -10,7 +10,7 @@ import com.metabroadcast.common.base.Maybe;
 public abstract class InterlinkingDelta {
 
     public static final InterlinkingDelta deltaFor(Maybe<Document> document, DateTime lastUpdated) {
-        return document.hasValue() ? new ExistingDelta(document.requireValue(), lastUpdated) : new NewDelta(); 
+        return document.hasValue() && lastUpdated != null ? new ExistingDelta(document.requireValue(), lastUpdated) : new NewDelta(); 
     }
 
     public static final InterlinkingDelta deltaFor(Document document, DateTime lastUpdated) {
