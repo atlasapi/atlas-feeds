@@ -35,7 +35,7 @@ import com.metabroadcast.common.time.DateTimeZones;
 
 public class InterlinkFeedOutputter {
 
-	public static final DateTimeFormatter DATE_TIME_FORMAT = ISODateTimeFormat.dateTime();
+	public static final DateTimeFormatter DATE_TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
 	
 	public static final XMLNamespace NS_ATOM = new XMLNamespace("atom", "http://www.w3.org/2005/Atom");
 	public static final XMLNamespace NS_DC = new XMLNamespace("dc", "http://purl.org/dc/terms");
@@ -64,11 +64,13 @@ public class InterlinkFeedOutputter {
 		}
 	}
 	
-	public void updateLastUpdated(List<InterlinkBase> entries, DateTime lastUpdated, Document document) {
+	public DateTime updateLastUpdated(List<InterlinkBase> entries, DateTime lastUpdated, Document document) {
 	    Element rootElement = document.getRootElement();
 	    Element updatedElem = rootElement.getFirstChildElement("updated", NS_ATOM.getUri());
 	    updatedElem.removeChildren();
-	    updatedElem.appendChild(extractLastUpdated(entries, lastUpdated).toString(DATE_TIME_FORMAT));
+	    lastUpdated = extractLastUpdated(entries, lastUpdated);
+        updatedElem.appendChild(lastUpdated.toString(DATE_TIME_FORMAT));
+        return lastUpdated;
     }
 
     private DateTime extractLastUpdated(List<InterlinkBase> entries, DateTime lastUpdated) {

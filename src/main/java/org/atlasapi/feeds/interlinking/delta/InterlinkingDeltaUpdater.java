@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.interlinking.delta;
 
+import static org.atlasapi.feeds.interlinking.delta.InterlinkingDelta.deltaFor;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Iterator;
@@ -15,7 +17,6 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 
-import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class InterlinkingDeltaUpdater {
@@ -32,25 +33,25 @@ public class InterlinkingDeltaUpdater {
         this.adapter = adapter;
     }
 
-    public Document updateFeed(Maybe<Document> existingFeedElement, DateTime until) {
-        return updateFeed(existingFeedElement, getLastUpdated(existingFeedElement.requireValue()), until);
+    public InterlinkingDelta updateFeed(InterlinkingDelta delta, DateTime until) {
+        return updateFeed(delta, delta.lastUpdated(), until);
     }
     
-    public Document updateFeed(Maybe<Document> existingFeedElement, DateTime from, DateTime to) {
+    public InterlinkingDelta updateFeed(InterlinkingDelta delta, DateTime from, DateTime to) {
         Iterator<Content> newContent = contentFinder.updatedSince(Publisher.C4, from);
         InterlinkFeed interlinkFeed = adapter.fromContent(InterlinkController.FEED_ID + getDateString(from), Publisher.C4, from, to, newContent);
 
         Document document;
-        if (existingFeedElement.hasValue()) {
-            document = existingFeedElement.requireValue();
+        if (delta.exists()) {
+            document = delta.document();
         } else {
             document = new Document(outputter.createFeed(interlinkFeed, from));
         }
         
-        outputter.updateLastUpdated(interlinkFeed.entries(), getLastUpdated(document), document);
+        DateTime lastUpdated = outputter.updateLastUpdated(interlinkFeed.entries(), getLastUpdated(document), document);
         outputter.outputFeedToElements(interlinkFeed.entries(), false, document.getRootElement());
 
-        return document;
+        return deltaFor(document, lastUpdated);
     }
 
     private DateTime getLastUpdated(Document document) {
