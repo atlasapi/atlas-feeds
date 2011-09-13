@@ -163,6 +163,12 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		    
 		copyBasicContentAttributes(fullPlayList, simplePlaylist);
 		
+		if (fullPlayList instanceof Series) {
+		    Series series = (Series) fullPlayList;
+            simplePlaylist.setSeriesNumber(series.getSeriesNumber());
+		    simplePlaylist.setTotalEpisodes(series.getTotalEpisodes());
+		}
+		
 		for (ChildRef child : fullPlayList.getChildRefs()) {
 			simplePlaylist.add(contentIdentifierFrom(child));
 		}
