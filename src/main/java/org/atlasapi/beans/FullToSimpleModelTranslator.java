@@ -19,6 +19,7 @@ import org.atlasapi.media.entity.Described;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.EntityType;
 import org.atlasapi.media.entity.Episode;
+import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
@@ -333,6 +334,9 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 				seriesSummary.setType(Series.class.getSimpleName());
 				simpleItem.setSeriesSummary(seriesSummary);
 			}
+		} else if (fullItem instanceof Film) {
+            Film film = (Film) fullItem;
+		    simpleItem.setYear(film.getYear());
 		}
 	}
 
