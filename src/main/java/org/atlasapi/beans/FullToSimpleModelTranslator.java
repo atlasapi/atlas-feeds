@@ -414,6 +414,9 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		if (encoding.getVideoCoding() != null) {
 			simpleLocation.setVideoCoding(encoding.getVideoCoding().toString());
 		}
+		if (encoding.getAudioCoding() != null) {
+		    simpleLocation.setAudioCoding(encoding.getAudioCoding().toString());
+		}
 		
 		simpleLocation.setVideoFrameRate(encoding.getVideoFrameRate());
 		simpleLocation.setVideoHorizontalSize(encoding.getVideoHorizontalSize());
