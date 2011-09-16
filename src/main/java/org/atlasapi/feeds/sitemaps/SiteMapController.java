@@ -3,6 +3,7 @@ package org.atlasapi.feeds.sitemaps;
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
+import static com.metabroadcast.common.http.HttpStatusCode.BAD_REQUEST;
 import static org.atlasapi.feeds.sitemaps.SiteMapRef.transformerForHost;
 import static org.atlasapi.persistence.content.ContentTable.CHILD_ITEMS;
 import static org.atlasapi.persistence.content.listing.ContentListingCriteria.defaultCriteria;
@@ -18,6 +19,7 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.content.criteria.ContentQuery;
+import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Container;
@@ -44,12 +46,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.metabroadcast.common.base.Maybe;
+import com.metabroadcast.common.http.HttpStatusCode;
 import com.metabroadcast.common.webapp.http.CacheHeaderWriter;
 
 @Controller
 public class SiteMapController {
 
     private static final String HOST_PARAM = "host";
+    private static final String PUBLISHER_PARAM = "publisher";
 
     private final ContentLister lister;
     private final String defaultHost;
@@ -68,13 +73,24 @@ public class SiteMapController {
     }
 
     @RequestMapping("/feeds/sitemaps/index.xml")
-    public String siteMapFofPublisher(@RequestParam(value = HOST_PARAM, required = false) final String host, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public String siteMapFofPublisher(@RequestParam(value = PUBLISHER_PARAM) final String publisher, @RequestParam(value = HOST_PARAM, required = false) final String host, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        
+        Maybe<Publisher> possiblePublisher = Publisher.fromKey(publisher);
+        if(possiblePublisher.isNothing()) {
+            response.sendError(BAD_REQUEST.code(), "Unknown publisher " + publisher);
+            return null;
+        }
         
         ContentQuery query = queryBuilder.build(request);
         Set<Publisher> includedPublishers = query.getConfiguration().getIncludedPublishers();
         
-        Iterable<SiteMapRef> sitemapRefs = includedPublishers.isEmpty() ? ImmutableList.<SiteMapRef>of() : sitemapRefForQuery(query, host);
-        
+        Iterable<SiteMapRef> sitemapRefs;
+        if (includedPublishers.contains(possiblePublisher.requireValue())) {
+            sitemapRefs = sitemapRefForQuery(query, host, possiblePublisher.requireValue());
+        } else {
+            sitemapRefs = ImmutableList.<SiteMapRef> of();
+        }
+
         response.setStatus(HttpServletResponse.SC_OK);
         cacheHeaderWriter.writeHeaders(request, response);
         
@@ -83,10 +99,10 @@ public class SiteMapController {
         return null;
     }
 
-    public Iterable<SiteMapRef> sitemapRefForQuery(ContentQuery query, final String host) {
+    public Iterable<SiteMapRef> sitemapRefForQuery(ContentQuery query, final String host, Publisher publisher) {
         final ImmutableSet.Builder<String> brands = ImmutableSet.builder();
         
-        lister.listContent(ImmutableSet.of(CHILD_ITEMS), defaultCriteria().forPublishers(query.getConfiguration().getIncludedPublishers()), new ContentListingHandler() {
+        lister.listContent(ImmutableSet.of(CHILD_ITEMS), defaultCriteria().forPublisher(publisher), new ContentListingHandler() {
             @Override
             public boolean handle(Iterable<? extends Content> contents, ContentListingProgress progress) {
                 for (Item item : Iterables.filter(contents, Item.class)) {
