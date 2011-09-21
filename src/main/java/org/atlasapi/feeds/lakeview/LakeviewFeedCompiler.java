@@ -3,6 +3,7 @@ package org.atlasapi.feeds.lakeview;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +28,8 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
@@ -58,53 +61,109 @@ public class LakeviewFeedCompiler {
 
         Element feed = createElement("Feed", LAKEVIEW);
 
+        //This is specified. Don't use lastUpdated....
         String lastModified = DATETIME_FORMAT.print(clock.now());
 
-        for (LakeviewContentGroup content : contents) {
-            Iterable<Episode> episodes = Iterables.concat(content.contents().values());
-            feed.appendChild(createBrandElem(content.brand(), lastModified, episodes, content.contents().keySet().size()));
+        for (LakeviewContentGroup contentGroup : contents) {
+
+            List<Element> groupElements = elementsForGroup(lastModified, contentGroup);
             
-            for (Entry<Series, Collection<Episode>> seriesEpisodes : content.contents().entrySet()) {
-                feed.appendChild(createSeriesElem(seriesEpisodes.getKey(), content.brand(), seriesEpisodes.getValue(), lastModified));
-                
-                for (Episode episode : seriesEpisodes.getValue()) {
-                    feed.appendChild(createEpisodeElem(episode, content.brand(), lastModified));
-                }
-                
+            for (Element element : groupElements) {
+                feed.appendChild(element);
             }
+            
         }
 
         return new Document(feed);
     }
 
-    private Element createBrandElem(Brand brand, String lastModified, Iterable<Episode> episodes, int seasons) {
+    private List<Element> elementsForGroup(String lastModified, LakeviewContentGroup contentGroup) {
+        DateTime brandPublicationDate = null;
+        DateTime brandEndDate = null;
+        
+        ImmutableMap.Builder<Element, List<Element>> seriesEpisodesElems = ImmutableMap.builder();
+        for (Entry<Series, Collection<Episode>> seriesEpisodes : contentGroup.contents().entrySet()) {
+            
+            DateTime seriesPublicationDate = null;
+            
+            ImmutableList.Builder<Element> episodeEntries = ImmutableList.builder();
+            for (Episode episode : seriesEpisodes.getValue()) {
+                DateTime publicationDate = orginalPublicationDate(episode);
+                if(publicationDate != null) {
+                    episodeEntries.add(createEpisodeElem(episode, contentGroup.brand(), publicationDate, lastModified));
+                    seriesPublicationDate = earliestOf(publicationDate, seriesPublicationDate);
+                    brandEndDate = latestOf(publicationDate, brandEndDate);
+                }
+            }
+            
+            if(seriesPublicationDate != null) {
+                seriesEpisodesElems.put(createSeriesElem(seriesEpisodes.getKey(), contentGroup.brand(), seriesPublicationDate, lastModified), episodeEntries.build());
+                brandPublicationDate = seriesPublicationDate.isBefore(brandPublicationDate) ? seriesPublicationDate : brandPublicationDate;
+            }
+        }
+        
+        Builder<Element> elements = ImmutableList.builder();
+        
+        if(brandPublicationDate != null) {
+            Element brandElem = createBrandElem(contentGroup.brand(), brandPublicationDate, brandEndDate, lastModified, contentGroup);
+            if(brandElem != null) {
+                appendElements(elements, brandElem, seriesEpisodesElems.build());
+            }
+        }
+        
+        return elements.build();
+    }
+
+    private DateTime latestOf(DateTime publicationDate, DateTime brandEndDate) {
+        return brandEndDate == null || publicationDate.isAfter(brandEndDate) ? publicationDate : brandEndDate;
+    }
+
+    private DateTime earliestOf(DateTime publicationDate, DateTime seriesPublicationDate) {
+        return seriesPublicationDate == null || publicationDate.isBefore(seriesPublicationDate) ? publicationDate : seriesPublicationDate;
+    }
+
+    private void appendElements(Builder<Element> elements, Element brandElem, Map<Element, List<Element>> seriesEpisodeElements) {
+        elements.add(brandElem);
+        for (Entry<Element, List<Element>> seriesEpisodes : seriesEpisodeElements.entrySet()) {
+            elements.add(seriesEpisodes.getKey()).addAll(seriesEpisodes.getValue());
+        }
+    }
+    
+    private List<Episode> episodes(LakeviewContentGroup contentGroup) {
+        return ImmutableList.copyOf(Iterables.concat(contentGroup.contents().values()));
+    }
+
+    private Element createBrandElem(Brand brand, DateTime originalPublicationDate, DateTime brandEndDate, String lastModified, LakeviewContentGroup contentGroup) {
         Element element = createElement("TVSeries", LAKEVIEW);
         element.appendChild(stringElement("ItemId", LAKEVIEW, brandId(brand.getCanonicalUri())));
-        element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY SERIES TITLE" : brand.getTitle()));
+        element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle()));
         
-        appendCommonElements(element, brand, lastModified);
+        appendCommonElements(element, brand, originalPublicationDate, lastModified);
+        element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(contentGroup.contents().keySet().size())));
         
-        List<Broadcast> broadcasts = extractBroadcasts(episodes);
-        appendOriginalBroadcastElement(broadcasts, element);
-        
-        element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(seasons)));
-        if(!broadcasts.isEmpty()) {
-            element.appendChild(stringElement("Network", LAKEVIEW, extractNetwork(broadcasts)));
-            element.appendChild(stringElement("EndYear", LAKEVIEW, extractEndYear(broadcasts)));
+        if (brand.getPresentationChannel() != null && Channel.fromKey(brand.getPresentationChannel()).hasValue()) {
+            element.appendChild(stringElement("Network", LAKEVIEW, Channel.fromKey(brand.getPresentationChannel()).requireValue().title()));
+        } else {
+            List<Broadcast> broadcasts = extractBroadcasts(episodes(contentGroup));
+            if (!broadcasts.isEmpty()) {
+                element.appendChild(stringElement("Network", LAKEVIEW, extractNetwork(broadcasts)));
+            } else {
+                return null;
+            }
+        }
+
+        if(brandEndDate != null) {
+            element.appendChild(stringElement("EndYear", LAKEVIEW, String.valueOf(brandEndDate.getYear())));
         }
         
         return element;
-    }
-
-    private String extractEndYear(Iterable<Broadcast> broadcasts) {
-        return String.valueOf(TRANSMISSION_ORDERING.max(broadcasts).getTransmissionEndTime().getYear());
     }
 
     private String extractNetwork(List<Broadcast> broadcasts) {
         return Channel.fromUri(TRANSMISSION_ORDERING.min(broadcasts).getBroadcastOn()).requireValue().title();
     }
 
-    private Element createSeriesElem(Series series, Brand parent, Iterable<Episode> episodes, String lastModified) {
+    private Element createSeriesElem(Series series, Brand parent, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVSeason", LAKEVIEW);
         element.appendChild(stringElement("ItemId", LAKEVIEW, seriesId(series.getCanonicalUri())));
         
@@ -114,16 +173,15 @@ public class LakeviewFeedCompiler {
             element.appendChild(stringElement("Title", LAKEVIEW, series.getTitle()));
         }
         
-        appendCommonElements(element, series, lastModified);
+        appendCommonElements(element, series, originalPublicationDate, lastModified);
         
-        appendOriginalBroadcastElement(extractBroadcasts(episodes), element);
         element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(((Series) series).getSeriesNumber())));
         element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(((Series) series).getParent().getUri())));
         
         return element;
     }
 
-    private Element createEpisodeElem(Episode episode, Brand container, String lastModified) {
+    private Element createEpisodeElem(Episode episode, Brand container, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVEpisode", LAKEVIEW);
         element.appendChild(stringElement("ItemId", LAKEVIEW, episodeId(episode.getCanonicalUri())));
         
@@ -133,17 +191,9 @@ public class LakeviewFeedCompiler {
             element.appendChild(stringElement("Title", LAKEVIEW, episode.getTitle()));
         }
         
-        appendCommonElements(element, episode, lastModified);
+        appendCommonElements(element, episode, originalPublicationDate, lastModified);
 
         element.appendChild(stringElement("ApplicationSpecificData", LAKEVIEW, extract4OdId(episode)));
-        
-        List<Broadcast> broadcasts = extractBroadcasts(ImmutableList.of(episode));
-        if(!broadcasts.isEmpty()) {
-            element.appendChild(stringElement("OriginalPublicationDate", LAKEVIEW, extractFirstBroadcastDate(broadcasts)));
-        } else {
-            String fad = extractFirstAvailabilityDate(episode);
-            element.appendChild(stringElement("OriginalPublicationDate", LAKEVIEW, fad == null ? new DateTime(0).toString(DATETIME_FORMAT) : fad));
-        }
         
         element.appendChild(stringElement("EpisodeNumber", LAKEVIEW, String.valueOf(episode.getEpisodeNumber())));
         element.appendChild(stringElement("DurationInSeconds", LAKEVIEW, String.valueOf(duration(episode))));
@@ -153,27 +203,38 @@ public class LakeviewFeedCompiler {
         return element;
     }
 
-    private String extractFirstAvailabilityDate(Episode episode) {
+
+    private DateTime orginalPublicationDate(Episode episode) {
+        DateTime broadcastDate = extractFirstBroadcastDate(extractBroadcasts(ImmutableList.of(episode)));
+        if(broadcastDate != null) {
+            return broadcastDate;
+        }
+        
+        DateTime availabilityDate = extractFirstAvailabilityDate(episode);
+        if(availabilityDate != null) {
+            return availabilityDate;
+        }
+        return null;
+    }
+    
+    private DateTime extractFirstAvailabilityDate(Episode episode) {
         for (Version version : episode.getVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
                     if(location.getPolicy() != null && location.getPolicy().getAvailabilityStart() != null) {
-                        return location.getPolicy().getAvailabilityStart().toString(DATETIME_FORMAT);
+                        return location.getPolicy().getAvailabilityStart();
                     }
                 }
             }
         }
         return null;
     }
-
-    private void appendOriginalBroadcastElement(List<Broadcast> broadcasts, Element element) {
-        if(!broadcasts.isEmpty()) {
-            element.appendChild(stringElement("OriginalPublicationDate", LAKEVIEW, extractFirstBroadcastDate(broadcasts)));
-        }
-    }
     
-    private String extractFirstBroadcastDate(List<Broadcast> broadcasts) {
-        return TRANSMISSION_ORDERING.min(broadcasts).getTransmissionTime().toString(DATETIME_FORMAT);
+    private DateTime extractFirstBroadcastDate(List<Broadcast> broadcasts) {
+        if(broadcasts.isEmpty()) {
+            return null;
+        }
+        return TRANSMISSION_ORDERING.min(broadcasts).getTransmissionTime();
     }
 
     private List<Broadcast> extractBroadcasts(Iterable<Episode> episodes) {
@@ -203,7 +264,7 @@ public class LakeviewFeedCompiler {
         return "NONE";
     }
 
-    private void appendCommonElements(Element element, Content content, String lastModified) {
+    private void appendCommonElements(Element element, Content content, DateTime originalPublicationDate, String lastModified) {
         
         if(!Strings.isNullOrEmpty(content.getDescription())) {
             element.appendChild(stringElement("Description", LAKEVIEW, content.getDescription()));
@@ -238,6 +299,8 @@ public class LakeviewFeedCompiler {
         pc.appendChild(stringElement("HasGuidance", LAKEVIEW, String.valueOf(true)));
         element.appendChild(pc);
         element.appendChild(stringElement("PublicWebUri", LAKEVIEW, String.format("%s.atom", content.getCanonicalUri())));
+
+        element.appendChild(stringElement("OriginalPublicationDate", LAKEVIEW, originalPublicationDate.toString(DATETIME_FORMAT)));
     }
 
     private static final String ID_PREFIX = "http://channel4.com/en-GB";
