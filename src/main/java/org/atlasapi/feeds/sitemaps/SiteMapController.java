@@ -1,24 +1,38 @@
 package org.atlasapi.feeds.sitemaps;
 
+import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.transform;
+import static com.metabroadcast.common.http.HttpStatusCode.BAD_REQUEST;
+import static org.atlasapi.feeds.sitemaps.SiteMapRef.transformerForHost;
+import static org.atlasapi.persistence.content.ContentTable.CHILD_ITEMS;
+import static org.atlasapi.persistence.content.listing.ContentListingCriteria.defaultCriteria;
+
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.content.criteria.AtomicQuery;
 import org.atlasapi.content.criteria.ContentQuery;
-import org.atlasapi.media.entity.Brand;
+import org.atlasapi.content.criteria.attribute.Attributes;
+import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
-import org.atlasapi.media.entity.Identified;
+import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
+import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Version;
+import org.atlasapi.persistence.content.listing.ContentLister;
+import org.atlasapi.persistence.content.listing.ContentListingHandler;
+import org.atlasapi.persistence.content.listing.ContentListingProgress;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.query.content.parser.ApplicationConfigurationIncludingQueryBuilder;
 import org.springframework.stereotype.Controller;
@@ -26,122 +40,119 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.metabroadcast.common.query.Selection;
+import com.metabroadcast.common.base.Maybe;
+import com.metabroadcast.common.http.HttpStatusCode;
 import com.metabroadcast.common.webapp.http.CacheHeaderWriter;
 
 @Controller
 public class SiteMapController {
 
     private static final String HOST_PARAM = "host";
+    private static final String PUBLISHER_PARAM = "publisher";
 
-    private final KnownTypeQueryExecutor queryExecutor;
-    private final SiteMapOutputter outputter = new SiteMapOutputter();
-    private final SiteMapIndexOutputter indexOutputter = new SiteMapIndexOutputter();
+    private final ContentLister lister;
     private final String defaultHost;
     private final ApplicationConfigurationIncludingQueryBuilder queryBuilder;
-    private final CacheHeaderWriter cacheHeaderWriter = CacheHeaderWriter.neverCache();
+    private final KnownTypeQueryExecutor queryExecutor;
 
-    public SiteMapController(KnownTypeQueryExecutor queryExecutor, ApplicationConfigurationIncludingQueryBuilder queryBuilder, String defaultHost) {
+    private final SiteMapOutputter outputter = new SiteMapOutputter();
+    private final SiteMapIndexOutputter indexOutputter = new SiteMapIndexOutputter();
+    private final CacheHeaderWriter cacheHeaderWriter = CacheHeaderWriter.neverCache();
+    
+    public SiteMapController(KnownTypeQueryExecutor queryExecutor, ApplicationConfigurationIncludingQueryBuilder queryBuilder, ContentLister contentLister, String defaultHost) {
         this.queryExecutor = queryExecutor;
         this.queryBuilder = queryBuilder;
+        this.lister = contentLister;
         this.defaultHost = defaultHost;
+    }
+
+    @RequestMapping("/feeds/sitemaps/index.xml")
+    public String siteMapFofPublisher(@RequestParam(value = PUBLISHER_PARAM) final String publisher, @RequestParam(value = HOST_PARAM, required = false) final String host, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        
+        Maybe<Publisher> possiblePublisher = Publisher.fromKey(publisher);
+        if(possiblePublisher.isNothing()) {
+            response.sendError(BAD_REQUEST.code(), "Unknown publisher " + publisher);
+            return null;
+        }
+        
+        ContentQuery query = queryBuilder.build(request);
+        Set<Publisher> includedPublishers = query.getConfiguration().getIncludedPublishers();
+        
+        Iterable<SiteMapRef> sitemapRefs;
+        if (includedPublishers.contains(possiblePublisher.requireValue())) {
+            sitemapRefs = sitemapRefForQuery(query, host, possiblePublisher.requireValue());
+        } else {
+            sitemapRefs = ImmutableList.<SiteMapRef> of();
+        }
+
+        response.setStatus(HttpServletResponse.SC_OK);
+        cacheHeaderWriter.writeHeaders(request, response);
+        
+        indexOutputter.output(sitemapRefs, response.getOutputStream());
+        
+        return null;
+    }
+
+    public Iterable<SiteMapRef> sitemapRefForQuery(ContentQuery query, final String host, Publisher publisher) {
+        final ImmutableSet.Builder<String> brands = ImmutableSet.builder();
+        
+        lister.listContent(ImmutableSet.of(CHILD_ITEMS), defaultCriteria().forPublisher(publisher), new ContentListingHandler() {
+            @Override
+            public boolean handle(Iterable<? extends Content> contents, ContentListingProgress progress) {
+                for (Item item : Iterables.filter(contents, Item.class)) {
+                    if(item.getThumbnail() != null && hasLinkLocation(item)) {
+                        brands.add(item.getContainer().getUri());
+                    }
+                }
+                return true;
+            }
+        });
+        Iterable<SiteMapRef> sitemapRefs = transform(resolve(brands.build(), query), transformerForHost(hostOrDefault(host)));
+        return sitemapRefs;
+    }
+
+    private boolean hasLinkLocation(Item item) {
+        for (Version version : item.getVersions()) {
+            for (Encoding encoding : version.getManifestedAs()) {
+                for (Location location : encoding.getAvailableAt()) {
+                    if(TransportType.LINK.equals(location.getTransportType())){
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    private Iterable<Content> resolve(Iterable<String> brands, ContentQuery query) {
+        return filter(concat(queryExecutor.executeUriQuery(brands, query).values()), Content.class);
     }
 
     @RequestMapping("/feeds/sitemaps/sitemap.xml")
     public String siteMapForBrand(HttpServletRequest request, HttpServletResponse response, @RequestParam("brand.uri") String brandUri) throws IOException {
 
-        SitemapHackHttpRequest hackedRequest = new SitemapHackHttpRequest(request, brandUri);
-
-        ContentQuery query = queryBuilder.build(hackedRequest);
-        Map<String, List<Identified>> content = queryExecutor.executeUriQuery(uris(hackedRequest, query), query);
-        if (content.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return null;
-        }
+        final ContentQuery query = queryBuilder.build(new SitemapHackHttpRequest(request, brandUri));
         
-        List<Item> contents = Lists.newArrayList();
-        List<Brand> brands = ImmutableList.copyOf(Iterables.filter(Iterables.concat(content.values()), Brand.class));
+        Iterable<Container> brands = Iterables.filter(resolve(URI_SPLITTER.split(brandUri),query), Container.class);
         
-        Map<ParentRef, Container> parentLookup = Maps.newHashMap();
-        for (Brand brand: brands) {
-            Map<String, List<Identified>> childContent = queryExecutor.executeUriQuery(Iterables.transform(brand.getChildRefs(), ChildRef.TO_URI), query);
-            contents.addAll(ImmutableList.copyOf(Iterables.filter(Iterables.concat(childContent.values()), Item.class)));
-            parentLookup.put(ParentRef.parentRefFrom(brand), brand);
-        }
-        
-        response.setStatus(HttpServletResponse.SC_OK);
-        cacheHeaderWriter.writeHeaders(hackedRequest, response);
-        outputter.output(parentLookup, contents, response.getOutputStream());
-        return null;
-    }
-
-    @RequestMapping("/feeds/sitemaps/index.xml")
-    public String siteMapFofPublisher(@RequestParam(value = HOST_PARAM, required = false) final String host, HttpServletRequest request, HttpServletResponse response) throws IOException {
-        ContentQuery query = queryBuilder.build(request);
-
-        ContentQuery requestQuery = new ContentQuery(Iterables.concat(query.operands(), ImmutableList.<AtomicQuery> of(/*Attributes.LOCATION_TRANSPORT_TYPE.createQuery(Operators.EQUALS, ImmutableList
-                .of(TransportType.LINK))*/))).copyWithApplicationConfiguration(query.getConfiguration());
-
-        if(true) {
-            throw new UnsupportedOperationException(); //Can't discover content
-        }
-        List<? extends Content> brands = null;//queryExecutor.discover(requestQuery);
-
-        Iterable<SiteMapRef> refs = Iterables.transform(filter(brands), new Function<Content, SiteMapRef>() {
-
+        Map<ParentRef, Container> parentLookup = Maps.<ParentRef,Container>uniqueIndex(brands, ParentRef.T0_PARENT_REF);
+        Iterable<Item> contents = Iterables.filter(Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
             @Override
-            public SiteMapRef apply(Content brand) {
-                return new SiteMapRef("http://" + hostOrDefault(host) + "/feeds/sitemaps/sitemap.xml?brand.uri=" + brand.getCurie(), brand.getLastUpdated());
+            public Iterable<Content> apply(Container input) {
+                return resolve(Iterables.transform(input.getChildRefs(), ChildRef.TO_URI), query);
             }
-
-        });
+        })),Item.class);
+        
         response.setStatus(HttpServletResponse.SC_OK);
         cacheHeaderWriter.writeHeaders(request, response);
-        indexOutputter.output(refs, response.getOutputStream());
+        outputter.output(parentLookup, contents, response.getOutputStream());
         return null;
-    }
-
-    private Iterable<? extends Content> filter(List<? extends Content> brands) {
-        return Iterables.filter(brands, hasItemWithThumbnail);
-    }
-
-    private static final Predicate<? super Content> hasItemWithThumbnail = new Predicate<Content>(){
-
-        @Override
-        public boolean apply(Content input) {
-            if(input instanceof Container) {
-//                for (Item item : ((Container<?>)input).getContents()) {
-//                    if (item.getThumbnail() != null) {
-//                        return true;
-//                    }
-//                }
-//                return false;
-                throw new IllegalArgumentException("Can't tell if a container has a child with a thumbnail");
-            } else {
-                return ((Item)input).getThumbnail() != null;
-            }
-        }};
-
-    private static List<String> uris(HttpServletRequest request, ContentQuery filter) {
-        if (!Selection.ALL.equals(filter.getSelection())) {
-            throw new IllegalArgumentException("Cannot specifiy a limit or offset here");
-        }
-        String commaSeperatedUris = request.getParameter("uri");
-        if (commaSeperatedUris == null) {
-            throw new IllegalArgumentException("No uris specified");
-        }
-        List<String> uris = ImmutableList.copyOf(URI_SPLITTER.split(commaSeperatedUris));
-        if (Iterables.isEmpty(uris)) {
-            throw new IllegalArgumentException("No uris specified");
-        }
-        return uris;
     }
 
     private static final Splitter URI_SPLITTER = Splitter.on(",").omitEmptyStrings().trimResults();
@@ -149,7 +160,7 @@ public class SiteMapController {
     private String hostOrDefault(String host) {
         return host == null ? defaultHost : host;
     }
-
+    
     private static class SitemapHackHttpRequest extends HttpServletRequestWrapper {
         private final Map<String, String[]> params;
 
