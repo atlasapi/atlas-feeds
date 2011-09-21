@@ -210,6 +210,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		simpleDescription.setGenres(content.getGenres());
 		simpleDescription.setTags(content.getTags());
 		simpleDescription.setSameAs(content.getEquivalentTo());
+		simpleDescription.setPresentationChannel(content.getPresentationChannel());
 		
 		MediaType mediaType = content.getMediaType();
 		if (mediaType != null) {
