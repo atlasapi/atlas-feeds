@@ -19,13 +19,13 @@ import org.atlasapi.media.entity.Channel;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
-import org.atlasapi.media.entity.LookupRef;
-import org.atlasapi.media.entity.LookupRef.LookupType;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.persistence.content.ContentCategory;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
+import org.atlasapi.persistence.lookup.entry.LookupRef;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
@@ -128,7 +128,7 @@ public abstract class RadioPlayerFeedCompiler {
             @Override
             public LookupRef apply(Item input) {
                 if(input.getContainer() != null) {
-                    return new LookupRef(input.getContainer().getUri(), input.getPublisher(), LookupType.CONTAINER);
+                    return new LookupRef(input.getContainer().getUri(), input.getPublisher(), ContentCategory.CONTAINER);
                 }
                 return null;
             }
