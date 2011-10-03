@@ -83,11 +83,20 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
     
     static boolean containerQualifies(DateTime from, DateTime to, Container description) {
-        return ((from == null && to == null) || (description != null && description.getThisOrChildLastUpdated() != null && description.getThisOrChildLastUpdated().isAfter(from) && description.getThisOrChildLastUpdated().isBefore(to)));
+        return ((from == null && to == null) || (description != null && description.getThisOrChildLastUpdated() == null) || (description != null && description.getThisOrChildLastUpdated() != null && description.getThisOrChildLastUpdated().isAfter(from) && description.getThisOrChildLastUpdated().isBefore(to)));
     }
     
     static boolean qualifies(DateTime from, DateTime to, Identified description) {
         return ((from == null && to == null) || (description != null && description.getLastUpdated() != null && description.getLastUpdated().isAfter(from) && description.getLastUpdated().isBefore(to)));
+    }
+    
+    // The ID we provide is either the item URI or the ondemand URI, depending on whether
+    // we have an ondemand URI. Therefore, we consider an item to have changed if either
+    // a) the item has changed, or b) its ondemands have changed. We'll just use ThisOrChildLastUpdated
+    // as it's the superset of all changes. If we need to refine that later, then we can specifically
+    // look for changes to the item or its ondemads.
+    static boolean itemQualifies(DateTime from, DateTime to, Item item) {
+    	return ((from == null && to == null) || (item != null && item.getThisOrChildLastUpdated() == null) || (item != null && item.getThisOrChildLastUpdated() != null && item.getThisOrChildLastUpdated().isAfter(from) && item.getThisOrChildLastUpdated().isBefore(to)));
     }
     
     private InterlinkFeed feed(String id, Publisher publisher) {
@@ -142,7 +151,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
             .withSummary(toSummary(item))
             .withThumbnail(item.getImage());
         
-        if (qualifies(from, to, item)) {
+        if (itemQualifies(from, to, item)) {
             feed.addEntry(episode);
         }
 
