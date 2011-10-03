@@ -83,7 +83,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
     
     static boolean containerQualifies(DateTime from, DateTime to, Container description) {
-    	return ((from == null && to == null) || (description != null && description.getThisOrChildLastUpdated() != null && description.getThisOrChildLastUpdated().isAfter(from) && description.getThisOrChildLastUpdated().isBefore(to)));    }
+    	return ((from == null && to == null) || (description != null && description.getThisOrChildLastUpdated() != null && description.getThisOrChildLastUpdated().isAfter(from) && description.getThisOrChildLastUpdated().isBefore(to)));    
+    }
     
     static boolean qualifies(DateTime from, DateTime to, Identified description) {
         return ((from == null && to == null) || (description != null && description.getLastUpdated() != null && description.getLastUpdated().isAfter(from) && description.getLastUpdated().isBefore(to)));
