@@ -287,6 +287,8 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
         simpleModel.setWidescreen(broadcast.isWidescreen());
         simpleModel.setSurround(broadcast.isSurround());
         simpleModel.setLive(broadcast.isLive());
+        simpleModel.setPremiere(broadcast.isPremiere());
+        simpleModel.setNewSeries(broadcast.isNewSeries());
 	    
 	    return simpleModel; 
 	}
