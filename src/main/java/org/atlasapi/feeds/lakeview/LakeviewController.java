@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.atlasapi.media.entity.Publisher;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -23,7 +24,7 @@ public class LakeviewController {
     @RequestMapping("/feeds/lakeview/c4.xml")
     public void producateOutput(HttpServletResponse response) throws IOException {
         
-        feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent()), response.getOutputStream());
+        feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent(Publisher.C4)), response.getOutputStream());
         
     }
     

@@ -5,12 +5,13 @@ import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static com.metabroadcast.common.http.HttpStatusCode.BAD_REQUEST;
 import static org.atlasapi.feeds.sitemaps.SiteMapRef.transformerForHost;
-import static org.atlasapi.persistence.content.ContentTable.CHILD_ITEMS;
+import static org.atlasapi.persistence.content.ContentCategory.CHILD_ITEM;
 import static org.atlasapi.persistence.content.listing.ContentListingCriteria.defaultCriteria;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,7 +20,6 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.content.criteria.ContentQuery;
-import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Container;
@@ -31,8 +31,6 @@ import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.listing.ContentLister;
-import org.atlasapi.persistence.content.listing.ContentListingHandler;
-import org.atlasapi.persistence.content.listing.ContentListingProgress;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.query.content.parser.ApplicationConfigurationIncludingQueryBuilder;
 import org.springframework.stereotype.Controller;
@@ -45,9 +43,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.metabroadcast.common.base.Maybe;
-import com.metabroadcast.common.http.HttpStatusCode;
 import com.metabroadcast.common.webapp.http.CacheHeaderWriter;
 
 @Controller
@@ -102,17 +100,14 @@ public class SiteMapController {
     public Iterable<SiteMapRef> sitemapRefForQuery(ContentQuery query, final String host, Publisher publisher) {
         final ImmutableSet.Builder<String> brands = ImmutableSet.builder();
         
-        lister.listContent(ImmutableSet.of(CHILD_ITEMS), defaultCriteria().forPublisher(publisher), new ContentListingHandler() {
-            @Override
-            public boolean handle(Iterable<? extends Content> contents, ContentListingProgress progress) {
-                for (Item item : Iterables.filter(contents, Item.class)) {
-                    if(item.getThumbnail() != null && hasLinkLocation(item)) {
-                        brands.add(item.getContainer().getUri());
-                    }
-                }
-                return true;
+        Iterator<Item> items = Iterators.filter(lister.listContent(defaultCriteria().forPublisher(publisher).forContent(CHILD_ITEM).build()), Item.class);
+        while (items.hasNext()) {
+            Item item = items.next();
+            if(item.getThumbnail() != null && hasLinkLocation(item)) {
+                brands.add(item.getContainer().getUri());
             }
-        });
+        }
+
         Iterable<SiteMapRef> sitemapRefs = transform(resolve(brands.build(), query), transformerForHost(hostOrDefault(host)));
         return sitemapRefs;
     }

@@ -1,15 +1,16 @@
 package org.atlasapi.feeds.lakeview;
 
+import static org.atlasapi.persistence.content.ContentCategory.CHILD_ITEM;
 import static org.atlasapi.persistence.content.listing.ContentListingCriteria.defaultCriteria;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
 import org.atlasapi.media.entity.Brand;
-import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Identified;
@@ -19,15 +20,12 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.ContentResolver;
-import org.atlasapi.persistence.content.ContentTable;
 import org.atlasapi.persistence.content.listing.ContentLister;
-import org.atlasapi.persistence.content.listing.ContentListingHandler;
-import org.atlasapi.persistence.content.listing.ContentListingProgress;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
@@ -44,34 +42,20 @@ public class LakeviewContentFetcher {
         this.contentResolver = contentResolver;
     }
 
-    public List<LakeviewContentGroup> fetchContent() {
+    public List<LakeviewContentGroup> fetchContent(Publisher publisher) {
         
         //Container uri to episode map.
         final Multimap<String, Episode> containerAvailableEpisodes = HashMultimap.create();
         
-        contentLister.listContent(ImmutableSet.of(ContentTable.CHILD_ITEMS), defaultCriteria().forPublisher(Publisher.C4), new ContentListingHandler() {
-            @Override
-            public boolean handle(Iterable<? extends Content> contents, ContentListingProgress progress) {
-                
-                for (Content content : contents) {
-                    
-                    if (content instanceof Episode) {
-                        Episode episode = (Episode) content;
-                        
-                        if(hasAvailableLocation(episode)) {
-                            
-                            String brandUri = episode.getContainer().getUri();
-                            containerAvailableEpisodes.put(brandUri, episode);
-                            
-                        }
-                        
-                    }
-                    
-                }
-                
-                return true;
+        Iterator<Episode> listContent = Iterators.filter(contentLister.listContent(defaultCriteria().forPublisher(publisher).forContent(CHILD_ITEM).build()), Episode.class);
+        
+        while (listContent.hasNext()) {
+            Episode episode = listContent.next();
+            if(hasAvailableLocation(episode)) {
+                String brandUri = episode.getContainer().getUri();
+                containerAvailableEpisodes.put(brandUri, episode);
             }
-        });
+        }
         
         return createContentList(containerAvailableEpisodes);
     }
