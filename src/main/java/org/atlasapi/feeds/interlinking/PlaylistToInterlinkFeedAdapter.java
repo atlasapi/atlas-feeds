@@ -96,7 +96,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     // as it's the superset of all changes. If we need to refine that later, then we can specifically
     // look for changes to the item or its ondemads.
     static boolean itemQualifies(DateTime from, DateTime to, Item item) {
-    	return ((from == null && to == null) || (item != null && item.getThisOrChildLastUpdated() == null) || (item != null && item.getThisOrChildLastUpdated() != null && item.getThisOrChildLastUpdated().isAfter(from) && item.getThisOrChildLastUpdated().isBefore(to)));
+    	return ((from == null && to == null) || (item != null && item.getThisOrChildLastUpdated() != null && item.getThisOrChildLastUpdated().isAfter(from) && item.getThisOrChildLastUpdated().isBefore(to)));
     }
     
     private InterlinkFeed feed(String id, Publisher publisher) {
