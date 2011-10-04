@@ -41,10 +41,12 @@ public class InterlinkingDeltaUpdaterTest {
         final Item item1 = new Item("http://www.channel4.com/programmes/wildfire/episode-guide/series-1/episode-1", "c4:wildfire-20663895", Publisher.C4);
         item1.setTitle("Wildfire Series 1 Episode 1");
         item1.setLastUpdated(now.minusHours(5));
+        item1.setThisOrChildLastUpdated(item1.getLastUpdated());
 
         final Item item2 = new Item("http://www.channel4.com/programmes/wildfire/episode-guide/series-1/episode-2", "c4:wildfire-20663444", Publisher.C4);
         item2.setTitle("Wildfire Series 1 Episode 2");
         item2.setLastUpdated(now.minusHours(1));
+        item2.setThisOrChildLastUpdated(item2.getLastUpdated());
         
         context.checking(new Expectations(){{
             oneOf(contentFinder).updatedSince(Publisher.C4, startOfDay);
@@ -55,11 +57,11 @@ public class InterlinkingDeltaUpdaterTest {
         
         InterlinkingDelta updatedFeed = updater.updateFeed(delta, startOfDay, endOfDay);
         
-        assertEquals(updatedFeed.lastUpdated(), item1.getLastUpdated());
+        assertEquals(item1.getLastUpdated(), updatedFeed.lastUpdated());
         
         InterlinkingDelta updatedFeed2 = updater.updateFeed(updatedFeed, endOfDay);
         
-        assertEquals(updatedFeed2.lastUpdated(), item2.getLastUpdated());
+        assertEquals(item2.getLastUpdated(), updatedFeed2.lastUpdated());
         
         
     }
