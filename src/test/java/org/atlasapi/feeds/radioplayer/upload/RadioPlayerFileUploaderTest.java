@@ -28,7 +28,11 @@ import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
+import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
+import org.atlasapi.feeds.upload.ftp.FTPCredentials;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Channel;
@@ -117,7 +121,7 @@ public class RadioPlayerFileUploaderTest {
 		
         ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
 		FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
-		FTPFileUploader fileUploader = new CommonsFTPFileUploader(credentials);
+		FileUploader fileUploader = new CommonsFTPFileUploader(credentials);
 		
 		RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(fileUploader, new RadioPlayerRecordingExecutor(recorder), services, new DayRangeGenerator())
 		    .withLog(new SystemOutAdapterLog());
@@ -149,14 +153,14 @@ public class RadioPlayerFileUploaderTest {
     }
 
     private Matcher<RadioPlayerFTPUploadResult> successfulUploadResult() {
-        return new FTPUploadResultTypeMatcher<RadioPlayerFTPUploadResult>(FTPUploadResultType.SUCCESS);
+        return new FTPUploadResultTypeMatcher<RadioPlayerFTPUploadResult>(FileUploadResultType.SUCCESS);
     }
 	
-	private static class FTPUploadResultTypeMatcher<T extends FTPUploadResult> extends TypeSafeMatcher<T> {
+	private static class FTPUploadResultTypeMatcher<T extends FileUploadResult> extends TypeSafeMatcher<T> {
 	    
-	    private final FTPUploadResultType type;
+	    private final FileUploadResultType type;
 
-        public FTPUploadResultTypeMatcher(FTPUploadResultType type) {
+        public FTPUploadResultTypeMatcher(FileUploadResultType type) {
             this.type = type;
         }
 	    

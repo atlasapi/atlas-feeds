@@ -1,13 +1,14 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType.FAILURE;
-import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType.SUCCESS;
+import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.FAILURE;
+import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
+import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+import org.atlasapi.feeds.upload.ftp.FTPCredentials;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Test;
@@ -65,7 +66,7 @@ public class RadioPlayerServerHealthProbeTest {
         return result(successDate, FAILURE);
     }
 
-    public RadioPlayerFTPUploadResult result(DateTime successDate, FTPUploadResultType type) {
+    public RadioPlayerFTPUploadResult result(DateTime successDate, FileUploadResultType type) {
         return new RadioPlayerFTPUploadResult(String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type, SERVICE, successDate.toLocalDate());
     }
     

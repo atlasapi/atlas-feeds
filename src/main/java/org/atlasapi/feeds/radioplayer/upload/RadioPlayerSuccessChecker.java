@@ -5,8 +5,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerFilenameMatcher;
-import org.atlasapi.feeds.radioplayer.upload.CommonsFTPFileUploader.FileLastModified;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
+import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
+import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader.FileLastModified;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
@@ -47,11 +48,11 @@ public class RadioPlayerSuccessChecker implements Runnable {
 
         for (FileLastModified file : successes) {
             try {
-                FTPUploadResultType processSuccess = FTPUploadResultType.SUCCESS;
+                FileUploadResultType processSuccess = FileUploadResultType.SUCCESS;
                 if (failureLookup.containsKey(file.fileName())) {
                     DateTime lastFailure = failureLookup.get(file.fileName());
                     if (file.lastModified().isBefore(lastFailure)) {
-                        processSuccess = FTPUploadResultType.FAILURE;
+                        processSuccess = FileUploadResultType.FAILURE;
                     }
                 }
 
