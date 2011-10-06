@@ -17,8 +17,6 @@
 				</configuration>
 			</plugin>
 		</plugins>
->>>>>>> mbst-461-interlinking-azure
-
 		<extensions>
 			<extension>
 				<groupId>org.apache.maven.wagon</groupId>
