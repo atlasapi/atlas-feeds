@@ -36,7 +36,7 @@ public class LakeviewModule {
     private @Value("${lakeview.upload.account}") String account;
     private @Value("${lakeview.upload.key}") String key;
    
-    private static final String SCHEMA_VERSION = "0.4";
+    private static final String SCHEMA_VERSION = "0_4";
     private static final String FILENAME_PROVIDER_ID = "CA1.Xbox4oD";
     
     public @Bean LakeviewController lakeviewController() {
