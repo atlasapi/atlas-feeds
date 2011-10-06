@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.upload.FileUploader;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.joda.time.LocalDate;
@@ -9,12 +10,12 @@ import com.metabroadcast.common.time.DayRangeGenerator;
 
 public class RadioPlayerUploadTaskBuilder {
 
-    private final FTPFileUploader uploader;
+    private final FileUploader uploader;
     private final RadioPlayerRecordingExecutor executor;
     private XMLValidator validator;
     private AdapterLog log;
 
-    public RadioPlayerUploadTaskBuilder(FTPFileUploader uploader, RadioPlayerRecordingExecutor executor) {
+    public RadioPlayerUploadTaskBuilder(FileUploader uploader, RadioPlayerRecordingExecutor executor) {
         this.uploader = uploader;
         this.executor = executor;
     }

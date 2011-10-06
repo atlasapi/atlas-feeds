@@ -3,8 +3,6 @@ package org.atlasapi.feeds.radioplayer;
 import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.radioplayer.upload.CachingFTPUploadResultStore;
-import org.atlasapi.feeds.radioplayer.upload.CommonsFTPFileUploader;
-import org.atlasapi.feeds.radioplayer.upload.FTPCredentials;
 import org.atlasapi.feeds.radioplayer.upload.MongoFTPUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFTPUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
@@ -13,6 +11,8 @@ import org.atlasapi.feeds.radioplayer.upload.RadioPlayerSuccessChecker;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskBuilder;
+import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
+import org.atlasapi.feeds.upload.ftp.FTPCredentials;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;

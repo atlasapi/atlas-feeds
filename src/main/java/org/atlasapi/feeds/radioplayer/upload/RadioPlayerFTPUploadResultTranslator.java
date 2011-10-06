@@ -4,7 +4,9 @@ import static com.metabroadcast.common.persistence.mongo.MongoConstants.ID;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
+import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+import org.atlasapi.feeds.upload.ftp.FTPUploadResultTranslator;
 import org.joda.time.LocalDate;
 
 import com.metabroadcast.common.persistence.translator.TranslatorUtils;
@@ -37,14 +39,14 @@ public class RadioPlayerFTPUploadResultTranslator {
 
     public RadioPlayerFTPUploadResult fromDBObject(DBObject dbo) {
 
-        FTPUploadResult base = basicTranslator.fromDBObject(dbo);
+        FileUploadResult base = basicTranslator.fromDBObject(dbo);
 
         RadioPlayerService service = RadioPlayerServices.all.get(TranslatorUtils.toInteger(dbo, "serviceId").toString());
         LocalDate day = TranslatorUtils.toLocalDate(dbo, "day");
         
         RadioPlayerFTPUploadResult result = new RadioPlayerFTPUploadResult(base, service, day);
         if (dbo.containsField("processSuccess")) {
-            FTPUploadResultType processSuccess = FTPUploadResultType.valueOf(TranslatorUtils.toString(dbo, "processSuccess"));
+            FileUploadResultType processSuccess = FileUploadResultType.valueOf(TranslatorUtils.toString(dbo, "processSuccess"));
             result.withProcessSuccess(processSuccess);
         }
 

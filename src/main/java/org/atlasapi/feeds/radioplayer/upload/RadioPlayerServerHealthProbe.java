@@ -4,6 +4,10 @@ import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.FAILUR
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCESS;
 
+import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.ftp.FTPCredentials;
+import org.atlasapi.feeds.upload.ftp.FTPUploadResultTranslator;
+
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
@@ -35,7 +39,7 @@ public class RadioPlayerServerHealthProbe implements HealthProbe {
         return entryFor(connection(true), connection(false));
     }
 
-    private FTPUploadResult connection(boolean successfulConnection) {
+    private FileUploadResult connection(boolean successfulConnection) {
         DBObject first = Iterables.getFirst(results.find(new BasicDBObject("connected", successfulConnection)).sort(new BasicDBObject("time", -1)).limit(1), null);
         if (first != null) {
             return translator.fromDBObject(first);
@@ -43,18 +47,18 @@ public class RadioPlayerServerHealthProbe implements HealthProbe {
         return null;
     }
 
-    private ProbeResultEntry entryFor(FTPUploadResult success, FTPUploadResult failure) {
+    private ProbeResultEntry entryFor(FileUploadResult success, FileUploadResult failure) {
         if (success == null && failure == null) {
             return new ProbeResultEntry(INFO, credentials.toString(), "No Data");
         }
 
         String value = buildValue(success, failure);
 
-        FTPUploadResult mostRecent = failure == null ? success : (success == null ? failure : success.uploadTime().isAfter(failure.uploadTime()) ? success : failure);
+        FileUploadResult mostRecent = failure == null ? success : (success == null ? failure : success.uploadTime().isAfter(failure.uploadTime()) ? success : failure);
         return new ProbeResultEntry(resultType(mostRecent), credentials.toString(), value);
     }
 
-    private ProbeResultType resultType(FTPUploadResult mostRecent) {
+    private ProbeResultType resultType(FileUploadResult mostRecent) {
         if (mostRecent.successfulConnection()) {
             return SUCCESS;
         } else {
@@ -62,7 +66,7 @@ public class RadioPlayerServerHealthProbe implements HealthProbe {
         }
     }
 
-    private String buildValue(FTPUploadResult success, FTPUploadResult failure) {
+    private String buildValue(FileUploadResult success, FileUploadResult failure) {
         StringBuilder builder = new StringBuilder("<table>");
         if (success != null) {
             buildResult(builder, success);
@@ -73,7 +77,7 @@ public class RadioPlayerServerHealthProbe implements HealthProbe {
         return builder.append("</table>").toString();
     }
 
-    public void buildResult(StringBuilder builder, FTPUploadResult result) {
+    public void buildResult(StringBuilder builder, FileUploadResult result) {
         builder.append("<tr><td>Last ");
         builder.append(result.successfulConnection() ? "Success" : "Failure");
         builder.append(": ");

@@ -1,7 +1,7 @@
-package org.atlasapi.feeds.radioplayer.upload;
+package org.atlasapi.feeds.upload.ftp;
 
-import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.failedUpload;
-import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.successfulUpload;
+import static org.atlasapi.feeds.upload.FileUploadResult.failedUpload;
+import static org.atlasapi.feeds.upload.FileUploadResult.successfulUpload;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -11,7 +11,10 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPFileFilter;
 import org.apache.commons.net.ftp.FTPReply;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
+import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.FileUpload;
+import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
@@ -19,7 +22,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.metabroadcast.common.time.DateTimeZones;
 
-public class CommonsFTPFileUploader implements FTPFileUploader {
+public class CommonsFTPFileUploader implements FileUploader {
 
     private static final int TIMEOUT = 15*1000; //15 seconds
     private static final Duration RECONNECT_DELAY = Duration.standardSeconds(5);
@@ -39,7 +42,7 @@ public class CommonsFTPFileUploader implements FTPFileUploader {
     }
 
     @Override
-    public FTPUploadResult upload(FTPUpload upload) throws Exception {
+    public FileUploadResult upload(FileUpload upload) throws Exception {
         return attemptUpload(upload);
     }
     
@@ -67,10 +70,10 @@ public class CommonsFTPFileUploader implements FTPFileUploader {
         return list.build();
     }
     
-    private FTPUploadResult attemptUpload(FTPUpload upload) throws InterruptedException {
-        FTPUploadResult uploadResult = doUpload(upload);
+    private FileUploadResult attemptUpload(FileUpload upload) throws InterruptedException {
+        FileUploadResult uploadResult = doUpload(upload);
 
-        for (int i = 0; i < UPLOAD_ATTEMPTS && !uploadResult.type().equals(FTPUploadResultType.SUCCESS); i++) {
+        for (int i = 0; i < UPLOAD_ATTEMPTS && !uploadResult.type().equals(FileUploadResultType.SUCCESS); i++) {
             Thread.sleep(RECONNECT_DELAY.getMillis());
             uploadResult = doUpload(upload);
         }
@@ -78,7 +81,7 @@ public class CommonsFTPFileUploader implements FTPFileUploader {
         return uploadResult;
     }
     
-    public FTPUploadResult doUpload(FTPUpload upload) {
+    public FileUploadResult doUpload(FileUpload upload) {
         String filename = upload.getFilename();
         FTPClient client = tryToConnectAndLogin();
         if (client == null) {

@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.radioplayer.upload;
+package org.atlasapi.feeds.upload;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -12,16 +12,16 @@ import com.google.common.collect.Ordering;
 import com.google.inject.internal.Objects;
 import com.metabroadcast.common.time.DateTimeZones;
 
-public class FTPUploadResult {
+public class FileUploadResult {
 
-    public enum FTPUploadResultType {
+    public enum FileUploadResultType {
         SUCCESS("Success"), 
         FAILURE("Failure"), 
         UNKNOWN("Unknown");
 
         private final String niceName;
 
-        FTPUploadResultType(String niceName) {
+        FileUploadResultType(String niceName) {
             this.niceName = niceName;
         }
 
@@ -29,32 +29,32 @@ public class FTPUploadResult {
             return niceName;
         }
 
-        public static final List<FTPUploadResultType> RESULT_TYPES = Arrays.asList(values());
+        public static final List<FileUploadResultType> RESULT_TYPES = Arrays.asList(values());
     }
 
-    public static final Ordering<FTPUploadResult> DATE_ORDERING = Ordering.from(new Comparator<FTPUploadResult>() {
+    public static final Ordering<FileUploadResult> DATE_ORDERING = Ordering.from(new Comparator<FileUploadResult>() {
         @Override
-        public int compare(FTPUploadResult r1, FTPUploadResult r2) {
+        public int compare(FileUploadResult r1, FileUploadResult r2) {
             return r1.uploadTime().compareTo(r2.uploadTime());
         }
     });
 
-    public static final Ordering<FTPUploadResult> TYPE_ORDERING = Ordering.from(new Comparator<FTPUploadResult>() {
+    public static final Ordering<FileUploadResult> TYPE_ORDERING = Ordering.from(new Comparator<FileUploadResult>() {
         @Override
-        public int compare(FTPUploadResult r1, FTPUploadResult r2) {
+        public int compare(FileUploadResult r1, FileUploadResult r2) {
             return r1.type().compareTo(r2.type());
         }
     });
 
     private final String filename;
     private final DateTime dateTime;
-    private final FTPUploadResultType success;
+    private final FileUploadResultType success;
     private String message;
     private Exception exception;
     private ExceptionSummary exceptionSummary;
     private Boolean successfulConnection = true;
 
-    public FTPUploadResult(String filename, DateTime dateTime, FTPUploadResultType success) {
+    public FileUploadResult(String filename, DateTime dateTime, FileUploadResultType success) {
         this.filename = filename;
         this.dateTime = dateTime;
         this.success = success;
@@ -64,7 +64,7 @@ public class FTPUploadResult {
         return filename;
     }
 
-    public FTPUploadResultType type() {
+    public FileUploadResultType type() {
         return success;
     }
 
@@ -88,24 +88,24 @@ public class FTPUploadResult {
         return successfulConnection;
     }
 
-    public static FTPUploadResult successfulUpload(String filename) {
-        return new FTPUploadResult(filename, new DateTime(DateTimeZones.UTC), FTPUploadResultType.SUCCESS);
+    public static FileUploadResult successfulUpload(String filename) {
+        return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.SUCCESS);
     }
 
-    public static FTPUploadResult failedUpload(String filename) {
-        return new FTPUploadResult(filename, new DateTime(DateTimeZones.UTC), FTPUploadResultType.FAILURE);
+    public static FileUploadResult failedUpload(String filename) {
+        return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.FAILURE);
     }
 
-    public static FTPUploadResult unknownUpload(String filename) {
-        return new FTPUploadResult(filename, new DateTime(DateTimeZones.UTC), FTPUploadResultType.UNKNOWN);
+    public static FileUploadResult unknownUpload(String filename) {
+        return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.UNKNOWN);
     }
 
-    public FTPUploadResult withMessage(String message) {
+    public FileUploadResult withMessage(String message) {
         this.message = message;
         return this;
     }
 
-    public FTPUploadResult withCause(Exception e) {
+    public FileUploadResult withCause(Exception e) {
         this.exception = e;
         if (e != null) {
             this.exceptionSummary = new ExceptionSummary(e);
@@ -113,12 +113,12 @@ public class FTPUploadResult {
         return this;
     }
 
-    public FTPUploadResult withExceptionSummary(ExceptionSummary summary) {
+    public FileUploadResult withExceptionSummary(ExceptionSummary summary) {
         exceptionSummary = summary;
         return this;
     }
 
-    public FTPUploadResult withConnectionSuccess(Boolean successfulConnection) {
+    public FileUploadResult withConnectionSuccess(Boolean successfulConnection) {
         this.successfulConnection = successfulConnection;
         return this;
     }
@@ -128,8 +128,8 @@ public class FTPUploadResult {
         if (this == that) {
             return true;
         }
-        if (that instanceof FTPUploadResult) {
-            FTPUploadResult other = (FTPUploadResult) that;
+        if (that instanceof FileUploadResult) {
+            FileUploadResult other = (FileUploadResult) that;
             return Objects.equal(dateTime, other.dateTime) && Objects.equal(filename, filename) && Objects.equal(success, other.success);
         }
         return false;
@@ -145,10 +145,10 @@ public class FTPUploadResult {
         return String.format("%s: %s upload of %s", dateTime.toString("dd/MM/yy HH:mm:ss"), success.toNiceString(), filename);
     }
 
-    public static final Predicate<FTPUploadResult> SUCCESSFUL = new Predicate<FTPUploadResult>() {
+    public static final Predicate<FileUploadResult> SUCCESSFUL = new Predicate<FileUploadResult>() {
         @Override
-        public boolean apply(FTPUploadResult input) {
-            return FTPUploadResultType.SUCCESS.equals(input.type());
+        public boolean apply(FileUploadResult input) {
+            return FileUploadResultType.SUCCESS.equals(input.type());
         }
     };
 }

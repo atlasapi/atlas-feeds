@@ -3,11 +3,12 @@ package org.atlasapi.feeds.radioplayer.upload;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.FAILURE;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCESS;
-import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.DATE_ORDERING;
+import static org.atlasapi.feeds.upload.FileUploadResult.DATE_ORDERING;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
+import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.joda.time.LocalDate;
 
 import com.google.common.collect.Iterables;
@@ -50,7 +51,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         return result;
     }
 
-    private ProbeResultEntry entryFor(LocalDate day, Iterable<? extends FTPUploadResult> results) {
+    private ProbeResultEntry entryFor(LocalDate day, Iterable<? extends FileUploadResult> results) {
         String filename = linkedFilename(day) + uploadButton(day);
         
         if (Iterables.isEmpty(results)) {
@@ -60,7 +61,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         return new ProbeResultEntry(entryResultType(mostRecentResult(results), day), filename, buildEntryValue(results));
     }
 
-    private FTPUploadResult mostRecentResult(Iterable<? extends FTPUploadResult> results) {
+    private FileUploadResult mostRecentResult(Iterable<? extends FileUploadResult> results) {
         return DATE_ORDERING.reverse().immutableSortedCopy(results).get(0);
     }
 
@@ -68,10 +69,10 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         return String.format("<a style=\"text-decoration:none\" href=\"/feeds/ukradioplayer/%1$s_%2$s_PI.xml\">%1$s_%2$s_PI.xml</a>", day.toString("yyyyMMdd"), service.getRadioplayerId());
     }
 
-    private ProbeResultType entryResultType(FTPUploadResult mostRecent, LocalDate day) {
+    private ProbeResultType entryResultType(FileUploadResult mostRecent, LocalDate day) {
         if (mostRecent instanceof RadioPlayerFTPUploadResult) {
             RadioPlayerFTPUploadResult rpResult = (RadioPlayerFTPUploadResult) mostRecent;
-            if (rpResult.processSuccess() != null && rpResult.processSuccess() == FTPUploadResultType.FAILURE) {
+            if (rpResult.processSuccess() != null && rpResult.processSuccess() == FileUploadResultType.FAILURE) {
                 return FAILURE;
             }
         }
@@ -95,15 +96,15 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         }
     }
 
-    protected String buildEntryValue(Iterable<? extends FTPUploadResult> results) {
+    protected String buildEntryValue(Iterable<? extends FileUploadResult> results) {
         StringBuilder builder = new StringBuilder("<table>");
-        for (FTPUploadResult result : Iterables.limit(results,2)) {
+        for (FileUploadResult result : Iterables.limit(results,2)) {
             appendResult(builder, result);
         }
         return builder.append("</table>").toString();
     }
 
-    private void appendResult(StringBuilder builder, FTPUploadResult result) {
+    private void appendResult(StringBuilder builder, FileUploadResult result) {
         builder.append("<tr><td>Last ");
         builder.append(result.type().toNiceString());
         builder.append(": ");
@@ -115,7 +116,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         builder.append("</td><td>");
         if (result instanceof RadioPlayerFTPUploadResult) {
             RadioPlayerFTPUploadResult rpResult = (RadioPlayerFTPUploadResult) result;
-            FTPUploadResultType processSuccess = rpResult.processSuccess() == null ? FTPUploadResultType.UNKNOWN : rpResult.processSuccess();
+            FileUploadResultType processSuccess = rpResult.processSuccess() == null ? FileUploadResultType.UNKNOWN : rpResult.processSuccess();
             builder.append("Processing Result: "+processSuccess.toNiceString());
         }
         builder.append("</td></tr>");

@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType.SUCCESS;
+import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.INFO;
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.WARN;
 
@@ -11,6 +11,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.upload.FileUploader;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
@@ -29,7 +30,7 @@ public class RadioPlayerUploadTask implements Runnable {
 
     private final Iterable<RadioPlayerService> services;
     private final RadioPlayerRecordingExecutor executor;
-    private final FTPFileUploader uploader;
+    private final FileUploader uploader;
 
     private DayRangeGenerator dayRangeGenerator;
     private Iterable<LocalDate> dayRange;
@@ -37,14 +38,14 @@ public class RadioPlayerUploadTask implements Runnable {
     private XMLValidator validator;
     private AdapterLog log;
 
-    public RadioPlayerUploadTask(FTPFileUploader uploader, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator) {
+    public RadioPlayerUploadTask(FileUploader uploader, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator) {
         this.uploader = uploader;
         this.executor = executor;
         this.services = services;
         this.dayRangeGenerator = dayRangeGenerator;
     }
 
-    public RadioPlayerUploadTask(FTPFileUploader uploader, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, Iterable<LocalDate> dayRange) {
+    public RadioPlayerUploadTask(FileUploader uploader, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, Iterable<LocalDate> dayRange) {
         this.uploader = uploader;
         this.executor = executor;
         this.services = services;

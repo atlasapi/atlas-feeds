@@ -7,7 +7,9 @@ import static org.hamcrest.Matchers.notNullValue;
 
 import java.util.ArrayList;
 
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
+import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+import org.atlasapi.feeds.upload.ftp.FTPUploadResultTranslator;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -23,11 +25,11 @@ public class RadioPlayerUploadResultTranslatorTest {
         
         DateTime time = new DateTime(DateTimeZones.UTC);
         
-        FTPUploadResult result = new FTPUploadResult("success", time, FTPUploadResultType.SUCCESS).withMessage("SUCCESS");
+        FileUploadResult result = new FileUploadResult("success", time, FileUploadResultType.SUCCESS).withMessage("SUCCESS");
         
         DBObject encoded = translator.toDBObject(result);
         
-        FTPUploadResult decoded = translator.fromDBObject(encoded);
+        FileUploadResult decoded = translator.fromDBObject(encoded);
         
         assertThat(decoded.type(), is(equalTo(result.type())));
         assertThat(decoded.filename(), is(equalTo(result.filename())));
@@ -50,11 +52,11 @@ public class RadioPlayerUploadResultTranslatorTest {
         
         assertThat(exception, is(notNullValue()));
         
-        FTPUploadResult result = new FTPUploadResult("failed", time, FTPUploadResultType.FAILURE).withMessage("FAILURE").withCause(exception);
+        FileUploadResult result = new FileUploadResult("failed", time, FileUploadResultType.FAILURE).withMessage("FAILURE").withCause(exception);
         
         DBObject encoded = translator.toDBObject(result);
         
-        FTPUploadResult decoded = translator.fromDBObject(encoded);
+        FileUploadResult decoded = translator.fromDBObject(encoded);
         
         assertThat(decoded.type(), is(equalTo(result.type())));
         assertThat(decoded.filename(), is(equalTo(result.filename())));
