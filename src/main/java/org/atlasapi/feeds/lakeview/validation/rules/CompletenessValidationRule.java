@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.inject.internal.Lists;
-import com.sun.tools.javac.util.Pair;
 
 /**
  * Validation rule to check all on-demands that we expect to be present, are.
@@ -50,7 +49,7 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 		// TODO: Films
 
 		List<String> expectedOnDemands = getExpectedOnDemandsFromDatabase();
-		List<Pair<String, ElementProduct>> errors = Lists.newArrayList();
+		List<String> errors = Lists.newArrayList();
 
 		// Do a two-way comparison between feed items and expected items
 		for (String expectedOnDemand : expectedOnDemands) {
@@ -63,9 +62,7 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 				}
 			}
 			if (!foundItemInFeed) {
-				errors.add(new Pair<String, ElementProduct>(
-						"Valid ondemand in db, not in feed: "
-								+ expectedOnDemand, null));
+				errors.add("Valid ondemand in db, not in feed: " + expectedOnDemand);
 			}
 		}
 
@@ -74,8 +71,7 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 
 			if (!expectedOnDemands
 					.contains(getApplicationSpecificData(feedEpisode))) {
-				errors.add(new Pair<String, ElementProduct>(
-						"Item found in feed, not expected", feedEpisode));
+				errors.add("Item found in feed, not expected" + feedEpisode.getItemId());
 			}
 		}
 

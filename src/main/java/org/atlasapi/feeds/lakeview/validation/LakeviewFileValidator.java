@@ -1,6 +1,5 @@
 package org.atlasapi.feeds.lakeview.validation;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 
@@ -9,8 +8,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
 import org.atlasapi.feeds.lakeview.validation.rules.LakeviewFeedValidationRule;
-import org.atlasapi.feeds.lakeview.validation.rules.HeirarchyValidationRule;
-import org.atlasapi.feeds.lakeview.validation.rules.UpToDateValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult;
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult.ValidationResultType;
 import org.atlasapi.generated.ElementMovie;
@@ -22,8 +19,6 @@ import org.atlasapi.generated.Feed;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.google.inject.internal.Lists;
-import com.metabroadcast.common.time.SystemClock;
 
 public class LakeviewFileValidator {
 
@@ -70,16 +65,5 @@ public class LakeviewFileValidator {
 		}
 		
 		return results.build();
-	}
-
-	public static void main(String[] args) {
-		File file = new File("/Users/tom/lakeview.xml");
-		
-		List<LakeviewFeedValidationRule> validationRules = Lists.newArrayList();
-		validationRules.add(new HeirarchyValidationRule());
-		//validationRules.add(new CompletenessValidationRule(null, 10));
-		validationRules.add(new UpToDateValidationRule(5, new SystemClock()));
-		LakeviewFileValidator validator = new LakeviewFileValidator(validationRules);
-		//validator.validate(file);
 	}
 }

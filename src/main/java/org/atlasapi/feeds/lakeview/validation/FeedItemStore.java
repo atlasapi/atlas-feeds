@@ -13,14 +13,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.internal.ImmutableMap;
 import com.google.inject.internal.Lists;
 import com.google.inject.internal.Maps;
-import com.sun.tools.javac.util.Pair;
 
 public class FeedItemStore {
 
 	private Map<String, ElementTVSeries> brands = Maps.newHashMap();
 	private Map<String, ElementTVSeason> series = Maps.newHashMap();
 	private Map<String, ElementTVEpisode> episodes = Maps.newHashMap();
-	private List<Pair<String, ElementProduct>> errors;
+	private List<String> errors;
 
 	public FeedItemStore() {
 		this.errors = Lists.newArrayList();
@@ -54,7 +53,7 @@ public class FeedItemStore {
 	}
 
 	private void addError(ElementProduct element, String message) {
-		errors.add(new Pair<String, ElementProduct>(message, element));
+		errors.add(message + ": " + element.getItemId());
 	}
 
 	public Map<String, ElementTVSeries> getBrands() {
@@ -69,7 +68,7 @@ public class FeedItemStore {
 		return ImmutableMap.copyOf(episodes);
 	}
 
-	public List<Pair<String, ElementProduct>> getErrors() {
+	public List<String> getErrors() {
 		return ImmutableList.copyOf(errors);
 	}
 

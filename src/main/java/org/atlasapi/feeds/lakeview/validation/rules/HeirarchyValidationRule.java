@@ -30,7 +30,7 @@ public class HeirarchyValidationRule implements LakeviewFeedValidationRule {
 
 	@Override
 	public ValidationResult validate(FeedItemStore feedItemStore) {
-		List<Pair<String, ElementProduct>> errors = Lists.newArrayList();
+		List<String> errors = Lists.newArrayList();
 
 		validateEpisodes(errors, feedItemStore);
 		validateSeries(errors, feedItemStore);
@@ -49,7 +49,7 @@ public class HeirarchyValidationRule implements LakeviewFeedValidationRule {
 	}
 
 	// An Atlas Series, which is a season in C4 nomenclature
-	private void validateSeries(List<Pair<String, ElementProduct>> errors, FeedItemStore feedItemStore) {
+	private void validateSeries(List<String> errors, FeedItemStore feedItemStore) {
 		for (ElementTVSeason season : feedItemStore.getSeries().values()) {
 			if (!feedItemStore.getBrands().containsKey(season.getSeriesId())) {
 				addError(errors, season, "Brand not present");
@@ -57,7 +57,7 @@ public class HeirarchyValidationRule implements LakeviewFeedValidationRule {
 		}
 	}
 
-	private void validateEpisodes(List<Pair<String, ElementProduct>> errors, FeedItemStore feedItemStore) {
+	private void validateEpisodes(List<String> errors, FeedItemStore feedItemStore) {
 		for (ElementTVEpisode episode : feedItemStore.getEpisodes().values()) {
 			if (!feedItemStore.getSeries().containsKey(
 					getParent(Parent.SERIES, episode))) {
@@ -71,9 +71,9 @@ public class HeirarchyValidationRule implements LakeviewFeedValidationRule {
 		}
 	}
 
-	private void addError(List<Pair<String, ElementProduct>> errors,
+	private void addError(List<String> errors,
 			ElementProduct element, String description) {
-		errors.add(new Pair<String, ElementProduct>(description, element));
+		errors.add(description + element.getItemId());
 	}
 
 	public static String getParent(Parent parent, ElementTVEpisode episode) {
