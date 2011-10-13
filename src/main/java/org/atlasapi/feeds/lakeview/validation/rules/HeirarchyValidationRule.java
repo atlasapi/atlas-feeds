@@ -11,7 +11,6 @@ import org.atlasapi.generated.ElementTVEpisode;
 import org.atlasapi.generated.ElementTVSeason;
 
 import com.google.inject.internal.Lists;
-import com.sun.tools.javac.util.Pair;
 
 /**
  * Validation rule to ensure the episode/series/brand hierarchy is consistent
