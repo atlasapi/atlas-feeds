@@ -1,23 +1,23 @@
-package org.atlasapi.feeds.radioplayer.upload;
+package org.atlasapi.feeds.upload;
 
-import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.failedUpload;
+import static org.atlasapi.feeds.upload.FileUploadResult.failedUpload;
 
 import java.io.ByteArrayInputStream;
 
 import org.atlasapi.feeds.xml.XMLValidator;
 
-public class ValidatingFTPFileUploader implements FTPFileUploader {
+public class ValidatingFileUploader implements FileUploader {
 
     private final XMLValidator validator;
-    private final FTPFileUploader delegate;
+    private final FileUploader delegate;
 
-    public ValidatingFTPFileUploader(XMLValidator validator, FTPFileUploader delegate) {
+    public ValidatingFileUploader(XMLValidator validator, FileUploader delegate) {
         this.validator = validator;
         this.delegate = delegate;
     }
 
     @Override
-    public FTPUploadResult upload(FTPUpload upload) throws Exception {
+    public FileUploadResult upload(FileUpload upload) throws Exception {
         try {
             if (validator != null) {
                 validator.validate(new ByteArrayInputStream(upload.getFileData()));

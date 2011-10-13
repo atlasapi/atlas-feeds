@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.radioplayer.upload;
+package org.atlasapi.feeds.upload.ftp;
 
 import com.google.common.base.Objects;
 
