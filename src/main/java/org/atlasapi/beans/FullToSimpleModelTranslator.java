@@ -29,6 +29,7 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule.ScheduleChannel;
 import org.atlasapi.media.entity.Series;
+import org.atlasapi.media.entity.Topic;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.entity.simple.Aliased;
 import org.atlasapi.media.entity.simple.BrandSummary;
@@ -42,6 +43,8 @@ import org.atlasapi.media.entity.simple.RelatedLink;
 import org.atlasapi.media.entity.simple.Restriction;
 import org.atlasapi.media.entity.simple.ScheduleQueryResult;
 import org.atlasapi.media.entity.simple.SeriesSummary;
+import org.atlasapi.media.entity.simple.TopicQueryResult;
+import org.atlasapi.persistence.topic.TopicUriResolver;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -60,9 +63,11 @@ import com.metabroadcast.common.intl.Countries;
 public class FullToSimpleModelTranslator implements AtlasModelWriter {
 
 	private final AtlasModelWriter outputWriter;
+    private final TopicUriResolver topicResolver;
 
-	public FullToSimpleModelTranslator(AtlasModelWriter outputter) {
+	public FullToSimpleModelTranslator(AtlasModelWriter outputter, TopicUriResolver topicResolver) {
 		this.outputWriter = outputter;
+        this.topicResolver = topicResolver;
 	}
 	
 	@Override
@@ -75,6 +80,9 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    else if (type.equals(AtlasModelType.SCHEDULE)) {
 	        outputGraph = writeOutSchedule(Iterables.transform(fullGraph, TO_SCHEDULE_CHANNEL));
 	    }
+	    else if (type.equals(AtlasModelType.TOPIC)) {
+	        outputGraph = writeOutTopics(Iterables.transform(fullGraph, TO_TOPIC));
+	    }
 	    else {
 	        outputGraph = writeOutContent(Iterables.transform(fullGraph, TO_DESCRIBED));
 	    }
@@ -82,7 +90,20 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    outputWriter.writeTo(request, response, ImmutableSet.of(outputGraph), type);
 	}
 	
-	private PeopleQueryResult writeOutPeople(Iterable<Person> people) {
+	private TopicQueryResult writeOutTopics(Iterable<Topic> fullTopics) {
+	    TopicQueryResult result = new TopicQueryResult();
+	    for (Topic fullTopic : fullTopics) {
+	        org.atlasapi.media.entity.simple.Topic topic = new org.atlasapi.media.entity.simple.Topic();
+	        copyBasicDescribedAttributes(fullTopic, topic);
+	        topic.setType(fullTopic.getType().toString());
+	        topic.setValue(fullTopic.getValue());
+	        topic.setNamespace(fullTopic.getNamespace());
+	        result.add(topic);
+        }
+        return result;
+    }
+
+    private PeopleQueryResult writeOutPeople(Iterable<Person> people) {
 	    PeopleQueryResult peopleOutputGraph = new PeopleQueryResult();
         for (Person person : people) {
             peopleOutputGraph.add(simplePersonFrom(person));
@@ -116,7 +137,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		return outputGraph;
 	}
 	
-	static org.atlasapi.media.entity.simple.ScheduleChannel scheduleChannelFrom(ScheduleChannel scheduleChannel) {
+	org.atlasapi.media.entity.simple.ScheduleChannel scheduleChannelFrom(ScheduleChannel scheduleChannel) {
 	    org.atlasapi.media.entity.simple.ScheduleChannel newScheduleChannel = new org.atlasapi.media.entity.simple.ScheduleChannel();
 	    newScheduleChannel.setChannelUri(scheduleChannel.channel().uri());
 	    newScheduleChannel.setChannelKey(scheduleChannel.channel().key());
@@ -159,7 +180,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    return person;
 	}
 
-	private static org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Container fullPlayList) {
+	private org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Container fullPlayList) {
 		
 		org.atlasapi.media.entity.simple.Playlist simplePlaylist = new org.atlasapi.media.entity.simple.Playlist();
 		simplePlaylist.setType(EntityType.from(fullPlayList).toString());
@@ -197,9 +218,10 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    return contentList;
 	}
 	
-	private static void copyBasicContentAttributes(Content content, Description simpleDescription) {
+	private void copyBasicContentAttributes(Content content, Description simpleDescription) {
 		copyBasicDescribedAttributes(content, simpleDescription);
 		simpleDescription.setClips(clipToSimple(content.getClips()));
+		simpleDescription.setTopics(resolveTopics(content.getTopics()));
         simpleDescription.setKeyPhrases(Iterables.transform(content.getKeyPhrases(), new Function<org.atlasapi.media.entity.KeyPhrase, KeyPhrase>() {
             @Override
             public KeyPhrase apply(org.atlasapi.media.entity.KeyPhrase input) {
@@ -225,7 +247,14 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
             }}));
 	}
 
-	private static void copyBasicDescribedAttributes(Described content, Description simpleDescription) {
+    private Iterable<org.atlasapi.media.entity.simple.Topic> resolveTopics(List<String> topics) {
+        if(topics.isEmpty()) { //don't even ask (the resolver)
+            return ImmutableList.of();
+        }
+        return writeOutTopics(topicResolver.topicsForUris(topics)).getContents();
+    }
+
+    private static void copyBasicDescribedAttributes(Described content, Description simpleDescription) {
 		copyDescriptionAttributesTo(content, simpleDescription);
 		simpleDescription.setTitle(content.getTitle());
 		simpleDescription.setPublisher(toPublisherDetails(content.getPublisher()));
@@ -252,7 +281,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		simpleDescription.setCurie(description.getCurie());
 	}
 
-	private static List<Item> clipToSimple(List<Clip> clips) {
+	private List<Item> clipToSimple(List<Clip> clips) {
 		return Lists.transform(clips, new Function<Clip, Item>() {
 			@Override
 			public Item apply(Clip clip) {
@@ -265,7 +294,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
         return ContentIdentifier.identifierFor(content);
     }
 
-	static org.atlasapi.media.entity.simple.Item simpleItemFrom(org.atlasapi.media.entity.Item fullItem) {
+	org.atlasapi.media.entity.simple.Item simpleItemFrom(org.atlasapi.media.entity.Item fullItem) {
 		
 		org.atlasapi.media.entity.simple.Item simpleItem = new org.atlasapi.media.entity.simple.Item();
 		simpleItem.setType(EntityType.from(fullItem).toString());
@@ -337,7 +366,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		simpleItem.addLocation(simpleLocation);
 	}
 
-	private static void copyProperties(org.atlasapi.media.entity.Item fullItem, Item simpleItem) {
+	private void copyProperties(org.atlasapi.media.entity.Item fullItem, Item simpleItem) {
 		copyBasicContentAttributes(fullItem, simpleItem);
 		
 		simpleItem.setBlackAndWhite(fullItem.getBlackAndWhite());
@@ -508,6 +537,13 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
         @Override
         public ScheduleChannel apply(Object input) {
             return (ScheduleChannel) input;
+        }
+    };
+    
+    private static final Function<Object, Topic> TO_TOPIC = new Function<Object, Topic>() {
+        @Override
+        public Topic apply(Object input) {
+            return (Topic) input;
         }
     };
     
