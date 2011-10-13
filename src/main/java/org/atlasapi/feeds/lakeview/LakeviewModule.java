@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.lakeview;
 
+import org.atlasapi.feeds.lakeview.validation.LakeviewServerHealthProbe;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.listing.ContentLister;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
+import com.metabroadcast.common.health.HealthProbe;
 
 @Configuration
 public class LakeviewModule {
@@ -46,5 +48,9 @@ public class LakeviewModule {
             log.record(new AdapterLogEntry(Severity.WARN).withDescription("Couldn't load schemas for Lakeview XML validation").withCause(e));
             return null;
         }
+    }
+    
+    public @Bean HealthProbe lakeviewHealthProbe() {
+    	return new LakeviewServerHealthProbe();
     }
 }
