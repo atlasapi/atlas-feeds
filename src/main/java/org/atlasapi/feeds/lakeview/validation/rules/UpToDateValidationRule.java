@@ -15,7 +15,7 @@ import com.metabroadcast.common.time.Clock;
  * @author tom
  *
  */
-public class UpToDateValidationRule implements FeedValidationRule {
+public class UpToDateValidationRule implements LakeviewFeedValidationRule {
 
 	private int minNewItemsInLastDay;
 	private Clock clock;
@@ -32,8 +32,7 @@ public class UpToDateValidationRule implements FeedValidationRule {
 		DateTime aDayAgo = clock.now().minusDays(1);
 		int publishedInLastDay = 0;
 		for (ElementTVEpisode episode : feedItemStore.getEpisodes().values()) {
-			DateTime originalPublicationDate = new DateTime(
-					getOriginalPublicationDate(episode));
+			DateTime originalPublicationDate = getOriginalPublicationDate(episode);
 			if (originalPublicationDate.isAfter(aDayAgo)
 					&& originalPublicationDate.isBeforeNow()) {
 				publishedInLastDay++;
@@ -41,11 +40,11 @@ public class UpToDateValidationRule implements FeedValidationRule {
 		}
 		if (publishedInLastDay < minNewItemsInLastDay) {
 			return new ValidationResult(getRuleName(), ValidationResultType.FAILURE, String.format(
-							"Not enough new items found in last day. Found %d, minimum is %d",
+							"Not enough new items found in last day. Found %d, threshold is %d",
 							publishedInLastDay, minNewItemsInLastDay));
 		}
 		else {
-			return new ValidationResult(getRuleName(), ValidationResultType.SUCCESS);
+			return new ValidationResult(getRuleName(), ValidationResultType.SUCCESS, String.format("%d items published in last day", publishedInLastDay));
 		}
 	}
 	
@@ -54,11 +53,11 @@ public class UpToDateValidationRule implements FeedValidationRule {
 		return "Up-to-date check";
 	}
 
-	public static String getOriginalPublicationDate(ElementTVEpisode episode) {
+	public static DateTime getOriginalPublicationDate(ElementTVEpisode episode) {
 		for (JAXBElement<?> restElement : episode.getRest()) {
 			if (restElement.getName().getLocalPart()
 					.equals("OriginalPublicationDate")) {
-				return (String) restElement.getValue();
+				return new DateTime((String) restElement.getValue());
 			}
 		}
 		throw new RuntimeException("Element OriginalPublicationDate not found");

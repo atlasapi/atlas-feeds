@@ -1,14 +1,14 @@
 package org.atlasapi.feeds.lakeview.validation;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
-import org.atlasapi.feeds.lakeview.validation.rules.CompletenessValidationRule;
-import org.atlasapi.feeds.lakeview.validation.rules.FeedValidationRule;
+import org.atlasapi.feeds.lakeview.validation.rules.LakeviewFeedValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.HeirarchyValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.UpToDateValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult;
@@ -23,26 +23,24 @@ import org.atlasapi.generated.Feed;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.inject.internal.Lists;
-import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
-import com.sun.tools.javac.util.Pair;
 
 public class LakeviewFileValidator {
 
-	private List<FeedValidationRule> validationRules;
+	private List<LakeviewFeedValidationRule> validationRules;
 
-	public LakeviewFileValidator(List<FeedValidationRule> validationRules) {
+	public LakeviewFileValidator(List<LakeviewFeedValidationRule> validationRules) {
 		this.validationRules = validationRules;
 	}
 
-	public List<ValidationResult> validate(File file) {
+	public List<ValidationResult> validate(InputStream stream) {
 		
 		Builder<ValidationResult> results = ImmutableList.builder();
 		try {
 			JAXBContext ctx = JAXBContext
 					.newInstance(new Class[] { Feed.class });
 			Unmarshaller um = ctx.createUnmarshaller();
-			Feed feed = (Feed) um.unmarshal(file);
+			Feed feed = (Feed) um.unmarshal(stream);
 			List<ElementProduct> f = feed.getMovieOrTVEpisodeOrTVSeason();
 
 			FeedItemStore itemStore = new FeedItemStore();
@@ -62,7 +60,7 @@ public class LakeviewFileValidator {
 			}
 			
 			
-			for(FeedValidationRule validationRule : validationRules) {
+			for(LakeviewFeedValidationRule validationRule : validationRules) {
 				ValidationResult result = validationRule.validate(itemStore);
 				results.add(result);
 			}
@@ -77,11 +75,11 @@ public class LakeviewFileValidator {
 	public static void main(String[] args) {
 		File file = new File("/Users/tom/lakeview.xml");
 		
-		List<FeedValidationRule> validationRules = Lists.newArrayList();
+		List<LakeviewFeedValidationRule> validationRules = Lists.newArrayList();
 		validationRules.add(new HeirarchyValidationRule());
 		//validationRules.add(new CompletenessValidationRule(null, 10));
 		validationRules.add(new UpToDateValidationRule(5, new SystemClock()));
 		LakeviewFileValidator validator = new LakeviewFileValidator(validationRules);
-		validator.validate(file);
+		//validator.validate(file);
 	}
 }

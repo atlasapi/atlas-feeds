@@ -33,7 +33,7 @@ import com.sun.tools.javac.util.Pair;
  * @author tom
  * 
  */
-public class CompletenessValidationRule implements FeedValidationRule {
+public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 
 	private ContentLister contentLister;
 	private int tolerance;
@@ -83,10 +83,10 @@ public class CompletenessValidationRule implements FeedValidationRule {
 		// will be slightly stale
 		if (errors.size() < tolerance) {
 			return new ValidationResult(getRuleName(), ValidationResultType.SUCCESS,
-					null);
+					String.format("%d items in feed, %d items in database", feedItemStore.getEpisodes().size(), expectedOnDemands.size()));
 		} else {
 			return new ValidationResult(getRuleName(), ValidationResultType.FAILURE,
-					"Too many missing items");
+					String.format("%d items in feed, %d items in database. Tolerance is %d", feedItemStore.getEpisodes().size(), expectedOnDemands.size(), tolerance));
 		}
 	}
 

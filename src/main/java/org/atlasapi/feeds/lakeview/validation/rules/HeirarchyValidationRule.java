@@ -19,7 +19,7 @@ import com.sun.tools.javac.util.Pair;
  * @author tom
  * 
  */
-public class HeirarchyValidationRule implements FeedValidationRule {
+public class HeirarchyValidationRule implements LakeviewFeedValidationRule {
 
 	private enum Parent {
 		SERIES, BRAND
@@ -39,7 +39,7 @@ public class HeirarchyValidationRule implements FeedValidationRule {
 			return new ValidationResult(getRuleName(), ValidationResultType.FAILURE, errors.toString());
 		}
 		else {
-			return new ValidationResult(getRuleName(), ValidationResultType.SUCCESS);
+			return new ValidationResult(getRuleName(), ValidationResultType.SUCCESS, "Hierarchy consistent");
 		}
 	}
 	
