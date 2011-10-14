@@ -42,7 +42,7 @@ import org.atlasapi.media.entity.simple.Restriction;
 import org.atlasapi.media.entity.simple.ScheduleQueryResult;
 import org.atlasapi.media.entity.simple.SeriesSummary;
 import org.atlasapi.media.entity.simple.TopicQueryResult;
-import org.atlasapi.persistence.topic.TopicUriResolver;
+import org.atlasapi.persistence.topic.TopicQueryResolver;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -61,9 +61,9 @@ import com.metabroadcast.common.intl.Countries;
 public class FullToSimpleModelTranslator implements AtlasModelWriter {
 
 	private final AtlasModelWriter outputWriter;
-    private final TopicUriResolver topicResolver;
+    private final TopicQueryResolver topicResolver;
 
-	public FullToSimpleModelTranslator(AtlasModelWriter outputter, TopicUriResolver topicResolver) {
+	public FullToSimpleModelTranslator(AtlasModelWriter outputter, TopicQueryResolver topicResolver) {
 		this.outputWriter = outputter;
         this.topicResolver = topicResolver;
 	}
@@ -92,7 +92,17 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    TopicQueryResult result = new TopicQueryResult();
 	    for (Topic fullTopic : fullTopics) {
 	        org.atlasapi.media.entity.simple.Topic topic = new org.atlasapi.media.entity.simple.Topic();
-	        copyBasicDescribedAttributes(fullTopic, topic);
+	        copyDescriptionAttributesTo(fullTopic, topic);
+	        topic.setTitle(fullTopic.getTitle());
+	        topic.setDescription(fullTopic.getDescription());
+	        topic.setImage(fullTopic.getImage());
+	        topic.setImage(fullTopic.getThumbnail());
+            topic.setPublishers(ImmutableSet.copyOf(Iterables.transform(fullTopic.getPublishers(), new Function<Publisher, PublisherDetails>() {
+                @Override
+                public PublisherDetails apply(Publisher input) {
+                    return toPublisherDetails(input);
+                }
+            })));
 	        topic.setType(fullTopic.getType().toString());
 	        topic.setValue(fullTopic.getValue());
 	        topic.setNamespace(fullTopic.getNamespace());

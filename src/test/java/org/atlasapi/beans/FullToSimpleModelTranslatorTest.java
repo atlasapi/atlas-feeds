@@ -21,7 +21,7 @@ import org.atlasapi.media.entity.Restriction;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.entity.simple.ContentQueryResult;
 import org.atlasapi.media.entity.simple.Item;
-import org.atlasapi.persistence.topic.TopicUriResolver;
+import org.atlasapi.persistence.topic.TopicQueryResolver;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -66,7 +66,7 @@ public class FullToSimpleModelTranslatorTest {
 			one(xmlOutputter).writeTo(with(request), with(response), with(simpleGraph()), with(AtlasModelType.CONTENT));
 		}});
 		
-		new FullToSimpleModelTranslator(xmlOutputter, TopicUriResolver.NULL_RESOLVER).writeTo(request, response, graph, AtlasModelType.CONTENT);
+		new FullToSimpleModelTranslator(xmlOutputter, TopicQueryResolver.NULL_RESOLVER).writeTo(request, response, graph, AtlasModelType.CONTENT);
 	}
 
 	protected Matcher<Set<Object>> simpleGraph() {
@@ -117,7 +117,7 @@ public class FullToSimpleModelTranslatorTest {
 		CrewMember person = Actor.actor("hisID", "Andrew Collings", "Dirt-bag Humperdink", Publisher.BBC);
 		fullItem.addPerson(person);
 		
-		Item simpleItem = new FullToSimpleModelTranslator(null, TopicUriResolver.NULL_RESOLVER).simpleItemFrom(fullItem);
+		Item simpleItem = new FullToSimpleModelTranslator(null, TopicQueryResolver.NULL_RESOLVER).simpleItemFrom(fullItem);
 		List<org.atlasapi.media.entity.simple.Person> people = simpleItem.getPeople();
 		org.atlasapi.media.entity.simple.Person simpleActor = Iterables.getOnlyElement(people);
 		assertThat(simpleActor.getCharacter(), is("Dirt-bag Humperdink"));
