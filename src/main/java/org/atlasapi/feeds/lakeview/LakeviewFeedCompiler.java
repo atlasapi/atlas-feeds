@@ -140,7 +140,7 @@ public class LakeviewFeedCompiler {
         element.appendChild(stringElement("ItemId", LAKEVIEW, brandId(brand.getCanonicalUri())));
         element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle()));
         
-        appendCommonElements(element, brand, originalPublicationDate, lastModified, null);
+        appendCommonElements(element, brand, originalPublicationDate, lastModified, null, null);
         element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(contentGroup.contents().keySet().size())));
         
         if (brand.getPresentationChannel() != null && Channel.fromKey(brand.getPresentationChannel()).hasValue()) {
@@ -176,7 +176,7 @@ public class LakeviewFeedCompiler {
             element.appendChild(stringElement("Title", LAKEVIEW, series.getTitle()));
         }
         
-        appendCommonElements(element, series, originalPublicationDate, lastModified, null);
+        appendCommonElements(element, series, originalPublicationDate, lastModified, null, null);
         
         element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(((Series) series).getSeriesNumber())));
         element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(((Series) series).getParent().getUri())));
@@ -194,8 +194,27 @@ public class LakeviewFeedCompiler {
         } else {
             element.appendChild(stringElement("Title", LAKEVIEW, episode.getTitle()));
         }
-        
-        appendCommonElements(element, episode, originalPublicationDate, lastModified, extract4OdId(episode));
+    
+    	Element instances = createElement("Instances", LAKEVIEW);
+    	Element videoInstance = createElement("VideoInstance", LAKEVIEW);
+    	videoInstance.appendChild(stringElement("Device", LAKEVIEW, "Xbox360"));
+    	
+    	Element availabilities = createElement("Availabilities", LAKEVIEW);
+    	Element availability = createElement("Availability", LAKEVIEW);
+    	availability.appendChild(stringElement("OfferType", LAKEVIEW, "FreeWithAds"));
+    	availability.appendChild(stringElement("StartDateTime", LAKEVIEW, extractFirstAvailabilityDate(episode).toString(DATETIME_FORMAT)));
+    	availability.appendChild(stringElement("EndDateTime", LAKEVIEW, extractLastAvailabilityDate(episode).toString(DATETIME_FORMAT)));
+    	
+    	availabilities.appendChild(availability);
+    	videoInstance.appendChild(availabilities);
+    	videoInstance.appendChild(stringElement("ResolutionFormat", LAKEVIEW, "SD"));
+    	videoInstance.appendChild(stringElement("DeliveryFormat", LAKEVIEW, "Streaming"));
+    	videoInstance.appendChild(stringElement("PrimaryAudioLanguage", LAKEVIEW, "en-GB"));
+    	videoInstance.appendChild(stringElement("VideoInstanceType", LAKEVIEW, "Full"));
+    	
+    	instances.appendChild(videoInstance);        	
+    
+        appendCommonElements(element, episode, originalPublicationDate, lastModified, extract4OdId(episode), instances);
         
         element.appendChild(stringElement("EpisodeNumber", LAKEVIEW, String.valueOf(episode.getEpisodeNumber())));
         element.appendChild(stringElement("DurationInSeconds", LAKEVIEW, String.valueOf(duration(episode))));
@@ -225,6 +244,19 @@ public class LakeviewFeedCompiler {
                 for (Location location : encoding.getAvailableAt()) {
                     if(location.getPolicy() != null && location.getPolicy().getAvailabilityStart() != null) {
                         return location.getPolicy().getAvailabilityStart();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
+    private DateTime extractLastAvailabilityDate(Episode episode) {
+        for (Version version : episode.getVersions()) {
+            for (Encoding encoding : version.getManifestedAs()) {
+                for (Location location : encoding.getAvailableAt()) {
+                    if(location.getPolicy() != null && location.getPolicy().getAvailabilityStart() != null) {
+                        return location.getPolicy().getAvailabilityEnd();
                     }
                 }
             }
@@ -266,7 +298,8 @@ public class LakeviewFeedCompiler {
         return "NONE";
     }
 
-    private void appendCommonElements(Element element, Content content, DateTime originalPublicationDate, String lastModified, String applicationSpecificData) {
+    private void appendCommonElements(Element element, Content content, DateTime originalPublicationDate, String lastModified, String applicationSpecificData,
+    		Element instances) {
         
         if(!Strings.isNullOrEmpty(content.getDescription())) {
             element.appendChild(stringElement("Description", LAKEVIEW, content.getDescription()));
@@ -300,6 +333,11 @@ public class LakeviewFeedCompiler {
         Element pc = createElement("ParentalControl", LAKEVIEW);
         pc.appendChild(stringElement("HasGuidance", LAKEVIEW, String.valueOf(true)));
         element.appendChild(pc);
+        
+        if(instances != null) {
+        	element.appendChild(instances);
+        }
+        
         element.appendChild(stringElement("PublicWebUri", LAKEVIEW, String.format("%s.atom", content.getCanonicalUri())));
         if(applicationSpecificData != null) {
         	element.appendChild(stringElement("ApplicationSpecificData", LAKEVIEW, applicationSpecificData));
