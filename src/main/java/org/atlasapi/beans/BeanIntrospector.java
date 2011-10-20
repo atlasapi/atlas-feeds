@@ -32,7 +32,7 @@ import com.google.common.collect.Maps;
 
 public class BeanIntrospector {
 
-	private static final Set<String> RDF_IGNORE_ATTRIBUTES = ImmutableSet.of("isActivelyPublished", "series");
+	private static final Set<String> RDF_IGNORE_ATTRIBUTES = ImmutableSet.of("isActivelyPublished", "series", "readHash", "parentRef");
 	
     public static Map<String, PropertyDescriptor> getPropertyDescriptors(Class<?> beanType) throws IntrospectionException {
         Map<String, PropertyDescriptor> result = Maps.newHashMap();
