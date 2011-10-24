@@ -20,6 +20,7 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
@@ -242,7 +243,7 @@ public class LakeviewFeedCompiler {
         for (Version version : episode.getVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if(location.getPolicy() != null && location.getPolicy().getAvailabilityStart() != null) {
+                    if(location.getPolicy() != null && Platform.XBOX.equals(location.getPolicy().getPlatform()) && location.getPolicy().getAvailabilityStart() != null) {
                         return location.getPolicy().getAvailabilityStart();
                     }
                 }
@@ -255,7 +256,7 @@ public class LakeviewFeedCompiler {
         for (Version version : episode.getVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if(location.getPolicy() != null && location.getPolicy().getAvailabilityStart() != null) {
+                    if(location.getPolicy() != null && Platform.XBOX.equals(location.getPolicy().getPlatform()) && location.getPolicy().getAvailabilityStart() != null) {
                         return location.getPolicy().getAvailabilityEnd();
                     }
                 }
