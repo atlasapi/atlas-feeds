@@ -16,6 +16,7 @@ import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
@@ -117,7 +118,7 @@ public class LakeviewContentFetcher {
         for (Version version : episode.getVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if(location.getAvailable()) {
+                    if(location.getAvailable() && (location.getPolicy() != null && Platform.XBOX.equals(location.getPolicy().getPlatform()))) {
                         return true;
                     }
                 }
