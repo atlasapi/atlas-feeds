@@ -27,6 +27,7 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -141,7 +142,7 @@ public class LakeviewFeedCompiler {
         element.appendChild(stringElement("ItemId", LAKEVIEW, brandId(brand.getCanonicalUri())));
         element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle()));
         
-        appendCommonElements(element, brand, originalPublicationDate, lastModified, null, null);
+        appendCommonElements(element, brand, originalPublicationDate, lastModified, brandAtomUri(brand.getCanonicalUri()), null);
         element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(contentGroup.contents().keySet().size())));
         
         if (brand.getPresentationChannel() != null && Channel.fromKey(brand.getPresentationChannel()).hasValue()) {
@@ -177,7 +178,7 @@ public class LakeviewFeedCompiler {
             element.appendChild(stringElement("Title", LAKEVIEW, series.getTitle()));
         }
         
-        appendCommonElements(element, series, originalPublicationDate, lastModified, null, null);
+        appendCommonElements(element, series, originalPublicationDate, lastModified, seriesAtomUri(series.getCanonicalUri()), null);
         
         element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(((Series) series).getSeriesNumber())));
         element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(((Series) series).getParent().getUri())));
@@ -215,7 +216,7 @@ public class LakeviewFeedCompiler {
     	
     	instances.appendChild(videoInstance);        	
     
-        appendCommonElements(element, episode, originalPublicationDate, lastModified, extract4OdId(episode), instances);
+        appendCommonElements(element, episode, originalPublicationDate, lastModified, episodeAtomUri(episode.getCanonicalUri(), extractAssetId(episode)), instances);
         
         element.appendChild(stringElement("EpisodeNumber", LAKEVIEW, String.valueOf(episode.getEpisodeNumber())));
         element.appendChild(stringElement("DurationInSeconds", LAKEVIEW, String.valueOf(duration(episode))));
@@ -282,12 +283,14 @@ public class LakeviewFeedCompiler {
         return broadcasts;
     }
 
-    private String extract4OdId(Episode episode) {
+    private String extractAssetId(Episode episode) {
         for (Version version : episode.getVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if(location.getTransportType().equals(TransportType.LINK)) {
-                        Pattern pattern = Pattern.compile(".*#(\\d+)$");
+                    if(location.getTransportType().equals(TransportType.LINK)
+                    		&& location.getPolicy() != null 
+                    		&& Platform.XBOX.equals(location.getPolicy().getPlatform())) {
+                        Pattern pattern = Pattern.compile(".*asset/(\\d+)$");
                         Matcher matcher = pattern.matcher(location.getUri());
                         if(matcher.matches()) {
                             return matcher.group(1);                            
@@ -348,11 +351,26 @@ public class LakeviewFeedCompiler {
 
     private static final String ID_PREFIX = "http://channel4.com/en-GB";
     private static final String C4_PROG_BASE = "http://www.channel4.com/programmes/";
+    private static final String C4_API_BASE = "http://www.channel4.com/pmlsd/";
     
     private String brandId(String brandUri) {
         return String.format("%s/TVSeries/%s", ID_PREFIX, brandUri.replaceAll(C4_PROG_BASE, ""));
     }
 
+    @VisibleForTesting
+    public String brandAtomUri(String brandUri) {
+    	return String.format("%s%s/4od.atom", C4_API_BASE, brandUri.replaceAll(C4_PROG_BASE, ""));
+    }
+    
+    @VisibleForTesting
+    public String seriesAtomUri(String seriesUri) {
+    	return String.format("%s%s/4od.atom#%s", C4_API_BASE, seriesUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide.*", ""), seriesUri.replaceAll(C4_PROG_BASE + ".*/episode-guide/", ""));
+    }
+    
+    @VisibleForTesting
+    public String episodeAtomUri(String episodeUri, String assetId) {
+    	return String.format("%s%s/4od.atom#%s", C4_API_BASE, episodeUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide.*", ""), assetId);
+    }
     private String seriesId(String seriesUri) {
         return String.format("%s/TVSeason/%s", ID_PREFIX, seriesUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "-"));
     }
