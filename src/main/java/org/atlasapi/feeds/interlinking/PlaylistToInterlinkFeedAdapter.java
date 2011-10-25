@@ -20,6 +20,7 @@ import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
+import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
@@ -32,6 +33,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.text.Truncator;
+import com.metabroadcast.common.time.DateTimeZones;
 
 public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     
@@ -142,9 +144,10 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 		String episodeId = idFrom(item);
 		String parentId = parentFromItem(item);
 		
-		InterlinkOnDemand onDemand = firstLinkLocation(item, from, to, episodeId);
+		Location availableLocation = firstAvailableLocation(item);
+		String link = availableLocation == null ? linkFrom(item.getCanonicalUri()) : availableLocation.getUri();
 		
-		InterlinkEpisode episode = new InterlinkEpisode(episodeId, operationFor(item, from, to), itemIndexFrom(item), onDemand == null ? linkFrom(item.getCanonicalUri()) : onDemand.uri(), parentId)
+        InterlinkEpisode episode = new InterlinkEpisode(episodeId, operationFor(item, from, to), itemIndexFrom(item), link, parentId)
             .withTitle(extractItemTitle(item))
             .withDescription(toDescription(item))
             .withLastUpdated(item.getLastUpdated())
@@ -164,7 +167,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
             }
         }
 
-        
+        InterlinkOnDemand onDemand = firstLinkLocation(item, from, to, episodeId);
         if (onDemand != null) {
             feed.addEntry(onDemand);
         }
@@ -326,6 +329,25 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 	   return null;
     }
     
+    private Location firstAvailableLocation(Item item) {
+        for (Version version : item.nativeVersions()) {
+            for (Encoding encoding : version.getManifestedAs()) {
+                for (Location location : encoding.getAvailableAt()) {
+                    if (TransportType.LINK.equals(location.getTransportType()) && available(location)) {
+                        return location;
+                    }
+                }
+            }
+        }
+        return null;
+     }
+    
+    private boolean available(Location location) {
+        Policy policy = location.getPolicy();
+        DateTime now = new DateTime(DateTimeZones.UTC);
+        return policy.getAvailabilityStart().isBefore(now) && policy.getAvailabilityEnd().isAfter(now);
+    }
+
     protected InterlinkOnDemand firstLinkLocation(Item item, DateTime from, DateTime to, String parentId) {
         for (Version version : item.nativeVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
