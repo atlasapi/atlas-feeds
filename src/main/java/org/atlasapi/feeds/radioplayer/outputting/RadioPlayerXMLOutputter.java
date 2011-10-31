@@ -49,7 +49,6 @@ public abstract class RadioPlayerXMLOutputter {
 
     private void write(OutputStream out, Element feed) throws UnsupportedEncodingException, IOException {
         Serializer serializer = new Serializer(out, Charsets.UTF_8.toString());
-        serializer.setIndent(4);
         serializer.setLineSeparator("\n");
         serializer.write(new Document(feed));
     }
