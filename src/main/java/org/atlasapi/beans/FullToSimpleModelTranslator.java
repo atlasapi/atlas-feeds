@@ -281,16 +281,16 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	private static org.atlasapi.media.entity.simple.Broadcast simplify(Broadcast broadcast) {
 	    org.atlasapi.media.entity.simple.Broadcast simpleModel = new org.atlasapi.media.entity.simple.Broadcast(broadcast.getBroadcastOn(), broadcast.getTransmissionTime(), broadcast.getTransmissionEndTime(), broadcast.getId());
 	    
-	    simpleModel.setRepeat(broadcast.isRepeat());
-	    simpleModel.setSubtitled(broadcast.isSubtitled());
-	    simpleModel.setSigned(broadcast.isSigned());
-        simpleModel.setAudioDescribed(broadcast.isAudioDescribed());
-        simpleModel.setHighDefinition(broadcast.isHighDefinition());
-        simpleModel.setWidescreen(broadcast.isWidescreen());
-        simpleModel.setSurround(broadcast.isSurround());
-        simpleModel.setLive(broadcast.isLive());
-        simpleModel.setPremiere(broadcast.isPremiere());
-        simpleModel.setNewSeries(broadcast.isNewSeries());
+	    simpleModel.setRepeat(broadcast.getRepeat());
+	    simpleModel.setSubtitled(broadcast.getSubtitled());
+	    simpleModel.setSigned(broadcast.getSigned());
+        simpleModel.setAudioDescribed(broadcast.getAudioDescribed());
+        simpleModel.setHighDefinition(broadcast.getHighDefinition());
+        simpleModel.setWidescreen(broadcast.getWidescreen());
+        simpleModel.setSurround(broadcast.getSurround());
+        simpleModel.setLive(broadcast.getLive());
+        simpleModel.setPremiere(broadcast.getPremiere());
+        simpleModel.setNewSeries(broadcast.getNewSeries());
 	    
 	    return simpleModel; 
 	}
@@ -315,7 +315,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	private static void copyProperties(org.atlasapi.media.entity.Item fullItem, Item simpleItem) {
 		copyBasicContentAttributes(fullItem, simpleItem);
 		
-		simpleItem.setBlackAndWhite(fullItem.isBlackAndWhite());
+		simpleItem.setBlackAndWhite(fullItem.getBlackAndWhite());
 		simpleItem.setCountriesOfOrigin(fullItem.getCountriesOfOrigin());
 		simpleItem.setScheduleOnly(fullItem.isScheduleOnly());
 		
