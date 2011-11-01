@@ -270,9 +270,11 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		}
 		
 		for (Broadcast broadcast : version.getBroadcasts()) {
-			org.atlasapi.media.entity.simple.Broadcast simpleBroadcast = simplify(broadcast);
-			copyProperties(version, simpleBroadcast, item);
-			simpleItem.addBroadcast(simpleBroadcast);
+		    if(broadcast.isActivelyPublished()) {
+		        org.atlasapi.media.entity.simple.Broadcast simpleBroadcast = simplify(broadcast);
+		        copyProperties(version, simpleBroadcast, item);
+		        simpleItem.addBroadcast(simpleBroadcast);
+		    }
 		}
 	}
 
