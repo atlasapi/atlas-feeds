@@ -117,7 +117,7 @@ public class LakeviewModule {
 	LakeviewFileValidator lakeviewFileValidator() {
 		Clock clock = new SystemClock();
 		Builder<LakeviewFeedValidationRule> validationRules = ImmutableList.builder();
-		validationRules.add(new CompletenessValidationRule(contentLister, 100));
+		//validationRules.add(new CompletenessValidationRule(contentLister, 100));
 		validationRules.add(new HeirarchyValidationRule());
 		validationRules.add(new UpToDateValidationRule(5, clock));
 		validationRules.add(new RecentUpdateToBrandValidationRule("http://channel4.com/en-GB/TVSeries/deal-or-no-deal", 5, clock));
