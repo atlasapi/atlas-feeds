@@ -16,7 +16,7 @@ public class ApplicationConfigurationIncludingQueryBuilder {
 
 	public ApplicationConfigurationIncludingQueryBuilder(QueryStringBackedQueryBuilder queryBuilder, ApplicationConfigurationFetcher appFetcher) {
 		this.queryBuilder = queryBuilder;
-		this.queryBuilder.withIgnoreParams("apiKey").withIgnoreParams("uri");
+		this.queryBuilder.withIgnoreParams("apiKey").withIgnoreParams("uri","id");
 		this.configFetcher = appFetcher;
 	}
 
