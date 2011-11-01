@@ -1,5 +1,14 @@
 package org.atlasapi.feeds.lakeview;
 
+import org.atlasapi.feeds.lakeview.validation.AzureLatestFileDownloader;
+import org.atlasapi.feeds.lakeview.validation.LakeviewFileValidator;
+import org.atlasapi.feeds.lakeview.validation.LakeviewServerHealthProbe;
+import org.atlasapi.feeds.lakeview.validation.rules.CompletenessValidationRule;
+import org.atlasapi.feeds.lakeview.validation.rules.HeirarchyValidationRule;
+import org.atlasapi.feeds.lakeview.validation.rules.LakeviewFeedValidationRule;
+import org.atlasapi.feeds.lakeview.validation.rules.RecentUpdateToBrandValidationRule;
+import org.atlasapi.feeds.lakeview.validation.rules.UpToDateValidationRule;
+
 import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.lakeview.upload.LakeviewFileUpdater;
@@ -16,67 +25,116 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
+import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
+import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
 
 @Configuration
 public class LakeviewModule {
 
-    @Autowired ContentLister contentLister;
-    @Autowired ContentResolver contentResolver;
-    @Autowired AdapterLog log;
-    @Autowired private SimpleScheduler scheduler;
-    
-    private @Value("${lakeview.upload.enabled}") String enabled;
-    private @Value("${lakeview.upload.hostname}") String hostname;
-    private @Value("${lakeview.upload.container}") String container;
-    private @Value("${lakeview.upload.account}") String account;
-    private @Value("${lakeview.upload.key}") String key;
-   
-    private static final String SCHEMA_VERSION = "0_4";
-    private static final String FILENAME_PROVIDER_ID = "CA1.Xbox4oD";
-    
-    public @Bean LakeviewController lakeviewController() {
-        return new LakeviewController(lakeviewContentFetcher(), lakeviewFeedCompiler(), lakeviewFeedOutputter());
-    }
+	@Autowired
+	ContentLister contentLister;
+	@Autowired
+	ContentResolver contentResolver;
+	@Autowired
+	AdapterLog log;
+	@Autowired
+	private SimpleScheduler scheduler;
 
-    public @Bean LakeviewContentFetcher lakeviewContentFetcher() {
-        return new LakeviewContentFetcher(contentLister, contentResolver);
-    }
-    
-    public @Bean LakeviewFeedCompiler lakeviewFeedCompiler() {
-        return new LakeviewFeedCompiler();
-    }
+	private @Value("${lakeview.upload.enabled}")
+	String enabled;
+	private @Value("${lakeview.upload.hostname}")
+	String hostname;
+	private @Value("${lakeview.upload.container}")
+	String container;
+	private @Value("${lakeview.upload.account}")
+	String account;
+	private @Value("${lakeview.upload.key}")
+	String key;
 
-    public @Bean XmlFeedOutputter lakeviewFeedOutputter() {
-        return /*new ValidatingXmlFeedOutputter(lakeViewValidator(),*/ new SerializingFeedOutputter()/*)*/;
-    }
+	private static final String SCHEMA_VERSION = "0_4";
+	private static final String FILENAME_PROVIDER_ID = "CA1.Xbox4oD";
 
-    public @Bean XMLValidator lakeViewValidator() {
-        try {
-            return XMLValidator.forSchemas(ImmutableSet.of(
-                    Resources.getResource("xml.xsd").openStream(), 
-                    Resources.getResource("Lakeview_Content_Catalog_Feed.xsd").openStream()
-                ));
-        } catch (Exception e) {
-            log.record(new AdapterLogEntry(Severity.WARN).withDescription("Couldn't load schemas for Lakeview XML validation").withCause(e));
-            return null;
-        }
-    }
-    
-    public @Bean AzureFileUploader lakeviewAzureUploader() {
-    	return new AzureFileUploader(hostname, account, key, container);
-    	
-    }
-    
-    @PostConstruct
-    public void scheduleTasks() {
-        if(Boolean.parseBoolean(enabled)) {
-        	LakeviewFileUpdater updater = new LakeviewFileUpdater(lakeviewContentFetcher(), lakeviewFeedCompiler(), lakeviewFeedOutputter(), FILENAME_PROVIDER_ID, SCHEMA_VERSION, lakeviewAzureUploader(), new SystemClock(), log);
-            scheduler.schedule(updater.withName("Lakeview Azure updater"), RepetitionRules.every(Duration.standardDays(1)));
-        }        
-    }
+	public @Bean
+	LakeviewController lakeviewController() {
+		return new LakeviewController(lakeviewContentFetcher(),
+				lakeviewFeedCompiler(), lakeviewFeedOutputter());
+	}
+
+	public @Bean
+	LakeviewContentFetcher lakeviewContentFetcher() {
+		return new LakeviewContentFetcher(contentLister, contentResolver);
+	}
+
+	public @Bean
+	LakeviewFeedCompiler lakeviewFeedCompiler() {
+		return new LakeviewFeedCompiler();
+	}
+
+	public @Bean
+	XmlFeedOutputter lakeviewFeedOutputter() {
+		return /* new ValidatingXmlFeedOutputter(lakeViewValidator(), */new SerializingFeedOutputter()/* ) */;
+	}
+
+	public @Bean
+	XMLValidator lakeViewValidator() {
+		try {
+			return XMLValidator.forSchemas(ImmutableSet.of(Resources
+					.getResource("xml.xsd").openStream(), Resources
+					.getResource("Lakeview_Content_Catalog_Feed.xsd")
+					.openStream()));
+		} catch (Exception e) {
+			log.record(new AdapterLogEntry(Severity.WARN).withDescription(
+					"Couldn't load schemas for Lakeview XML validation")
+					.withCause(e));
+			return null;
+		}
+	}
+
+	public @Bean
+	HealthProbe lakeviewHealthProbe() {
+		return new LakeviewServerHealthProbe(new SystemClock(), lakeviewFileValidator(), azureLatestFileDownloader());
+	}
+
+	public @Bean
+	AzureFileUploader lakeviewAzureUploader() {
+		return new AzureFileUploader(hostname, account, key, container);
+
+	}
+	
+	public @Bean
+	AzureLatestFileDownloader azureLatestFileDownloader() {
+		return new AzureLatestFileDownloader(hostname, account, key, container);
+	}
+	
+	public @Bean 
+	LakeviewFileValidator lakeviewFileValidator() {
+		Clock clock = new SystemClock();
+		Builder<LakeviewFeedValidationRule> validationRules = ImmutableList.builder();
+		//validationRules.add(new CompletenessValidationRule(contentLister, 100));
+		validationRules.add(new HeirarchyValidationRule());
+		validationRules.add(new UpToDateValidationRule(5, clock));
+		validationRules.add(new RecentUpdateToBrandValidationRule("http://channel4.com/en-GB/TVSeries/deal-or-no-deal", 5, clock));
+		validationRules.add(new RecentUpdateToBrandValidationRule("http://channel4.com/en-GB/TVSeries/countdown", 5, clock));
+		return new LakeviewFileValidator(validationRules.build());
+	}
+	
+	@PostConstruct
+	public void scheduleTasks() {
+		if (Boolean.parseBoolean(enabled)) {
+			LakeviewFileUpdater updater = new LakeviewFileUpdater(
+					lakeviewContentFetcher(), lakeviewFeedCompiler(),
+					lakeviewFeedOutputter(), FILENAME_PROVIDER_ID,
+					SCHEMA_VERSION, lakeviewAzureUploader(), new SystemClock(),
+					log);
+			scheduler.schedule(updater.withName("Lakeview Azure updater"),
+					RepetitionRules.every(Duration.standardDays(1)));
+		}
+	}
 }
