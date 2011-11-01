@@ -14,8 +14,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor.TaskCanceller;
+import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.joda.time.DateTime;
@@ -47,7 +48,7 @@ public class RadioPlayerRecordingExecutorTest {
 
             @Override
             public RadioPlayerFTPUploadResult call() throws Exception {
-                return new RadioPlayerFTPUploadResult(new FTPUploadResult("file", new DateTime(), FTPUploadResultType.SUCCESS), service, date);
+                return new RadioPlayerFTPUploadResult(new FileUploadResult("file", new DateTime(), FileUploadResultType.SUCCESS), service, date);
             }
         }));
 

@@ -1,11 +1,11 @@
-package org.atlasapi.feeds.radioplayer.upload;
+package org.atlasapi.feeds.upload;
 
-public class FTPUpload {
+public class FileUpload {
 
     private final String filename;
     private final byte[] fileData;
 
-    public FTPUpload(String filename, byte[] fileData) {
+    public FileUpload(String filename, byte[] fileData) {
         this.filename = filename;
         this.fileData = fileData;
     }

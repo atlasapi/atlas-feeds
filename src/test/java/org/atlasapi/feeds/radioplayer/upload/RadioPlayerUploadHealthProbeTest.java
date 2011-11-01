@@ -1,14 +1,15 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType.FAILURE;
-import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType.SUCCESS;
+import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.FAILURE;
+import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
+import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Test;
@@ -84,7 +85,7 @@ public class RadioPlayerUploadHealthProbeTest {
     public void testFutureFailureIsInfo() {
         
         DateTime futureDay = new DateTime().plusDays(4);
-        FTPUploadResult upResult = new FTPUploadResult(String.format("%s_%s_PI.xml", futureDay.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), new DateTime(DateTimeZones.UTC), FAILURE);
+        FileUploadResult upResult = new FileUploadResult(String.format("%s_%s_PI.xml", futureDay.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), new DateTime(DateTimeZones.UTC), FAILURE);
         RadioPlayerFTPUploadResult rpResult = new RadioPlayerFTPUploadResult(upResult.filename(), upResult.uploadTime(), upResult.type(), SERVICE, futureDay.toLocalDate());
         
         recorder.record(rpResult);
@@ -103,7 +104,7 @@ public class RadioPlayerUploadHealthProbeTest {
         return result(successDate, FAILURE);
     }
 
-    public RadioPlayerFTPUploadResult result(DateTime successDate, FTPUploadResultType type) {
+    public RadioPlayerFTPUploadResult result(DateTime successDate, FileUploadResultType type) {
         return new RadioPlayerFTPUploadResult(String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type, SERVICE, successDate.toLocalDate());
     }
 }

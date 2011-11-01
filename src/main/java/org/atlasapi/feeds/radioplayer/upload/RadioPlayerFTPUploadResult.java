@@ -1,22 +1,23 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.upload.FileUploadResult;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 
-public class RadioPlayerFTPUploadResult extends FTPUploadResult {
+public class RadioPlayerFTPUploadResult extends FileUploadResult {
 
     private final RadioPlayerService service;
     private final LocalDate day;
-    private FTPUploadResultType processSuccess;
+    private FileUploadResultType processSuccess;
 
-    public RadioPlayerFTPUploadResult(String filename, DateTime dateTime, FTPUploadResultType success, RadioPlayerService service, LocalDate day) {
+    public RadioPlayerFTPUploadResult(String filename, DateTime dateTime, FileUploadResultType success, RadioPlayerService service, LocalDate day) {
         super(filename, dateTime, success);
         this.service = service;
         this.day = day;
     }
 
-    public RadioPlayerFTPUploadResult(FTPUploadResult upload, RadioPlayerService service, LocalDate localDate) {
+    public RadioPlayerFTPUploadResult(FileUploadResult upload, RadioPlayerService service, LocalDate localDate) {
         super(upload.filename(), upload.uploadTime(), upload.type());
         this.service = service;
         this.day = localDate;
@@ -25,7 +26,7 @@ public class RadioPlayerFTPUploadResult extends FTPUploadResult {
         withMessage(upload.message());
     }
     
-    public RadioPlayerFTPUploadResult withProcessSuccess(FTPUploadResultType processSuccess) {
+    public RadioPlayerFTPUploadResult withProcessSuccess(FileUploadResultType processSuccess) {
         this.processSuccess = processSuccess;
         return this;
     }
@@ -38,7 +39,7 @@ public class RadioPlayerFTPUploadResult extends FTPUploadResult {
         return day;
     }
     
-    public FTPUploadResultType processSuccess() {
+    public FileUploadResultType processSuccess() {
         return processSuccess;
     }
 }

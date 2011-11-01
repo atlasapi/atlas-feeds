@@ -20,12 +20,14 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -46,7 +48,8 @@ public class LakeviewFeedCompiler {
             });
     private static final DateTimeFormatter DATETIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
     private static final XMLNamespace LAKEVIEW = new XMLNamespace("", "http://schemas.microsoft.com/Lakeview/2011/06/13/ingestion");
-
+    private static final String PROVIDER_ID = "0x484707D1";
+    
     private final Clock clock;
 
     public LakeviewFeedCompiler(Clock clock) {
@@ -135,10 +138,11 @@ public class LakeviewFeedCompiler {
 
     private Element createBrandElem(Brand brand, DateTime originalPublicationDate, DateTime brandEndDate, String lastModified, LakeviewContentGroup contentGroup) {
         Element element = createElement("TVSeries", LAKEVIEW);
+        element.appendChild(stringElement("Provider", LAKEVIEW, PROVIDER_ID));
         element.appendChild(stringElement("ItemId", LAKEVIEW, brandId(brand.getCanonicalUri())));
         element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle()));
         
-        appendCommonElements(element, brand, originalPublicationDate, lastModified);
+        appendCommonElements(element, brand, originalPublicationDate, lastModified, brandAtomUri(brand.getCanonicalUri()), null);
         element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(contentGroup.contents().keySet().size())));
         
         if (brand.getPresentationChannel() != null && Channel.fromKey(brand.getPresentationChannel()).hasValue()) {
@@ -165,6 +169,7 @@ public class LakeviewFeedCompiler {
 
     private Element createSeriesElem(Series series, Brand parent, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVSeason", LAKEVIEW);
+        element.appendChild(stringElement("Provider", LAKEVIEW, PROVIDER_ID));
         element.appendChild(stringElement("ItemId", LAKEVIEW, seriesId(series.getCanonicalUri())));
         
         if(Strings.isNullOrEmpty(series.getTitle()) || series.getTitle().matches("(?i)series \\d+")) {
@@ -173,7 +178,7 @@ public class LakeviewFeedCompiler {
             element.appendChild(stringElement("Title", LAKEVIEW, series.getTitle()));
         }
         
-        appendCommonElements(element, series, originalPublicationDate, lastModified);
+        appendCommonElements(element, series, originalPublicationDate, lastModified, seriesAtomUri(series.getCanonicalUri()), null);
         
         element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(((Series) series).getSeriesNumber())));
         element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(((Series) series).getParent().getUri())));
@@ -183,6 +188,7 @@ public class LakeviewFeedCompiler {
 
     private Element createEpisodeElem(Episode episode, Brand container, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVEpisode", LAKEVIEW);
+        element.appendChild(stringElement("Provider", LAKEVIEW, PROVIDER_ID));
         element.appendChild(stringElement("ItemId", LAKEVIEW, episodeId(episode.getCanonicalUri())));
         
         if(Strings.isNullOrEmpty(episode.getTitle()) || episode.getTitle().matches("(?i)(series \\d+)? episode \\d+")) {
@@ -190,10 +196,27 @@ public class LakeviewFeedCompiler {
         } else {
             element.appendChild(stringElement("Title", LAKEVIEW, episode.getTitle()));
         }
-        
-        appendCommonElements(element, episode, originalPublicationDate, lastModified);
-
-        element.appendChild(stringElement("ApplicationSpecificData", LAKEVIEW, extract4OdId(episode)));
+    
+    	Element instances = createElement("Instances", LAKEVIEW);
+    	Element videoInstance = createElement("VideoInstance", LAKEVIEW);
+    	videoInstance.appendChild(stringElement("Device", LAKEVIEW, "Xbox360"));
+    	
+    	Element availabilities = createElement("Availabilities", LAKEVIEW);
+    	Element availability = createElement("Availability", LAKEVIEW);
+    	availability.appendChild(stringElement("OfferType", LAKEVIEW, "FreeWithAds"));
+    	availability.appendChild(stringElement("StartDateTime", LAKEVIEW, extractFirstAvailabilityDate(episode).toString(DATETIME_FORMAT)));
+    	availability.appendChild(stringElement("EndDateTime", LAKEVIEW, extractLastAvailabilityDate(episode).toString(DATETIME_FORMAT)));
+    	
+    	availabilities.appendChild(availability);
+    	videoInstance.appendChild(availabilities);
+    	videoInstance.appendChild(stringElement("ResolutionFormat", LAKEVIEW, "SD"));
+    	videoInstance.appendChild(stringElement("DeliveryFormat", LAKEVIEW, "Streaming"));
+    	videoInstance.appendChild(stringElement("PrimaryAudioLanguage", LAKEVIEW, "en-GB"));
+    	videoInstance.appendChild(stringElement("VideoInstanceType", LAKEVIEW, "Full"));
+    	
+    	instances.appendChild(videoInstance);        	
+    
+        appendCommonElements(element, episode, originalPublicationDate, lastModified, episodeAtomUri(episode.getCanonicalUri(), extractAssetId(episode)), instances);
         
         element.appendChild(stringElement("EpisodeNumber", LAKEVIEW, String.valueOf(episode.getEpisodeNumber())));
         element.appendChild(stringElement("DurationInSeconds", LAKEVIEW, String.valueOf(duration(episode))));
@@ -221,8 +244,21 @@ public class LakeviewFeedCompiler {
         for (Version version : episode.getVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if(location.getPolicy() != null && location.getPolicy().getAvailabilityStart() != null) {
+                    if(location.getPolicy() != null && Platform.XBOX.equals(location.getPolicy().getPlatform()) && location.getPolicy().getAvailabilityStart() != null) {
                         return location.getPolicy().getAvailabilityStart();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
+    private DateTime extractLastAvailabilityDate(Episode episode) {
+        for (Version version : episode.getVersions()) {
+            for (Encoding encoding : version.getManifestedAs()) {
+                for (Location location : encoding.getAvailableAt()) {
+                    if(location.getPolicy() != null && Platform.XBOX.equals(location.getPolicy().getPlatform()) && location.getPolicy().getAvailabilityStart() != null) {
+                        return location.getPolicy().getAvailabilityEnd();
                     }
                 }
             }
@@ -247,12 +283,14 @@ public class LakeviewFeedCompiler {
         return broadcasts;
     }
 
-    private String extract4OdId(Episode episode) {
+    private String extractAssetId(Episode episode) {
         for (Version version : episode.getVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if(location.getTransportType().equals(TransportType.LINK)) {
-                        Pattern pattern = Pattern.compile(".*#(\\d+)$");
+                    if(location.getTransportType().equals(TransportType.LINK)
+                    		&& location.getPolicy() != null 
+                    		&& Platform.XBOX.equals(location.getPolicy().getPlatform())) {
+                        Pattern pattern = Pattern.compile(".*asset/(\\d+)$");
                         Matcher matcher = pattern.matcher(location.getUri());
                         if(matcher.matches()) {
                             return matcher.group(1);                            
@@ -264,7 +302,8 @@ public class LakeviewFeedCompiler {
         return "NONE";
     }
 
-    private void appendCommonElements(Element element, Content content, DateTime originalPublicationDate, String lastModified) {
+    private void appendCommonElements(Element element, Content content, DateTime originalPublicationDate, String lastModified, String applicationSpecificData,
+    		Element instances) {
         
         if(!Strings.isNullOrEmpty(content.getDescription())) {
             element.appendChild(stringElement("Description", LAKEVIEW, content.getDescription()));
@@ -298,18 +337,40 @@ public class LakeviewFeedCompiler {
         Element pc = createElement("ParentalControl", LAKEVIEW);
         pc.appendChild(stringElement("HasGuidance", LAKEVIEW, String.valueOf(true)));
         element.appendChild(pc);
+        
+        if(instances != null) {
+        	element.appendChild(instances);
+        }
+        
         element.appendChild(stringElement("PublicWebUri", LAKEVIEW, String.format("%s.atom", content.getCanonicalUri())));
-
+        if(applicationSpecificData != null) {
+        	element.appendChild(stringElement("ApplicationSpecificData", LAKEVIEW, applicationSpecificData));
+        }
         element.appendChild(stringElement("OriginalPublicationDate", LAKEVIEW, originalPublicationDate.toString(DATETIME_FORMAT)));
     }
 
     private static final String ID_PREFIX = "http://channel4.com/en-GB";
     private static final String C4_PROG_BASE = "http://www.channel4.com/programmes/";
+    private static final String C4_API_BASE = "http://www.channel4.com/pmlsd/";
     
     private String brandId(String brandUri) {
         return String.format("%s/TVSeries/%s", ID_PREFIX, brandUri.replaceAll(C4_PROG_BASE, ""));
     }
 
+    @VisibleForTesting
+    public String brandAtomUri(String brandUri) {
+    	return String.format("%s%s/4od.atom", C4_API_BASE, brandUri.replaceAll(C4_PROG_BASE, ""));
+    }
+    
+    @VisibleForTesting
+    public String seriesAtomUri(String seriesUri) {
+    	return String.format("%s%s/4od.atom#%s", C4_API_BASE, seriesUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide.*", ""), seriesUri.replaceAll(C4_PROG_BASE + ".*/episode-guide/", ""));
+    }
+    
+    @VisibleForTesting
+    public String episodeAtomUri(String episodeUri, String assetId) {
+    	return String.format("%s%s/4od.atom#%s", C4_API_BASE, episodeUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide.*", ""), assetId);
+    }
     private String seriesId(String seriesUri) {
         return String.format("%s/TVSeason/%s", ID_PREFIX, seriesUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "-"));
     }

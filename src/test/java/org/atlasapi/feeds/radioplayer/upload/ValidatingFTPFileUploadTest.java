@@ -7,7 +7,11 @@ import static org.hamcrest.Matchers.is;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
+import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.FileUpload;
+import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.ValidatingFileUploader;
+import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -30,20 +34,20 @@ public class ValidatingFTPFileUploadTest {
         
         Mockery context = new Mockery();
         
-        final FTPFileUploader delegate = context.mock(FTPFileUploader.class);
+        final FileUploader delegate = context.mock(FileUploader.class);
         
         String filename = "test";
-        final FTPUploadResult successfulUpload = FTPUploadResult.successfulUpload(filename);
+        final FileUploadResult successfulUpload = FileUploadResult.successfulUpload(filename);
         byte[] fileData = bytesFromResource("org/atlasapi/feeds/radioplayer/basicPIFeedTest.xml");
         
-        ValidatingFTPFileUploader uploadTask = new ValidatingFTPFileUploader(validator, delegate);
+        ValidatingFileUploader uploadTask = new ValidatingFileUploader(validator, delegate);
         
         context.checking(new Expectations(){{
-            one(delegate).upload(with(any(FTPUpload.class))); 
+            one(delegate).upload(with(any(FileUpload.class))); 
                 will(returnValue(successfulUpload));
         }});
         
-        FTPUploadResult result = uploadTask.upload(new FTPUpload(filename , fileData));
+        FileUploadResult result = uploadTask.upload(new FileUpload(filename , fileData));
         
         assertThat(result, is(equalTo(successfulUpload)));
     }
@@ -62,19 +66,19 @@ public class ValidatingFTPFileUploadTest {
         
         Mockery context = new Mockery();
         
-        final FTPFileUploader delegate = context.mock(FTPFileUploader.class);
+        final FileUploader delegate = context.mock(FileUploader.class);
         
         String filename = "test";
         byte[] fileData = bytesFromResource("org/atlasapi/feeds/radioplayer/invalidPIFeedTest.xml");
         
-        ValidatingFTPFileUploader uploadTask = new ValidatingFTPFileUploader(validator, delegate);
+        ValidatingFileUploader uploadTask = new ValidatingFileUploader(validator, delegate);
         
         context.checking(new Expectations(){{
-            never(delegate).upload(with(any(FTPUpload.class)));
+            never(delegate).upload(with(any(FileUpload.class)));
         }});
         
-        FTPUploadResult result = uploadTask.upload(new FTPUpload(filename, fileData));
-        assertThat(result.type(), is(equalTo(FTPUploadResultType.FAILURE)));
+        FileUploadResult result = uploadTask.upload(new FileUpload(filename, fileData));
+        assertThat(result.type(), is(equalTo(FileUploadResultType.FAILURE)));
     }
 
 }

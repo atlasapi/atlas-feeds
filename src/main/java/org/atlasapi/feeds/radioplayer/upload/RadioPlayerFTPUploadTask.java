@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.failedUpload;
+import static org.atlasapi.feeds.upload.FileUploadResult.failedUpload;
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.DEBUG;
 import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.ERROR;
 
@@ -11,6 +11,11 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
+import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.FileUpload;
+import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.LoggingFileUploader;
+import org.atlasapi.feeds.upload.ValidatingFileUploader;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
@@ -20,14 +25,14 @@ import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadResult> {
 
-    private final FTPFileUploader uploader;
+    private final FileUploader uploader;
     private final LocalDate day;
     private final RadioPlayerService service;
 
     private XMLValidator validator;
     private AdapterLog log;
 
-    public RadioPlayerFTPUploadTask(FTPFileUploader uploader, LocalDate day, RadioPlayerService service) {
+    public RadioPlayerFTPUploadTask(FileUploader uploader, LocalDate day, RadioPlayerService service) {
         this.uploader = uploader;
         this.day = day;
         this.service = service;
@@ -38,14 +43,14 @@ public class RadioPlayerFTPUploadTask implements Callable<RadioPlayerFTPUploadRe
         return new RadioPlayerFTPUploadResult(compileAndUpload(), service, day);
     }
 
-    private FTPUploadResult compileAndUpload() {
+    private FileUploadResult compileAndUpload() {
         String filename = String.format("%s_%s_PI.xml", day.toString("yyyyMMdd"), service.getRadioplayerId());
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             RadioPlayerFeedCompiler.valueOf("PI").compileFeedFor(day, service, out);
             
-            FTPFileUploader delegate = new LoggingFTPUploader(log, new ValidatingFTPFileUploader(validator, uploader));
-            return delegate.upload(new FTPUpload(filename, out.toByteArray()));
+            FileUploader delegate = new LoggingFileUploader(log, new ValidatingFileUploader(validator, uploader));
+            return delegate.upload(new FileUpload(filename, out.toByteArray()));
             
         } catch (InterruptedException e) {
             log.record(new AdapterLogEntry(ERROR).withCause(e).withDescription("Upload of " + filename + " was interrupted").withSource(getClass()));

@@ -1,8 +1,10 @@
-package org.atlasapi.feeds.radioplayer.upload;
+package org.atlasapi.feeds.upload.ftp;
 
 import static com.metabroadcast.common.persistence.mongo.MongoConstants.ID;
 
-import org.atlasapi.feeds.radioplayer.upload.FTPUploadResult.FTPUploadResultType;
+import org.atlasapi.feeds.radioplayer.upload.ExceptionSummaryTranslator;
+import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 
 import com.metabroadcast.common.persistence.translator.TranslatorUtils;
 import com.mongodb.BasicDBObject;
@@ -12,7 +14,7 @@ public class FTPUploadResultTranslator {
 
     private ExceptionSummaryTranslator exceptionTranslator = new ExceptionSummaryTranslator();
 
-    public DBObject toDBObject(FTPUploadResult result) {
+    public DBObject toDBObject(FileUploadResult result) {
 
         DBObject dbo = new BasicDBObject();
 
@@ -32,13 +34,13 @@ public class FTPUploadResultTranslator {
         return dbo;
     }
 
-    private String id(FTPUploadResult result) {
+    private String id(FileUploadResult result) {
         return result.type() + ":" + result.filename();
     }
 
-    public FTPUploadResult fromDBObject(DBObject dbo) {
+    public FileUploadResult fromDBObject(DBObject dbo) {
 
-        FTPUploadResult result = new FTPUploadResult(TranslatorUtils.toString(dbo, "filename"), TranslatorUtils.toDateTime(dbo, "time"), FTPUploadResultType.valueOf(TranslatorUtils.toString(dbo,
+        FileUploadResult result = new FileUploadResult(TranslatorUtils.toString(dbo, "filename"), TranslatorUtils.toDateTime(dbo, "time"), FileUploadResultType.valueOf(TranslatorUtils.toString(dbo,
                 "type")));
 
         result.withMessage(TranslatorUtils.toString(dbo, "message"));
