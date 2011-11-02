@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import com.metabroadcast.common.health.HealthProbe;
+import com.metabroadcast.common.scheduling.RepetitionRule;
 import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
 import com.metabroadcast.common.time.Clock;
@@ -38,6 +39,8 @@ import com.metabroadcast.common.time.SystemClock;
 @Configuration
 public class LakeviewModule {
 
+	private final static RepetitionRule LAKEVIEW_UPLOAD = RepetitionRules.every(Duration.standardDays(1)).withOffset(Duration.standardHours(4));
+	
 	@Autowired
 	ContentLister contentLister;
 	@Autowired
@@ -117,7 +120,7 @@ public class LakeviewModule {
 	LakeviewFileValidator lakeviewFileValidator() {
 		Clock clock = new SystemClock();
 		Builder<LakeviewFeedValidationRule> validationRules = ImmutableList.builder();
-		validationRules.add(new CompletenessValidationRule(contentLister, 100));
+		//validationRules.add(new CompletenessValidationRule(contentLister, 100));
 		validationRules.add(new HeirarchyValidationRule());
 		validationRules.add(new UpToDateValidationRule(5, clock));
 		validationRules.add(new RecentUpdateToBrandValidationRule("http://channel4.com/en-GB/TVSeries/deal-or-no-deal", 5, clock));
@@ -134,7 +137,7 @@ public class LakeviewModule {
 					SCHEMA_VERSION, lakeviewAzureUploader(), new SystemClock(),
 					log);
 			scheduler.schedule(updater.withName("Lakeview Azure updater"),
-					RepetitionRules.every(Duration.standardDays(1)));
+					LAKEVIEW_UPLOAD);
 		}
 	}
 }
