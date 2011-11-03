@@ -142,7 +142,7 @@ public class LakeviewFeedCompiler {
         element.appendChild(stringElement("ItemId", LAKEVIEW, brandId(brand.getCanonicalUri())));
         element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle()));
         
-        appendCommonElements(element, brand, originalPublicationDate, lastModified, brandAtomUri(brand.getCanonicalUri()), null);
+        appendCommonElements(element, brand, originalPublicationDate, lastModified, null, null);
         element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(contentGroup.contents().keySet().size())));
         
         if (brand.getPresentationChannel() != null && Channel.fromKey(brand.getPresentationChannel()).hasValue()) {
@@ -178,7 +178,7 @@ public class LakeviewFeedCompiler {
             element.appendChild(stringElement("Title", LAKEVIEW, series.getTitle()));
         }
         
-        appendCommonElements(element, series, originalPublicationDate, lastModified, seriesAtomUri(series.getCanonicalUri()), null);
+        appendCommonElements(element, series, originalPublicationDate, lastModified, null, null);
         
         element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(((Series) series).getSeriesNumber())));
         element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(((Series) series).getParent().getUri())));
@@ -351,18 +351,20 @@ public class LakeviewFeedCompiler {
 
     private static final String ID_PREFIX = "http://channel4.com/en-GB";
     private static final String C4_PROG_BASE = "http://www.channel4.com/programmes/";
-    private static final String C4_API_BASE = "http://www.channel4.com/pmlsd/";
+    private static final String C4_API_BASE = "https://xbox.channel4.com/pmlsd/";
     
     private String brandId(String brandUri) {
         return String.format("%s/TVSeries/%s", ID_PREFIX, brandUri.replaceAll(C4_PROG_BASE, ""));
     }
 
     @VisibleForTesting
+    @Deprecated
     public String brandAtomUri(String brandUri) {
     	return String.format("%s%s/4od.atom", C4_API_BASE, brandUri.replaceAll(C4_PROG_BASE, ""));
     }
     
     @VisibleForTesting
+    @Deprecated
     public String seriesAtomUri(String seriesUri) {
     	return String.format("%s%s/4od.atom#%s", C4_API_BASE, seriesUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide.*", ""), seriesUri.replaceAll(C4_PROG_BASE + ".*/episode-guide/", ""));
     }
