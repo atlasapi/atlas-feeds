@@ -1,17 +1,15 @@
 package org.atlasapi.feeds.lakeview;
 
+import javax.annotation.PostConstruct;
+
+import org.atlasapi.feeds.lakeview.upload.LakeviewFileUpdater;
 import org.atlasapi.feeds.lakeview.validation.AzureLatestFileDownloader;
 import org.atlasapi.feeds.lakeview.validation.LakeviewFileValidator;
 import org.atlasapi.feeds.lakeview.validation.LakeviewServerHealthProbe;
-import org.atlasapi.feeds.lakeview.validation.rules.CompletenessValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.HeirarchyValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.LakeviewFeedValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.RecentUpdateToBrandValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.UpToDateValidationRule;
-
-import javax.annotation.PostConstruct;
-
-import org.atlasapi.feeds.lakeview.upload.LakeviewFileUpdater;
 import org.atlasapi.feeds.upload.azure.AzureFileUploader;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.persistence.content.ContentResolver;

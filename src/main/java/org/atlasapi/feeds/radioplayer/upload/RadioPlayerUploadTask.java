@@ -1,113 +1,101 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
-import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.INFO;
-import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.WARN;
+import static org.atlasapi.feeds.upload.FileUploadResult.failedUpload;
+import static org.atlasapi.persistence.logging.AdapterLogEntry.debugEntry;
+import static org.atlasapi.persistence.logging.AdapterLogEntry.errorEntry;
 
-import java.util.List;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 
+import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.feeds.upload.FileUploader;
-import org.atlasapi.feeds.xml.XMLValidator;
+import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
+import org.atlasapi.feeds.upload.FileUpload;
+import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.persistence.logging.AdapterLog;
-import org.atlasapi.persistence.logging.AdapterLogEntry;
-import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
-import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.joda.time.Period;
-import org.joda.time.format.PeriodFormat;
 
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.metabroadcast.common.time.DateTimeZones;
-import com.metabroadcast.common.time.DayRangeGenerator;
 
-public class RadioPlayerUploadTask implements Runnable {
+public class RadioPlayerUploadTask implements Callable<Iterable<RadioPlayerUploadResult>> {
 
-    private final Iterable<RadioPlayerService> services;
-    private final RadioPlayerRecordingExecutor executor;
-    private final FileUploader uploader;
+    private final Iterable<FileUploadService> remoteTargets;
+    private final LocalDate day;
+    private final RadioPlayerService service;
+    private final AdapterLog log;
 
-    private DayRangeGenerator dayRangeGenerator;
-    private Iterable<LocalDate> dayRange;
-
-    private XMLValidator validator;
-    private AdapterLog log;
-
-    public RadioPlayerUploadTask(FileUploader uploader, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator) {
-        this.uploader = uploader;
-        this.executor = executor;
-        this.services = services;
-        this.dayRangeGenerator = dayRangeGenerator;
-    }
-
-    public RadioPlayerUploadTask(FileUploader uploader, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, Iterable<LocalDate> dayRange) {
-        this.uploader = uploader;
-        this.executor = executor;
-        this.services = services;
-        this.dayRange = dayRange;
+    public RadioPlayerUploadTask(Iterable<FileUploadService> remoteTargets, LocalDate day, RadioPlayerService service, AdapterLog log) {
+        this.remoteTargets = remoteTargets;
+        this.day = day;
+        this.service = service;
+        this.log = log;
     }
 
     @Override
-    public void run() {
-        DateTime start = new DateTime(DateTimeZones.UTC);
-
-        int serviceCount = Iterables.size(services);
-        Iterable<LocalDate> days = dayRange != null ? dayRange : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
-        log(String.format("Radioplayer Uploader starting for %s services for %s days", serviceCount, Iterables.size(days)), INFO);
-
-        List<Callable<RadioPlayerFTPUploadResult>> uploadTasks = Lists.newArrayListWithCapacity(Iterables.size(days) * serviceCount);
-        for (RadioPlayerService service : services) {
-            for (LocalDate day : days) {
-                uploadTasks.add(new RadioPlayerFTPUploadTask(uploader, day, service).withValidator(validator).withLog(log));
-            }
+    public Iterable<RadioPlayerUploadResult> call() throws Exception {
+        final String filename = String.format("%s_%s_PI.xml", day.toString("yyyyMMdd"), service.getRadioplayerId());
+        
+        try {
+            byte[] filebytes = getFileContent();
+            FileUpload upload = new FileUpload(filename, filebytes);
+            return doUploads(upload);
+        } catch (NoItemsException e) {
+            logNotItemsException(filename, e);
+            return failedUploads(filename, e);
         }
+        
+    }
 
-        LinkedBlockingQueue<Future<RadioPlayerFTPUploadResult>> results = executor.submit(uploadTasks);
-
-        int successes = 0;
-        for (int i = 0; i < uploadTasks.size(); i++) {
+    private byte[] getFileContent() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        RadioPlayerFeedCompiler.valueOf("PI").compileFeedFor(day, service, out);
+        return out.toByteArray();
+    }
+    
+    private Iterable<RadioPlayerUploadResult> doUploads(final FileUpload upload) {
+        ImmutableList.Builder<RadioPlayerUploadResult> results = ImmutableList.builder();
+        for (FileUploadService target : remoteTargets) {
             try {
-                Future<RadioPlayerFTPUploadResult> futureResult = results.take();
-                if(!futureResult.isCancelled()) {
-                    RadioPlayerFTPUploadResult result = futureResult.get();
-                    if (SUCCESS.equals(result.type())) {
-                        successes++;
-                    }
-                }
-            }catch (InterruptedException e) {
-                log("Radioplayer Uploader interrupted waiting for result.", WARN, e);
-            } catch (ExecutionException e) {
-                log("Radioplayer Uploader exception retrieving result", WARN, e);
+                results.add(uploadTo(target, upload));
+            } catch (InterruptedException e) {
+                log.record(errorEntry().withCause(e).withDescription("Upload of " + upload.getFilename() + " was interrupted").withSource(getClass()));
+                results.add(failure(target, upload.getFilename(), e));
+                break;
             }
         }
-
-        String runTime = new Period(start, new DateTime(DateTimeZones.UTC)).toString(PeriodFormat.getDefault());
-        log(String.format("Radioplayer Uploader finished in %s, %s/%s successful.", runTime, successes, uploadTasks.size()), INFO);
+        return results.build();
     }
 
-    private void log(String desc, Severity s) {
-        log(desc, s, null);
+    private RadioPlayerUploadResult uploadTo(FileUploadService uploadService, FileUpload upload) throws InterruptedException {
+        return new RadioPlayerUploadResult(uploadService.serviceIdentifier(), service, day, uploadService.upload(upload));
     }
 
-    private void log(String desc, Severity s, Exception e) {
-        if (log != null) {
-            AdapterLogEntry entry = new AdapterLogEntry(s).withDescription(desc).withSource(getClass());
-            log.record(e != null ? entry.withCause(e) : entry);
+    private Iterable<RadioPlayerUploadResult> failedUploads(final String filename, final NoItemsException e) {
+        return Iterables.transform(remoteTargets, new Function<FileUploadService, RadioPlayerUploadResult>() {
+            @Override
+            public RadioPlayerUploadResult apply(FileUploadService input) {
+                return failure(input, filename, e);
+            }
+
+        });
+    }
+    private RadioPlayerUploadResult failure(FileUploadService input, final String filename, final Exception e) {
+        return new RadioPlayerUploadResult(input.serviceIdentifier(), service, day, failedUpload(filename).withCause(e).withMessage(e.getMessage()));
+    }
+
+    private void logNotItemsException(String filename, NoItemsException e) {
+        if( log != null) {
+            if (!day.isAfter(new LocalDate(DateTimeZones.UTC).plusDays(1)) && !RadioPlayerServices.untracked.contains(service)) {
+                log.record(errorEntry().withDescription("No items for " + filename).withSource(getClass()).withCause(e));
+            } else {
+                log.record(debugEntry().withDescription("No items for " + filename).withSource(getClass()).withCause(e));
+            }
         }
     }
 
-    public RadioPlayerUploadTask withValidator(XMLValidator validator) {
-        this.validator = validator;
-        return this;
-    }
-
-    public RadioPlayerUploadTask withLog(AdapterLog log) {
-        this.log = log;
-        return this;
-    }
 }

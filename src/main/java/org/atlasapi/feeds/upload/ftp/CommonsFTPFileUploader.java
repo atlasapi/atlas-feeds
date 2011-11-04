@@ -1,184 +1,73 @@
 package org.atlasapi.feeds.upload.ftp;
 
-import static org.atlasapi.feeds.upload.FileUploadResult.failedUpload;
-import static org.atlasapi.feeds.upload.FileUploadResult.successfulUpload;
-
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
 
 import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
-import org.apache.commons.net.ftp.FTPFileFilter;
-import org.apache.commons.net.ftp.FTPReply;
-import org.atlasapi.feeds.upload.FileUploader;
 import org.atlasapi.feeds.upload.FileUpload;
-import org.atlasapi.feeds.upload.FileUploadResult;
-import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
-
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-import com.metabroadcast.common.time.DateTimeZones;
+import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.RemoteServiceDetails;
 
 public class CommonsFTPFileUploader implements FileUploader {
 
-    private static final int TIMEOUT = 15*1000; //15 seconds
-    private static final Duration RECONNECT_DELAY = Duration.standardSeconds(5);
     private static final int UPLOAD_ATTEMPTS = 5;
     
-    private static final FTPFileFilter ftpFilenameFilter = new FTPFileFilter() {
-        @Override
-        public boolean accept(FTPFile file) {
-            return file.isFile() && file.getName().endsWith(".xml") && file.getName().startsWith("20") && ! file.getName().endsWith("SI.xml");
-        }
-    };
+    private final RemoteServiceDetails remoteDetails;
+    private CommonsFTPClientConnector clientConnector;
 
-    private final FTPCredentials credentials;
-
-    public CommonsFTPFileUploader(FTPCredentials credentials) {
-        this.credentials = credentials;
+    public CommonsFTPFileUploader(RemoteServiceDetails remoteDetails) {
+        this.remoteDetails = remoteDetails;
+        this.clientConnector = new CommonsFTPClientConnector();
     }
-
+    
     @Override
-    public FileUploadResult upload(FileUpload upload) throws Exception {
-        return attemptUpload(upload);
+    public void upload(FileUpload upload) throws Exception {
+        attemptUpload(upload);
     }
     
-    public List<FileLastModified> listDir(String dir) {
-        ImmutableList.Builder<FileLastModified> list = ImmutableList.builder();
-        FTPClient client = tryToConnectAndLogin();
-        
-        if (client != null && client.isConnected()) {
-            try {
-                FTPFile[] files = client.listFiles(dir, ftpFilenameFilter);
-                
-                for (FTPFile file: files) {
-                    list.add(new FileLastModified(file.getName(), new DateTime(file.getTimestamp(), DateTimeZones.UTC)));
-                }
-                
-                return list.build();
-            } catch (IOException e) {
-                //TODO: remove
-                e.printStackTrace();
-            } finally {
-                disconnectQuietly(client);
+    private void attemptUpload(FileUpload upload) throws Exception {
+        Exception exception = null;
+        for (int i = 0; i < UPLOAD_ATTEMPTS; i++) {
+            exception = tryConnectAndUpload(upload);
+            if(exception == null) {
+                return;
             }
         }
-        
-        return list.build();
+        throw exception;
     }
     
-    private FileUploadResult attemptUpload(FileUpload upload) throws InterruptedException {
-        FileUploadResult uploadResult = doUpload(upload);
-
-        for (int i = 0; i < UPLOAD_ATTEMPTS && !uploadResult.type().equals(FileUploadResultType.SUCCESS); i++) {
-            Thread.sleep(RECONNECT_DELAY.getMillis());
-            uploadResult = doUpload(upload);
-        }
-
-        return uploadResult;
-    }
-    
-    public FileUploadResult doUpload(FileUpload upload) {
-        String filename = upload.getFilename();
-        FTPClient client = tryToConnectAndLogin();
-        if (client == null) {
-            return failedUpload(filename).withMessage("Failed to connect/login to server").withConnectionSuccess(false);
-        } else if (client.isConnected()) {
-            try {
-                OutputStream stream = client.storeFileStream(filename);
-                if (stream == null) {
-                    return failedUpload(filename).withMessage(String.format("Failed to open stream to server. FTP Response: %s", client.getReplyString()));
-                } else {
-                    stream.write(upload.getFileData());
-                    stream.close();
-                    if (!client.completePendingCommand()) {
-                        return failedUpload(filename).withMessage(String.format("Failed to complete upload to server. FTP Response: %s", client.getReplyString()));
-                    }
-                }
-            } catch (IOException e) {
-                return failedUpload(filename).withMessage("Connection to server dropped: " + e.getMessage()).withCause(e);
-            } finally {
-                disconnectQuietly(client);
-            }
-            return successfulUpload(filename).withMessage("File uploaded successfully");
-        } else {
-            return failedUpload(filename).withMessage("No connection to server").withConnectionSuccess(false);
-        }
-    }
-
-    private FTPClient tryToConnectAndLogin() {
+    public Exception tryConnectAndUpload(FileUpload upload) {
         try {
-            FTPClient client = new FTPClient();
-            client.setConnectTimeout(TIMEOUT);
-
-            client.connect(credentials.server(), credentials.port());
-
-            client.setSoTimeout(TIMEOUT);
-
-            if (!FTPReply.isPositiveCompletion(client.getReplyCode())) {
-                client.disconnect();
-                return null;
+            FTPClient client = clientConnector.connectAndLogin(remoteDetails);
+            
+            if (!client.isConnected()) {
+                return new IllegalStateException("No connection to server");
+            } else {
+                try {
+                    doUpload(client, upload);
+                } finally {
+                    clientConnector.disconnectQuietly(client);
+                }
             }
-
-            client.enterLocalPassiveMode();
-
-            if (!client.login(credentials.username(), credentials.password())) {
-                client.disconnect();
-                return null;
-            }
-
-            return client;
-        } catch (IOException e) {
             return null;
+        } catch (Exception e) {
+            return e;
         }
+       
     }
 
-    public void disconnectQuietly(FTPClient client) {
-        try {
-            client.disconnect();
-        } catch (IOException e) {
-            // ignore failure...
+    private void doUpload(FTPClient client, FileUpload upload) throws IOException {
+        OutputStream stream = client.storeFileStream(upload.getFilename());
+        if (stream == null) {
+            throw new IllegalStateException(String.format("Failed to open file stream: %s %s", client.getReplyCode(), client.getReplyString()));
+        }
+
+        stream.write(upload.getFileData());
+        stream.close();
+        
+        if (!client.completePendingCommand()) {
+            throw new IllegalStateException(String.format("Failed to complete upload: %s %s", client.getReplyCode(), client.getReplyString()));
         }
     }
-
-    public static class FileLastModified {
-        
-        private final String fileName;
-        private final DateTime lastModified;
-
-        public FileLastModified(String fileName, DateTime lastModified) {
-            this.fileName = fileName;
-            this.lastModified = lastModified;
-        }
-        
-        public String fileName() {
-            return fileName;
-        }
-        
-        public DateTime lastModified() {
-            return lastModified;
-        }
-        
-        @Override
-        public boolean equals(Object obj) {
-            if (obj instanceof FileLastModified) {
-                FileLastModified target = (FileLastModified) obj;
-                return Objects.equal(fileName, target.fileName) && Objects.equal(lastModified, target.lastModified);
-            }
-            return false;
-        }
-        
-        @Override
-        public int hashCode() {
-            return fileName.hashCode();
-        }
-        
-        @Override
-        public String toString() {
-            return Objects.toStringHelper(this).addValue(fileName).addValue(lastModified).toString();
-        }
-    }
+    
 }

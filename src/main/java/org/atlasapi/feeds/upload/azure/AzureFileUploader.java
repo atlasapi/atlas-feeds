@@ -1,9 +1,10 @@
 package org.atlasapi.feeds.upload.azure;
 
+import java.net.ConnectException;
 import java.net.URI;
-import org.atlasapi.feeds.upload.FileUploader;
+
 import org.atlasapi.feeds.upload.FileUpload;
-import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.FileUploader;
 import org.soyatec.windowsazure.blob.BlobStorageClient;
 import org.soyatec.windowsazure.blob.IBlobContainer;
 import org.soyatec.windowsazure.blob.IBlobContents;
@@ -12,12 +13,7 @@ import org.soyatec.windowsazure.blob.internal.BlobContents;
 import org.soyatec.windowsazure.blob.internal.BlobProperties;
 import org.soyatec.windowsazure.blob.internal.RetryPolicies;
 import org.soyatec.windowsazure.blob.io.BlobMemoryStream;
-import org.soyatec.windowsazure.error.StorageException;
-import org.soyatec.windowsazure.error.StorageServerException;
 import org.soyatec.windowsazure.internal.util.TimeSpan;
-
-import static org.atlasapi.feeds.upload.FileUploadResult.failedUpload;
-import static org.atlasapi.feeds.upload.FileUploadResult.successfulUpload;
 
 public class AzureFileUploader implements FileUploader {
 		
@@ -42,34 +38,22 @@ public class AzureFileUploader implements FileUploader {
 	}
 
 	@Override
-	public FileUploadResult upload(FileUpload upload) {
+	public void upload(FileUpload upload) throws Exception {
 		
-		try {
-			IBlobProperties properties = new BlobProperties(upload.getFilename());
-			properties.setContentType(CONTENT_TYPE_BINARY);
-			
-			BlobMemoryStream blobStream = new BlobMemoryStream(upload.getFileData());
-			IBlobContents blobContents = new BlobContents(blobStream);
-			
-			IBlobContainer blobContainer = getClient().getBlobContainer(container);
-			
-			if(blobContainer == null) {
-				return failedUpload(upload.getFilename()).withMessage("Could not get container: " + container);
-			}
-			
-			if(blobContainer.createBlockBlob(properties, blobContents) == null) {
-				return failedUpload(upload.getFilename()).withMessage("Could not create block blob").withConnectionSuccess(true);
-			}
-			return successfulUpload(upload.getFilename()).withMessage("File uploaded successfully");
+		IBlobProperties properties = new BlobProperties(upload.getFilename());
+		properties.setContentType(CONTENT_TYPE_BINARY);
+		
+		BlobMemoryStream blobStream = new BlobMemoryStream(upload.getFileData());
+		IBlobContents blobContents = new BlobContents(blobStream);
+		
+		IBlobContainer blobContainer = getClient().getBlobContainer(container);
+		
+		if(blobContainer == null) {
+			throw new ConnectException(String.format("Failed to obtain container named %s", container));
 		}
-		catch(StorageServerException e) {
-			return failedUpload(upload.getFilename()).withCause(e);
-		} 
-		catch (StorageException e) {
-			return failedUpload(upload.getFilename()).withCause(e);
+		
+		if(blobContainer.createBlockBlob(properties, blobContents) == null) {
+			throw new Exception("Failed to create blob");
 		}
 	}
-	
-
-
 }
