@@ -25,7 +25,11 @@ public class FileUploadResultTranslator {
         if (result.exception() != null) {
             TranslatorUtils.from(dbo, "exception", exceptionTranslator.toDBObject(result.exceptionSummary()));
         }
-
+        
+        if (result.remoteProcessingResult() != null) {
+            TranslatorUtils.from(dbo, "remoteCheck", result.remoteProcessingResult());
+        }
+ 
         return dbo;
     }
 
@@ -39,6 +43,10 @@ public class FileUploadResultTranslator {
 
         if (dbo.containsField("exception")) {
             result = result.withExceptionSummary(exceptionTranslator.fromDBObject((DBObject) dbo.get("exception")));
+        }
+        
+        if (dbo.containsField("remoteCheck")) {
+            result = result.withRemoteProcessingResult(FileUploadResultType.valueOf(TranslatorUtils.toString(dbo,"remoteCheck")));
         }
 
         return result;

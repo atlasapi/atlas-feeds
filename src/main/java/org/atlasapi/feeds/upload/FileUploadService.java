@@ -1,10 +1,13 @@
 package org.atlasapi.feeds.upload;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.net.ConnectException;
 
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.joda.time.DateTime;
 
+import com.google.common.base.Function;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class FileUploadService {
@@ -13,8 +16,8 @@ public class FileUploadService {
     private final FileUploader uploader;
 
     public FileUploadService(String serviceIdentifier, FileUploader uploader) {
-        this.serviceIdentifier = serviceIdentifier;
-        this.uploader = uploader;
+        this.serviceIdentifier = checkNotNull(serviceIdentifier);
+        this.uploader = checkNotNull(uploader);
     }
     
     public FileUploadResult upload(FileUpload upload) {
@@ -35,5 +38,11 @@ public class FileUploadService {
     public String serviceIdentifier() {
         return serviceIdentifier;
     }
-    
+
+    public static Function<FileUploadService, String> TO_IDENTIFIER = new Function<FileUploadService, String>() {
+        @Override
+        public String apply(FileUploadService input) {
+            return input.serviceIdentifier;
+        }
+    };
 }

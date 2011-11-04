@@ -28,9 +28,8 @@ import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
-import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
-import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.feeds.upload.RemoteServiceDetails;
 import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
 import org.atlasapi.media.TransportType;
@@ -122,11 +121,10 @@ public class RadioPlayerFileUploaderTest {
 		RadioPlayerFeedCompiler.init(scheduleResolver, contentResolver);
 		
         ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
-        RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("localhost")).withPort(9521).withCredentials(new UsernameAndPassword("test","testpassword")).build();
-		FileUploader fileUploader = new CommonsFTPFileUploader(credentials);
+        RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("127.0.0.1")).withPort(9521).withCredentials(new UsernameAndPassword("test","testpassword")).build();
+        FileUploadService fileUploader = new FileUploadService("remoteService", new CommonsFTPFileUploader(credentials));
 		
-		RadioPlayerScheduledUploadTask uploader = new RadioPlayerScheduledUploadTask(fileUploader, new RadioPlayerRecordingExecutor(recorder), services, new DayRangeGenerator())
-		    .withLog(new SystemOutAdapterLog());
+		RadioPlayerScheduledUploadTask uploader = new RadioPlayerScheduledUploadTask(ImmutableSet.of(fileUploader), new RadioPlayerRecordingExecutor(recorder), services, new DayRangeGenerator(), new SystemOutAdapterLog());
 
 		Executor executor = MoreExecutors.sameThreadExecutor();
 		executor.execute(uploader);
@@ -154,11 +152,11 @@ public class RadioPlayerFileUploaderTest {
         return uploaded;
     }
 
-    private Matcher<FileUploadResult> successfulUploadResult() {
+    private Matcher<RadioPlayerUploadResult> successfulUploadResult() {
         return new FileUploadResultTypeMatcher(FileUploadResultType.SUCCESS);
     }
 	
-	private static class FileUploadResultTypeMatcher extends TypeSafeMatcher<FileUploadResult> {
+	private static class FileUploadResultTypeMatcher extends TypeSafeMatcher<RadioPlayerUploadResult> {
 	    
 	    private final FileUploadResultType type;
 
@@ -173,8 +171,8 @@ public class RadioPlayerFileUploaderTest {
         }
 
         @Override
-        public boolean matchesSafely(FileUploadResult upload) {
-            return type == upload.type();
+        public boolean matchesSafely(RadioPlayerUploadResult upload) {
+            return type == upload.getUpload().type();
         }
     };
 

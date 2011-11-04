@@ -42,7 +42,7 @@ public class FTPFileUploadTest {
         
         startServer();
         
-        RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("localhost")).withPort(9521).withCredentials(new UsernameAndPassword(TEST_USERNAME, TEST_PASSWORD)).build();
+        RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("127.0.0.1")).withPort(9521).withCredentials(new UsernameAndPassword(TEST_USERNAME, TEST_PASSWORD)).build();
         
         FileUploader upload = new CommonsFTPFileUploader(credentials);
         

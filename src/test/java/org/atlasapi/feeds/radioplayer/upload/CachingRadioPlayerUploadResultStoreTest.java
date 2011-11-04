@@ -53,7 +53,7 @@ public class CachingRadioPlayerUploadResultStoreTest {
     public void testEmptyRead() {
         
         context.checking(new Expectations(){{
-            one(delegateStore).resultsFor(remoteService, with(any(RadioPlayerService.class)), with(any(LocalDate.class)));
+            one(delegateStore).resultsFor(with(remoteService), with(any(RadioPlayerService.class)), with(any(LocalDate.class)));
             will(returnValue(ImmutableSet.of(FileUploadResult.successfulUpload("test1"))));
         }});
         

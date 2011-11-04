@@ -9,7 +9,6 @@ import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.feeds.upload.ftp.CommonsDirectoryLister;
 import org.atlasapi.feeds.upload.ftp.CommonsDirectoryLister.FileLastModified;
-import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
@@ -60,18 +59,24 @@ public class RadioPlayerSuccessChecker implements Runnable {
                     }
                 }
 
-                for (RadioPlayerUploadResult result : getCurrentResults(file.fileName())) {
-                    resultStore.record(result.withProcessSuccess(processSuccess));
+                RadioPlayerFilenameMatcher matcher = RadioPlayerFilenameMatcher.on(file.fileName().replace(".xml", ""));
+                if (RadioPlayerFilenameMatcher.hasMatch(matcher)) {
+                    for (FileUploadResult result : getCurrentResults(matcher)) {
+                        resultStore.record(radioPlayerResult(matcher, result.withRemoteProcessingResult(processSuccess)));
+                    }
                 }
+                
             } catch (Exception e) {
                 log.record(new AdapterLogEntry(Severity.ERROR).withDescription("Problem processing file: " + file).withCause(e));
             }
         }
     }
 
-    private Set<FileUploadResult> getCurrentResults(String filename) {
-        filename = filename.replace(".xml", "");
-        RadioPlayerFilenameMatcher matcher = RadioPlayerFilenameMatcher.on(filename);
+    private RadioPlayerUploadResult radioPlayerResult(RadioPlayerFilenameMatcher matcher, FileUploadResult result) {
+        return new RadioPlayerUploadResult(remoteService, matcher.service().requireValue(), matcher.date().requireValue(), result);
+    }
+
+    private Set<FileUploadResult> getCurrentResults(RadioPlayerFilenameMatcher matcher) {
         if (RadioPlayerFilenameMatcher.hasMatch(matcher)) {
             return ImmutableSet.copyOf(resultStore.resultsFor(remoteService, matcher.service().requireValue(), matcher.date().requireValue()));
         }

@@ -45,6 +45,18 @@ public final class FileUploadResult {
             return r1.type().compareTo(r2.type());
         }
     });
+    
+    public static FileUploadResult successfulUpload(String filename) {
+        return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.SUCCESS);
+    }
+
+    public static FileUploadResult failedUpload(String filename) {
+        return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.FAILURE);
+    }
+
+    public static FileUploadResult unknownUpload(String filename) {
+        return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.UNKNOWN);
+    }
 
     private final String filename;
     private final DateTime dateTime;
@@ -54,6 +66,7 @@ public final class FileUploadResult {
     private Exception exception;
     private ExceptionSummary exceptionSummary;
     private Boolean successfulConnection = true;
+    private FileUploadResultType remoteProcessingResult;
 
     public FileUploadResult(String filename, DateTime dateTime, FileUploadResultType success) {
         this.filename = filename;
@@ -89,20 +102,12 @@ public final class FileUploadResult {
         return successfulConnection;
     }
     
-    public static FileUploadResult successfulUpload(String filename) {
-        return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.SUCCESS);
-    }
-
-    public static FileUploadResult failedUpload(String filename) {
-        return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.FAILURE);
-    }
-
-    public static FileUploadResult unknownUpload(String filename) {
-        return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.UNKNOWN);
+    public FileUploadResultType remoteProcessingResult() {
+        return remoteProcessingResult;
     }
 
     public FileUploadResult withMessage(String message) {
-        FileUploadResult result = new FileUploadResult(filename, dateTime, success);
+        FileUploadResult result = copy();
         result.message = message;
         return result;
     }
@@ -112,26 +117,42 @@ public final class FileUploadResult {
     }
 
     public FileUploadResult withCause(Exception e) {
-        FileUploadResult result = new FileUploadResult(filename, dateTime, success);
+        FileUploadResult result = copy();
         result.exception = e;
         if (e != null) {
             result.exceptionSummary = new ExceptionSummary(e);
         }
-        return this;
+        return result;
     }
 
     public FileUploadResult withExceptionSummary(ExceptionSummary summary) {
-        FileUploadResult result = new FileUploadResult(filename, dateTime, success);
+        FileUploadResult result = copy();
         result.exceptionSummary = summary;
         return result;
     }
 
     public FileUploadResult withConnectionSuccess(Boolean successfulConnection) {
-        FileUploadResult result = new FileUploadResult(filename, dateTime, success);
+        FileUploadResult result = copy();
         result.successfulConnection = successfulConnection;
         return result;
     }
+    
+    public FileUploadResult withRemoteProcessingResult(FileUploadResultType sucess) {
+        FileUploadResult result = copy();
+        result.remoteProcessingResult = sucess;
+        return result;
+    }
 
+    private FileUploadResult copy() {
+        FileUploadResult result = new FileUploadResult(filename, dateTime, success);
+        result.message = message;
+        result.exception = exception;
+        result.exceptionSummary = exceptionSummary;
+        result.successfulConnection = successfulConnection;
+        result.remoteProcessingResult = remoteProcessingResult;
+        return result;
+    }
+    
     @Override
     public boolean equals(Object that) {
         if (this == that) {

@@ -44,11 +44,11 @@ public class RadioPlayerRecordingExecutorTest {
             one(recorder).record(with(any(RadioPlayerUploadResult.class)));
         }});
 
-        executor.submit(ImmutableSet.<Callable<RadioPlayerUploadResult>> of(new Callable<RadioPlayerUploadResult>() {
+        executor.submit(ImmutableSet.<Callable<Iterable<RadioPlayerUploadResult>>> of(new Callable<Iterable<RadioPlayerUploadResult>>() {
 
             @Override
-            public RadioPlayerUploadResult call() throws Exception {
-                return new RadioPlayerUploadResult(new FileUploadResult("file", new DateTime(), FileUploadResultType.SUCCESS), service, date);
+            public Iterable<RadioPlayerUploadResult> call() throws Exception {
+                return ImmutableSet.of(new RadioPlayerUploadResult("remoteService", service, date, new FileUploadResult("file", new DateTime(), FileUploadResultType.SUCCESS)));
             }
         }));
 
@@ -65,15 +65,15 @@ public class RadioPlayerRecordingExecutorTest {
             never(recorder).record(with(any(RadioPlayerUploadResult.class)));
         }});
 
-        LinkedBlockingQueue<Future<RadioPlayerUploadResult>> results = executor.submit(ImmutableSet.<Callable<RadioPlayerUploadResult>> of(new Callable<RadioPlayerUploadResult>() {
+        LinkedBlockingQueue<Future<Iterable<RadioPlayerUploadResult>>> results = executor.submit(ImmutableSet.<Callable<Iterable<RadioPlayerUploadResult>>> of(new Callable<Iterable<RadioPlayerUploadResult>>() {
             @Override
-            public RadioPlayerUploadResult call() throws Exception {
+            public Iterable<RadioPlayerUploadResult> call() throws Exception {
                 Thread.sleep(20000);
                 return null;
             }
         }));
 
-        Future<RadioPlayerUploadResult> result = results.take();
+        Future<Iterable<RadioPlayerUploadResult>> result = results.take();
         
         assertThat(result.isDone(), is(true));
         

@@ -42,7 +42,7 @@ public class MongoFileUploadResultStore implements FileUploadResultStore {
     }
 
     private Iterable<FileUploadResult> transform(DBObject query) {
-        return Iterables.transform(collection.find(query), new Function<DBObject, FileUploadResult>() {
+        return Iterables.transform(collection.find(query).sort(new BasicDBObject("time", -1)), new Function<DBObject, FileUploadResult>() {
             @Override
             public FileUploadResult apply(DBObject input) {
                 return translator.fromDBObject(input);

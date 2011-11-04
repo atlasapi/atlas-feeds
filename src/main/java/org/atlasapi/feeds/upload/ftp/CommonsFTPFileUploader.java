@@ -7,11 +7,9 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploader;
 import org.atlasapi.feeds.upload.RemoteServiceDetails;
-import org.joda.time.Duration;
 
 public class CommonsFTPFileUploader implements FileUploader {
 
-    private static final Duration RECONNECT_DELAY = Duration.standardSeconds(5);
     private static final int UPLOAD_ATTEMPTS = 5;
     
     private final RemoteServiceDetails remoteDetails;
@@ -24,34 +22,38 @@ public class CommonsFTPFileUploader implements FileUploader {
     
     @Override
     public void upload(FileUpload upload) throws Exception {
-        attemptUpload(upload, UPLOAD_ATTEMPTS);
+        attemptUpload(upload);
     }
     
-    private void attemptUpload(FileUpload upload, int remainingAttempts) throws Exception {
+    private void attemptUpload(FileUpload upload) throws Exception {
+        Exception exception = null;
+        for (int i = 0; i < UPLOAD_ATTEMPTS; i++) {
+            exception = tryConnectAndUpload(upload);
+            if(exception == null) {
+                return;
+            }
+        }
+        throw exception;
+    }
+    
+    public Exception tryConnectAndUpload(FileUpload upload) {
         try {
-            tryConnectAndUpload(upload);
+            FTPClient client = clientConnector.connectAndLogin(remoteDetails);
+            
+            if (!client.isConnected()) {
+                return new IllegalStateException("No connection to server");
+            } else {
+                try {
+                    doUpload(client, upload);
+                } finally {
+                    clientConnector.disconnectQuietly(client);
+                }
+            }
+            return null;
         } catch (Exception e) {
-            if(remainingAttempts == 0) {
-                throw e;
-            }
-            Thread.sleep(RECONNECT_DELAY.getMillis());
-            attemptUpload(upload, remainingAttempts--);
+            return e;
         }
-    }
-    
-    public void tryConnectAndUpload(FileUpload upload) throws Exception {
-        
-        FTPClient client = clientConnector.connectAndLogin(remoteDetails);
-        
-        if (!client.isConnected()) {
-            throw new IllegalStateException("No connection to server");
-        } else {
-            try {
-                doUpload(client, upload);
-            } finally {
-                clientConnector.disconnectQuietly(client);
-            }
-        }
+       
     }
 
     private void doUpload(FTPClient client, FileUpload upload) throws IOException {
