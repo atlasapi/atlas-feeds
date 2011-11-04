@@ -73,7 +73,7 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
         
         private void loadCache() {
             for (final RadioPlayerService service : RadioPlayerServices.services) {
-                cache.put(service, new MapMaker().softValues().expireAfterWrite(10, TimeUnit.MINUTES).makeComputingMap(new Function<LocalDate, Set<FileUploadResult>>() {
+                cache.put(service, new MapMaker().softValues().expireAfterWrite(10, TimeUnit.MINUTES).<LocalDate, Set<FileUploadResult>>makeComputingMap(new Function<LocalDate, Set<FileUploadResult>>() {
                     @Override
                     public Set<FileUploadResult> apply(LocalDate day) {
                         TreeSet<FileUploadResult> set = Sets.newTreeSet(TYPE_ORDERING);
