@@ -31,7 +31,7 @@ public class RadioPlayerUploadHealthProbeTest {
     //    private static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
     public final DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     public final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(new MongoFTPUploadResultStore(mongo), SERVICE, new DayRangeGenerator().withLookAhead(0).withLookBack(0));
-    private RadioPlayerFTPUploadResultStore recorder = new MongoFTPUploadResultStore(mongo);
+    private RadioPlayerUploadResultStore recorder = new MongoFTPUploadResultStore(mongo);
     
     @After
     public void tearDown() {
@@ -86,7 +86,7 @@ public class RadioPlayerUploadHealthProbeTest {
         
         DateTime futureDay = new DateTime().plusDays(4);
         FileUploadResult upResult = new FileUploadResult(String.format("%s_%s_PI.xml", futureDay.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), new DateTime(DateTimeZones.UTC), FAILURE);
-        RadioPlayerFTPUploadResult rpResult = new RadioPlayerFTPUploadResult(upResult.filename(), upResult.uploadTime(), upResult.type(), SERVICE, futureDay.toLocalDate());
+        RadioPlayerUploadResult rpResult = new RadioPlayerUploadResult(upResult.filename(), upResult.uploadTime(), upResult.type(), SERVICE, futureDay.toLocalDate());
         
         recorder.record(rpResult);
         
@@ -96,15 +96,15 @@ public class RadioPlayerUploadHealthProbeTest {
         assertThat(Iterables.getFirst(result.entries(), null).getType(), is(equalTo(ProbeResultType.INFO)));
     }
     
-    public RadioPlayerFTPUploadResult successfulResult(DateTime successDate) {
+    public RadioPlayerUploadResult successfulResult(DateTime successDate) {
         return result(successDate, SUCCESS);
     }
     
-    public RadioPlayerFTPUploadResult failedResult(DateTime successDate) {
+    public RadioPlayerUploadResult failedResult(DateTime successDate) {
         return result(successDate, FAILURE);
     }
 
-    public RadioPlayerFTPUploadResult result(DateTime successDate, FileUploadResultType type) {
-        return new RadioPlayerFTPUploadResult(String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type, SERVICE, successDate.toLocalDate());
+    public RadioPlayerUploadResult result(DateTime successDate, FileUploadResultType type) {
+        return new RadioPlayerUploadResult(String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type, SERVICE, successDate.toLocalDate());
     }
 }

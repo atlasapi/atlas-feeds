@@ -24,12 +24,12 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
     protected static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
 
-    protected final RadioPlayerFTPUploadResultStore store;
+    protected final RadioPlayerUploadResultStore store;
     private final RadioPlayerService service;
     protected final DayRangeGenerator rangeGenerator;
     protected final RadioPlayerFTPUploadResultTranslator translator;
 
-    public RadioPlayerUploadHealthProbe(RadioPlayerFTPUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
+    public RadioPlayerUploadHealthProbe(RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
         this.store = store;
         this.service = service;
         this.rangeGenerator = dayRangeGenerator;
@@ -43,7 +43,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         DayRange dayRange = rangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
         
         for (LocalDate day : dayRange) {
-            result.addEntry(entryFor(day, store.resultsFor(service, day)));
+            result.addEntry(entryFor(day, store.resultsFor(rsi, service, day)));
         }
 
         result.addEntry(uploadAll());
@@ -70,8 +70,8 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     }
 
     private ProbeResultType entryResultType(FileUploadResult mostRecent, LocalDate day) {
-        if (mostRecent instanceof RadioPlayerFTPUploadResult) {
-            RadioPlayerFTPUploadResult rpResult = (RadioPlayerFTPUploadResult) mostRecent;
+        if (mostRecent instanceof RadioPlayerUploadResult) {
+            RadioPlayerUploadResult rpResult = (RadioPlayerUploadResult) mostRecent;
             if (rpResult.processSuccess() != null && rpResult.processSuccess() == FileUploadResultType.FAILURE) {
                 return FAILURE;
             }
@@ -114,8 +114,8 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
             builder.append(result.message());
         }
         builder.append("</td><td>");
-        if (result instanceof RadioPlayerFTPUploadResult) {
-            RadioPlayerFTPUploadResult rpResult = (RadioPlayerFTPUploadResult) result;
+        if (result instanceof RadioPlayerUploadResult) {
+            RadioPlayerUploadResult rpResult = (RadioPlayerUploadResult) result;
             FileUploadResultType processSuccess = rpResult.processSuccess() == null ? FileUploadResultType.UNKNOWN : rpResult.processSuccess();
             builder.append("Processing Result: "+processSuccess.toNiceString());
         }

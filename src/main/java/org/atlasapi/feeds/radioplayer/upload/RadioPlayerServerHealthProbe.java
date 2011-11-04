@@ -5,8 +5,8 @@ import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCESS;
 
 import org.atlasapi.feeds.upload.FileUploadResult;
-import org.atlasapi.feeds.upload.ftp.FTPCredentials;
-import org.atlasapi.feeds.upload.ftp.FTPUploadResultTranslator;
+import org.atlasapi.feeds.upload.RemoteServiceDetails;
+import org.atlasapi.feeds.upload.persistence.FileUploadResultTranslator;
 
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.health.HealthProbe;
@@ -21,13 +21,13 @@ import com.mongodb.DBObject;
 public class RadioPlayerServerHealthProbe implements HealthProbe {
 
     private final DBCollection results;
-    private final FTPCredentials credentials;
-    private final FTPUploadResultTranslator translator;
+    private final RemoteServiceDetails credentials;
+    private final FileUploadResultTranslator translator;
 
-    public RadioPlayerServerHealthProbe(DatabasedMongo mongo, FTPCredentials credentials) {
+    public RadioPlayerServerHealthProbe(DatabasedMongo mongo, RemoteServiceDetails credentials) {
         this.results = mongo.collection("radioplayer");
         this.credentials = credentials;
-        this.translator = new FTPUploadResultTranslator();
+        this.translator = new FileUploadResultTranslator();
     }
 
     @Override

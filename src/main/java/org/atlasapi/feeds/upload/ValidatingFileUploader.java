@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.upload;
 
-import static org.atlasapi.feeds.upload.FileUploadResult.failedUpload;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.ByteArrayInputStream;
 
@@ -8,24 +8,22 @@ import org.atlasapi.feeds.xml.XMLValidator;
 
 public class ValidatingFileUploader implements FileUploader {
 
+    public static ValidatingFileUploader validatingUploader(XMLValidator validator, FileUploader delegate) {
+        return new ValidatingFileUploader(validator, delegate);
+    }
+    
     private final XMLValidator validator;
     private final FileUploader delegate;
 
     public ValidatingFileUploader(XMLValidator validator, FileUploader delegate) {
-        this.validator = validator;
-        this.delegate = delegate;
+        this.validator = checkNotNull(validator);
+        this.delegate = checkNotNull(delegate);
     }
 
     @Override
-    public FileUploadResult upload(FileUpload upload) throws Exception {
-        try {
-            if (validator != null) {
-                validator.validate(new ByteArrayInputStream(upload.getFileData()));
-            }
-        } catch (Exception e) {
-            return failedUpload(upload.getFilename()).withMessage("Failed to validate file").withCause(e).withConnectionSuccess(null);
-        }
-        return delegate.upload(upload);
+    public void upload(FileUpload upload) throws Exception {
+        validator.validate(new ByteArrayInputStream(upload.getFileData()));
+        delegate.upload(upload);
     }
 
 }

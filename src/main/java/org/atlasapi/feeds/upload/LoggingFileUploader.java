@@ -1,13 +1,15 @@
 package org.atlasapi.feeds.upload;
 
-import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.FAILURE;
-import static org.atlasapi.persistence.logging.AdapterLogEntry.Severity.ERROR;
+import static org.atlasapi.persistence.logging.AdapterLogEntry.errorEntry;
 
 import org.atlasapi.persistence.logging.AdapterLog;
-import org.atlasapi.persistence.logging.AdapterLogEntry;
 
 public class LoggingFileUploader implements FileUploader {
 
+    public static LoggingFileUploader loggingUploader(AdapterLog log, FileUploader delegate) {
+        return new LoggingFileUploader(log, delegate);
+    }
+    
     private final AdapterLog log;
     private final FileUploader delegate;
 
@@ -17,18 +19,18 @@ public class LoggingFileUploader implements FileUploader {
     }
 
     @Override
-    public FileUploadResult upload(FileUpload upload) throws Exception {
-        FileUploadResult result = delegate.upload(upload);
-        if (FAILURE.equals(result.type())) {
-            log(result);
+    public void upload(FileUpload upload) throws Exception {
+        try {
+            delegate.upload(upload);
+        } catch (Exception e) {
+            log(upload, e);
+            throw e;
         }
-        return result;
     }
 
-    private void log(FileUploadResult result) {
+    private void log(FileUpload upload, Exception e) {
         if (log != null) {
-            AdapterLogEntry entry = new AdapterLogEntry(ERROR).withDescription(result.filename() + ":" + result.message()).withSource(getClass());
-            log.record(result.exception() == null ? entry : entry.withCause(result.exception()));
+            log.record(errorEntry().withDescription(upload.getFilename() + ":" + e.getMessage()).withSource(getClass()));
         }
     }
 

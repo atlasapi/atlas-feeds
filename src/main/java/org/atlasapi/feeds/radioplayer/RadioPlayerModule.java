@@ -1,18 +1,21 @@
 package org.atlasapi.feeds.radioplayer;
 
+import java.text.ParseException;
+
 import javax.annotation.PostConstruct;
 
-import org.atlasapi.feeds.radioplayer.upload.CachingFTPUploadResultStore;
+import org.atlasapi.feeds.radioplayer.upload.CachingRadioPlayerUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.MongoFTPUploadResultStore;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFTPUploadResultStore;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerSuccessChecker;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskBuilder;
+import org.atlasapi.feeds.upload.RemoteServiceDetails;
+import org.atlasapi.feeds.upload.RemoteServiceDetails.RemoteServiceDetailsBuilder;
 import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
-import org.atlasapi.feeds.upload.ftp.FTPCredentials;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
@@ -33,12 +36,14 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Resources;
+import com.google.common.net.HostSpecifier;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.RepetitionRules.Every;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
+import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.time.DayRangeGenerator;
 import com.metabroadcast.common.webapp.health.HealthController;
 
@@ -76,11 +81,12 @@ public class RadioPlayerModule {
         return new RadioPlayerUploadController(radioPlayerUploadTaskBuilder(), dayRangeGenerator, Configurer.get("rp.health.password", "").get());
     }
     
-    @Bean CommonsFTPFileUploader radioPlayerFileUploader(){
+    @Bean CommonsFTPFileUploader radioPlayerFileUploader() throws ParseException{
+        RemoteServiceDetailsBuilder serviceDetails = RemoteServiceDetails.forServer(HostSpecifier.from(ftpHost)).withPort(ftpPort);
         if(ftpCredentialsHaveBeenSet()) {
-            return new CommonsFTPFileUploader(FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build());
+            return new CommonsFTPFileUploader(serviceDetails.withCredentials(new UsernameAndPassword(ftpUsername, ftpPassword)).build());
         } else {
-            return new CommonsFTPFileUploader(FTPCredentials.forServer("Credentials").withUsername("Set").build());
+            return new CommonsFTPFileUploader(serviceDetails.build());
         }
     }
 
@@ -88,8 +94,8 @@ public class RadioPlayerModule {
 		return ftpHost != null && ftpPort != null && ftpUsername != null && ftpPassword != null;
 	}
     
-    @Bean RadioPlayerFTPUploadResultStore uploadResultRecorder() {
-        return new CachingFTPUploadResultStore(new MongoFTPUploadResultStore(mongo));
+    @Bean RadioPlayerUploadResultStore uploadResultRecorder() {
+        return new CachingRadioPlayerUploadResultStore(new MongoFTPUploadResultStore(mongo));
     }
 
     @Bean XMLValidator radioPlayerValidator() {
@@ -106,7 +112,7 @@ public class RadioPlayerModule {
     }
     
     @Bean RadioPlayerUploadTaskBuilder radioPlayerUploadTaskBuilder() {
-        return new RadioPlayerUploadTaskBuilder(radioPlayerFileUploader(), radioPlayerUploadTaskRunner()).withLog(log).withValidator(radioPlayerValidator());
+        return new RadioPlayerUploadTaskBuilder(radioPlayerFileUploader(), radioPlayerUploadTaskRunner()).withLog(log);
     }
     
     @Bean RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner() {
@@ -117,7 +123,7 @@ public class RadioPlayerModule {
 	public void scheduleTasks() {
 	    RadioPlayerFeedCompiler.init(scheduleResolver, contentResolver);
 		if (ftpCredentialsHaveBeenSet()) {
-		    FTPCredentials credentials = FTPCredentials.forServer(ftpHost).withPort(ftpPort).withUsername(ftpUsername).withPassword(ftpPassword).build();
+		    RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from(ftpHost)).withPort(ftpPort).withCredentials(new UsernameAndPassword(ftpUsername, ftpPassword)).build();
 		    createHealthProbes(credentials);
 	
 		    if (Boolean.parseBoolean(upload)) {
@@ -150,7 +156,7 @@ public class RadioPlayerModule {
         }
     }
 
-    private void createHealthProbes(FTPCredentials credentials) {
+    private void createHealthProbes(RemoteServiceDetails credentials) {
 
         Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>() {
             @Override

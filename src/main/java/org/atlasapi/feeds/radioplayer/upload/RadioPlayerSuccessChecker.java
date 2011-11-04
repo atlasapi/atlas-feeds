@@ -5,9 +5,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerFilenameMatcher;
+import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+import org.atlasapi.feeds.upload.ftp.CommonsDirectoryLister;
+import org.atlasapi.feeds.upload.ftp.CommonsDirectoryLister.FileLastModified;
 import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
-import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader.FileLastModified;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
@@ -21,11 +23,13 @@ public class RadioPlayerSuccessChecker implements Runnable {
     private final static String SUCCESS_DIR = "Processed";
     private final static String FAILURE_DIR = "Failed";
 
-    private final CommonsFTPFileUploader ftp;
-    private final RadioPlayerFTPUploadResultStore resultStore;
+    private final CommonsDirectoryLister ftp;
+    private final RadioPlayerUploadResultStore resultStore;
     private final AdapterLog log;
+    private final String remoteService;
 
-    public RadioPlayerSuccessChecker(CommonsFTPFileUploader ftp, RadioPlayerFTPUploadResultStore resultStore, AdapterLog log) {
+    public RadioPlayerSuccessChecker(String remoteService, CommonsDirectoryLister ftp, RadioPlayerUploadResultStore resultStore, AdapterLog log) {
+        this.remoteService = remoteService;
         this.ftp = ftp;
         this.resultStore = resultStore;
         this.log = log;
@@ -56,7 +60,7 @@ public class RadioPlayerSuccessChecker implements Runnable {
                     }
                 }
 
-                for (RadioPlayerFTPUploadResult result : getCurrentResults(file.fileName())) {
+                for (RadioPlayerUploadResult result : getCurrentResults(file.fileName())) {
                     resultStore.record(result.withProcessSuccess(processSuccess));
                 }
             } catch (Exception e) {
@@ -65,11 +69,11 @@ public class RadioPlayerSuccessChecker implements Runnable {
         }
     }
 
-    private Set<RadioPlayerFTPUploadResult> getCurrentResults(String filename) {
+    private Set<FileUploadResult> getCurrentResults(String filename) {
         filename = filename.replace(".xml", "");
         RadioPlayerFilenameMatcher matcher = RadioPlayerFilenameMatcher.on(filename);
         if (RadioPlayerFilenameMatcher.hasMatch(matcher)) {
-            return resultStore.resultsFor(matcher.service().requireValue(), matcher.date().requireValue());
+            return ImmutableSet.copyOf(resultStore.resultsFor(remoteService, matcher.service().requireValue(), matcher.date().requireValue()));
         }
         return ImmutableSet.of();
     }

@@ -3,7 +3,6 @@ package org.atlasapi.feeds.upload.azure;
 import java.net.URI;
 import org.atlasapi.feeds.upload.FileUploader;
 import org.atlasapi.feeds.upload.FileUpload;
-import org.atlasapi.feeds.upload.FileUploadResult;
 import org.soyatec.windowsazure.blob.BlobStorageClient;
 import org.soyatec.windowsazure.blob.IBlobContainer;
 import org.soyatec.windowsazure.blob.IBlobContents;
@@ -42,7 +41,7 @@ public class AzureFileUploader implements FileUploader {
 	}
 
 	@Override
-	public FileUploadResult upload(FileUpload upload) {
+	public void upload(FileUpload upload) throws Exception {
 		
 		try {
 			IBlobProperties properties = new BlobProperties(upload.getFilename());

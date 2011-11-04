@@ -12,7 +12,7 @@ import com.google.common.collect.Ordering;
 import com.google.inject.internal.Objects;
 import com.metabroadcast.common.time.DateTimeZones;
 
-public class FileUploadResult {
+public final class FileUploadResult {
 
     public enum FileUploadResultType {
         SUCCESS("Success"), 
@@ -49,6 +49,7 @@ public class FileUploadResult {
     private final String filename;
     private final DateTime dateTime;
     private final FileUploadResultType success;
+
     private String message;
     private Exception exception;
     private ExceptionSummary exceptionSummary;
@@ -87,7 +88,7 @@ public class FileUploadResult {
     public Boolean successfulConnection() {
         return successfulConnection;
     }
-
+    
     public static FileUploadResult successfulUpload(String filename) {
         return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.SUCCESS);
     }
@@ -101,26 +102,34 @@ public class FileUploadResult {
     }
 
     public FileUploadResult withMessage(String message) {
-        this.message = message;
-        return this;
+        FileUploadResult result = new FileUploadResult(filename, dateTime, success);
+        result.message = message;
+        return result;
+    }
+    
+    public FileUploadResult withMessage(String pattern, Object... args) {
+        return withMessage(String.format(pattern, args));
     }
 
     public FileUploadResult withCause(Exception e) {
-        this.exception = e;
+        FileUploadResult result = new FileUploadResult(filename, dateTime, success);
+        result.exception = e;
         if (e != null) {
-            this.exceptionSummary = new ExceptionSummary(e);
+            result.exceptionSummary = new ExceptionSummary(e);
         }
         return this;
     }
 
     public FileUploadResult withExceptionSummary(ExceptionSummary summary) {
-        exceptionSummary = summary;
-        return this;
+        FileUploadResult result = new FileUploadResult(filename, dateTime, success);
+        result.exceptionSummary = summary;
+        return result;
     }
 
     public FileUploadResult withConnectionSuccess(Boolean successfulConnection) {
-        this.successfulConnection = successfulConnection;
-        return this;
+        FileUploadResult result = new FileUploadResult(filename, dateTime, success);
+        result.successfulConnection = successfulConnection;
+        return result;
     }
 
     @Override

@@ -28,11 +28,11 @@ import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
-import org.atlasapi.feeds.upload.FileUploader;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.RemoteServiceDetails;
 import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
-import org.atlasapi.feeds.upload.ftp.FTPCredentials;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Channel;
@@ -64,8 +64,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
+import com.google.common.net.HostSpecifier;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.time.DateTimeZones;
 import com.metabroadcast.common.time.DayRangeGenerator;
 
@@ -77,7 +79,7 @@ public class RadioPlayerFileUploaderTest {
 	private final Mockery context = new Mockery();
 	private final KnownTypeContentResolver contentResolver = context.mock(KnownTypeContentResolver.class);            
 	private final ScheduleResolver scheduleResolver = context.mock(ScheduleResolver.class);
-	private final RadioPlayerFTPUploadResultStore recorder = context.mock(RadioPlayerFTPUploadResultStore.class);
+	private final RadioPlayerUploadResultStore recorder = context.mock(RadioPlayerUploadResultStore.class);
 	
 	private final RadioPlayerService service = RadioPlayerServices.all.get("340");
     private final DateTime day = new DateTime(DateTimeZones.UTC);
@@ -120,10 +122,10 @@ public class RadioPlayerFileUploaderTest {
 		RadioPlayerFeedCompiler.init(scheduleResolver, contentResolver);
 		
         ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
-		FTPCredentials credentials = FTPCredentials.forServer("localhost").withPort(9521).withUsername("test").withPassword("testpassword").build();
+        RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("localhost")).withPort(9521).withCredentials(new UsernameAndPassword("test","testpassword")).build();
 		FileUploader fileUploader = new CommonsFTPFileUploader(credentials);
 		
-		RadioPlayerUploadTask uploader = new RadioPlayerUploadTask(fileUploader, new RadioPlayerRecordingExecutor(recorder), services, new DayRangeGenerator())
+		RadioPlayerScheduledUploadTask uploader = new RadioPlayerScheduledUploadTask(fileUploader, new RadioPlayerRecordingExecutor(recorder), services, new DayRangeGenerator())
 		    .withLog(new SystemOutAdapterLog());
 
 		Executor executor = MoreExecutors.sameThreadExecutor();
@@ -152,15 +154,15 @@ public class RadioPlayerFileUploaderTest {
         return uploaded;
     }
 
-    private Matcher<RadioPlayerFTPUploadResult> successfulUploadResult() {
-        return new FTPUploadResultTypeMatcher<RadioPlayerFTPUploadResult>(FileUploadResultType.SUCCESS);
+    private Matcher<FileUploadResult> successfulUploadResult() {
+        return new FileUploadResultTypeMatcher(FileUploadResultType.SUCCESS);
     }
 	
-	private static class FTPUploadResultTypeMatcher<T extends FileUploadResult> extends TypeSafeMatcher<T> {
+	private static class FileUploadResultTypeMatcher extends TypeSafeMatcher<FileUploadResult> {
 	    
 	    private final FileUploadResultType type;
 
-        public FTPUploadResultTypeMatcher(FileUploadResultType type) {
+        public FileUploadResultTypeMatcher(FileUploadResultType type) {
             this.type = type;
         }
 	    
@@ -171,7 +173,7 @@ public class RadioPlayerFileUploaderTest {
         }
 
         @Override
-        public boolean matchesSafely(T upload) {
+        public boolean matchesSafely(FileUploadResult upload) {
             return type == upload.type();
         }
     };

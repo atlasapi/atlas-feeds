@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
-import org.atlasapi.feeds.upload.ftp.FTPUploadResultTranslator;
+import org.atlasapi.feeds.upload.persistence.FileUploadResultTranslator;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -18,7 +18,7 @@ import com.mongodb.DBObject;
 
 public class RadioPlayerUploadResultTranslatorTest {
 
-    private final FTPUploadResultTranslator translator = new FTPUploadResultTranslator();
+    private final FileUploadResultTranslator translator = new FileUploadResultTranslator();
     
     @Test
     public void testCodingOfSuccessResult() {
