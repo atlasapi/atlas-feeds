@@ -16,6 +16,7 @@ public class FileUploadResultTranslator {
 
         DBObject dbo = new BasicDBObject();
 
+        TranslatorUtils.from(dbo, "service", result.remote());
         TranslatorUtils.from(dbo, "filename", result.filename());
         TranslatorUtils.from(dbo, "type", result.type().toString());
         TranslatorUtils.fromDateTime(dbo, "time", result.uploadTime());
@@ -36,9 +37,9 @@ public class FileUploadResultTranslator {
     public FileUploadResult fromDBObject(DBObject dbo) {
 
         FileUploadResult result = new FileUploadResult(
+                TranslatorUtils.toString(dbo, "service"), 
                 TranslatorUtils.toString(dbo, "filename"), 
-                TranslatorUtils.toDateTime(dbo, "time"), 
-                FileUploadResultType.valueOf(TranslatorUtils.toString(dbo,"type"))
+                TranslatorUtils.toDateTime(dbo, "time"), FileUploadResultType.valueOf(TranslatorUtils.toString(dbo,"type"))
         ).withMessage(TranslatorUtils.toString(dbo, "message")).withConnectionSuccess(TranslatorUtils.toBoolean(dbo, "connected"));
 
         if (dbo.containsField("exception")) {

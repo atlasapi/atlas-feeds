@@ -18,6 +18,7 @@ import com.mongodb.DBObject;
 
 public class RadioPlayerUploadResultTranslatorTest {
 
+    private static final String REMOTE_SERVICE_ID = "remote";
     private final FileUploadResultTranslator translator = new FileUploadResultTranslator();
     
     @Test
@@ -25,7 +26,7 @@ public class RadioPlayerUploadResultTranslatorTest {
         
         DateTime time = new DateTime(DateTimeZones.UTC);
         
-        FileUploadResult result = new FileUploadResult("success", time, FileUploadResultType.SUCCESS).withMessage("SUCCESS");
+        FileUploadResult result = new FileUploadResult(REMOTE_SERVICE_ID, "success", time, FileUploadResultType.SUCCESS).withMessage("SUCCESS");
         
         DBObject encoded = translator.toDBObject(result);
         
@@ -52,7 +53,7 @@ public class RadioPlayerUploadResultTranslatorTest {
         
         assertThat(exception, is(notNullValue()));
         
-        FileUploadResult result = new FileUploadResult("failed", time, FileUploadResultType.FAILURE).withMessage("FAILURE").withCause(exception);
+        FileUploadResult result = new FileUploadResult(REMOTE_SERVICE_ID, "failed", time, FileUploadResultType.FAILURE).withMessage("FAILURE").withCause(exception);
         
         DBObject encoded = translator.toDBObject(result);
         

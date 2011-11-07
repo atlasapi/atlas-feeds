@@ -38,10 +38,10 @@ public class CachingRadioPlayerUploadResultStoreTest {
         
         CachingRadioPlayerUploadResultStore store = new CachingRadioPlayerUploadResultStore(ImmutableSet.of(remoteService), delegateStore);
         
-        store.record(new RadioPlayerUploadResult(remoteService, service, day, FileUploadResult.successfulUpload("test1")));
+        store.record(new RadioPlayerUploadResult(service, day, FileUploadResult.successfulUpload(remoteService, "test1")));
         
         DateTime later = new DateTime(DateTimeZones.UTC).plus(5000);
-        store.record(new RadioPlayerUploadResult(remoteService, service, day, new FileUploadResult("test1", later, SUCCESS)));
+        store.record(new RadioPlayerUploadResult(service, day, new FileUploadResult(remoteService, "test1", later, SUCCESS)));
         
         Set<FileUploadResult> results = ImmutableSet.copyOf(store.resultsFor(remoteService, service, day));
         
@@ -54,7 +54,7 @@ public class CachingRadioPlayerUploadResultStoreTest {
         
         context.checking(new Expectations(){{
             one(delegateStore).resultsFor(with(remoteService), with(any(RadioPlayerService.class)), with(any(LocalDate.class)));
-            will(returnValue(ImmutableSet.of(FileUploadResult.successfulUpload("test1"))));
+            will(returnValue(ImmutableSet.of(FileUploadResult.successfulUpload(remoteService,"test1"))));
         }});
         
         CachingRadioPlayerUploadResultStore store = new CachingRadioPlayerUploadResultStore(ImmutableSet.of(remoteService), delegateStore);

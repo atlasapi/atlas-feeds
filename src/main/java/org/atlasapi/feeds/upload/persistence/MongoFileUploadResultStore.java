@@ -27,11 +27,10 @@ public class MongoFileUploadResultStore implements FileUploadResultStore {
     }
     
     @Override
-    public void store(String service, String identifier, FileUploadResult result) {
+    public void store(String identifier, FileUploadResult result) {
         DBObject dbo = translator.toDBObject(result);
-        String oid = String.format("%s:%s:%s", service, result.type(), identifier);
+        String oid = String.format("%s:%s:%s", result.remote(), result.type(), identifier);
         dbo.put(MongoConstants.ID, oid);
-        dbo.put("service", service);
         dbo.put("id", identifier);
         collection.update(new BasicDBObject(MongoConstants.ID, oid), dbo, UPSERT, SINGLE);
     }

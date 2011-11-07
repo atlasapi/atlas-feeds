@@ -72,7 +72,7 @@ public class RadioPlayerUploadTask implements Callable<Iterable<RadioPlayerUploa
     }
 
     private RadioPlayerUploadResult uploadTo(FileUploadService uploadService, FileUpload upload) throws InterruptedException {
-        return new RadioPlayerUploadResult(uploadService.serviceIdentifier(), service, day, uploadService.upload(upload));
+        return new RadioPlayerUploadResult(service, day, uploadService.upload(upload));
     }
 
     private Iterable<RadioPlayerUploadResult> failedUploads(final String filename, final NoItemsException e) {
@@ -85,7 +85,7 @@ public class RadioPlayerUploadTask implements Callable<Iterable<RadioPlayerUploa
         });
     }
     private RadioPlayerUploadResult failure(FileUploadService input, final String filename, final Exception e) {
-        return new RadioPlayerUploadResult(input.serviceIdentifier(), service, day, failedUpload(filename).withCause(e).withMessage(e.getMessage()));
+        return new RadioPlayerUploadResult(service, day, failedUpload(input.serviceIdentifier(), filename).withCause(e).withMessage(e.getMessage()));
     }
 
     private void logNotItemsException(String filename, NoItemsException e) {

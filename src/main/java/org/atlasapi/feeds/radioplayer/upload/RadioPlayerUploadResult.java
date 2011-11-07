@@ -10,11 +10,9 @@ public class RadioPlayerUploadResult {
 
     private final RadioPlayerService service;
     private final LocalDate day;
-    private final String serviceId;
     private final FileUploadResult upload;
 
-    public RadioPlayerUploadResult(String serviceId, RadioPlayerService service, LocalDate localDate, FileUploadResult upload) {
-        this.serviceId = checkNotNull(serviceId);
+    public RadioPlayerUploadResult(RadioPlayerService service, LocalDate localDate, FileUploadResult upload) {
         this.service = checkNotNull(service);
         this.day = checkNotNull(localDate);
         this.upload = checkNotNull(upload);
@@ -28,10 +26,6 @@ public class RadioPlayerUploadResult {
         return day;
     }
 
-    public String remoteService() {
-        return serviceId;
-    }
-
     public FileUploadResult getUpload() {
         return upload;
     }
@@ -43,7 +37,7 @@ public class RadioPlayerUploadResult {
         }
         if (that instanceof RadioPlayerUploadResult) {
             RadioPlayerUploadResult other = (RadioPlayerUploadResult) that;
-            return service.equals(other.service) && serviceId.equals(other.serviceId) && day.equals(other.day) && upload.equals(other.upload);
+            return service.equals(other.service) && day.equals(other.day) && upload.equals(other.upload);
         }
         return false;
     }

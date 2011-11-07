@@ -23,7 +23,7 @@ public class FileUploadService {
     public FileUploadResult upload(FileUpload upload) {
         try {
             uploader.upload(upload);
-            return new FileUploadResult(upload.getFilename(), new DateTime(DateTimeZones.UTC), FileUploadResultType.SUCCESS);
+            return new FileUploadResult(serviceIdentifier, upload.getFilename(), new DateTime(DateTimeZones.UTC), FileUploadResultType.SUCCESS);
         } catch (ConnectException e) {
             return failedUploadResult(upload, e).withConnectionSuccess(false);
         } catch (Exception e) {
@@ -32,7 +32,7 @@ public class FileUploadService {
     }
 
     private FileUploadResult failedUploadResult(FileUpload upload, Exception e) {
-        return new FileUploadResult(upload.getFilename(), new DateTime(DateTimeZones.UTC), FileUploadResultType.FAILURE).withCause(e);
+        return new FileUploadResult(serviceIdentifier, upload.getFilename(), new DateTime(DateTimeZones.UTC), FileUploadResultType.FAILURE).withCause(e);
     }
 
     public String serviceIdentifier() {

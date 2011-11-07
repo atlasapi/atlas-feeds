@@ -48,7 +48,7 @@ public class RadioPlayerRecordingExecutorTest {
 
             @Override
             public Iterable<RadioPlayerUploadResult> call() throws Exception {
-                return ImmutableSet.of(new RadioPlayerUploadResult("remoteService", service, date, new FileUploadResult("file", new DateTime(), FileUploadResultType.SUCCESS)));
+                return ImmutableSet.of(new RadioPlayerUploadResult(service, date, new FileUploadResult("remote", "file", new DateTime(), FileUploadResultType.SUCCESS)));
             }
         }));
 

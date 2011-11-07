@@ -73,7 +73,7 @@ public class RadioPlayerSuccessChecker implements Runnable {
     }
 
     private RadioPlayerUploadResult radioPlayerResult(RadioPlayerFilenameMatcher matcher, FileUploadResult result) {
-        return new RadioPlayerUploadResult(remoteService, matcher.service().requireValue(), matcher.date().requireValue(), result);
+        return new RadioPlayerUploadResult(matcher.service().requireValue(), matcher.date().requireValue(), result);
     }
 
     private Set<FileUploadResult> getCurrentResults(RadioPlayerFilenameMatcher matcher) {
