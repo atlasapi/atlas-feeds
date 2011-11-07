@@ -38,7 +38,7 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
     public void record(RadioPlayerUploadResult result) {
         delegate.record(result);
 
-        RemoteServiceSpecificResultCache remoteServiceCache = remoteServiceCacheMap.get(result.remoteService());
+        RemoteServiceSpecificResultCache remoteServiceCache = remoteServiceCacheMap.get(result.getUpload().remote());
         
         ConcurrentMap<LocalDate,Set<FileUploadResult>> serviceMap = remoteServiceCache.get(result.service());
 
