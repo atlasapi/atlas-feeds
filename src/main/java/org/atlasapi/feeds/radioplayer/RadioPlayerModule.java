@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer;
 
+import static org.atlasapi.persistence.logging.AdapterLogEntry.infoEntry;
+
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -84,7 +86,14 @@ public class RadioPlayerModule {
 	    ImmutableMap.Builder<String,RemoteServiceDetails> remotes = ImmutableMap.builder();
 	    for (Entry<String, Parameter> property : Configurer.getParamsWithKeyMatching(Predicates.containsPattern(RP_UPLOAD_SERVICE_PREFIX))) {
             String serviceId = property.getKey().substring(RP_UPLOAD_SERVICE_PREFIX.length());
-            remotes.put(serviceId, detailsFor(serviceId, ImmutableList.copyOf(Splitter.on("|").split(property.getValue().get()))));
+            String serviceConfig = property.getValue().get();
+            if (!Strings.isNullOrEmpty(serviceConfig)) {
+                RemoteServiceDetails details = detailsFor(serviceId, ImmutableList.copyOf(Splitter.on("|").split(serviceConfig)));
+                log.record(infoEntry().withSource(getClass()).withDescription("Found details for service %s: %s", serviceId, details));
+                remotes.put(serviceId, details);
+            } else {
+                log.record(infoEntry().withSource(getClass()).withDescription("Ignoring service %s: no details", serviceId));
+            }
         }
 	    return remotes.build();
 	}
