@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import static org.atlasapi.persistence.logging.AdapterLogEntry.errorEntry;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -10,8 +12,6 @@ import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.feeds.upload.ftp.CommonsDirectoryLister;
 import org.atlasapi.feeds.upload.ftp.CommonsDirectoryLister.FileLastModified;
 import org.atlasapi.persistence.logging.AdapterLog;
-import org.atlasapi.persistence.logging.AdapterLogEntry;
-import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 import org.joda.time.DateTime;
 
 import com.google.common.collect.ImmutableMap;
@@ -39,7 +39,7 @@ public class RadioPlayerSuccessChecker implements Runnable {
         try {
             checkSuccesses();
         } catch (Exception e) {
-            log.record(new AdapterLogEntry(Severity.ERROR).withDescription("Problem checking RadioPlayer successes").withCause(e));
+            log.record(errorEntry().withDescription("Exception checking remote processing for " + remoteService).withCause(e));
         }
     }
 
@@ -67,7 +67,7 @@ public class RadioPlayerSuccessChecker implements Runnable {
                 }
                 
             } catch (Exception e) {
-                log.record(new AdapterLogEntry(Severity.ERROR).withDescription("Problem processing file: " + file).withCause(e));
+                log.record(errorEntry().withDescription("Exception for service %s processing file %s", remoteService, file).withCause(e));
             }
         }
     }

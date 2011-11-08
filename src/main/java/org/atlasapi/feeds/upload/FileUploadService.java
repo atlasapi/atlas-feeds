@@ -32,7 +32,7 @@ public class FileUploadService {
     }
 
     private FileUploadResult failedUploadResult(FileUpload upload, Exception e) {
-        return new FileUploadResult(serviceIdentifier, upload.getFilename(), new DateTime(DateTimeZones.UTC), FileUploadResultType.FAILURE).withCause(e);
+        return new FileUploadResult(serviceIdentifier, upload.getFilename(), new DateTime(DateTimeZones.UTC), FileUploadResultType.FAILURE).withCause(e).withMessage(e.getMessage());
     }
 
     public String serviceIdentifier() {

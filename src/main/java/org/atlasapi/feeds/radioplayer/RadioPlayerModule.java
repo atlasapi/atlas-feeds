@@ -10,8 +10,8 @@ import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.radioplayer.upload.CachingRadioPlayerUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRemoteProcessingChecker;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerSuccessChecker;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadResultStore;
@@ -21,7 +21,6 @@ import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.feeds.upload.LoggingFileUploader;
 import org.atlasapi.feeds.upload.RemoteServiceDetails;
 import org.atlasapi.feeds.upload.ValidatingFileUploader;
-import org.atlasapi.feeds.upload.ftp.CommonsDirectoryLister;
 import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;
@@ -163,15 +162,11 @@ public class RadioPlayerModule {
 	
 		    if (Boolean.parseBoolean(upload)) {
 				
-	            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), dayRangeGenerator), UPLOAD_EVERY_TWO_HOURS);
-	            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), new DayRangeGenerator()), UPLOAD_EVERY_TEN_MINUTES);
+	            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), dayRangeGenerator).withName("Radioplayer Full Upload"), UPLOAD_EVERY_TWO_HOURS);
+	            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer Today Upload"), UPLOAD_EVERY_TEN_MINUTES);
 	            
-	            for (Entry<String, RemoteServiceDetails> remote : radioPlayerUploadServiceDetails().entrySet()) {
-	                RadioPlayerSuccessChecker checker = new RadioPlayerSuccessChecker(remote.getKey(), new CommonsDirectoryLister(remote.getValue()), uploadResultRecorder(), log);
-	                scheduler.schedule(checker, UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(5)));
-	                log.record(AdapterLogEntry.infoEntry().withSource(getClass())
-	                        .withDescription(String.format("Radioplayer uploader installed for: %s. Frequency: %s",remote.getValue(),UPLOAD_EVERY_TEN_MINUTES)));
-	            }
+	            RadioPlayerRemoteProcessingChecker checker = new RadioPlayerRemoteProcessingChecker(radioPlayerUploadServiceDetails(), uploadResultRecorder(), log);
+	            scheduler.schedule(checker, UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(5)));
 	
 			} else {
 				log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())

@@ -109,6 +109,8 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         builder.append("</td><td>");
         if (result.message() != null) {
             builder.append(result.message());
+        } else if (FileUploadResultType.SUCCESS == result.type()) {
+            builder.append("File uploaded successfully");
         }
         builder.append("</td><td>");
         FileUploadResultType processSuccess = result.remoteProcessingResult() == null ? FileUploadResultType.UNKNOWN : result.remoteProcessingResult();
