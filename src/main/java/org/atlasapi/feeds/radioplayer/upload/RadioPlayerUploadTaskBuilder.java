@@ -1,28 +1,22 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.feeds.upload.FileUploader;
-import org.atlasapi.feeds.xml.XMLValidator;
+import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.joda.time.LocalDate;
 
+import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.time.DayRangeGenerator;
 
 public class RadioPlayerUploadTaskBuilder {
 
-    private final FileUploader uploader;
+    private final Iterable<FileUploadService> uploadServices;
     private final RadioPlayerRecordingExecutor executor;
-    private XMLValidator validator;
     private AdapterLog log;
 
-    public RadioPlayerUploadTaskBuilder(FileUploader uploader, RadioPlayerRecordingExecutor executor) {
-        this.uploader = uploader;
+    public RadioPlayerUploadTaskBuilder(Iterable<FileUploadService> uploadServices, RadioPlayerRecordingExecutor executor) {
+        this.uploadServices = uploadServices;
         this.executor = executor;
-    }
-    
-    public RadioPlayerUploadTaskBuilder withValidator(XMLValidator validator) {
-        this.validator = validator;
-        return this;
     }
     
     public RadioPlayerUploadTaskBuilder withLog(AdapterLog log) {
@@ -30,12 +24,12 @@ public class RadioPlayerUploadTaskBuilder {
         return this;
     }
     
-    public RadioPlayerUploadTask newTask(Iterable<RadioPlayerService> services, DayRangeGenerator dayGenerator) {
-        return new RadioPlayerUploadTask(uploader, executor, services, dayGenerator).withLog(log).withValidator(validator);
+    public ScheduledTask newTask(Iterable<RadioPlayerService> services, DayRangeGenerator dayGenerator) {
+        return new RadioPlayerScheduledUploadTask(uploadServices, executor, services, dayGenerator, log);
     }
     
-    public RadioPlayerUploadTask newTask(Iterable<RadioPlayerService> services, Iterable<LocalDate> days) {
-        return new RadioPlayerUploadTask(uploader, executor, services, days).withLog(log).withValidator(validator);
+    public Runnable newTask(Iterable<RadioPlayerService> services, Iterable<LocalDate> days) {
+        return new RadioPlayerBatchUploadTask(uploadServices, executor, services, days, log);
     }
     
 }

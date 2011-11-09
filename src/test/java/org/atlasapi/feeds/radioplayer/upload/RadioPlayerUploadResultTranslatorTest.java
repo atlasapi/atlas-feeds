@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
-import org.atlasapi.feeds.upload.ftp.FTPUploadResultTranslator;
+import org.atlasapi.feeds.upload.persistence.FileUploadResultTranslator;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -18,14 +18,15 @@ import com.mongodb.DBObject;
 
 public class RadioPlayerUploadResultTranslatorTest {
 
-    private final FTPUploadResultTranslator translator = new FTPUploadResultTranslator();
+    private static final String REMOTE_SERVICE_ID = "remote";
+    private final FileUploadResultTranslator translator = new FileUploadResultTranslator();
     
     @Test
     public void testCodingOfSuccessResult() {
         
         DateTime time = new DateTime(DateTimeZones.UTC);
         
-        FileUploadResult result = new FileUploadResult("success", time, FileUploadResultType.SUCCESS).withMessage("SUCCESS");
+        FileUploadResult result = new FileUploadResult(REMOTE_SERVICE_ID, "success", time, FileUploadResultType.SUCCESS).withMessage("SUCCESS");
         
         DBObject encoded = translator.toDBObject(result);
         
@@ -52,7 +53,7 @@ public class RadioPlayerUploadResultTranslatorTest {
         
         assertThat(exception, is(notNullValue()));
         
-        FileUploadResult result = new FileUploadResult("failed", time, FileUploadResultType.FAILURE).withMessage("FAILURE").withCause(exception);
+        FileUploadResult result = new FileUploadResult(REMOTE_SERVICE_ID, "failed", time, FileUploadResultType.FAILURE).withMessage("FAILURE").withCause(exception);
         
         DBObject encoded = translator.toDBObject(result);
         

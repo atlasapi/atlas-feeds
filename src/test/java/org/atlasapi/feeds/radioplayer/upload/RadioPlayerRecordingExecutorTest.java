@@ -30,7 +30,7 @@ import com.metabroadcast.common.time.DateTimeZones;
 public class RadioPlayerRecordingExecutorTest {
 
     private final Mockery context = new Mockery();
-    private final RadioPlayerFTPUploadResultStore recorder = context.mock(RadioPlayerFTPUploadResultStore.class);
+    private final RadioPlayerUploadResultStore recorder = context.mock(RadioPlayerUploadResultStore.class);
     private final RadioPlayerService service = RadioPlayerServices.all.get("340");
     private final LocalDate date = new LocalDate(DateTimeZones.UTC);
 
@@ -41,14 +41,14 @@ public class RadioPlayerRecordingExecutorTest {
         RadioPlayerRecordingExecutor executor = new RadioPlayerRecordingExecutor(recorder, executorService);
 
         context.checking(new Expectations() {{
-            one(recorder).record(with(any(RadioPlayerFTPUploadResult.class)));
+            one(recorder).record(with(any(RadioPlayerUploadResult.class)));
         }});
 
-        executor.submit(ImmutableSet.<Callable<RadioPlayerFTPUploadResult>> of(new Callable<RadioPlayerFTPUploadResult>() {
+        executor.submit(ImmutableSet.<Callable<Iterable<RadioPlayerUploadResult>>> of(new Callable<Iterable<RadioPlayerUploadResult>>() {
 
             @Override
-            public RadioPlayerFTPUploadResult call() throws Exception {
-                return new RadioPlayerFTPUploadResult(new FileUploadResult("file", new DateTime(), FileUploadResultType.SUCCESS), service, date);
+            public Iterable<RadioPlayerUploadResult> call() throws Exception {
+                return ImmutableSet.of(new RadioPlayerUploadResult(service, date, new FileUploadResult("remote", "file", new DateTime(), FileUploadResultType.SUCCESS)));
             }
         }));
 
@@ -62,18 +62,18 @@ public class RadioPlayerRecordingExecutorTest {
         RadioPlayerRecordingExecutor executor = new RadioPlayerRecordingExecutor(recorder, executorService, new TaskCanceller(10, TimeUnit.MILLISECONDS));
 
         context.checking(new Expectations() {{
-            never(recorder).record(with(any(RadioPlayerFTPUploadResult.class)));
+            never(recorder).record(with(any(RadioPlayerUploadResult.class)));
         }});
 
-        LinkedBlockingQueue<Future<RadioPlayerFTPUploadResult>> results = executor.submit(ImmutableSet.<Callable<RadioPlayerFTPUploadResult>> of(new Callable<RadioPlayerFTPUploadResult>() {
+        LinkedBlockingQueue<Future<Iterable<RadioPlayerUploadResult>>> results = executor.submit(ImmutableSet.<Callable<Iterable<RadioPlayerUploadResult>>> of(new Callable<Iterable<RadioPlayerUploadResult>>() {
             @Override
-            public RadioPlayerFTPUploadResult call() throws Exception {
+            public Iterable<RadioPlayerUploadResult> call() throws Exception {
                 Thread.sleep(20000);
                 return null;
             }
         }));
 
-        Future<RadioPlayerFTPUploadResult> result = results.take();
+        Future<Iterable<RadioPlayerUploadResult>> result = results.take();
         
         assertThat(result.isDone(), is(true));
         

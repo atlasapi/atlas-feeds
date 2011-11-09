@@ -12,7 +12,6 @@ import javax.xml.bind.JAXBElement;
 
 import org.atlasapi.feeds.lakeview.validation.FeedItemStore;
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult.ValidationResultType;
-import org.atlasapi.generated.ElementProduct;
 import org.atlasapi.generated.ElementTVEpisode;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
@@ -21,8 +20,8 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.listing.ContentLister;
 
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterators;
 import com.google.inject.internal.Lists;
 

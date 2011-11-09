@@ -24,16 +24,16 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
     protected static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
 
-    protected final RadioPlayerFTPUploadResultStore store;
+    private final String remoteServiceId;
+    protected final RadioPlayerUploadResultStore store;
     private final RadioPlayerService service;
     protected final DayRangeGenerator rangeGenerator;
-    protected final RadioPlayerFTPUploadResultTranslator translator;
 
-    public RadioPlayerUploadHealthProbe(RadioPlayerFTPUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
+    public RadioPlayerUploadHealthProbe(String remoteServiceId, RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
+        this.remoteServiceId = remoteServiceId;
         this.store = store;
         this.service = service;
         this.rangeGenerator = dayRangeGenerator;
-        this.translator = new RadioPlayerFTPUploadResultTranslator();
     }
 
     @Override
@@ -43,7 +43,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         DayRange dayRange = rangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
         
         for (LocalDate day : dayRange) {
-            result.addEntry(entryFor(day, store.resultsFor(service, day)));
+            result.addEntry(entryFor(day, store.resultsFor(remoteServiceId, service, day)));
         }
 
         result.addEntry(uploadAll());
@@ -70,11 +70,8 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     }
 
     private ProbeResultType entryResultType(FileUploadResult mostRecent, LocalDate day) {
-        if (mostRecent instanceof RadioPlayerFTPUploadResult) {
-            RadioPlayerFTPUploadResult rpResult = (RadioPlayerFTPUploadResult) mostRecent;
-            if (rpResult.processSuccess() != null && rpResult.processSuccess() == FileUploadResultType.FAILURE) {
-                return FAILURE;
-            }
+        if (FileUploadResultType.FAILURE.equals(mostRecent.remoteProcessingResult())) {
+            return FAILURE;
         }
         switch (mostRecent.type()) {
         case SUCCESS:
@@ -112,13 +109,16 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         builder.append("</td><td>");
         if (result.message() != null) {
             builder.append(result.message());
+        } else {
+            if (FileUploadResultType.SUCCESS == result.type()) {
+                builder.append("File uploaded successfully");
+            } else if (result.exceptionSummary() != null && result.exceptionSummary().message() != null) {
+                builder.append(result.exceptionSummary().message());
+            }
         }
         builder.append("</td><td>");
-        if (result instanceof RadioPlayerFTPUploadResult) {
-            RadioPlayerFTPUploadResult rpResult = (RadioPlayerFTPUploadResult) result;
-            FileUploadResultType processSuccess = rpResult.processSuccess() == null ? FileUploadResultType.UNKNOWN : rpResult.processSuccess();
-            builder.append("Processing Result: "+processSuccess.toNiceString());
-        }
+        FileUploadResultType processSuccess = result.remoteProcessingResult() == null ? FileUploadResultType.UNKNOWN : result.remoteProcessingResult();
+        builder.append("Processing Result: " + processSuccess.toNiceString());
         builder.append("</td></tr>");
     }
 
@@ -141,7 +141,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
     @Override
     public String slug() {
-        return "ukrp" + service.getName();
+        return String.format("ukrp-%s-%s", remoteServiceId, service.getName());
     }
 
 }
