@@ -67,7 +67,7 @@ public class RadioPlayerSuccessChecker implements Runnable {
                 }
                 
             } catch (Exception e) {
-                log.record(errorEntry().withDescription("Exception for service %s processing file %s", remoteService, file).withCause(e));
+                log.record(errorEntry().withSource(getClass()).withDescription("Exception for service %s processing file %s", remoteService, file).withCause(e));
             }
         }
     }
