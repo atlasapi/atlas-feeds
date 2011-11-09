@@ -1,16 +1,17 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import static org.atlasapi.persistence.logging.AdapterLogEntry.errorEntry;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerFilenameMatcher;
+import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
-import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
-import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader.FileLastModified;
+import org.atlasapi.feeds.upload.ftp.CommonsDirectoryLister;
+import org.atlasapi.feeds.upload.ftp.CommonsDirectoryLister.FileLastModified;
 import org.atlasapi.persistence.logging.AdapterLog;
-import org.atlasapi.persistence.logging.AdapterLogEntry;
-import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 import org.joda.time.DateTime;
 
 import com.google.common.collect.ImmutableMap;
@@ -21,11 +22,13 @@ public class RadioPlayerSuccessChecker implements Runnable {
     private final static String SUCCESS_DIR = "Processed";
     private final static String FAILURE_DIR = "Failed";
 
-    private final CommonsFTPFileUploader ftp;
-    private final RadioPlayerFTPUploadResultStore resultStore;
+    private final CommonsDirectoryLister ftp;
+    private final RadioPlayerUploadResultStore resultStore;
     private final AdapterLog log;
+    private final String remoteService;
 
-    public RadioPlayerSuccessChecker(CommonsFTPFileUploader ftp, RadioPlayerFTPUploadResultStore resultStore, AdapterLog log) {
+    public RadioPlayerSuccessChecker(String remoteService, CommonsDirectoryLister ftp, RadioPlayerUploadResultStore resultStore, AdapterLog log) {
+        this.remoteService = remoteService;
         this.ftp = ftp;
         this.resultStore = resultStore;
         this.log = log;
@@ -36,7 +39,7 @@ public class RadioPlayerSuccessChecker implements Runnable {
         try {
             checkSuccesses();
         } catch (Exception e) {
-            log.record(new AdapterLogEntry(Severity.ERROR).withDescription("Problem checking RadioPlayer successes").withCause(e));
+            log.record(errorEntry().withDescription("Exception checking remote processing for " + remoteService).withCause(e));
         }
     }
 
@@ -56,20 +59,26 @@ public class RadioPlayerSuccessChecker implements Runnable {
                     }
                 }
 
-                for (RadioPlayerFTPUploadResult result : getCurrentResults(file.fileName())) {
-                    resultStore.record(result.withProcessSuccess(processSuccess));
+                RadioPlayerFilenameMatcher matcher = RadioPlayerFilenameMatcher.on(file.fileName().replace(".xml", ""));
+                if (RadioPlayerFilenameMatcher.hasMatch(matcher)) {
+                    for (FileUploadResult result : getCurrentResults(matcher)) {
+                        resultStore.record(radioPlayerResult(matcher, result.withRemoteProcessingResult(processSuccess)));
+                    }
                 }
+                
             } catch (Exception e) {
-                log.record(new AdapterLogEntry(Severity.ERROR).withDescription("Problem processing file: " + file).withCause(e));
+                log.record(errorEntry().withSource(getClass()).withDescription("Exception for service %s processing file %s", remoteService, file).withCause(e));
             }
         }
     }
 
-    private Set<RadioPlayerFTPUploadResult> getCurrentResults(String filename) {
-        filename = filename.replace(".xml", "");
-        RadioPlayerFilenameMatcher matcher = RadioPlayerFilenameMatcher.on(filename);
+    private RadioPlayerUploadResult radioPlayerResult(RadioPlayerFilenameMatcher matcher, FileUploadResult result) {
+        return new RadioPlayerUploadResult(matcher.service().requireValue(), matcher.date().requireValue(), result);
+    }
+
+    private Set<FileUploadResult> getCurrentResults(RadioPlayerFilenameMatcher matcher) {
         if (RadioPlayerFilenameMatcher.hasMatch(matcher)) {
-            return resultStore.resultsFor(matcher.service().requireValue(), matcher.date().requireValue());
+            return ImmutableSet.copyOf(resultStore.resultsFor(remoteService, matcher.service().requireValue(), matcher.date().requireValue()));
         }
         return ImmutableSet.of();
     }

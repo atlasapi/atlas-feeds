@@ -10,8 +10,10 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.joda.time.DateTime;
 import org.junit.After;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.Iterables;
@@ -22,20 +24,26 @@ import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.time.DateTimeZones;
 import com.metabroadcast.common.time.DayRangeGenerator;
 import com.mongodb.BasicDBObject;
+import com.mongodb.BasicDBObjectBuilder;
 
 public class RadioPlayerUploadHealthProbeTest {
 
+    private static final String REMOTE_SERVICE_ID = "remote";
     private static final String DATE_FORMAT = "yyyyMMdd";
     private static final RadioPlayerService SERVICE = RadioPlayerServices.all.get("340");
     
-    //    private static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
-    public final DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
-    public final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(new MongoFTPUploadResultStore(mongo), SERVICE, new DayRangeGenerator().withLookAhead(0).withLookBack(0));
-    private RadioPlayerFTPUploadResultStore recorder = new MongoFTPUploadResultStore(mongo);
+    private final static DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
+    private final RadioPlayerUploadResultStore recorder = new UploadResultStoreBackedRadioPlayerResultStore(new MongoFileUploadResultStore(mongo));
+    private final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(REMOTE_SERVICE_ID, recorder, SERVICE, new DayRangeGenerator().withLookAhead(0).withLookBack(0));
+    
+    @BeforeClass
+    public static void setup() {
+        mongo.collection("uploads").ensureIndex(new BasicDBObjectBuilder().add("service",1).add("id", 1).add("time", -1).get());
+    }
     
     @After
     public void tearDown() {
-        mongo.collection("radioplayer").remove(new BasicDBObject());
+        mongo.collection("uploads").remove(new BasicDBObject());
     }
     
     @Test
@@ -84,27 +92,30 @@ public class RadioPlayerUploadHealthProbeTest {
     @Test
     public void testFutureFailureIsInfo() {
         
-        DateTime futureDay = new DateTime().plusDays(4);
-        FileUploadResult upResult = new FileUploadResult(String.format("%s_%s_PI.xml", futureDay.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), new DateTime(DateTimeZones.UTC), FAILURE);
-        RadioPlayerFTPUploadResult rpResult = new RadioPlayerFTPUploadResult(upResult.filename(), upResult.uploadTime(), upResult.type(), SERVICE, futureDay.toLocalDate());
+        RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(REMOTE_SERVICE_ID, recorder, SERVICE, new DayRangeGenerator().withLookAhead(4).withLookBack(0));
+
+        
+        DateTime futureDay = new DateTime(DateTimeZones.UTC).plusDays(4);
+        FileUploadResult upResult = new FileUploadResult(REMOTE_SERVICE_ID, String.format("%s_%s_PI.xml", futureDay.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), new DateTime(DateTimeZones.UTC), FAILURE);
+        RadioPlayerUploadResult rpResult = new RadioPlayerUploadResult(SERVICE, futureDay.toLocalDate(), upResult);
         
         recorder.record(rpResult);
         
         ProbeResult result = probe.probe();
         
-        assertThat(Iterables.size(result.entries()), is(equalTo(2)));
-        assertThat(Iterables.getFirst(result.entries(), null).getType(), is(equalTo(ProbeResultType.INFO)));
+        assertThat(Iterables.size(result.entries()), is(equalTo(6)));
+        assertThat(Iterables.get(result.entries(), 5).getType(), is(equalTo(ProbeResultType.INFO)));
     }
     
-    public RadioPlayerFTPUploadResult successfulResult(DateTime successDate) {
+    public RadioPlayerUploadResult successfulResult(DateTime successDate) {
         return result(successDate, SUCCESS);
     }
     
-    public RadioPlayerFTPUploadResult failedResult(DateTime successDate) {
+    public RadioPlayerUploadResult failedResult(DateTime successDate) {
         return result(successDate, FAILURE);
     }
 
-    public RadioPlayerFTPUploadResult result(DateTime successDate, FileUploadResultType type) {
-        return new RadioPlayerFTPUploadResult(String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type, SERVICE, successDate.toLocalDate());
+    public RadioPlayerUploadResult result(DateTime successDate, FileUploadResultType type) {
+        return new RadioPlayerUploadResult(SERVICE, successDate.toLocalDate(), new FileUploadResult(REMOTE_SERVICE_ID, String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type));
     }
 }

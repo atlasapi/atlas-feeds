@@ -12,7 +12,7 @@ import com.google.common.collect.Ordering;
 import com.google.inject.internal.Objects;
 import com.metabroadcast.common.time.DateTimeZones;
 
-public class FileUploadResult {
+public final class FileUploadResult {
 
     public enum FileUploadResultType {
         SUCCESS("Success"), 
@@ -45,21 +45,48 @@ public class FileUploadResult {
             return r1.type().compareTo(r2.type());
         }
     });
+    
+    public static FileUploadResult successfulUpload(String remoteId, String filename) {
+        return new FileUploadResult(remoteId, filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.SUCCESS);
+    }
 
+    public static FileUploadResult failedUpload(String remoteId, String filename) {
+        return new FileUploadResult(remoteId, filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.FAILURE);
+    }
+
+    public static FileUploadResult unknownUpload(String remoteId, String filename) {
+        return new FileUploadResult(remoteId, filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.UNKNOWN);
+    }
+    
+    public static final Predicate<FileUploadResult> SUCCESSFUL = new Predicate<FileUploadResult>() {
+        @Override
+        public boolean apply(FileUploadResult input) {
+            return FileUploadResultType.SUCCESS.equals(input.type());
+        }
+    };
+
+    private final String remoteId;
     private final String filename;
     private final DateTime dateTime;
     private final FileUploadResultType success;
+
     private String message;
     private Exception exception;
     private ExceptionSummary exceptionSummary;
     private Boolean successfulConnection = true;
+    private FileUploadResultType remoteProcessingResult;
 
-    public FileUploadResult(String filename, DateTime dateTime, FileUploadResultType success) {
+    public FileUploadResult(String remoteId, String filename, DateTime dateTime, FileUploadResultType success) {
+        this.remoteId = remoteId;
         this.filename = filename;
         this.dateTime = dateTime;
         this.success = success;
     }
 
+    public String remote() {
+        return remoteId;
+    }
+    
     public String filename() {
         return filename;
     }
@@ -87,42 +114,58 @@ public class FileUploadResult {
     public Boolean successfulConnection() {
         return successfulConnection;
     }
-
-    public static FileUploadResult successfulUpload(String filename) {
-        return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.SUCCESS);
-    }
-
-    public static FileUploadResult failedUpload(String filename) {
-        return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.FAILURE);
-    }
-
-    public static FileUploadResult unknownUpload(String filename) {
-        return new FileUploadResult(filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.UNKNOWN);
+    
+    public FileUploadResultType remoteProcessingResult() {
+        return remoteProcessingResult;
     }
 
     public FileUploadResult withMessage(String message) {
-        this.message = message;
-        return this;
+        FileUploadResult result = copy();
+        result.message = message;
+        return result;
+    }
+    
+    public FileUploadResult withMessage(String pattern, Object... args) {
+        return withMessage(String.format(pattern, args));
     }
 
     public FileUploadResult withCause(Exception e) {
-        this.exception = e;
+        FileUploadResult result = copy();
+        result.exception = e;
         if (e != null) {
-            this.exceptionSummary = new ExceptionSummary(e);
+            result.exceptionSummary = new ExceptionSummary(e);
         }
-        return this;
+        return result;
     }
 
     public FileUploadResult withExceptionSummary(ExceptionSummary summary) {
-        exceptionSummary = summary;
-        return this;
+        FileUploadResult result = copy();
+        result.exceptionSummary = summary;
+        return result;
     }
 
     public FileUploadResult withConnectionSuccess(Boolean successfulConnection) {
-        this.successfulConnection = successfulConnection;
-        return this;
+        FileUploadResult result = copy();
+        result.successfulConnection = successfulConnection;
+        return result;
+    }
+    
+    public FileUploadResult withRemoteProcessingResult(FileUploadResultType sucess) {
+        FileUploadResult result = copy();
+        result.remoteProcessingResult = sucess;
+        return result;
     }
 
+    private FileUploadResult copy() {
+        FileUploadResult result = new FileUploadResult(remote(), filename, dateTime, success);
+        result.message = message;
+        result.exception = exception;
+        result.exceptionSummary = exceptionSummary;
+        result.successfulConnection = successfulConnection;
+        result.remoteProcessingResult = remoteProcessingResult;
+        return result;
+    }
+    
     @Override
     public boolean equals(Object that) {
         if (this == that) {
@@ -145,10 +188,4 @@ public class FileUploadResult {
         return String.format("%s: %s upload of %s", dateTime.toString("dd/MM/yy HH:mm:ss"), success.toNiceString(), filename);
     }
 
-    public static final Predicate<FileUploadResult> SUCCESSFUL = new Predicate<FileUploadResult>() {
-        @Override
-        public boolean apply(FileUploadResult input) {
-            return FileUploadResultType.SUCCESS.equals(input.type());
-        }
-    };
 }

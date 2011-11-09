@@ -5,29 +5,21 @@ import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCESS;
 
 import org.atlasapi.feeds.upload.FileUploadResult;
-import org.atlasapi.feeds.upload.ftp.FTPCredentials;
-import org.atlasapi.feeds.upload.ftp.FTPUploadResultTranslator;
+import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
 
-import com.google.common.collect.Iterables;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultEntry;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultType;
-import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
 
 public class RadioPlayerServerHealthProbe implements HealthProbe {
 
-    private final DBCollection results;
-    private final FTPCredentials credentials;
-    private final FTPUploadResultTranslator translator;
+    private final String serviceIdentifier;
+    private final FileUploadResultStore resultStore;
 
-    public RadioPlayerServerHealthProbe(DatabasedMongo mongo, FTPCredentials credentials) {
-        this.results = mongo.collection("radioplayer");
-        this.credentials = credentials;
-        this.translator = new FTPUploadResultTranslator();
+    public RadioPlayerServerHealthProbe(String serviceIdentifier, FileUploadResultStore resultStore) {
+        this.serviceIdentifier = serviceIdentifier;
+        this.resultStore = resultStore;
     }
 
     @Override
@@ -36,26 +28,34 @@ public class RadioPlayerServerHealthProbe implements HealthProbe {
     }
 
     private ProbeResultEntry buildEntry() {
-        return entryFor(connection(true), connection(false));
+        FileUploadResult[] results = latestResults();
+        return entryFor(results[0], results[1]);
     }
 
-    private FileUploadResult connection(boolean successfulConnection) {
-        DBObject first = Iterables.getFirst(results.find(new BasicDBObject("connected", successfulConnection)).sort(new BasicDBObject("time", -1)).limit(1), null);
-        if (first != null) {
-            return translator.fromDBObject(first);
+    private FileUploadResult[] latestResults() {
+        FileUploadResult success = null, failure = null;
+        for (FileUploadResult result : resultStore.results(serviceIdentifier)) {
+            if(result.successfulConnection()) {
+                success = success == null ? result : success;
+            } else {
+                failure = failure == null ? result : failure;
+            }
+            if(success != null && failure != null) {
+                break;
+            }
         }
-        return null;
+        return new FileUploadResult[]{success, failure};
     }
 
     private ProbeResultEntry entryFor(FileUploadResult success, FileUploadResult failure) {
         if (success == null && failure == null) {
-            return new ProbeResultEntry(INFO, credentials.toString(), "No Data");
+            return new ProbeResultEntry(INFO, serviceIdentifier, "No Data");
         }
 
         String value = buildValue(success, failure);
 
         FileUploadResult mostRecent = failure == null ? success : (success == null ? failure : success.uploadTime().isAfter(failure.uploadTime()) ? success : failure);
-        return new ProbeResultEntry(resultType(mostRecent), credentials.toString(), value);
+        return new ProbeResultEntry(resultType(mostRecent), serviceIdentifier, value);
     }
 
     private ProbeResultType resultType(FileUploadResult mostRecent) {
@@ -77,7 +77,7 @@ public class RadioPlayerServerHealthProbe implements HealthProbe {
         return builder.append("</table>").toString();
     }
 
-    public void buildResult(StringBuilder builder, FileUploadResult result) {
+    private void buildResult(StringBuilder builder, FileUploadResult result) {
         builder.append("<tr><td>Last ");
         builder.append(result.successfulConnection() ? "Success" : "Failure");
         builder.append(": ");
@@ -93,12 +93,12 @@ public class RadioPlayerServerHealthProbe implements HealthProbe {
 
     @Override
     public String title() {
-        return "FTP";
+        return "Connection";
     }
 
     @Override
     public String slug() {
-        return "ukrpFTP";
+        return "ukrp-connect-" + serviceIdentifier;
     }
 
 }
