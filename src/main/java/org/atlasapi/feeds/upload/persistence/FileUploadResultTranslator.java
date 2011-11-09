@@ -28,7 +28,7 @@ public class FileUploadResultTranslator {
         }
         
         if (result.remoteProcessingResult() != null) {
-            TranslatorUtils.from(dbo, "remoteCheck", result.remoteProcessingResult());
+            TranslatorUtils.from(dbo, "remoteCheck", result.remoteProcessingResult().toString());
         }
  
         return dbo;
