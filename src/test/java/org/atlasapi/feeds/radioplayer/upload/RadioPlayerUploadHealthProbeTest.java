@@ -32,6 +32,7 @@ public class RadioPlayerUploadHealthProbeTest {
     private static final String DATE_FORMAT = "yyyyMMdd";
     private static final RadioPlayerService SERVICE = RadioPlayerServices.all.get("340");
     
+    //TODO: remove mongo and mock RadioPlayerUploadResultStore
     private final static DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     private final RadioPlayerUploadResultStore recorder = new UploadResultStoreBackedRadioPlayerResultStore(new MongoFileUploadResultStore(mongo));
     private final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(REMOTE_SERVICE_ID, recorder, SERVICE, new DayRangeGenerator().withLookAhead(0).withLookBack(0));
