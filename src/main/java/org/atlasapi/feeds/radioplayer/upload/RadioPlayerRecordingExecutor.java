@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+//TODO: Make this extend AbstractExecutorService or similar?
 public class RadioPlayerRecordingExecutor {
 
     private static final int MAX_CONNECTIONS = 5;

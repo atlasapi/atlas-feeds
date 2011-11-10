@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.radioplayer.upload;
+package org.atlasapi.feeds.upload.ftp;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -16,7 +16,7 @@ import org.junit.Test;
 import com.metabroadcast.common.time.DateTimeZones;
 import com.mongodb.DBObject;
 
-public class RadioPlayerUploadResultTranslatorTest {
+public class FileUploadResultTranslatorTest {
 
     private static final String REMOTE_SERVICE_ID = "remote";
     private final FileUploadResultTranslator translator = new FileUploadResultTranslator();
