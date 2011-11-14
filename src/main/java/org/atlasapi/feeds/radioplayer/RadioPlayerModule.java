@@ -62,7 +62,7 @@ import com.metabroadcast.common.webapp.health.HealthController;
 public class RadioPlayerModule {
 
 	private static final String RP_UPLOAD_SERVICE_PREFIX = "rp.upload.";
-    private static final Every UPLOAD_EVERY_TEN_MINUTES = RepetitionRules.every(Duration.standardMinutes(10)).withOffset(Duration.standardMinutes(5));
+    private static final Every UPLOAD_EVERY_TEN_MINUTES = RepetitionRules.every(Duration.standardMinutes(10));
 	private static final Every UPLOAD_EVERY_TWO_HOURS = RepetitionRules.every(Duration.standardHours(2));
 
 	private @Value("${rp.ftp.enabled}") String upload;
@@ -141,8 +141,7 @@ public class RadioPlayerModule {
                 Resources.getResource("epgSchedule_10.xsd").openStream()
             ));
         } catch (Exception e) {
-            log.record(new AdapterLogEntry(Severity.WARN).withDescription("Couldn't load schemas for RadioPlayer XML validation").withCause(e));
-            return null;
+            throw Throwables.propagate(e);
         }
     }
     
@@ -162,11 +161,15 @@ public class RadioPlayerModule {
 	
 		    if (Boolean.parseBoolean(upload)) {
 				
-	            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), dayRangeGenerator).withName("Radioplayer Full Upload"), UPLOAD_EVERY_TWO_HOURS);
-	            scheduler.schedule(radioPlayerUploadTaskBuilder().newTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer Today Upload"), UPLOAD_EVERY_TEN_MINUTES);
-	            
-	            RadioPlayerRemoteProcessingChecker checker = new RadioPlayerRemoteProcessingChecker(radioPlayerUploadServiceDetails(), uploadResultRecorder(), log);
-	            scheduler.schedule(checker, UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(5)));
+	            scheduler.schedule(
+	                    radioPlayerUploadTaskBuilder().newTask(uploadServices(), dayRangeGenerator).withName("Radioplayer Full Upload"), 
+	                    UPLOAD_EVERY_TWO_HOURS);
+	            scheduler.schedule(
+	                    radioPlayerUploadTaskBuilder().newTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer Today Upload"), 
+	                    UPLOAD_EVERY_TEN_MINUTES);
+	            scheduler.schedule(
+	                    new RadioPlayerRemoteProcessingChecker(radioPlayerUploadServiceDetails(), uploadResultRecorder(), log).withName("Radioplayer Remote Processing Checker"),
+	                    UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(5)));
 	
 			} else {
 				log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
