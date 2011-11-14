@@ -20,6 +20,7 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.EntityType;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
+import org.atlasapi.media.entity.simple.KeyPhrase;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
@@ -198,6 +199,12 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	private static void copyBasicContentAttributes(Content content, Description simpleDescription) {
 		copyBasicDescribedAttributes(content, simpleDescription);
 		simpleDescription.setClips(clipToSimple(content.getClips()));
+        simpleDescription.setKeyPhrases(Iterables.transform(content.getKeyPhrases(), new Function<org.atlasapi.media.entity.KeyPhrase, KeyPhrase>() {
+            @Override
+            public KeyPhrase apply(org.atlasapi.media.entity.KeyPhrase input) {
+                return new KeyPhrase(input.getPhrase(), toPublisherDetails(input.getPublisher()), input.getWeighting());
+            }
+        }));
 	}
 
 	private static void copyBasicDescribedAttributes(Described content, Description simpleDescription) {
