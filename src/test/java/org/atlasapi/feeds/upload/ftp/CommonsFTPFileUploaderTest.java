@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.radioplayer.upload;
+package org.atlasapi.feeds.upload.ftp;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -14,7 +14,6 @@ import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFileUploaderTest.TestUse
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploader;
 import org.atlasapi.feeds.upload.RemoteServiceDetails;
-import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -23,7 +22,7 @@ import com.google.common.io.Resources;
 import com.google.common.net.HostSpecifier;
 import com.metabroadcast.common.security.UsernameAndPassword;
 
-public class FTPFileUploadTest {
+public class CommonsFTPFileUploaderTest {
 
     private static final String TEST_PASSWORD = "testpassword";
     private static final String TEST_USERNAME = "test";

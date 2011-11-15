@@ -23,10 +23,10 @@ import com.mongodb.BasicDBObjectBuilder;
 
 public class RadioPlayerServerHealthProbeTest {
 
-
     private static final String DATE_FORMAT = "yyyyMMdd";
     private static final RadioPlayerService SERVICE = RadioPlayerServices.all.get("340");
     
+    //TODO: remove mongo and mock RadioPlayerUploadResultStore
     public final static DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     public final RadioPlayerServerHealthProbe probe = new RadioPlayerServerHealthProbe("remote", new MongoFileUploadResultStore(mongo));
     private RadioPlayerUploadResultStore recorder = new UploadResultStoreBackedRadioPlayerResultStore(new MongoFileUploadResultStore(mongo));
