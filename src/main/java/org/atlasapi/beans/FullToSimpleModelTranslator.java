@@ -38,6 +38,7 @@ import org.atlasapi.media.entity.simple.Description;
 import org.atlasapi.media.entity.simple.Item;
 import org.atlasapi.media.entity.simple.PeopleQueryResult;
 import org.atlasapi.media.entity.simple.PublisherDetails;
+import org.atlasapi.media.entity.simple.RelatedLink;
 import org.atlasapi.media.entity.simple.Restriction;
 import org.atlasapi.media.entity.simple.ScheduleQueryResult;
 import org.atlasapi.media.entity.simple.SeriesSummary;
@@ -205,6 +206,23 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
                 return new KeyPhrase(input.getPhrase(), toPublisherDetails(input.getPublisher()), input.getWeighting());
             }
         }));
+        simpleDescription.setRelatedLinks(Iterables.transform(content.getRelatedLinks(), new Function<org.atlasapi.media.entity.RelatedLink, RelatedLink>(){
+
+            @Override
+            public RelatedLink apply(org.atlasapi.media.entity.RelatedLink rl) {
+                RelatedLink simpleLink = new RelatedLink();
+                
+                simpleLink.setUrl(rl.getUrl());
+                simpleLink.setType(rl.getType().toString().toLowerCase());
+                simpleLink.setSourceId(rl.getSourceId());
+                simpleLink.setShortName(rl.getShortName());
+                simpleLink.setTitle(rl.getTitle());
+                simpleLink.setDescription(rl.getDescription());
+                simpleLink.setImage(rl.getImage());
+                simpleLink.setThumbnail(rl.getThumbnail());
+                
+                return simpleLink;
+            }}));
 	}
 
 	private static void copyBasicDescribedAttributes(Described content, Description simpleDescription) {
