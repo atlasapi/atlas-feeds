@@ -20,6 +20,7 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.EntityType;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
+import org.atlasapi.media.entity.simple.KeyPhrase;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
@@ -38,6 +39,7 @@ import org.atlasapi.media.entity.simple.Description;
 import org.atlasapi.media.entity.simple.Item;
 import org.atlasapi.media.entity.simple.PeopleQueryResult;
 import org.atlasapi.media.entity.simple.PublisherDetails;
+import org.atlasapi.media.entity.simple.RelatedLink;
 import org.atlasapi.media.entity.simple.Restriction;
 import org.atlasapi.media.entity.simple.ScheduleQueryResult;
 import org.atlasapi.media.entity.simple.SeriesSummary;
@@ -230,6 +232,29 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		copyBasicDescribedAttributes(content, simpleDescription);
 		simpleDescription.setClips(clipToSimple(content.getClips()));
 		simpleDescription.setTopics(resolveTopics(content.getTopics()));
+        simpleDescription.setKeyPhrases(Iterables.transform(content.getKeyPhrases(), new Function<org.atlasapi.media.entity.KeyPhrase, KeyPhrase>() {
+            @Override
+            public KeyPhrase apply(org.atlasapi.media.entity.KeyPhrase input) {
+                return new KeyPhrase(input.getPhrase(), toPublisherDetails(input.getPublisher()), input.getWeighting());
+            }
+        }));
+        simpleDescription.setRelatedLinks(Iterables.transform(content.getRelatedLinks(), new Function<org.atlasapi.media.entity.RelatedLink, RelatedLink>(){
+
+            @Override
+            public RelatedLink apply(org.atlasapi.media.entity.RelatedLink rl) {
+                RelatedLink simpleLink = new RelatedLink();
+                
+                simpleLink.setUrl(rl.getUrl());
+                simpleLink.setType(rl.getType().toString().toLowerCase());
+                simpleLink.setSourceId(rl.getSourceId());
+                simpleLink.setShortName(rl.getShortName());
+                simpleLink.setTitle(rl.getTitle());
+                simpleLink.setDescription(rl.getDescription());
+                simpleLink.setImage(rl.getImage());
+                simpleLink.setThumbnail(rl.getThumbnail());
+                
+                return simpleLink;
+            }}));
 	}
 
     private Iterable<org.atlasapi.media.entity.simple.Topic> resolveTopics(List<String> topics) {
