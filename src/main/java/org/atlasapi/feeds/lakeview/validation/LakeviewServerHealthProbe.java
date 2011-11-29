@@ -1,17 +1,17 @@
 package org.atlasapi.feeds.lakeview.validation;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
-import java.util.zip.GZIPInputStream;
 
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult;
+import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
@@ -23,12 +23,14 @@ public class LakeviewServerHealthProbe implements HealthProbe {
 
 	private Clock clock;
 	private LakeviewFileValidator validator;
-	private AzureLatestFileDownloader azureFileDownloader;
+	private FileUploadResultStore fileUploadResultStore;
+	private String remoteServiceName;
 	
-	public LakeviewServerHealthProbe(Clock clock, LakeviewFileValidator validator, AzureLatestFileDownloader azureFileDownloader) {
+	public LakeviewServerHealthProbe(Clock clock, LakeviewFileValidator validator, FileUploadResultStore fileUploadResultStore, String serviceName) {
 		this.clock = clock;
 		this.validator = validator;
-		this.azureFileDownloader = azureFileDownloader;
+		this.fileUploadResultStore = fileUploadResultStore;
+		this.remoteServiceName = serviceName;
 	}
 	
 	@Override
@@ -42,38 +44,38 @@ public class LakeviewServerHealthProbe implements HealthProbe {
 	}
 
 	private List<ProbeResultEntry> validateFeedFile() {
-		List<ProbeResultEntry> results = Lists.newArrayList();
-	
-		AzureFileAndMetadata file = azureFileDownloader.getLatestFile();
+
+		Builder<ProbeResultEntry> results = new ImmutableList.Builder<ProbeResultEntry>();
+
+		results.add(validateFileUpload());
+		results.addAll(validateFileContents());
 		
-		if(file == null) {
-			results.add(new ProbeResultEntry(ProbeResultType.FAILURE, "Azure file upload", "No file present"));
+		return results.build();
+	}
+	
+	private ProbeResultEntry validateFileUpload() {
+		
+		ProbeResultEntry result = null;
+		FileUploadResult mostRecentResult = Iterables.getFirst(fileUploadResultStore.results(remoteServiceName), null);
+		
+		if(mostRecentResult == null) {
+			result = (new ProbeResultEntry(ProbeResultType.FAILURE, "Azure file upload", "No file upload result found"));
 		}
 		else {
 			DateTime twentyFiveHoursAgo = clock.now().minusHours(25);
-			if(file.getLastModTime().isBefore(twentyFiveHoursAgo)) {
-				results.add(new ProbeResultEntry(ProbeResultType.FAILURE, "Azure file upload", "No recent file upload: " + file.getLastModTime().toString(DateTimeFormat.mediumDateTime())));
+			if(mostRecentResult.uploadTime().isBefore(twentyFiveHoursAgo)) {
+				result = new ProbeResultEntry(ProbeResultType.FAILURE, "Azure file upload", "No recent file upload. Last upload at " + mostRecentResult.uploadTime().toString(DateTimeFormat.mediumDateTime()));
 			}
 			else {
-				results.add(new ProbeResultEntry(ProbeResultType.SUCCESS, "Azure file upload", "Last file was uploaded at " + file.getLastModTime().toString(DateTimeFormat.mediumDateTime())));
+				result = new ProbeResultEntry(ProbeResultType.SUCCESS, "Azure file upload", "Last file was uploaded at " + mostRecentResult.uploadTime().toString(DateTimeFormat.mediumDateTime()));
 			}
-			
-			results.addAll(validateFileContents(file));
 		}
-		
-		return ImmutableList.copyOf(results);
+		return result;
 	}
 
-	private List<ProbeResultEntry> validateFileContents(AzureFileAndMetadata file) {
-		InputStream is = null;
-		try {
-			is = new GZIPInputStream(new ByteArrayInputStream(file.getContents()));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	private List<ProbeResultEntry> validateFileContents() {
 
-		List<ProbeResultEntry> validationRulesResults = Lists.transform(validator.validate(is),
+		List<ProbeResultEntry> validationRulesResults = Lists.transform(validator.validate(),
 				new Function<ValidationResult, ProbeResultEntry>() {
 					@Override
 					public ProbeResultEntry apply(ValidationResult result) {

@@ -8,7 +8,7 @@ import org.atlasapi.feeds.lakeview.LakeviewContentFetcher;
 import org.atlasapi.feeds.lakeview.LakeviewFeedCompiler;
 import org.atlasapi.feeds.lakeview.XmlFeedOutputter;
 import org.atlasapi.feeds.upload.FileUpload;
-import org.atlasapi.feeds.upload.azure.AzureFileUploader;
+import org.atlasapi.feeds.upload.FileUploader;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
@@ -26,13 +26,13 @@ public class LakeviewFileUpdater extends ScheduledTask {
 	private XmlFeedOutputter feedOutputter;
 	private String filenameProviderID;
 	private Clock clock;
-	private AzureFileUploader uploader;
+	private FileUploader uploader;
 	private String schemaVersion;
 	private AdapterLog log;
 	
 	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormat.forPattern("yyyy-MM-dd.HH-mm-ss");
 
-	public LakeviewFileUpdater(LakeviewContentFetcher contentFetcher, LakeviewFeedCompiler feedCompiler, XmlFeedOutputter feedOutputter, String filenameProviderId, String schemaVersion, AzureFileUploader uploader, Clock clock, AdapterLog log) {
+	public LakeviewFileUpdater(LakeviewContentFetcher contentFetcher, LakeviewFeedCompiler feedCompiler, XmlFeedOutputter feedOutputter, String filenameProviderId, String schemaVersion, FileUploader uploader, Clock clock, AdapterLog log) {
 		this.contentFetcher = contentFetcher;
 		this.feedCompiler = feedCompiler;
 		this.feedOutputter = feedOutputter;
