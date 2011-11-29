@@ -54,8 +54,7 @@ public class RecentUpdateToBrandValidationRule implements
 			return new ValidationResult(
 					getRuleName(),
 					ValidationResultType.FAILURE,
-					"Latest update " + latestValidUpdate != null ? latestValidUpdate
-							.toString() : "NULL");
+					"Latest update " + latestValidUpdate );
 		}
 	}
 

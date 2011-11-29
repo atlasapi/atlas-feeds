@@ -6,11 +6,16 @@ import org.atlasapi.feeds.lakeview.upload.LakeviewFileUpdater;
 import org.atlasapi.feeds.lakeview.validation.AzureLatestFileDownloader;
 import org.atlasapi.feeds.lakeview.validation.LakeviewFileValidator;
 import org.atlasapi.feeds.lakeview.validation.LakeviewServerHealthProbe;
+import org.atlasapi.feeds.lakeview.validation.rules.CompletenessValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.HeirarchyValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.LakeviewFeedValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.RecentUpdateToBrandValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.UpToDateValidationRule;
+import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.ResultStoringFileUploader;
 import org.atlasapi.feeds.upload.azure.AzureFileUploader;
+import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
+import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.listing.ContentLister;
@@ -28,6 +33,7 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import com.metabroadcast.common.health.HealthProbe;
+import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.scheduling.RepetitionRule;
 import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
@@ -38,6 +44,8 @@ import com.metabroadcast.common.time.SystemClock;
 public class LakeviewModule {
 
 	private final static RepetitionRule LAKEVIEW_UPLOAD = RepetitionRules.every(Duration.standardDays(1)).withOffset(Duration.standardHours(4));
+	private final static String SERVICE_NAME = "lakeview";
+	private final static String REMOTE_ID = "azure";
 	
 	@Autowired
 	ContentLister contentLister;
@@ -45,8 +53,10 @@ public class LakeviewModule {
 	ContentResolver contentResolver;
 	@Autowired
 	AdapterLog log;
-	@Autowired
-	private SimpleScheduler scheduler;
+	@Autowired 
+	SimpleScheduler scheduler;
+	@Autowired 
+	DatabasedMongo mongo;
 
 	private @Value("${lakeview.upload.enabled}")
 	String enabled;
@@ -100,12 +110,13 @@ public class LakeviewModule {
 
 	public @Bean
 	HealthProbe lakeviewHealthProbe() {
-		return new LakeviewServerHealthProbe(new SystemClock(), lakeviewFileValidator(), azureLatestFileDownloader());
+		return new LakeviewServerHealthProbe(new SystemClock(), lakeviewFileValidator(), lakeviewResultStore(), REMOTE_ID);
 	}
 
 	public @Bean
-	AzureFileUploader lakeviewAzureUploader() {
-		return new AzureFileUploader(hostname, account, key, container);
+	FileUploader lakeviewAzureUploader() {
+		return ResultStoringFileUploader.resultStoringFileUploader(lakeviewResultStore(), SERVICE_NAME, REMOTE_ID, 
+				new AzureFileUploader(hostname, account, key, container));
 
 	}
 	
@@ -118,12 +129,18 @@ public class LakeviewModule {
 	LakeviewFileValidator lakeviewFileValidator() {
 		Clock clock = new SystemClock();
 		Builder<LakeviewFeedValidationRule> validationRules = ImmutableList.builder();
-		//validationRules.add(new CompletenessValidationRule(contentLister, 100));
+		validationRules.add(new CompletenessValidationRule(contentLister, 100));
 		validationRules.add(new HeirarchyValidationRule());
 		validationRules.add(new UpToDateValidationRule(5, clock));
 		validationRules.add(new RecentUpdateToBrandValidationRule("http://channel4.com/en-GB/TVSeries/deal-or-no-deal", 5, clock));
 		validationRules.add(new RecentUpdateToBrandValidationRule("http://channel4.com/en-GB/TVSeries/countdown", 5, clock));
-		return new LakeviewFileValidator(validationRules.build());
+		return new LakeviewFileValidator(lakeviewContentFetcher(), lakeviewFeedCompiler(),
+				lakeviewFeedOutputter(), validationRules.build(), log);
+	}
+	
+	public @Bean
+	FileUploadResultStore lakeviewResultStore() {
+		return new MongoFileUploadResultStore(mongo);
 	}
 	
 	@PostConstruct

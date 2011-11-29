@@ -5,6 +5,7 @@ import java.net.URI;
 
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
 import org.soyatec.windowsazure.blob.BlobStorageClient;
 import org.soyatec.windowsazure.blob.IBlobContainer;
 import org.soyatec.windowsazure.blob.IBlobContents;
