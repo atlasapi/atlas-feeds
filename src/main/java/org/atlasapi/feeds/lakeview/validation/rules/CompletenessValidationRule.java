@@ -16,6 +16,7 @@ import org.atlasapi.generated.ElementTVEpisode;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.listing.ContentLister;
@@ -110,11 +111,10 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 			for (Encoding encoding : version.getManifestedAs()) {
 				for (Location location : encoding.getAvailableAt()) {
 					if (location.getAvailable()
-							&& (location.getPolicy() == null || (location
-									.getPolicy().getAvailabilityStart()
-									.isBeforeNow() && location.getPolicy()
-									.getAvailabilityEnd().isAfterNow()))) {
-
+                            && location.getPolicy() != null 
+                            && Platform.XBOX.equals(location.getPolicy().getPlatform())
+                            && location.getPolicy().getAvailabilityStart().isBeforeNow() 
+                            && location.getPolicy().getAvailabilityEnd().isAfterNow()) {
 						Matcher matcher = ONDEMAND_ID
 								.matcher(location.getUri());
 						if (matcher.matches()) {
