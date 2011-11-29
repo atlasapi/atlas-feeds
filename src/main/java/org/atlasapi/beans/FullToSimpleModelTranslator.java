@@ -451,6 +451,9 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 			    simpleLocation.setPrice(policy.getPrice().getAmount());
 			    simpleLocation.setCurrency(policy.getPrice().getCurrency().getCurrencyCode());
 			}
+			if(policy.getPlatform() != null) {
+				simpleLocation.setPlatform(policy.getPlatform().key());
+			}
 		}
 		
 		simpleLocation.setTransportIsLive(location.getTransportIsLive());
