@@ -58,5 +58,9 @@ public class XmlTvBroadcastItem implements Comparable<XmlTvBroadcastItem> {
     public Series getSeries() {
         return series;
     }
+
+    public boolean hasSeries() {
+        return series != null;
+    }
     
 }
