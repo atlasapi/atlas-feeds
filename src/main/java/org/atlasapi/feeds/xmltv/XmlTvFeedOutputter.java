@@ -63,13 +63,17 @@ public class XmlTvFeedOutputter {
                 EMPTY_FIELD,//placeholder for film star rating
                 EMPTY_FIELD,//placeholder for film certificate
                 genre(broadcastItem.getItem().getGenres()),
-                broadcastItem.getItem().getDescription(),
+                description(broadcastItem),
                 EMPTY_FIELD,// RT Choice
                 date(broadcast.getTransmissionEndTime()),
                 time(broadcast.getTransmissionTime()),
                 time(broadcast.getTransmissionEndTime()),
                 String.valueOf(broadcast.getBroadcastDuration() / 60)
         );
+    }
+
+    private String description(XmlTvBroadcastItem broadcastItem) {
+        return broadcastItem.getItem().getDescription() != null ? broadcastItem.getItem().getDescription() : EMPTY_FIELD;
     }
 
     private String performers(XmlTvBroadcastItem broadcastItem) {
@@ -103,7 +107,7 @@ public class XmlTvFeedOutputter {
     }
 
     private String subTitle(XmlTvBroadcastItem broadcastItem) {
-        return isEpisode(broadcastItem) ? subtitleForEpisode((Episode)broadcastItem.getItem(), broadcastItem.getSeries()) : EMPTY_FIELD;
+        return isEpisode(broadcastItem) && broadcastItem.getSeries() != null ? subtitleForEpisode((Episode)broadcastItem.getItem(), broadcastItem.getSeries()) : EMPTY_FIELD;
     }
 
     private String subtitleForEpisode(Episode item, Series series) {

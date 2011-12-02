@@ -95,7 +95,7 @@ public class XmlTvFeedCompiler {
 
             @Override
             public LookupRef apply(Episode input) {
-                if(input.getContainer() != null) {
+                if(input.getSeriesRef() != null) {
                     return new LookupRef(input.getSeriesRef().getUri(), input.getPublisher(), ContentCategory.PROGRAMME_GROUP);
                 }
                 return null;
