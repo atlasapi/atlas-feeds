@@ -57,6 +57,8 @@ public class XmlTvFeedOutputter {
                 director(broadcastItem),
                 performers(broadcastItem),
                 toString(broadcast.getPremiere()),
+                toString(broadcastItem.getItem() instanceof Film),
+                toString(broadcast.getRepeat()),
                 toString(broadcast.getSubtitled()),
                 toString(broadcast.getWidescreen()),
                 toString(broadcast.getNewSeries()),
