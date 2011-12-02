@@ -53,7 +53,9 @@ public class XmlTvController {
                 return;
             }
         }
-        
+
+        response.setContentType(MimeType.TEXT_PLAIN.toString());
+        response.setCharacterEncoding(Charsets.UTF_8.displayName());
         compiler.compileFeed(daysFrom(startDate), channel, response.getOutputStream());
         
     }
