@@ -1,9 +1,9 @@
 package org.atlasapi.feeds.xmltv;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.List;
 import java.util.Set;
 
@@ -34,12 +34,13 @@ public class XmlTvFeedOutputter {
     }
 
     public void output(List<XmlTvBroadcastItem> items, OutputStream stream) throws IOException {
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream, Charsets.UTF_8));
+        Writer writer = new OutputStreamWriter(stream, Charsets.UTF_8);
         writer.write(XmlTvModule.FEED_PREABMLE);
         for (XmlTvBroadcastItem broadcastItem : items) {
-            writer.newLine();
+            writer.write('\n');
             writer.write(join(extractFields(broadcastItem)));
         }
+//        writer.flush();
     }
 
     private String join(List<String> extractedFields) {
@@ -56,6 +57,8 @@ public class XmlTvFeedOutputter {
                 director(broadcastItem),
                 performers(broadcastItem),
                 toString(broadcast.getPremiere()),
+                toString(broadcastItem.getItem() instanceof Film),
+                toString(broadcast.getRepeat()),
                 toString(broadcast.getSubtitled()),
                 toString(broadcast.getWidescreen()),
                 toString(broadcast.getNewSeries()),
