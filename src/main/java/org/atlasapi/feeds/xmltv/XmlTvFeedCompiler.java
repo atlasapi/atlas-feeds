@@ -24,6 +24,7 @@ import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.lookup.entry.LookupRef;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
@@ -38,6 +39,7 @@ import com.metabroadcast.common.time.DateTimeZones;
 
 public class XmlTvFeedCompiler {
 
+    private static final LocalTime SCHEDULE_START = new LocalTime(06,00,00);
     private final ScheduleResolver scheduleResolver;
     private final Publisher publisher;
     private final KnownTypeContentResolver contentResolver;
@@ -83,8 +85,8 @@ public class XmlTvFeedCompiler {
     }
 
     private List<Item> getItemsFromSchedule(Range<LocalDate> days, Channel channel) {
-        DateTime from = days.lowerEndpoint().toDateTimeAtStartOfDay(DateTimeZones.UTC);
-        DateTime to = days.upperEndpoint().toDateTimeAtStartOfDay(DateTimeZones.UTC);
+        DateTime from = days.lowerEndpoint().toDateTime(SCHEDULE_START, DateTimeZones.UTC);
+        DateTime to = days.upperEndpoint().toDateTime(SCHEDULE_START, DateTimeZones.UTC);
         Schedule schedule = scheduleResolver.schedule(from, to, ImmutableList.of(channel), ImmutableSet.of(publisher));
         List<Item> items = Iterables.getOnlyElement(schedule.scheduleChannels()).items();
         return items;

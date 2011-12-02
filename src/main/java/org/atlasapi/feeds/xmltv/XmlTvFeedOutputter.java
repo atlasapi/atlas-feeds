@@ -19,6 +19,7 @@ import org.joda.time.DateTime;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.time.DateTimeZones;
@@ -99,7 +100,8 @@ public class XmlTvFeedOutputter {
     }
 
     private String episode(XmlTvBroadcastItem broadcastItem) {
-        return isEpisode(broadcastItem) && broadcastItem.getItem().getTitle() != null ? broadcastItem.getItem().getTitle() : EMPTY_FIELD;
+        final String title = broadcastItem.getItem().getTitle();
+        return isEpisode(broadcastItem) && title != null && !Objects.equal(title, broadcastItem.getContainer().getTitle()) ? title : EMPTY_FIELD;
     }
 
     private String genre(Set<String> genres) {
@@ -107,7 +109,7 @@ public class XmlTvFeedOutputter {
     }
 
     private String subTitle(XmlTvBroadcastItem broadcastItem) {
-        return isEpisode(broadcastItem) && broadcastItem.getSeries() != null ? subtitleForEpisode((Episode)broadcastItem.getItem(), broadcastItem.getSeries()) : EMPTY_FIELD;
+        return isEpisode(broadcastItem) && broadcastItem.hasSeries() ? subtitleForEpisode((Episode)broadcastItem.getItem(), broadcastItem.getSeries()) : EMPTY_FIELD;
     }
 
     private String subtitleForEpisode(Episode item, Series series) {
