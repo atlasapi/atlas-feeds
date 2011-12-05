@@ -51,7 +51,7 @@ public class XmlTvModule {
         return new XmlTvChannelLookup();
     }
 
-    private @Bean XmlTvFeedCompiler xmltvFeedCompiler() {
+    public @Bean XmlTvFeedCompiler xmltvFeedCompiler() {
         return new XmlTvFeedCompiler(scheduleResolver, contentResolver, Publisher.PA);
     }
     
