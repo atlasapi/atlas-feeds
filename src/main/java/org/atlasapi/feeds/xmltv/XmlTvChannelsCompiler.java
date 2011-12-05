@@ -24,6 +24,7 @@ public class XmlTvChannelsCompiler {
         for (Entry<Integer, Channel> channelMapping : channels.entrySet()) {
             writer.write(String.format("%s|%s\n", channelMapping.getKey(), channelMapping.getValue().title()));
         }
+        writer.flush();
     }
     
 }
