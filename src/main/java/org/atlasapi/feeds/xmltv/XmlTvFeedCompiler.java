@@ -52,7 +52,7 @@ public class XmlTvFeedCompiler {
         this.outputter = new XmlTvFeedOutputter();
     }
     
-    public void compileFeed(Range<LocalDate> days, Channel channel, OutputStream writeTo) throws IOException {
+    public void compileChannelFeed(Range<LocalDate> days, Channel channel, OutputStream writeTo) throws IOException {
         outputter.output(sort(transform(getItemsFromSchedule(days, channel))), writeTo);
     }
     
