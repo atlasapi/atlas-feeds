@@ -40,7 +40,7 @@ public class XmlTvFeedOutputter {
             writer.write('\n');
             writer.write(join(extractFields(broadcastItem)));
         }
-//        writer.flush();
+        writer.flush();
     }
 
     private String join(List<String> extractedFields) {
@@ -112,11 +112,23 @@ public class XmlTvFeedOutputter {
     }
 
     private String subTitle(XmlTvBroadcastItem broadcastItem) {
-        return isEpisode(broadcastItem) && broadcastItem.hasSeries() ? subtitleForEpisode((Episode)broadcastItem.getItem(), broadcastItem.getSeries()) : EMPTY_FIELD;
+        if (isEpisode(broadcastItem)) {
+            Episode episode = (Episode)broadcastItem.getItem();
+            if(broadcastItem.hasSeries()) {
+                return subtitleForEpisodeAndSeries(episode, broadcastItem.getSeries());
+            }
+            if(episode.getEpisodeNumber() != null) {
+                return String.valueOf(episode.getEpisodeNumber());
+            }
+        }
+        return EMPTY_FIELD;
     }
 
-    private String subtitleForEpisode(Episode item, Series series) {
-        return String.format("%s/%s, series %s", item.getEpisodeNumber(), series.getTotalEpisodes(), series.getSeriesNumber());
+    private String subtitleForEpisodeAndSeries(Episode item, Series series) {
+        if(series.getTotalEpisodes() != null) {
+            return String.format("%s/%s, series %s", item.getEpisodeNumber(), series.getTotalEpisodes(), series.getSeriesNumber());
+        }
+        return String.format("%s, series %s", item.getEpisodeNumber(), series.getSeriesNumber());
     }
 
     private String programmeTitle(XmlTvBroadcastItem broadcastItem) {

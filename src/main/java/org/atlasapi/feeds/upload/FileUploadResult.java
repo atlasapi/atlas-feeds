@@ -46,6 +46,13 @@ public final class FileUploadResult {
         }
     });
     
+    public static final Ordering<FileUploadResult> NAME_ORDERING = Ordering.from(new Comparator<FileUploadResult>() {
+        @Override
+        public int compare(FileUploadResult r1, FileUploadResult r2) {
+            return r1.filename().compareTo(r2.filename());
+        }
+    });
+    
     public static FileUploadResult successfulUpload(String remoteId, String filename) {
         return new FileUploadResult(remoteId, filename, new DateTime(DateTimeZones.UTC), FileUploadResultType.SUCCESS);
     }

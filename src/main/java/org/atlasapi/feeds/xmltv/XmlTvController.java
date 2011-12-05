@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.xmltv;
 
 import java.io.IOException;
-import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -20,17 +19,27 @@ import com.google.common.collect.Range;
 import com.google.common.collect.Ranges;
 import com.metabroadcast.common.http.HttpStatusCode;
 import com.metabroadcast.common.media.MimeType;
+import com.metabroadcast.common.webapp.health.HealthController;
 
 @Controller
 public class XmlTvController {
 
     private final DateTimeFormatter dateFormat = ISODateTimeFormat.basicDate();
-    private final XmlTvFeedCompiler compiler;
+    private final XmlTvFeedCompiler feedCompiler;
+    private final XmlTvChannelsCompiler channelsCompiler;
     private final XmlTvChannelLookup channelLookup;
+    private final HealthController health;
 
-    public XmlTvController(XmlTvFeedCompiler compiler, XmlTvChannelLookup channelLookup) {
-        this.compiler = compiler;
+    public XmlTvController(XmlTvFeedCompiler feedCompiler, XmlTvChannelLookup channelLookup, HealthController health) {
+        this.feedCompiler = feedCompiler;
+        this.channelsCompiler = new XmlTvChannelsCompiler(channelLookup);
         this.channelLookup = channelLookup;
+        this.health = health;
+    }
+    
+    @RequestMapping("/feeds/xmltv/health")
+    public String health(HttpServletResponse response) throws IOException {
+        return health.showHealthPageForSlugs(response, "xmltv");
     }
     
     @RequestMapping("/feeds/xmltv/{id}.dat")
@@ -56,7 +65,7 @@ public class XmlTvController {
 
         response.setContentType(MimeType.TEXT_PLAIN.toString());
         response.setCharacterEncoding(Charsets.UTF_8.displayName());
-        compiler.compileFeed(daysFrom(startDate), channel, response.getOutputStream());
+        feedCompiler.compileChannelFeed(daysFrom(startDate), channel, response.getOutputStream());
         
     }
 
@@ -68,9 +77,6 @@ public class XmlTvController {
     public void getChannels(HttpServletResponse response) throws IOException {
         response.setContentType(MimeType.TEXT_PLAIN.toString());
         response.setCharacterEncoding(Charsets.UTF_8.displayName());
-        response.getWriter().println(XmlTvModule.FEED_PREABMLE);
-        for (Entry<Integer, Channel> channelMapping : channelLookup.entrySet()) {
-            response.getWriter().println(String.format("%s|%s", channelMapping.getKey(), channelMapping.getValue().title()));
-        }
+        channelsCompiler.compileChannelsFeed(response.getOutputStream());
     }
 }
