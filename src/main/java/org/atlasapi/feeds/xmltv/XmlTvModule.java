@@ -47,7 +47,7 @@ public class XmlTvModule {
         return new XmlTvController(xmltvFeedCompiler(), xmlTvChannels(), health);
     }
 
-    private @Bean XmlTvChannelLookup xmlTvChannels() {
+    public @Bean XmlTvChannelLookup xmlTvChannels() {
         return new XmlTvChannelLookup();
     }
 
