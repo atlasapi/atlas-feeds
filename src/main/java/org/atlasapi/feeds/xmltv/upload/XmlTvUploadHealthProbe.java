@@ -52,7 +52,7 @@ public class XmlTvUploadHealthProbe implements HealthProbe {
         addChannelsDatEntry(probeResult, groupedResults);
         
         for (Entry<Integer, Channel> channel : channels.entrySet()) {
-            String entryKey = String.format("%s (%s)", channel.getValue(), channel.getValue().title());
+            String entryKey = String.format("%s: %s", channel.getKey(), channel.getValue().title());
             Collection<FileUploadResult> resultsGroup = groupedResults.get(String.format("%s.dat",channel.getKey()));
             
             ProbeResultEntry entry;
