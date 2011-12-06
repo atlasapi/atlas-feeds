@@ -125,10 +125,19 @@ public class XmlTvFeedOutputter {
     }
 
     private String subtitleForEpisodeAndSeries(Episode item, Series series) {
-        if(series.getTotalEpisodes() != null) {
-            return String.format("%s/%s, series %s", item.getEpisodeNumber(), series.getTotalEpisodes(), series.getSeriesNumber());
+        if(series.getTotalEpisodes() != null && item.getEpisodeNumber() != null && item.getSeriesNumber() != null) {
+            return String.format("%s/%s, series %s", item.getEpisodeNumber(), series.getTotalEpisodes(), item.getSeriesNumber());
         }
-        return String.format("%s, series %s", item.getEpisodeNumber(), series.getSeriesNumber());
+        if (item.getEpisodeNumber() != null && item.getSeriesNumber() != null) {
+            return String.format("%s, series %s", item.getEpisodeNumber(), item.getSeriesNumber());
+        }
+        if (item.getEpisodeNumber() != null) {
+            return String.format("%s", item.getEpisodeNumber());
+        }
+        if (item.getSeriesNumber() != null) {
+            return String.format("series %s", item.getSeriesNumber());
+        }
+        return EMPTY_FIELD;
     }
 
     private String programmeTitle(XmlTvBroadcastItem broadcastItem) {
