@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Iterables;
+import com.metabroadcast.common.http.HttpStatusCode;
 import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.security.HttpBasicAuthChecker;
 import com.metabroadcast.common.security.UsernameAndPassword;
@@ -68,7 +69,11 @@ public class RadioPlayerHealthController {
         }
         boolean allowed = checker.check(request);
         if (allowed) {
-            return main.showHealthPageForSlugs(response, slugs.get(sid));
+            if(slugs.containsKey(sid)) {
+                return main.showHealthPageForSlugs(response, slugs.get(sid));
+            } else {
+                response.sendError(HttpStatusCode.NOT_FOUND.code());
+            }
         }
         HttpBasicAuthChecker.requestAuth(response, "Heath Page");
         return null;
