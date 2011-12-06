@@ -38,7 +38,7 @@ public class XmlTvUploadService extends AbstractService implements AsyncFileUplo
     }
     
     public XmlTvUploadService(String serviceName, FileUploader uploader) {
-        this(serviceName, uploader, Executors.newFixedThreadPool(10,new ThreadFactoryBuilder().setNameFormat(serviceName+"-upload-%s").build()), new SystemClock());
+        this(serviceName, uploader, Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat(serviceName+"-upload-%s").build()), new SystemClock());
     }
     
     @Override
