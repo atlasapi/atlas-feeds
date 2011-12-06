@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.media.entity.Actor;
+import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Clip;
@@ -20,6 +21,7 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.EntityType;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
@@ -40,6 +42,7 @@ import org.atlasapi.media.entity.simple.PublisherDetails;
 import org.atlasapi.media.entity.simple.Restriction;
 import org.atlasapi.media.entity.simple.ScheduleQueryResult;
 import org.atlasapi.media.entity.simple.SeriesSummary;
+import org.atlasapi.persistence.content.ContentResolver;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -47,6 +50,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
+import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.intl.Countries;
 
 /**
@@ -58,9 +62,11 @@ import com.metabroadcast.common.intl.Countries;
 public class FullToSimpleModelTranslator implements AtlasModelWriter {
 
 	private final AtlasModelWriter outputWriter;
+    private final ContentResolver contentResolver;
 
-	public FullToSimpleModelTranslator(AtlasModelWriter outputter) {
+	public FullToSimpleModelTranslator(AtlasModelWriter outputter, ContentResolver contentResolver) {
 		this.outputWriter = outputter;
+        this.contentResolver = contentResolver;
 	}
 	
 	@Override
@@ -114,7 +120,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		return outputGraph;
 	}
 	
-	static org.atlasapi.media.entity.simple.ScheduleChannel scheduleChannelFrom(ScheduleChannel scheduleChannel) {
+	org.atlasapi.media.entity.simple.ScheduleChannel scheduleChannelFrom(ScheduleChannel scheduleChannel) {
 	    org.atlasapi.media.entity.simple.ScheduleChannel newScheduleChannel = new org.atlasapi.media.entity.simple.ScheduleChannel();
 	    newScheduleChannel.setChannelUri(scheduleChannel.channel().uri());
 	    newScheduleChannel.setChannelKey(scheduleChannel.channel().key());
@@ -141,7 +147,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    return person;
 	}
 	
-	private static org.atlasapi.media.entity.simple.Person simplePersonFrom(CrewMember fullCrew) {
+	private org.atlasapi.media.entity.simple.Person simplePersonFrom(CrewMember fullCrew) {
 	    org.atlasapi.media.entity.simple.Person person = new org.atlasapi.media.entity.simple.Person();
 	    person.setType(Person.class.getSimpleName());
 	    if (fullCrew instanceof Actor) {
@@ -157,7 +163,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    return person;
 	}
 
-	private static org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Container fullPlayList) {
+	private org.atlasapi.media.entity.simple.Playlist simplePlaylistFrom(Container fullPlayList) {
 		
 		org.atlasapi.media.entity.simple.Playlist simplePlaylist = new org.atlasapi.media.entity.simple.Playlist();
 		simplePlaylist.setType(EntityType.from(fullPlayList).toString());
@@ -195,7 +201,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	    return contentList;
 	}
 	
-	private static void copyBasicContentAttributes(Content content, Description simpleDescription) {
+	private void copyBasicContentAttributes(Content content, Description simpleDescription) {
 		copyBasicDescribedAttributes(content, simpleDescription);
 		simpleDescription.setClips(clipToSimple(content.getClips()));
 	}
@@ -227,7 +233,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		simpleDescription.setCurie(description.getCurie());
 	}
 
-	private static List<Item> clipToSimple(List<Clip> clips) {
+	private List<Item> clipToSimple(List<Clip> clips) {
 		return Lists.transform(clips, new Function<Clip, Item>() {
 			@Override
 			public Item apply(Clip clip) {
@@ -240,7 +246,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
         return ContentIdentifier.identifierFor(content);
     }
 
-	static org.atlasapi.media.entity.simple.Item simpleItemFrom(org.atlasapi.media.entity.Item fullItem) {
+	org.atlasapi.media.entity.simple.Item simpleItemFrom(org.atlasapi.media.entity.Item fullItem) {
 		
 		org.atlasapi.media.entity.simple.Item simpleItem = new org.atlasapi.media.entity.simple.Item();
 		simpleItem.setType(EntityType.from(fullItem).toString());
@@ -312,7 +318,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		simpleItem.addLocation(simpleLocation);
 	}
 
-	private static void copyProperties(org.atlasapi.media.entity.Item fullItem, Item simpleItem) {
+	private void copyProperties(org.atlasapi.media.entity.Item fullItem, Item simpleItem) {
 		copyBasicContentAttributes(fullItem, simpleItem);
 		
 		simpleItem.setBlackAndWhite(fullItem.getBlackAndWhite());
@@ -320,10 +326,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		simpleItem.setScheduleOnly(fullItem.isScheduleOnly());
 		
 		if (fullItem.getContainer() != null) {
-			ParentRef brand = fullItem.getContainer();
-			BrandSummary brandSummary = new BrandSummary();
-			brandSummary.setUri(brand.getUri());
-			simpleItem.setBrandSummary(brandSummary);
+			simpleItem.setBrandSummary(summaryFromResolved(fullItem.getContainer()));
 		}
 		
 		if (fullItem instanceof Episode) {
@@ -334,10 +337,7 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 			
 			ParentRef series = episode.getSeriesRef();
 			if (series != null) {
-				SeriesSummary seriesSummary = new SeriesSummary();
-				seriesSummary.setUri(series.getUri());
-				seriesSummary.setType(Series.class.getSimpleName());
-				simpleItem.setSeriesSummary(seriesSummary);
+				simpleItem.setSeriesSummary(seriesSummaryFromResolved(series));
 			}
 		} else if (fullItem instanceof Film) {
             Film film = (Film) fullItem;
@@ -345,7 +345,35 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		}
 	}
 
-	private static PublisherDetails toPublisherDetails(Publisher publisher) {
+	private SeriesSummary seriesSummaryFromResolved(ParentRef seriesRef) {
+	    final Maybe<Identified> resolved = contentResolver.findByCanonicalUris(ImmutableList.of(seriesRef.getUri())).get(seriesRef.getUri());
+        if (resolved.hasValue() && resolved.requireValue() instanceof Series) {
+            Series series = (Series) resolved.requireValue();
+            SeriesSummary seriesSummary = new SeriesSummary();
+            seriesSummary.setUri(series.getCanonicalUri());
+            seriesSummary.setTitle(series.getTitle());
+            seriesSummary.setDescription(series.getDescription());
+            seriesSummary.setCurie(series.getCurie());
+            return seriesSummary;
+        } 
+        return null;
+    }
+
+    private BrandSummary summaryFromResolved(ParentRef container) {
+        final Maybe<Identified> resolved = contentResolver.findByCanonicalUris(ImmutableList.of(container.getUri())).get(container.getUri());
+        if (resolved.hasValue() && resolved.requireValue() instanceof Brand) {
+            Brand brand = (Brand) resolved.requireValue();
+            BrandSummary brandSummary = new BrandSummary();
+            brandSummary.setUri(brand.getCanonicalUri());
+            brandSummary.setTitle(brand.getTitle());
+            brandSummary.setDescription(brand.getDescription());
+            brandSummary.setCurie(brand.getCurie());
+            return brandSummary;
+        } 
+        return null;
+    }
+
+    private static PublisherDetails toPublisherDetails(Publisher publisher) {
 
 		if (publisher == null) {
 			return null;
