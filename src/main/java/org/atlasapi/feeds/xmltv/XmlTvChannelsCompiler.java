@@ -22,7 +22,7 @@ public class XmlTvChannelsCompiler {
         Writer writer = new OutputStreamWriter(stream, Charsets.UTF_8);
         writer.write(XmlTvModule.FEED_PREABMLE);
         for (Entry<Integer, Channel> channelMapping : channels.entrySet()) {
-            writer.write(String.format("%s|%s\n", channelMapping.getKey(), channelMapping.getValue().title()));
+            writer.write(String.format("\n%s|%s", channelMapping.getKey(), channelMapping.getValue().title()));
         }
         writer.flush();
     }
