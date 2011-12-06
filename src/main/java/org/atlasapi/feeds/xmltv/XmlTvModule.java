@@ -2,7 +2,6 @@ package org.atlasapi.feeds.xmltv;
 
 import javax.annotation.PostConstruct;
 
-import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.upload.s3.S3FileUploader;
 import org.atlasapi.feeds.xmltv.upload.XmlTvUploadHealthProbe;
@@ -11,6 +10,7 @@ import org.atlasapi.feeds.xmltv.upload.XmlTvUploadTask;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
+import org.atlasapi.persistence.logging.AdapterLog;
 import org.joda.time.LocalTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,7 +35,7 @@ public class XmlTvModule {
     @Autowired SimpleScheduler scheduler;
     @Autowired DatabasedMongo mongo;
     @Autowired HealthController health;
-    @Autowired FileUploadResultStore resultStore;
+    @Autowired AdapterLog log;
     
     private @Value("${xmltv.upload.enabled}") String uploadEnabled;
     private @Value("${xmltv.upload.bucket}") String s3bucket;
@@ -59,14 +59,11 @@ public class XmlTvModule {
     public void scheduleUploadTask() {
         if(Boolean.valueOf(uploadEnabled)) {
             final XmlTvUploadService uploadService = new XmlTvUploadService(SERVICE_NAME, new S3FileUploader(new UsernameAndPassword(s3access, s3secret), s3bucket, s3folder));
-            final XmlTvUploadTask uploadTask = new XmlTvUploadTask(uploadService, new MongoFileUploadResultStore(mongo), xmltvFeedCompiler(), xmlTvChannels());
+            final MongoFileUploadResultStore resultStore = new MongoFileUploadResultStore(mongo);
+            final XmlTvUploadTask uploadTask = new XmlTvUploadTask(uploadService, resultStore, xmltvFeedCompiler(), xmlTvChannels(), log);
             scheduler.schedule(uploadTask.withName("XmlTv Upload"), RepetitionRules.daily(new LocalTime(04,30,00)));
-            health.addProbes(createProbes());
+            health.addProbes(ImmutableSet.<HealthProbe>of(new XmlTvUploadHealthProbe(xmlTvChannels(), resultStore)));
         }
-    }
-    
-    private Iterable<HealthProbe> createProbes() {
-        return ImmutableSet.<HealthProbe>of(new XmlTvUploadHealthProbe(xmlTvChannels(), resultStore));
     }
 
     static final String FEED_PREABMLE = "\t\nIn accessing this XML feed, you agree that you will only access its contents for your own personal " +
