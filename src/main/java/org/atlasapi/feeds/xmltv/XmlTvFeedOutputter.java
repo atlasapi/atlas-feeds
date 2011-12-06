@@ -37,7 +37,7 @@ public class XmlTvFeedOutputter {
         Writer writer = new OutputStreamWriter(stream, Charsets.UTF_8);
         writer.write(XmlTvModule.FEED_PREABMLE);
         for (XmlTvBroadcastItem broadcastItem : items) {
-            writer.write('\n');
+            writer.write("\r\n");
             writer.write(join(extractFields(broadcastItem)));
         }
         writer.flush();

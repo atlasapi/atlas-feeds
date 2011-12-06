@@ -1,9 +1,10 @@
 package org.atlasapi.feeds.xmltv.upload;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploadResult;
@@ -21,8 +22,12 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Ranges;
+import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.time.DateTimeZones;
 
@@ -47,56 +52,95 @@ public class XmlTvUploadTask extends ScheduledTask {
     @Override
     protected void runTask() {
         LocalDate startDay = new LocalDate(DateTimeZones.LONDON);
+        
+        ListeningExecutorService compilerService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10, new ThreadFactoryBuilder().setNameFormat("xmltv-compile-%s").build()));
 
-        List<ListenableFuture<FileUploadResult>> uploadResults = ImmutableList.<ListenableFuture<FileUploadResult>> builder()
-                .add(uploadChannelsDat("channels.dat"))
-                .addAll(uploadChannels(startDay))
+        List<XmlTvUploadResult> uploadResults = ImmutableList.<XmlTvUploadResult> builder()
+                .add(uploadChannelsDat("channels.dat", compilerService))
+                .addAll(uploadChannels(startDay, compilerService))
                 .build();
         
-        
-        for (ListenableFuture<FileUploadResult> uploadResult : uploadResults) {
+        for (XmlTvUploadResult uploadResult : uploadResults) {
             try {
                 FileUploadResult result = uploadResult.get();
                 resultStore.store(result.filename(), result);
             } catch (Exception e) {
+                resultStore.store(uploadResult.filename(), failedUpload(uploadResult.filename(), e));
                 log.record(AdapterLogEntry.errorEntry().withCause(e).withSource(getClass()).withDescription("Exception uploading XMLTV feeds"));
                 throw Throwables.propagate(e);
             }
         }
-       
+        
+        compilerService.shutdown();
     }
 
-    private Iterable<ListenableFuture<FileUploadResult>> uploadChannels(final LocalDate startDay) {
-        return Iterables.transform(channelLookup.entrySet(), new Function<Entry<Integer,Channel>, ListenableFuture<FileUploadResult>>(){
+    private Iterable<XmlTvUploadResult> uploadChannels(final LocalDate startDay, final ListeningExecutorService compilerService) {
+        return Iterables.transform(channelLookup.entrySet(), new Function<Entry<Integer, Channel>, XmlTvUploadResult>() {
+            @Override
+            public XmlTvUploadResult apply(Entry<Integer, Channel> channel) {
+                return upload(String.format("%s.dat", channel.getKey()), startDay, channel, compilerService);
+            }
+        });
+    }
+
+    private XmlTvUploadResult uploadChannelsDat(final String filename, ListeningExecutorService compilerService) {
+        final ListenableFuture<FileUpload> upload = compilerService.submit(new Callable<FileUpload>() {
+            @Override
+            public FileUpload call() throws Exception {
+                ByteArrayOutputStream writeTo = new ByteArrayOutputStream();
+                channelCompiler.compileChannelsFeed(writeTo);
+                return new FileUpload(filename, writeTo.toByteArray());
+            }
+        });
+        return chainUpload(filename, upload);
+    }
+
+    private XmlTvUploadResult chainUpload(final String filename, final ListenableFuture<FileUpload> upload) {
+        return new XmlTvUploadResult(Futures.chain(upload, new Function<FileUpload, ListenableFuture<FileUploadResult>>() {
 
             @Override
-            public ListenableFuture<FileUploadResult> apply(Entry<Integer, Channel> channel) {
-                return upload(String.format("%s.dat", channel.getKey()), startDay, channel);
-            }});
+            public ListenableFuture<FileUploadResult> apply(FileUpload input) {
+                return uploadService.upload(input);
+            }
+
+        }),filename);
     }
 
-    private ListenableFuture<FileUploadResult> uploadChannelsDat(String filename) {
-        ByteArrayOutputStream writeTo = new ByteArrayOutputStream();
-        try {
-            channelCompiler.compileChannelsFeed(writeTo);
-        } catch (IOException e) {
-            return Futures.immediateFuture(failedUpload(filename, e));
-        }
-        return uploadService.upload(new FileUpload(filename, writeTo.toByteArray()));
-    }
-
-    private ListenableFuture<FileUploadResult> upload(String filename, LocalDate startDay, Entry<Integer, Channel> channel) {
-        ByteArrayOutputStream writeTo = new ByteArrayOutputStream();
-        try {
-            feedCompiler.compileChannelFeed(Ranges.closed(startDay, startDay.plusWeeks(2)), channel.getValue(), writeTo);
-        } catch (IOException e) {
-            return Futures.immediateFuture(failedUpload(filename, e));
-        }
-        return uploadService.upload(new FileUpload(filename, writeTo.toByteArray()));
+    private XmlTvUploadResult upload(final String filename, final LocalDate startDay, final Entry<Integer, Channel> channel, ListeningExecutorService compilerService) {
+        final ListenableFuture<FileUpload> upload = compilerService.submit(new Callable<FileUpload>() {
+            @Override
+            public FileUpload call() throws Exception {
+                ByteArrayOutputStream writeTo = new ByteArrayOutputStream();
+                feedCompiler.compileChannelFeed(Ranges.closed(startDay, startDay.plusWeeks(2)), channel.getValue(), writeTo);
+                return new FileUpload(filename, writeTo.toByteArray());
+            }
+        });
+        return chainUpload(filename, upload);
     }
 
     private FileUploadResult failedUpload(String filename, Exception e) {
         return FileUploadResult.failedUpload(uploadService.serviceName(), filename).withCause(e).withMessage(e.getMessage());
     }
 
+    private class XmlTvUploadResult extends ForwardingListenableFuture<FileUploadResult> {
+
+        private final ListenableFuture<FileUploadResult> delegate;
+        private final String filename;
+
+        public XmlTvUploadResult(ListenableFuture<FileUploadResult> delegate, String filename) {
+            this.delegate = delegate;
+            this.filename = filename;
+        }
+        
+        @Override
+        protected ListenableFuture<FileUploadResult> delegate() {
+            return delegate;
+        }
+
+        public String filename() {
+            return filename;
+        }
+        
+    }
+    
 }

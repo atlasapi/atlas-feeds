@@ -74,7 +74,7 @@ public class XmlTvFeedCompiler {
                             broadcastItem.withContainer((Container)containers.get(item.getContainer().getUri()));
                         }
                         if(item instanceof Episode && ((Episode)item).getSeriesRef() != null) {
-                            broadcastItem.withSeries((Series)series.get(((Episode)item).getSeriesRef()));
+                            broadcastItem.withSeries((Series)series.get(((Episode)item).getSeriesRef().getUri()));
                         }
                         broadcastItems.add(broadcastItem);
                     }
