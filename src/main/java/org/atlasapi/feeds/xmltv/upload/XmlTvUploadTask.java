@@ -48,23 +48,20 @@ public class XmlTvUploadTask extends ScheduledTask {
     protected void runTask() {
         LocalDate startDay = new LocalDate(DateTimeZones.LONDON);
 
-        ListenableFuture<List<FileUploadResult>> uploadResults = Futures.allAsList(
-            ImmutableList.<ListenableFuture<FileUploadResult>>builder()
+        List<ListenableFuture<FileUploadResult>> uploadResults = ImmutableList.<ListenableFuture<FileUploadResult>> builder()
                 .add(uploadChannelsDat("channels.dat"))
                 .addAll(uploadChannels(startDay))
-            .build()
-        );
+                .build();
         
         
-        List<FileUploadResult> results;
-        try {
-            results = uploadResults.get();
-            for (FileUploadResult uploadResult : results) {
-                resultStore.store(uploadResult.filename(), uploadResult);
+        for (ListenableFuture<FileUploadResult> uploadResult : uploadResults) {
+            try {
+                FileUploadResult result = uploadResult.get();
+                resultStore.store(result.filename(), result);
+            } catch (Exception e) {
+                log.record(AdapterLogEntry.errorEntry().withCause(e).withSource(getClass()).withDescription("Exception uploading XMLTV feeds"));
+                throw Throwables.propagate(e);
             }
-        } catch (Exception e) {
-            log.record(AdapterLogEntry.errorEntry().withCause(e).withSource(getClass()).withDescription("Exception upload XMLTV feeds"));
-            throw Throwables.propagate(e);
         }
        
     }

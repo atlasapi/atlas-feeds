@@ -54,7 +54,6 @@ public class XmlTvUploadService extends AbstractService implements AsyncFileUplo
     @Override
     public ListenableFuture<FileUploadResult> upload(final FileUpload upload) {
         return executor.submit(new Callable<FileUploadResult>() {
-
             @Override
             public FileUploadResult call() throws Exception {
                 try {
