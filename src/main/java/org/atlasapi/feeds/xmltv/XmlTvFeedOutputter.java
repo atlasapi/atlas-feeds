@@ -69,7 +69,7 @@ public class XmlTvFeedOutputter {
                 genre(broadcastItem.getItem().getGenres()),
                 description(broadcastItem),
                 EMPTY_FIELD,// RT Choice
-                date(broadcast.getTransmissionEndTime()),
+                date(broadcast.getTransmissionTime()),
                 time(broadcast.getTransmissionTime()),
                 time(broadcast.getTransmissionEndTime()),
                 String.valueOf(broadcast.getBroadcastDuration() / 60)
