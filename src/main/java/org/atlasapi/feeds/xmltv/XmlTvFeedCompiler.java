@@ -85,6 +85,9 @@ public class XmlTvFeedCompiler {
     }
 
     private List<Item> getItemsFromSchedule(Range<LocalDate> days, Channel channel) {
+        if(channel.equals(XmlTvChannelLookup.IGNORED)) {
+            return ImmutableList.of();
+        }
         DateTime from = days.lowerEndpoint().toDateTime(SCHEDULE_START, DateTimeZones.UTC);
         DateTime to = days.upperEndpoint().toDateTime(SCHEDULE_START, DateTimeZones.UTC);
         Schedule schedule = scheduleResolver.schedule(from, to, ImmutableList.of(channel), ImmutableSet.of(publisher));
