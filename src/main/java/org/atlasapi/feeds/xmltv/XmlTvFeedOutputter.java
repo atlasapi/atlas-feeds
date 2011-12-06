@@ -40,6 +40,7 @@ public class XmlTvFeedOutputter {
             writer.write("\r\n");
             writer.write(join(extractFields(broadcastItem)));
         }
+        writer.write("\r\n");
         writer.flush();
     }
 
