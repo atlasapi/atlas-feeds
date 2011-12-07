@@ -69,7 +69,7 @@ public class XmlTvFeedOutputter {
                 EMPTY_FIELD,//placeholder for film certificate
                 genre(broadcastItem.getItem().getGenres()),
                 description(broadcastItem),
-                EMPTY_FIELD,// RT Choice
+                String.valueOf(false),// RT Choice
                 date(broadcast.getTransmissionTime()),
                 time(broadcast.getTransmissionTime()),
                 time(broadcast.getTransmissionEndTime()),
