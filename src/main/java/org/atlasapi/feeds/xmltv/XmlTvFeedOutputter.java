@@ -22,12 +22,14 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class XmlTvFeedOutputter {
 
     private final String EMPTY_FIELD = "";
     private final Joiner fieldJoiner;
+    private final XmlTvFeedGenreMap genreMap = new XmlTvFeedGenreMap();
 
     public XmlTvFeedOutputter() {
         this.fieldJoiner = Joiner.on("~");
@@ -109,7 +111,7 @@ public class XmlTvFeedOutputter {
     }
 
     private String genre(Set<String> genres) {
-        return "No Genre";
+        return Maybe.fromPossibleNullValue(genres.isEmpty() ? "No Genre" : genreMap.mapGenreUri(Iterables.get(genres, 0))).valueOrDefault(EMPTY_FIELD);
     }
 
     private String subTitle(XmlTvBroadcastItem broadcastItem) {
