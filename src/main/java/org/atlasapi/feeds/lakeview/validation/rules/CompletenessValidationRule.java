@@ -19,6 +19,7 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.persistence.content.listing.ContentLister;
 
 import com.google.common.collect.ImmutableList;
@@ -110,11 +111,11 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 		for (Version version : episode.getVersions()) {
 			for (Encoding encoding : version.getManifestedAs()) {
 				for (Location location : encoding.getAvailableAt()) {
-					if (location.getAvailable()
-                            && location.getPolicy() != null 
-                            && Platform.XBOX.equals(location.getPolicy().getPlatform())
-                            && location.getPolicy().getAvailabilityStart().isBeforeNow() 
-                            && location.getPolicy().getAvailabilityEnd().isAfterNow()) {
+					if(location.getPolicy() != null 
+							&& Platform.XBOX.equals(location.getPolicy().getPlatform()) 
+							&& location.getPolicy().getAvailabilityStart().isBeforeNow() 
+							&& location.getPolicy().getAvailabilityEnd().isAfterNow()) {
+
 						Matcher matcher = ONDEMAND_ID
 								.matcher(location.getUri());
 						if (matcher.matches()) {
@@ -126,7 +127,7 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 		}
 		return null;
 	}
-
+	
 	public static String getApplicationSpecificData(ElementTVEpisode episode) {
 		for (JAXBElement<?> restElement : episode.getRest()) {
 			if (restElement.getName().getLocalPart()
