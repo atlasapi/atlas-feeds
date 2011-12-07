@@ -21,6 +21,8 @@ import org.atlasapi.media.entity.Restriction;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.entity.simple.ContentQueryResult;
 import org.atlasapi.media.entity.simple.Item;
+import org.atlasapi.persistence.content.ContentResolver;
+import org.atlasapi.persistence.content.ResolvedContent;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -43,7 +45,10 @@ import com.metabroadcast.common.servlet.StubHttpServletResponse;
 public class FullToSimpleModelTranslatorTest {
     
     private final Mockery context = new Mockery();
-
+    private final ContentResolver contentResolver = context.mock(ContentResolver.class);
+    private final AtlasModelWriter xmlOutputter = context.mock(AtlasModelWriter.class);
+    private final FullToSimpleModelTranslator translator = new FullToSimpleModelTranslator(xmlOutputter, contentResolver);
+    
 	private StubHttpServletRequest request;
 	private StubHttpServletResponse response;
 
@@ -56,16 +61,15 @@ public class FullToSimpleModelTranslatorTest {
 	@Test
 	public void testTranslatesItemsInFullModel() throws Exception {
 		
-		final AtlasModelWriter xmlOutputter = context.mock(AtlasModelWriter.class);
-		
 		Set<Object> graph = Sets.newHashSet();
 		graph.add(new Episode());
 		
 		context.checking(new Expectations() {{ 
 			one(xmlOutputter).writeTo(with(request), with(response), with(simpleGraph()), with(AtlasModelType.CONTENT));
+			ignoring(contentResolver);
 		}});
 		
-		new FullToSimpleModelTranslator(xmlOutputter).writeTo(request, response, graph, AtlasModelType.CONTENT);
+        translator.writeTo(request, response, graph, AtlasModelType.CONTENT);
 	}
 
 	protected Matcher<Set<Object>> simpleGraph() {
@@ -86,7 +90,12 @@ public class FullToSimpleModelTranslatorTest {
 			}};
 	}
 	
-	public void testCanCreateSimpleItemFromFullItem() throws Exception {
+	@SuppressWarnings("unchecked")
+    public void testCanCreateSimpleItemFromFullItem() throws Exception {
+	    
+	    context.checking(new Expectations(){{
+	        allowing(contentResolver).findByCanonicalUris(with(any(Iterable.class)));will(returnValue(ResolvedContent.builder().build()));
+	    }});
 		
 		org.atlasapi.media.entity.Item fullItem = new org.atlasapi.media.entity.Item();
 		Version version = new Version();
@@ -116,7 +125,7 @@ public class FullToSimpleModelTranslatorTest {
 		CrewMember person = Actor.actor("hisID", "Andrew Collings", "Dirt-bag Humperdink", Publisher.BBC);
 		fullItem.addPerson(person);
 		
-		Item simpleItem = FullToSimpleModelTranslator.simpleItemFrom(fullItem);
+		Item simpleItem = translator.simpleItemFrom(fullItem);
 		List<org.atlasapi.media.entity.simple.Person> people = simpleItem.getPeople();
 		org.atlasapi.media.entity.simple.Person simpleActor = Iterables.getOnlyElement(people);
 		assertThat(simpleActor.getCharacter(), is("Dirt-bag Humperdink"));
