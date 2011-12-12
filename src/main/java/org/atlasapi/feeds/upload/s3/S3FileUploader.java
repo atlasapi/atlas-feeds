@@ -24,7 +24,9 @@ public class S3FileUploader implements FileUploader {
     @Override
     public void upload(FileUpload upload) throws Exception {
         S3Service s3Service = new RestS3Service(creds);
-        s3Service.putObject(s3Service.getBucket(bucket), new S3Object(String.format("%s/%s", folder, upload.getFilename()),upload.getFileData()));
+        final S3Object object = new S3Object(String.format("%s/%s", folder, upload.getFilename()),upload.getFileData());
+        object.setContentType(upload.getContentType().toString());
+        s3Service.putObject(s3Service.getBucket(bucket), object);
     }
 
 }

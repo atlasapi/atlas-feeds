@@ -44,13 +44,9 @@ public class XmlTvModule {
     private @Value("${s3.secret}") String s3secret;
 
     public @Bean XmlTvController xmlTvController() {
-        return new XmlTvController(xmltvFeedCompiler(), xmlTvChannels(), health);
+        return new XmlTvController(xmltvFeedCompiler(), XmlTvChannelLookup.MAP, health);
     }
-
-    public @Bean XmlTvChannelLookup xmlTvChannels() {
-        return new XmlTvChannelLookup();
-    }
-
+    
     public @Bean XmlTvFeedCompiler xmltvFeedCompiler() {
         return new XmlTvFeedCompiler(scheduleResolver, contentResolver, Publisher.PA);
     }
@@ -60,9 +56,9 @@ public class XmlTvModule {
         if(Boolean.valueOf(uploadEnabled)) {
             final XmlTvUploadService uploadService = new XmlTvUploadService(SERVICE_NAME, new S3FileUploader(new UsernameAndPassword(s3access, s3secret), s3bucket, s3folder));
             final MongoFileUploadResultStore resultStore = new MongoFileUploadResultStore(mongo);
-            final XmlTvUploadTask uploadTask = new XmlTvUploadTask(uploadService, resultStore, xmltvFeedCompiler(), xmlTvChannels(), log);
+            final XmlTvUploadTask uploadTask = new XmlTvUploadTask(uploadService, resultStore, xmltvFeedCompiler(), XmlTvChannelLookup.MAP, log);
             scheduler.schedule(uploadTask.withName("XmlTv Upload"), RepetitionRules.daily(new LocalTime(04,30,00)));
-            health.addProbes(ImmutableSet.<HealthProbe>of(new XmlTvUploadHealthProbe(xmlTvChannels(), resultStore)));
+            health.addProbes(ImmutableSet.<HealthProbe>of(new XmlTvUploadHealthProbe(XmlTvChannelLookup.MAP, resultStore)));
         }
     }
 
