@@ -1,10 +1,11 @@
 package org.atlasapi.feeds.xmltv;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.media.entity.Channel;
+import org.atlasapi.feeds.xmltv.XmlTvChannelLookup.XmlTvChannel;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -27,10 +28,10 @@ public class XmlTvController {
     private final DateTimeFormatter dateFormat = ISODateTimeFormat.basicDate();
     private final XmlTvFeedCompiler feedCompiler;
     private final XmlTvChannelsCompiler channelsCompiler;
-    private final XmlTvChannelLookup channelLookup;
+    private final Map<Integer, XmlTvChannel> channelLookup;
     private final HealthController health;
 
-    public XmlTvController(XmlTvFeedCompiler feedCompiler, XmlTvChannelLookup channelLookup, HealthController health) {
+    public XmlTvController(XmlTvFeedCompiler feedCompiler, Map<Integer, XmlTvChannel> channelLookup, HealthController health) {
         this.feedCompiler = feedCompiler;
         this.channelsCompiler = new XmlTvChannelsCompiler(channelLookup);
         this.channelLookup = channelLookup;
@@ -45,7 +46,7 @@ public class XmlTvController {
     @RequestMapping("/feeds/xmltv/{id}.dat")
     public void getFeed(HttpServletResponse response, @PathVariable Integer id, @RequestParam(value="from",required=false) String startDay) throws IOException {
         
-        Channel channel = channelLookup.get(id);
+        XmlTvChannel channel = channelLookup.get(id);
         
         if (channel == null) {
             response.sendError(HttpStatusCode.NOT_FOUND.code(), String.format("Channel %s not found", id));
@@ -65,7 +66,7 @@ public class XmlTvController {
 
         response.setContentType(MimeType.TEXT_PLAIN.toString());
         response.setCharacterEncoding(Charsets.UTF_8.displayName());
-        feedCompiler.compileChannelFeed(daysFrom(startDate), channel, response.getOutputStream());
+        feedCompiler.compileChannelFeed(daysFrom(startDate), channel.channel(), response.getOutputStream());
         
     }
 

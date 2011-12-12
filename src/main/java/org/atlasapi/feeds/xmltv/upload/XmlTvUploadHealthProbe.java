@@ -7,13 +7,13 @@ import static org.atlasapi.feeds.upload.FileUploadResult.DATE_ORDERING;
 import static org.atlasapi.feeds.upload.FileUploadResult.TYPE_ORDERING;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
-import org.atlasapi.feeds.xmltv.XmlTvChannelLookup;
-import org.atlasapi.media.entity.Channel;
+import org.atlasapi.feeds.xmltv.XmlTvChannelLookup.XmlTvChannel;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -28,10 +28,10 @@ public class XmlTvUploadHealthProbe implements HealthProbe {
 
     protected static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
 
-    private final XmlTvChannelLookup channels;
+    private final Map<Integer,XmlTvChannel> channels;
     private final FileUploadResultStore resultStore;
 
-    public XmlTvUploadHealthProbe(XmlTvChannelLookup channels, FileUploadResultStore resultStore) {
+    public XmlTvUploadHealthProbe(Map<Integer,XmlTvChannel> channels, FileUploadResultStore resultStore) {
         this.channels = channels;
         this.resultStore = resultStore;
     }
@@ -51,7 +51,7 @@ public class XmlTvUploadHealthProbe implements HealthProbe {
         
         addChannelsDatEntry(probeResult, groupedResults);
         
-        for (Entry<Integer, Channel> channel : channels.entrySet()) {
+        for (Entry<Integer, XmlTvChannel> channel : channels.entrySet()) {
             String entryKey = String.format("%s: %s", channel.getKey(), channel.getValue().title());
             Collection<FileUploadResult> resultsGroup = groupedResults.get(String.format("%s.dat",channel.getKey()));
             
