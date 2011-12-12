@@ -468,6 +468,8 @@ public class XmlTvChannelLookup {
             .put(2686, channelFrom(Channel.SKY_LIVING_LOVES))
             .put(2696, channelFrom(IGNORED, "Sony Entertainment TV (Plus 1)"))
             .put(2697, channelFrom(IGNORED, "Sony Entertainment Television"))
+            .put(2698, channelFrom(Channel.PBS))
+            .put(2699, channelFrom(Channel.FIVE_PLUS1))
         .build();
 
 }
