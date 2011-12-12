@@ -1,5 +1,8 @@
 package org.atlasapi.feeds.xmltv.upload;
 
+import static com.metabroadcast.common.media.MimeType.TEXT_PLAIN;
+import static org.atlasapi.feeds.upload.FileUpload.fileUpload;
+
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Map;
@@ -89,7 +92,7 @@ public class XmlTvUploadTask extends ScheduledTask {
             public FileUpload call() throws Exception {
                 ByteArrayOutputStream writeTo = new ByteArrayOutputStream();
                 channelCompiler.compileChannelsFeed(writeTo);
-                return new FileUpload(filename, writeTo.toByteArray());
+                return fileUpload(filename, writeTo.toByteArray()).withContentType(TEXT_PLAIN).build();
             }
         });
         return chainUpload(filename, upload);
@@ -112,7 +115,7 @@ public class XmlTvUploadTask extends ScheduledTask {
             public FileUpload call() throws Exception {
                 ByteArrayOutputStream writeTo = new ByteArrayOutputStream();
                 feedCompiler.compileChannelFeed(Ranges.closed(startDay, startDay.plusWeeks(2)), channel.getValue().channel(), writeTo);
-                return new FileUpload(filename, writeTo.toByteArray());
+                return fileUpload(filename, writeTo.toByteArray()).withContentType(TEXT_PLAIN).build();
             }
         });
         return chainUpload(filename, upload);
