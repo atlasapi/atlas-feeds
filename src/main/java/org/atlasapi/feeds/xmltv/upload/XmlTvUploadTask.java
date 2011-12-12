@@ -2,6 +2,7 @@ package org.atlasapi.feeds.xmltv.upload;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -9,10 +10,9 @@ import java.util.concurrent.Executors;
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
-import org.atlasapi.feeds.xmltv.XmlTvChannelLookup;
+import org.atlasapi.feeds.xmltv.XmlTvChannelLookup.XmlTvChannel;
 import org.atlasapi.feeds.xmltv.XmlTvChannelsCompiler;
 import org.atlasapi.feeds.xmltv.XmlTvFeedCompiler;
-import org.atlasapi.media.entity.Channel;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.joda.time.LocalDate;
@@ -34,13 +34,13 @@ import com.metabroadcast.common.time.DateTimeZones;
 public class XmlTvUploadTask extends ScheduledTask {
 
     private final AsyncFileUploadService uploadService;
-    private final XmlTvChannelLookup channelLookup;
+    private final Map<Integer,XmlTvChannel> channelLookup;
     private final XmlTvFeedCompiler feedCompiler;
     private final FileUploadResultStore resultStore;
     private final XmlTvChannelsCompiler channelCompiler;
     private final AdapterLog log;
 
-    public XmlTvUploadTask(AsyncFileUploadService uploadService, FileUploadResultStore resultStore, XmlTvFeedCompiler feedCompiler, XmlTvChannelLookup channelLookup, AdapterLog log) {
+    public XmlTvUploadTask(AsyncFileUploadService uploadService, FileUploadResultStore resultStore, XmlTvFeedCompiler feedCompiler, Map<Integer,XmlTvChannel> channelLookup, AdapterLog log) {
         this.uploadService = uploadService;
         this.resultStore = resultStore;
         this.feedCompiler = feedCompiler;
@@ -75,9 +75,9 @@ public class XmlTvUploadTask extends ScheduledTask {
     }
 
     private Iterable<XmlTvUploadResult> uploadChannels(final LocalDate startDay, final ListeningExecutorService compilerService) {
-        return Iterables.transform(channelLookup.entrySet(), new Function<Entry<Integer, Channel>, XmlTvUploadResult>() {
+        return Iterables.transform(channelLookup.entrySet(), new Function<Entry<Integer, XmlTvChannel>, XmlTvUploadResult>() {
             @Override
-            public XmlTvUploadResult apply(Entry<Integer, Channel> channel) {
+            public XmlTvUploadResult apply(Entry<Integer, XmlTvChannel> channel) {
                 return upload(String.format("%s.dat", channel.getKey()), startDay, channel, compilerService);
             }
         });
@@ -106,12 +106,12 @@ public class XmlTvUploadTask extends ScheduledTask {
         }),filename);
     }
 
-    private XmlTvUploadResult upload(final String filename, final LocalDate startDay, final Entry<Integer, Channel> channel, ListeningExecutorService compilerService) {
+    private XmlTvUploadResult upload(final String filename, final LocalDate startDay, final Entry<Integer, XmlTvChannel> channel, ListeningExecutorService compilerService) {
         final ListenableFuture<FileUpload> upload = compilerService.submit(new Callable<FileUpload>() {
             @Override
             public FileUpload call() throws Exception {
                 ByteArrayOutputStream writeTo = new ByteArrayOutputStream();
-                feedCompiler.compileChannelFeed(Ranges.closed(startDay, startDay.plusWeeks(2)), channel.getValue(), writeTo);
+                feedCompiler.compileChannelFeed(Ranges.closed(startDay, startDay.plusWeeks(2)), channel.getValue().channel(), writeTo);
                 return new FileUpload(filename, writeTo.toByteArray());
             }
         });
