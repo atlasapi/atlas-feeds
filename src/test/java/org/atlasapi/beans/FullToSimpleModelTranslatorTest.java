@@ -47,7 +47,7 @@ public class FullToSimpleModelTranslatorTest {
     private final Mockery context = new Mockery();
     private final ContentResolver contentResolver = context.mock(ContentResolver.class);
     private final AtlasModelWriter xmlOutputter = context.mock(AtlasModelWriter.class);
-    private final FullToSimpleModelTranslator translator = new FullToSimpleModelTranslator(xmlOutputter, contentResolver);
+    private final FullToSimpleModelTranslator translator = new FullToSimpleModelTranslator(xmlOutputter, contentResolver, null);
     
 	private StubHttpServletRequest request;
 	private StubHttpServletResponse response;
