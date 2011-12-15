@@ -25,6 +25,7 @@ import org.atlasapi.beans.OembedJsonTranslator;
 import org.atlasapi.beans.OembedXmlTranslator;
 import org.atlasapi.beans.html.HtmlTranslator;
 import org.atlasapi.persistence.topic.TopicQueryResolver;
+import org.atlasapi.media.segment.SegmentResolver;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.rdf.beans.RdfXmlTranslator;
 
@@ -37,12 +38,12 @@ public class DispatchingAtlasModelWriter implements AtlasModelWriter {
 
 	private final List<MappedWriter> writers = Lists.newArrayList();
 	
-	public DispatchingAtlasModelWriter(ContentResolver contentResolver, TopicQueryResolver topicResolver) {
-		add("json", APPLICATION_JSON,  new FullToSimpleModelTranslator(new JsonTranslator(), contentResolver, topicResolver));
+	public DispatchingAtlasModelWriter(ContentResolver contentResolver, TopicQueryResolver topicResolver, SegmentResolver segmentResolver) {
+		add("json", APPLICATION_JSON,  new FullToSimpleModelTranslator(new JsonTranslator(), contentResolver, topicResolver,segmentResolver));
 		add("rdf.xml", APPLICATION_RDF_XML, new RdfXmlTranslator());
 		add("oembed.xml", APPLICATION_OEMBED_XML,  new OembedXmlTranslator());
 		add("oembed.json",APPLICATION_OEMBED_JSON,  new OembedJsonTranslator());
-		add("xml", APPLICATION_XML,  new FullToSimpleModelTranslator(new JaxbXmlTranslator(), contentResolver, topicResolver));
+		add("xml", APPLICATION_XML,  new FullToSimpleModelTranslator(new JaxbXmlTranslator(), contentResolver, topicResolver,segmentResolver));
 		add("html", TEXT_HTML, new HtmlTranslator());
 	}
 

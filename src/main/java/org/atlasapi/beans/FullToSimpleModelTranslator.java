@@ -3,6 +3,7 @@ package org.atlasapi.beans;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -47,14 +48,20 @@ import org.atlasapi.media.entity.simple.ScheduleQueryResult;
 import org.atlasapi.media.entity.simple.SeriesSummary;
 import org.atlasapi.media.entity.simple.TopicQueryResult;
 import org.atlasapi.persistence.topic.TopicQueryResolver;
+import org.atlasapi.media.segment.Segment;
+import org.atlasapi.media.segment.SegmentEvent;
+import org.atlasapi.media.segment.SegmentRef;
+import org.atlasapi.media.segment.SegmentResolver;
 import org.atlasapi.persistence.content.ContentResolver;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
+import com.google.common.primitives.Ints;
 import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.intl.Countries;
 
@@ -69,11 +76,13 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	private final AtlasModelWriter outputWriter;
     private final TopicQueryResolver topicResolver;
     private final ContentResolver contentResolver;
+    private final SegmentResolver segmentResolver;
 
-	public FullToSimpleModelTranslator(AtlasModelWriter outputter, ContentResolver contentResolver, TopicQueryResolver topicResolver) {
+	public FullToSimpleModelTranslator(AtlasModelWriter outputter, ContentResolver contentResolver, TopicQueryResolver topicResolver, SegmentResolver segmentResolver) {
 		this.outputWriter = outputter;
         this.topicResolver = topicResolver;
         this.contentResolver = contentResolver;
+        this.segmentResolver = segmentResolver;
 	}
 	
 	@Override
@@ -315,8 +324,13 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		org.atlasapi.media.entity.simple.Item simpleItem = new org.atlasapi.media.entity.simple.Item();
 		simpleItem.setType(EntityType.from(fullItem).toString());
 		
+		boolean doneSegments = false;
 		for (Version version : fullItem.getVersions()) {
 			addTo(simpleItem, version, fullItem);
+			if(!doneSegments && !version.getSegmentEvents().isEmpty()) {
+			    simpleItem.setSegments(simplify(version.getSegmentEvents()));
+			    doneSegments = true;
+			}
 		}
 		
 		List<org.atlasapi.media.entity.simple.Person> people = Lists.newArrayList();
@@ -333,7 +347,57 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		return simpleItem;
 	}
 
-	private static void addTo(Item simpleItem, Version version, org.atlasapi.media.entity.Item item) {
+	private List<org.atlasapi.media.entity.simple.SegmentEvent> simplify(List<SegmentEvent> segmentEvents) {
+	    final Map<SegmentRef, Maybe<Segment>> resolvedSegs = segmentResolver.resolveById(Lists.transform(segmentEvents, SegmentEvent.TO_REF));
+        return ImmutableList.copyOf(Iterables.filter(Iterables.transform(segmentEvents, new Function<SegmentEvent, org.atlasapi.media.entity.simple.SegmentEvent>(){
+            @Override
+            public org.atlasapi.media.entity.simple.SegmentEvent apply(SegmentEvent input) {
+                Maybe<Segment> segment = resolvedSegs.get(input.getSegment());
+                if (segment.hasValue()) {
+                    return simplify(input, segment.requireValue());
+                }
+                return null;
+            }
+        }),Predicates.notNull()));
+    }
+
+    private org.atlasapi.media.entity.simple.SegmentEvent simplify(SegmentEvent event, Segment segment) {
+        final org.atlasapi.media.entity.simple.SegmentEvent segmentEvent = new org.atlasapi.media.entity.simple.SegmentEvent();
+        
+        final org.atlasapi.media.entity.Description description = event.getDescription();
+        segmentEvent.setTitle(description.getTitle());
+        segmentEvent.setShortSynopsis(description.getShortSynopsis());
+        segmentEvent.setMediumSynopsis(description.getMediumSynopsis());
+        segmentEvent.setLongSynopsis(description.getLongSynopsis());
+        
+        segmentEvent.setUri(event.getCanonicalUri());
+        segmentEvent.setIsChapter(event.getIsChapter());
+        segmentEvent.setPosition(event.getPosition());
+        segmentEvent.setOffset(Ints.saturatedCast(event.getOffset().getStandardSeconds()));
+        segmentEvent.setSegment(simplify(segment));
+        
+        return segmentEvent;
+    }
+	
+    private org.atlasapi.media.entity.simple.Segment simplify(Segment segment) {
+        final org.atlasapi.media.entity.simple.Segment seg = new org.atlasapi.media.entity.simple.Segment();
+        
+        seg.setUri(segment.getCanonicalUri());
+        seg.setId(segment.getIdentifier());
+        
+        final org.atlasapi.media.entity.Description description = segment.getDescription();
+        seg.setTitle(description.getTitle());
+        seg.setShortSynopsis(description.getShortSynopsis());
+        seg.setMediumSynopsis(description.getMediumSynopsis());
+        seg.setLongSynopsis(description.getLongSynopsis());
+        
+        seg.setDuration(Ints.saturatedCast(segment.getDuration().getStandardSeconds()));
+        seg.setType(segment.getType().toString());
+        
+        return seg;
+    }
+
+    private static void addTo(Item simpleItem, Version version, org.atlasapi.media.entity.Item item) {
 		
 		for (Encoding encoding : version.getManifestedAs()) {
 			addTo(simpleItem, version, encoding, item);
@@ -346,6 +410,8 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 		        simpleItem.addBroadcast(simpleBroadcast);
 		    }
 		}
+		
+		
 	}
 
 	private static org.atlasapi.media.entity.simple.Broadcast simplify(Broadcast broadcast) {
