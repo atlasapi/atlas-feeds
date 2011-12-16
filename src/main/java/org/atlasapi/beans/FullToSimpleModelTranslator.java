@@ -8,7 +8,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.media.entity.Actor;
-import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Clip;
@@ -21,7 +20,6 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.EntityType;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
-import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
@@ -50,7 +48,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.intl.Countries;
 
 /**
@@ -346,31 +343,35 @@ public class FullToSimpleModelTranslator implements AtlasModelWriter {
 	}
 
 	private SeriesSummary seriesSummaryFromResolved(ParentRef seriesRef) {
-	    final Maybe<Identified> resolved = contentResolver.findByCanonicalUris(ImmutableList.of(seriesRef.getUri())).get(seriesRef.getUri());
-        if (resolved.hasValue() && resolved.requireValue() instanceof Series) {
-            Series series = (Series) resolved.requireValue();
-            SeriesSummary seriesSummary = new SeriesSummary();
-            seriesSummary.setUri(series.getCanonicalUri());
-            seriesSummary.setTitle(series.getTitle());
-            seriesSummary.setDescription(series.getDescription());
-            seriesSummary.setCurie(series.getCurie());
-            return seriesSummary;
-        } 
-        return null;
+//	    final Maybe<Identified> resolved = contentResolver.findByCanonicalUris(ImmutableList.of(seriesRef.getUri())).get(seriesRef.getUri());
+//        if (resolved.hasValue() && resolved.requireValue() instanceof Series) {
+//            Series series = (Series) resolved.requireValue();
+//            SeriesSummary seriesSummary = new SeriesSummary();
+//            seriesSummary.setUri(series.getCanonicalUri());
+//            seriesSummary.setTitle(series.getTitle());
+//            seriesSummary.setDescription(series.getDescription());
+//            seriesSummary.setCurie(series.getCurie());
+//            return seriesSummary;
+//        } 
+        SeriesSummary seriesSummary = new SeriesSummary();
+        seriesSummary.setUri(seriesRef.getUri());
+        return seriesSummary;
     }
 
     private BrandSummary summaryFromResolved(ParentRef container) {
-        final Maybe<Identified> resolved = contentResolver.findByCanonicalUris(ImmutableList.of(container.getUri())).get(container.getUri());
-        if (resolved.hasValue() && resolved.requireValue() instanceof Brand) {
-            Brand brand = (Brand) resolved.requireValue();
-            BrandSummary brandSummary = new BrandSummary();
-            brandSummary.setUri(brand.getCanonicalUri());
-            brandSummary.setTitle(brand.getTitle());
-            brandSummary.setDescription(brand.getDescription());
-            brandSummary.setCurie(brand.getCurie());
-            return brandSummary;
-        } 
-        return null;
+//        final Maybe<Identified> resolved = contentResolver.findByCanonicalUris(ImmutableList.of(container.getUri())).get(container.getUri());
+//        if (resolved.hasValue() && resolved.requireValue() instanceof Brand) {
+//            Brand brand = (Brand) resolved.requireValue();
+//            BrandSummary brandSummary = new BrandSummary();
+//            brandSummary.setUri(brand.getCanonicalUri());
+//            brandSummary.setTitle(brand.getTitle());
+//            brandSummary.setDescription(brand.getDescription());
+//            brandSummary.setCurie(brand.getCurie());
+//            return brandSummary;
+//        } 
+        BrandSummary brandSummary = new BrandSummary();
+        brandSummary.setUri(container.getUri());
+        return brandSummary;
     }
 
     private static PublisherDetails toPublisherDetails(Publisher publisher) {
