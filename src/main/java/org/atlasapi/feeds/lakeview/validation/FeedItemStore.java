@@ -3,6 +3,7 @@ package org.atlasapi.feeds.lakeview.validation;
 import java.util.List;
 import java.util.Map;
 
+import org.atlasapi.generated.ElementMovie;
 import org.atlasapi.generated.ElementProduct;
 import org.atlasapi.generated.ElementTVEpisode;
 import org.atlasapi.generated.ElementTVSeason;
@@ -19,6 +20,8 @@ public class FeedItemStore {
 	private Map<String, ElementTVSeries> brands = Maps.newHashMap();
 	private Map<String, ElementTVSeason> series = Maps.newHashMap();
 	private Map<String, ElementTVEpisode> episodes = Maps.newHashMap();
+	private Map<String, ElementMovie> movies = Maps.newHashMap();
+	
 	private List<String> errors;
 
 	public FeedItemStore() {
@@ -51,6 +54,16 @@ public class FeedItemStore {
 			addError(episode, "Duplicate episode");
 		}
 	}
+	
+	public void addMovie(ElementMovie movie) {
+		Preconditions.checkNotNull(movie);
+		Preconditions.checkNotNull(movie.getItemId());
+		
+		if (movies.put(movie.getItemId(), movie) != null) {
+			addError(movie, "Duplicate episode");
+		}
+		
+	}
 
 	private void addError(ElementProduct element, String message) {
 		errors.add(message + ": " + element.getItemId());
@@ -66,6 +79,10 @@ public class FeedItemStore {
 
 	public Map<String, ElementTVEpisode> getEpisodes() {
 		return ImmutableMap.copyOf(episodes);
+	}
+	
+	public Map<String, ElementMovie> getMovies() {
+		return ImmutableMap.copyOf(movies);
 	}
 
 	public List<String> getErrors() {

@@ -69,7 +69,7 @@ public class LakeviewFileValidator {
 				} else if (ep instanceof ElementTVSeries) {
 					itemStore.addBrand((ElementTVSeries) ep);
 				} else if (ep instanceof ElementMovie) {
-					// do nothing for now
+					itemStore.addMovie((ElementMovie) ep);
 				} else
 					throw new IllegalArgumentException("Unknown element type "
 							+ ep.getClass().getName());
