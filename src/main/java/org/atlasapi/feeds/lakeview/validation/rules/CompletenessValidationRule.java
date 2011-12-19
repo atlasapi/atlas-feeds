@@ -36,7 +36,7 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 
 	private ContentLister contentLister;
 	private int tolerance;
-	private static Pattern ONDEMAND_ID = Pattern.compile(".*#(\\d+)");
+	private static Pattern ONDEMAND_ID = Pattern.compile(".*/(\\d+)");
 
 	public CompletenessValidationRule(ContentLister contentLister, int tolerance) {
 		this.contentLister = contentLister;
