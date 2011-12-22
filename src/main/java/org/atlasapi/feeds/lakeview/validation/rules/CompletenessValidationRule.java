@@ -5,6 +5,8 @@ import static org.atlasapi.persistence.content.listing.ContentListingCriteria.de
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,6 +14,7 @@ import javax.xml.bind.JAXBElement;
 
 import org.atlasapi.feeds.lakeview.validation.FeedItemStore;
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult.ValidationResultType;
+import org.atlasapi.generated.ElementMovie;
 import org.atlasapi.generated.ElementTVEpisode;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
@@ -22,8 +25,8 @@ import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.persistence.content.listing.ContentLister;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.inject.internal.Lists;
 
@@ -49,28 +52,37 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 
 		// TODO: Films
 
-		List<String> expectedOnDemands = getExpectedOnDemandsFromDatabase();
+		Map<String, String> expectedOnDemands = getExpectedOnDemandsFromDatabase();
 		List<String> errors = Lists.newArrayList();
 
 		// Do a two-way comparison between feed items and expected items
-		for (String expectedOnDemand : expectedOnDemands) {
+		for (Entry<String, String> expectedOnDemand : expectedOnDemands.entrySet()) {
 			boolean foundItemInFeed = false;
 			for (ElementTVEpisode feedEpisode : feedItemStore.getEpisodes()
 					.values()) {
 				if (getApplicationSpecificData(feedEpisode).equals(
-						expectedOnDemand)) {
+						expectedOnDemand.getValue())) {
+					foundItemInFeed = true;
+				}
+			}
+			
+			for (ElementMovie feedMovie : feedItemStore.getMovies()
+					.values()) {
+				if (getApplicationSpecificData(feedMovie).equals(
+						expectedOnDemand.getValue())) {
 					foundItemInFeed = true;
 				}
 			}
 			if (!foundItemInFeed) {
-				errors.add("Valid ondemand in db, not in feed: " + expectedOnDemand);
+				errors.add(String.format("Valid ondemand in db, not in feed. URI %s Ondemand %s", 
+						expectedOnDemand.getKey(), expectedOnDemand.getValue()));
 			}
 		}
 
 		for (ElementTVEpisode feedEpisode : feedItemStore.getEpisodes()
 				.values()) {
 
-			if (!expectedOnDemands
+			if (!expectedOnDemands.values()
 					.contains(getApplicationSpecificData(feedEpisode))) {
 				errors.add("Item found in feed, not expected" + feedEpisode.getItemId());
 			}
@@ -83,24 +95,25 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 					String.format("%d items in feed, %d items in database", feedItemStore.getEpisodes().size(), expectedOnDemands.size()));
 		} else {
 			return new ValidationResult(getRuleName(), ValidationResultType.FAILURE,
-					String.format("%d items in feed, %d items in database. Tolerance is %d", feedItemStore.getEpisodes().size(), expectedOnDemands.size(), tolerance));
+					String.format("%d items in feed, %d items in database. Tolerance is %d. First missing item is %s", 
+							feedItemStore.getEpisodes().size(), expectedOnDemands.size(), tolerance, Iterables.getFirst(errors, null)));
 		}
 	}
 
-	private List<String> getExpectedOnDemandsFromDatabase() {
+	private Map<String, String> getExpectedOnDemandsFromDatabase() {
 		Iterator<Episode> listContent = Iterators.filter(
 				contentLister.listContent(defaultCriteria()
 						.forPublisher(Publisher.C4).forContent(CHILD_ITEM)
 						.build()), Episode.class);
 
-		Builder<String> expectedOnDemands = ImmutableList.builder();
+		com.google.common.collect.ImmutableMap.Builder<String, String> expectedOnDemands = ImmutableMap.builder();
 
 		while (listContent.hasNext()) {
 			Episode episode = listContent.next();
 			String onDemandId = getFirstAvailableOnDemandId(episode);
 
 			if (onDemandId != null) {
-				expectedOnDemands.add(onDemandId);
+				expectedOnDemands.put(episode.getCanonicalUri(), onDemandId);
 			}
 		}
 
@@ -135,6 +148,10 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 				return (String) restElement.getValue();
 		}
 		throw new RuntimeException("Element ApplicationSpecificData not found");
+	}
+	
+	public static String getApplicationSpecificData(ElementMovie movie) {
+		return movie.getApplicationSpecificData();
 	}
 
 	@Override
