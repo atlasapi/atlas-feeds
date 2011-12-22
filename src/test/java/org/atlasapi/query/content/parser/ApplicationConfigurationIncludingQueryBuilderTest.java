@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.atlasapi.application.Application;
 import org.atlasapi.application.ApplicationCredentials;
-import org.atlasapi.application.persistence.ApplicationReader;
+import org.atlasapi.application.ApplicationStore;
 import org.atlasapi.application.query.ApplicationConfigurationFetcher;
 import org.atlasapi.application.query.IpCheckingApiKeyConfigurationFetcher;
 import org.atlasapi.content.criteria.ContentQuery;
@@ -35,7 +35,7 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 		final Application testApp = Application.application("testSlug").withCredentials(new ApplicationCredentials(testApiKey)).build();
 		
 		Mockery context = new Mockery();
-		final ApplicationReader reader = context.mock(ApplicationReader.class);
+		final ApplicationStore reader = context.mock(ApplicationStore.class);
 		
 		
 		context.checking(new Expectations(){{
