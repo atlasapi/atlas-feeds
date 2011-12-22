@@ -53,9 +53,9 @@ public class XmlTvFeedOutputter {
     private List<String> extractFields(XmlTvBroadcastItem broadcastItem) {
         Broadcast broadcast = broadcastItem.getBroadcast();
         return ImmutableList.of(
-                programmeTitle(broadcastItem),
-                subTitle(broadcastItem),
-                episode(broadcastItem),
+                removeNewLines(programmeTitle(broadcastItem)),
+                removeNewLines(subTitle(broadcastItem)),
+                removeNewLines(episode(broadcastItem)),
                 year(broadcastItem),
                 director(broadcastItem),
                 performers(broadcastItem),
@@ -70,7 +70,7 @@ public class XmlTvFeedOutputter {
                 EMPTY_FIELD,//placeholder for film star rating
                 EMPTY_FIELD,//placeholder for film certificate
                 genre(broadcastItem.getItem().getGenres()),
-                description(broadcastItem),
+                removeNewLines(description(broadcastItem)),
                 String.valueOf(false),// RT Choice
                 date(broadcast.getTransmissionTime()),
                 time(broadcast.getTransmissionTime()),
@@ -161,6 +161,10 @@ public class XmlTvFeedOutputter {
 
     private String toString(Boolean flag) {
         return Boolean.TRUE.equals(flag) ? "true" : "false";
+    }
+    
+    private String removeNewLines(String input) {
+    	return input.replaceAll("(\\r|\\n)+", " ");
     }
     
 }
