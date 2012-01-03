@@ -22,6 +22,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.persistence.channels.ChannelResolver;
 import org.atlasapi.persistence.content.ContentCategory;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
@@ -44,18 +45,20 @@ public abstract class RadioPlayerFeedCompiler {
     private final RadioPlayerXMLOutputter outputter;
     protected final ScheduleResolver scheduleResolver;
     protected final KnownTypeContentResolver contentResolver;
+	protected final ChannelResolver channelResolver;
 
-    public RadioPlayerFeedCompiler(RadioPlayerXMLOutputter outputter, ScheduleResolver scheduleResolver, KnownTypeContentResolver contentResolver) {
+    public RadioPlayerFeedCompiler(RadioPlayerXMLOutputter outputter, ScheduleResolver scheduleResolver, KnownTypeContentResolver contentResolver, ChannelResolver channelResolver) {
         this.outputter = outputter;
         this.scheduleResolver = scheduleResolver;
         this.contentResolver = contentResolver;
+        this.channelResolver = channelResolver;
     }
     
     private static Map<String, RadioPlayerFeedCompiler> compilerMap;
     
-    public static void init(ScheduleResolver scheduleResolver, KnownTypeContentResolver contentResolver) {
+    public static void init(ScheduleResolver scheduleResolver, KnownTypeContentResolver contentResolver, ChannelResolver channelResolver) {
         compilerMap = ImmutableMap.<String, RadioPlayerFeedCompiler>of(
-                "PI",new RadioPlayerProgrammeInformationFeedCompiler(scheduleResolver, contentResolver)
+                "PI",new RadioPlayerProgrammeInformationFeedCompiler(scheduleResolver, contentResolver, channelResolver)
             );
     }
     
@@ -65,14 +68,14 @@ public abstract class RadioPlayerFeedCompiler {
     }
 	
     private static class RadioPlayerProgrammeInformationFeedCompiler extends RadioPlayerFeedCompiler {
-        public RadioPlayerProgrammeInformationFeedCompiler(ScheduleResolver scheduleResolver, KnownTypeContentResolver contentResolver) {
-            super(new RadioPlayerProgrammeInformationOutputter(), scheduleResolver, contentResolver);
+        public RadioPlayerProgrammeInformationFeedCompiler(ScheduleResolver scheduleResolver, KnownTypeContentResolver contentResolver, ChannelResolver channelResolver) {
+            super(new RadioPlayerProgrammeInformationOutputter(), scheduleResolver, contentResolver, channelResolver);
         }
 
         @Override
         public List<Item> queryFor(LocalDate day, String serviceUri) {
             DateTime date = day.toDateTimeAtStartOfDay(DateTimeZones.UTC);
-            Channel channel = Channel.fromUri(serviceUri).requireValue();
+            Channel channel = channelResolver.fromUri(serviceUri).requireValue();
             Schedule schedule = scheduleResolver.schedule(date.minusMillis(1), date.plusDays(1), ImmutableSet.of(channel), ImmutableSet.of(Publisher.BBC));
             return Iterables.getOnlyElement(schedule.scheduleChannels()).items();
         }

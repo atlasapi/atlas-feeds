@@ -23,6 +23,7 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.persistence.channels.ChannelResolver;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -51,13 +52,15 @@ public class LakeviewFeedCompiler {
     private static final String PROVIDER_ID = "0x484707D1";
     
     private final Clock clock;
+	private ChannelResolver channelResolver;
 
-    public LakeviewFeedCompiler(Clock clock) {
+    public LakeviewFeedCompiler(ChannelResolver channelResolver, Clock clock) {
         this.clock = clock;
+        this.channelResolver = channelResolver;
     }
 
-    public LakeviewFeedCompiler() {
-        this(new SystemClock());
+    public LakeviewFeedCompiler(ChannelResolver channelResolver) {
+        this(channelResolver, new SystemClock());
     }
 
     public Document compile(List<LakeviewContentGroup> contents) {
@@ -145,8 +148,8 @@ public class LakeviewFeedCompiler {
         appendCommonElements(element, brand, originalPublicationDate, lastModified, null, null);
         element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(contentGroup.contents().keySet().size())));
         
-        if (brand.getPresentationChannel() != null && Channel.fromKey(brand.getPresentationChannel()).hasValue()) {
-            element.appendChild(stringElement("Network", LAKEVIEW, Channel.fromKey(brand.getPresentationChannel()).requireValue().title()));
+        if (brand.getPresentationChannel() != null && channelResolver.fromKey(brand.getPresentationChannel()).hasValue()) {
+            element.appendChild(stringElement("Network", LAKEVIEW, channelResolver.fromKey(brand.getPresentationChannel()).requireValue().title()));
         } else {
             List<Broadcast> broadcasts = extractBroadcasts(episodes(contentGroup));
             if (!broadcasts.isEmpty()) {
@@ -164,7 +167,7 @@ public class LakeviewFeedCompiler {
     }
 
     private String extractNetwork(List<Broadcast> broadcasts) {
-        return Channel.fromUri(TRANSMISSION_ORDERING.min(broadcasts).getBroadcastOn()).requireValue().title();
+        return channelResolver.fromUri(TRANSMISSION_ORDERING.min(broadcasts).getBroadcastOn()).requireValue().title();
     }
 
     private Element createSeriesElem(Series series, Brand parent, DateTime originalPublicationDate, String lastModified) {

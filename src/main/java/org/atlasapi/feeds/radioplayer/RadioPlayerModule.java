@@ -24,6 +24,7 @@ import org.atlasapi.feeds.upload.ValidatingFileUploader;
 import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;
+import org.atlasapi.persistence.channels.ChannelResolver;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.logging.AdapterLog;
@@ -74,6 +75,7 @@ public class RadioPlayerModule {
 	private @Autowired DatabasedMongo mongo;
 	private @Autowired HealthController health;
 	private @Autowired ScheduleResolver scheduleResolver;
+	private @Autowired ChannelResolver channelResolver;
 	
 	private static DayRangeGenerator dayRangeGenerator = new DayRangeGenerator().withLookAhead(7).withLookBack(7);
 
@@ -155,7 +157,7 @@ public class RadioPlayerModule {
     
 	@PostConstruct 
 	public void scheduleTasks() {
-	    RadioPlayerFeedCompiler.init(scheduleResolver, contentResolver);
+	    RadioPlayerFeedCompiler.init(scheduleResolver, contentResolver, channelResolver);
 		if (!radioPlayerUploadServiceDetails().isEmpty()) {
 		    createHealthProbes(radioPlayerUploadServiceDetails().keySet());
 	

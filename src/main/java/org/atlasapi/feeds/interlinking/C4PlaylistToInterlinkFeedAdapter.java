@@ -1,10 +1,5 @@
 package org.atlasapi.feeds.interlinking;
 
-import static org.atlasapi.media.entity.Channel.CHANNEL_FOUR;
-import static org.atlasapi.media.entity.Channel.E_FOUR;
-import static org.atlasapi.media.entity.Channel.FILM_4;
-import static org.atlasapi.media.entity.Channel.MORE_FOUR;
-
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,7 +21,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
 
     private final static Pattern CHANNEL_SPECIFIC_ID_PATTERN = Pattern.compile("tag:([^,]+),(\\d{4}):slot/(C4|M4|F4|E4|4M)(\\d+)");
 
-    private static Set<String> BROADCAST_SERVICES = ImmutableSet.of(CHANNEL_FOUR.uri(), E_FOUR.uri(), MORE_FOUR.uri(), FILM_4.uri());
+    private static Set<String> BROADCAST_SERVICES = ImmutableSet.of("http://www.channel4.com", "http://www.e4.com", "http://www.channel4.com/more4", "http://film4.com");
 
     protected static final Pattern SYNTHESIZED_PATTERN = Pattern.compile("http://www.channel4.com/programmes/synthesized/[^/]+/(\\d+)");
 
@@ -46,8 +41,8 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
 				return tagAlias.substring(0,slashIndex) + CHANNEL_LOOKUP.get(broadcast.getBroadcastOn()) + tagAlias.substring(slashIndex);
 			}
 		}
-    	if(broadcast.getId() != null) {
-    	    return broadcast.getId();
+    	if(broadcast.getSourceId() != null) {
+    	    return broadcast.getSourceId();
     	}
     	return super.broadcastId(broadcast);
     }
