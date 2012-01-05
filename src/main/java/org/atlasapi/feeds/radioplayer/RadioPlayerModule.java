@@ -24,7 +24,7 @@ import org.atlasapi.feeds.upload.ValidatingFileUploader;
 import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;
-import org.atlasapi.persistence.channels.ChannelResolver;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.logging.AdapterLog;
