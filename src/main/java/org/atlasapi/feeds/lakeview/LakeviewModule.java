@@ -17,6 +17,7 @@ import org.atlasapi.feeds.upload.azure.AzureFileUploader;
 import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.logging.AdapterLog;
@@ -57,6 +58,8 @@ public class LakeviewModule {
 	SimpleScheduler scheduler;
 	@Autowired 
 	DatabasedMongo mongo;
+	@Autowired
+	ChannelResolver channelResolver;
 
 	private @Value("${lakeview.upload.enabled}")
 	String enabled;
@@ -85,7 +88,7 @@ public class LakeviewModule {
 
 	public @Bean
 	LakeviewFeedCompiler lakeviewFeedCompiler() {
-		return new LakeviewFeedCompiler();
+		return new LakeviewFeedCompiler(channelResolver);
 	}
 
 	public @Bean

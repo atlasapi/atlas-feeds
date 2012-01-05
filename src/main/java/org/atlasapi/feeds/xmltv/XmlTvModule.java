@@ -7,6 +7,7 @@ import org.atlasapi.feeds.upload.s3.S3FileUploader;
 import org.atlasapi.feeds.xmltv.upload.XmlTvUploadHealthProbe;
 import org.atlasapi.feeds.xmltv.upload.XmlTvUploadService;
 import org.atlasapi.feeds.xmltv.upload.XmlTvUploadTask;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
@@ -31,6 +32,7 @@ public class XmlTvModule {
     private static final String SERVICE_NAME = "xmltv";
     
     @Autowired ScheduleResolver scheduleResolver;
+    @Autowired ChannelResolver channelResolver;
     @Autowired KnownTypeContentResolver contentResolver;
     @Autowired SimpleScheduler scheduler;
     @Autowired DatabasedMongo mongo;
@@ -43,8 +45,11 @@ public class XmlTvModule {
     private @Value("${s3.access}") String s3access;
     private @Value("${s3.secret}") String s3secret;
 
+    public @Bean XmlTvChannelLookup xmlTvChannelLookup() {
+    	return new XmlTvChannelLookup(channelResolver);
+    }
     public @Bean XmlTvController xmlTvController() {
-        return new XmlTvController(xmltvFeedCompiler(), XmlTvChannelLookup.MAP, health);
+        return new XmlTvController(xmltvFeedCompiler(), xmlTvChannelLookup().getXmlTvChannelMap(), health);
     }
     
     public @Bean XmlTvFeedCompiler xmltvFeedCompiler() {
@@ -56,9 +61,9 @@ public class XmlTvModule {
         if(Boolean.valueOf(uploadEnabled)) {
             final XmlTvUploadService uploadService = new XmlTvUploadService(SERVICE_NAME, new S3FileUploader(new UsernameAndPassword(s3access, s3secret), s3bucket, s3folder));
             final MongoFileUploadResultStore resultStore = new MongoFileUploadResultStore(mongo);
-            final XmlTvUploadTask uploadTask = new XmlTvUploadTask(uploadService, resultStore, xmltvFeedCompiler(), XmlTvChannelLookup.MAP, log);
+            final XmlTvUploadTask uploadTask = new XmlTvUploadTask(uploadService, resultStore, xmltvFeedCompiler(), xmlTvChannelLookup().getXmlTvChannelMap(), log);
             scheduler.schedule(uploadTask.withName("XmlTv Upload"), RepetitionRules.daily(new LocalTime(04,30,00)));
-            health.addProbes(ImmutableSet.<HealthProbe>of(new XmlTvUploadHealthProbe(XmlTvChannelLookup.MAP, resultStore)));
+            health.addProbes(ImmutableSet.<HealthProbe>of(new XmlTvUploadHealthProbe(xmlTvChannelLookup().getXmlTvChannelMap(), resultStore)));
         }
     }
 

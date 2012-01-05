@@ -33,12 +33,14 @@ import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.feeds.upload.RemoteServiceDetails;
 import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
 import org.atlasapi.media.TransportType;
+import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Broadcast;
-import org.atlasapi.media.entity.Channel;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
@@ -51,12 +53,14 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
+import org.jmock.integration.junit4.JMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -65,11 +69,13 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.net.HostSpecifier;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.time.DateTimeZones;
 import com.metabroadcast.common.time.DayRangeGenerator;
 
+@RunWith(JMock.class)
 public class RadioPlayerFileUploaderTest {
 
     private static final String TEST_PASSWORD = "testpassword";
@@ -82,10 +88,10 @@ public class RadioPlayerFileUploaderTest {
 	
 	private final RadioPlayerService service = RadioPlayerServices.all.get("340");
     private final DateTime day = new DateTime(DateTimeZones.UTC);
-    private final Channel channel = Channel.fromUri(service.getServiceUri()).requireValue();
+    private final Channel channel = new Channel(Publisher.METABROADCAST, "BBC Radio 1", "radio1", MediaType.AUDIO, "http://www.bbc.co.uk/radio1");
     private final Set<Channel> channels = ImmutableSet.of(channel);
     private final Set<Publisher> publishers = ImmutableSet.of(Publisher.BBC);
-
+    
 	private static File dir;
 
 	private FtpServer server;
@@ -112,13 +118,15 @@ public class RadioPlayerFileUploaderTest {
 	    channelMap.put(channel, ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1))));
 	    
 	    final Schedule schedule = Schedule.fromChannelMap(channelMap, new Interval(day, day.plusDays(1)));
+	    final ChannelResolver channelResolver = context.mock(ChannelResolver.class);
 		context.checking(new Expectations(){{
+			allowing(channelResolver).fromUri("http://www.bbc.co.uk/services/radio1/england");
+			will(returnValue(Maybe.just(channel)));
 		    oneOf(scheduleResolver).schedule(with(any(DateTime.class)), with(any(DateTime.class)), with(channels), with(publishers)); will(returnValue(schedule));
-		    oneOf(recorder).record(with(successfulUploadResult()));
 		    oneOf(recorder).record(with(successfulUploadResult()));
 		}});
 		
-		RadioPlayerFeedCompiler.init(scheduleResolver, contentResolver);
+		RadioPlayerFeedCompiler.init(scheduleResolver, contentResolver, channelResolver);
 		
         ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
         RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("127.0.0.1")).withPort(9521).withCredentials(new UsernameAndPassword("test","testpassword")).build();
