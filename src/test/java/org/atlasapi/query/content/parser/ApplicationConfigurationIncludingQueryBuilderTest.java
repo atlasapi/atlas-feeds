@@ -7,7 +7,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.atlasapi.application.Application;
 import org.atlasapi.application.ApplicationConfiguration;
 import org.atlasapi.application.persistence.ApplicationReader;
-import org.atlasapi.application.persistence.ApplicationStore;
 import org.atlasapi.application.query.ApiKeyConfigurationFetcher;
 import org.atlasapi.application.query.ApplicationConfigurationFetcher;
 import org.atlasapi.content.criteria.ContentQuery;
