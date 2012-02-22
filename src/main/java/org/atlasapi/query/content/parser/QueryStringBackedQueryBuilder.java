@@ -68,7 +68,7 @@ public class QueryStringBackedQueryBuilder {
 
 	private final DateTimeInQueryParser dateTimeParser = new DateTimeInQueryParser();
 	
-	private static final SelectionBuilder selectionBuilder = Selection.builder();
+	private static final SelectionBuilder selectionBuilder = Selection.builder().withDefaultLimit(25).withMaxLimit(50);
 	private final ContentQuery defaults;
 
 	public QueryStringBackedQueryBuilder() {
