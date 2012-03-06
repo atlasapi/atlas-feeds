@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Range;
 import com.google.common.collect.Ranges;
 import com.metabroadcast.common.http.HttpStatusCode;
@@ -40,7 +41,7 @@ public class XmlTvController {
     
     @RequestMapping("/feeds/xmltv/health")
     public String health(HttpServletResponse response) throws IOException {
-        return health.showHealthPageForSlugs(response, "xmltv");
+        return health.showHealthPageForSlugs(response, ImmutableList.of("xmltv"), false);
     }
     
     @RequestMapping("/feeds/xmltv/{id}.dat")
