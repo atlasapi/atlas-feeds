@@ -70,7 +70,7 @@ public class RadioPlayerHealthController {
         boolean allowed = checker.check(request);
         if (allowed) {
             if(slugs.containsKey(sid)) {
-                return main.showHealthPageForSlugs(response, slugs.get(sid));
+                return main.showHealthPageForSlugs(response, slugs.get(sid), false);
             } else {
                 response.sendError(HttpStatusCode.NOT_FOUND.code());
             }
