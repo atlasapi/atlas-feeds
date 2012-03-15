@@ -2,7 +2,6 @@ package org.atlasapi.feeds.lakeview;
 
 import static org.atlasapi.feeds.lakeview.LakeviewContentFetcher.EPISODE_NUMBER_ORDERING;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +89,7 @@ public class LakeviewFeedCompiler {
     private List<Element> elementsForGroup(String lastModified, LakeviewContentGroup contentGroup) {
         DateTime brandPublicationDate = null;
         DateTime brandEndDate = null;
+        int addedSeasons = 0;
         
         List<Element> elements = Lists.newLinkedList();
         
@@ -109,19 +109,20 @@ public class LakeviewFeedCompiler {
             for (Series series : contentGroup.series()) {
                 DateTime seriesPublicationDate = null;
                 
-                int added = 0;
+                int addedEpisodes = 0;
                 for (Episode episode : sortedSeriesEpisodes(series.getChildRefs(),childRefToEpisode)) {
                     DateTime publicationDate = orginalPublicationDate(episode);
                     if (publicationDate != null) {
                         elements.add(createEpisodeElem(episode, contentGroup.brand(), publicationDate, lastModified));
-                        added++;
+                        addedEpisodes++;
                         seriesPublicationDate = earliestOf(publicationDate, seriesPublicationDate);
                         brandEndDate = latestOf(publicationDate, brandEndDate);
                     }
                 }
                 
                 if(seriesPublicationDate != null) {
-                    elements.add(elements.size() - added, createSeriesElem(series, contentGroup.brand(), seriesPublicationDate, lastModified));
+                    addedSeasons++;
+                    elements.add(elements.size() - addedEpisodes, createSeriesElem(series, contentGroup.brand(), seriesPublicationDate, lastModified));
                     brandPublicationDate = seriesPublicationDate.isBefore(brandPublicationDate) ? seriesPublicationDate : brandPublicationDate;
                 }
             }
@@ -129,7 +130,7 @@ public class LakeviewFeedCompiler {
         
         Element brandElem = null;
         if(brandPublicationDate != null) {
-            brandElem = createBrandElem(contentGroup.brand(), brandPublicationDate, brandEndDate, lastModified, contentGroup);
+            brandElem = createBrandElem(contentGroup.brand(), brandPublicationDate, brandEndDate, lastModified, contentGroup, addedSeasons);
             if(brandElem != null) {
                 elements.add(0, brandElem);
             }
@@ -152,14 +153,16 @@ public class LakeviewFeedCompiler {
         return seriesPublicationDate == null || publicationDate.isBefore(seriesPublicationDate) ? publicationDate : seriesPublicationDate;
     }
 
-    private Element createBrandElem(Brand brand, DateTime originalPublicationDate, DateTime brandEndDate, String lastModified, LakeviewContentGroup contentGroup) {
+    private Element createBrandElem(Brand brand, DateTime originalPublicationDate, DateTime brandEndDate, String lastModified, LakeviewContentGroup contentGroup, int addedSeasons) {
         Element element = createElement("TVSeries", LAKEVIEW);
         element.appendChild(stringElement("Provider", LAKEVIEW, PROVIDER_ID));
         element.appendChild(stringElement("ItemId", LAKEVIEW, brandId(brand.getCanonicalUri())));
         element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle()));
         
         appendCommonElements(element, brand, originalPublicationDate, lastModified, null, null);
-        element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(contentGroup.series().size())));
+        if (addedSeasons > 0) {
+            element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(addedSeasons)));
+        }
         
         if (brand.getPresentationChannel() != null && channelResolver.fromKey(brand.getPresentationChannel()).hasValue()) {
             element.appendChild(stringElement("Network", LAKEVIEW, channelResolver.fromKey(brand.getPresentationChannel()).requireValue().title()));
