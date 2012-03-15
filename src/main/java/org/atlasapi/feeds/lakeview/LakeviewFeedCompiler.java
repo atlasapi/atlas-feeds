@@ -1,10 +1,10 @@
 package org.atlasapi.feeds.lakeview;
 
-import java.util.Collection;
+import static org.atlasapi.feeds.lakeview.LakeviewContentFetcher.EPISODE_NUMBER_ORDERING;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,13 +13,14 @@ import nu.xom.Element;
 
 import org.atlasapi.feeds.xml.XMLNamespace;
 import org.atlasapi.media.TransportType;
-import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Series;
@@ -29,12 +30,14 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.base.Functions;
+import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
@@ -86,38 +89,60 @@ public class LakeviewFeedCompiler {
     private List<Element> elementsForGroup(String lastModified, LakeviewContentGroup contentGroup) {
         DateTime brandPublicationDate = null;
         DateTime brandEndDate = null;
+        int addedSeasons = 0;
         
-        ImmutableMap.Builder<Element, List<Element>> seriesEpisodesElems = ImmutableMap.builder();
-        for (Entry<Series, Collection<Episode>> seriesEpisodes : contentGroup.contents().entrySet()) {
-            
-            DateTime seriesPublicationDate = null;
-            
-            ImmutableList.Builder<Element> episodeEntries = ImmutableList.builder();
-            for (Episode episode : seriesEpisodes.getValue()) {
+        List<Element> elements = Lists.newLinkedList();
+        
+        if (contentGroup.isFlattened()) {
+            for (Episode episode : contentGroup.episodes()) {
                 DateTime publicationDate = orginalPublicationDate(episode);
                 if(publicationDate != null) {
-                    episodeEntries.add(createEpisodeElem(episode, contentGroup.brand(), publicationDate, lastModified));
-                    seriesPublicationDate = earliestOf(publicationDate, seriesPublicationDate);
+                    elements.add(createEpisodeElem(episode, contentGroup.brand(), publicationDate, lastModified));
+                    brandPublicationDate = publicationDate.isBefore(brandPublicationDate) ? publicationDate : brandPublicationDate;
                     brandEndDate = latestOf(publicationDate, brandEndDate);
                 }
             }
-            
-            if(seriesPublicationDate != null) {
-                seriesEpisodesElems.put(createSeriesElem(seriesEpisodes.getKey(), contentGroup.brand(), seriesPublicationDate, lastModified), episodeEntries.build());
-                brandPublicationDate = seriesPublicationDate.isBefore(brandPublicationDate) ? seriesPublicationDate : brandPublicationDate;
+        } else {
+            Map<String,Episode> episodeSeriesIndex = Maps.uniqueIndex(contentGroup.episodes(), Identified.TO_URI);
+            Function<ChildRef, Episode> childRefToEpisode = Functions.compose(Functions.forMap(episodeSeriesIndex, null), ChildRef.TO_URI);
+
+            for (Series series : contentGroup.series()) {
+                DateTime seriesPublicationDate = null;
+                
+                int addedEpisodes = 0;
+                for (Episode episode : sortedSeriesEpisodes(series.getChildRefs(),childRefToEpisode)) {
+                    DateTime publicationDate = orginalPublicationDate(episode);
+                    if (publicationDate != null) {
+                        elements.add(createEpisodeElem(episode, contentGroup.brand(), publicationDate, lastModified));
+                        addedEpisodes++;
+                        seriesPublicationDate = earliestOf(publicationDate, seriesPublicationDate);
+                        brandEndDate = latestOf(publicationDate, brandEndDate);
+                    }
+                }
+                
+                if(seriesPublicationDate != null) {
+                    addedSeasons++;
+                    elements.add(elements.size() - addedEpisodes, createSeriesElem(series, contentGroup.brand(), seriesPublicationDate, lastModified));
+                    brandPublicationDate = seriesPublicationDate.isBefore(brandPublicationDate) ? seriesPublicationDate : brandPublicationDate;
+                }
             }
         }
         
-        Builder<Element> elements = ImmutableList.builder();
-        
+        Element brandElem = null;
         if(brandPublicationDate != null) {
-            Element brandElem = createBrandElem(contentGroup.brand(), brandPublicationDate, brandEndDate, lastModified, contentGroup);
+            brandElem = createBrandElem(contentGroup.brand(), brandPublicationDate, brandEndDate, lastModified, contentGroup, addedSeasons);
             if(brandElem != null) {
-                appendElements(elements, brandElem, seriesEpisodesElems.build());
+                elements.add(0, brandElem);
             }
         }
         
-        return elements.build();
+        return brandElem != null ? elements : ImmutableList.<Element>of();
+    }
+
+    public ImmutableList<Episode> sortedSeriesEpisodes(ImmutableList<ChildRef> childRefs, Function<ChildRef, Episode> childRefToEpisode) {
+        Iterable<Episode> episodes = Iterables.filter(Iterables.transform(childRefs, childRefToEpisode),Predicates.notNull());
+        ImmutableList<Episode> sortedSeriesEpisodes = EPISODE_NUMBER_ORDERING.immutableSortedCopy(episodes);
+        return sortedSeriesEpisodes;
     }
 
     private DateTime latestOf(DateTime publicationDate, DateTime brandEndDate) {
@@ -128,30 +153,21 @@ public class LakeviewFeedCompiler {
         return seriesPublicationDate == null || publicationDate.isBefore(seriesPublicationDate) ? publicationDate : seriesPublicationDate;
     }
 
-    private void appendElements(Builder<Element> elements, Element brandElem, Map<Element, List<Element>> seriesEpisodeElements) {
-        elements.add(brandElem);
-        for (Entry<Element, List<Element>> seriesEpisodes : seriesEpisodeElements.entrySet()) {
-            elements.add(seriesEpisodes.getKey()).addAll(seriesEpisodes.getValue());
-        }
-    }
-    
-    private List<Episode> episodes(LakeviewContentGroup contentGroup) {
-        return ImmutableList.copyOf(Iterables.concat(contentGroup.contents().values()));
-    }
-
-    private Element createBrandElem(Brand brand, DateTime originalPublicationDate, DateTime brandEndDate, String lastModified, LakeviewContentGroup contentGroup) {
+    private Element createBrandElem(Brand brand, DateTime originalPublicationDate, DateTime brandEndDate, String lastModified, LakeviewContentGroup contentGroup, int addedSeasons) {
         Element element = createElement("TVSeries", LAKEVIEW);
         element.appendChild(stringElement("Provider", LAKEVIEW, PROVIDER_ID));
         element.appendChild(stringElement("ItemId", LAKEVIEW, brandId(brand.getCanonicalUri())));
         element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle()));
         
         appendCommonElements(element, brand, originalPublicationDate, lastModified, null, null);
-        element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(contentGroup.contents().keySet().size())));
+        if (addedSeasons > 0) {
+            element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(addedSeasons)));
+        }
         
         if (brand.getPresentationChannel() != null && channelResolver.fromKey(brand.getPresentationChannel()).hasValue()) {
             element.appendChild(stringElement("Network", LAKEVIEW, channelResolver.fromKey(brand.getPresentationChannel()).requireValue().title()));
         } else {
-            List<Broadcast> broadcasts = extractBroadcasts(episodes(contentGroup));
+            List<Broadcast> broadcasts = extractBroadcasts(contentGroup.episodes());
             if (!broadcasts.isEmpty()) {
                 element.appendChild(stringElement("Network", LAKEVIEW, extractNetwork(broadcasts)));
             } else {
@@ -183,8 +199,8 @@ public class LakeviewFeedCompiler {
         
         appendCommonElements(element, series, originalPublicationDate, lastModified, null, null);
         
-        element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(((Series) series).getSeriesNumber())));
-        element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(((Series) series).getParent().getUri())));
+        element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(series.getSeriesNumber())));
+        element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(parent.getCanonicalUri())));
         
         return element;
     }
@@ -224,7 +240,9 @@ public class LakeviewFeedCompiler {
         element.appendChild(stringElement("EpisodeNumber", LAKEVIEW, String.valueOf(episode.getEpisodeNumber())));
         element.appendChild(stringElement("DurationInSeconds", LAKEVIEW, String.valueOf(duration(episode))));
         element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(episode.getContainer().getUri())));
-        element.appendChild(stringElement("SeasonId", LAKEVIEW, seriesId(episode.getSeriesRef().getUri())));
+        if (episode.getSeriesRef() != null) {
+            element.appendChild(stringElement("SeasonId", LAKEVIEW, seriesId(episode.getSeriesRef().getUri())));
+        }
         
         return element;
     }
