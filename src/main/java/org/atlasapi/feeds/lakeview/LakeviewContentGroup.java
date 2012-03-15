@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.lakeview;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.List;
 
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Episode;
@@ -12,19 +11,29 @@ import com.google.common.base.Objects;
 public class LakeviewContentGroup {
 
     private final Brand brand;
-    private final Map<Series, Collection<Episode>> contents;
+    private final List<Series> series;
+    private final List<Episode> episodes;
 
-    public LakeviewContentGroup(Brand brand, Map<Series, Collection<Episode>> contents) {
+    public LakeviewContentGroup(Brand brand, List<Series> series, List<Episode> episodes) {
         this.brand = brand;
-        this.contents = contents;
+        this.series = series;
+        this.episodes = episodes;
     }
 
     public Brand brand() {
         return brand;
     }
+    
+    public boolean isFlattened() {
+        return series.isEmpty();
+    }
 
-    public Map<Series, Collection<Episode>> contents() {
-        return contents;
+    public List<Series> series() {
+        return series;
+    }
+
+    public List<Episode> episodes() {
+        return episodes;
     }
     
     @Override
@@ -34,14 +43,18 @@ public class LakeviewContentGroup {
         }
         if (that instanceof LakeviewContentGroup) {
             LakeviewContentGroup other = (LakeviewContentGroup) that;
-            return brand.equals(other.brand) && contents.equals(other.contents);
+            return brand.equals(other.brand);
         }
         return false;
     }
     
     @Override
     public int hashCode() {
-        return Objects.hashCode(brand, contents);
+        return Objects.hashCode(brand);
     }
-    
+
+    @Override
+    public String toString() {
+        return brand.toString();
+    }
 }
