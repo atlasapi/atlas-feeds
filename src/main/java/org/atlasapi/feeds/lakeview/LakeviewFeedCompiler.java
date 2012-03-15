@@ -196,8 +196,8 @@ public class LakeviewFeedCompiler {
         
         appendCommonElements(element, series, originalPublicationDate, lastModified, null, null);
         
-        element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(((Series) series).getSeriesNumber())));
-        element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(((Series) series).getParent().getUri())));
+        element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(series.getSeriesNumber())));
+        element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(parent.getCanonicalUri())));
         
         return element;
     }
