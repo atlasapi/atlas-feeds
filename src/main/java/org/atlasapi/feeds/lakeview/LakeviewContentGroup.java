@@ -2,9 +2,9 @@ package org.atlasapi.feeds.lakeview;
 
 import java.util.List;
 
-import org.atlasapi.media.entity.Brand;
-import org.atlasapi.media.entity.Episode;
-import org.atlasapi.media.entity.Series;
+import org.atlasapi.media.content.Brand;
+import org.atlasapi.media.content.Episode;
+import org.atlasapi.media.content.Series;
 
 import com.google.common.base.Objects;
 

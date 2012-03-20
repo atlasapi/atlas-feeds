@@ -4,7 +4,7 @@ import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.interlinking.C4PlaylistToInterlinkFeedAdapter;
 import org.atlasapi.feeds.interlinking.outputting.InterlinkFeedOutputter;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+import org.atlasapi.persistence.content.listing.LastUpdatedContentFinder;
 import org.jets3t.service.security.AWSCredentials;
 import org.joda.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;

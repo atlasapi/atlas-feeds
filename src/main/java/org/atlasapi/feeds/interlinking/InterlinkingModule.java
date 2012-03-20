@@ -1,8 +1,8 @@
 package org.atlasapi.feeds.interlinking;
 
 import org.atlasapi.feeds.interlinking.www.InterlinkController;
-import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+import org.atlasapi.media.content.Publisher;
+import org.atlasapi.persistence.content.listing.LastUpdatedContentFinder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -3,7 +3,7 @@ package org.atlasapi.feeds.radioplayer.upload;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.persistence.content.listing.ContentLister;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+import org.atlasapi.persistence.content.listing.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;

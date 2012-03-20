@@ -8,7 +8,7 @@ import nu.xom.Attribute;
 import nu.xom.Element;
 
 import org.atlasapi.feeds.xml.XMLNamespace;
-import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.content.Item;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;

@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.atlasapi.feeds.radioplayer.upload.FileType;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerOdUriResolver;
 import org.atlasapi.persistence.content.listing.ContentLister;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+import org.atlasapi.persistence.content.listing.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
