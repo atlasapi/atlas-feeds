@@ -214,7 +214,7 @@ public class XmlTvFeedGenreMap {
     public XmlTvFeedGenreMap() {
     }
     
-    private static final String genreUriPrefix = "http://pressassociation.com/genres/";
+    static final String genreUriPrefix = "http://pressassociation.com/genres/";
     
     public String mapGenreUri(String genreUri) {
         return genreMap.get(genreUri.substring(genreUriPrefix.length()));

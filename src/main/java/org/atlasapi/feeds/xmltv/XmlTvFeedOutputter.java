@@ -20,6 +20,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.base.Maybe;
@@ -111,7 +112,7 @@ public class XmlTvFeedOutputter {
     }
 
     private String genre(Set<String> genres) {
-        return Maybe.fromPossibleNullValue(genres.isEmpty() ? "No Genre" : genreMap.mapGenreUri(Iterables.get(genres, 0))).valueOrDefault(EMPTY_FIELD);
+        return Maybe.fromPossibleNullValue(genres.isEmpty() ? "No Genre" : genreMap.mapGenreUri(Iterables.get(Iterables.filter(genres, Predicates.containsPattern(XmlTvFeedGenreMap.genreUriPrefix)), 0))).valueOrDefault(EMPTY_FIELD);
     }
 
     private String subTitle(XmlTvBroadcastItem broadcastItem) {
