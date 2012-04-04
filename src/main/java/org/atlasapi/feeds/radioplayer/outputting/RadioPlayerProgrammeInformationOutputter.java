@@ -80,8 +80,8 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
             programme.appendChild(genreElement);
         }
 
-        
-        Set<Country> outputCountries = Sets.newHashSet();
+        //Because outputCountries always contains ALL, international block output is suppressed.
+        Set<Country> outputCountries = Sets.newHashSet(Countries.ALL);
         for (Encoding encoding : broadcastItem.getVersion().getManifestedAs()) {
             for (Location location : encoding.getAvailableAt()) {
             	for (Country country : representedBy(encoding, location)) {
