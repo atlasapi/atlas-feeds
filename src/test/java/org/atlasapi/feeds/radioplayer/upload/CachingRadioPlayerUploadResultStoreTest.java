@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -38,12 +39,12 @@ public class CachingRadioPlayerUploadResultStoreTest {
         
         CachingRadioPlayerUploadResultStore store = new CachingRadioPlayerUploadResultStore(ImmutableSet.of(remoteService), delegateStore);
         
-        store.record(new RadioPlayerUploadResult(service, day, FileUploadResult.successfulUpload(remoteService, "test1")));
+        store.record(new RadioPlayerUploadResult(PI, service, day, FileUploadResult.successfulUpload(remoteService, "test1")));
         
         DateTime later = new DateTime(DateTimeZones.UTC).plus(5000);
-        store.record(new RadioPlayerUploadResult(service, day, new FileUploadResult(remoteService, "test1", later, SUCCESS)));
+        store.record(new RadioPlayerUploadResult(PI, service, day, new FileUploadResult(remoteService, "test1", later, SUCCESS)));
         
-        Set<FileUploadResult> results = ImmutableSet.copyOf(store.resultsFor(remoteService, service, day));
+        Set<FileUploadResult> results = ImmutableSet.copyOf(store.resultsFor(null, remoteService, service, day));
         
         assertThat(results.size(), is(equalTo(1)));
         assertThat(Iterables.getOnlyElement(results).uploadTime(), is(equalTo(later)));
@@ -53,14 +54,14 @@ public class CachingRadioPlayerUploadResultStoreTest {
     public void testEmptyRead() {
         
         context.checking(new Expectations(){{
-            one(delegateStore).resultsFor(with(remoteService), with(any(RadioPlayerService.class)), with(any(LocalDate.class)));
+            one(delegateStore).resultsFor(null, with(remoteService), with(any(RadioPlayerService.class)), with(any(LocalDate.class)));
             will(returnValue(ImmutableSet.of(FileUploadResult.successfulUpload(remoteService,"test1"))));
         }});
         
         CachingRadioPlayerUploadResultStore store = new CachingRadioPlayerUploadResultStore(ImmutableSet.of(remoteService), delegateStore);
         
-        Set<FileUploadResult> results = ImmutableSet.copyOf(store.resultsFor(remoteService, service, day));
-        Set<FileUploadResult> results2 = ImmutableSet.copyOf(store.resultsFor(remoteService, service, day));
+        Set<FileUploadResult> results = ImmutableSet.copyOf(store.resultsFor(null, remoteService, service, day));
+        Set<FileUploadResult> results2 = ImmutableSet.copyOf(store.resultsFor(null, remoteService, service, day));
         
         assertThat(results, is(equalTo(results2)));
         assertThat(results.isEmpty(), is(false));

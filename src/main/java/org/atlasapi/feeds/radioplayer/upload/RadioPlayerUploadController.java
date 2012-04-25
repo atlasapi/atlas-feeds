@@ -65,7 +65,7 @@ public class RadioPlayerUploadController {
 
         Iterable<LocalDate> days = day != null ? ImmutableList.of(DATE_PATTERN.parseDateTime(day).toLocalDate()) : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
 
-        radioPlayerUploadTaskBuilder.newTask(ImmutableList.of(service), days).run();
+        radioPlayerUploadTaskBuilder.newBatchPiTask(ImmutableList.of(service), days).run();
 
         return "redirect:/feeds/ukradioplayer/health";
     }

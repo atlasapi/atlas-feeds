@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -70,7 +71,7 @@ public class RadioPlayerServerHealthProbeTest {
     }
     
     private RadioPlayerUploadResult result(DateTime successDate, FileUploadResultType type, boolean connectionSuccess) {
-        return new RadioPlayerUploadResult(SERVICE, successDate.toLocalDate(), new FileUploadResult("remote", String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type).withConnectionSuccess(connectionSuccess));
+        return new RadioPlayerUploadResult(PI, SERVICE, successDate.toLocalDate(), new FileUploadResult("remote", String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type).withConnectionSuccess(connectionSuccess));
     }
     
 }

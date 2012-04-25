@@ -21,7 +21,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metabroadcast.common.time.DateTimeZones;
 
-public class RadioPlayerBatchUploadTask implements Runnable {
+public class RadioPlayerPiBatchUploadTask implements Runnable {
 
     private final Iterable<FileUploadService> uploaders;
     private final RadioPlayerRecordingExecutor executor;
@@ -29,7 +29,7 @@ public class RadioPlayerBatchUploadTask implements Runnable {
     private final Iterable<LocalDate> days;
     private final AdapterLog log;
 
-    public RadioPlayerBatchUploadTask(Iterable<FileUploadService> uploaders, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, Iterable<LocalDate> dayRange, AdapterLog log) {
+    public RadioPlayerPiBatchUploadTask(Iterable<FileUploadService> uploaders, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, Iterable<LocalDate> dayRange, AdapterLog log) {
         this.uploaders = uploaders;
         this.executor = executor;
         this.services = services;
@@ -47,7 +47,7 @@ public class RadioPlayerBatchUploadTask implements Runnable {
         
         for (RadioPlayerService service : services) {
             for (LocalDate day : days) {
-                uploadTasks.add(new RadioPlayerUploadTask(uploaders, day, service, log));
+                uploadTasks.add(new RadioPlayerPiUploadTask(uploaders, day, service, log));
             }
         }
 

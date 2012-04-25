@@ -1,7 +1,11 @@
 package org.atlasapi.feeds.upload.persistence;
 
+import static com.metabroadcast.common.persistence.mongo.MongoBuilders.sort;
+import static com.metabroadcast.common.persistence.mongo.MongoBuilders.where;
 import static com.metabroadcast.common.persistence.mongo.MongoConstants.SINGLE;
 import static com.metabroadcast.common.persistence.mongo.MongoConstants.UPSERT;
+import static org.atlasapi.feeds.upload.persistence.FileUploadResultTranslator.SERVICE_KEY;
+import static org.atlasapi.feeds.upload.persistence.FileUploadResultTranslator.TIME_KEY;
 
 import java.util.regex.Pattern;
 
@@ -12,12 +16,11 @@ import com.google.common.collect.Iterables;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoConstants;
 import com.mongodb.BasicDBObject;
-import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 
 public class MongoFileUploadResultStore implements FileUploadResultStore {
-
+    
     private DBCollection collection;
     private FileUploadResultTranslator translator;
 
@@ -28,6 +31,7 @@ public class MongoFileUploadResultStore implements FileUploadResultStore {
     
     @Override
     public void store(String identifier, FileUploadResult result) {
+        
         DBObject dbo = translator.toDBObject(result);
         String oid = String.format("%s:%s:%s", result.remote(), result.type(), identifier);
         dbo.put(MongoConstants.ID, oid);
@@ -37,11 +41,11 @@ public class MongoFileUploadResultStore implements FileUploadResultStore {
 
     @Override
     public Iterable<FileUploadResult> result(String service, String identifierPrefix) {
-        return transform(new BasicDBObjectBuilder().add("service", service).add("id", Pattern.compile("^"+identifierPrefix)).get());
+        return transform(where().fieldEquals(SERVICE_KEY, service).fieldEquals("id", Pattern.compile("^"+identifierPrefix)).build());
     }
 
     private Iterable<FileUploadResult> transform(DBObject query) {
-        return Iterables.transform(collection.find(query).sort(new BasicDBObject("time", -1)), new Function<DBObject, FileUploadResult>() {
+        return Iterables.transform(collection.find(query).sort(sort().descending(TIME_KEY).build()), new Function<DBObject, FileUploadResult>() {
             @Override
             public FileUploadResult apply(DBObject input) {
                 return translator.fromDBObject(input);
@@ -51,7 +55,7 @@ public class MongoFileUploadResultStore implements FileUploadResultStore {
 
     @Override
     public Iterable<FileUploadResult> results(String service) {
-        return transform(new BasicDBObjectBuilder().add("service", service).get());
+        return transform(where().fieldEquals(SERVICE_KEY, service).build());
     }
 
 }

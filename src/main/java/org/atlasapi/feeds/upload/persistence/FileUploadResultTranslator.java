@@ -9,17 +9,20 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
 public class FileUploadResultTranslator {
-
+    
+    public static final String SERVICE_KEY = "service";
+    public static final String TIME_KEY = "time";
+    
     private ExceptionSummaryTranslator exceptionTranslator = new ExceptionSummaryTranslator();
 
     public DBObject toDBObject(FileUploadResult result) {
 
         DBObject dbo = new BasicDBObject();
 
-        TranslatorUtils.from(dbo, "service", result.remote());
+        TranslatorUtils.from(dbo, SERVICE_KEY, result.remote());
         TranslatorUtils.from(dbo, "filename", result.filename());
         TranslatorUtils.from(dbo, "type", result.type().toString());
-        TranslatorUtils.fromDateTime(dbo, "time", result.uploadTime());
+        TranslatorUtils.fromDateTime(dbo, TIME_KEY, result.uploadTime());
         TranslatorUtils.from(dbo, "message", result.message());
         TranslatorUtils.from(dbo, "connected", result.successfulConnection());
 
@@ -37,9 +40,9 @@ public class FileUploadResultTranslator {
     public FileUploadResult fromDBObject(DBObject dbo) {
 
         FileUploadResult result = new FileUploadResult(
-                TranslatorUtils.toString(dbo, "service"), 
+                TranslatorUtils.toString(dbo, SERVICE_KEY), 
                 TranslatorUtils.toString(dbo, "filename"), 
-                TranslatorUtils.toDateTime(dbo, "time"), FileUploadResultType.valueOf(TranslatorUtils.toString(dbo,"type"))
+                TranslatorUtils.toDateTime(dbo, TIME_KEY), FileUploadResultType.valueOf(TranslatorUtils.toString(dbo,"type"))
         ).withMessage(TranslatorUtils.toString(dbo, "message")).withConnectionSuccess(TranslatorUtils.toBoolean(dbo, "connected"));
 
         if (dbo.containsField("exception")) {

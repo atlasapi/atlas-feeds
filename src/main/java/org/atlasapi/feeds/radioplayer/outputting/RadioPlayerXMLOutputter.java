@@ -8,7 +8,7 @@ import nu.xom.Document;
 import nu.xom.Element;
 import nu.xom.Serializer;
 
-import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.radioplayer.RadioPlayerFeedSpec;
 import org.atlasapi.feeds.xml.XMLNamespace;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Broadcast;
@@ -16,7 +16,6 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
-import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
@@ -27,7 +26,7 @@ public abstract class RadioPlayerXMLOutputter {
 
     protected static final DateTimeFormatter DATE_TIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
 
-    protected abstract Element createFeed(LocalDate day, RadioPlayerService id, Iterable<RadioPlayerBroadcastItem> items);
+    protected abstract Element createFeed(RadioPlayerFeedSpec spec, Iterable<RadioPlayerBroadcastItem> items);
 
     protected static final Truncator MEDIUM_TITLE = new Truncator().withMaxLength(16).onlyTruncateAtAWordBoundary().omitTrailingPunctuationWhenTruncated();
     protected static final Truncator LONG_TITLE = new Truncator().withMaxLength(128).onlyTruncateAtAWordBoundary().omitTrailingPunctuationWhenTruncated();
@@ -43,8 +42,8 @@ public abstract class RadioPlayerXMLOutputter {
         super();
     }
 
-    public void output(LocalDate day, RadioPlayerService id, Iterable<RadioPlayerBroadcastItem> items, OutputStream out) throws IOException {
-        write(out, createFeed(day, id, items));
+    public void output(RadioPlayerFeedSpec spec, Iterable<RadioPlayerBroadcastItem> items, OutputStream out) throws IOException {
+        write(out, createFeed(spec, items));
     }
 
     private void write(OutputStream out, Element feed) throws UnsupportedEncodingException, IOException {
