@@ -30,7 +30,7 @@ import com.metabroadcast.common.time.DateTimeZones;
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {
 
     private static final String ORIGINATOR = "Metabroadcast";
-    private static final String ONDEMAND_LOCATION = "http://www.bbc.co.uk/iplayer/console/";
+    private static final String ONDEMAND_LOCATION = "http://www.bbc.co.uk/radio/player/";
     private static final DateTime MAX_AVAILABLE_TILL = new DateTime(2037, 01, 01, 0, 0, 0, 0, DateTimeZones.UTC);
 
     private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
