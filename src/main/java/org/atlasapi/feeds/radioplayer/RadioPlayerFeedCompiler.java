@@ -1,8 +1,12 @@
 package org.atlasapi.feeds.radioplayer;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Iterables.filter;
+import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
+import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -13,7 +17,9 @@ import java.util.Map;
 import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerBroadcastItem;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerProgrammeInformationOutputter;
+import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerUpdatedClipOutputter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter;
+import org.atlasapi.feeds.radioplayer.upload.FileType;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Broadcast;
@@ -24,11 +30,12 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.ContentCategory;
+import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
+import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.lookup.entry.LookupRef;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
@@ -38,50 +45,73 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
+import com.metabroadcast.common.base.MorePredicates;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public abstract class RadioPlayerFeedCompiler {
     
     private final RadioPlayerXMLOutputter outputter;
-    protected final ScheduleResolver scheduleResolver;
-    protected final KnownTypeContentResolver contentResolver;
-	protected final ChannelResolver channelResolver;
+    protected final KnownTypeContentResolver knownTypeContentResolver;
 
-    public RadioPlayerFeedCompiler(RadioPlayerXMLOutputter outputter, ScheduleResolver scheduleResolver, KnownTypeContentResolver contentResolver, ChannelResolver channelResolver) {
+    public RadioPlayerFeedCompiler(RadioPlayerXMLOutputter outputter, KnownTypeContentResolver contentResolver) {
         this.outputter = outputter;
-        this.scheduleResolver = scheduleResolver;
-        this.contentResolver = contentResolver;
-        this.channelResolver = channelResolver;
+        this.knownTypeContentResolver = contentResolver;
     }
     
-    private static Map<String, RadioPlayerFeedCompiler> compilerMap;
+    private static Map<FileType, RadioPlayerFeedCompiler> compilerMap;
     
-    public static void init(ScheduleResolver scheduleResolver, KnownTypeContentResolver contentResolver, ChannelResolver channelResolver) {
-        compilerMap = ImmutableMap.<String, RadioPlayerFeedCompiler>of(
-                "PI",new RadioPlayerProgrammeInformationFeedCompiler(scheduleResolver, contentResolver, channelResolver)
+    public static void init(ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, ContentResolver contentResolver, ChannelResolver channelResolver) {
+        compilerMap = ImmutableMap.<FileType, RadioPlayerFeedCompiler>of(
+                PI, new RadioPlayerProgrammeInformationFeedCompiler(scheduleResolver, knownTypeContentResolver, channelResolver),
+                OD, new RadioPlayerOnDemandFeedCompiler(knownTypeContentResolver, contentResolver)
             );
     }
     
-    public static RadioPlayerFeedCompiler valueOf(String type) {
+    public static RadioPlayerFeedCompiler valueOf(FileType type) {
         checkState(compilerMap != null, "Compiler map not initialised");
         return checkNotNull(compilerMap.get(type), "No compiler for type " + type);
     }
 	
     private static class RadioPlayerProgrammeInformationFeedCompiler extends RadioPlayerFeedCompiler {
-        public RadioPlayerProgrammeInformationFeedCompiler(ScheduleResolver scheduleResolver, KnownTypeContentResolver contentResolver, ChannelResolver channelResolver) {
-            super(new RadioPlayerProgrammeInformationOutputter(), scheduleResolver, contentResolver, channelResolver);
+        private final ScheduleResolver scheduleResolver;
+        private final ChannelResolver channelResolver;
+
+        public RadioPlayerProgrammeInformationFeedCompiler(ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, ChannelResolver channelResolver) {
+            super(new RadioPlayerProgrammeInformationOutputter(), knownTypeContentResolver);
+            this.scheduleResolver = scheduleResolver;
+            this.channelResolver = channelResolver;
         }
 
         @Override
-        public List<Item> queryFor(LocalDate day, String serviceUri) {
-            DateTime date = day.toDateTimeAtStartOfDay(DateTimeZones.UTC);
-            Channel channel = channelResolver.fromUri(serviceUri).requireValue();
+        public List<Item> queryFor(RadioPlayerFeedSpec spec) {
+            checkArgument(spec instanceof RadioPlayerPiFeedSpec);
+            DateTime date = ((RadioPlayerPiFeedSpec)spec).getDay().toDateTimeAtStartOfDay(DateTimeZones.UTC);
+            Channel channel = channelResolver.fromUri(spec.getService().getScheduleUri()).requireValue();
             Schedule schedule = scheduleResolver.schedule(date.minusMillis(1), date.plusDays(1), ImmutableSet.of(channel), ImmutableSet.of(Publisher.BBC));
             return Iterables.getOnlyElement(schedule.scheduleChannels()).items();
         }
     }
     
-	public abstract List<Item> queryFor(LocalDate date, String serviceUri);
+    private static class RadioPlayerOnDemandFeedCompiler extends RadioPlayerFeedCompiler {
+        
+        private final ContentResolver contentResolver;
+
+        public RadioPlayerOnDemandFeedCompiler(KnownTypeContentResolver knownTypeContentResolver, ContentResolver contentResolver) {
+            super(new RadioPlayerUpdatedClipOutputter(), knownTypeContentResolver);
+            this.contentResolver = contentResolver;
+        }
+        
+        @Override
+        public List<Item> queryFor(RadioPlayerFeedSpec spec) {
+            checkArgument(spec instanceof RadioPlayerOdFeedSpec);
+            RadioPlayerOdFeedSpec odSpec = (RadioPlayerOdFeedSpec)spec;
+            ResolvedContent resolvedContent = contentResolver.findByCanonicalUris(odSpec.getUris());
+            return ImmutableList.copyOf(filter(filter(resolvedContent.getAllResolvedResults(), Item.class), 
+                    MorePredicates.transformingPredicate(Item.TO_CLIPS, MorePredicates.anyPredicate(RadioPlayerUpdatedClipOutputter.availableAndUpdatedSince(odSpec.getSince()))))); 
+        }
+    }
+    
+	public abstract List<Item> queryFor(RadioPlayerFeedSpec spec);
 	
     public RadioPlayerXMLOutputter getOutputter() {
         if (outputter == null) {
@@ -89,15 +119,14 @@ public abstract class RadioPlayerFeedCompiler {
         }
         return outputter;
     }
-
-    public void compileFeedFor(LocalDate day, RadioPlayerService service, OutputStream out) throws IOException {
+    
+    public void compileFeedFor(RadioPlayerFeedSpec spec, OutputStream out) throws IOException {
         if (outputter != null) {
-            String serviceUri = service.getServiceUri();
-            List<Item> items = queryFor(day, serviceUri);
+            List<Item> items = queryFor(spec);
             if (items.isEmpty()) {
-                throw new NoItemsException(day, service);
+                throw new NoItemsException(spec);
             }
-            outputter.output(day, service, sort(transform(items, serviceUri, day)), out);
+            outputter.output(spec, sort(transform(items, spec.getService().getServiceUri())), out);
         }
     }
 
@@ -105,7 +134,7 @@ public abstract class RadioPlayerFeedCompiler {
         return Ordering.natural().immutableSortedCopy(broadcastItems);
     }
 
-    private List<RadioPlayerBroadcastItem> transform(List<Item> items, String serviceUri, LocalDate day) {
+    private List<RadioPlayerBroadcastItem> transform(List<Item> items, String serviceUri) {
         final Map<String, Identified> containers = containersFor(items);
         return ImmutableList.copyOf(concat(Iterables.transform(items, new Function<Item, Iterable<RadioPlayerBroadcastItem>>() {
             @Override
@@ -142,6 +171,6 @@ public abstract class RadioPlayerFeedCompiler {
             return ImmutableMap.of();
         }
         
-        return contentResolver.findByLookupRefs(ImmutableSet.copyOf(containerLookups)).asResolvedMap();
+        return knownTypeContentResolver.findByLookupRefs(ImmutableSet.copyOf(containerLookups)).asResolvedMap();
     }
 }

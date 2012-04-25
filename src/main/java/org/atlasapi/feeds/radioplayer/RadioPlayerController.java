@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.atlasapi.feeds.radioplayer.upload.FileType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,9 +19,9 @@ public class RadioPlayerController {
 
         if (RadioPlayerFilenameMatcher.hasMatch(matcher)) {
 
-            RadioPlayerFeedCompiler feedType = matcher.type().requireValue();
+            FileType feedType = matcher.type().requireValue();
             try {
-                feedType.compileFeedFor(matcher.date().requireValue(), matcher.service().requireValue(), response.getOutputStream());
+                RadioPlayerFeedCompiler.valueOf(feedType).compileFeedFor(new RadioPlayerPiFeedSpec(matcher.service().requireValue(), matcher.date().requireValue()), response.getOutputStream());
             } catch (Exception e) {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
             }

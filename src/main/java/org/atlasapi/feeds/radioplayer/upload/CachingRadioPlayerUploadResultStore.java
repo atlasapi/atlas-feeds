@@ -15,6 +15,8 @@ import org.joda.time.LocalDate;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ForwardingMap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.MapMaker;
@@ -24,25 +26,33 @@ import com.google.common.collect.Sets;
 public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadResultStore {
 
     private final RadioPlayerUploadResultStore delegate;
-    private Map<String, RemoteServiceSpecificResultCache> remoteServiceCacheMap;
+    private final Map<FileType, Map<String, RemoteServiceSpecificResultCache>> fileTypeToRemoteServiceCacheMap;
 
     public CachingRadioPlayerUploadResultStore(Iterable<String> remoteServiceIds, final RadioPlayerUploadResultStore delegate) {
         this.delegate = delegate;
-        this.remoteServiceCacheMap = Maps.newHashMap();
-        for (String remoteService : remoteServiceIds) {
-            remoteServiceCacheMap.put(remoteService, new RemoteServiceSpecificResultCache(remoteService));
+        
+        Builder<FileType, Map<String, RemoteServiceSpecificResultCache>> fileTypeToRemoteServiceCacheMap = ImmutableMap.builder();
+        for (FileType type : FileType.values()) {
+            Map<String, RemoteServiceSpecificResultCache> remoteServiceCacheMap = Maps.newHashMap();
+            for (String remoteService : remoteServiceIds) {
+                remoteServiceCacheMap.put(remoteService, new RemoteServiceSpecificResultCache(remoteService));
+            }
+            fileTypeToRemoteServiceCacheMap.put(type, remoteServiceCacheMap);
         }
+        this.fileTypeToRemoteServiceCacheMap = fileTypeToRemoteServiceCacheMap.build();
     }
 
     @Override
     public void record(RadioPlayerUploadResult result) {
         delegate.record(result);
 
+        Map<String, RemoteServiceSpecificResultCache> remoteServiceCacheMap = fileTypeToRemoteServiceCacheMap.get(result.getType());
+        
         RemoteServiceSpecificResultCache remoteServiceCache = remoteServiceCacheMap.get(result.getUpload().remote());
         
-        ConcurrentMap<LocalDate,Set<FileUploadResult>> serviceMap = remoteServiceCache.get(result.service());
+        ConcurrentMap<LocalDate,Set<FileUploadResult>> serviceMap = remoteServiceCache.get(result.getService());
 
-        Set<FileUploadResult> current = serviceMap.putIfAbsent(result.day(), treeSetWith(result.getUpload()));
+        Set<FileUploadResult> current = serviceMap.putIfAbsent(result.getDay(), treeSetWith(result.getUpload()));
         if (current != null) {
             current.remove(result.getUpload());
             current.add(result.getUpload());
@@ -56,8 +66,8 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
     }
 
     @Override
-    public Iterable<FileUploadResult> resultsFor(String remoteServiceId, RadioPlayerService service, LocalDate day) {
-        return ImmutableSet.copyOf(remoteServiceCacheMap.get(remoteServiceId).get(service).get(day));
+    public Iterable<FileUploadResult> resultsFor(FileType type, String remoteServiceId, RadioPlayerService service, LocalDate day) {
+        return ImmutableSet.copyOf(fileTypeToRemoteServiceCacheMap.get(type).get(remoteServiceId).get(service).get(day));
     }
     
     private class RemoteServiceSpecificResultCache extends ForwardingMap<RadioPlayerService, ConcurrentMap<LocalDate, Set<FileUploadResult>>>{
@@ -77,7 +87,7 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
                     @Override
                     public Set<FileUploadResult> apply(LocalDate day) {
                         TreeSet<FileUploadResult> set = Sets.newTreeSet(TYPE_ORDERING);
-                        Iterables.addAll(set, delegate.resultsFor(rsi, service, day));
+                        Iterables.addAll(set, delegate.resultsFor(null, rsi, service, day));
                         return set;
                     }
                 }));

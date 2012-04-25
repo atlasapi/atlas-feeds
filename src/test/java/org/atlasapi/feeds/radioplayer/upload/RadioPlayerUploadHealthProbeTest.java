@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.FAILURE;
 import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -98,7 +99,7 @@ public class RadioPlayerUploadHealthProbeTest {
         
         DateTime futureDay = new DateTime(DateTimeZones.UTC).plusDays(4);
         FileUploadResult upResult = new FileUploadResult(REMOTE_SERVICE_ID, String.format("%s_%s_PI.xml", futureDay.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), new DateTime(DateTimeZones.UTC), FAILURE);
-        RadioPlayerUploadResult rpResult = new RadioPlayerUploadResult(SERVICE, futureDay.toLocalDate(), upResult);
+        RadioPlayerUploadResult rpResult = new RadioPlayerUploadResult(PI, SERVICE, futureDay.toLocalDate(), upResult);
         
         recorder.record(rpResult);
         
@@ -117,6 +118,6 @@ public class RadioPlayerUploadHealthProbeTest {
     }
 
     public RadioPlayerUploadResult result(DateTime successDate, FileUploadResultType type) {
-        return new RadioPlayerUploadResult(SERVICE, successDate.toLocalDate(), new FileUploadResult(REMOTE_SERVICE_ID, String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type));
+        return new RadioPlayerUploadResult(PI, SERVICE, successDate.toLocalDate(), new FileUploadResult(REMOTE_SERVICE_ID, String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type));
     }
 }

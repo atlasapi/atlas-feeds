@@ -43,7 +43,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         DayRange dayRange = rangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
         
         for (LocalDate day : dayRange) {
-            result.addEntry(entryFor(day, store.resultsFor(remoteServiceId, service, day)));
+            result.addEntry(entryFor(day, store.resultsFor(FileType.PI, remoteServiceId, service, day)));
         }
 
         result.addEntry(uploadAll());
