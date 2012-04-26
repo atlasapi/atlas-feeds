@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
+import static com.google.common.collect.Iterators.filter;
+
 import java.util.Iterator;
 import java.util.Set;
 
@@ -47,8 +49,10 @@ public class RadioPlayerOdUriResolver {
         
         HashMultimap<RadioPlayerService, String> serviceToUris = HashMultimap.create();
         
-        while (content.hasNext()) {
-            Item item = (Item) content.next();
+        Iterator<Item> items = filter(content, Item.class);
+        
+        while (items.hasNext()) {
+            Item item = items.next();
             
             Set<Broadcast> allBroadcasts = Sets.newHashSet();
             for (Version version : item.getVersions()) {
