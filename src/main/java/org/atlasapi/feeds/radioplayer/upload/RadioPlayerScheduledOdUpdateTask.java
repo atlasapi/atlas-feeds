@@ -36,6 +36,6 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
         if (fullSnapshot) {
             date = date.minusDays(1);
         }
-        new RadioPlayerOdBatchUploadTask(uploaders, executor, services, date, fullSnapshot, log, lastUpdatedContentFinder, contentLister);
+        new RadioPlayerOdBatchUploadTask(uploaders, executor, services, date, fullSnapshot, log, lastUpdatedContentFinder, contentLister).run();
     }
 }
