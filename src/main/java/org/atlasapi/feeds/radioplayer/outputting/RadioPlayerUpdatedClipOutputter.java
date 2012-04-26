@@ -45,7 +45,7 @@ import com.metabroadcast.common.time.DateTimeZones;
 public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
     
     private static final String ORIGINATOR = "Metabroadcast";
-    private static final String ONDEMAND_LOCATION = "http://www.bbc.co.uk/iplayer/console/";
+    private static final String ONDEMAND_LOCATION = "http://www.bbc.co.uk/radio/player/";
     private static final DateTime MAX_AVAILABLE_TILL = new DateTime(2037, 01, 01, 0, 0, 0, 0, DateTimeZones.UTC);
     
     private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
@@ -126,7 +126,7 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                         }
                         
                         DateTime availableUntil = location.getPolicy().getAvailabilityEnd();
-                        if (end == null || end.isAfter(availableUntil)) {
+                        if (end == null || end.isBefore(availableUntil)) {
                             end = availableUntil;
                         }
                     }
@@ -154,8 +154,8 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                 programme.appendChild(stringElement("longName", EPGDATATYPES, LONG_TITLE.truncatePossibleNull(title)));
         
                 programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(broadcastItem.getItem().getDescription()))));
-                if (!Strings.isNullOrEmpty(broadcastItem.getItem().getImage())) {
-                    programme.appendChild(mediaDescription(imageDescriptionElem(broadcastItem.getItem())));
+                if (!Strings.isNullOrEmpty(clip.getImage())) {
+                    programme.appendChild(mediaDescription(imageDescriptionElem(clip)));
                 }
         
                 for (Element genreElement : genreElementCreator.genreElementsFor(broadcastItem.getItem())) {
