@@ -320,7 +320,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 	   for (Version version : item.nativeVersions()) {
            for (Encoding encoding : version.getManifestedAs()) {
                for (Location location : encoding.getAvailableAt()) {
-                   if (TransportType.LINK.equals(location.getTransportType()) && qualifies(from, to, location)) {
+                   if (TransportType.LINK.equals(location.getTransportType()) && qualifies(from, to, location)
+                       && (location.getPolicy() == null || location.getPolicy().getPlatform() == null)) {
                 	   return location;
                    }
                }
@@ -333,7 +334,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         for (Version version : item.nativeVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if (TransportType.LINK.equals(location.getTransportType()) && available(location)) {
+                    if (TransportType.LINK.equals(location.getTransportType()) && available(location) 
+                        && (location.getPolicy() == null || location.getPolicy().getPlatform() == null)) {
                         return location;
                     }
                 }
