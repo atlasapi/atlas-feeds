@@ -134,6 +134,8 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
             }
         }
         
+        end = Ordering.natural().min(end, MAX_AVAILABLE_TILL);
+        
         return new Interval(start, end);
     }
 
