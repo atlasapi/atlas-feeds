@@ -38,12 +38,8 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
-import com.google.common.collect.Sets;
 import com.metabroadcast.common.base.MorePredicates;
-import com.metabroadcast.common.intl.Countries;
-import com.metabroadcast.common.intl.Country;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
@@ -166,15 +162,9 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                     programme.appendChild(genreElement);
                 }
                 
-                Set<Country> outputCountries = Sets.newHashSet();
                 for (Encoding encoding : version.getManifestedAs()) {
                     for (Location location : encoding.getAvailableAt()) {
-                        for (Country country : representedBy(encoding, location)) {
-                            if (!outputCountries.contains(country)) {
-                                programme.appendChild(ondemandElement(clip, location, country));
-                                outputCountries.add(country);
-                            }
-                        }
+                        programme.appendChild(ondemandElement(clip, location));
                     }
                 }
                 elements.add(programme);
@@ -230,36 +220,13 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
         return item.getImage();
     }
     
-    private final Set<Country> representedBy(Encoding encoding, Location location) {
-        Policy policy = location.getPolicy();
-        if (policy == null) {
-            return ImmutableSet.of();
-        }
-        Set<Country> countries = Sets.newHashSet();
-        if (policy.getAvailableCountries().contains(Countries.ALL)) {
-            countries.add(Countries.ALL);
-            countries.add(Countries.GB);
-        }
-        if (policy.getAvailableCountries().contains(Countries.GB)) {
-            countries.add(Countries.GB);
-        }
-        if (policy.getAvailableCountries().isEmpty()) {
-            countries.add(Countries.ALL);
-        }
-        return countries;
-    }
-    
-    private Element ondemandElement(Clip item, Location location, Country country) {
+    private Element ondemandElement(Clip item, Location location) {
         Element ondemandElement = createElement("ondemand", EPGDATATYPES);
 
         ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCurie().substring(item.getCurie().indexOf(":") + 1)));
 
         Policy policy = location.getPolicy();
         if (policy != null) {
-             
-            // disabled
-            // addRestriction(ondemandElement, country);
-
             DateTime availableTill = Ordering.natural().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
             DateTime availableFrom = policy.getAvailabilityStart();
             if (availableTill != null && availableFrom != null) {
@@ -270,7 +237,6 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                 availabilityElem.appendChild(availabilityScopeElem);
                 ondemandElement.appendChild(availabilityElem);
             }
-
         }
 
         return ondemandElement;
