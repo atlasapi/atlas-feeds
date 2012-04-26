@@ -36,20 +36,25 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
     @Override
     public Iterable<RadioPlayerUploadResult> call() throws Exception {
         
-        log.record(AdapterLogEntry.infoEntry().withDescription("Starting upload task for %s", spec.filename()));
-        
-        final String filename = spec.filename();
+        log.record(AdapterLogEntry.infoEntry().withDescription("Starting upload task for %s", spec.filename()).withSource(getClass()));
         
         try {
             byte[] filebytes = getFileContent();
-            FileUpload upload = new FileUpload(filename, filebytes);
+            FileUpload upload = new FileUpload(spec.filename(), filebytes);
+            
+            log.record(AdapterLogEntry.infoEntry().withDescription("Compiled file for uploading for %s", spec.filename()).withSource(getClass()));
+            
             Iterable<RadioPlayerUploadResult> results = doUploads(upload);
             
-            log.record(AdapterLogEntry.infoEntry().withDescription("Successfully completed upload task for %s", spec.filename()));
+            log.record(AdapterLogEntry.infoEntry().withDescription("Successfully completed upload task for %s", spec.filename()).withSource(getClass()));
             
             return results;
         } catch (NoItemsException e) {
             logNotItemsException(e);
+            log.record(AdapterLogEntry.errorEntry().withCause(e).withDescription("Failed upload task for %s", spec.filename()).withSource(getClass()));
+            return failedUploads(e);
+        } catch (Exception e) {
+            log.record(AdapterLogEntry.errorEntry().withCause(e).withDescription("Failed upload task for %s", spec.filename()).withSource(getClass()));
             return failedUploads(e);
         }
     }
@@ -74,7 +79,7 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
         return results.build();
     }
 
-    private Iterable<RadioPlayerUploadResult> failedUploads(final NoItemsException e) {
+    private Iterable<RadioPlayerUploadResult> failedUploads(final Exception e) {
         return Iterables.transform(remoteTargets, new Function<FileUploadService, RadioPlayerUploadResult>() {
             @Override
             public RadioPlayerUploadResult apply(FileUploadService input) {
