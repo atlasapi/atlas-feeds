@@ -177,6 +177,7 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                         }
                     }
                 }
+                elements.add(programme);
             }
         }
 
