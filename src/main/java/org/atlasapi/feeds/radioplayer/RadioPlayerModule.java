@@ -174,20 +174,20 @@ public class RadioPlayerModule {
 		    if (Boolean.parseBoolean(upload)) {
 				
 	            scheduler.schedule(
-	                    radioPlayerUploadTaskBuilder().newScheduledPiTask(uploadServices(), dayRangeGenerator).withName("Radioplayer Full Upload"), 
+	                    radioPlayerUploadTaskBuilder().newScheduledPiTask(uploadServices(), dayRangeGenerator).withName("Radioplayer PI Full Upload"), 
 	                    UPLOAD_EVERY_TWO_HOURS);
 	            scheduler.schedule(
-	                    radioPlayerUploadTaskBuilder().newScheduledPiTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer Today Upload"), 
+	                    radioPlayerUploadTaskBuilder().newScheduledPiTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer PI Today Upload"), 
 	                    UPLOAD_EVERY_TEN_MINUTES);
 	            scheduler.schedule(
 	                    new RadioPlayerRemoteProcessingChecker(radioPlayerUploadServiceDetails(), uploadResultRecorder(), log).withName("Radioplayer Remote Processing Checker"),
 	                    UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(5)));
 	            
 	            scheduler.schedule(
-	                    radioPlayerUploadTaskBuilder().newScheduledOdTask(uploadServices(), true), 
+	                    radioPlayerUploadTaskBuilder().newScheduledOdTask(uploadServices(), true).withName("Radioplayer OD Full Upload"), 
 	                    NEVER);
 	            scheduler.schedule(
-	                    radioPlayerUploadTaskBuilder().newScheduledOdTask(uploadServices(), false),
+	                    radioPlayerUploadTaskBuilder().newScheduledOdTask(uploadServices(), false).withName("Radioplayer OD Today Upload"),
 	                    UPLOAD_EVERY_TEN_MINUTES);
 	            
 	

@@ -13,6 +13,7 @@ import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.persistence.logging.AdapterLog;
+import org.atlasapi.persistence.logging.AdapterLogEntry;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -34,12 +35,19 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
 
     @Override
     public Iterable<RadioPlayerUploadResult> call() throws Exception {
+        
+        log.record(AdapterLogEntry.infoEntry().withDescription("Starting upload task for %s", spec.filename()));
+        
         final String filename = spec.filename();
         
         try {
             byte[] filebytes = getFileContent();
             FileUpload upload = new FileUpload(filename, filebytes);
-            return doUploads(upload);
+            Iterable<RadioPlayerUploadResult> results = doUploads(upload);
+            
+            log.record(AdapterLogEntry.infoEntry().withDescription("Successfully completed upload task for %s", spec.filename()));
+            
+            return results;
         } catch (NoItemsException e) {
             logNotItemsException(e);
             return failedUploads(e);

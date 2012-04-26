@@ -29,7 +29,7 @@ public class RadioPlayerOdFeedSpec extends RadioPlayerFeedSpec {
     
     @Override
     public String toString() {
-        return Objects.toStringHelper(RadioPlayerOdFeedSpec.class).add("service", service).add("since", since).toString();
+        return Objects.toStringHelper(RadioPlayerOdFeedSpec.class).add("service", service).add("day", day.toString("dd/MM/yyyy")).add("since", since).toString();
     }
 
     @Override

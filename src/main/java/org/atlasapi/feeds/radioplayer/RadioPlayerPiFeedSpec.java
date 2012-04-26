@@ -10,12 +10,10 @@ public class RadioPlayerPiFeedSpec extends RadioPlayerFeedSpec {
         super(service, day);
     }
 
-
     @Override
     public String toString() {
         return Objects.toStringHelper(RadioPlayerPiFeedSpec.class).add("service", service).add("day", day.toString("dd/MM/yyyy")).toString();
     }
-
 
     @Override
     protected String filenameSuffix() {
