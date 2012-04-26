@@ -54,11 +54,13 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
     public void run() {
         DateTime start = new DateTime(DateTimeZones.UTC);
         int serviceCount = Iterables.size(services);
-        log.record(AdapterLogEntry.infoEntry().withDescription("Radioplayer OD Uploader starting for %s services", serviceCount));
+        log.record(AdapterLogEntry.infoEntry().withDescription("Radioplayer OD Batch Uploader starting for %s services", serviceCount));
         
-        List<Callable<Iterable<RadioPlayerUploadResult>>> uploadTasks = Lists.newArrayListWithCapacity(serviceCount);
         SetMultimap<RadioPlayerService,String> serviceToUris = fullSnapshot ? uriResolver.getServiceToUrisMapForSnapshot() : uriResolver.getServiceToUrisMapSince(since.get());
         
+        log.record(AdapterLogEntry.infoEntry().withDescription("Radioplayer OD Batch Uploader finished finding uris to process"));
+        
+        List<Callable<Iterable<RadioPlayerUploadResult>>> uploadTasks = Lists.newArrayListWithCapacity(serviceCount);
         for (RadioPlayerService service : services) {
             uploadTasks.add(new RadioPlayerOdUploadTask(uploaders, since, day, service, serviceToUris.get(service), log));
         }
@@ -78,13 +80,13 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
                     }
                 }
             }catch (InterruptedException e) {
-                log.record(AdapterLogEntry.warnEntry().withDescription("Radioplayer OD Uploader interrupted waiting for result.").withCause(e));
+                log.record(AdapterLogEntry.warnEntry().withDescription("Radioplayer OD Batch Uploader interrupted waiting for result.").withCause(e));
             } catch (ExecutionException e) {
-                log.record(AdapterLogEntry.warnEntry().withDescription("Radioplayer OD Uploader exception retrieving result").withCause(e));
+                log.record(AdapterLogEntry.warnEntry().withDescription("Radioplayer OD Batch Uploader exception retrieving result").withCause(e));
             }
         }
 
         String runTime = new Period(start, new DateTime(DateTimeZones.UTC)).toString(PeriodFormat.getDefault());
-        AdapterLogEntry.infoEntry().withDescription("Radioplayer OD Uploader finished in %s, %s/%s successful.", runTime, successes, uploadTasks.size());
+        AdapterLogEntry.infoEntry().withDescription("Radioplayer OD Batch Uploader finished in %s, %s/%s successful.", runTime, successes, uploadTasks.size());
     }
 }
