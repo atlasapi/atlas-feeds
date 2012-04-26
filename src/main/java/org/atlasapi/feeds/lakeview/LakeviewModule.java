@@ -132,11 +132,12 @@ public class LakeviewModule {
 	LakeviewFileValidator lakeviewFileValidator() {
 		Clock clock = new SystemClock();
 		Builder<LakeviewFeedValidationRule> validationRules = ImmutableList.builder();
-		validationRules.add(new CompletenessValidationRule(contentLister, 100));
+		validationRules.add(new CompletenessValidationRule(contentLister, 200));
 		validationRules.add(new HeirarchyValidationRule());
-		validationRules.add(new UpToDateValidationRule(5, clock));
-		validationRules.add(new RecentUpdateToBrandValidationRule("http://channel4.com/en-GB/TVSeries/deal-or-no-deal", 5, clock));
-		validationRules.add(new RecentUpdateToBrandValidationRule("http://channel4.com/en-GB/TVSeries/countdown", 5, clock));
+		validationRules.add(new UpToDateValidationRule(1, clock));
+		// We need to find better candidates for this, as we don't see updates to these brands
+		//validationRules.add(new RecentUpdateToBrandValidationRule("http://channel4.com/en-GB/TVSeries/deal-or-no-deal", 5, clock));
+		//validationRules.add(new RecentUpdateToBrandValidationRule("http://channel4.com/en-GB/TVSeries/countdown", 5, clock));
 		return new LakeviewFileValidator(lakeviewContentFetcher(), lakeviewFeedCompiler(),
 				lakeviewFeedOutputter(), validationRules.build(), log);
 	}
