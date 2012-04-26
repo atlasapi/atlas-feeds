@@ -24,7 +24,7 @@ public class RadioPlayerOdUploadTask extends RadioPlayerUploadTask {
     @Override
     protected void logNotItemsException(NoItemsException e) {
         if( log != null) {
-            log.record(debugEntry().withDescription("No items for " + spec.filename()).withSource(getClass()).withCause(e));
+            log.record(debugEntry().withDescription("No items for " + spec).withSource(getClass()).withCause(e));
         }
     }
 }

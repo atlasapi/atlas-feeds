@@ -3,6 +3,7 @@ package org.atlasapi.feeds.radioplayer.upload;
 import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -62,7 +63,12 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
         
         List<Callable<Iterable<RadioPlayerUploadResult>>> uploadTasks = Lists.newArrayListWithCapacity(serviceCount);
         for (RadioPlayerService service : services) {
-            uploadTasks.add(new RadioPlayerOdUploadTask(uploaders, since, day, service, serviceToUris.get(service), log));
+            Set<String> uris = serviceToUris.get(service);
+            if (uris.isEmpty()) {
+                log.record(AdapterLogEntry.infoEntry().withDescription("No items for OD %s upload for service %s", (fullSnapshot ? "snapshot" : "change"), service).withSource(getClass()));
+            } else {
+                uploadTasks.add(new RadioPlayerOdUploadTask(uploaders, since, day, service, uris, log));
+            }
         }
 
         LinkedBlockingQueue<Future<Iterable<RadioPlayerUploadResult>>> futureResults = executor.submit(uploadTasks);

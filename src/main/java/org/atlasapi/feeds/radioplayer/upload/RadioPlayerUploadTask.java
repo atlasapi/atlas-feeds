@@ -36,25 +36,25 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
     @Override
     public Iterable<RadioPlayerUploadResult> call() throws Exception {
         
-        log.record(AdapterLogEntry.infoEntry().withDescription("Starting upload task for %s", spec.filename()).withSource(getClass()));
+        log.record(AdapterLogEntry.infoEntry().withDescription("Starting upload task for %s", spec).withSource(getClass()));
         
         try {
             byte[] filebytes = getFileContent();
             FileUpload upload = new FileUpload(spec.filename(), filebytes);
             
-            log.record(AdapterLogEntry.infoEntry().withDescription("Compiled file for uploading for %s", spec.filename()).withSource(getClass()));
+            log.record(AdapterLogEntry.infoEntry().withDescription("Compiled file for uploading for %s", spec).withSource(getClass()));
             
             Iterable<RadioPlayerUploadResult> results = doUploads(upload);
             
-            log.record(AdapterLogEntry.infoEntry().withDescription("Successfully completed upload task for %s", spec.filename()).withSource(getClass()));
+            log.record(AdapterLogEntry.infoEntry().withDescription("Successfully completed upload task for %s", spec).withSource(getClass()));
             
             return results;
         } catch (NoItemsException e) {
             logNotItemsException(e);
-            log.record(AdapterLogEntry.errorEntry().withCause(e).withDescription("Failed upload task for %s", spec.filename()).withSource(getClass()));
+            log.record(AdapterLogEntry.errorEntry().withCause(e).withDescription("Failed upload task for %s", spec).withSource(getClass()));
             return failedUploads(e);
         } catch (Exception e) {
-            log.record(AdapterLogEntry.errorEntry().withCause(e).withDescription("Failed upload task for %s", spec.filename()).withSource(getClass()));
+            log.record(AdapterLogEntry.errorEntry().withCause(e).withDescription("Failed upload task for %s", spec).withSource(getClass()));
             return failedUploads(e);
         }
     }
@@ -71,7 +71,7 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
             try {
                 results.add(uploadTo(target, upload));
             } catch (InterruptedException e) {
-                log.record(errorEntry().withCause(e).withDescription("Upload of " + upload.getFilename() + " was interrupted").withSource(getClass()));
+                log.record(errorEntry().withCause(e).withDescription("Upload of " + spec + " was interrupted").withSource(getClass()));
                 results.add(failure(target, e));
                 break;
             }

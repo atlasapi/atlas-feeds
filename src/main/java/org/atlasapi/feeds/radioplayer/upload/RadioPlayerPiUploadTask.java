@@ -24,9 +24,9 @@ public class RadioPlayerPiUploadTask extends RadioPlayerUploadTask {
     protected void logNotItemsException(NoItemsException e) {
         if( log != null) {
             if (!spec.getDay().isAfter(new LocalDate(DateTimeZones.UTC).plusDays(1)) && !RadioPlayerServices.untracked.contains(spec.getService())) {
-                log.record(errorEntry().withDescription("No items for " + spec.filename()).withSource(getClass()).withCause(e));
+                log.record(errorEntry().withDescription("No items for " + spec).withSource(getClass()).withCause(e));
             } else {
-                log.record(debugEntry().withDescription("No items for " + spec.filename()).withSource(getClass()).withCause(e));
+                log.record(debugEntry().withDescription("No items for " + spec).withSource(getClass()).withCause(e));
             }
         }
     }
