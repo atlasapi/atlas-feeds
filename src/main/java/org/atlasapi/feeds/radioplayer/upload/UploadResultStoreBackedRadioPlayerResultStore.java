@@ -15,7 +15,7 @@ public class UploadResultStoreBackedRadioPlayerResultStore implements RadioPlaye
     
     @Override
     public void record(RadioPlayerUploadResult result) {
-        backingStore.store(String.format("%s-%s-%s", result.getType().name(), result.getService().getRadioplayerId(), result.getDay().toString("yyyy-MM-dd")), result.getUpload());
+        backingStore.store(String.format("%s-%s-%s", result.getService().getRadioplayerId(), result.getType().name(), result.getDay().toString("yyyy-MM-dd")), result.getUpload());
     }
 
     @Override

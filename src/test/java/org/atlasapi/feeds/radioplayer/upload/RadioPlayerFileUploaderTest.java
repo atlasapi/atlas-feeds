@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
@@ -134,7 +136,7 @@ public class RadioPlayerFileUploaderTest {
         RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("127.0.0.1")).withPort(9521).withCredentials(new UsernameAndPassword("test","testpassword")).build();
         FileUploadService fileUploader = new FileUploadService("remoteService", new CommonsFTPFileUploader(credentials));
 		
-		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(ImmutableSet.of(fileUploader), new RadioPlayerRecordingExecutor(recorder), services, new DayRangeGenerator(), new SystemOutAdapterLog());
+		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(ImmutableSet.of(fileUploader), new RadioPlayerRecordingExecutor(recorder, MoreExecutors.sameThreadExecutor()), services, new DayRangeGenerator(), new SystemOutAdapterLog());
 
 		Executor executor = MoreExecutors.sameThreadExecutor();
 		executor.execute(uploader);

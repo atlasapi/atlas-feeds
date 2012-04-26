@@ -35,7 +35,7 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
         for (FileType type : FileType.values()) {
             Map<String, RemoteServiceSpecificResultCache> remoteServiceCacheMap = Maps.newHashMap();
             for (String remoteService : remoteServiceIds) {
-                remoteServiceCacheMap.put(remoteService, new RemoteServiceSpecificResultCache(remoteService));
+                remoteServiceCacheMap.put(remoteService, new RemoteServiceSpecificResultCache(type, remoteService));
             }
             fileTypeToRemoteServiceCacheMap.put(type, remoteServiceCacheMap);
         }
@@ -74,8 +74,10 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
 
         private final Map<RadioPlayerService, ConcurrentMap<LocalDate, Set<FileUploadResult>>> cache;
         private final String rsi;
+        private final FileType type;
         
-        public RemoteServiceSpecificResultCache(String remoteServiceIdentifier) {
+        public RemoteServiceSpecificResultCache(FileType type, String remoteServiceIdentifier) {
+            this.type = type;
             this.rsi = remoteServiceIdentifier;
             this.cache = Maps.newHashMap();
             loadCache();
@@ -87,7 +89,7 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
                     @Override
                     public Set<FileUploadResult> apply(LocalDate day) {
                         TreeSet<FileUploadResult> set = Sets.newTreeSet(TYPE_ORDERING);
-                        Iterables.addAll(set, delegate.resultsFor(null, rsi, service, day));
+                        Iterables.addAll(set, delegate.resultsFor(type, rsi, service, day));
                         return set;
                     }
                 }));
