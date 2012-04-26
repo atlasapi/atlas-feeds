@@ -3,6 +3,7 @@ package org.atlasapi.feeds.radioplayer.upload;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.FAILURE;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCESS;
+import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 import static org.atlasapi.feeds.upload.FileUploadResult.DATE_ORDERING;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
@@ -43,7 +44,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         DayRange dayRange = rangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
         
         for (LocalDate day : dayRange) {
-            result.addEntry(entryFor(day, store.resultsFor(FileType.PI, remoteServiceId, service, day)));
+            result.addEntry(entryFor(day, store.resultsFor(PI, remoteServiceId, service, day)));
         }
 
         result.addEntry(uploadAll());

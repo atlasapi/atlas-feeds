@@ -90,7 +90,7 @@ public class RadioPlayerModule {
 	private static DayRangeGenerator dayRangeGenerator = new DayRangeGenerator().withLookAhead(7).withLookBack(7);
 
 	public @Bean RadioPlayerController radioPlayerController() {
-		return new RadioPlayerController();
+		return new RadioPlayerController(lastUpdatedContentFinder, contentLister);
 	}
 	
 	public @Bean Map<String,RemoteServiceDetails> radioPlayerUploadServiceDetails() {

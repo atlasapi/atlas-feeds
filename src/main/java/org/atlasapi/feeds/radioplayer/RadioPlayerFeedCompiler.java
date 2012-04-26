@@ -86,7 +86,7 @@ public abstract class RadioPlayerFeedCompiler {
         public List<Item> queryFor(RadioPlayerFeedSpec spec) {
             checkArgument(spec instanceof RadioPlayerPiFeedSpec);
             DateTime date = ((RadioPlayerPiFeedSpec)spec).getDay().toDateTimeAtStartOfDay(DateTimeZones.UTC);
-            Channel channel = channelResolver.fromUri(spec.getService().getScheduleUri()).requireValue();
+            Channel channel = channelResolver.fromUri(spec.getService().getServiceUri()).requireValue();
             Schedule schedule = scheduleResolver.schedule(date.minusMillis(1), date.plusDays(1), ImmutableSet.of(channel), ImmutableSet.of(Publisher.BBC));
             return Iterables.getOnlyElement(schedule.scheduleChannels()).items();
         }
