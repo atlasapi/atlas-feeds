@@ -49,8 +49,6 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
         this.uriResolver = new RadioPlayerOdUriResolver(contentLister, lastUpdatedContentFinder);
     }
     
-    
-    
     @Override
     public void run() {
         DateTime start = new DateTime(DateTimeZones.UTC);

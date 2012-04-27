@@ -42,4 +42,8 @@ public class RadioPlayerUploadTaskBuilder {
         return new RadioPlayerScheduledOdUpdateTask(uploadServices, executor, services, log, fullSnapshot, lastUpdatedContentFinder, contentLister);
     }
     
+    public Runnable newBatchOdTask(Iterable<RadioPlayerService> services, LocalDate day) {
+        return new RadioPlayerOdBatchUploadTask(uploadServices, executor, services, day, false, log, lastUpdatedContentFinder, contentLister);
+    }
+    
 }
