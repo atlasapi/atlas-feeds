@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerUpdatedClipOutputter;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -18,11 +19,13 @@ import org.atlasapi.persistence.content.listing.ContentListingCriteria;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.base.MoreOrderings;
+import com.metabroadcast.common.base.MorePredicates;
 
 public class RadioPlayerOdUriResolver {
     
@@ -37,19 +40,19 @@ public class RadioPlayerOdUriResolver {
     
     public SetMultimap<RadioPlayerService, String> getServiceToUrisMapForSnapshot() {
         
-        return getServiceToUrisMapForContent(contentLister.listContent(new ContentListingCriteria.Builder().forPublisher(Publisher.BBC).forContent(ContentCategory.ITEMS).build()));
+        return getServiceToUrisMapForContent(contentLister.listContent(new ContentListingCriteria.Builder().forPublisher(Publisher.BBC).forContent(ContentCategory.ITEMS).build()), Optional.<DateTime>absent());
     }
     
     public SetMultimap<RadioPlayerService, String> getServiceToUrisMapSince(DateTime since) {
         
-        return getServiceToUrisMapForContent(lastUpdatedContentFinder.updatedSince(Publisher.BBC, since));
+        return getServiceToUrisMapForContent(lastUpdatedContentFinder.updatedSince(Publisher.BBC, since), Optional.of(since));
     }
 
-    private SetMultimap<RadioPlayerService, String> getServiceToUrisMapForContent(Iterator<Content> content) {
+    private SetMultimap<RadioPlayerService, String> getServiceToUrisMapForContent(Iterator<Content> content, Optional<DateTime> since) {
         
         HashMultimap<RadioPlayerService, String> serviceToUris = HashMultimap.create();
         
-        Iterator<Item> items = filter(content, Item.class);
+        Iterator<Item> items = filter(filter(content, Item.class), MorePredicates.transformingPredicate(Item.TO_CLIPS, MorePredicates.anyPredicate(RadioPlayerUpdatedClipOutputter.availableAndUpdatedSince(since))));
         
         while (items.hasNext()) {
             Item item = items.next();
