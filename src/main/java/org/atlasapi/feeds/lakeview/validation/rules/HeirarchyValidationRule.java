@@ -65,7 +65,7 @@ public class HeirarchyValidationRule implements LakeviewFeedValidationRule {
 				addError(errors, episode, "Brand not present");
 			}
 
-			if(season.hasValue() && feedItemStore.getSeries().containsKey(season.requireValue())) {
+			if(season.hasValue() && !feedItemStore.getSeries().containsKey(season.requireValue())) {
 			    addError(errors, episode, "Series not present");			    
 			}
 			
