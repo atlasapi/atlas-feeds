@@ -134,7 +134,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     }
 
     private ProbeResultEntry uploadAllPi() {
-        return new ProbeResultEntry(INFO, "Update All PI files", uploadButton(null, null));
+        return new ProbeResultEntry(INFO, "Update All PI files", uploadButton(PI, null));
     }
 
     @Override
