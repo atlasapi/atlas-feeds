@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.lakeview.validation.rules;
 
-import static org.atlasapi.persistence.content.ContentCategory.CHILD_ITEM;
+import static org.atlasapi.persistence.content.ContentCategory.ITEMS;
 import static org.atlasapi.persistence.content.listing.ContentListingCriteria.defaultCriteria;
 
 import java.util.Iterator;
@@ -18,13 +18,14 @@ import org.atlasapi.generated.ElementMovie;
 import org.atlasapi.generated.ElementTVEpisode;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
+import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
-import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.persistence.content.listing.ContentLister;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
@@ -95,33 +96,33 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 					String.format("%d items in feed, %d items in database", feedItemStore.getEpisodes().size(), expectedOnDemands.size()));
 		} else {
 			return new ValidationResult(getRuleName(), ValidationResultType.FAILURE,
-					String.format("%d items in feed, %d items in database. Tolerance is %d. First missing item is %s", 
-							feedItemStore.getEpisodes().size(), expectedOnDemands.size(), tolerance, Iterables.getFirst(errors, null)));
+					String.format("%d errors: %d items in feed, %d items in database. Tolerance is %d. First missing item is %s", 
+							errors.size(), feedItemStore.getEpisodes().size(), expectedOnDemands.size(), tolerance, Iterables.getFirst(errors, null)));
 		}
 	}
 
 	private Map<String, String> getExpectedOnDemandsFromDatabase() {
-		Iterator<Episode> listContent = Iterators.filter(
+		Iterator<Item> listContent = Iterators.filter(
 				contentLister.listContent(defaultCriteria()
-						.forPublisher(Publisher.C4).forContent(CHILD_ITEM)
-						.build()), Episode.class);
+						.forPublisher(Publisher.C4).forContent(ImmutableList.copyOf(ITEMS))
+						.build()), Item.class);
 
 		com.google.common.collect.ImmutableMap.Builder<String, String> expectedOnDemands = ImmutableMap.builder();
 
 		while (listContent.hasNext()) {
-			Episode episode = listContent.next();
-			String onDemandId = getFirstAvailableOnDemandId(episode);
+			Item item = listContent.next();
+			String onDemandId = getFirstAvailableOnDemandId(item);
 
 			if (onDemandId != null) {
-				expectedOnDemands.put(episode.getCanonicalUri(), onDemandId);
+				expectedOnDemands.put(item.getCanonicalUri(), onDemandId);
 			}
 		}
 
 		return expectedOnDemands.build();
 	}
 
-	private String getFirstAvailableOnDemandId(Episode episode) {
-		for (Version version : episode.getVersions()) {
+	private String getFirstAvailableOnDemandId(Item item) {
+		for (Version version : item.getVersions()) {
 			for (Encoding encoding : version.getManifestedAs()) {
 				for (Location location : encoding.getAvailableAt()) {
 					if(location.getPolicy() != null 
