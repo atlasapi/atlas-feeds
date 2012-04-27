@@ -17,7 +17,6 @@ import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult.ValidationR
 import org.atlasapi.generated.ElementMovie;
 import org.atlasapi.generated.ElementTVEpisode;
 import org.atlasapi.media.entity.Encoding;
-import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy.Platform;
@@ -41,7 +40,8 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 
 	private ContentLister contentLister;
 	private int tolerance;
-	private static Pattern ONDEMAND_ID = Pattern.compile(".*/(\\d+)");
+	private static Pattern ONDEMAND_ID_IN_DB = Pattern.compile(".*/(\\d+)");
+	private static Pattern ONDEMAND_ID_IN_OUTPUT = Pattern.compile(".*#(\\d+)");
 
 	public CompletenessValidationRule(ContentLister contentLister, int tolerance) {
 		this.contentLister = contentLister;
@@ -51,8 +51,6 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 	@Override
 	public ValidationResult validate(FeedItemStore feedItemStore) {
 
-		// TODO: Films
-
 		Map<String, String> expectedOnDemands = getExpectedOnDemandsFromDatabase();
 		List<String> errors = Lists.newArrayList();
 
@@ -61,19 +59,22 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 			boolean foundItemInFeed = false;
 			for (ElementTVEpisode feedEpisode : feedItemStore.getEpisodes()
 					.values()) {
-				if (getApplicationSpecificData(feedEpisode).equals(
-						expectedOnDemand.getValue())) {
+			    Matcher matcher = ONDEMAND_ID_IN_OUTPUT
+                        .matcher(getApplicationSpecificData(feedEpisode));
+                if (matcher.matches() && matcher.group().equals(expectedOnDemand.getValue())) {
 					foundItemInFeed = true;
 				}
 			}
 			
 			for (ElementMovie feedMovie : feedItemStore.getMovies()
 					.values()) {
-				if (getApplicationSpecificData(feedMovie).equals(
-						expectedOnDemand.getValue())) {
-					foundItemInFeed = true;
-				}
+			    Matcher matcher = ONDEMAND_ID_IN_OUTPUT
+                        .matcher(getApplicationSpecificData(feedMovie));
+                if (matcher.matches() && matcher.group().equals(expectedOnDemand.getValue())) {
+                    foundItemInFeed = true;
+                }
 			}
+			
 			if (!foundItemInFeed) {
 				errors.add(String.format("Valid ondemand in db, not in feed. URI %s Ondemand %s", 
 						expectedOnDemand.getKey(), expectedOnDemand.getValue()));
@@ -130,7 +131,7 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 							&& location.getPolicy().getAvailabilityStart().isBeforeNow() 
 							&& location.getPolicy().getAvailabilityEnd().isAfterNow()) {
 
-						Matcher matcher = ONDEMAND_ID
+						Matcher matcher = ONDEMAND_ID_IN_DB
 								.matcher(location.getUri());
 						if (matcher.matches()) {
 							return matcher.group();
