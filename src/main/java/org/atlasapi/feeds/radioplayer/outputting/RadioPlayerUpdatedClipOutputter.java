@@ -151,7 +151,7 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                 
                 programme.addAttribute(new Attribute("id", clip.getCanonicalUri().replace("http://", "crid://")));
         
-                String title = clipTitle(itemTitle(broadcastItem), clip);
+                String title = clipTitle(itemOrContainerTitle(broadcastItem), clip);
                 programme.appendChild(stringElement("mediumName", EPGDATATYPES, MEDIUM_TITLE.truncatePossibleNull(title)));
                 programme.appendChild(stringElement("longName", EPGDATATYPES, LONG_TITLE.truncatePossibleNull(title)));
         
@@ -177,25 +177,27 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
     }
     
     private String clipTitle(String itemTitle, Clip clip) {
+        if (Strings.isNullOrEmpty(itemTitle)) {
+            return clip.getTitle();
+        }
         if (Strings.isNullOrEmpty(clip.getTitle())) {
             return itemTitle;
-        } else {
-            return itemTitle + " : " + clip.getTitle();
         }
+        return itemTitle + " : " + clip.getTitle();
     }
     
-    private String itemTitle(RadioPlayerBroadcastItem broadcastItem) {
-        String title = "";//Strings.nullToEmpty(broadcastItem.getItem().getTitle());
+    private String itemOrContainerTitle(RadioPlayerBroadcastItem broadcastItem) {
         if (broadcastItem.hasContainer()) {
             Container brand = broadcastItem.getContainer();
             if (!Strings.isNullOrEmpty(brand.getTitle())) {
                 String brandTitle = brand.getTitle();
-                if (!brandTitle.equals(title)) {
-                    return brandTitle;// + " : " + title;
-                }
+                return brandTitle;// + " : " + title;
             }
         }
-        return title;
+        if (!Strings.isNullOrEmpty(broadcastItem.getItem().getTitle())) {
+            return broadcastItem.getItem().getTitle();
+        }
+        return "";
     }
     
     private Element mediaDescription(Element childElem) {
