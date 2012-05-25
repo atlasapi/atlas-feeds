@@ -235,7 +235,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 	}
 
 	private Operation operationFor(Item item, DateTime from, DateTime to) {
-		Location location = firstQualifyingLocation(item, from, to);
+		Location location = firstAvailableLocation(item);
 		
 		boolean activeBroadcast = false;
 		for (Version version: item.nativeVersions()) {
