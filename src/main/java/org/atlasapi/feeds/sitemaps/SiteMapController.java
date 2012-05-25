@@ -28,6 +28,7 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.listing.ContentLister;
@@ -116,7 +117,8 @@ public class SiteMapController {
         for (Version version : item.getVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if(TransportType.LINK.equals(location.getTransportType())){
+                    if(TransportType.LINK.equals(location.getTransportType()) 
+                            && (location.getPolicy() == null || !Platform.XBOX.equals(location.getPolicy().getPlatform()))) {
                         return true;
                     }
                 }
