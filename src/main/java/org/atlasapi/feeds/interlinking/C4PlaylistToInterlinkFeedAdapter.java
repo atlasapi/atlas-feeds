@@ -74,7 +74,17 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
 				return "tag:www.channel4.com,2009:" + idMatcher.group(1);
         	}
         }
-        return extractTagUri(description.getCanonicalUri());
+        if(description.getCanonicalUri().startsWith(C4_SLASH_PROGRAMMES_PREFIX)) {
+            return extractTagUri(description.getCanonicalUri());
+        }
+        else {
+            for(String alias : description.getAliases()) {
+                if(alias.startsWith(C4_SLASH_PROGRAMMES_PREFIX)) {
+                    return extractTagUri(alias);
+                }
+            }
+        }
+        throw new IllegalArgumentException(String.format("Could not find C4 programme URI in item with ID %s", description.getCanonicalUri()));
     }
     
     @Override

@@ -11,6 +11,7 @@ import org.atlasapi.generated.ElementTVEpisode;
 import org.atlasapi.generated.ElementTVSeason;
 
 import com.google.inject.internal.Lists;
+import com.metabroadcast.common.base.Maybe;
 
 /**
  * Validation rule to ensure the episode/series/brand hierarchy is consistent
@@ -58,14 +59,18 @@ public class HeirarchyValidationRule implements LakeviewFeedValidationRule {
 
 	private void validateEpisodes(List<String> errors, FeedItemStore feedItemStore) {
 		for (ElementTVEpisode episode : feedItemStore.getEpisodes().values()) {
-			if (!feedItemStore.getSeries().containsKey(
-					getParent(Parent.SERIES, episode))) {
-				addError(errors, episode, "Series not present");
+		    Maybe<String> series = getSeries(episode);
+		    Maybe<String> season = getSeason(episode);
+			if (series.hasValue() && !feedItemStore.getBrands().containsKey(series.requireValue())) {
+				addError(errors, episode, "Brand not present");
 			}
 
-			if (!feedItemStore.getBrands().containsKey(
-					getParent(Parent.BRAND, episode))) {
-				addError(errors, episode, "Brand not present");
+			if(season.hasValue() && !feedItemStore.getSeries().containsKey(season.requireValue())) {
+			    addError(errors, episode, "Series not present");			    
+			}
+			
+			if(!(season.hasValue() || series.hasValue())) {
+			    addError(errors, episode, "No parent");
 			}
 		}
 	}
@@ -75,21 +80,29 @@ public class HeirarchyValidationRule implements LakeviewFeedValidationRule {
 		errors.add(description + element.getItemId());
 	}
 
-	public static String getParent(Parent parent, ElementTVEpisode episode) {
+	public static Maybe<String> getSeries(ElementTVEpisode episode) {
 		// The lakeview schema has multiple elements called seasonId and
 		// seriesId because of the way
 		// they enforce at least one of the two is always specified. This blows
 		// up JAXB so we need to look
 		// through the 'rest' elements to find these two.
 		for (JAXBElement<?> restElement : episode.getRest()) {
-			if (restElement
-					.getName()
-					.getLocalPart()
-					.equals(Parent.SERIES.equals(parent) ? "SeasonId"
-							: "SeriesId"))
-				return (String) restElement.getValue();
+			if (restElement.getName().getLocalPart().equals("SeriesId")) {
+			    return Maybe.just((String) restElement.getValue());
+			}
+			
 		}
-		throw new RuntimeException("Element not found");
+		return Maybe.nothing();
 	}
+	
+	   public static Maybe<String> getSeason(ElementTVEpisode episode) {
+	        for (JAXBElement<?> restElement : episode.getRest()) {
+	            if (restElement.getName().getLocalPart().equals("SeasonId")) {
+	                return Maybe.just((String) restElement.getValue());
+	            }
+	            
+	        }
+	        return Maybe.nothing();
+	    }
 
 }

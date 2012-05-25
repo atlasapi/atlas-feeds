@@ -24,6 +24,7 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -81,7 +82,8 @@ public class SiteMapOutputter {
 
     private void entryForItem(Element feed, Item item, String title) {
         Location location = locationFrom(item);
-        if (location != null && item.getThumbnail() != null) {
+        if (location != null && item.getThumbnail() != null 
+                && (location.getPolicy() == null || !Platform.XBOX.equals(location.getPolicy().getPlatform()))) {
             feed.appendChild(urlEntry(item, location, title));
         }
     }
