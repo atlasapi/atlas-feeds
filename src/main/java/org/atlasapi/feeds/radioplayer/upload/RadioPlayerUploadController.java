@@ -2,6 +2,8 @@ package org.atlasapi.feeds.radioplayer.upload;
 
 import static com.metabroadcast.common.http.HttpStatusCode.BAD_REQUEST;
 import static com.metabroadcast.common.http.HttpStatusCode.NOT_FOUND;
+import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
+import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 
 import java.io.IOException;
 
@@ -44,8 +46,8 @@ public class RadioPlayerUploadController {
         }
     }
 
-    @RequestMapping(value = "feeds/ukradioplayer/upload/{id}/{day}", method = RequestMethod.POST)
-    public String uploadDay(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String serviceId, @PathVariable("day") String day) throws IOException {
+    @RequestMapping(value = "feeds/ukradioplayer/upload/{type}/{id}/{day}", method = RequestMethod.POST)
+    public String uploadDay(HttpServletRequest request, HttpServletResponse response, @PathVariable("type") String type, @PathVariable("id") String serviceId, @PathVariable("day") String day) throws IOException {
         if (checker == null) {
             response.setContentType(MimeType.TEXT_PLAIN.toString());
             response.getOutputStream().print("No password set up, uploader can't be used");
@@ -57,21 +59,39 @@ public class RadioPlayerUploadController {
             response.sendError(NOT_FOUND.code(), "Unkown service " + serviceId);
             return null;
         }
+        
+        FileType fileType = null;
+        for (FileType typeOption : FileType.values()) {
+            if (typeOption.name().equals(type)) {
+                fileType = typeOption;
+            }
+        }
+        if (fileType == null) {
+            response.sendError(NOT_FOUND.code(), "Unknown file type " + type);
+            return null;
+        }
+        
+        if (fileType.equals(OD) && day == null) {
+            response.sendError(BAD_REQUEST.code(), "Must specify day with OD file type");
+        }
 
         if (day != null && !day.matches("\\d{8}")) {
             response.sendError(BAD_REQUEST.code(), "Bad Date Format");
             return null;
         }
 
-        Iterable<LocalDate> days = day != null ? ImmutableList.of(DATE_PATTERN.parseDateTime(day).toLocalDate()) : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
-
-        radioPlayerUploadTaskBuilder.newTask(ImmutableList.of(service), days).run();
+        if (fileType.equals(PI)) {
+            Iterable<LocalDate> days = day != null ? ImmutableList.of(DATE_PATTERN.parseDateTime(day).toLocalDate()) : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
+            radioPlayerUploadTaskBuilder.newBatchPiTask(ImmutableList.of(service), days).run();
+        } else if (fileType.equals(OD)) {
+            radioPlayerUploadTaskBuilder.newBatchOdTask(ImmutableList.of(service), DATE_PATTERN.parseDateTime(day).toLocalDate()).run();
+        }
 
         return "redirect:/feeds/ukradioplayer/health";
     }
 
-    @RequestMapping("feeds/ukradioplayer/upload/{id}")
-    public String uploadDays(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String serviceId) throws IOException {
-        return uploadDay(request, response, serviceId, null);
+    @RequestMapping("feeds/ukradioplayer/upload/{type}/{id}")
+    public String uploadDays(HttpServletRequest request, HttpServletResponse response, @PathVariable("type") String type, @PathVariable("id") String serviceId) throws IOException {
+        return uploadDay(request, response, type, serviceId, null);
     }
 }

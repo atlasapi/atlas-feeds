@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.radioplayer;
 
+import static com.metabroadcast.common.scheduling.RepetitionRules.NEVER;
 import static org.atlasapi.persistence.logging.AdapterLogEntry.infoEntry;
 
 import java.util.Map;
@@ -25,8 +26,11 @@ import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.media.channel.ChannelResolver;
+import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
+import org.atlasapi.persistence.content.listing.ContentLister;
+import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
@@ -69,18 +73,24 @@ public class RadioPlayerModule {
 	private @Value("${rp.ftp.enabled}") String upload;
 	private @Value("${rp.ftp.services}") String uploadServices;
 	
-    private @Autowired KnownTypeContentResolver contentResolver;
+    private @Autowired KnownTypeContentResolver knownTypeContentResolver;
 	private @Autowired SimpleScheduler scheduler;
 	private @Autowired AdapterLog log;
 	private @Autowired DatabasedMongo mongo;
 	private @Autowired HealthController health;
 	private @Autowired ScheduleResolver scheduleResolver;
 	private @Autowired ChannelResolver channelResolver;
+	@Autowired
+	private ContentResolver contentResolver;
+	@Autowired
+	private LastUpdatedContentFinder lastUpdatedContentFinder;
+	@Autowired
+	private ContentLister contentLister;
 	
 	private static DayRangeGenerator dayRangeGenerator = new DayRangeGenerator().withLookAhead(7).withLookBack(7);
 
 	public @Bean RadioPlayerController radioPlayerController() {
-		return new RadioPlayerController();
+		return new RadioPlayerController(lastUpdatedContentFinder, contentLister);
 	}
 	
 	public @Bean Map<String,RemoteServiceDetails> radioPlayerUploadServiceDetails() {
@@ -148,7 +158,7 @@ public class RadioPlayerModule {
     }
     
     @Bean RadioPlayerUploadTaskBuilder radioPlayerUploadTaskBuilder() {
-        return new RadioPlayerUploadTaskBuilder(radioPlayerUploadServices(), radioPlayerUploadTaskRunner()).withLog(log);
+        return new RadioPlayerUploadTaskBuilder(radioPlayerUploadServices(), radioPlayerUploadTaskRunner(), lastUpdatedContentFinder, contentLister).withLog(log);
     }
     
     @Bean RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner() {
@@ -157,21 +167,29 @@ public class RadioPlayerModule {
     
 	@PostConstruct 
 	public void scheduleTasks() {
-	    RadioPlayerFeedCompiler.init(scheduleResolver, contentResolver, channelResolver);
+	    RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver);
 		if (!radioPlayerUploadServiceDetails().isEmpty()) {
 		    createHealthProbes(radioPlayerUploadServiceDetails().keySet());
 	
 		    if (Boolean.parseBoolean(upload)) {
 				
 	            scheduler.schedule(
-	                    radioPlayerUploadTaskBuilder().newTask(uploadServices(), dayRangeGenerator).withName("Radioplayer Full Upload"), 
+	                    radioPlayerUploadTaskBuilder().newScheduledPiTask(uploadServices(), dayRangeGenerator).withName("Radioplayer PI Full Upload"), 
 	                    UPLOAD_EVERY_TWO_HOURS);
 	            scheduler.schedule(
-	                    radioPlayerUploadTaskBuilder().newTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer Today Upload"), 
+	                    radioPlayerUploadTaskBuilder().newScheduledPiTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer PI Today Upload"), 
 	                    UPLOAD_EVERY_TEN_MINUTES);
 	            scheduler.schedule(
 	                    new RadioPlayerRemoteProcessingChecker(radioPlayerUploadServiceDetails(), uploadResultRecorder(), log).withName("Radioplayer Remote Processing Checker"),
 	                    UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(5)));
+	            
+	            scheduler.schedule(
+	                    radioPlayerUploadTaskBuilder().newScheduledOdTask(uploadServices(), true).withName("Radioplayer OD Full Upload"), 
+	                    NEVER);
+	            scheduler.schedule(
+	                    radioPlayerUploadTaskBuilder().newScheduledOdTask(uploadServices(), false).withName("Radioplayer OD Today Upload"),
+	                    UPLOAD_EVERY_TEN_MINUTES);
+	            
 	
 			} else {
 				log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())

@@ -9,7 +9,7 @@ import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.time.DateTimeZones;
 import com.metabroadcast.common.time.DayRangeGenerator;
 
-public class RadioPlayerScheduledUploadTask extends ScheduledTask {
+public class RadioPlayerScheduledPiUploadTask extends ScheduledTask {
 
     private final Iterable<RadioPlayerService> services;
     private final RadioPlayerRecordingExecutor executor;
@@ -17,7 +17,7 @@ public class RadioPlayerScheduledUploadTask extends ScheduledTask {
     private final DayRangeGenerator dayRangeGenerator;
     private final AdapterLog log;
 
-    public RadioPlayerScheduledUploadTask(Iterable<FileUploadService> uploaders, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator, AdapterLog log) {
+    public RadioPlayerScheduledPiUploadTask(Iterable<FileUploadService> uploaders, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator, AdapterLog log) {
         this.uploaders = uploaders;
         this.executor = executor;
         this.services = services;
@@ -27,7 +27,7 @@ public class RadioPlayerScheduledUploadTask extends ScheduledTask {
 
     @Override
     public void runTask() {
-        new RadioPlayerBatchUploadTask(uploaders, executor, services, dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC)), log).run();
+        new RadioPlayerPiBatchUploadTask(uploaders, executor, services, dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC)), log).run();
         
     }
 

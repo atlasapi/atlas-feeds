@@ -15,12 +15,11 @@ public class UploadResultStoreBackedRadioPlayerResultStore implements RadioPlaye
     
     @Override
     public void record(RadioPlayerUploadResult result) {
-        backingStore.store(String.format("%s-%s",result.service().getRadioplayerId(), result.day().toString("yyyy-MM-dd")), result.getUpload());
+        backingStore.store(String.format("%s-%s-%s", result.getService().getRadioplayerId(), result.getType().name(), result.getDay().toString("yyyy-MM-dd")), result.getUpload());
     }
 
     @Override
-    public Iterable<FileUploadResult> resultsFor(String remoteServiceId, RadioPlayerService service, LocalDate day) {
-        return backingStore.result(remoteServiceId, String.valueOf(service.getRadioplayerId()));
+    public Iterable<FileUploadResult> resultsFor(FileType fileType, String remoteServiceId, RadioPlayerService service, LocalDate day) {
+        return backingStore.result(remoteServiceId, String.format("%s-%s", service.getRadioplayerId(), fileType.name()));
     }
-
 }

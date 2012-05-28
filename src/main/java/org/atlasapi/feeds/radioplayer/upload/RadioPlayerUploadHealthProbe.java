@@ -3,6 +3,8 @@ package org.atlasapi.feeds.radioplayer.upload;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.FAILURE;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCESS;
+import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
+import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 import static org.atlasapi.feeds.upload.FileUploadResult.DATE_ORDERING;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
@@ -43,16 +45,17 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         DayRange dayRange = rangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
         
         for (LocalDate day : dayRange) {
-            result.addEntry(entryFor(day, store.resultsFor(remoteServiceId, service, day)));
+            result.addEntry(entryFor(day, PI, store.resultsFor(PI, remoteServiceId, service, day)));
+            result.addEntry(entryFor(day, OD, store.resultsFor(OD, remoteServiceId, service, day)));
         }
 
-        result.addEntry(uploadAll());
+        result.addEntry(uploadAllPi());
 
         return result;
     }
 
-    private ProbeResultEntry entryFor(LocalDate day, Iterable<? extends FileUploadResult> results) {
-        String filename = linkedFilename(day) + uploadButton(day);
+    private ProbeResultEntry entryFor(LocalDate day, FileType type, Iterable<? extends FileUploadResult> results) {
+        String filename = linkedFilename(type, day) + uploadButton(type, day);
         
         if (Iterables.isEmpty(results)) {
             return new ProbeResultEntry(INFO, filename, "No Data");
@@ -65,8 +68,8 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         return DATE_ORDERING.reverse().immutableSortedCopy(results).get(0);
     }
 
-    private String linkedFilename(LocalDate day) {
-        return String.format("<a style=\"text-decoration:none\" href=\"/feeds/ukradioplayer/%1$s_%2$s_PI.xml\">%1$s_%2$s_PI.xml</a>", day.toString("yyyyMMdd"), service.getRadioplayerId());
+    private String linkedFilename(FileType type, LocalDate day) {
+        return String.format("<a style=\"text-decoration:none\" href=\"/feeds/ukradioplayer/%1$s_%2$s_%3$s.xml\">%1$s_%2$s_%3$s.xml</a>", day.toString("yyyyMMdd"), service.getRadioplayerId(), type.name());
     }
 
     private ProbeResultType entryResultType(FileUploadResult mostRecent, LocalDate day) {
@@ -122,16 +125,16 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         builder.append("</td></tr>");
     }
 
-    private String uploadButton(LocalDate day) {
-        String postTarget = String.format("/feeds/ukradioplayer/upload/%s", service.getRadioplayerId());
+    private String uploadButton(FileType type, LocalDate day) {
+        String postTarget = String.format("/feeds/ukradioplayer/upload/%s/%s", type.name(), service.getRadioplayerId());
         if(day != null) {
             postTarget += day.toString("/yyyyMMdd");
         }
         return "<form style=\"text-align:center\" action=\""+postTarget+"\" method=\"post\"><input type=\"submit\" value=\"Update\"/></form>";
     }
 
-    private ProbeResultEntry uploadAll() {
-        return new ProbeResultEntry(INFO, "Update All", uploadButton(null));
+    private ProbeResultEntry uploadAllPi() {
+        return new ProbeResultEntry(INFO, "Update All PI files", uploadButton(PI, null));
     }
 
     @Override
