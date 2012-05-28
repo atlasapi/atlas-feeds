@@ -14,6 +14,8 @@ public class RadioPlayerServices {
 	public static final Map<String, RadioPlayerService> all;
 	
 	public static final Set<RadioPlayerService> untracked;
+
+    public static final Map<String, RadioPlayerService> serviceUriToService;
 	
 	static {
 		services = ImmutableSet.<RadioPlayerService> builder().
@@ -80,6 +82,13 @@ public class RadioPlayerServices {
             @Override
             public String apply(RadioPlayerService input) {
                 return String.valueOf(input.getRadioplayerId());
+            }
+        });
+        
+        serviceUriToService = Maps.uniqueIndex(services, new Function<RadioPlayerService, String>() {
+            @Override
+            public String apply(RadioPlayerService input) {
+                return input.getServiceUri();
             }
         });
         

@@ -5,6 +5,7 @@ import static com.metabroadcast.common.base.Maybe.HAS_VALUE;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.atlasapi.feeds.radioplayer.upload.FileType;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -35,7 +36,7 @@ public abstract class RadioPlayerFilenameMatcher {
 
     public abstract Maybe<RadioPlayerService> service();
 
-    public abstract Maybe<RadioPlayerFeedCompiler> type();
+    public abstract Maybe<FileType> type();
 
     public abstract boolean matches();
 
@@ -43,12 +44,12 @@ public abstract class RadioPlayerFilenameMatcher {
 
         private final LocalDate date;
         private Maybe<RadioPlayerService> service;
-        private RadioPlayerFeedCompiler type;
+        private FileType type;
 
         public RadioPlayerFilenameMatch(String date, String service, String feedType) {
             this.date = DATE_FORMAT.parseDateTime(date).toLocalDate();
             this.service = Maybe.fromPossibleNullValue(RadioPlayerServices.all.get(service));
-            this.type = RadioPlayerFeedCompiler.valueOf(feedType);
+            this.type = FileType.valueOf(feedType);
         }
 
         @Override
@@ -62,7 +63,7 @@ public abstract class RadioPlayerFilenameMatcher {
         }
 
         @Override
-        public Maybe<RadioPlayerFeedCompiler> type() {
+        public Maybe<FileType> type() {
             return Maybe.just(type);
         }
 
@@ -86,7 +87,7 @@ public abstract class RadioPlayerFilenameMatcher {
         }
 
         @Override
-        public Maybe<RadioPlayerFeedCompiler> type() {
+        public Maybe<FileType> type() {
             return Maybe.nothing();
         }
 
