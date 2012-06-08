@@ -13,29 +13,29 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.joda.time.LocalDate;
 
-import com.google.common.base.Function;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadResultStore {
 
     private final RadioPlayerUploadResultStore delegate;
-    private final Map<FileType, Map<String, RemoteServiceSpecificResultCache>> fileTypeToRemoteServiceCacheMap;
+    private final Map<FileType, Map<String, CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache>> fileTypeToRemoteServiceCacheMap;
 
     public CachingRadioPlayerUploadResultStore(Iterable<String> remoteServiceIds, final RadioPlayerUploadResultStore delegate) {
         this.delegate = delegate;
         
-        Builder<FileType, Map<String, RemoteServiceSpecificResultCache>> fileTypeToRemoteServiceCacheMap = ImmutableMap.builder();
+        Builder<FileType, Map<String, CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache>> fileTypeToRemoteServiceCacheMap = ImmutableMap.builder();
         for (FileType type : FileType.values()) {
-            Map<String, RemoteServiceSpecificResultCache> remoteServiceCacheMap = Maps.newHashMap();
+            Map<String, CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache> remoteServiceCacheMap = Maps.newHashMap();
             for (String remoteService : remoteServiceIds) {
-                remoteServiceCacheMap.put(remoteService, new RemoteServiceSpecificResultCache(type, remoteService));
+                remoteServiceCacheMap.put(remoteService, new CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache(type, remoteService));
             }
             fileTypeToRemoteServiceCacheMap.put(type, remoteServiceCacheMap);
         }
@@ -46,9 +46,9 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
     public void record(RadioPlayerUploadResult result) {
         delegate.record(result);
 
-        Map<String, RemoteServiceSpecificResultCache> remoteServiceCacheMap = fileTypeToRemoteServiceCacheMap.get(result.getType());
+        Map<String, CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache> remoteServiceCacheMap = fileTypeToRemoteServiceCacheMap.get(result.getType());
         
-        RemoteServiceSpecificResultCache remoteServiceCache = remoteServiceCacheMap.get(result.getUpload().remote());
+        CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache remoteServiceCache = remoteServiceCacheMap.get(result.getUpload().remote());
         
         ConcurrentMap<LocalDate,Set<FileUploadResult>> serviceMap = remoteServiceCache.get(result.getService());
 
@@ -85,14 +85,14 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
         
         private void loadCache() {
             for (final RadioPlayerService service : RadioPlayerServices.services) {
-                cache.put(service, new MapMaker().softValues().expireAfterWrite(5, TimeUnit.MINUTES).<LocalDate, Set<FileUploadResult>>makeComputingMap(new Function<LocalDate, Set<FileUploadResult>>() {
+                cache.put(service, CacheBuilder.newBuilder().softValues().expireAfterWrite(5, TimeUnit.MINUTES).<LocalDate, Set<FileUploadResult>>build(new CacheLoader<LocalDate, Set<FileUploadResult>>() {
                     @Override
-                    public Set<FileUploadResult> apply(LocalDate day) {
+                    public Set<FileUploadResult> load(LocalDate day) {
                         TreeSet<FileUploadResult> set = Sets.newTreeSet(TYPE_ORDERING);
                         Iterables.addAll(set, delegate.resultsFor(type, rsi, service, day));
                         return set;
                     }
-                }));
+                }).asMap());
             }
         }
 
