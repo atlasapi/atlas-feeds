@@ -15,6 +15,7 @@ import org.joda.time.LocalDate;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -22,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import java.util.concurrent.ExecutionException;
 
 public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadResultStore {
 
@@ -47,10 +49,10 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
         delegate.record(result);
 
         Map<String, CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache> remoteServiceCacheMap = fileTypeToRemoteServiceCacheMap.get(result.getType());
-        
+
         CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache remoteServiceCache = remoteServiceCacheMap.get(result.getUpload().remote());
-        
-        ConcurrentMap<LocalDate,Set<FileUploadResult>> serviceMap = remoteServiceCache.get(result.getService());
+
+        ConcurrentMap<LocalDate,Set<FileUploadResult>> serviceMap = remoteServiceCache.get(result.getService()).asMap();
 
         Set<FileUploadResult> current = serviceMap.putIfAbsent(result.getDay(), treeSetWith(result.getUpload()));
         if (current != null) {
@@ -67,12 +69,16 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
 
     @Override
     public Iterable<FileUploadResult> resultsFor(FileType type, String remoteServiceId, RadioPlayerService service, LocalDate day) {
-        return ImmutableSet.copyOf(fileTypeToRemoteServiceCacheMap.get(type).get(remoteServiceId).get(service).get(day));
+        try {
+            return ImmutableSet.copyOf(fileTypeToRemoteServiceCacheMap.get(type).get(remoteServiceId).get(service).get(day));
+        } catch (ExecutionException ex) {
+            throw new IllegalStateException(ex.getMessage(), ex);
+        }
     }
     
-    private class RemoteServiceSpecificResultCache extends ForwardingMap<RadioPlayerService, ConcurrentMap<LocalDate, Set<FileUploadResult>>>{
+    private class RemoteServiceSpecificResultCache extends ForwardingMap<RadioPlayerService, LoadingCache<LocalDate, Set<FileUploadResult>>>{
 
-        private final Map<RadioPlayerService, ConcurrentMap<LocalDate, Set<FileUploadResult>>> cache;
+        private final Map<RadioPlayerService, LoadingCache<LocalDate, Set<FileUploadResult>>> cache;
         private final String rsi;
         private final FileType type;
         
@@ -92,12 +98,12 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
                         Iterables.addAll(set, delegate.resultsFor(type, rsi, service, day));
                         return set;
                     }
-                }).asMap());
+                }));
             }
         }
 
         @Override
-        protected Map<RadioPlayerService, ConcurrentMap<LocalDate, Set<FileUploadResult>>> delegate() {
+        protected Map<RadioPlayerService, LoadingCache<LocalDate, Set<FileUploadResult>>> delegate() {
             return cache;
         }
     }
