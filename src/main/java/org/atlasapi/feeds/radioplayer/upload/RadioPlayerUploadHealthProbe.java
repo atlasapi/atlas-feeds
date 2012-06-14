@@ -6,13 +6,17 @@ import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCES
 import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
 import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 import static org.atlasapi.feeds.upload.FileUploadResult.DATE_ORDERING;
+import static org.joda.time.Duration.standardHours;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.joda.time.LocalDate;
 
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
@@ -26,6 +30,13 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
     protected static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
 
+    protected static final Predicate<DateTime> PI_STALE = new Predicate<DateTime>() {
+        @Override
+        public boolean apply(DateTime input) {
+            return false;
+        }
+    };
+    
     private final String remoteServiceId;
     protected final RadioPlayerUploadResultStore store;
     private final RadioPlayerService service;
@@ -61,7 +72,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
             return new ProbeResultEntry(INFO, filename, "No Data");
         }
         
-        return new ProbeResultEntry(entryResultType(mostRecentResult(results), day), filename, buildEntryValue(results));
+        return new ProbeResultEntry(entryResultType(mostRecentResult(results), day, type), filename, buildEntryValue(results));
     }
 
     private FileUploadResult mostRecentResult(Iterable<? extends FileUploadResult> results) {
@@ -72,16 +83,13 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         return String.format("<a style=\"text-decoration:none\" href=\"/feeds/ukradioplayer/%1$s_%2$s_%3$s.xml\">%1$s_%2$s_%3$s.xml</a>", day.toString("yyyyMMdd"), service.getRadioplayerId(), type.name());
     }
 
-    private ProbeResultType entryResultType(FileUploadResult mostRecent, LocalDate day) {
+    private ProbeResultType entryResultType(FileUploadResult mostRecent, LocalDate day, FileType type) {
         if (FileUploadResultType.FAILURE.equals(mostRecent.remoteProcessingResult())) {
             return FAILURE;
         }
         switch (mostRecent.type()) {
         case SUCCESS:
-            if (day.isEqual(new LocalDate(DateTimeZones.UTC)) && mostRecent.uploadTime().plusMinutes(20).isBeforeNow()) {
-                return FAILURE;
-            }
-            if (mostRecent.uploadTime().plusHours(4).isBeforeNow()) {
+            if (FileType.PI == type && (isToday(day) && olderThan(mostRecent, Duration.standardMinutes(20)) || olderThan(mostRecent, standardHours(4)))) {
                 return FAILURE;
             }
             return SUCCESS;
@@ -94,6 +102,14 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         default:
             return INFO;
         }
+    }
+
+    private boolean olderThan(FileUploadResult mostRecent, Duration todayStaleness) {
+        return mostRecent.uploadTime().plus(todayStaleness).isBeforeNow();
+    }
+
+    private boolean isToday(LocalDate day) {
+        return day.isEqual(new LocalDate(DateTimeZones.UTC));
     }
 
     protected String buildEntryValue(Iterable<? extends FileUploadResult> results) {
