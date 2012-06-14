@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+import org.atlasapi.feeds.radioplayer.RadioPlayerPiFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
@@ -125,8 +126,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 	
 	private static String output(List<RadioPlayerBroadcastItem> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		outputter.output(new LocalDate(2010, 9, 6),
-						new RadioPlayerService(502, "radio2").withDabServiceId("e1_ce15_c222_0"), items, out);
+		outputter.output(new RadioPlayerPiFeedSpec(new RadioPlayerService(502, "radio2").withDabServiceId("e1_ce15_c222_0"), new LocalDate(2010, 9, 6)), items, out);
 		return out.toString(Charsets.UTF_8.toString()).substring(550);
 	}
 

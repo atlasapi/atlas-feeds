@@ -5,6 +5,8 @@ import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 
+import com.google.common.base.Function;
+
 public class RadioPlayerBroadcastItem implements Comparable<RadioPlayerBroadcastItem> {
 
     private final Item item;
@@ -48,4 +50,10 @@ public class RadioPlayerBroadcastItem implements Comparable<RadioPlayerBroadcast
         return container != null;
     }
     
+    public static final Function<RadioPlayerBroadcastItem, Item> TO_ITEM = new Function<RadioPlayerBroadcastItem, Item>() {
+        @Override
+        public Item apply(RadioPlayerBroadcastItem input) {
+            return input.getItem();
+        }
+    };
 }

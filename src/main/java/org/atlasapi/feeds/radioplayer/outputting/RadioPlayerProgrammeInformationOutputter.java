@@ -7,6 +7,8 @@ import java.util.regex.Pattern;
 import nu.xom.Attribute;
 import nu.xom.Element;
 
+import org.atlasapi.feeds.radioplayer.RadioPlayerFeedSpec;
+import org.atlasapi.feeds.radioplayer.RadioPlayerPiFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Container;
@@ -19,6 +21,7 @@ import org.joda.time.Duration;
 import org.joda.time.LocalDate;
 import org.joda.time.format.ISOPeriodFormat;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
@@ -30,13 +33,17 @@ import com.metabroadcast.common.time.DateTimeZones;
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {
 
     private static final String ORIGINATOR = "Metabroadcast";
-    private static final String ONDEMAND_LOCATION = "http://www.bbc.co.uk/iplayer/console/";
+    private static final String ONDEMAND_LOCATION = "http://www.bbc.co.uk/radio/player/";
     private static final DateTime MAX_AVAILABLE_TILL = new DateTime(2037, 01, 01, 0, 0, 0, 0, DateTimeZones.UTC);
 
     private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
 
     @Override
-    public Element createFeed(LocalDate day, RadioPlayerService id, Iterable<RadioPlayerBroadcastItem> items) {
+    public Element createFeed(RadioPlayerFeedSpec spec, Iterable<RadioPlayerBroadcastItem> items) {
+        Preconditions.checkArgument(spec instanceof RadioPlayerPiFeedSpec);
+        
+        RadioPlayerPiFeedSpec piSpec = (RadioPlayerPiFeedSpec) spec;
+        
         Element epgElem = createElement("epg", EPGSCHEDULE);
         EPGDATATYPES.addDeclarationTo(epgElem);
         XSI.addDeclarationTo(epgElem);
@@ -50,10 +57,10 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         schedule.addAttribute(new Attribute("version", "1"));
         schedule.addAttribute(new Attribute("creationTime", DATE_TIME_FORMAT.print(new DateTime(DateTimeZones.UTC))));
 
-        schedule.appendChild(scopeElement(day, id));
+        schedule.appendChild(scopeElement(piSpec.getDay(), piSpec.getService()));
 
         for (RadioPlayerBroadcastItem item : items) {
-            schedule.appendChild(createProgrammeElement(item, id));
+            schedule.appendChild(createProgrammeElement(item, piSpec.getService()));
         }
 
         epgElem.appendChild(schedule);
@@ -70,7 +77,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         programme.appendChild(stringElement("longName", EPGDATATYPES, LONG_TITLE.truncatePossibleNull(title)));
 
         Broadcast broadcast = broadcastItem.getBroadcast();
-        programme.appendChild(locationElement(broadcastItem.getItem(), broadcast, id));
+        programme.appendChild(locationElement(broadcast, id));
         programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(broadcastItem.getItem().getDescription()))));
         if (!Strings.isNullOrEmpty(broadcastItem.getItem().getImage())) {
             programme.appendChild(mediaDescription(imageDescriptionElem(broadcastItem.getItem())));
@@ -129,7 +136,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         return title;
     }
 
-    private Element locationElement(Item item, Broadcast broadcast, RadioPlayerService id) {
+    private Element locationElement(Broadcast broadcast, RadioPlayerService id) {
         Element locationElement = createElement("location", EPGDATATYPES);
 
         Element timeElement = createElement("time", EPGDATATYPES);

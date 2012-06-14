@@ -9,6 +9,6 @@ public interface RadioPlayerUploadResultStore {
 
     void record(RadioPlayerUploadResult result);
     
-    Iterable<FileUploadResult> resultsFor(String remoteServiceId, RadioPlayerService service, LocalDate day);
+    Iterable<FileUploadResult> resultsFor(FileType type, String remoteServiceId, RadioPlayerService service, LocalDate day);
 
 }

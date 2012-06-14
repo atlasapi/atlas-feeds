@@ -13,36 +13,48 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.joda.time.LocalDate;
 
-import com.google.common.base.Function;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ForwardingMap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import java.util.concurrent.ExecutionException;
 
 public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadResultStore {
 
     private final RadioPlayerUploadResultStore delegate;
-    private Map<String, RemoteServiceSpecificResultCache> remoteServiceCacheMap;
+    private final Map<FileType, Map<String, CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache>> fileTypeToRemoteServiceCacheMap;
 
     public CachingRadioPlayerUploadResultStore(Iterable<String> remoteServiceIds, final RadioPlayerUploadResultStore delegate) {
         this.delegate = delegate;
-        this.remoteServiceCacheMap = Maps.newHashMap();
-        for (String remoteService : remoteServiceIds) {
-            remoteServiceCacheMap.put(remoteService, new RemoteServiceSpecificResultCache(remoteService));
+        
+        Builder<FileType, Map<String, CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache>> fileTypeToRemoteServiceCacheMap = ImmutableMap.builder();
+        for (FileType type : FileType.values()) {
+            Map<String, CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache> remoteServiceCacheMap = Maps.newHashMap();
+            for (String remoteService : remoteServiceIds) {
+                remoteServiceCacheMap.put(remoteService, new CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache(type, remoteService));
+            }
+            fileTypeToRemoteServiceCacheMap.put(type, remoteServiceCacheMap);
         }
+        this.fileTypeToRemoteServiceCacheMap = fileTypeToRemoteServiceCacheMap.build();
     }
 
     @Override
     public void record(RadioPlayerUploadResult result) {
         delegate.record(result);
 
-        RemoteServiceSpecificResultCache remoteServiceCache = remoteServiceCacheMap.get(result.getUpload().remote());
-        
-        ConcurrentMap<LocalDate,Set<FileUploadResult>> serviceMap = remoteServiceCache.get(result.service());
+        Map<String, CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache> remoteServiceCacheMap = fileTypeToRemoteServiceCacheMap.get(result.getType());
 
-        Set<FileUploadResult> current = serviceMap.putIfAbsent(result.day(), treeSetWith(result.getUpload()));
+        CachingRadioPlayerUploadResultStore.RemoteServiceSpecificResultCache remoteServiceCache = remoteServiceCacheMap.get(result.getUpload().remote());
+
+        ConcurrentMap<LocalDate,Set<FileUploadResult>> serviceMap = remoteServiceCache.get(result.getService()).asMap();
+
+        Set<FileUploadResult> current = serviceMap.putIfAbsent(result.getDay(), treeSetWith(result.getUpload()));
         if (current != null) {
             current.remove(result.getUpload());
             current.add(result.getUpload());
@@ -56,16 +68,22 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
     }
 
     @Override
-    public Iterable<FileUploadResult> resultsFor(String remoteServiceId, RadioPlayerService service, LocalDate day) {
-        return ImmutableSet.copyOf(remoteServiceCacheMap.get(remoteServiceId).get(service).get(day));
+    public Iterable<FileUploadResult> resultsFor(FileType type, String remoteServiceId, RadioPlayerService service, LocalDate day) {
+        try {
+            return ImmutableSet.copyOf(fileTypeToRemoteServiceCacheMap.get(type).get(remoteServiceId).get(service).get(day));
+        } catch (ExecutionException ex) {
+            throw new IllegalStateException(ex.getMessage(), ex);
+        }
     }
     
-    private class RemoteServiceSpecificResultCache extends ForwardingMap<RadioPlayerService, ConcurrentMap<LocalDate, Set<FileUploadResult>>>{
+    private class RemoteServiceSpecificResultCache extends ForwardingMap<RadioPlayerService, LoadingCache<LocalDate, Set<FileUploadResult>>>{
 
-        private final Map<RadioPlayerService, ConcurrentMap<LocalDate, Set<FileUploadResult>>> cache;
+        private final Map<RadioPlayerService, LoadingCache<LocalDate, Set<FileUploadResult>>> cache;
         private final String rsi;
+        private final FileType type;
         
-        public RemoteServiceSpecificResultCache(String remoteServiceIdentifier) {
+        public RemoteServiceSpecificResultCache(FileType type, String remoteServiceIdentifier) {
+            this.type = type;
             this.rsi = remoteServiceIdentifier;
             this.cache = Maps.newHashMap();
             loadCache();
@@ -73,11 +91,11 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
         
         private void loadCache() {
             for (final RadioPlayerService service : RadioPlayerServices.services) {
-                cache.put(service, new MapMaker().softValues().expireAfterWrite(5, TimeUnit.MINUTES).<LocalDate, Set<FileUploadResult>>makeComputingMap(new Function<LocalDate, Set<FileUploadResult>>() {
+                cache.put(service, CacheBuilder.newBuilder().softValues().expireAfterWrite(5, TimeUnit.MINUTES).<LocalDate, Set<FileUploadResult>>build(new CacheLoader<LocalDate, Set<FileUploadResult>>() {
                     @Override
-                    public Set<FileUploadResult> apply(LocalDate day) {
+                    public Set<FileUploadResult> load(LocalDate day) {
                         TreeSet<FileUploadResult> set = Sets.newTreeSet(TYPE_ORDERING);
-                        Iterables.addAll(set, delegate.resultsFor(rsi, service, day));
+                        Iterables.addAll(set, delegate.resultsFor(type, rsi, service, day));
                         return set;
                     }
                 }));
@@ -85,7 +103,7 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
         }
 
         @Override
-        protected Map<RadioPlayerService, ConcurrentMap<LocalDate, Set<FileUploadResult>>> delegate() {
+        protected Map<RadioPlayerService, LoadingCache<LocalDate, Set<FileUploadResult>>> delegate() {
             return cache;
         }
     }
