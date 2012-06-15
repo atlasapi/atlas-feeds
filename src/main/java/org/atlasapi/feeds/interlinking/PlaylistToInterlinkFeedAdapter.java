@@ -26,6 +26,8 @@ import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -36,6 +38,8 @@ import com.metabroadcast.common.text.Truncator;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
+    
+    private static final Logger log = LoggerFactory.getLogger(PlaylistToInterlinkFeedAdapter.class);
     
     protected static final Operation DEFAULT_OPERATION = Operation.STORE;
 	
@@ -64,22 +68,27 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         InterlinkFeed feed = feed(id, publisher);
         while(contents.hasNext()) {
             Content content = contents.next();
-        	if (content instanceof Brand) {
-        		Brand brand = (Brand) content;
-        		if (containerQualifies(from, to, brand)) {
-        		    feed.addEntry(fromBrand(brand, from, to));
-        		}
-        	}
-        	if (content instanceof Series) {
-        	    Series series = (Series) content;
-                if (containerQualifies(from, to, series)) {
-                    feed.addEntry(fromSeries(series, from, to));
-                }
-        	}
-        	if (content instanceof Item) {
-        	    Item item = (Item) content;
-        	    populateFeedWithItem(feed, item, from, to);
-        	}
+            try {
+            	if (content instanceof Brand) {
+            		Brand brand = (Brand) content;
+            		if (containerQualifies(from, to, brand)) {
+            		    feed.addEntry(fromBrand(brand, from, to));
+            		}
+            	}
+            	if (content instanceof Series) {
+            	    Series series = (Series) content;
+                    if (containerQualifies(from, to, series)) {
+                        feed.addEntry(fromSeries(series, from, to));
+                    }
+            	}
+            	if (content instanceof Item) {
+            	    Item item = (Item) content;
+            	    populateFeedWithItem(feed, item, from, to);
+            	}
+            }
+            catch(Exception e) {
+                throw new RuntimeException(String.format("Failure when outputting content with URI %s", content.getCanonicalUri()), e);
+            }
         }
         return feed;
     }
