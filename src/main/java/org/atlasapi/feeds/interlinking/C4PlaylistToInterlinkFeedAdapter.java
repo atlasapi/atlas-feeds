@@ -4,10 +4,10 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.atlasapi.media.entity.Broadcast;
-import org.atlasapi.media.entity.Identified;
-import org.atlasapi.media.entity.Location;
-import org.atlasapi.media.entity.ParentRef;
+import org.atlasapi.media.content.Broadcast;
+import org.atlasapi.media.content.Identified;
+import org.atlasapi.media.content.Location;
+import org.atlasapi.media.content.ParentRef;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;

@@ -2,15 +2,15 @@ package org.atlasapi.feeds.interlinking.delta;
 
 import static com.metabroadcast.common.time.DateTimeZones.UTC;
 import static org.joda.time.DateTimeConstants.AUGUST;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import nu.xom.Document;
 
 import org.atlasapi.feeds.interlinking.C4PlaylistToInterlinkFeedAdapter;
 import org.atlasapi.feeds.interlinking.PlaylistToInterlinkFeed;
 import org.atlasapi.feeds.interlinking.outputting.InterlinkFeedOutputter;
-import org.atlasapi.media.entity.Item;
-import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+import org.atlasapi.media.content.Item;
+import org.atlasapi.media.content.Publisher;
+import org.atlasapi.persistence.content.listing.LastUpdatedContentFinder;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.joda.time.DateTime;

@@ -27,8 +27,8 @@ import java.util.Map;
 
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.ContentQueryBuilder;
-import org.atlasapi.media.entity.MediaType;
-import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.content.MediaType;
+import org.atlasapi.media.content.Publisher;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;

@@ -12,7 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.persistence.content.listing.ContentLister;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+import org.atlasapi.persistence.content.listing.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.joda.time.DateTime;

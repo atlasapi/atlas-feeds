@@ -8,19 +8,20 @@ import java.util.Set;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerUpdatedClipOutputter;
-import org.atlasapi.media.entity.Broadcast;
-import org.atlasapi.media.entity.Content;
-import org.atlasapi.media.entity.Item;
-import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.media.entity.Version;
-import org.atlasapi.persistence.content.ContentCategory;
+import org.atlasapi.media.content.Broadcast;
+import org.atlasapi.media.content.Content;
+import org.atlasapi.media.content.Item;
+import org.atlasapi.media.content.Publisher;
+import org.atlasapi.media.content.Version;
+import org.atlasapi.media.content.util.ContentCategory;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.listing.ContentListingCriteria;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+import org.atlasapi.persistence.content.listing.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
@@ -40,7 +41,7 @@ public class RadioPlayerOdUriResolver {
     
     public SetMultimap<RadioPlayerService, String> getServiceToUrisMapForSnapshot() {
         
-        return getServiceToUrisMapForContent(contentLister.listContent(new ContentListingCriteria.Builder().forPublisher(Publisher.BBC).forContent(ContentCategory.ITEMS).build()), Optional.<DateTime>absent());
+        return getServiceToUrisMapForContent(contentLister.listContent(new ContentListingCriteria.Builder().forPublisher(Publisher.BBC).forContent(ImmutableList.copyOf(ContentCategory.ITEMS)).build()), Optional.<DateTime>absent());
     }
     
     public SetMultimap<RadioPlayerService, String> getServiceToUrisMapSince(DateTime since) {

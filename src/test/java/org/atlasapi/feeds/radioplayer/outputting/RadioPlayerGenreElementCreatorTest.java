@@ -8,7 +8,7 @@ import java.util.List;
 
 import nu.xom.Element;
 
-import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.content.Item;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.lakeview.validation.rules;
 
-import static org.atlasapi.persistence.content.ContentCategory.ITEMS;
+import static org.atlasapi.media.content.util.ContentCategory.ITEMS;
 import static org.atlasapi.persistence.content.listing.ContentListingCriteria.defaultCriteria;
 
 import java.util.Iterator;
@@ -16,12 +16,12 @@ import org.atlasapi.feeds.lakeview.validation.FeedItemStore;
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult.ValidationResultType;
 import org.atlasapi.generated.ElementMovie;
 import org.atlasapi.generated.ElementTVEpisode;
-import org.atlasapi.media.entity.Encoding;
-import org.atlasapi.media.entity.Item;
-import org.atlasapi.media.entity.Location;
-import org.atlasapi.media.entity.Policy.Platform;
-import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.content.Encoding;
+import org.atlasapi.media.content.Item;
+import org.atlasapi.media.content.Location;
+import org.atlasapi.media.content.Policy.Platform;
+import org.atlasapi.media.content.Publisher;
+import org.atlasapi.media.content.Version;
 import org.atlasapi.persistence.content.listing.ContentLister;
 
 import com.google.common.collect.ImmutableList;

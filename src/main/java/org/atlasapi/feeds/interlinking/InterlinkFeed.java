@@ -2,8 +2,6 @@ package org.atlasapi.feeds.interlinking;
 
 import java.util.List;
 
-import org.joda.time.DateTime;
-
 import com.google.common.collect.Lists;
 
 public final class InterlinkFeed {

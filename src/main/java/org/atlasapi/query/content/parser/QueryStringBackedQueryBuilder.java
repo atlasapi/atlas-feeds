@@ -32,7 +32,7 @@ import org.atlasapi.content.criteria.attribute.QueryFactory;
 import org.atlasapi.content.criteria.attribute.StringValuedAttribute;
 import org.atlasapi.content.criteria.operator.Operator;
 import org.atlasapi.content.criteria.operator.Operators;
-import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.content.Publisher;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Function;

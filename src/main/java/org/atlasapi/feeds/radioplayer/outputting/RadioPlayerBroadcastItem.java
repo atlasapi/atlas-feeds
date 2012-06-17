@@ -1,9 +1,9 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
-import org.atlasapi.media.entity.Broadcast;
-import org.atlasapi.media.entity.Container;
-import org.atlasapi.media.entity.Item;
-import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.content.Broadcast;
+import org.atlasapi.media.content.Container;
+import org.atlasapi.media.content.Item;
+import org.atlasapi.media.content.Version;
 
 import com.google.common.base.Function;
 

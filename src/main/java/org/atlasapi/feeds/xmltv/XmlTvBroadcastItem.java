@@ -1,10 +1,11 @@
 package org.atlasapi.feeds.xmltv;
 
-import org.atlasapi.media.entity.Broadcast;
-import org.atlasapi.media.entity.Container;
-import org.atlasapi.media.entity.Item;
-import org.atlasapi.media.entity.Series;
-import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.content.Broadcast;
+import org.atlasapi.media.content.Container;
+import org.atlasapi.media.content.Item;
+import org.atlasapi.media.content.Series;
+import org.atlasapi.media.content.Version;
+
 
 public class XmlTvBroadcastItem implements Comparable<XmlTvBroadcastItem> {
 

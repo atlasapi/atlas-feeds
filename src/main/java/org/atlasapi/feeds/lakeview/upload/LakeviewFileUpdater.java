@@ -9,7 +9,7 @@ import org.atlasapi.feeds.lakeview.LakeviewFeedCompiler;
 import org.atlasapi.feeds.lakeview.XmlFeedOutputter;
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploader;
-import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.content.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
