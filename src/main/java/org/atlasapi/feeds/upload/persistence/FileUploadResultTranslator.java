@@ -10,6 +10,7 @@ import com.mongodb.DBObject;
 
 public class FileUploadResultTranslator {
     
+    public static final String FILENAME = "filename";
     public static final String SERVICE_KEY = "service";
     public static final String TIME_KEY = "time";
     
@@ -20,7 +21,7 @@ public class FileUploadResultTranslator {
         DBObject dbo = new BasicDBObject();
 
         TranslatorUtils.from(dbo, SERVICE_KEY, result.remote());
-        TranslatorUtils.from(dbo, "filename", result.filename());
+        TranslatorUtils.from(dbo, FILENAME, result.filename());
         TranslatorUtils.from(dbo, "type", result.type().toString());
         TranslatorUtils.fromDateTime(dbo, TIME_KEY, result.uploadTime());
         TranslatorUtils.from(dbo, "message", result.message());
@@ -41,7 +42,7 @@ public class FileUploadResultTranslator {
 
         FileUploadResult result = new FileUploadResult(
                 TranslatorUtils.toString(dbo, SERVICE_KEY), 
-                TranslatorUtils.toString(dbo, "filename"), 
+                TranslatorUtils.toString(dbo, FILENAME), 
                 TranslatorUtils.toDateTime(dbo, TIME_KEY), FileUploadResultType.valueOf(TranslatorUtils.toString(dbo,"type"))
         ).withMessage(TranslatorUtils.toString(dbo, "message")).withConnectionSuccess(TranslatorUtils.toBoolean(dbo, "connected"));
 
