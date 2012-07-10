@@ -2,6 +2,8 @@ package org.atlasapi.feeds.upload.persistence;
 
 import org.atlasapi.feeds.upload.FileUploadResult;
 
+import com.metabroadcast.common.base.Maybe;
+
 /**
  * Stores and retrieves upload results for a given remote service (identified by
  * name). Results are stored against a specified result identification key.
@@ -46,4 +48,14 @@ public interface FileUploadResultStore {
      * @return relevant upload results, most recent first.
      */
     Iterable<FileUploadResult> result(String service, String identifierPrefix);
+    
+    /**
+     * Upload results for a given filename. Results are returned in reverse
+     * chronological order.
+     * 
+     * @param service
+     * @param fileName
+     * @return
+     */
+    Maybe<FileUploadResult> latestResultFor(String service, String fileName);
 }
