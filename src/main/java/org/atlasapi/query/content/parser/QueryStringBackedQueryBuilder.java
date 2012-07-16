@@ -90,7 +90,8 @@ public class QueryStringBackedQueryBuilder {
     @SuppressWarnings("unchecked")
     public ContentQuery build(HttpServletRequest request) {
         ContentQuery contentQuery = build(request.getParameterMap()).copyWithSelection(selectionBuilder.build(request));
-        Set<Annotation> annotations = ImmutableSet.copyOf(Iterables.transform(csvSplitter.split(request.getParameter(ANNOTATIONS_PARAM)), Functions.forMap(Annotation.LOOKUP)));
+        String annotationsParam = request.getParameter(ANNOTATIONS_PARAM) != null ? request.getParameter(ANNOTATIONS_PARAM) : "";
+        Set<Annotation> annotations = ImmutableSet.copyOf(Iterables.transform(csvSplitter.split(annotationsParam), Functions.forMap(Annotation.LOOKUP)));
         if (annotations.isEmpty()) {
             return contentQuery;
         } else {
