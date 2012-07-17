@@ -76,6 +76,7 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(355, "radiowales").withServiceUriSuffix("radiowales/fm").withScheduleUri("http://www.bbc.co.uk/radiowales/programmes/schedules/fm").withIonServiceId("bbc_radio_wales_fm")).
 			add(new RadioPlayerService(356, "radiocymru").withIonServiceId("bbc_radio_cymru")).
 			add(new RadioPlayerService(358, "radio4extra").withIonServiceId("bbc_radio_four_extra")).
+			add(new RadioPlayerService(359, "5liveolympicsextra").withIonServiceId("bbc_radio_five_live_olympics_extra")).
 		build();
 		
         all = Maps.uniqueIndex(services, new Function<RadioPlayerService, String>() {
