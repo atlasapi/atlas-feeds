@@ -13,7 +13,6 @@ import nu.xom.Element;
 
 import org.atlasapi.feeds.xml.XMLNamespace;
 import org.atlasapi.media.TransportType;
-import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.ChildRef;
@@ -41,6 +40,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
+import org.atlasapi.persistence.media.channel.ChannelResolver;
 
 public class LakeviewFeedCompiler {
 
