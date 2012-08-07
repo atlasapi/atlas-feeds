@@ -25,7 +25,6 @@ import org.atlasapi.feeds.upload.ValidatingFileUploader;
 import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;
-import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
@@ -62,6 +61,7 @@ import com.metabroadcast.common.scheduling.SimpleScheduler;
 import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.time.DayRangeGenerator;
 import com.metabroadcast.common.webapp.health.HealthController;
+import org.atlasapi.persistence.media.channel.ChannelResolver;
 
 @Configuration
 public class RadioPlayerModule {
