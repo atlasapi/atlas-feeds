@@ -9,7 +9,6 @@ import org.atlasapi.feeds.lakeview.validation.LakeviewServerHealthProbe;
 import org.atlasapi.feeds.lakeview.validation.rules.CompletenessValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.HeirarchyValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.LakeviewFeedValidationRule;
-import org.atlasapi.feeds.lakeview.validation.rules.RecentUpdateToBrandValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.UpToDateValidationRule;
 import org.atlasapi.feeds.upload.FileUploader;
 import org.atlasapi.feeds.upload.ResultStoringFileUploader;
@@ -17,7 +16,6 @@ import org.atlasapi.feeds.upload.azure.AzureFileUploader;
 import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;
-import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.logging.AdapterLog;
@@ -40,6 +38,7 @@ import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
+import org.atlasapi.persistence.media.channel.ChannelResolver;
 
 @Configuration
 public class LakeviewModule {
