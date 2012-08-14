@@ -318,8 +318,6 @@ public class XmlTvChannelLookup {
             .put(2636, "Multi Channel")
             .put(2637, "Music Choice Europe")
             .put(2681, "ITV1 STV +1")
-            .put(2696, "Sony Entertainment TV (Plus 1)")
-            .put(2697, "Sony Entertainment Television")
     		.build();
 
 
