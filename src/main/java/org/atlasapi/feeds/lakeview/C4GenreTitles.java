@@ -40,6 +40,8 @@ public class C4GenreTitles {
         .put("http://www.channel4.com/programmes/tags/society-and-culture", "Society and Culture")
         .put("http://www.channel4.com/programmes/tags/sports-and-games", "Sports and Games")
         .put("http://www.channel4.com/programmes/tags/us-shows", "US Shows")
+        .put("http://www.channel4.com/programmes/tags/factual", "Factual")
+        .put("http://www.channel4.com/programmes/tags/sport", "Sport")
     .build();
 
     public static String title(String genreUri) {
