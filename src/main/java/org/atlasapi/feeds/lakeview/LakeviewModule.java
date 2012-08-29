@@ -63,8 +63,6 @@ public class LakeviewModule {
 
 	private @Value("${lakeview.upload.enabled}")
 	String enabled;
-	private @Value("${lakeview.upload.hostname}")
-	String hostname;
 	private @Value("${lakeview.upload.container}")
 	String container;
 	private @Value("${lakeview.upload.account}")
@@ -122,13 +120,13 @@ public class LakeviewModule {
 	public @Bean
 	FileUploader lakeviewAzureUploader() {
 		return ResultStoringFileUploader.resultStoringFileUploader(lakeviewResultStore(), SERVICE_NAME, REMOTE_ID, 
-				new AzureFileUploader(hostname, account, key, container));
+				new AzureFileUploader(account, key, container));
 
 	}
 	
 	public @Bean
 	AzureLatestFileDownloader azureLatestFileDownloader() {
-		return new AzureLatestFileDownloader(hostname, account, key, container);
+		return new AzureLatestFileDownloader(account, key, container);
 	}
 	
 	public @Bean 
