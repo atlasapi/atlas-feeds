@@ -36,13 +36,18 @@ import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Function;
+import com.google.common.base.Functions;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.common.query.Selection.SelectionBuilder;
 import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
+import org.atlasapi.output.Annotation;
 
 public class QueryStringBackedQueryBuilder {
 
@@ -66,6 +71,8 @@ public class QueryStringBackedQueryBuilder {
 	        ON_PARAM,
 	        ANNOTATIONS_PARAM
     ); 
+    
+    private final Splitter csvSplitter = Splitter.on(",").omitEmptyStrings().trimResults();
 
 	private final DateTimeInQueryParser dateTimeParser = new DateTimeInQueryParser();
 	
@@ -80,10 +87,17 @@ public class QueryStringBackedQueryBuilder {
 		this.defaults = defaults;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public ContentQuery build(HttpServletRequest request) {
-		return build(request.getParameterMap()).copyWithSelection(selectionBuilder.build(request));
-	}
+    @SuppressWarnings("unchecked")
+    public ContentQuery build(HttpServletRequest request) {
+        ContentQuery contentQuery = build(request.getParameterMap()).copyWithSelection(selectionBuilder.build(request));
+        String annotationsParam = request.getParameter(ANNOTATIONS_PARAM) != null ? request.getParameter(ANNOTATIONS_PARAM) : "";
+        Set<Annotation> annotations = ImmutableSet.copyOf(Iterables.transform(csvSplitter.split(annotationsParam), Functions.forMap(Annotation.LOOKUP)));
+        if (annotations.isEmpty()) {
+            return contentQuery;
+        } else {
+            return contentQuery.copyWithAnnotations(annotations);
+        }
+    }
 	
 	ContentQuery build(Map<String, String[]> params) {
 		return buildFromFilteredMap(filter(params));
@@ -257,4 +271,16 @@ public class QueryStringBackedQueryBuilder {
 		ignoreParams.addAll(Arrays.asList(params));
 		return this;
 	}
+    
+    private boolean containsAnnotation(HttpServletRequest request, Annotation annotation) {
+        String annotations = request.getParameter(ANNOTATIONS_PARAM);
+        if (annotations != null) {
+            for (String candidate : Splitter.on(",").split(annotations)) {
+                if (candidate.toLowerCase().equals(annotation.name().toLowerCase())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }
