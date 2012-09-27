@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.atlasapi</groupId>
     <artifactId>atlas-feeds</artifactId>
-    <version>5.0-SNAPSHOT</version>
+    <version>6.0-SNAPSHOT</version>
     <description></description>
     <build>
 	<plugins>
@@ -154,7 +154,7 @@
 		<dependency>
 			<groupId>org.atlasapi</groupId>
 			<artifactId>atlas-applications</artifactId>
-			<version>${atlas.version}</version>
+			<version>5.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>
