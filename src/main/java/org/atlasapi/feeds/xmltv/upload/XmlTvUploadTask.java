@@ -25,6 +25,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Ranges;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -99,7 +100,7 @@ public class XmlTvUploadTask extends ScheduledTask {
     }
 
     private XmlTvUploadResult chainUpload(final String filename, final ListenableFuture<FileUpload> upload) {
-        return new XmlTvUploadResult(Futures.chain(upload, new Function<FileUpload, ListenableFuture<FileUploadResult>>() {
+        return new XmlTvUploadResult(Futures.transform(upload, new AsyncFunction<FileUpload, FileUploadResult>() {
 
             @Override
             public ListenableFuture<FileUploadResult> apply(FileUpload input) {
