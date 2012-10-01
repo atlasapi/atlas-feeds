@@ -10,12 +10,14 @@ import nu.xom.Element;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerPiFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
+import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.LocalDate;
@@ -93,7 +95,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
             for (Location location : encoding.getAvailableAt()) {
             	for (Country country : representedBy(encoding, location)) {
             		if (!outputCountries.contains(country)) {
-	            		programme.appendChild(ondemandElement(broadcastItem.getItem(), location, country));
+	            		programme.appendChild(ondemandElement(broadcastItem, location, country, id));
 	            		outputCountries.add(country);
             		}
             	}
@@ -178,12 +180,15 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         return item.getImage();
     }
 
-    private Element ondemandElement(Item item, Location location, Country country) {
+    private Element ondemandElement(RadioPlayerBroadcastItem broadcastItem, Location location, Country country, RadioPlayerService service) {
+        
+        Item item = broadcastItem.getItem();
+        
         Element ondemandElement = createElement("ondemand", EPGDATATYPES);
 
         ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCurie().substring(item.getCurie().indexOf(":") + 1)));
 
-        Policy policy = location.getPolicy();
+        Policy policy = location.getPolicy();   
         if (policy != null) {
              
         	// disabled
@@ -201,11 +206,45 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
             }
 
         }
+        
+        Version version = broadcastItem.getVersion();
+        if (RadioPlayerServices.nationalNetworks.contains(service) && Strings.emptyToNull(version.getCanonicalUri()) != null) {
+            ondemandElement.appendChild(audioStreamGroupElement(version));
+        }
 
         return ondemandElement;
     }
 
-	@SuppressWarnings("unused")
+	private Element audioStreamGroupElement(Version version) {
+        Element audioStreamGroupElem = createElement("audioStreamGroup", RADIOPLAYER);
+        Element audioStreamElem = createElement("audioStream", RADIOPLAYER);
+        
+        Element audioSourceElem = createElement("audioSource", RADIOPLAYER);
+        audioSourceElem.addAttribute(new Attribute("url", audioSourceUrl(version.getCanonicalUri())));
+        audioSourceElem.addAttribute(new Attribute("mimeValue", "application/vnd.bbc-mediaselector+json"));
+        audioStreamElem.appendChild(audioSourceElem);
+        
+        Element audioFormatElem = createElement("audioFormat", RADIOPLAYER);
+        audioFormatElem.addAttribute(new Attribute("href","urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3"));
+        audioStreamElem.appendChild(audioFormatElem);
+        
+        Element bitRateElem = createElement("bitRate", RADIOPLAYER);
+        bitRateElem.addAttribute(new Attribute("target","128000"));
+        bitRateElem.addAttribute(new Attribute("variable","true"));
+        audioStreamElem.appendChild(bitRateElem);
+        
+        audioStreamGroupElem.appendChild(audioStreamElem);
+        return audioStreamGroupElem;
+    }
+
+    private String audioSourceUrl(String versionUri) {
+        return String.format(
+            "http://open.live.bbc.co.uk/mediaselector/5/select/version/2.0/format/json/vpid/%s/mediaset/",
+            versionUri.replace("http://www.bbc.co.uk/programmes/","")
+        );
+    }
+
+    @SuppressWarnings("unused")
 	private void addRestriction(Element ondemandElement, Country country) {
 		if (!Countries.ALL.equals(country)) {
 			Element restrictionElem = createElement("restriction", RADIOPLAYER);

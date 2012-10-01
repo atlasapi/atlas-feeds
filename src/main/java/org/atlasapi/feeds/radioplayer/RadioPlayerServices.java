@@ -3,9 +3,16 @@ package org.atlasapi.feeds.radioplayer;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import com.google.common.base.Function;
+import com.google.common.base.Functions;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Ranges;
+import com.google.common.collect.Sets;
+import com.metabroadcast.common.base.MorePredicates;
 
 public class RadioPlayerServices {
 
@@ -16,6 +23,8 @@ public class RadioPlayerServices {
 	public static final Set<RadioPlayerService> untracked;
 
     public static final Map<String, RadioPlayerService> serviceUriToService;
+    
+    public static final Set<RadioPlayerService> nationalNetworks;
 	
 	static {
 		services = ImmutableSet.<RadioPlayerService> builder().
@@ -79,12 +88,14 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(359, "5liveolympicsextra").withIonServiceId("bbc_radio_five_live_olympics_extra")).
 		build();
 		
-        all = Maps.uniqueIndex(services, new Function<RadioPlayerService, String>() {
-            @Override
-            public String apply(RadioPlayerService input) {
-                return String.valueOf(input.getRadioplayerId());
-            }
-        });
+		Function<RadioPlayerService, Integer> TO_ID = new Function<RadioPlayerService, Integer>() {
+		    @Override
+		    public Integer apply(@Nullable RadioPlayerService input) {
+		        return input.getRadioplayerId();
+		    }
+		};
+
+		all = Maps.uniqueIndex(services, Functions.compose(Functions.toStringFunction(), TO_ID));
         
         serviceUriToService = Maps.uniqueIndex(services, new Function<RadioPlayerService, String>() {
             @Override
@@ -94,6 +105,8 @@ public class RadioPlayerServices {
         });
         
         untracked = ImmutableSet.of(all.get("346"), all.get("358"), all.get("359"));
-	};
+            
+        nationalNetworks = Sets.filter(services, MorePredicates.transformingPredicate(TO_ID, Predicates.or(Ranges.closed(340, 350),Predicates.equalTo(358))));
+	}
 
 }
