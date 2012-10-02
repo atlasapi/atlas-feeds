@@ -57,8 +57,10 @@ public class ValidatingFTPFileUploadTest {
         try {
             return XMLValidator.forSchemas(ImmutableSet.<InputStream>of(
                     Resources.getResource("org/atlasapi/feeds/radioplayer/xml.xsd").openStream(),
-                    Resources.getResource("org/atlasapi/feeds/radioplayer/epgSI_10.xsd").openStream(),
-                    Resources.getResource("org/atlasapi/feeds/radioplayer/epgSchedule_10.xsd").openStream()
+                    Resources.getResource("org/atlasapi/feeds/radioplayer/epgSI_11.xsd").openStream(),
+                    Resources.getResource("org/atlasapi/feeds/radioplayer/epgSchedule_11.xsd").openStream(),
+                    Resources.getResource("org/atlasapi/feeds/radioplayer/epgDataTypes_11.xsd").openStream(),
+                    Resources.getResource("org/atlasapi/feeds/radioplayer/rpDataTypes_11.xsd").openStream()
             ));
         } catch (Exception e) {
             throw Throwables.propagate(e);

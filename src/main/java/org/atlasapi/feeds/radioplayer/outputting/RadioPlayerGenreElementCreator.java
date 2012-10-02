@@ -19,7 +19,7 @@ import com.google.common.collect.Ordering;
 public class RadioPlayerGenreElementCreator {
 
     private final RadioPlayerCSVReadingGenreMap GENRES;
-    protected static final XMLNamespace EPGDATATYPES = new XMLNamespace("epg", "http://www.radioplayer.co.uk/schemas/10/epgDataTypes");
+    protected static final XMLNamespace EPGDATATYPES = new XMLNamespace("epg", "http://www.radioplayer.co.uk/schemas/11/epgDataTypes");
     private final List<String> genreTypes = ImmutableList.of("main", "secondary", "secondary", "secondary");
     private final Ordering<String> genreTypeComparator = Ordering.explicit(genreTypes.subList(0, 2));
 
