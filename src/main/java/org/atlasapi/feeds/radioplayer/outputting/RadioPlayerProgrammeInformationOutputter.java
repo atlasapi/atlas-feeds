@@ -239,7 +239,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 
     private String audioSourceUrl(String versionUri) {
         return String.format(
-            "http://open.live.bbc.co.uk/mediaselector/5/select/version/2.0/format/json/vpid/%s/mediaset/",
+            "http://open.live.bbc.co.uk/mediaselector/5/select/version/2.0/proto/http/format/json/vpid/%s/mediaset/",
             versionUri.replace("http://www.bbc.co.uk/programmes/","")
         );
     }
