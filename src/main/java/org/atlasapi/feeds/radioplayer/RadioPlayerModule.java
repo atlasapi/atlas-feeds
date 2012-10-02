@@ -149,8 +149,10 @@ public class RadioPlayerModule {
         try {
             return XMLValidator.forSchemas(ImmutableSet.of(
                 Resources.getResource("xml.xsd").openStream(), 
-                Resources.getResource("epgSI_10.xsd").openStream(), 
-                Resources.getResource("epgSchedule_10.xsd").openStream()
+                Resources.getResource("epgSI_11.xsd").openStream(), 
+                Resources.getResource("epgSchedule_11.xsd").openStream(),
+                Resources.getResource("epgDataTypes_11.xsd").openStream(),
+                Resources.getResource("rpDataTypes_11.xsd").openStream()
             ));
         } catch (Exception e) {
             throw Throwables.propagate(e);

@@ -127,7 +127,9 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 	private static String output(List<RadioPlayerBroadcastItem> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		outputter.output(new RadioPlayerPiFeedSpec(new RadioPlayerService(502, "radio2").withDabServiceId("e1_ce15_c222_0"), new LocalDate(2010, 9, 6)), items, out);
-		return out.toString(Charsets.UTF_8.toString()).substring(550);
+		String substring = out.toString(Charsets.UTF_8.toString()).substring(550);
+		System.out.println(substring);
+        return substring;
 	}
 
 	private String expectedFeed( String filename) throws IOException {
