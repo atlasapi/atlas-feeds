@@ -4,14 +4,20 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.interlinking.DelegatingPlaylistToInterlinkAdapter;
 import org.atlasapi.feeds.interlinking.PlaylistToInterlinkFeed;
 import org.atlasapi.feeds.interlinking.PlaylistToInterlinkFeedAdapter;
 import org.atlasapi.feeds.interlinking.outputting.InterlinkFeedOutputter;
+import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
+import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -20,6 +26,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
+import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.time.DateTimeZones;
 
@@ -31,9 +40,11 @@ public class InterlinkController {
     private final PlaylistToInterlinkFeed adapter;
     private final DateTimeFormatter fmt = DateTimeFormat.forPattern("yyyyMMdd").withZone(DateTimeZones.LONDON);
     private final LastUpdatedContentFinder executor;
+    private final ChannelResolver channelResolver;
 
-    public InterlinkController(LastUpdatedContentFinder executor, Map<Publisher, PlaylistToInterlinkFeed> delegates) {
+    public InterlinkController(LastUpdatedContentFinder executor, Map<Publisher, PlaylistToInterlinkFeed> delegates, ChannelResolver channelResolver) {
         this.executor = executor;
+        this.channelResolver = channelResolver;
         this.adapter = new DelegatingPlaylistToInterlinkAdapter(delegates, new PlaylistToInterlinkFeedAdapter());
     }
 
@@ -60,5 +71,45 @@ public class InterlinkController {
 
     	Iterator<Content> content = executor.updatedSince(Publisher.C4, from);
     	outputter.output(adapter.fromContent(FEED_ID + "bootstrap", Publisher.C4, from, to, content), response.getOutputStream(), true, from);
+    }
+    
+    @RequestMapping("/feeds/bbc-interlinking/bootstrap/{channelKey}")
+    public void bootstrapFeed(HttpServletResponse response, @PathVariable String channelKey) throws IOException {
+        response.setContentType(MimeType.APPLICATION_ATOM_XML.toString());
+        response.setStatus(HttpServletResponse.SC_OK);
+        
+        DateTime from = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.LONDON);
+        DateTime to = new DateTime(DateTimeZones.LONDON);
+
+        Maybe<org.atlasapi.media.channel.Channel> channel = channelResolver.fromKey(channelKey);
+        if(channel.isNothing()) {
+            throw new IllegalArgumentException("Invalid channel key");
+        }
+        
+        Iterator<Content> content = Iterators.filter(executor.updatedSince(Publisher.C4, from), channelFilter(channel.requireValue()));
+        outputter.output(adapter.fromContent(FEED_ID + "bootstrap", Publisher.C4, from, to, content), response.getOutputStream(), true, from);
+    }
+    
+    private Predicate<Content> channelFilter(final Channel channel) {
+        return new Predicate<Content>() {
+
+            @Override
+            public boolean apply(@Nullable Content input) {
+                if(!(input instanceof Item)) {
+                    return false;
+                }
+                
+                Item item = (Item) input;
+                
+                for(Version version : item.getVersions()) {
+                    for(Broadcast broadcast : version.getBroadcasts()) {
+                        if(channel.uri().equals(broadcast.getBroadcastOn())) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+        };
     }
 }
