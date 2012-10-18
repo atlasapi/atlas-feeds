@@ -106,7 +106,7 @@ public class RadioPlayerServices {
         
         untracked = ImmutableSet.of(all.get("346"), all.get("358"), all.get("359"));
             
-        nationalNetworks = Sets.filter(services, MorePredicates.transformingPredicate(TO_ID, Predicates.or(Ranges.closed(340, 350),Predicates.equalTo(358))));
+        nationalNetworks = Sets.filter(services, MorePredicates.transformingPredicate(TO_ID, Predicates.or(Ranges.closedOpen(340, 350),Predicates.equalTo(358))));
 	}
 
 }
