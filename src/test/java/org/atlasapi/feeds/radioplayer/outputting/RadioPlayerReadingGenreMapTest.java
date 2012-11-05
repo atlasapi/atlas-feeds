@@ -26,7 +26,7 @@ public class RadioPlayerReadingGenreMapTest {
 
 	@Test
 	public void testMap() {
-		RadioPlayerCSVReadingGenreMap gm = new RadioPlayerCSVReadingGenreMap("org/atlasapi/feeds/radioplayer/testgenres.csv");
+		RadioPlayerTSVReadingGenreMap gm = new RadioPlayerTSVReadingGenreMap("org/atlasapi/feeds/radioplayer/testgenres.tsv");
 		
 		assertThat(
 			gm.map(ImmutableSet.of("http://www.bbc.co.uk/programmes/genres/childrens/entertainmentandcomedy")), 
@@ -48,7 +48,7 @@ public class RadioPlayerReadingGenreMapTest {
 	}
 
 	@Test
-	public void testFullMapCreates() {
+	public void testCSVFullMapCreates() {
 		new RadioPlayerCSVReadingGenreMap(RadioPlayerCSVReadingGenreMap.GENRES_FILE);
 	}
 	
