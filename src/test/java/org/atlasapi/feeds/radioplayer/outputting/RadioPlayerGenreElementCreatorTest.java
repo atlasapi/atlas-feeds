@@ -34,7 +34,7 @@ public class RadioPlayerGenreElementCreatorTest {
 				"http://www.bbc.co.uk/programmes/genres/childrens"
 		));
 		
-		List<Element> genreElems = new RadioPlayerGenreElementCreator(new RadioPlayerCSVReadingGenreMap("radioplayergenres.csv")).genreElementsFor(item);
+		List<Element> genreElems = new RadioPlayerGenreElementCreator(new RadioPlayerTSVReadingGenreMap("radioplayergenres.tsv")).genreElementsFor(item);
 		
 		ImmutableList<String> mappedGenres = ImmutableList.copyOf(Iterables.transform(genreElems, new Function<Element, String>() {
 			@Override
