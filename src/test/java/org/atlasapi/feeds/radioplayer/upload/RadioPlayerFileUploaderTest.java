@@ -92,7 +92,7 @@ public class RadioPlayerFileUploaderTest {
 	
 	private final RadioPlayerService service = RadioPlayerServices.all.get("340");
     private final DateTime day = new DateTime(DateTimeZones.UTC);
-    private final Channel channel = new Channel(Publisher.METABROADCAST, "BBC Radio 1", "radio1", MediaType.AUDIO, "http://www.bbc.co.uk/radio1");
+    private final Channel channel = new Channel(Publisher.METABROADCAST, "BBC Radio 1", "radio1", false, MediaType.AUDIO, "http://www.bbc.co.uk/radio1");
     private final Set<Channel> channels = ImmutableSet.of(channel);
     private final Set<Publisher> publishers = ImmutableSet.of(Publisher.BBC);
     
