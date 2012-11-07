@@ -100,7 +100,7 @@ public class XmlTvChannelLookup {
         return new XmlTvChannel(channel, title);
     }
 
-    public static final Channel IGNORED = new Channel(Publisher.METABROADCAST, "Ignored", "Ignored", MediaType.AUDIO, "ignored");
+    public static final Channel IGNORED = new Channel(Publisher.METABROADCAST, "Ignored", "Ignored", false, MediaType.AUDIO, "ignored");
     
     private static final ImmutableMap<Integer, String> CHANNEL_NAME_OVERRIDES = ImmutableMap.<Integer, String> builder()
     		.put(32, "YTV")
