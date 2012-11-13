@@ -2,6 +2,7 @@ package org.atlasapi.feeds.radioplayer.outputting;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -27,7 +28,6 @@ public class RadioPlayerTSVReadingGenreMap {
     
     private final Log log = LogFactory.getLog(RadioPlayerTSVReadingGenreMap.class);
     private final Multimap<String, String> genreMapping;
-//    private final Map<String, List<String>> genreMapping;
 
     public RadioPlayerTSVReadingGenreMap(String genreResourceFilename) {
         this(Resources.getResource(genreResourceFilename));
@@ -82,7 +82,7 @@ public class RadioPlayerTSVReadingGenreMap {
 
     public Set<List<String>> map(Set<String> sourceGenres) {
         Set<List<String>> mappedGenres = Sets.newHashSet();
-
+        
         if (sourceGenres == null) {
             return mappedGenres;
         }
