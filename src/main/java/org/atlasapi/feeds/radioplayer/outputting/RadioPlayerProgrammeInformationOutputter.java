@@ -17,6 +17,8 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
+import org.atlasapi.media.entity.Policy.Network;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -180,39 +182,87 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         return item.getImage();
     }
 
-    private Element ondemandElement(RadioPlayerBroadcastItem broadcastItem, Location location, Country country, RadioPlayerService service) {
+    Element ondemandElement(RadioPlayerBroadcastItem broadcastItem, Location location, Country country, RadioPlayerService service) {
         
         Item item = broadcastItem.getItem();
-        
         Element ondemandElement = createElement("ondemand", EPGDATATYPES);
 
         ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCurie().substring(item.getCurie().indexOf(":") + 1)));
 
+
+        Version version = broadcastItem.getVersion();
+        
         Policy policy = location.getPolicy();   
         if (policy != null) {
-             
         	// disabled
         	// addRestriction(ondemandElement, country);
-
-            DateTime availableTill = Ordering.natural().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
-            DateTime availableFrom = policy.getAvailabilityStart();
-            if (availableTill != null && availableFrom != null) {
-                Element availabilityElem = createElement("availability", RADIOPLAYER);
-                Element availabilityScopeElem = createElement("scope", RADIOPLAYER);
-                availabilityScopeElem.addAttribute(new Attribute("startTime", DATE_TIME_FORMAT.print(availableFrom)));
-                availabilityScopeElem.addAttribute(new Attribute("stopTime", DATE_TIME_FORMAT.print(availableTill)));
-                availabilityElem.appendChild(availabilityScopeElem);
-                ondemandElement.appendChild(availabilityElem);
+            
+            if (policy.getPlatform() != null) {
+                switch (policy.getPlatform()) {
+                case PC :
+                    addAvailabilityDetailsToOndemand(ondemandElement, policy);
+                    for (Encoding encoding : version.getManifestedAs()) {
+                        Policy ios3G = null;
+                        Policy iosWifi = null;
+                        for (Location encodingLocation : encoding.getAvailableAt()) {
+                            if (encodingLocation.getPolicy().getNetwork().isPresent()) {
+                                if (encodingLocation.getPolicy().getPlatform().equals(Platform.IOS) 
+                                        && encodingLocation.getPolicy().getNetwork().get().equals(Network.THREE_G)) {
+                                    ios3G = encodingLocation.getPolicy();
+                                }
+                                if (encodingLocation.getPolicy().getPlatform().equals(Platform.IOS) 
+                                        && encodingLocation.getPolicy().getNetwork().get().equals(Network.WIFI)) {
+                                    iosWifi = encodingLocation.getPolicy();
+                                }
+                            }
+                        }
+                        if (ios3G != null && iosWifi != null) {
+                            if (ios3G.getActualAvailabilityStart() != null && iosWifi.getActualAvailabilityStart() != null) {
+                                if (ios3G.getActualAvailabilityStart().isBefore(new DateTime()) && iosWifi.getActualAvailabilityStart().isBefore(new DateTime())) {
+                                    addAudioStreamElement(ondemandElement, version, service);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case IOS :
+                    break;
+                case XBOX :
+                default :
+                    // as now
+                    addAvailabilityDetailsToOndemand(ondemandElement, policy);
+                    addAudioStreamElement(ondemandElement, version, service);
+                    break;
+                }
+            } else {
+                // as now
+                addAvailabilityDetailsToOndemand(ondemandElement, policy);
+                addAudioStreamElement(ondemandElement, version, service);
             }
-
-        }
-        
-        Version version = broadcastItem.getVersion();
-        if (RadioPlayerServices.nationalNetworks.contains(service) && Strings.emptyToNull(version.getCanonicalUri()) != null) {
-            ondemandElement.appendChild(audioStreamGroupElement(version));
+        } else {
+            addAudioStreamElement(ondemandElement, version, service);
         }
 
         return ondemandElement;
+    }
+    
+    private void addAvailabilityDetailsToOndemand(Element ondemandElement, Policy policy) {
+        DateTime availableTill = Ordering.natural().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
+        DateTime availableFrom = policy.getAvailabilityStart();
+        if (availableTill != null && availableFrom != null) {
+            Element availabilityElem = createElement("availability", RADIOPLAYER);
+            Element availabilityScopeElem = createElement("scope", RADIOPLAYER);
+            availabilityScopeElem.addAttribute(new Attribute("startTime", DATE_TIME_FORMAT.print(availableFrom)));
+            availabilityScopeElem.addAttribute(new Attribute("stopTime", DATE_TIME_FORMAT.print(availableTill)));
+            availabilityElem.appendChild(availabilityScopeElem);
+            ondemandElement.appendChild(availabilityElem);
+        }
+    }
+    
+    private void addAudioStreamElement(Element ondemandElement, Version version, RadioPlayerService service) {
+        if (RadioPlayerServices.nationalNetworks.contains(service) && Strings.emptyToNull(version.getCanonicalUri()) != null) {
+            ondemandElement.appendChild(audioStreamGroupElement(version));
+        }
     }
 
 	private Element audioStreamGroupElement(Version version) {
