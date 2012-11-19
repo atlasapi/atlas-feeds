@@ -2,6 +2,9 @@ package org.atlasapi.feeds.radioplayer.outputting;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import java.util.List;
+
 import nu.xom.Element;
 import nu.xom.Elements;
 
@@ -17,21 +20,26 @@ import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
 import org.junit.Test;
 
-import com.metabroadcast.common.intl.Countries;
+import com.google.inject.internal.Lists;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
 
 public class MobileAvailabilityTest {
     Clock clock = new TimeMachine();
-    private static RadioPlayerXMLOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
     
     @Test
     public void testMobileAvailabilityNoPlatform() {
         RadioPlayerBroadcastItem broadcastItem = buildRadioPlayerBroadcastItem();
         broadcastItem.getVersion().setCanonicalUri("canonicalUri");
+        List<Location> locations = Lists.newArrayList(buildNoPlatformLocation());
+        Encoding encoding = new Encoding();
+        for (Location location : locations) {
+            encoding.addAvailableAt(location);
+        }
+        broadcastItem.getVersion().addManifestedAs(encoding);
         
         RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
-        Element ondemandElement = outputter.ondemandElement(broadcastItem, buildNoPlatformLocation(), Countries.GB, new RadioPlayerService(342, "radio2"));
+        Element ondemandElement = outputter.ondemandElement(broadcastItem, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it should be)
         assertTrue(hasAudioStreamGroup(ondemandElement));
     }
@@ -40,9 +48,15 @@ public class MobileAvailabilityTest {
     public void testMobileAvailabilityXBox() {
         RadioPlayerBroadcastItem broadcastItem = buildRadioPlayerBroadcastItem();
         broadcastItem.getVersion().setCanonicalUri("canonicalUri");
+        List<Location> locations = Lists.newArrayList(buildXBoxLocation());
+        Encoding encoding = new Encoding();
+        for (Location location : locations) {
+            encoding.addAvailableAt(location);
+        }
+        broadcastItem.getVersion().addManifestedAs(encoding);
         
         RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
-        Element ondemandElement = outputter.ondemandElement(broadcastItem, buildXBoxLocation(), Countries.GB, new RadioPlayerService(342, "radio2"));
+        Element ondemandElement = outputter.ondemandElement(broadcastItem, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it should be)
         assertTrue(hasAudioStreamGroup(ondemandElement));
     }
@@ -51,9 +65,15 @@ public class MobileAvailabilityTest {
     public void testMobileAvailabilityPCWithNoIOSLocations() {
         RadioPlayerBroadcastItem broadcastItem = buildRadioPlayerBroadcastItem();
         broadcastItem.getVersion().setCanonicalUri("canonicalUri");
+        List<Location> locations = Lists.newArrayList(buildPCLocation());
+        Encoding encoding = new Encoding();
+        for (Location location : locations) {
+            encoding.addAvailableAt(location);
+        }
+        broadcastItem.getVersion().addManifestedAs(encoding);
         
         RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
-        Element ondemandElement = outputter.ondemandElement(broadcastItem, buildPCLocation(), Countries.GB, new RadioPlayerService(342, "radio2"));
+        Element ondemandElement = outputter.ondemandElement(broadcastItem, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it shouldn't be)
         assertFalse(hasAudioStreamGroup(ondemandElement));
     }
@@ -62,15 +82,15 @@ public class MobileAvailabilityTest {
     public void testMobileAvailabilityPCWithIOSLocations() {
         RadioPlayerBroadcastItem broadcastItem = buildRadioPlayerBroadcastItem();
         broadcastItem.getVersion().setCanonicalUri("canonicalUri");
-        
+        List<Location> locations = Lists.newArrayList(buildPCLocation(), buildIOS3GLocation(false), buildIOSWifiLocation(false));
         Encoding encoding = new Encoding();
-        encoding.addAvailableAt(buildPCLocation());
-        encoding.addAvailableAt(buildIOS3GLocation(false));
-        encoding.addAvailableAt(buildIOSWifiLocation(false));
+        for (Location location : locations) {
+            encoding.addAvailableAt(location);
+        }
         broadcastItem.getVersion().addManifestedAs(encoding);
         
         RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
-        Element ondemandElement = outputter.ondemandElement(broadcastItem, buildPCLocation(), Countries.GB, new RadioPlayerService(342, "radio2"));
+        Element ondemandElement = outputter.ondemandElement(broadcastItem, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it shouldn't be)
         assertFalse(hasAudioStreamGroup(ondemandElement));
     }
@@ -79,15 +99,15 @@ public class MobileAvailabilityTest {
     public void testMobileAvailabilityPCWithIOSLocationsActualAvailabilitySet() {
         RadioPlayerBroadcastItem broadcastItem = buildRadioPlayerBroadcastItem();
         broadcastItem.getVersion().setCanonicalUri("canonicalUri");
-        
+        List<Location> locations = Lists.newArrayList(buildPCLocation(), buildIOS3GLocation(true), buildIOSWifiLocation(true));
         Encoding encoding = new Encoding();
-        encoding.addAvailableAt(buildPCLocation());
-        encoding.addAvailableAt(buildIOS3GLocation(true));
-        encoding.addAvailableAt(buildIOSWifiLocation(true));
+        for (Location location : locations) {
+            encoding.addAvailableAt(location);
+        }
         broadcastItem.getVersion().addManifestedAs(encoding);
         
         RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
-        Element ondemandElement = outputter.ondemandElement(broadcastItem, buildPCLocation(), Countries.GB, new RadioPlayerService(342, "radio2"));
+        Element ondemandElement = outputter.ondemandElement(broadcastItem, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it should be)
         assertTrue(hasAudioStreamGroup(ondemandElement));
     }
