@@ -39,27 +39,6 @@ public class RadioPlayerGenreElementCreator {
             genres = Sets.union(genres, Sets.newCopyOnWriteArraySet(genreList));
         }
 
-//        final Map<String, String> finalGenres = Maps.newHashMap();
-
-        // THIS TRIMS OFF GENRES...
-        // Create map of genre to type backwards, so most significant genre type
-        // definition is left in map.
-//        for (int i = genreTypes.size() - 1; i >= 0; i--) {
-//            for (List<String> genreGroup : mappedGenres) {
-//                if (genreGroup.size() > i) {
-//                    finalGenres.put(genreGroup.get(i), genreTypes.get(i));
-//                }
-//            }
-//        }
-
-//        // Order keys by type.
-//        Iterable<String> orderedKeys = Ordering.from(new Comparator<String>() {
-//            @Override
-//            public int compare(String o1, String o2) {
-//                return genreTypeComparator.compare(finalGenres.get(o1), finalGenres.get(o2));
-//            }
-//        }).sortedCopy(finalGenres.keySet());
-
         // Create the actual genre elements
         ImmutableList<Element> genreElements = ImmutableList.copyOf(Iterables.transform(genres, new Function<String, Element>() {
             @Override
