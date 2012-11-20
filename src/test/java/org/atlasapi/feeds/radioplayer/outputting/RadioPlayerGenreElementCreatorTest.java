@@ -34,7 +34,7 @@ public class RadioPlayerGenreElementCreatorTest {
 				"http://www.bbc.co.uk/programmes/genres/childrens"
 		));
 		
-		List<Element> genreElems = new RadioPlayerGenreElementCreator(new RadioPlayerCSVReadingGenreMap("radioplayergenres.csv")).genreElementsFor(item);
+		List<Element> genreElems = new RadioPlayerGenreElementCreator(new RadioPlayerTSVReadingGenreMap("radioplayergenres.tsv")).genreElementsFor(item);
 		
 		ImmutableList<String> mappedGenres = ImmutableList.copyOf(Iterables.transform(genreElems, new Function<Element, String>() {
 			@Override
@@ -42,13 +42,14 @@ public class RadioPlayerGenreElementCreatorTest {
 				return from.getAttributeValue("href");
 			}
 		}));
-		assertThat(mappedGenres.size(), is(4));
+		assertThat(mappedGenres.size(), is(6));
 		assertThat(mappedGenres, is(equalTo(ImmutableList.of(
-				"urn:tva:metadata:cs:IntendedAudienceCS:2005:4.2.1",
+                "urn:tva:metadata:cs:ContentCS:2007:3.5",
+                "urn:tva:metadata:cs:IntendedAudienceCS:2005:4.2.1",
+                "urn:radioplayer:metadata:cs:Category:2012:7",
 				"urn:tva:metadata:cs:ContentCS:2007:3.1",
-				"urn:tva:metadata:cs:ContentCS:2007:3.5",
-				"urn:tva:metadata:cs:ContentCS:2007:3.1.3"
+				"urn:tva:metadata:cs:ContentCS:2007:3.1.3",
+				"urn:radioplayer:metadata:cs:Category:2012:6"
 		))));
 	}
-
 }

@@ -4,7 +4,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.junit.Before;
@@ -21,7 +26,7 @@ public class RadioPlayerReadingGenreMapTest {
 
 	@Test
 	public void testMap() {
-		RadioPlayerCSVReadingGenreMap gm = new RadioPlayerCSVReadingGenreMap("org/atlasapi/feeds/radioplayer/testgenres.csv");
+		RadioPlayerTSVReadingGenreMap gm = new RadioPlayerTSVReadingGenreMap("org/atlasapi/feeds/radioplayer/testgenres.tsv");
 		
 		assertThat(
 			gm.map(ImmutableSet.of("http://www.bbc.co.uk/programmes/genres/childrens/entertainmentandcomedy")), 
@@ -43,7 +48,12 @@ public class RadioPlayerReadingGenreMapTest {
 	}
 
 	@Test
-	public void testFullMapCreates() {
+	public void testCSVFullMapCreates() {
 		new RadioPlayerCSVReadingGenreMap(RadioPlayerCSVReadingGenreMap.GENRES_FILE);
 	}
+	
+	@Test
+    public void testFullTSVMapCreates() {
+	    new RadioPlayerTSVReadingGenreMap(RadioPlayerTSVReadingGenreMap.GENRES_FILE);
+    }
 }
