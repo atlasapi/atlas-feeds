@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,17 +19,26 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
+import org.atlasapi.media.entity.Policy.Network;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.LocalDate;
 import org.joda.time.format.ISOPeriodFormat;
 
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
+import com.google.inject.internal.Lists;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
 import com.metabroadcast.common.time.DateTimeZones;
@@ -90,18 +101,22 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         }
 
         //Because outputCountries always contains ALL, international block output is suppressed.
-        Set<Country> outputCountries = Sets.newHashSet(Countries.ALL);
+        Multimap<Country, Location> locationsByCountry = ArrayListMultimap.create();
+        // bucket locations by country
         for (Encoding encoding : broadcastItem.getVersion().getManifestedAs()) {
             for (Location location : encoding.getAvailableAt()) {
-            	for (Country country : representedBy(encoding, location)) {
-            		if (!outputCountries.contains(country)) {
-	            		programme.appendChild(ondemandElement(broadcastItem, location, country, id));
-	            		outputCountries.add(country);
-            		}
-            	}
+                for (Country country : representedBy(encoding, location)) {
+                    locationsByCountry.put(country, location);
+                }
             }
         }
-
+        
+        for (Country country : locationsByCountry.keySet()) {
+            if (!country.equals(Countries.ALL)) {
+                programme.appendChild(ondemandElement(broadcastItem, locationsByCountry.get(country), id));
+            }
+        }
+        
         return programme;
     }
     
@@ -180,7 +195,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         return item.getImage();
     }
 
-    private Element ondemandElement(RadioPlayerBroadcastItem broadcastItem, Location location, Country country, RadioPlayerService service) {
+    Element ondemandElement(RadioPlayerBroadcastItem broadcastItem,  Collection<Location> locations, RadioPlayerService service) {
         
         Item item = broadcastItem.getItem();
         
@@ -188,31 +203,84 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 
         ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCurie().substring(item.getCurie().indexOf(":") + 1)));
 
-        Policy policy = location.getPolicy();   
-        if (policy != null) {
-             
-        	// disabled
-        	// addRestriction(ondemandElement, country);
 
-            DateTime availableTill = Ordering.natural().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
-            DateTime availableFrom = policy.getAvailabilityStart();
-            if (availableTill != null && availableFrom != null) {
-                Element availabilityElem = createElement("availability", RADIOPLAYER);
-                Element availabilityScopeElem = createElement("scope", RADIOPLAYER);
-                availabilityScopeElem.addAttribute(new Attribute("startTime", DATE_TIME_FORMAT.print(availableFrom)));
-                availabilityScopeElem.addAttribute(new Attribute("stopTime", DATE_TIME_FORMAT.print(availableTill)));
-                availabilityElem.appendChild(availabilityScopeElem);
-                ondemandElement.appendChild(availabilityElem);
-            }
-
-        }
-        
         Version version = broadcastItem.getVersion();
+        
+        // get the list of non-null policies from the provided list of locations
+        List<Policy> policies = Lists.newArrayList(Iterables.filter(Iterables.transform(locations, new Function<Location, Policy>() {
+            @Override
+            public Policy apply(Location input) {
+                return input.getPolicy();
+            }
+        }), new Predicate<Policy>() {
+            @Override
+            public boolean apply(Policy input) {
+                return input != null;
+            }
+        }));
+        
+        if (policies.isEmpty()) {
+            addAudioStreamElement(ondemandElement, version, service);
+        } else {
+            Optional<Policy> pcPolicy = Iterables.tryFind(policies, new Predicate<Policy>() {
+                @Override
+                public boolean apply(Policy input) {
+                    return (input.getPlatform() != null && input.getPlatform().equals(Platform.PC)); 
+                }
+            });
+            if (!pcPolicy.isPresent()) {
+                // add availability details for first policy in list
+                addAvailabilityDetailsToOndemand(ondemandElement, policies.get(0));
+                addAudioStreamElement(ondemandElement, version, service);
+            } else {
+                addAvailabilityDetailsToOndemand(ondemandElement, pcPolicy.get());
+                Policy ios3G = null;
+                Policy iosWifi = null;
+                for (Policy policy : policies) {
+                    if (policy.getNetwork() !=  null) {
+                        if (policy.getPlatform().equals(Platform.IOS) 
+                                && policy.getNetwork().equals(Network.THREE_G)) {
+                            ios3G = policy;
+                        }
+                        if (policy.getPlatform().equals(Platform.IOS) 
+                                && policy.getNetwork().equals(Network.WIFI)) {
+                            iosWifi = policy;
+                        }
+                    }
+                }
+                // if there are policies for both IOS-3G and IOS-Wifi, and both have actualAvailabilityStarts, and both of those times are before now, 
+                // add the audiostreamgroup
+                if (ios3G != null && iosWifi != null) {
+                    if (ios3G.getActualAvailabilityStart() != null && iosWifi.getActualAvailabilityStart() != null) {
+                        if (ios3G.getActualAvailabilityStart().isBefore(new DateTime()) && iosWifi.getActualAvailabilityStart().isBefore(new DateTime())) {
+                            addAudioStreamElement(ondemandElement, version, service);
+                        }
+                    }
+                }
+            }
+        }
+           
+
+        return ondemandElement;
+    }
+    
+    private void addAvailabilityDetailsToOndemand(Element ondemandElement, Policy policy) {
+        DateTime availableTill = Ordering.natural().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
+        DateTime availableFrom = policy.getAvailabilityStart();
+        if (availableTill != null && availableFrom != null) {
+            Element availabilityElem = createElement("availability", RADIOPLAYER);
+            Element availabilityScopeElem = createElement("scope", RADIOPLAYER);
+            availabilityScopeElem.addAttribute(new Attribute("startTime", DATE_TIME_FORMAT.print(availableFrom)));
+            availabilityScopeElem.addAttribute(new Attribute("stopTime", DATE_TIME_FORMAT.print(availableTill)));
+            availabilityElem.appendChild(availabilityScopeElem);
+            ondemandElement.appendChild(availabilityElem);
+        }
+    }
+    
+    private void addAudioStreamElement(Element ondemandElement, Version version, RadioPlayerService service) {
         if (RadioPlayerServices.nationalNetworks.contains(service) && Strings.emptyToNull(version.getCanonicalUri()) != null) {
             ondemandElement.appendChild(audioStreamGroupElement(version));
         }
-
-        return ondemandElement;
     }
 
 	private Element audioStreamGroupElement(Version version) {
