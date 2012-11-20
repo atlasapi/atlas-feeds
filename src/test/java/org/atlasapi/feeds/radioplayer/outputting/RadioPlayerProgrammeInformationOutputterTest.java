@@ -102,6 +102,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		Version version = Iterables.getOnlyElement(testItem.getVersions());
         Broadcast broadcast = Iterables.getOnlyElement(version.getBroadcasts());
+        
         assertEquals(expectedFeed("seriesNoBrandPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast).withContainer(series))));
 	}
 
@@ -120,19 +121,17 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		version.addBroadcast(broadcast);
 		
 		testItem.setVersions(ImmutableSet.of(version));
-		
+
 		assertEquals(expectedFeed("noLocationPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast))));
 	}
 	
 	private static String output(List<RadioPlayerBroadcastItem> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		outputter.output(new RadioPlayerPiFeedSpec(new RadioPlayerService(502, "radio2").withDabServiceId("e1_ce15_c222_0"), new LocalDate(2010, 9, 6)), items, out);
-		String substring = out.toString(Charsets.UTF_8.toString()).substring(550);
-		System.out.println(substring);
-        return substring;
+		return out.toString(Charsets.UTF_8.toString()).substring(550);
 	}
 
-	private String expectedFeed( String filename) throws IOException {
+	private String expectedFeed(String filename) throws IOException {
 		return Resources.toString(
 				Resources.getResource("org/atlasapi/feeds/radioplayer/"
 						+ filename), Charsets.UTF_8).substring(550);
