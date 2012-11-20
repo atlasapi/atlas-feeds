@@ -36,7 +36,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import com.google.inject.internal.Lists;
@@ -238,13 +237,13 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
                 Policy ios3G = null;
                 Policy iosWifi = null;
                 for (Policy policy : policies) {
-                    if (policy.getNetwork().isPresent()) {
+                    if (policy.getNetwork() !=  null) {
                         if (policy.getPlatform().equals(Platform.IOS) 
-                                && policy.getNetwork().get().equals(Network.THREE_G)) {
+                                && policy.getNetwork().equals(Network.THREE_G)) {
                             ios3G = policy;
                         }
                         if (policy.getPlatform().equals(Platform.IOS) 
-                                && policy.getNetwork().get().equals(Network.WIFI)) {
+                                && policy.getNetwork().equals(Network.WIFI)) {
                             iosWifi = policy;
                         }
                     }
