@@ -93,7 +93,7 @@ public class XmlTvFeedCompiler {
         DateTime from = days.lowerEndpoint().toDateTime(SCHEDULE_START, DateTimeZones.UTC);
         DateTime to = days.upperEndpoint().toDateTime(SCHEDULE_START, DateTimeZones.UTC);
         Schedule schedule = scheduleResolver.schedule(from, to, ImmutableList.of(channel), ImmutableSet.of(publisher), Optional.<ApplicationConfiguration>absent());
-        List<Item> items = Iterables.getOnlyElement(schedule.scheduleChannels()).items();
+        List<Item> items = Iterables.getOnlyElement(schedule.channelSchedules()).items();
         return items;
     }
     
