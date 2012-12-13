@@ -32,7 +32,7 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 	@Test
 	public void testBuild() {
 		final String testApiKey = "testKey";
-		final Application testApp = Application.application("testSlug").withCredentials(new ApplicationCredentials(testApiKey)).build();
+		final Application testApp = Application.application("testSlug").withCredentials(new ApplicationCredentials(testApiKey, true)).build();
 		
 		Mockery context = new Mockery();
 		final ApplicationStore reader = context.mock(ApplicationStore.class);
