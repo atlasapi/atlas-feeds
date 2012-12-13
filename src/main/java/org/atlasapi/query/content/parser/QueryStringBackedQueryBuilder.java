@@ -37,6 +37,7 @@ import org.joda.time.DateTime;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
+import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -95,7 +96,7 @@ public class QueryStringBackedQueryBuilder {
     public ContentQuery build(HttpServletRequest request) {
         ContentQuery contentQuery = build(request.getParameterMap()).copyWithSelection(selectionBuilder.build(request));
         String annotationsParam = request.getParameter(ANNOTATIONS_PARAM) != null ? request.getParameter(ANNOTATIONS_PARAM) : "";
-        Set<Annotation> annotations = ImmutableSet.copyOf(Iterables.transform(csvSplitter.split(annotationsParam), Functions.forMap(Annotation.LOOKUP)));
+        Set<Annotation> annotations = ImmutableSet.copyOf(Optional.presentInstances(Iterables.transform(csvSplitter.split(annotationsParam), Functions.forMap(Annotation.lookup()))));
         if (annotations.isEmpty()) {
             return contentQuery;
         } else {
