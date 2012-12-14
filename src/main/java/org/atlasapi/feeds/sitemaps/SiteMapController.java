@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
+import org.atlasapi.application.query.InvalidAPIKeyException;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.ChildRef;
@@ -78,22 +79,25 @@ public class SiteMapController {
             response.sendError(BAD_REQUEST.code(), "Unknown publisher " + publisher);
             return null;
         }
+        try {
+            ContentQuery query = queryBuilder.build(request);
+		
+            Set<Publisher> includedPublishers = query.getConfiguration().getEnabledSources();
         
-        ContentQuery query = queryBuilder.build(request);
-        Set<Publisher> includedPublishers = query.getConfiguration().getEnabledSources();
-        
-        Iterable<SiteMapRef> sitemapRefs;
-        if (includedPublishers.contains(possiblePublisher.requireValue())) {
-            sitemapRefs = sitemapRefForQuery(query, host, possiblePublisher.requireValue());
-        } else {
-            sitemapRefs = ImmutableList.<SiteMapRef> of();
-        }
+            Iterable<SiteMapRef> sitemapRefs;
+            if (includedPublishers.contains(possiblePublisher.requireValue())) {
+                sitemapRefs = sitemapRefForQuery(query, host, possiblePublisher.requireValue());
+            } else {
+                sitemapRefs = ImmutableList.<SiteMapRef> of();
+            }
 
-        response.setStatus(HttpServletResponse.SC_OK);
-        cacheHeaderWriter.writeHeaders(request, response);
+            response.setStatus(HttpServletResponse.SC_OK);
+            cacheHeaderWriter.writeHeaders(request, response);
         
-        indexOutputter.output(sitemapRefs, response.getOutputStream());
-        
+            indexOutputter.output(sitemapRefs, response.getOutputStream());
+		} catch (InvalidAPIKeyException e) {
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+		}
         return null;
     }
 
@@ -131,22 +135,26 @@ public class SiteMapController {
 
     @RequestMapping("/feeds/sitemaps/sitemap.xml")
     public String siteMapForBrand(HttpServletRequest request, HttpServletResponse response, @RequestParam("brand.uri") String brandUri) throws IOException {
-
-        final ContentQuery query = queryBuilder.build(new SitemapHackHttpRequest(request, brandUri));
+        try {
+            final ContentQuery query = queryBuilder.build(new SitemapHackHttpRequest(request, brandUri));
         
-        Iterable<Container> brands = Iterables.filter(resolve(URI_SPLITTER.split(brandUri),query), Container.class);
+            Iterable<Container> brands = Iterables.filter(resolve(URI_SPLITTER.split(brandUri),query), Container.class);
         
-        Map<ParentRef, Container> parentLookup = Maps.<ParentRef,Container>uniqueIndex(brands, ParentRef.T0_PARENT_REF);
-        Iterable<Item> contents = Iterables.filter(Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
-            @Override
-            public Iterable<Content> apply(Container input) {
-                return resolve(Iterables.transform(input.getChildRefs(), ChildRef.TO_URI), query);
-            }
-        })),Item.class);
+            Map<ParentRef, Container> parentLookup = Maps.<ParentRef,Container>uniqueIndex(brands, ParentRef.T0_PARENT_REF);
+            Iterable<Item> contents = Iterables.filter(Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
+                @Override
+                public Iterable<Content> apply(Container input) {
+                    return resolve(Iterables.transform(input.getChildRefs(), ChildRef.TO_URI), query);
+                }
+            })),Item.class);
         
-        response.setStatus(HttpServletResponse.SC_OK);
-        cacheHeaderWriter.writeHeaders(request, response);
-        outputter.output(parentLookup, contents, response.getOutputStream());
+            response.setStatus(HttpServletResponse.SC_OK);
+            cacheHeaderWriter.writeHeaders(request, response);
+            outputter.output(parentLookup, contents, response.getOutputStream());
+        
+        } catch (InvalidAPIKeyException e) {
+		    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
+	    }
         return null;
     }
 

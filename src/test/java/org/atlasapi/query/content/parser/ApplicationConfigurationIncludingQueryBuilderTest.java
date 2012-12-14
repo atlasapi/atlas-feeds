@@ -8,6 +8,7 @@ import org.atlasapi.application.Application;
 import org.atlasapi.application.ApplicationCredentials;
 import org.atlasapi.application.ApplicationStore;
 import org.atlasapi.application.query.ApplicationConfigurationFetcher;
+import org.atlasapi.application.query.InvalidAPIKeyException;
 import org.atlasapi.application.query.IpCheckingApiKeyConfigurationFetcher;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.jmock.Expectations;
@@ -47,9 +48,13 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 		ApplicationConfigurationIncludingQueryBuilder builder = new ApplicationConfigurationIncludingQueryBuilder(new QueryStringBackedQueryBuilder(), configFetcher) ;
 
 		HttpServletRequest request = new StubHttpServletRequest().withParam("tag", "East").withParam("apiKey", testApiKey);
-		ContentQuery query = builder.build(request);
-		
-		assertEquals(testApp.getConfiguration(), query.getConfiguration());		
+		ContentQuery query;
+		try {
+			query = builder.build(request);
+			assertEquals(testApp.getConfiguration(), query.getConfiguration());	
+		} catch (InvalidAPIKeyException e) {
+			e.printStackTrace();
+		}
 	}
 
 }
