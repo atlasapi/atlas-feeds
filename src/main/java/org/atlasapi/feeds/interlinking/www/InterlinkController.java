@@ -10,7 +10,7 @@ import org.atlasapi.feeds.interlinking.DelegatingPlaylistToInterlinkAdapter;
 import org.atlasapi.feeds.interlinking.PlaylistToInterlinkFeed;
 import org.atlasapi.feeds.interlinking.PlaylistToInterlinkFeedAdapter;
 import org.atlasapi.feeds.interlinking.outputting.InterlinkFeedOutputter;
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;

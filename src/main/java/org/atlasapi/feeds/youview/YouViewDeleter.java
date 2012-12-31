@@ -5,7 +5,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.media.entity.Brand;
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Series;
 import org.slf4j.Logger;

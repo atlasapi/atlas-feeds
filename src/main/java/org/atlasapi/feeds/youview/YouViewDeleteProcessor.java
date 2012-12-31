@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview;
 
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.content.Content;
 
 
 public interface YouViewDeleteProcessor<T> {

@@ -21,9 +21,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.media.TransportType;
+import org.atlasapi.media.content.Container;
+import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.ChildRef;
-import org.atlasapi.media.entity.Container;
-import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;

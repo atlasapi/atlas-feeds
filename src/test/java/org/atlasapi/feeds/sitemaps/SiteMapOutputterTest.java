@@ -18,8 +18,8 @@ import junit.framework.TestCase;
 import nu.xom.Builder;
 
 import org.atlasapi.media.TransportType;
+import org.atlasapi.media.content.Container;
 import org.atlasapi.media.entity.Brand;
-import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;

@@ -21,7 +21,7 @@ import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;

@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;

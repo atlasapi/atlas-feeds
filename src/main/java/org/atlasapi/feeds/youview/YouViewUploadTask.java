@@ -1,11 +1,11 @@
-    package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview;
 
 import java.util.Iterator;
 import java.util.List;
 
 import org.atlasapi.feeds.utils.UpdateProgress;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;

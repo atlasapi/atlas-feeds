@@ -22,8 +22,8 @@ import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerUpdatedClipOutputter
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter;
 import org.atlasapi.feeds.radioplayer.upload.FileType;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.content.Container;
 import org.atlasapi.media.entity.Broadcast;
-import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.LookupRef;
