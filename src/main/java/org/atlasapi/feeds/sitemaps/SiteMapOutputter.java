@@ -15,9 +15,9 @@ import nu.xom.Serializer;
 
 import org.atlasapi.feeds.xml.XMLNamespace;
 import org.atlasapi.media.TransportType;
+import org.atlasapi.media.content.Container;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Clip;
-import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;

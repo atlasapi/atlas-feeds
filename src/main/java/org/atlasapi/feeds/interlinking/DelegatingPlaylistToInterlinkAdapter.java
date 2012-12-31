@@ -3,7 +3,7 @@ package org.atlasapi.feeds.interlinking;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 

@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.sitemaps;
 
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.content.Content;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Function;

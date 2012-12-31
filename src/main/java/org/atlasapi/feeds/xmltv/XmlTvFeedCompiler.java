@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.content.Container;
 import org.atlasapi.media.entity.Broadcast;
-import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
