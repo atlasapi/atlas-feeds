@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -27,6 +28,7 @@ import org.apache.ftpserver.ftplet.UserManager;
 import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
+import org.atlasapi.application.ApplicationConfiguration;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
@@ -126,7 +128,7 @@ public class RadioPlayerFileUploaderTest {
 		context.checking(new Expectations(){{
 			allowing(channelResolver).fromUri("http://www.bbc.co.uk/services/radio1/england");
 			will(returnValue(Maybe.just(channel)));
-		    oneOf(scheduleResolver).schedule(with(any(DateTime.class)), with(any(DateTime.class)), with(channels), with(publishers)); will(returnValue(schedule));
+		    oneOf(scheduleResolver).schedule(with(any(DateTime.class)), with(any(DateTime.class)), with(channels), with(publishers), with(nullValue(ApplicationConfiguration.class))); will(returnValue(schedule));
 		    oneOf(recorder).record(with(successfulUploadResult()));
 		}});
 		
