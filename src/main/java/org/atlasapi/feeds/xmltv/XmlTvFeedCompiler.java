@@ -101,7 +101,7 @@ public class XmlTvFeedCompiler {
             @Override
             public LookupRef apply(Episode input) {
                 if(input.getSeriesRef() != null) {
-                    return new LookupRef(input.getSeriesRef().getUri(), input.getPublisher(), ContentCategory.PROGRAMME_GROUP);
+                    return new LookupRef(input.getSeriesRef().getUri(), input.getSeriesRef().getId(), input.getPublisher(), ContentCategory.PROGRAMME_GROUP);
                 }
                 return null;
             }
@@ -121,7 +121,7 @@ public class XmlTvFeedCompiler {
             @Override
             public LookupRef apply(Item input) {
                 if(input.getContainer() != null) {
-                    return new LookupRef(input.getContainer().getUri(), input.getPublisher(), ContentCategory.CONTAINER);
+                    return new LookupRef(input.getContainer().getUri(), input.getContainer().getId(), input.getPublisher(), ContentCategory.CONTAINER);
                 }
                 return null;
             }
