@@ -162,7 +162,7 @@ public abstract class RadioPlayerFeedCompiler {
             @Override
             public LookupRef apply(Item input) {
                 if(input.getContainer() != null) {
-                    return new LookupRef(input.getContainer().getUri(), input.getPublisher(), ContentCategory.CONTAINER);
+                    return new LookupRef(input.getContainer().getUri(), input.getContainer().getId(), input.getPublisher(), ContentCategory.CONTAINER);
                 }
                 return null;
             }
