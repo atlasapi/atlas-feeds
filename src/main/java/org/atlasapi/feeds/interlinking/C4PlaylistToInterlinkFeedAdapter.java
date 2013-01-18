@@ -79,7 +79,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
     
     @Override
     protected String idFromParentRef(ParentRef parent) {
-        return extractTagUri(parent.getUri());
+        return extractTagUri(parent.getId().toString());
     }
 
     private String extractTagUri(String uri) {
