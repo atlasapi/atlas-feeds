@@ -13,17 +13,20 @@ import nu.xom.Element;
 
 import org.atlasapi.feeds.xml.XMLNamespace;
 import org.atlasapi.media.TransportType;
+import org.atlasapi.media.common.Id;
+import org.atlasapi.media.common.Identifiable;
 import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
-import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.util.Identifiables;
+import org.atlasapi.persistence.media.channel.ChannelResolver;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -40,7 +43,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
-import org.atlasapi.persistence.media.channel.ChannelResolver;
 
 public class LakeviewFeedCompiler {
 
@@ -105,8 +107,8 @@ public class LakeviewFeedCompiler {
                 }
             }
         } else {
-            Map<String,Episode> episodeSeriesIndex = Maps.uniqueIndex(contentGroup.episodes(), Identified.TO_URI);
-            Function<ChildRef, Episode> childRefToEpisode = Functions.compose(Functions.forMap(episodeSeriesIndex, null), ChildRef.TO_URI);
+            Map<Id, Episode> episodeSeriesIndex = Maps.uniqueIndex(contentGroup.episodes(), Identifiables.toId());
+            Function<Identifiable, Episode> childRefToEpisode = Functions.compose(Functions.forMap(episodeSeriesIndex, null),Identifiables.toId());
 
             for (Series series : contentGroup.series()) {
                 DateTime seriesPublicationDate = null;
@@ -141,7 +143,7 @@ public class LakeviewFeedCompiler {
         return brandElem != null ? elements : ImmutableList.<Element>of();
     }
 
-    public ImmutableList<Episode> sortedSeriesEpisodes(ImmutableList<ChildRef> childRefs, Function<ChildRef, Episode> childRefToEpisode) {
+    public ImmutableList<Episode> sortedSeriesEpisodes(ImmutableList<ChildRef> childRefs, Function<? super ChildRef, Episode> childRefToEpisode) {
         Iterable<Episode> episodes = Iterables.filter(Iterables.transform(childRefs, childRefToEpisode),Predicates.notNull());
         ImmutableList<Episode> sortedSeriesEpisodes = EPISODE_NUMBER_ORDERING.immutableSortedCopy(episodes);
         return sortedSeriesEpisodes;
@@ -257,9 +259,9 @@ public class LakeviewFeedCompiler {
         
         element.appendChild(stringElement("EpisodeNumber", LAKEVIEW, String.valueOf(episode.getEpisodeNumber())));
         element.appendChild(stringElement("DurationInSeconds", LAKEVIEW, String.valueOf(duration(episode))));
-        element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(episode.getContainer().getUri())));
+        element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(episode.getContainer().getId().toString())));
         if (episode.getSeriesRef() != null) {
-            element.appendChild(stringElement("SeasonId", LAKEVIEW, seriesId(episode.getSeriesRef().getUri())));
+            element.appendChild(stringElement("SeasonId", LAKEVIEW, seriesId(episode.getSeriesRef().getId().toString())));
         }
         
         return element;

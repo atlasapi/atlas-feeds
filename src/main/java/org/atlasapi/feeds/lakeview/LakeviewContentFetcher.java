@@ -10,8 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.atlasapi.media.common.Id;
 import org.atlasapi.media.entity.Brand;
-import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Identified;
@@ -21,6 +21,7 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.SeriesRef;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.util.Identifiables;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.listing.ContentLister;
 
@@ -81,7 +82,7 @@ public class LakeviewContentFetcher {
         while (listContent.hasNext()) {
             Episode episode = listContent.next();
             if(hasAvailableLocation(episode)) {
-                String brandUri = episode.getContainer().getUri();
+                String brandUri = episode.getContainer().getId().toString();
                 containerAvailableEpisodes.put(brandUri, episode);
             }
         }
@@ -98,7 +99,7 @@ public class LakeviewContentFetcher {
             if(resolvedBrand.hasValue()) {
                 
                 Brand brand = (Brand)resolvedBrand.requireValue();
-                List<Series> resolvedSeries = resolveSeries(Iterables.transform(brand.getSeriesRefs(), SeriesRef.TO_URI));
+                List<Series> resolvedSeries = resolveSeries(Iterables.transform(brand.getSeriesRefs(), Identifiables.toId()));
                 ImmutableList<Episode> orderedEpisodes = EPISODE_NUMBER_ORDERING.immutableSortedCopy(brandEpisodes.getValue());
                 
                 if (!brandEpisodes.getValue().isEmpty()) {
@@ -110,11 +111,11 @@ public class LakeviewContentFetcher {
         return content;
     }
 
-    private List<Series> resolveSeries(Iterable<String> seriesUris) {
+    private List<Series> resolveSeries(Iterable<Id> seriesUris) {
         if(seriesUris == null || Iterables.isEmpty(seriesUris)) {
             return ImmutableList.of();
         }
-        return seriesOrdering.immutableSortedCopy(Iterables.filter(contentResolver.findByCanonicalUris(seriesUris).getAllResolvedResults(), Series.class));
+        return seriesOrdering.immutableSortedCopy(Iterables.filter(contentResolver.findByIds(seriesUris).getAllResolvedResults(), Series.class));
     }
 
     private boolean hasAvailableLocation(Episode episode) {

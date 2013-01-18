@@ -123,7 +123,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     }
 
 	protected String idFromParentRef(ParentRef parent) {
-        return parent.getUri();
+        return parent.getId().toString();
     }
 
     private String extractSeriesTitle(Series series) {

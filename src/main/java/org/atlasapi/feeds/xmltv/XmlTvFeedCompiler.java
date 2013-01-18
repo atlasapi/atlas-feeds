@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.atlasapi.application.ApplicationConfiguration;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.common.Id;
 import org.atlasapi.media.content.Container;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Episode;
@@ -63,8 +64,8 @@ public class XmlTvFeedCompiler {
     }
     
     private List<XmlTvBroadcastItem> transform(List<Item> items) {
-        final Map<String, Identified> containers = containersFor(items);
-        final Map<String, Identified> series = seriesFor(items);
+        final Map<Id, Identified> containers = containersFor(items);
+        final Map<Id, Identified> series = seriesFor(items);
         return ImmutableList.copyOf(concat(Iterables.transform(items, new Function<Item, Iterable<XmlTvBroadcastItem>>() {
             @Override
             public Iterable<XmlTvBroadcastItem> apply(Item item) {
@@ -72,11 +73,11 @@ public class XmlTvFeedCompiler {
                 for (Version version : item.nativeVersions()) {
                     for (Broadcast broadcast : version.getBroadcasts()) {
                         XmlTvBroadcastItem broadcastItem = new XmlTvBroadcastItem(item, version, broadcast);
-                        if(item.getContainer() != null && containers.containsKey(item.getContainer().getUri())) {
-                            broadcastItem.withContainer((Container)containers.get(item.getContainer().getUri()));
+                        if(item.getContainer() != null && containers.containsKey(item.getContainer().getId())) {
+                            broadcastItem.withContainer((Container)containers.get(item.getContainer().getId()));
                         }
                         if(item instanceof Episode && ((Episode)item).getSeriesRef() != null) {
-                            broadcastItem.withSeries((Series)series.get(((Episode)item).getSeriesRef().getUri()));
+                            broadcastItem.withSeries((Series)series.get(((Episode)item).getSeriesRef().getId()));
                         }
                         broadcastItems.add(broadcastItem);
                     }
@@ -97,13 +98,13 @@ public class XmlTvFeedCompiler {
         return items;
     }
     
-    private Map<String, Identified> seriesFor(List<Item> items) {
+    private Map<Id, Identified> seriesFor(List<Item> items) {
         Iterable<LookupRef> containerLookups = Iterables.filter(Iterables.transform(Iterables.filter(items, Episode.class), new Function<Episode, LookupRef>() {
 
             @Override
             public LookupRef apply(Episode input) {
                 if(input.getSeriesRef() != null) {
-                    return new LookupRef(input.getSeriesRef().getUri(), input.getSeriesRef().getId(), input.getPublisher(), ContentCategory.PROGRAMME_GROUP);
+                    return new LookupRef(input.getSeriesRef().getId(), input.getPublisher(), ContentCategory.PROGRAMME_GROUP);
                 }
                 return null;
             }
@@ -117,13 +118,13 @@ public class XmlTvFeedCompiler {
         return contentResolver.findByLookupRefs(ImmutableSet.copyOf(containerLookups)).asResolvedMap();
     }
     
-    private Map<String, Identified> containersFor(List<Item> items) {
+    private Map<Id, Identified> containersFor(List<Item> items) {
         Iterable<LookupRef> containerLookups = Iterables.filter(Iterables.transform(items, new Function<Item, LookupRef>() {
 
             @Override
             public LookupRef apply(Item input) {
                 if(input.getContainer() != null) {
-                    return new LookupRef(input.getContainer().getUri(), input.getContainer().getId(), input.getPublisher(), ContentCategory.CONTAINER);
+                    return new LookupRef(input.getContainer().getId(), input.getPublisher(), ContentCategory.CONTAINER);
                 }
                 return null;
             }

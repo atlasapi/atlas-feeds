@@ -22,6 +22,7 @@ import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerUpdatedClipOutputter
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter;
 import org.atlasapi.feeds.radioplayer.upload.FileType;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.common.Id;
 import org.atlasapi.media.content.Container;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Identified;
@@ -137,7 +138,7 @@ public abstract class RadioPlayerFeedCompiler {
     }
 
     private List<RadioPlayerBroadcastItem> transform(List<Item> items, String serviceUri) {
-        final Map<String, Identified> containers = containersFor(items);
+        final Map<Id, Identified> containers = containersFor(items);
         return ImmutableList.copyOf(concat(Iterables.transform(items, new Function<Item, Iterable<RadioPlayerBroadcastItem>>() {
             @Override
             public Iterable<RadioPlayerBroadcastItem> apply(Item item) {
@@ -145,8 +146,8 @@ public abstract class RadioPlayerFeedCompiler {
                 for (Version version : item.nativeVersions()) {
                     for (Broadcast broadcast : version.getBroadcasts()) {
                         RadioPlayerBroadcastItem broadcastItem = new RadioPlayerBroadcastItem(item, version, broadcast);
-                        if(item.getContainer() != null && containers.containsKey(item.getContainer().getUri())) {
-                            broadcastItem.withContainer((Container)containers.get(item.getContainer().getUri()));
+                        if(item.getContainer() != null && containers.containsKey(item.getContainer().getId())) {
+                            broadcastItem.withContainer((Container)containers.get(item.getContainer().getId()));
                         }
                         broadcastItems.add(broadcastItem);
                     }
@@ -156,13 +157,13 @@ public abstract class RadioPlayerFeedCompiler {
         })));
     }
 
-    private Map<String, Identified> containersFor(List<Item> items) {
+    private Map<Id, Identified> containersFor(List<Item> items) {
         Iterable<LookupRef> containerLookups = Iterables.filter(Iterables.transform(items, new Function<Item, LookupRef>() {
 
             @Override
             public LookupRef apply(Item input) {
                 if(input.getContainer() != null) {
-                    return new LookupRef(input.getContainer().getUri(), input.getContainer().getId(), input.getPublisher(), ContentCategory.CONTAINER);
+                    return new LookupRef(input.getContainer().getId(), input.getPublisher(), ContentCategory.CONTAINER);
                 }
                 return null;
             }
