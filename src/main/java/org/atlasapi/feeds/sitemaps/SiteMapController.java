@@ -21,15 +21,16 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.media.TransportType;
+import org.atlasapi.media.common.Id;
 import org.atlasapi.media.content.Container;
 import org.atlasapi.media.content.Content;
-import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.util.Identifiables;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.query.content.parser.ApplicationConfigurationIncludingQueryBuilder;
@@ -98,13 +99,13 @@ public class SiteMapController {
     }
 
     public Iterable<SiteMapRef> sitemapRefForQuery(ContentQuery query, final String host, Publisher publisher) {
-        final ImmutableSet.Builder<String> brands = ImmutableSet.builder();
+        final ImmutableSet.Builder<Id> brands = ImmutableSet.builder();
         
         Iterator<Item> items = Iterators.filter(lister.listContent(defaultCriteria().forPublisher(publisher).forContent(CHILD_ITEM).build()), Item.class);
         while (items.hasNext()) {
             Item item = items.next();
             if(item.getThumbnail() != null && hasLinkLocation(item)) {
-                brands.add(item.getContainer().getUri());
+                brands.add(item.getContainer().getId());
             }
         }
 
@@ -125,7 +126,11 @@ public class SiteMapController {
         return false;
     }
     
-    private Iterable<Content> resolve(Iterable<String> brands, ContentQuery query) {
+    private Iterable<Content> resolve(Iterable<Id> brands, ContentQuery query) {
+        return filter(concat(queryExecutor.executeIdQuery(brands, query).values()), Content.class);
+    }
+    
+    private Iterable<Content> resolveUri(Iterable<String> brands, ContentQuery query) {
         return filter(concat(queryExecutor.executeUriQuery(brands, query).values()), Content.class);
     }
 
@@ -134,13 +139,13 @@ public class SiteMapController {
 
         final ContentQuery query = queryBuilder.build(new SitemapHackHttpRequest(request, brandUri));
         
-        Iterable<Container> brands = Iterables.filter(resolve(URI_SPLITTER.split(brandUri),query), Container.class);
+        Iterable<Container> brands = Iterables.filter(resolveUri(URI_SPLITTER.split(brandUri),query), Container.class);
         
         Map<ParentRef, Container> parentLookup = Maps.<ParentRef,Container>uniqueIndex(brands, ParentRef.T0_PARENT_REF);
         Iterable<Item> contents = Iterables.filter(Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
             @Override
             public Iterable<Content> apply(Container input) {
-                return resolve(Iterables.transform(input.getChildRefs(), ChildRef.TO_URI), query);
+                return resolve(Iterables.transform(input.getChildRefs(), Identifiables.toId()), query);
             }
         })),Item.class);
         
