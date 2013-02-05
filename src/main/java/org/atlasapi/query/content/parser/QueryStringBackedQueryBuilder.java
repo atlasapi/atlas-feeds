@@ -154,23 +154,28 @@ public class QueryStringBackedQueryBuilder {
 		return new ContentQuery(operands);
 	}
 	
-	private class AttributeOperatorValues {
-		
-		private final Attribute<?> attribute;
+	final <T> AttributeOperatorValues<T> attribueOperatorValues(Attribute<T> attribute, Operator op, List<String> values) {
+	    return new AttributeOperatorValues<T>(attribute, op, values);
+	}
+
+	private class AttributeOperatorValues<T> {
+	    
+		private final Attribute<T> attribute;
 		private final Operator op;
 		private final List<String> values;
 		
-		public AttributeOperatorValues(Attribute<?> attribute, Operator op, List<String> values) {
+		public AttributeOperatorValues(Attribute<T> attribute, Operator op, List<String> values) {
 			this.attribute = attribute;
 			this.op = op;
 			this.values = values;
 		}
-		public AttributeQuery<?> toAttributeQuery() {
-			return attribute.createQuery(op, coerceListToType(values, attribute.requiresOperandOfType()));
+		public AttributeQuery<T> toAttributeQuery() {
+			List<T> typesValues = coerceListToType(values, attribute.requiresOperandOfType());
+            return attribute.createQuery(op, typesValues);
 		}
 	}
 	
-	private AttributeOperatorValues toQuery(String paramKey, String paramValue) {
+	private AttributeOperatorValues<?> toQuery(String paramKey, String paramValue) {
 		String[] parts = paramKey.split(ATTRIBUTE_OPERATOR_SEPERATOR);
 		if (parts.length > 2) {
 			throw new IllegalArgumentException("Malformed attribute and operator combination");
@@ -195,7 +200,7 @@ public class QueryStringBackedQueryBuilder {
 		} else {
 			values = Arrays.asList(paramValue.split(OPERAND_SEPERATOR));
 		}
-		return new AttributeOperatorValues(attribute, op, formatValues(attribute, values));
+		return attribueOperatorValues(attribute, op, formatValues(attribute, values));
 	}
 	
 	private List<String> formatValues(QueryFactory<?> attribute, List<String> values) {
