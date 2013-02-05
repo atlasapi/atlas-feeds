@@ -97,7 +97,7 @@ public class QueryStringBackedQueryBuilderTest  {
 	public void testTitleAndPublisherEqualityDisjunction() throws Exception {
 		Map<String, String[]> params = Maps.newHashMap();
 		params.put("publisher", new String[] { "bbc.co.uk,channel4.com" });
-		check(params, query().isAnEnumIn(DESCRIPTION_PUBLISHER, ImmutableList.<Enum<Publisher>>of(Publisher.BBC, Publisher.C4)));
+		check(params, query().isAnEnumIn(DESCRIPTION_PUBLISHER, ImmutableList.of(Publisher.BBC, Publisher.C4)));
 	}
 	
 //	@Test
