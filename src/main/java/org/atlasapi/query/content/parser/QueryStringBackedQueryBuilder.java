@@ -61,6 +61,8 @@ public class QueryStringBackedQueryBuilder {
     public static final String FROM_PARAM = "from";
     public static final String ON_PARAM = "on";
     public static final String ANNOTATIONS_PARAM = "annotations";
+    public static final String ALIAS_NAMESPACE_PARAM = "aliases.namespace";
+    public static final String ALIAS_VALUE_PARAM = "aliases.value";
 	
 	private final Set<String> ignoreParams = Sets.newHashSet(
 	        Selection.START_INDEX_REQUEST_PARAM,
@@ -69,7 +71,9 @@ public class QueryStringBackedQueryBuilder {
 	        TO_PARAM,
 	        FROM_PARAM,
 	        ON_PARAM,
-	        ANNOTATIONS_PARAM
+	        ANNOTATIONS_PARAM,
+	        ALIAS_NAMESPACE_PARAM,
+	        ALIAS_VALUE_PARAM
     ); 
     
     private final Splitter csvSplitter = Splitter.on(",").omitEmptyStrings().trimResults();

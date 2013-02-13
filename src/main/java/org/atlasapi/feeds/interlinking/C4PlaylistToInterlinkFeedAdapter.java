@@ -28,7 +28,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
 
     @Override
     protected String broadcastId(Broadcast broadcast) {
-    	for (String alias : broadcast.getAliases()) {
+    	for (String alias : broadcast.getAliasUrls()) {
     	    Matcher matcher = CHANNEL_SPECIFIC_ID_PATTERN.matcher(alias);
 			if (matcher.matches()) {
 				return alias;
@@ -53,7 +53,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
 
             @Override
             public boolean apply(Broadcast broadcast) {
-                for (String alias : broadcast.getAliases()) {
+                for (String alias : broadcast.getAliasUrls()) {
                     if (BROADCAST_ID_PATTERN.matcher(alias).matches()) {
                         return true;
                     }
