@@ -21,6 +21,7 @@ import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerUpdatedClipOutputter
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter;
 import org.atlasapi.feeds.radioplayer.upload.FileType;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.common.Id;
 import org.atlasapi.media.content.Container;
 import org.atlasapi.media.entity.Broadcast;
@@ -47,7 +48,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.metabroadcast.common.base.MorePredicates;
 import com.metabroadcast.common.time.DateTimeZones;
-import org.atlasapi.persistence.media.channel.ChannelResolver;
 
 public abstract class RadioPlayerFeedCompiler {
     
