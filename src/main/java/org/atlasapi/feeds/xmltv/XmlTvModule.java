@@ -7,6 +7,7 @@ import org.atlasapi.feeds.upload.s3.S3FileUploader;
 import org.atlasapi.feeds.xmltv.upload.XmlTvUploadHealthProbe;
 import org.atlasapi.feeds.xmltv.upload.XmlTvUploadService;
 import org.atlasapi.feeds.xmltv.upload.XmlTvUploadTask;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
@@ -24,7 +25,6 @@ import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
 import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.webapp.health.HealthController;
-import org.atlasapi.persistence.media.channel.ChannelResolver;
 
 @Configuration
 public class XmlTvModule {
