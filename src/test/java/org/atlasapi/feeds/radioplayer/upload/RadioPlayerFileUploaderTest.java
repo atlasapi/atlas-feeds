@@ -36,6 +36,7 @@ import org.atlasapi.feeds.upload.RemoteServiceDetails;
 import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
@@ -76,7 +77,6 @@ import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.time.DateTimeZones;
 import com.metabroadcast.common.time.DayRangeGenerator;
-import org.atlasapi.persistence.media.channel.ChannelResolver;
 
 @RunWith(JMock.class)
 public class RadioPlayerFileUploaderTest {
