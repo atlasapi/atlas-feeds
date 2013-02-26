@@ -6,9 +6,9 @@ import javax.xml.bind.JAXBElement;
 
 import org.atlasapi.feeds.lakeview.validation.FeedItemStore;
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult.ValidationResultType;
-import org.atlasapi.generated.ElementProduct;
-import org.atlasapi.generated.ElementTVEpisode;
-import org.atlasapi.generated.ElementTVSeason;
+import org.atlasapi.generated.lakeview.ElementProduct;
+import org.atlasapi.generated.lakeview.ElementTVEpisode;
+import org.atlasapi.generated.lakeview.ElementTVSeason;
 
 import com.google.inject.internal.Lists;
 import com.metabroadcast.common.base.Maybe;

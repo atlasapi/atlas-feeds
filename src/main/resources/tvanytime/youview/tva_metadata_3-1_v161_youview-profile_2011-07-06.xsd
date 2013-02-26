@@ -1,0 +1,1037 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+=======================================================
+YouView B2B Metadata Supply Schema: Profile of TV-Anytime Schema
+======================================================= 
+06/07/2011, Richard Bradbury
+- Made <Free> element mandatory again in OnDemandProgramType (CANTEC-123)
+======================================================= 
+15/02/2011, Richard Bradbury
+- Made length attribute really mandatory in ExplanatoryTextType (YVCP-456)
+- Also profiled out medium length explanatory text as not required in our profile
+======================================================= 
+15/02/2011, Richard Bradbury
+- in SynopsisType, made length attribute really mandatory (CANTEC-309)
+======================================================= 
+31/01/2011, Michael Sullivan (CANTEC-309)
+- in SynopsisType, made length attribute mandatory (CANTEC-309)
+======================================================= 
+31/01/2011, Michael Sullivan (CANTEC-310)
+- in ScheduleType, BroadcastEventType and OnDemandProgramType, serviceIDRef now limited to a single 
+tva:TVAIDRefType (is plural tva:TVAIDRefsType in TV-Anytime) 
+======================================================= 
+07/01/2011, Richard Bradbury
+  - Fixed bug where <ParentalGuidance> was incorrectly mandatory in all <BasicDescription>s. Changed to 0..1 (see also CANTEC-82).
+======================================================= 
+15/12/2010, Richard Bradbury
+  - Removed numOfItems attribute from GroupInformationType (CANTEC-281).
+======================================================= 
+07/12/2010, Richard Bradbury
+  - Changed cardinality of ServiceInformation/Name element to from 0..* to 1..2 (CANTEC-249).
+======================================================= 
+11/10/2010, Richard Bradbury
+  - Made <Free> optional in ScheduleEventType (and therefore BroadcastEventType) for consistency.
+======================================================= 
+25/11/2010, Michael Sullivan (CANTEC-123)
+  - Removed <Free> from OnDemandProgramType.
+  - Removed <PurchaseList> from InstanceDescriptionType.
+======================================================= 
+11/10/2010, Richard Bradbury
+  - Reduced cardinality of <BitRate> element to 0..1 to reflect our profiling.
+======================================================= 
+10/10/2010, Richard Bradbury
+  - Reintroduced <PurchaseList> element to BasicContentDescriptionType to support Pricing in Packages.
+======================================================= 
+30/09/2010, Richard Bradbury
+  - Made start and end attributes mandatory on ScheduleType.
+  - Profiled serviceIDRef attribute to be mandatory for OnDemandProgramType and BroadcastEventType (CANTEC-110).
+======================================================= 
+06/09/2010, Richard Bradbury
+  - Made <AVAttributes> optional again in InstanceDescriptionType to support "Coming soon... " Use Case (see CANTEC-89).
+=======================================================
+18/06/2010, Richard Bradbury
+  - Made certain elements mandatory.
+  - Removed certain unwanted elements and dependent types
+=======================================================
+29/04/10, Michael Sullivan
+  -First draft after move to v1.6.1 as basis for profile
+=======================================================
+09/12/09, Michael Sullivan
+	- checked all TV-A type change requests made this week are present in schema and match requests in detail
+=======================================================
+12/11/09, Michael Sullivan
+	- first cut amendment of TVA schema
+	- removed many unused Types
+	- removed fragment identification and versioning attributes, required earlier but deprecated recently following content partner input
+	NRIYP = placeholder abbreviation for "Not Required in YouView Profile"
+======================================================= 
+-->
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2010" xmlns:xml="http://www.w3.org/XML/1998/namespace" targetNamespace="urn:tva:metadata:2010" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<annotation>
+		<documentation xml:lang="en">This schema consists of datatypes that are normatively defined in ETSI TS 102 822-3-1 v1.6.1</documentation>
+	</annotation>
+	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
+	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7_2008.xsd"/>
+	<annotation>
+		<documentation xml:lang="en">Section 6.3.3 BASIC TYPES</documentation>
+	</annotation>
+	<!-- <simpleType name="TVAIDType">
+		<restriction base="string"/>
+	</simpleType>
+	<simpleType name="TVAIDRefType">
+		<restriction base="string"/>
+	</simpleType> -->
+	<!-- Type restriction tightened for YouView profile: (05-May-2010, Richard B/Michael S) -->
+	<simpleType name="TVAIDType">
+		<restriction base="anyURI"/>
+	</simpleType>
+	<simpleType name="TVAIDRefType">
+		<restriction base="anyURI"/>
+	</simpleType>
+	<simpleType name="TVAIDRefsType">
+		<list itemType="tva:TVAIDRefType"/>
+	</simpleType>
+	<simpleType name="CRIDType">
+		<restriction base="anyURI">
+			<pattern value="(c|C)(r|R)(i|I)(d|D)://.*/.*"/>
+		</restriction>
+	</simpleType>
+	<complexType name="CRIDRefType">
+		<attribute name="crid" type="tva:CRIDType" use="required"/>
+	</complexType>
+	<complexType name="FlagType">
+		<attribute name="value" type="boolean" use="required"/>
+	</complexType>
+	<complexType name="TVATimeType">
+		<sequence>
+			<element name="TimePoint" type="mpeg7:timePointType"/>
+			<element name="Duration" type="mpeg7:durationType" minOccurs="0"/>
+		</sequence>
+	</complexType>
+	<simpleType name="currencyCodeType">
+		<restriction base="string">
+			<pattern value="[a-zA-Z]{3}"/>
+		</restriction>
+	</simpleType>
+	<complexType name="PriceType">
+		<simpleContent>
+			<extension base="float">
+				<attribute name="currency" type="tva:currencyCodeType" use="required"/>
+			</extension>
+		</simpleContent>
+	</complexType>
+	<complexType name="TermNameType">
+		<simpleContent>
+			<extension base="mpeg7:TextualType">
+				<attribute name="preferred" type="boolean" use="optional"/>
+			</extension>
+		</simpleContent>
+	</complexType>
+	<complexType name="ControlledTermType">
+		<sequence>
+			<element name="Name" type="tva:TermNameType" minOccurs="0"/>
+			<element name="Definition" type="mpeg7:TextualType" minOccurs="0"/>
+		</sequence>
+		<attribute name="href" type="mpeg7:termReferenceType" use="required"/>
+	</complexType>
+	<complexType name="TVAIDRefElementType">
+		<attribute name="ref" type="tva:TVAIDRefType" use="required"/>
+	</complexType>
+	<complexType name="TVAAgentType">
+		<sequence>
+			<choice minOccurs="0" maxOccurs="unbounded">
+				<element name="PersonName" type="mpeg7:PersonNameType"/>
+				<element name="PersonNameIDRef" type="tva:TVAIDRefElementType"/>
+				<element name="OrganizationName" type="mpeg7:TextualType"/>
+				<element name="OrganizationNameIDRef" type="tva:TVAIDRefElementType"/>
+			</choice>
+		</sequence>
+	</complexType>
+	<attributeGroup name="fragmentIdentification">
+		<attribute name="fragmentExpirationDate" type="dateTime" use="optional"/>
+		<!-- NRIYP
+		<attribute name="fragmentId" type="tva:TVAIDType" use="optional"/>
+		<attribute name="fragmentVersion" type="unsignedLong" use="optional"/>
+		-->
+		<!-- Restored Michael S 2010/02/08: fragmentExpirationDate, for possible future use -->
+	</attributeGroup>
+	<annotation>
+		<documentation xml:lang="en">Section 6.3.4 DESCRIPTION</documentation>
+	</annotation>
+	<complexType name="KeywordType">
+		<simpleContent>
+			<extension base="mpeg7:TextualType">
+				<attribute name="type" use="optional" default="main">
+					<simpleType>
+						<restriction base="NMTOKEN">
+							<enumeration value="main"/>
+							<enumeration value="secondary"/>
+							<enumeration value="other"/>
+						</restriction>
+					</simpleType>
+				</attribute>
+			</extension>
+		</simpleContent>
+	</complexType>
+	<complexType name="GenreType">
+		<complexContent>
+			<extension base="tva:ControlledTermType">
+				<attribute name="type" use="optional" default="main">
+					<simpleType>
+						<restriction base="string">
+							<enumeration value="main"/>
+							<enumeration value="secondary"/>
+							<enumeration value="other"/>
+						</restriction>
+					</simpleType>
+				</attribute>
+			</extension>
+		</complexContent>
+	</complexType>
+	<simpleType name="SynopsisLengthType">
+		<restriction base="string">
+			<enumeration value="short"/>
+			<enumeration value="medium"/>
+			<enumeration value="long"/>
+		</restriction>
+	</simpleType>
+	<complexType name="SynopsisType">
+		<simpleContent>
+			<extension base="mpeg7:TextualType">
+				<attribute name="length" type="tva:SynopsisLengthType" use="required"/>
+			</extension>
+			<!-- michaels 2011/01/31: made @length mandatory (CANTEC-309) -->
+		</simpleContent>
+	</complexType>
+	<!-- NRIYP
+	<simpleType name="segmentTypeType"> ...
+	<complexType name="SegmentReferenceType"> ...
+	-->
+	<complexType name="RelatedMaterialType">
+		<sequence>
+			<element name="HowRelated" type="tva:ControlledTermType" minOccurs="0"/>
+			<element name="Format" type="tva:ControlledTermType" minOccurs="0"/>
+			<element name="MediaLocator" type="mpeg7:MediaLocatorType"/>
+			<element name="PromotionalText" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="PromotionalMedia" type="mpeg7:TitleMediaType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="SourceMediaLocator" type="mpeg7:MediaLocatorType" minOccurs="0"/>
+			<!-- NRIYP <choice> <element name="SegmentReference" type="tva:SegmentReferenceType"/> </choice> -->
+		</sequence>
+	</complexType>
+	<complexType name="CreditsItemType">
+		<complexContent>
+			<extension base="tva:TVAAgentType">
+				<choice>
+					<element name="Character" type="mpeg7:PersonNameType" minOccurs="0" maxOccurs="unbounded"/>
+					<element name="PresentationRole" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
+				</choice>
+				<attribute name="role" type="mpeg7:termReferenceType" use="required"/>
+				<attribute name="index" type="nonNegativeInteger" use="optional"/>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="CreditsListType">
+		<sequence>
+			<element name="CreditsItem" type="tva:CreditsItemType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<!-- NRIYP
+	<complexType name="AwardType"> ...
+	<complexType name="AwardsListItemType"> ...
+	<complexType name="AwardsListType"> ...
+	-->
+	<complexType name="ShortTitleType">
+		<simpleContent>
+			<extension base="mpeg7:TitleType">
+				<attribute name="length" type="unsignedShort" use="required"/>
+			</extension>
+		</simpleContent>
+	</complexType>
+	<complexType name="CaptionLanguageType">
+		<simpleContent>
+			<extension base="language">
+				<attribute name="primary" type="boolean" use="optional"/>
+				<attribute name="translation" type="boolean" use="optional"/>
+				<attribute name="closed" type="boolean" use="optional" default="true"/>
+				<attribute name="supplemental" type="boolean" use="optional" default="false"/>
+			</extension>
+		</simpleContent>
+	</complexType>
+	<complexType name="SignLanguageType">
+		<simpleContent>
+			<extension base="language">
+				<attribute name="primary" type="boolean" use="optional"/>
+				<attribute name="translation" type="boolean" use="optional"/>
+				<attribute name="type" type="string" use="optional"/>
+				<attribute name="closed" type="boolean" use="optional"/>
+			</extension>
+		</simpleContent>
+	</complexType>
+	<!-- NRIYP
+	<complexType name="CreationCoordinatesType"> ...
+	<complexType name="TVAPlaceType"> ...
+	<complexType name="DepictedCoordinatesType"> ...
+	<complexType name="ReleaseDateType"> ...
+	<complexType name="ReleaseInformationType"> ...
+	<complexType name="DRMDeclarationType"> ...
+	-->
+	<complexType name="PurchaseType">
+		<sequence>
+			<element name="PurchaseType" type="tva:ControlledTermType" minOccurs="0"/>
+			<element name="QuantityUnit" type="tva:ControlledTermType" minOccurs="0"/>
+			<element name="QuantityRange" minOccurs="0">
+				<complexType>
+					<attribute name="min" type="unsignedInt" use="optional"/>
+					<attribute name="max" type="unsignedInt" use="optional"/>
+				</complexType>
+			</element>
+		</sequence>
+	</complexType>
+	<complexType name="PurchaseItemType">
+		<sequence>
+			<element name="Price" type="tva:PriceType" maxOccurs="unbounded"/>
+			<element name="Purchase" type="tva:PurchaseType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Description" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="PricingServerURL" type="anyURI" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRIYP <element name="DRMDeclaration" type="tva:DRMDeclarationType" minOccurs="0"/> -->
+		</sequence>
+		<attribute name="start" type="dateTime" use="optional"/>
+		<attribute name="end" type="dateTime" use="optional"/>
+	</complexType>
+	<complexType name="PurchaseListType">
+		<sequence>
+			<choice minOccurs="0" maxOccurs="unbounded">
+				<element name="PurchaseItem" type="tva:PurchaseItemType"/>
+				<element name="PurchaseIdRef" type="tva:TVAIDRefType"/>
+			</choice>
+		</sequence>
+	</complexType>
+	<simpleType name="ExplanationLengthType">
+		<restriction base="string">
+			<enumeration value="short"/>
+			<enumeration value="long"/>
+			<!-- NRIYP <enumeration value="medium"/> -->
+		</restriction>
+	</simpleType>
+	<complexType name="ExplanationType">
+		<simpleContent>
+			<extension base="mpeg7:TextualType">
+				<attribute name="length" type="tva:ExplanationLengthType" use="required"/>
+			</extension>
+			<!-- YVCP-456: Made length attribute mandatory -->
+		</simpleContent>
+	</complexType>
+	<complexType name="TVAParentalGuidanceType">
+		<complexContent>
+			<extension base="mpeg7:ParentalGuidanceType">
+				<sequence>
+					<element name="ExplanatoryText" type="tva:ExplanationType" minOccurs="0" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="BasicContentDescriptionType">
+		<sequence>
+			<element name="Title" type="mpeg7:TitleType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRIYP <element name="MediaTitle" type="mpeg7:TitleMediaType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<element name="ShortTitle" type="tva:ShortTitleType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Synopsis" type="tva:SynopsisType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRIYP <element name="PromotionalInformation" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<element name="Keyword" type="tva:KeywordType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Genre" type="tva:GenreType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- richardb 2011/01/07: Change cardinality of ParentalGuidance element to 0..1. -->
+			<!-- NOTE: ParentalGuidance is mandatory for ProgramInformation but cannot be made mandatory in the schema because it would then become mandatory for GroupInformation too. -->
+			<element name="ParentalGuidance" type="tva:TVAParentalGuidanceType" minOccurs="0"/>
+			<element name="Language" type="mpeg7:ExtendedLanguageType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRIYP <element name="CaptionLanguage" type="tva:CaptionLanguageType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<!-- NRIYP <element name="SignLanguage" type="tva:SignLanguageType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<element name="CreditsList" type="tva:CreditsListType" minOccurs="0"/>
+			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ProductionDate" type="tva:TVATimeType" minOccurs="0"/>
+			<element name="ProductionLocation" type="mpeg7:regionCode" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRIYP <element name="ReleaseInformation" type="tva:ReleaseInformationType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<element name="Duration" type="duration" minOccurs="0"/>
+			<element name="PurchaseList" type="tva:PurchaseListType" minOccurs="0"/>
+			<!-- NRIYP <element name="AwardsList" type="tva:AwardsListType" minOccurs="0"/> -->
+			<!-- NRIYP <element name="CreationCoordinates" type="tva:CreationCoordinatesType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<!-- NRIYP <element name="DepictedCoordinates" type="tva:DepictedCoordinatesType" minOccurs="0" maxOccurs="unbounded"/>	-->
+		</sequence>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">Section 6.3.5 AUDIO AND VIDEO INFORMATION</documentation>
+	</annotation>
+	<!-- Restored type BitRateType - Michael S 2010-06-03 -->
+	<complexType name="BitRateType">
+		<simpleContent>
+			<extension base="nonNegativeInteger">
+				<attribute name="variable" type="boolean" use="optional" default="false"/>
+				<attribute name="minimum" type="unsignedLong" use="optional"/>
+				<attribute name="average" type="unsignedLong" use="optional"/>
+				<attribute name="maximum" type="unsignedLong" use="optional"/>
+			</extension>
+		</simpleContent>
+	</complexType>
+	<complexType name="AudioLanguageType">
+		<simpleContent>
+			<extension base="mpeg7:ExtendedLanguageType">
+				<attribute name="purpose" type="mpeg7:termReferenceType" use="required"/>
+			</extension>
+			<!-- richardb 2010-06-24: Made purpose attribute mandatory -->
+		</simpleContent>
+	</complexType>
+	<complexType name="AudioAttributesType">
+		<sequence>
+			<element name="Coding" type="tva:ControlledTermType" minOccurs="0"/>
+			<element name="NumOfChannels" type="unsignedShort" minOccurs="0"/>
+			<element name="MixType" type="tva:ControlledTermType" minOccurs="0"/>
+			<element name="AudioLanguage" type="tva:AudioLanguageType" minOccurs="0"/>
+			<element name="SampleFrequency" type="unsignedInt" minOccurs="0"/>
+			<element name="BitsPerSample" type="unsignedInt" minOccurs="0"/>
+		</sequence>
+	</complexType>
+	<!-- NRIYP
+	<simpleType name="FrameRateType"> ...
+	-->
+	<complexType name="VideoAttributesType">
+		<sequence>
+			<element name="Coding" type="tva:ControlledTermType" minOccurs="0"/>
+			<element name="Scan" type="tva:ScanType" minOccurs="0"/>
+			<element name="HorizontalSize" type="unsignedShort" minOccurs="0"/>
+			<element name="VerticalSize" type="unsignedShort" minOccurs="0"/>
+			<element name="AspectRatio" type="tva:AspectRatioType" minOccurs="0" maxOccurs="2"/>
+			<element name="Color" type="tva:ColorType" minOccurs="0"/>
+			<!-- NRIYP <element name="FrameRate" type="tva:FrameRateType" minOccurs="0"/> -->
+		</sequence>
+	</complexType>
+	<complexType name="CaptioningAttributesType">
+		<sequence>
+			<element name="Coding" type="tva:ControlledTermType" minOccurs="0"/>
+		</sequence>
+	</complexType>
+	<complexType name="AVAttributesType">
+		<sequence>
+			<element name="FileFormat" type="tva:ControlledTermType" minOccurs="0"/>
+			<element name="FileSize" type="unsignedLong" minOccurs="0"/>
+			<element name="System" type="tva:ControlledTermType" minOccurs="0"/>
+			<element name="AudioAttributes" type="tva:AudioAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="VideoAttributes" type="tva:VideoAttributesType" minOccurs="0"/>
+			<element name="CaptioningAttributes" type="tva:CaptioningAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- richardb 2010/11/11: Vanilla TV-Anytime allows 0..2 <BitRate> elements; this profile only allows 0..1. -->
+			<element name="BitRate" type="tva:BitRateType" minOccurs="0"/>
+		</sequence>
+	</complexType>
+	<simpleType name="ScanType">
+		<restriction base="string">
+			<enumeration value="interlaced"/>
+			<enumeration value="progressive"/>
+		</restriction>
+	</simpleType>
+	<simpleType name="ColorTypeType">
+		<restriction base="string">
+			<enumeration value="color"/>
+			<enumeration value="blackAndWhite"/>
+			<enumeration value="blackAndWhiteAndColor"/>
+			<enumeration value="colorized"/>
+		</restriction>
+	</simpleType>
+	<complexType name="ColorType">
+		<attribute name="type" type="tva:ColorTypeType" use="required"/>
+	</complexType>
+	<simpleType name="RatioType">
+		<restriction base="string">
+			<pattern value="\d+:\d+"/>
+		</restriction>
+	</simpleType>
+	<complexType name="AspectRatioType">
+		<simpleContent>
+			<extension base="tva:RatioType">
+				<attribute name="type" use="optional" default="original">
+					<simpleType>
+						<restriction base="string">
+							<enumeration value="original"/>
+							<enumeration value="publication"/>
+						</restriction>
+					</simpleType>
+				</attribute>
+			</extension>
+		</simpleContent>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">Section 6.3.6 PROGRAMME INFORMATION</documentation>
+	</annotation>
+	<complexType name="AggregationOfType">
+		<sequence>
+			<element name="AggregatedProgram" type="tva:CRIDRefType" minOccurs="2" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute name="type" use="required">
+			<simpleType>
+				<restriction base="string">
+					<enumeration value="omnibus"/>
+					<enumeration value="magazine"/>
+					<enumeration value="split"/>
+				</restriction>
+			</simpleType>
+		</attribute>
+	</complexType>
+	<complexType name="ProgramInformationType">
+		<sequence>
+			<element name="BasicDescription" type="tva:BasicContentDescriptionType"/>
+			<element name="OtherIdentifier" type="mpeg7:UniqueIDType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRIYP <element name="AVAttributes" type="tva:AVAttributesType" minOccurs="0"/> -->
+			<element name="MemberOf" type="tva:BaseMemberOfType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- richardb 2010-06-18: Made DerivedFrom mandatory -->
+			<element name="DerivedFrom" type="tva:DerivedFromType"/>
+			<!-- NRIYP <element name="PartOfAggregatedProgram" type="tva:CRIDType" minOccurs="0"/> -->
+			<!-- NRIYP <element name="AggregationOf" type="tva:AggregationOfType" minOccurs="0"/> -->
+			<!-- NRIYP <element name="EpisodeOf" type="tva:EpisodeOfType" minOccurs="0"/> removed MichaelS 2010/03/23 -->
+		</sequence>
+		<attribute name="programId" type="tva:CRIDType" use="required"/>
+		<attributeGroup ref="tva:fragmentIdentification"/>
+		<attribute ref="xml:lang" use="optional"/>
+		<!-- NRIYP <attribute name="metadataOriginIDRef" type="tva:TVAIDRefType" use="optional"/> -->
+	</complexType>
+	<complexType name="EpisodeOfType">
+		<complexContent>
+			<extension base="tva:BaseMemberOfType"/>
+		</complexContent>
+	</complexType>
+	<complexType name="BaseMemberOfType" abstract="true">
+		<complexContent>
+			<extension base="tva:CRIDRefType">
+				<attribute name="index" type="unsignedInt" use="optional"/>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="MemberOfType">
+		<complexContent>
+			<extension base="tva:BaseMemberOfType"/>
+		</complexContent>
+	</complexType>
+	<complexType name="BaseDerivationReasonType" abstract="true"/>
+	<complexType name="DerivationReasonType">
+		<complexContent>
+			<extension base="tva:BaseDerivationReasonType">
+				<attribute name="value" use="required">
+					<simpleType>
+						<restriction base="string">
+							<enumeration value="violence"/>
+							<enumeration value="language"/>
+							<enumeration value="sex"/>
+							<enumeration value="duration"/>
+							<enumeration value="other"/>
+						</restriction>
+					</simpleType>
+				</attribute>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="GenericDerivationReasonType">
+		<complexContent>
+			<extension base="tva:BaseDerivationReasonType">
+				<sequence>
+					<element name="Classifier" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
+					<element name="Description" type="mpeg7:TextualType" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="DerivedFromType">
+		<complexContent>
+			<extension base="tva:BaseMemberOfType">
+				<sequence>
+					<element name="DerivationReason" type="tva:GenericDerivationReasonType" minOccurs="0" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">Section 6.3.7 GROUP INFORMATION</documentation>
+	</annotation>
+	<complexType name="BaseProgramGroupTypeType" abstract="true"/>
+	<complexType name="ProgramGroupTypeType">
+		<complexContent>
+			<extension base="tva:BaseProgramGroupTypeType">
+				<attribute name="value" use="required">
+					<simpleType>
+						<restriction base="string">
+							<enumeration value="series"/>
+							<enumeration value="show"/>
+							<enumeration value="programConcept"/>
+							<enumeration value="programCompilation"/>
+							<enumeration value="otherCollection"/>
+							<enumeration value="otherChoice"/>
+							<enumeration value="mini-series"/>
+							<enumeration value="brand"/>
+							<enumeration value="automaticAcquisitionThemed"/>
+							<enumeration value="automaticAcquisitionNonThemed"/>
+						</restriction>
+					</simpleType>
+				</attribute>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="GroupInformationType">
+		<sequence>
+			<element name="GroupType" type="tva:BaseProgramGroupTypeType"/>
+			<element name="BasicDescription" type="tva:BasicContentDescriptionType"/>
+			<element name="MemberOf" type="tva:BaseMemberOfType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="OtherIdentifier" type="mpeg7:UniqueIDType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRIYP <element name="PartOfAggregatedGroup" type="tva:CRIDType" minOccurs="0"/> -->
+			<!-- NRIYP <element name="AggregationOf" type="tva:AggregationOfType" minOccurs="0"/> -->
+		</sequence>
+		<attribute name="groupId" type="tva:CRIDType" use="required"/>
+		<attribute name="ordered" type="boolean" use="optional" default="false"/>
+		<attributeGroup ref="tva:fragmentIdentification"/>
+		<attribute ref="xml:lang" use="optional"/>
+		<attribute name="serviceIDRef" type="tva:TVAIDRefType" use="optional"/>
+		<!-- NRICP <attribute name="numOfItems" type="unsignedInt" use="optional"/> -->
+		<!-- NRIYP <attribute name="metadataOriginIDRef" type="tva:TVAIDRefType" use="optional"/> -->
+		<!-- michaels 2011-01-31: CANTEC-310: serviceIDRef needs to be limited to a single -->
+		<!-- tva:TVAIDRefType in the YouView profile (is plural tva:TVAIDRefsType in TV-Anytime) -->
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">Section 6.3.8 MEDIA REVIEW DS</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="ReviewerType"> ...
+	<complexType name="MediaReviewType"> ...
+	<complexType name="ReviewType"> ...
+	<complexType name="ProgramReviewTableType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">Section 6.4.2 PROGRAM LOCATION</documentation>
+	</annotation>
+	<simpleType name="InstanceMetadataIdType">
+		<restriction base="anyURI">
+			<pattern value="(i|I)(m|M)(i|I):(([^/]+)/)?([^/]+)"/>
+		</restriction>
+	</simpleType>
+	<complexType name="ProgramLocationType" abstract="true">
+		<sequence>
+			<element name="Program" type="tva:CRIDRefType"/>
+			<element name="ProgramURL" type="anyURI" minOccurs="0"/>
+			<!-- richardb 2010-06-18: Made InstanceMetadataId element mandatory -->
+			<element name="InstanceMetadataId" type="tva:InstanceMetadataIdType"/>
+			<!-- richardb 2010-06-18: Made InstanceDescription element mandatory -->
+			<element name="InstanceDescription" type="tva:InstanceDescriptionType"/>
+		</sequence>
+	</complexType>
+	<complexType name="ScheduleType">
+		<sequence>
+			<element name="ScheduleEvent" type="tva:ScheduleEventType" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute name="serviceIDRef" type="tva:TVAIDRefType" use="required"/>
+		<attribute name="start" type="dateTime" use="required"/>
+		<attribute name="end" type="dateTime" use="required"/>
+		<attributeGroup ref="tva:fragmentIdentification"/>
+		<attribute ref="xml:lang" use="optional"/>
+		<!-- michaels 2011-01-31: CANTEC-310: serviceIDRef needs to be limited to a single -->
+		<!-- tva:TVAIDRefType in the YouView profile (is plural tva:TVAIDRefsType in TV-Anytime) -->
+		<!-- richardb 2010/09/30: Made start and end attributes mandatory. -->
+		<!-- NRIYP <attribute name="metadataOriginIDRef" type="tva:TVAIDRefType" use="optional"/> -->
+	</complexType>
+	<complexType name="ScheduleEventType">
+		<complexContent>
+			<extension base="tva:ProgramLocationType">
+				<sequence>
+					<element name="PublishedStartTime" type="dateTime" minOccurs="0"/>
+					<element name="PublishedEndTime" type="dateTime" minOccurs="0"/>
+					<element name="PublishedDuration" type="duration" minOccurs="0"/>
+					<element name="Live" type="tva:FlagType" minOccurs="0"/>
+					<element name="Repeat" type="tva:FlagType" minOccurs="0"/>
+					<!-- NRIYP <element name="FirstShowing" type="tva:FlagType" minOccurs="0"/> -->
+					<!-- NRIYP <element name="LastShowing" type="tva:FlagType" minOccurs="0"/> -->
+					<!-- richardb 2010-06-18: Made Free element mandatory -->
+					<!-- richardb 2010-11-26: Made Free element optional again (as per standard) -->
+					<element name="Free" type="tva:FlagType" minOccurs="0"/>
+				</sequence>
+				<attribute ref="xml:lang" use="optional"/>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="BroadcastEventType">
+		<complexContent>
+			<extension base="tva:ScheduleEventType">
+				<attribute name="serviceIDRef" type="tva:TVAIDRefType" use="required"/>
+				<attributeGroup ref="tva:fragmentIdentification"/>
+			</extension>
+			<!-- richardb 2010-09-30: Made serviceIDRef mandatory. -->
+			<!-- michaels 2011-01-31: CANTEC-310: serviceIDRef needs to be limited to a single -->
+			<!-- tva:TVAIDRefType in the YouView profile (is plural tva:TVAIDRefsType in TV-Anytime) -->
+		</complexContent>
+	</complexType>
+	<simpleType name="DeliveryModeType">
+		<restriction base="string">
+			<enumeration value="streaming"/>
+			<enumeration value="download"/>
+		</restriction>
+	</simpleType>
+	<complexType name="OnDemandProgramType">
+		<complexContent>
+			<extension base="tva:ProgramLocationType">
+				<sequence>
+					<element name="PublishedDuration" type="duration" minOccurs="0"/>
+					<element name="StartOfAvailability" type="dateTime" minOccurs="0"/>
+					<element name="EndOfAvailability" type="dateTime" minOccurs="0"/>
+					<!-- NRIYP <element name="FirstAvailability" type="tva:FlagType" minOccurs="0"/> -->
+					<!-- NRIYP <element name="LastAvailability" type="tva:FlagType" minOccurs="0"/> -->
+					<element name="ImmediateViewing" type="tva:FlagType" minOccurs="0"/>
+					<!-- NRIYP <element name="DeliveryMode" type="tva:DeliveryModeType" minOccurs="0"/> -->
+					<!-- NRIYP <element name="ContentVersion" type="unsignedByte" minOccurs="0"/> -->
+					<!-- NRIYP <element name="ExpiryTime" type="dateTime" minOccurs="0"/> -->
+					<!-- NRIYP <element name="EarlyPlayout" type="tva:FlagType" minOccurs="0"/> -->
+					<!-- richardb 2010-06-18: Made Free element mandatory -->
+					<!-- michaels 2010-11-25: Removed Free element again (CANTEC-123) -->
+					<!-- richardb 2010-12-15: Reinstated Free element - CANTEC-123 is postponed until rev 1.3. -->
+					<!-- richardb 2011-07-06: Made Free element mandatory again, as per simplified pricing design CANTEC-123. -->
+					<element name="Free" type="tva:FlagType"/>
+				</sequence>
+				<attributeGroup ref="tva:fragmentIdentification"/>
+				<attribute ref="xml:lang" use="optional"/>
+				<attribute name="serviceIDRef" type="tva:TVAIDRefType" use="required"/>
+			</extension>
+			<!-- richardb 2010-09-30: Made serviceIDRef mandatory. -->
+			<!-- Normally has to be optional in case it is enclosed in an OnDemandService, but we have profiled out that Fragment. -->
+			<!-- michaels 2011-01-31: CANTEC-310: serviceIDRef needs to be limited to a single -->
+			<!-- tva:TVAIDRefType in the YouView profile (is plural tva:TVAIDRefsType in TV-Anytime) -->
+		</complexContent>
+	</complexType>
+	<!-- NRIYP
+	<complexType name="OnDemandServiceType"> ...
+	-->
+	<complexType name="PushDownloadType" mixed="false">
+		<complexContent mixed="false">
+			<extension base="tva:ProgramLocationType">
+				<sequence>
+					<element name="PublishedDuration" type="duration" minOccurs="0"/>
+					<element name="StartOfAvailability" type="dateTime" minOccurs="0"/>
+					<element name="EndOfAvailability" type="dateTime" minOccurs="0"/>
+					<element name="ContentVersion" type="unsignedByte" minOccurs="0"/>
+					<element name="ExpiryTime" type="dateTime" minOccurs="0"/>
+					<element name="ActivationTime" type="dateTime" minOccurs="0"/>
+				</sequence>
+				<attributeGroup ref="tva:fragmentIdentification"/>
+				<attribute ref="xml:lang" use="optional"/>
+				<attribute name="serviceIDRef" type="tva:TVAIDRefsType" use="optional"/>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="InstanceDescriptionType">
+		<sequence>
+			<element name="Title" type="mpeg7:TitleType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Synopsis" type="tva:SynopsisType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Genre" type="tva:GenreType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- michaels 2010-11-25: removed PurchaseList element (CANTEC-123) -->
+			<!-- richardb 2010-12-15: reinstated PurchaseList element - temporary reprieve since CANTEC-123 is postponed until rev 1.3. -->
+			<element name="PurchaseList" type="tva:PurchaseListType" minOccurs="0"/>
+			<element name="CaptionLanguage" type="tva:CaptionLanguageType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="SignLanguage" type="tva:SignLanguageType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="AVAttributes" type="tva:AVAttributesType" minOccurs="0"/>
+			<element name="MemberOf" type="tva:BaseMemberOfType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="OtherIdentifier" type="mpeg7:UniqueIDType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">Section 6.4.3 SERVICE INFORMATION</documentation>
+	</annotation>
+	<simpleType name="serviceInformationNameLengthType">
+		<restriction base="string">
+			<enumeration value="short"/>
+			<enumeration value="medium"/>
+			<enumeration value="long"/>
+		</restriction>
+	</simpleType>
+	<complexType name="ServiceInformationNameType">
+		<simpleContent>
+			<extension base="mpeg7:TextualType">
+				<attribute name="length" type="tva:serviceInformationNameLengthType" use="optional"/>
+			</extension>
+		</simpleContent>
+	</complexType>
+	<!-- NRIYP
+	<complexType name="ValidPeriodType"> ...
+	-->
+	<complexType name="ServiceRefType">
+		<attribute name="serviceIDRef" type="tva:TVAIDRefType" use="required"/>
+		<!-- NRIYP <sequence>
+			<element name="ValidPeriod" type="tva:ValidPeriodType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence> -->
+	</complexType>
+	<complexType name="ServiceInformationType">
+		<sequence>
+			<!-- richardb, 2010-12-07: Changed cardinality of Name element to from 0..* to 1..2 (CANTEC-249). -->
+			<element name="Name" type="tva:ServiceInformationNameType" maxOccurs="2"/>
+			<element name="Owner" type="string" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ServiceURL" type="anyURI" minOccurs="0"/>
+			<element name="ServiceDescription" type="tva:SynopsisType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ServiceGenre" type="tva:GenreType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ServiceLanguage" type="language" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ParentService" type="tva:ServiceRefType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRIYP <element name="Logo" type="mpeg7:MediaLocatorType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<!-- Logo element removed; images to be handled via RelatedMaterial - 2010-05-12, Michael S -->
+			<!-- NRIYP <element name="PurchaseList" type="tva:PurchaseListType" minOccurs="0"/> -->
+			<!-- NRIYP <element name="GroupPurchaseIDRef" type="tva:TVAIDRefType" minOccurs="0" maxOccurs="unbounded"/> -->
+		</sequence>
+		<attribute name="serviceId" type="tva:TVAIDType" use="required"/>
+		<attributeGroup ref="tva:fragmentIdentification"/>
+		<attribute ref="xml:lang" use="optional"/>
+		<!-- NRIYP <attribute name="metadataOriginIDRef" type="tva:TVAIDRefType" use="optional"/> -->
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">Section 6.5 CONSUMER METADATA (mostly imported from MPEG-7; see tva_mpeg7.xsd)</documentation>
+	</annotation>
+	<!-- NRIYP 
+	<complexType name="UserActionType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">Section 6.6 SEGMENTATION METADATA</documentation>
+	</annotation>
+	<complexType name="BasicSegmentDescriptionType">
+		<sequence>
+			<element name="Title" type="mpeg7:TitleType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Synopsis" type="tva:SynopsisType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Genre" type="tva:GenreType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Keyword" type="tva:KeywordType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="RelatedMaterial" type="tva:RelatedMaterialType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="CreditsList" type="tva:CreditsListType" minOccurs="0"/>
+		</sequence>
+	</complexType>
+	<complexType name="TVAMediaRelIncrTimePointType">
+		<simpleContent>
+			<restriction base="mpeg7:MediaRelIncrTimePointType">
+				<attribute name="mediaTimeUnit" type="mpeg7:mediaDurationType" use="optional" default="PT1N1000F"/>
+			</restriction>
+		</simpleContent>
+	</complexType>
+	<complexType name="TVAMediaTimeType">
+		<sequence>
+			<choice>
+				<element name="MediaRelTimePoint" type="mpeg7:MediaRelTimePointType"/>
+				<element name="MediaRelIncrTimePoint" type="tva:TVAMediaRelIncrTimePointType"/>
+			</choice>
+			<choice minOccurs="0">
+				<element name="MediaDuration" type="mpeg7:mediaDurationType"/>
+				<element name="MediaIncrDuration" type="mpeg7:MediaIncrDurationType"/>
+			</choice>
+		</sequence>
+	</complexType>
+	<complexType name="TimeBaseReferenceType">
+		<sequence>
+			<choice>
+				<element name="MediaTimePoint" type="mpeg7:mediaTimePointType"/>
+				<element name="MediaRelIncrTimePoint" type="mpeg7:MediaRelIncrTimePointType"/>
+			</choice>
+		</sequence>
+		<attribute name="timebaseId" type="string"/>
+	</complexType>
+	<complexType name="SegmentInformationType">
+		<sequence>
+			<element name="ProgramRef" type="tva:CRIDRefType" minOccurs="0"/>
+			<element name="TimeBaseReference" type="tva:TimeBaseReferenceType" minOccurs="0"/>
+			<element name="Description" type="tva:BasicSegmentDescriptionType" minOccurs="0"/>
+			<element name="SegmentLocator" type="tva:TVAMediaTimeType" minOccurs="0"/>
+			<element name="KeyFrameLocator" type="tva:TVAMediaTimeType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="OtherIdentifier" type="mpeg7:UniqueIDType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute name="segmentId" type="tva:TVAIDType" use="required"/>
+		<attributeGroup ref="tva:fragmentIdentification"/>
+		<attribute ref="xml:lang" use="optional"/>
+		<!-- NRIYP <attribute name="metadataOriginIDRef" type="tva:TVAIDRefType" use="optional"/> -->
+	</complexType>
+	<complexType name="GroupIntervalType">
+		<attribute name="ref" type="tva:TVAIDRefType" use="optional"/>
+	</complexType>
+	<complexType name="SegmentsType">
+		<attribute name="refList" type="tva:TVAIDRefsType" use="required"/>
+	</complexType>
+	<complexType name="GroupsType">
+		<attribute name="refList" type="tva:TVAIDRefsType" use="required"/>
+	</complexType>
+	<complexType name="SegmentGroupInformationType">
+		<sequence>
+			<element name="ProgramRef" type="tva:CRIDRefType"/>
+			<element name="TimeBaseReference" type="tva:TimeBaseReferenceType" minOccurs="0"/>
+			<element name="GroupType" type="tva:BaseSegmentGroupTypeType" maxOccurs="unbounded"/>
+			<element name="Description" type="tva:BasicSegmentDescriptionType" minOccurs="0"/>
+			<element name="GroupInterval" type="tva:GroupIntervalType" minOccurs="0"/>
+			<choice minOccurs="0">
+				<element name="Segments" type="tva:SegmentsType"/>
+				<element name="Groups" type="tva:GroupsType"/>
+			</choice>
+			<element name="KeyFrameLocator" type="tva:TVAMediaTimeType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="OtherIdentifier" type="mpeg7:UniqueIDType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute name="groupId" type="tva:TVAIDType" use="required"/>
+		<attribute name="ordered" type="boolean" use="optional" default="true"/>
+		<attribute name="numberOfSegments" type="unsignedShort" use="optional"/>
+		<attribute name="numberOfKeyFrames" type="unsignedShort" use="optional"/>
+		<attribute name="duration" type="mpeg7:mediaDurationType" use="optional"/>
+		<attribute name="topLevel" type="boolean" use="optional"/>
+		<attributeGroup ref="tva:fragmentIdentification"/>
+		<attribute ref="xml:lang" use="optional"/>
+		<!-- NRIYP <attribute name="metadataOriginIDRef" type="tva:TVAIDRefType" use="optional"/> -->
+	</complexType>
+	<complexType name="BaseSegmentGroupTypeType" abstract="true"/>
+	<complexType name="SegmentGroupTypeType">
+		<complexContent>
+			<extension base="tva:BaseSegmentGroupTypeType">
+				<attribute name="value" use="required">
+					<simpleType>
+						<restriction base="string">
+							<enumeration value="highlights"/>
+							<enumeration value="highlights/objects"/>
+							<enumeration value="highlights/events"/>
+							<enumeration value="bookmarks"/>
+							<enumeration value="bookmarks/objects"/>
+							<enumeration value="bookmarks/events"/>
+							<enumeration value="themeGroup"/>
+							<enumeration value="preview"/>
+							<enumeration value="preview/title"/>
+							<enumeration value="preview/slideshow"/>
+							<enumeration value="tableOfContents"/>
+							<enumeration value="synopsis"/>
+							<enumeration value="shots"/>
+							<enumeration value="insertionPoints"/>
+							<enumeration value="alternativeGroups"/>
+							<enumeration value="alternativeSegments"/>
+							<enumeration value="other"/>
+						</restriction>
+					</simpleType>
+				</attribute>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="SegmentListType">
+		<sequence>
+			<element name="SegmentInformation" type="tva:SegmentInformationType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<complexType name="SegmentGroupListType">
+		<sequence>
+			<element name="SegmentGroupInformation" type="tva:SegmentGroupInformationType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<complexType name="SegmentInformationTableType">
+		<sequence>
+			<element name="SegmentList" type="tva:SegmentListType" minOccurs="0"/>
+			<element name="SegmentGroupList" type="tva:SegmentGroupListType" minOccurs="0"/>
+		</sequence>
+		<attribute ref="xml:lang" use="optional"/>
+		<!-- NRIYP <attribute name="metadataOriginIDRef" type="tva:TVAIDRefType" use="optional"/> -->
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">Section 6.7.1 INFORMATION TABLES</documentation>
+	</annotation>
+	<complexType name="ProgramInformationTableType">
+		<sequence>
+			<element name="ProgramInformation" type="tva:ProgramInformationType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute ref="xml:lang" use="optional"/>
+		<!-- NRIYP <attribute name="metadataOriginIDRef" type="tva:TVAIDRefType" use="optional"/> -->
+	</complexType>
+	<complexType name="GroupInformationTableType">
+		<sequence>
+			<element name="GroupInformation" type="tva:GroupInformationType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute ref="xml:lang" use="optional"/>
+		<!-- NRIYP <attribute name="metadataOriginIDRef" type="tva:TVAIDRefType" use="optional"/> -->
+	</complexType>
+	<complexType name="ProgramLocationTableType">
+		<sequence>
+			<element name="Schedule" type="tva:ScheduleType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="OnDemandProgram" type="tva:OnDemandProgramType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- Restored BroadcastEvent, MichaelS 2010/07/23 -->
+			<element name="BroadcastEvent" type="tva:BroadcastEventType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRIYP <element name="OnDemandService" type="tva:OnDemandServiceType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<!-- NRIYP <element name="PushDownloadProgram" type="tva:PushDownloadType" minOccurs="0" maxOccurs="unbounded"/> -->
+		</sequence>
+		<attribute ref="xml:lang" use="optional"/>
+		<!-- NRIYP <attribute name="metadataOriginIDRef" type="tva:TVAIDRefType" use="optional"/> -->
+	</complexType>
+	<complexType name="ServiceInformationTableType">
+		<sequence>
+			<element name="ServiceInformation" type="tva:ServiceInformationType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute ref="xml:lang" use="optional"/>
+		<!-- NRIYP <attribute name="metadataOriginIDRef" type="tva:TVAIDRefType" use="optional"/> -->
+	</complexType>
+	<complexType name="TVAPersonNameType">
+		<complexContent>
+			<extension base="mpeg7:PersonNameType">
+				<sequence>
+					<element name="OtherIdentifier" type="mpeg7:UniqueIDType" minOccurs="0" maxOccurs="unbounded"/>
+				</sequence>
+				<attribute name="personNameId" type="tva:TVAIDType" use="required"/>
+				<attributeGroup ref="tva:fragmentIdentification"/>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="OrganizationNameType">
+		<simpleContent>
+			<extension base="mpeg7:TextualType">
+				<attribute name="organizationNameId" type="tva:TVAIDType" use="required"/>
+				<attributeGroup ref="tva:fragmentIdentification"/>
+			</extension>
+		</simpleContent>
+	</complexType>
+	<complexType name="CreditsInformationTableType">
+		<sequence>
+			<choice minOccurs="0" maxOccurs="unbounded">
+				<element name="PersonName" type="tva:TVAPersonNameType"/>
+				<element name="OrganizationName" type="tva:OrganizationNameType"/>
+			</choice>
+		</sequence>
+		<attribute ref="xml:lang" use="optional"/>
+		<!-- NRIYP <attribute name="copyrightNotice" type="string" use="optional"/> -->
+		<!-- NRIYP <attribute name="metadataOriginIDRef" type="tva:TVAIDRefType" use="optional"/> -->
+	</complexType>
+	<!-- NRIYP 
+	<complexType name="PurchaseInformationType"> ...
+	<complexType name="PurchaseInformationTableType"> ...
+	<element name="TVAContentLinks"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">Section 6.7.2 TV-ANYTIME METADATA DOCUMENT</documentation>
+	</annotation>
+	<element name="TVAMain" type="tva:TVAMainType"/>
+	<complexType name="TVAMainType">
+		<sequence>
+			<element name="CopyrightNotice" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ProgramDescription" type="tva:ProgramDescriptionType" minOccurs="0"/>
+			<!-- NRIYP <element name="MetadataOriginationInformationTable" type="tva:MetadataOriginationInformationTableType" minOccurs="0"/> -->
+			<!-- NRIYP <element name="ClassificationSchemeTable" type="tva:ClassificationSchemeTableType" minOccurs="0"/> -->
+			<!-- NRIYP <element name="UserDescription" type="tva:UserDescriptionType" minOccurs="0" maxOccurs="unbounded"/> -->
+		</sequence>
+		<attribute ref="xml:lang" use="required"/>
+		<attribute name="publisher" type="string" use="optional"/>
+		<attribute name="publicationTime" type="dateTime" use="optional"/>
+		<attribute name="rightsOwner" type="string" use="optional"/>
+		<attribute name="version" type="unsignedInt" use="optional"/>
+		<!-- NRIYP <attribute name="originID" type="tva:TVAIDRefType" use="optional"/> -->
+	</complexType>
+	<!-- NRIYP 
+	<complexType name="MetadataOriginationInformationType"> ...
+	<complexType name="MetadataOriginationInformationTableType"> ...
+	<complexType name="UserDescriptionType"> ...
+	<complexType name="UsageHistoryType"> ...
+	<complexType name="UserActionHistoryType"> ...
+	<complexType name="UserActionListType"> ...
+	<complexType name="CSAliasType"> ...
+	<complexType name="ClassificationSchemeType"> ...
+	<complexType name="ClassificationSchemeTableType"> ...
+	-->
+	<complexType name="ProgramDescriptionType">
+		<sequence>
+			<element name="ProgramInformationTable" type="tva:ProgramInformationTableType" minOccurs="0"/>
+			<element name="GroupInformationTable" type="tva:GroupInformationTableType" minOccurs="0"/>
+			<element name="ProgramLocationTable" type="tva:ProgramLocationTableType" minOccurs="0"/>
+			<element name="ServiceInformationTable" type="tva:ServiceInformationTableType" minOccurs="0"/>
+			<element name="CreditsInformationTable" type="tva:CreditsInformationTableType" minOccurs="0"/>
+			<!-- NRIYP <element name="SegmentInformationTable" type="tva:SegmentInformationTableType" minOccurs="0"/> -->
+			<!-- NRIYP <element name="ProgramReviewTable" type="tva:ProgramReviewTableType" minOccurs="0"/> -->
+			<!-- NRIYP <element name="PurchaseInformationTable" type="tva:PurchaseInformationTableType" minOccurs="0"/> -->
+		</sequence>
+	</complexType>
+</schema>

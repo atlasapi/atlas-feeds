@@ -4,7 +4,7 @@ import javax.xml.bind.JAXBElement;
 
 import org.atlasapi.feeds.lakeview.validation.FeedItemStore;
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult.ValidationResultType;
-import org.atlasapi.generated.ElementTVEpisode;
+import org.atlasapi.generated.lakeview.ElementTVEpisode;
 import org.joda.time.DateTime;
 
 import com.metabroadcast.common.time.Clock;
