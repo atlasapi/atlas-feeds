@@ -217,11 +217,12 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
            NameComponentType nameComponent = new NameComponentType();
            nameComponent.setValue(person.name());
            
-           JAXBElement<NameComponentType> nameElem = new JAXBElement<NameComponentType>(QName.valueOf("GivenName"), NameComponentType.class, nameComponent);
+           JAXBElement<NameComponentType> nameElem = new JAXBElement<NameComponentType>(new QName("urn:tva:mpeg7:2008", "GivenName"), NameComponentType.class, nameComponent);
            personName.getGivenNameOrLinkingNameOrFamilyName().add(nameElem);
            
-           JAXBElement<PersonNameType> personNameElem = new JAXBElement<PersonNameType>(QName.valueOf("PersonName"), PersonNameType.class, personName);
+           JAXBElement<PersonNameType> personNameElem = new JAXBElement<PersonNameType>(new QName("urn:tva:metadata:2010", "PersonName"), PersonNameType.class, personName);
            credit.getPersonNameOrPersonNameIDRefOrOrganizationName().add(personNameElem);
+           
            creditsList.getCreditsItem().add(credit);
        }
        

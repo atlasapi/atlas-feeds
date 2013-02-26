@@ -7,10 +7,14 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.Marshaller;
 
-import org.atlasapi.feeds.xml.XMLNamespace;
+import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Series;
+import org.atlasapi.persistence.content.ContentResolver;
+import org.atlasapi.persistence.content.ResolvedContent;
 
 import tva.metadata._2010.GroupInformationTableType;
 import tva.metadata._2010.ObjectFactory;
@@ -19,9 +23,10 @@ import tva.metadata._2010.ProgramInformationTableType;
 import tva.metadata._2010.ProgramLocationTableType;
 import tva.metadata._2010.ServiceInformationTableType;
 import tva.metadata._2010.TVAMainType;
-import tva.metadata.extended._2010.ExtendedTVAMainType;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.metabroadcast.common.base.Maybe;
 
 public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
 
@@ -32,6 +37,7 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
     private final OnDemandLocationGenerator progLocationGenerator;
     private final ServiceInformationGenerator lovefilmServiceInfoGenerator;
     private final ServiceInformationGenerator lovefilmInstantServiceInfoGenerator;
+    private ContentResolver contentResolver;
 
     public DefaultTvAnytimeGenerator(ProgramInformationGenerator progInfoGenerator, GroupInformationGenerator groupInfoGenerator, OnDemandLocationGenerator progLocationGenerator, ServiceInformationGenerator lovefilmServiceInfoGenerator, ServiceInformationGenerator lovefilmInstantServiceInfoGenerator) {
         this.progInfoGenerator = progInfoGenerator;
@@ -56,15 +62,15 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
             ProgramDescriptionType progDescription = new ProgramDescriptionType();
 
             if (isBootstrap) {
-                ServiceInformationTableType serviceInfoTable = new ServiceInformationTableType(); 
+                ServiceInformationTableType serviceInfoTable = factory.createServiceInformationTableType(); 
                 serviceInfoTable.getServiceInformation().add(lovefilmServiceInfoGenerator.generate());
                 serviceInfoTable.getServiceInformation().add(lovefilmInstantServiceInfoGenerator.generate());
                 progDescription.setServiceInformationTable(serviceInfoTable);
             }
 
-            ProgramInformationTableType progInfoTable = new ProgramInformationTableType();
-            GroupInformationTableType groupInfoTable = new GroupInformationTableType();
-            ProgramLocationTableType progLocTable = new ProgramLocationTableType();
+            ProgramInformationTableType progInfoTable = factory.createProgramInformationTableType();
+            GroupInformationTableType groupInfoTable = factory.createGroupInformationTableType();
+            ProgramLocationTableType progLocTable = factory.createProgramLocationTableType();
 
             for (Item item : items) {
                 progInfoTable.getProgramInformation().add(progInfoGenerator.generate(item));
@@ -72,8 +78,18 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
                 if (item instanceof Film) {
                     groupInfoTable.getGroupInformation().add(groupInfoGenerator.generateForFilm((Film)item));
                 } else if (item instanceof Episode) {
-                    groupInfoTable.getGroupInformation().add(groupInfoGenerator.generateForEpisode((Episode)item));
-                    // TODO obtain series/brand and generate for those
+                    Episode episode = (Episode)item;
+                    groupInfoTable.getGroupInformation().add(groupInfoGenerator.generateForEpisode(episode));
+                    // TODO deal with top-level series (?)
+                    ResolvedContent seriesAndBrand = contentResolver.findByCanonicalUris(ImmutableList.of(episode.getSeriesRef().getUri(), episode.getContainer().getUri()));
+                    Maybe<Identified> maybeSeries = seriesAndBrand.get(episode.getSeriesRef().getUri());
+                    Maybe<Identified> maybeBrand = seriesAndBrand.get(episode.getContainer().getUri());
+                    if (maybeSeries.hasValue()) {
+                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generateForSeries((Series) maybeSeries.requireValue()));    
+                    }
+                    if (maybeBrand.hasValue()) {
+                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generateForBrand((Brand) maybeBrand.requireValue()));    
+                    }
                 }
             }
 
