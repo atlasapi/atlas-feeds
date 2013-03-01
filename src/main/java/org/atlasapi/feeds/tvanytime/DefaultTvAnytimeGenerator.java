@@ -76,19 +76,19 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
                 progInfoTable.getProgramInformation().add(progInfoGenerator.generate(item));
                 progLocTable.getOnDemandProgram().add(progLocationGenerator.generate(item));
                 if (item instanceof Film) {
-                    groupInfoTable.getGroupInformation().add(groupInfoGenerator.generateForFilm((Film)item));
+                    groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Film)item));
                 } else if (item instanceof Episode) {
                     Episode episode = (Episode)item;
-                    groupInfoTable.getGroupInformation().add(groupInfoGenerator.generateForEpisode(episode));
+                    groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(episode));
                     // TODO deal with top-level series (?)
                     ResolvedContent seriesAndBrand = contentResolver.findByCanonicalUris(ImmutableList.of(episode.getSeriesRef().getUri(), episode.getContainer().getUri()));
                     Maybe<Identified> maybeSeries = seriesAndBrand.get(episode.getSeriesRef().getUri());
                     Maybe<Identified> maybeBrand = seriesAndBrand.get(episode.getContainer().getUri());
                     if (maybeSeries.hasValue()) {
-                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generateForSeries((Series) maybeSeries.requireValue()));    
+                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Series) maybeSeries.requireValue()));    
                     }
                     if (maybeBrand.hasValue()) {
-                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generateForBrand((Brand) maybeBrand.requireValue()));    
+                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Brand) maybeBrand.requireValue()));    
                     }
                 }
             }

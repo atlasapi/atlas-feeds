@@ -67,10 +67,10 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
         .build();
     
     private static final Map<String, String> YOUVIEW_ATLAS_GENRE_MAPPING = ImmutableMap.<String, String>builder()
-        .build();
+        .build();   
     
     @Override
-    public GroupInformationType generateForFilm(Film film) {
+    public GroupInformationType generate(Film film) {
         GroupInformationType groupInfo = generateWithCommonFields(film);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
@@ -82,7 +82,7 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
     // TODO cope with top-level series?
     
     @Override
-    public GroupInformationType generateForEpisode(Episode episode) {
+    public GroupInformationType generate(Episode episode) {
         GroupInformationType groupInfo = generateWithCommonFields(episode);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
@@ -96,7 +96,7 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
     }
     
     @Override
-    public GroupInformationType generateForSeries(Series series) {
+    public GroupInformationType generate(Series series) {
         GroupInformationType groupInfo = generateWithCommonFields(series);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));
@@ -110,7 +110,7 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
     }
     
     @Override
-    public GroupInformationType generateForBrand(Brand brand) {
+    public GroupInformationType generate(Brand brand) {
         GroupInformationType groupInfo = generateWithCommonFields(brand);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));

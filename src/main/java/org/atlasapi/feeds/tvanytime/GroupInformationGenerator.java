@@ -8,8 +8,8 @@ import org.atlasapi.media.entity.Series;
 import tva.metadata._2010.GroupInformationType;
 
 public interface GroupInformationGenerator {
-    public GroupInformationType generateForFilm(Film film);
-    public GroupInformationType generateForEpisode(Episode episode);
-    public GroupInformationType generateForSeries(Series series);
-    public GroupInformationType generateForBrand(Brand brand);
+    public GroupInformationType generate(Film film);
+    public GroupInformationType generate(Episode episode);
+    public GroupInformationType generate(Series series);
+    public GroupInformationType generate(Brand brand);
 }
