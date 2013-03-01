@@ -15,7 +15,11 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import javax.xml.datatype.Duration;
+
+import org.atlasapi.feeds.youview.output.DurationAdapter;
+
 import tva.metadata.extended._2010.ExtendedContentDescriptionType;
 import tva.mpeg7._2008.ExtendedLanguageType;
 import tva.mpeg7._2008.TitleType;
@@ -96,6 +100,7 @@ public class BasicContentDescriptionType {
     @XmlElement(name = "ProductionLocation")
     protected List<String> productionLocation;
     @XmlElement(name = "Duration")
+    @XmlJavaTypeAdapter(DurationAdapter.class)
     protected Duration duration;
     @XmlElement(name = "PurchaseList")
     protected PurchaseListType purchaseList;

@@ -15,8 +15,12 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
+
+import org.atlasapi.feeds.youview.output.AvailabilityAdapter;
+
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 
@@ -65,9 +69,11 @@ public class OnDemandProgramType
     protected Duration publishedDuration;
     @XmlElement(name = "StartOfAvailability")
     @XmlSchemaType(name = "dateTime")
+    @XmlJavaTypeAdapter(AvailabilityAdapter.class)
     protected XMLGregorianCalendar startOfAvailability;
     @XmlElement(name = "EndOfAvailability")
     @XmlSchemaType(name = "dateTime")
+    @XmlJavaTypeAdapter(AvailabilityAdapter.class)
     protected XMLGregorianCalendar endOfAvailability;
     @XmlElement(name = "ImmediateViewing")
     protected FlagType immediateViewing;
