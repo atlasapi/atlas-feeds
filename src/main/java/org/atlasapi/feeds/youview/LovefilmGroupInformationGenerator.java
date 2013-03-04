@@ -47,7 +47,7 @@ import com.google.inject.internal.Lists;
 
 public class LovefilmGroupInformationGenerator implements GroupInformationGenerator {
 
-    private static final String YOUVIEW_CREDIT_ROLE = "urn:tva:metadata:cs:TVARoleCS:2010:V106";
+    private static final String YOUVIEW_CREDIT_ROLE = "urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN";
     private static final String YOUVIEW_IMAGE_FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS:2001:1";
     private static final String YOUVIEW_IMAGE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
     private static final String YOUVIEW_IMAGE_ATTRIBUTE_PROD_STILL = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-production_still";
@@ -209,7 +209,6 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
        
        for (CrewMember person : content.people()) {
            CreditsItemType credit = new CreditsItemType();
-           // TODO TBC that this is correct role 
            credit.setRole(YOUVIEW_CREDIT_ROLE);
            
            PersonNameType personName = new PersonNameType();

@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.youview.www;
 
 import java.io.IOException;
-import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -9,7 +8,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.atlasapi.application.ApplicationConfiguration;
 import org.atlasapi.application.query.ApplicationConfigurationFetcher;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
-import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;

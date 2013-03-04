@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview;
 
 import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -45,8 +46,6 @@ public class LovefilmGroupInformationGeneratorTest {
     
     private static final GroupInformationGenerator generator = new LovefilmGroupInformationGenerator();
 
-    // TODO update with roles once these are confirmed
-    
     @Test
     public void testFilmOnDemandGeneration() {
         GroupInformationType groupInfo = generator.generate(createFilm());
@@ -90,6 +89,9 @@ public class LovefilmGroupInformationGeneratorTest {
         CreditsItemType firstCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 0);
         CreditsItemType secondCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 1);
         
+        assertEquals("urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN", firstCredit.getRole());
+        assertEquals("urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN", secondCredit.getRole());
+        
         PersonNameType firstPerson = (PersonNameType) Iterables.getOnlyElement(firstCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
         PersonNameType secondPerson = (PersonNameType) Iterables.getOnlyElement(secondCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
         
@@ -104,7 +106,9 @@ public class LovefilmGroupInformationGeneratorTest {
             "George C. Scott",
             "Stanley Kubrick"
         ));
-
+        
+        assertFalse(firstName.equals(secondName));
+        
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
         assertEquals("urn:tva:metadata:cs:HowRelatedCS:2010:19", relatedMaterial.getHowRelated().getHref());
@@ -182,6 +186,9 @@ public class LovefilmGroupInformationGeneratorTest {
         CreditsItemType firstCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 0);
         CreditsItemType secondCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 1);
         
+        assertEquals("urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN", firstCredit.getRole());
+        assertEquals("urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN", secondCredit.getRole());
+        
         PersonNameType firstPerson = (PersonNameType) Iterables.getOnlyElement(firstCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
         PersonNameType secondPerson = (PersonNameType) Iterables.getOnlyElement(secondCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
         
@@ -196,6 +203,7 @@ public class LovefilmGroupInformationGeneratorTest {
             "Robson Green",
             "Mark Benton"
         ));
+        assertFalse(firstName.equals(secondName));
 
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
@@ -274,6 +282,9 @@ public class LovefilmGroupInformationGeneratorTest {
 
         CreditsItemType firstCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 0);
         CreditsItemType secondCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 1);
+
+        assertEquals("urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN", firstCredit.getRole());
+        assertEquals("urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN", secondCredit.getRole());
         
         PersonNameType firstPerson = (PersonNameType) Iterables.getOnlyElement(firstCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
         PersonNameType secondPerson = (PersonNameType) Iterables.getOnlyElement(secondCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
@@ -289,6 +300,7 @@ public class LovefilmGroupInformationGeneratorTest {
             "Robson Green",
             "Mark Benton"
         ));
+        assertFalse(firstName.equals(secondName));
 
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
@@ -365,6 +377,9 @@ public class LovefilmGroupInformationGeneratorTest {
         CreditsItemType firstCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 0);
         CreditsItemType secondCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 1);
         
+        assertEquals("urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN", firstCredit.getRole());
+        assertEquals("urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN", secondCredit.getRole());
+        
         PersonNameType firstPerson = (PersonNameType) Iterables.getOnlyElement(firstCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
         PersonNameType secondPerson = (PersonNameType) Iterables.getOnlyElement(secondCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
         
@@ -379,6 +394,7 @@ public class LovefilmGroupInformationGeneratorTest {
             "Robson Green",
             "Mark Benton"
         ));
+        assertFalse(firstName.equals(secondName));
 
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
