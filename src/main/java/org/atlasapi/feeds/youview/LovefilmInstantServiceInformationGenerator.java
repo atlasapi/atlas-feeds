@@ -14,6 +14,7 @@ import tva.metadata._2010.GenreType;
 import tva.metadata._2010.RelatedMaterialType;
 import tva.metadata._2010.ServiceInformationNameType;
 import tva.metadata._2010.ServiceInformationType;
+import tva.metadata._2010.SynopsisLengthType;
 import tva.metadata._2010.SynopsisType;
 import tva.metadata.extended._2010.ContentAttributesType;
 import tva.metadata.extended._2010.ContentPropertiesType;
@@ -110,6 +111,7 @@ public class LovefilmInstantServiceInformationGenerator implements ServiceInform
 
     private SynopsisType generateServiceDescription() {
         SynopsisType synopsis = new SynopsisType();
+        synopsis.setLength(SynopsisLengthType.SHORT);
         synopsis.setValue("LOVEFiLM, an Amazon Company");
         return synopsis;
     }

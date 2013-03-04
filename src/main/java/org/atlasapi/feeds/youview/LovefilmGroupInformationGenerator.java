@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview;
 
+import static org.atlasapi.feeds.youview.LovefilmOutputUtils.getId;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +16,7 @@ import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.MediaType;
+import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 
@@ -38,6 +41,7 @@ import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 
+import com.google.common.base.Objects;
 import com.google.inject.internal.ImmutableMap;
 import com.google.inject.internal.Lists;
 
@@ -59,7 +63,6 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
     private static final String LOVEFILM_URL = "http://lovefilm.com";
     private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
     private static final String TITLE_TYPE_MAIN = "main";
-    private static final String LOVEFILM_URI_PATTERN = "http:\\/\\/lovefilm\\.com\\/[a-z]*\\/";
     private static final String LOVEFILM_MEDIATYPE_GENRE_VIDEO = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
     private static final Map<Specialization, String> YOUVIEW_SPECIALIZATION_GENRE_MAPPING = ImmutableMap.<Specialization, String>builder()
         .put(Specialization.FILM, "urn:tva:metadata:cs:OriginationCS:2005:5.7")
@@ -79,8 +82,6 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
         return groupInfo;
     }
     
-    // TODO cope with top-level series?
-    
     @Override
     public GroupInformationType generate(Episode episode) {
         GroupInformationType groupInfo = generateWithCommonFields(episode);
@@ -88,7 +89,9 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         
         MemberOfType memberOf = new MemberOfType();
-        memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(episode.getSeriesRef().getUri()));
+        
+        ParentRef parent = Objects.firstNonNull(episode.getSeriesRef(), episode.getContainer());
+        memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(parent.getUri()));
         memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
         groupInfo.getMemberOf().add(memberOf);
         
@@ -103,7 +106,9 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
         groupInfo.setOrdered(true);
         MemberOfType memberOf = new MemberOfType();
         memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(series.getParent().getUri()));
-        memberOf.setIndex(Long.valueOf(series.getSeriesNumber()));
+        if (series.getSeriesNumber() != null) {
+            memberOf.setIndex(Long.valueOf(series.getSeriesNumber()));
+        }
         groupInfo.getMemberOf().add(memberOf);
         
         return groupInfo;
@@ -130,11 +135,6 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
         return groupInfo;
     }
     
-    // TODO extract into common utils class
-    private String getId(String uri) {
-        return uri.replaceAll(LOVEFILM_URI_PATTERN, "");
-    }
-
     private BaseProgramGroupTypeType generateGroupType(String groupType) {
         ProgramGroupTypeType type = new ProgramGroupTypeType();
         type.setValue(groupType);

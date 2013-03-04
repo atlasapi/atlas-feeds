@@ -1,10 +1,10 @@
 package org.atlasapi.feeds.tvanytime;
 
-import java.io.File;
+import java.io.OutputStream;
 
 import org.atlasapi.media.entity.Item;
 
 public interface TvAnytimeGenerator {
 
-    void generateXml(Iterable<Item> items, File file, boolean isBootstrap);
+    void generateXml(Iterable<Item> items, OutputStream outStream, boolean includeServiceInformation);
 }

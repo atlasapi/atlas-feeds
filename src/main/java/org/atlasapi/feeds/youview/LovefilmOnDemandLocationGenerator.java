@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview;
 
+import static org.atlasapi.feeds.youview.LovefilmOutputUtils.getId;
+
 import java.math.BigInteger;
 import java.util.List;
 
@@ -27,6 +29,7 @@ import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -43,7 +46,6 @@ public class LovefilmOnDemandLocationGenerator implements OnDemandLocationGenera
     private static final String LOVEFILM_CRID_SEPARATOR = "_r";
     private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
     private static final String LOVEFILM_IDREF_ONDEMAND = "http://lovefilm.com/OnDemand";
-    private static final String LOVEFILM_URI_PATTERN = "http:\\/\\/lovefilm\\.com\\/[a-z]*\\/";
     private static final String GENRE_TYPE_OTHER = "other";
 
     private DatatypeFactory datatypeFactory;
@@ -67,11 +69,14 @@ public class LovefilmOnDemandLocationGenerator implements OnDemandLocationGenera
         onDemand.setServiceIDRef(LOVEFILM_IDREF_ONDEMAND);
         onDemand.setProgram(generateProgram(item));
         // TODO once again, this has a placeholder for the digital release id, which isn't currently ingested
-        onDemand.setInstanceMetadataId("imi:lovefilm.com/t" + getId(item) + "_r" + getId(item) + "_version");
+        onDemand.setInstanceMetadataId("imi:lovefilm.com/t" + getId(item.getCanonicalUri()) + "_r" + getId(item.getCanonicalUri()) + "_version");
         onDemand.setInstanceDescription(generateInstanceDescription(item));
         onDemand.setPublishedDuration(generatePublishedDuration(item));
         onDemand.setStartOfAvailability(generateAvailabilityStart(item));
-        onDemand.setEndOfAvailability(generateAvailabilityEnd(item));
+        Optional<XMLGregorianCalendar> endOfAvailability = generateAvailabilityEnd(item);
+        if (endOfAvailability.isPresent()) {
+            onDemand.setEndOfAvailability(endOfAvailability.get());
+        }
         onDemand.setFree(generateFree());
 
         return onDemand;
@@ -87,7 +92,7 @@ public class LovefilmOnDemandLocationGenerator implements OnDemandLocationGenera
     private CRIDRefType generateProgram(Item item) {
         CRIDRefType program = new CRIDRefType();
         // TODO digital_release_id not ingested yet, currently a placeholder of id + '_version'
-        program.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(item) + LOVEFILM_CRID_SEPARATOR + getId(item) + "_version");
+        program.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(item.getCanonicalUri()) + LOVEFILM_CRID_SEPARATOR + getId(item.getCanonicalUri()) + "_version");
         return program;
     }
 
@@ -147,7 +152,7 @@ public class LovefilmOnDemandLocationGenerator implements OnDemandLocationGenera
     private UniqueIDType generateOtherId(Item item) {
         UniqueIDType id = new UniqueIDType();
         id.setAuthority(LOVEFILM_DEEP_LINKING_ID);
-        id.setValue(getId(item) + DEEP_LINKING_ID_SUFFIX);
+        id.setValue(getId(item.getCanonicalUri()) + DEEP_LINKING_ID_SUFFIX);
         return id;
     }
 
@@ -179,15 +184,13 @@ public class LovefilmOnDemandLocationGenerator implements OnDemandLocationGenera
         return datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityStart().toGregorianCalendar());    
     }
 
-    private XMLGregorianCalendar generateAvailabilityEnd(Item item) {
+    private Optional<XMLGregorianCalendar> generateAvailabilityEnd(Item item) {
         Version version = Iterables.getOnlyElement(item.getVersions());
         Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
         Policy policy = Iterables.getOnlyElement(encoding.getAvailableAt()).getPolicy();
-        return datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityEnd().toGregorianCalendar());
-    }
-
-    // TODO extract into common utils class
-    private String getId(Item item) {
-        return item.getCanonicalUri().replaceAll(LOVEFILM_URI_PATTERN, "");
+        if (policy.getAvailabilityEnd() != null) {
+            return Optional.of(datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityEnd().toGregorianCalendar()));
+        }
+        return Optional.absent();
     }
 }

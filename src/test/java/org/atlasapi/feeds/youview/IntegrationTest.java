@@ -1,6 +1,9 @@
 package org.atlasapi.feeds.youview;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
@@ -19,10 +22,12 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Specialization;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.persistence.content.ContentResolver;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -37,13 +42,21 @@ public class IntegrationTest {
     private static final ServiceInformationGenerator lovefilmServiceInfoGenerator = new LovefilmServiceInformationGenerator();
     private static final ServiceInformationGenerator lovefilmInstantServiceInfoGenerator = new LovefilmInstantServiceInformationGenerator();
     
-    private static final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(progInfoGenerator, groupInfoGenerator, progLocationGenerator, lovefilmServiceInfoGenerator, lovefilmInstantServiceInfoGenerator);
+    private static final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
+        progInfoGenerator, 
+        groupInfoGenerator, 
+        progLocationGenerator, 
+        lovefilmServiceInfoGenerator, 
+        lovefilmInstantServiceInfoGenerator, 
+        Mockito.mock(ContentResolver.class)
+    );
 
     @Test
-    public void testXmlOutput() {
+    public void testXmlOutput() throws FileNotFoundException {
         File testFile = new File("src/test/resources/org/atlasapi/feeds/youview", "xml_test.xml");
+        OutputStream out = new FileOutputStream(testFile);
         
-        generator.generateXml(ImmutableList.<Item>of(createFilm()), testFile, false);
+        generator.generateXml(ImmutableList.<Item>of(createFilm()), out, false);
     }
 
     private Film createFilm() {

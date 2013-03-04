@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview;
 
+import static org.atlasapi.feeds.youview.LovefilmOutputUtils.getId;
+
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +27,7 @@ import tva.mpeg7._2008.ControlledTermUseType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -35,16 +38,27 @@ import com.metabroadcast.common.intl.Country;
 
 public class LovefilmProgramInformationGenerator implements ProgramInformationGenerator {
 
+    private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
     private static final String LOVEFILM_LINK_SUFFIX = "L";
     private static final String LOVEFILM_CRID_SEPARATOR = "_r";
     private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
-    private static final String YOUVIEW_DEFAULT_RATING = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
     private static final String LOVEFILM_CRID_PREFIX = LOVEFILM_PRODUCT_CRID_PREFIX;
     private static final String LOVEFILM_PRODUCT_ID = "product_id.lovefilm.com";
     private static final String LOVEFILM_DEEP_LINKING_ID = "deep_linking_id.lovefilm.com";
-    private static final String LOVEFILM_URI_PATTERN = "http:\\/\\/lovefilm\\.com\\/[a-z]*\\/";
-//    private static final String LOVEFILM_SHOW_PREFIX = "http://lovefilm.com/shows/";
-//    private static final String LOVEFILM_SEASON_PREFIX = "http://lovefilm.com/seasons/";
+    
+    private static final Predicate<Certificate> FILTER_CERT_FOR_GB = new Predicate<Certificate>() {
+        @Override
+        public boolean apply(Certificate input) {
+            return input.country().equals(Countries.GB);
+        }
+    };
+    
+    private static final Function<Certificate, String> CERTIFICATE_TO_CLASSIFICATION = new Function<Certificate, String>() {
+        @Override
+        public String apply(Certificate input) {
+            return YOUVIEW_CERTIFICATE_MAPPING.get(input.classification());
+        }
+    };
     
     private static final Map<String, String> YOUVIEW_CERTIFICATE_MAPPING = ImmutableMap.<String, String>builder()
             .put("U", "http://bbfc.org.uk/BBFCRatingCS/2002#U")
@@ -73,16 +87,12 @@ public class LovefilmProgramInformationGenerator implements ProgramInformationGe
         ProgramInformationType progInfo = new ProgramInformationType();
 
         // TODO digital_release_id not ingested yet, currently a placeholder of id + '_version'
-        progInfo.setProgramId(LOVEFILM_PRODUCT_CRID_PREFIX + getId(item) + LOVEFILM_CRID_SEPARATOR + getId(item) + "_version");
+        progInfo.setProgramId(LOVEFILM_PRODUCT_CRID_PREFIX + getId(item.getCanonicalUri()) + LOVEFILM_CRID_SEPARATOR + getId(item.getCanonicalUri()) + "_version");
         progInfo.setBasicDescription(generateBasicDescription(item));
         progInfo.setDerivedFrom(generateDerivedFrom(item));
         progInfo.getOtherIdentifier().add(generateOtherId(item));
 
         return progInfo;
-    }
-    
-    private String getId(Item item) {
-        return item.getCanonicalUri().replaceAll(LOVEFILM_URI_PATTERN, "");
     }
 
     private UniqueIDType generateOtherId(Item item) {
@@ -92,7 +102,7 @@ public class LovefilmProgramInformationGenerator implements ProgramInformationGe
         } else if (item instanceof Episode) {
             id.setAuthority(LOVEFILM_PRODUCT_ID);
         }
-        id.setValue(getId(item) + LOVEFILM_LINK_SUFFIX);
+        id.setValue(getId(item.getCanonicalUri()) + LOVEFILM_LINK_SUFFIX);
         return id;
     }
 
@@ -102,7 +112,10 @@ public class LovefilmProgramInformationGenerator implements ProgramInformationGe
         // ParentalGuidance
         basicDescription.setParentalGuidance(generateParentalGuidance(item));
         // ProductionDate
-        basicDescription.setProductionDate(generateProductionDate(item));
+        Optional<TVATimeType> prodDate = generateProductionDate(item);
+        if (prodDate.isPresent()) {
+            basicDescription.setProductionDate(prodDate.get());
+        }
         // ProductionLocation
         basicDescription.getProductionLocation().addAll(generateProductLocations(item));
         // Duration
@@ -124,21 +137,16 @@ public class LovefilmProgramInformationGenerator implements ProgramInformationGe
 
     private TVAParentalGuidanceType generateParentalGuidance(Item item) {
         TVAParentalGuidanceType parentalGuidance = new TVAParentalGuidanceType();
-        // first with country of GB
-        Certificate certificate = Iterables.getOnlyElement(
-            Iterables.filter(item.getCertificates(), new Predicate<Certificate>() {
-                @Override
-                public boolean apply(Certificate input) {
-                    return input.country().equals(Countries.GB);
-                }
-            }));
+
+        String certificate = Iterables.getFirst(
+            Iterables.transform(
+                Iterables.filter(item.getCertificates(), FILTER_CERT_FOR_GB), 
+                CERTIFICATE_TO_CLASSIFICATION
+            ), 
+            YOUVIEW_DEFAULT_CERTIFICATE);
 
         ControlledTermUseType useType = new ControlledTermUseType();
-        String href = YOUVIEW_CERTIFICATE_MAPPING.get(certificate.classification());
-        if (href == null) {
-            href = YOUVIEW_DEFAULT_RATING;
-        }
-        useType.setHref(href);
+        useType.setHref(certificate);
         parentalGuidance.setParentalRating(useType);
         return parentalGuidance;
     }
@@ -152,25 +160,18 @@ public class LovefilmProgramInformationGenerator implements ProgramInformationGe
         return null;
     }
 
-    private TVATimeType generateProductionDate(Item item) {
-        TVATimeType productionDate = new TVATimeType();
-        productionDate.setTimePoint(item.getYear().toString());
-        return productionDate;
+    private Optional<TVATimeType> generateProductionDate(Item item) {
+        if (item.getYear() != null) {
+            TVATimeType productionDate = new TVATimeType();
+            productionDate.setTimePoint(item.getYear().toString());
+            return Optional.of(productionDate);
+        }
+        return Optional.absent();
     }
 
     private DerivedFromType generateDerivedFrom(Item item) {
         DerivedFromType derivedFrom = new DerivedFromType();
-        derivedFrom.setCrid(LOVEFILM_CRID_PREFIX + getId(item));
-//            if (item instanceof Film) {
-//                derivedFrom.setCrid(LOVEFILM_CRID_PREFIX + getId(item));
-//            } else if (item instanceof Episode) {
-//                String parentUri = item.getContainer().getUri();
-//                if (parentUri.contains(LOVEFILM_SEASON_PREFIX)) {
-//                    derivedFrom.setCrid(LOVEFILM_CRID_PREFIX + parentUri.replace(LOVEFILM_SEASON_PREFIX, ""));
-//                } else {
-//                    derivedFrom.setCrid(LOVEFILM_CRID_PREFIX + parentUri.replace(LOVEFILM_SHOW_PREFIX, ""));
-//                }
-//            }
+        derivedFrom.setCrid(LOVEFILM_CRID_PREFIX + getId(item.getCanonicalUri()));
         return derivedFrom;
     }
 }

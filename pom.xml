@@ -176,6 +176,12 @@
 			<artifactId>commons-lang</artifactId>
 			<version>2.3</version>
 		</dependency>
+		<dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.0</version>
+            <scope>test</scope>
+        </dependency>
 		<!-- dependencies for azure client start here -->
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
