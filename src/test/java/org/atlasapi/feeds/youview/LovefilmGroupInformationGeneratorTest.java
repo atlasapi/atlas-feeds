@@ -33,6 +33,7 @@ import tva.metadata.extended._2010.ExtendedRelatedMaterialType;
 import tva.metadata.extended._2010.StillImageContentAttributesType;
 import tva.mpeg7._2008.ExtendedLanguageType;
 import tva.mpeg7._2008.NameComponentType;
+import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 
 import com.google.common.collect.ImmutableList;
@@ -66,9 +67,8 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals(SynopsisLengthType.SHORT, synopsis.getLength());
         
         // TODO full list of genres won't be possible until genre mapping is known
-        // first genre in list is blank, as there is no mapping currently
-        GenreType first = Iterables.get(desc.getGenre(), 1);
-        GenreType second = Iterables.get(desc.getGenre(), 2);
+        GenreType first = Iterables.get(desc.getGenre(), 0);
+        GenreType second = Iterables.get(desc.getGenre(), 1);
         
         assertThat(first.getType(), isOneOf("main", "other"));
         assertThat(second.getType(), isOneOf("main", "other"));
@@ -90,8 +90,11 @@ public class LovefilmGroupInformationGeneratorTest {
         CreditsItemType firstCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 0);
         CreditsItemType secondCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 1);
         
-        NameComponentType firstName = (NameComponentType) Iterables.getOnlyElement(Iterables.getOnlyElement(firstCredit.getCharacter()).getGivenNameOrLinkingNameOrFamilyName()).getValue();
-        NameComponentType secondName = (NameComponentType) Iterables.getOnlyElement(Iterables.getOnlyElement(secondCredit.getCharacter()).getGivenNameOrLinkingNameOrFamilyName()).getValue();
+        PersonNameType firstPerson = (PersonNameType) Iterables.getOnlyElement(firstCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
+        PersonNameType secondPerson = (PersonNameType) Iterables.getOnlyElement(secondCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
+        
+        NameComponentType firstName = (NameComponentType) Iterables.getOnlyElement(firstPerson.getGivenNameOrLinkingNameOrFamilyName()).getValue();
+        NameComponentType secondName = (NameComponentType) Iterables.getOnlyElement(secondPerson.getGivenNameOrLinkingNameOrFamilyName()).getValue();
         
         assertThat(firstName.getValue(), isOneOf(
             "George C. Scott",
@@ -156,9 +159,8 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals(SynopsisLengthType.SHORT, synopsis.getLength());
         
         // TODO full list of genres won't be possible until genre mapping is known
-        // first two genres in list are blank, as there is no mapping currently
-        GenreType first = Iterables.get(desc.getGenre(), 2);
-        GenreType second = Iterables.get(desc.getGenre(), 3);
+        GenreType first = Iterables.get(desc.getGenre(), 0);
+        GenreType second = Iterables.get(desc.getGenre(), 1);
         
         assertThat(first.getType(), isOneOf("main", "other"));
         assertThat(second.getType(), isOneOf("main", "other"));
@@ -180,8 +182,11 @@ public class LovefilmGroupInformationGeneratorTest {
         CreditsItemType firstCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 0);
         CreditsItemType secondCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 1);
         
-        NameComponentType firstName = (NameComponentType) Iterables.getOnlyElement(Iterables.getOnlyElement(firstCredit.getCharacter()).getGivenNameOrLinkingNameOrFamilyName()).getValue();
-        NameComponentType secondName = (NameComponentType) Iterables.getOnlyElement(Iterables.getOnlyElement(secondCredit.getCharacter()).getGivenNameOrLinkingNameOrFamilyName()).getValue();
+        PersonNameType firstPerson = (PersonNameType) Iterables.getOnlyElement(firstCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
+        PersonNameType secondPerson = (PersonNameType) Iterables.getOnlyElement(secondCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
+        
+        NameComponentType firstName = (NameComponentType) Iterables.getOnlyElement(firstPerson.getGivenNameOrLinkingNameOrFamilyName()).getValue();
+        NameComponentType secondName = (NameComponentType) Iterables.getOnlyElement(secondPerson.getGivenNameOrLinkingNameOrFamilyName()).getValue();
         
         assertThat(firstName.getValue(), isOneOf(
             "Robson Green",
@@ -247,9 +252,8 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals(SynopsisLengthType.SHORT, synopsis.getLength());
         
         // TODO full list of genres won't be possible until genre mapping is known
-        // first two genres in list are blank, as there is no mapping currently
-        GenreType first = Iterables.get(desc.getGenre(), 2);
-        GenreType second = Iterables.get(desc.getGenre(), 3);
+        GenreType first = Iterables.get(desc.getGenre(), 0);
+        GenreType second = Iterables.get(desc.getGenre(), 1);
         
         assertThat(first.getType(), isOneOf("main", "other"));
         assertThat(second.getType(), isOneOf("main", "other"));
@@ -271,8 +275,11 @@ public class LovefilmGroupInformationGeneratorTest {
         CreditsItemType firstCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 0);
         CreditsItemType secondCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 1);
         
-        NameComponentType firstName = (NameComponentType) Iterables.getOnlyElement(Iterables.getOnlyElement(firstCredit.getCharacter()).getGivenNameOrLinkingNameOrFamilyName()).getValue();
-        NameComponentType secondName = (NameComponentType) Iterables.getOnlyElement(Iterables.getOnlyElement(secondCredit.getCharacter()).getGivenNameOrLinkingNameOrFamilyName()).getValue();
+        PersonNameType firstPerson = (PersonNameType) Iterables.getOnlyElement(firstCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
+        PersonNameType secondPerson = (PersonNameType) Iterables.getOnlyElement(secondCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
+        
+        NameComponentType firstName = (NameComponentType) Iterables.getOnlyElement(firstPerson.getGivenNameOrLinkingNameOrFamilyName()).getValue();
+        NameComponentType secondName = (NameComponentType) Iterables.getOnlyElement(secondPerson.getGivenNameOrLinkingNameOrFamilyName()).getValue();
         
         assertThat(firstName.getValue(), isOneOf(
             "Robson Green",
@@ -335,9 +342,8 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals(SynopsisLengthType.SHORT, synopsis.getLength());
         
         // TODO full list of genres won't be possible until genre mapping is known
-        // first two genres in list are blank, as there is no mapping currently
-        GenreType first = Iterables.get(desc.getGenre(), 2);
-        GenreType second = Iterables.get(desc.getGenre(), 3);
+        GenreType first = Iterables.get(desc.getGenre(), 0);
+        GenreType second = Iterables.get(desc.getGenre(), 1);
         
         assertThat(first.getType(), isOneOf("main", "other"));
         assertThat(second.getType(), isOneOf("main", "other"));
@@ -359,8 +365,11 @@ public class LovefilmGroupInformationGeneratorTest {
         CreditsItemType firstCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 0);
         CreditsItemType secondCredit = Iterables.get(desc.getCreditsList().getCreditsItem(), 1);
         
-        NameComponentType firstName = (NameComponentType) Iterables.getOnlyElement(Iterables.getOnlyElement(firstCredit.getCharacter()).getGivenNameOrLinkingNameOrFamilyName()).getValue();
-        NameComponentType secondName = (NameComponentType) Iterables.getOnlyElement(Iterables.getOnlyElement(secondCredit.getCharacter()).getGivenNameOrLinkingNameOrFamilyName()).getValue();
+        PersonNameType firstPerson = (PersonNameType) Iterables.getOnlyElement(firstCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
+        PersonNameType secondPerson = (PersonNameType) Iterables.getOnlyElement(secondCredit.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
+        
+        NameComponentType firstName = (NameComponentType) Iterables.getOnlyElement(firstPerson.getGivenNameOrLinkingNameOrFamilyName()).getValue();
+        NameComponentType secondName = (NameComponentType) Iterables.getOnlyElement(secondPerson.getGivenNameOrLinkingNameOrFamilyName()).getValue();
         
         assertThat(firstName.getValue(), isOneOf(
             "Robson Green",
