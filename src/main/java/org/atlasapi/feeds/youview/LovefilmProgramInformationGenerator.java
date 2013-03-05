@@ -11,7 +11,6 @@ import javax.xml.datatype.Duration;
 
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.media.entity.Certificate;
-import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
@@ -56,7 +55,11 @@ public class LovefilmProgramInformationGenerator implements ProgramInformationGe
     private static final Function<Certificate, String> CERTIFICATE_TO_CLASSIFICATION = new Function<Certificate, String>() {
         @Override
         public String apply(Certificate input) {
-            return YOUVIEW_CERTIFICATE_MAPPING.get(input.classification());
+            String href = YOUVIEW_CERTIFICATE_MAPPING.get(input.classification());
+            if (href == null) {
+                href = YOUVIEW_DEFAULT_CERTIFICATE;
+            }
+            return href;
         }
     };
     
@@ -67,7 +70,7 @@ public class LovefilmProgramInformationGenerator implements ProgramInformationGe
             .put("15", "http://bbfc.org.uk/BBFCRatingCS/2002#15")
             .put("18", "http://bbfc.org.uk/BBFCRatingCS/2002#18")
             .build();
-
+    
     private DatatypeFactory datatypeFactory;
 
     /**
@@ -99,7 +102,7 @@ public class LovefilmProgramInformationGenerator implements ProgramInformationGe
         UniqueIDType id = new UniqueIDType();
         if (item instanceof Film) {
             id.setAuthority(LOVEFILM_DEEP_LINKING_ID);
-        } else if (item instanceof Episode) {
+        } else {
             id.setAuthority(LOVEFILM_PRODUCT_ID);
         }
         id.setValue(getId(item.getCanonicalUri()) + LOVEFILM_LINK_SUFFIX);

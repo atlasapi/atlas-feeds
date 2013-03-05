@@ -99,10 +99,10 @@ public abstract class YouViewUploader extends ScheduledTask {
                 } else {
                     throw new RuntimeException(String.format("An Http status code of %s was returned when POSTing to YouView. Error message:\n%s", response.statusCode(), response.body()));
                 }
-                progress.reduce(UpdateProgress.SUCCESS);
+                progress = progress.reduce(UpdateProgress.SUCCESS);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
-                progress.reduce(UpdateProgress.FAILURE);
+                progress = progress.reduce(UpdateProgress.FAILURE);
             }
             reportStatus(progress.toString());
         }

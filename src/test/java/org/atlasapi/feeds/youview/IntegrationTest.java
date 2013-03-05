@@ -48,7 +48,8 @@ public class IntegrationTest {
         progLocationGenerator, 
         lovefilmServiceInfoGenerator, 
         lovefilmInstantServiceInfoGenerator, 
-        Mockito.mock(ContentResolver.class)
+        Mockito.mock(ContentResolver.class),
+        true
     );
 
     @Test

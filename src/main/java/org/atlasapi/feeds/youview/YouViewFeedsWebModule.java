@@ -10,6 +10,7 @@ import org.atlasapi.feeds.youview.www.YouViewController;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,6 +18,8 @@ import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 
 @Configuration
 public class YouViewFeedsWebModule {
+    
+    private @Value("${youview.upload.validation}") String validation;
     
     private @Autowired DatabasedMongo mongo;
     private @Autowired LastUpdatedContentFinder executor;
@@ -41,7 +44,8 @@ public class YouViewFeedsWebModule {
             new LovefilmOnDemandLocationGenerator(), 
             new LovefilmServiceInformationGenerator(), 
             new LovefilmInstantServiceInformationGenerator(), 
-            contentResolver
+            contentResolver,
+            Boolean.parseBoolean(validation)
         );
     }
 }

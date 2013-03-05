@@ -30,6 +30,7 @@ public class YouViewUploadModule {
     private @Autowired ContentResolver contentResolver;
     private @Autowired SimpleScheduler scheduler;
     
+    private @Value("${youview.upload.validation}") String validation;
     private @Value("${youview.upload.enabled}") String enabled;
     private @Value("${youview.upload.url}") String url;
     private @Value("${youview.upload.username}") String username;
@@ -62,7 +63,8 @@ public class YouViewUploadModule {
             new LovefilmOnDemandLocationGenerator(), 
             new LovefilmServiceInformationGenerator(), 
             new LovefilmInstantServiceInformationGenerator(), 
-            contentResolver
+            contentResolver,
+            Boolean.parseBoolean(validation)
         );
     }
 }
