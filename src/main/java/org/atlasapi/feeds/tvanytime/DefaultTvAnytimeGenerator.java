@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.tvanytime;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.List;
@@ -39,6 +40,33 @@ import com.google.inject.internal.Lists;
 
 public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
 
+    private final class JaxbErrorHandler implements ErrorHandler {
+        
+        private boolean hasErrors = false;
+        
+        @Override
+        public void warning(SAXParseException e) throws SAXException {
+            log.error("XML Validation warning: " + e.getMessage(), e);
+            hasErrors = true;
+        }
+
+        @Override
+        public void fatalError(SAXParseException e) throws SAXException {
+            log.error("XML Validation fatal error: " + e.getMessage(), e);
+            hasErrors = true;
+        }
+
+        @Override
+        public void error(SAXParseException e) throws SAXException {
+            log.error("XML Validation error: " + e.getMessage(), e);
+            hasErrors = true;
+        }
+        
+        public boolean hasErrors() {
+            return hasErrors;
+        }
+    }
+
     private static final String TVA_LANGUAGE = "en-GB";
 
     private final ProgramInformationGenerator progInfoGenerator;
@@ -77,26 +105,17 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
                 Schema schema = sf.newSchema(new File("../atlas-feeds/src/main/resources/tvanytime/youview/youview_metadata_2011-07-06.xsd")); 
 
                 Validator validator = schema.newValidator();
-                validator.setErrorHandler(new ErrorHandler() {
-                    
-                    @Override
-                    public void warning(SAXParseException e) throws SAXException {
-                        log.error("XML Validation warning: " + e.getMessage(), e);
-                    }
-                    
-                    @Override
-                    public void fatalError(SAXParseException e) throws SAXException {
-                        log.error("XML Validation fatal error: " + e.getMessage(), e);
-                    }
-                    
-                    @Override
-                    public void error(SAXParseException e) throws SAXException {
-                        log.error("XML Validation error: " + e.getMessage(), e);
-                    }
-                });
-                
+                JaxbErrorHandler errorHandler = new JaxbErrorHandler();
+                validator.setErrorHandler(errorHandler);
 
                 validator.validate(source);
+                
+                if(errorHandler.hasErrors()) {
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    marshaller.marshal(rootElem, os);
+                    log.trace("Invalid xml was: {}", os.toString());
+                    throw new RuntimeException("XML Validation against schema failed");
+                }
                 
             }
             
