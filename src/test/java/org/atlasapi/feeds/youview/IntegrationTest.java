@@ -49,7 +49,7 @@ public class IntegrationTest {
         lovefilmServiceInfoGenerator, 
         lovefilmInstantServiceInfoGenerator, 
         Mockito.mock(ContentResolver.class),
-        true
+        false
     );
 
     @Test
