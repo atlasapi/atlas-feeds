@@ -5,6 +5,7 @@ import static org.atlasapi.feeds.youview.LovefilmOutputUtils.getId;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
@@ -47,6 +48,7 @@ import com.google.inject.internal.Lists;
 
 public class LovefilmGroupInformationGenerator implements GroupInformationGenerator {
 
+    private static final String ELLIPSIS = "...";
     private static final String YOUVIEW_CREDIT_ROLE = "urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN";
     private static final String YOUVIEW_IMAGE_FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS:2001:1";
     private static final String YOUVIEW_IMAGE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
@@ -64,17 +66,46 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
     private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
     private static final String TITLE_TYPE_MAIN = "main";
     private static final String LOVEFILM_MEDIATYPE_GENRE_VIDEO = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
+    private static final String LOVEFILM_GENRES_PREFIX = "http://lovefilm.com/genres/";
+    
     private static final Map<Specialization, String> YOUVIEW_SPECIALIZATION_GENRE_MAPPING = ImmutableMap.<Specialization, String>builder()
         .put(Specialization.FILM, "urn:tva:metadata:cs:OriginationCS:2005:5.7")
         .put(Specialization.TV, "urn:tva:metadata:cs:OriginationCS:2005:5.8")
         .build();
     
+    // TODO ultimately will become a .csv parser, that will populate the appropriate genre mappings
     private static final Map<String, String> YOUVIEW_ATLAS_GENRE_MAPPING = ImmutableMap.<String, String>builder()
-        .build();   
+        .put("action-adventure","rn:tva:metadata:cs:ContentCS:2010:3.4.6")
+        .put("adult","urn:tva:metadata:cs:ContentCS:2010:3.9")
+        .put("animated","urn:tva:metadata:cs:FormatCS:2010:2.3.3")
+        .put("bollywood","urn:tva:metadata:cs:ContentCS:2010:3.6.17.3")
+        .put("children","urn:tva:metadata:cs:IntendedAudienceCS:2010:4.2.1")
+        .put("comedy","urn:tva:metadata:cs:ContentCS:2010:3.5.7")
+        .put("documentary","urn:tva:metadata:cs:ContentCS:2010:3.1")
+        .put("drama","urn:tva:metadata:cs:ContentCS:2010:3.4")
+        .put("family","urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9")
+        .put("gay-lesbian","urn:tva:metadata:cs:ContentCS:2010:3.4")
+        .put("horror","urn:tva:metadata:cs:ContentCS:2010:3.4.6.6")
+        .put("music-musical","urn:tva:metadata:cs:ContentCS:2010:3.1.4")
+        .put("romance","urn:tva:metadata:cs:ContentCS:2010:3.4.3")
+        .put("sci-fi-fantasy","urn:tva:metadata:cs:ContentCS:2010:3.4.6.7")
+        .put("specialinterest","urn:tva:metadata:cs:ContentCS:2010:3.8")
+        .put("sport","urn:tva:metadata:cs:ContentCS:2010:3.2")
+        .put("teen","http://refdata.youview.com/mpeg7cs/YouViewIntendedAudienceCS/2010-09-20#4.2.3")
+        .put("television","urn:tva:metadata:cs:ContentCS:2010:3.5")
+        .put("thriller","urn:tva:metadata:cs:ContentCS:2010:3.4.6.10")
+        .put("worldcinema","urn:tva:metadata:cs:ContentCS:2010:3.4")
+        .build();
+    
+    private static final Map<SynopsisLengthType, Integer> YOUVIEW_SYNOPSIS_LENGTH = ImmutableMap.<SynopsisLengthType, Integer>builder()
+        .put(SynopsisLengthType.SHORT, 87)
+        .put(SynopsisLengthType.MEDIUM, 207)
+        .put(SynopsisLengthType.LONG, 1197)
+        .build();
     
     @Override
     public GroupInformationType generate(Film film) {
-        GroupInformationType groupInfo = generateWithCommonFields(film);
+        GroupInformationType groupInfo = generateWithCommonFields(film, null);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         groupInfo.setServiceIDRef(LOVEFILM_URL);
@@ -84,7 +115,7 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
     
     @Override
     public GroupInformationType generate(Episode episode) {
-        GroupInformationType groupInfo = generateWithCommonFields(episode);
+        GroupInformationType groupInfo = generateWithCommonFields(episode, null);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         
@@ -99,8 +130,8 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
     }
     
     @Override
-    public GroupInformationType generate(Series series) {
-        GroupInformationType groupInfo = generateWithCommonFields(series);
+    public GroupInformationType generate(Series series, Episode episode) {
+        GroupInformationType groupInfo = generateWithCommonFields(series, episode);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));
         groupInfo.setOrdered(true);
@@ -115,8 +146,8 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
     }
     
     @Override
-    public GroupInformationType generate(Brand brand) {
-        GroupInformationType groupInfo = generateWithCommonFields(brand);
+    public GroupInformationType generate(Brand brand, Episode episode) {
+        GroupInformationType groupInfo = generateWithCommonFields(brand, episode);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
         groupInfo.setOrdered(true);
@@ -125,12 +156,12 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
         return groupInfo;
     }
     
-    GroupInformationType generateWithCommonFields(Content content) {
+    GroupInformationType generateWithCommonFields(Content content, Episode episode) {
         GroupInformationType groupInfo = new GroupInformationType();
         
         groupInfo.setGroupId(LOVEFILM_PRODUCT_CRID_PREFIX + getId(content.getCanonicalUri()));
         // this needs tweaking depending on type
-        groupInfo.setBasicDescription(generateBasicDescription(content));
+        groupInfo.setBasicDescription(generateBasicDescription(content, episode));
         
         return groupInfo;
     }
@@ -141,17 +172,23 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
         return type;
     }
 
-    private BasicContentDescriptionType generateBasicDescription(Content content) {
+    private BasicContentDescriptionType generateBasicDescription(Content content, Episode episode) {
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
         
         basicDescription.getTitle().add(generateTitle(content));
-        basicDescription.getSynopsis().add(generateSynopsis(content));
+        basicDescription.getSynopsis().addAll(generateSynopses(content));
         basicDescription.getGenre().addAll(generateGenres(content));
         basicDescription.getGenre().add(generateGenreFromSpecialization(content));
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
         basicDescription.getLanguage().addAll(generateLanguage(content));
         basicDescription.setCreditsList(generateCreditsList(content));
-        basicDescription.getRelatedMaterial().add(generateRelatedMaterial(content));
+        if (content instanceof Series) {
+            basicDescription.getRelatedMaterial().add(generateRelatedMaterial(episode));
+        } else if (content instanceof Brand) {
+            basicDescription.getRelatedMaterial().add(generateRelatedMaterial(episode));
+        } else {
+            basicDescription.getRelatedMaterial().add(generateRelatedMaterial(content));
+        }
         
         return basicDescription;
     }
@@ -241,13 +278,12 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
 
     private Collection<GenreType> generateGenres(Content content) {
         List<GenreType> genres = Lists.newArrayList();
-        // TODO uncomment once genre mapping is present
-//        for (String genreStr : content.getGenres()) {
-//            GenreType genre = new GenreType();
-//            genre.setType(GENRE_TYPE_MAIN);
-//            genre.setHref(YOUVIEW_ATLAS_GENRE_MAPPING.get(genreStr));
-//            genres.add(genre);
-//        }
+        for (String genreStr : content.getGenres()) {
+            GenreType genre = new GenreType();
+            genre.setType(GENRE_TYPE_MAIN);
+            genre.setHref(YOUVIEW_ATLAS_GENRE_MAPPING.get(genreStr.replace(LOVEFILM_GENRES_PREFIX, "")));
+            genres.add(genre);
+        }
         return genres;
     }
 
@@ -269,11 +305,22 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
        return genre;
     }
 
-    private SynopsisType generateSynopsis(Content content) {
-        SynopsisType synopsis = new SynopsisType();
-        synopsis.setLength(SynopsisLengthType.SHORT);
-        synopsis.setValue(content.getDescription());
-        return synopsis;
+    private List<SynopsisType> generateSynopses(Content content) {
+        List<SynopsisType> synopses = Lists.newArrayList();
+        for (Entry<SynopsisLengthType, Integer> entry : YOUVIEW_SYNOPSIS_LENGTH.entrySet()) {
+            SynopsisType synopsis = new SynopsisType();
+            synopsis.setLength(entry.getKey());
+            String description = content.getDescription();
+            if (description != null) {
+                if (description.length() > entry.getValue()) {
+                    synopsis.setValue(description.substring(0, entry.getValue()) + ELLIPSIS);    
+                } else {
+                    synopsis.setValue(description);
+                }
+                synopses.add(synopsis);
+            }
+        }
+        return synopses;
     }
 
     private TitleType generateTitle(Content content) {

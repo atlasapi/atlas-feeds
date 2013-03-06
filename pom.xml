@@ -25,7 +25,7 @@
                             <generateDirectory>${project.build.directory}/generated-sources/lakeview</generateDirectory>
                         </configuration>
                     </execution>
-                     <execution>
+                     <!-- <execution>
                         <id>generate-tvanytime-youview-schema-xml</id>
                         <goals>
                             <goal>generate</goal>
@@ -99,7 +99,7 @@
                             </schemaIncludes>
                             <generateDirectory>${project.build.directory}/generated-sources/tvanytime/youview</generateDirectory>
                         </configuration>
-                    </execution>
+                    </execution> -->
                 </executions>
          </plugin>
          <plugin>

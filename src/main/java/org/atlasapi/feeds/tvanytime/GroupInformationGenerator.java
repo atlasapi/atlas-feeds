@@ -10,6 +10,6 @@ import tva.metadata._2010.GroupInformationType;
 public interface GroupInformationGenerator {
     public GroupInformationType generate(Film film);
     public GroupInformationType generate(Episode episode);
-    public GroupInformationType generate(Series series);
-    public GroupInformationType generate(Brand brand);
+    public GroupInformationType generate(Series series, Episode episode);
+    public GroupInformationType generate(Brand brand, Episode episode);
 }

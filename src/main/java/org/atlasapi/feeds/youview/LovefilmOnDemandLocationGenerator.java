@@ -37,6 +37,7 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class LovefilmOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
+    private static final String VERSION_SUFFIX = "_version";
     private static final String ASPECT_RATIO_16_9 = "16:9";
     private static final String YOUVIEW_MIX_TYPE = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
     private static final String DEEP_LINKING_ID_SUFFIX = "L";
@@ -69,7 +70,7 @@ public class LovefilmOnDemandLocationGenerator implements OnDemandLocationGenera
         onDemand.setServiceIDRef(LOVEFILM_IDREF_ONDEMAND);
         onDemand.setProgram(generateProgram(item));
         // TODO once again, this has a placeholder for the digital release id, which isn't currently ingested
-        onDemand.setInstanceMetadataId("imi:lovefilm.com/t" + getId(item.getCanonicalUri()) + "_r" + getId(item.getCanonicalUri()) + "_version");
+        onDemand.setInstanceMetadataId("imi:lovefilm.com/t" + getId(item.getCanonicalUri()) + VERSION_SUFFIX);
         onDemand.setInstanceDescription(generateInstanceDescription(item));
         onDemand.setPublishedDuration(generatePublishedDuration(item));
         onDemand.setStartOfAvailability(generateAvailabilityStart(item));
@@ -92,7 +93,7 @@ public class LovefilmOnDemandLocationGenerator implements OnDemandLocationGenera
     private CRIDRefType generateProgram(Item item) {
         CRIDRefType program = new CRIDRefType();
         // TODO digital_release_id not ingested yet, currently a placeholder of id + '_version'
-        program.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(item.getCanonicalUri()) + LOVEFILM_CRID_SEPARATOR + getId(item.getCanonicalUri()) + "_version");
+        program.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(item.getCanonicalUri()) + VERSION_SUFFIX);
         return program;
     }
 

@@ -37,12 +37,12 @@ import com.metabroadcast.common.intl.Country;
 
 public class LovefilmProgramInformationGenerator implements ProgramInformationGenerator {
 
+    private static final String VERSION_SUFFIX = "_version";
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
     private static final String LOVEFILM_LINK_SUFFIX = "L";
-    private static final String LOVEFILM_CRID_SEPARATOR = "_r";
+//    private static final String LOVEFILM_CRID_SEPARATOR = "_r";
     private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
     private static final String LOVEFILM_CRID_PREFIX = LOVEFILM_PRODUCT_CRID_PREFIX;
-    private static final String LOVEFILM_PRODUCT_ID = "product_id.lovefilm.com";
     private static final String LOVEFILM_DEEP_LINKING_ID = "deep_linking_id.lovefilm.com";
     
     private static final Predicate<Certificate> FILTER_CERT_FOR_GB = new Predicate<Certificate>() {
@@ -90,7 +90,7 @@ public class LovefilmProgramInformationGenerator implements ProgramInformationGe
         ProgramInformationType progInfo = new ProgramInformationType();
 
         // TODO digital_release_id not ingested yet, currently a placeholder of id + '_version'
-        progInfo.setProgramId(LOVEFILM_PRODUCT_CRID_PREFIX + getId(item.getCanonicalUri()) + LOVEFILM_CRID_SEPARATOR + getId(item.getCanonicalUri()) + "_version");
+        progInfo.setProgramId(LOVEFILM_PRODUCT_CRID_PREFIX + getId(item.getCanonicalUri()) + VERSION_SUFFIX);
         progInfo.setBasicDescription(generateBasicDescription(item));
         progInfo.setDerivedFrom(generateDerivedFrom(item));
         progInfo.getOtherIdentifier().add(generateOtherId(item));
@@ -100,11 +100,7 @@ public class LovefilmProgramInformationGenerator implements ProgramInformationGe
 
     private UniqueIDType generateOtherId(Item item) {
         UniqueIDType id = new UniqueIDType();
-        if (item instanceof Film) {
-            id.setAuthority(LOVEFILM_DEEP_LINKING_ID);
-        } else {
-            id.setAuthority(LOVEFILM_PRODUCT_ID);
-        }
+        id.setAuthority(LOVEFILM_DEEP_LINKING_ID);
         id.setValue(getId(item.getCanonicalUri()) + LOVEFILM_LINK_SUFFIX);
         return id;
     }

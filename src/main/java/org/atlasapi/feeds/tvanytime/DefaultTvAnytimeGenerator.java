@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
@@ -37,6 +38,7 @@ import tva.metadata._2010.TVAMainType;
 
 import com.google.common.base.Throwables;
 import com.google.inject.internal.Lists;
+import com.google.inject.internal.Sets;
 
 public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
 
@@ -126,6 +128,8 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
     }
 
     private JAXBElement<TVAMainType> createXml(Iterable<Item> items, boolean includeServiceInformation) {
+        
+        Set<String> added = Sets.newHashSet();
         TVAMainType tvaMain = factory.createTVAMainType();
         tvaMain.setLang(TVA_LANGUAGE);
         
@@ -147,29 +151,39 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
                 progLocTable.getOnDemandProgram().add(progLocationGenerator.generate((Item)item));
                 
                 if (item instanceof Film) {
-                    
-                    groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Film)item));
-                    
+                    if (!added.contains(item.getCanonicalUri())) {
+                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Film)item));
+                        added.add(item.getCanonicalUri());
+                    }
                 } else if (item instanceof Episode) {
                     
-                    Episode episode = (Episode)item;
-                    groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(episode));
-                    // TODO to be improved...
-                    List<String> parentUris = Lists.newArrayList();
-                    if (episode.getSeriesRef() != null) {
-                        parentUris.add(episode.getSeriesRef().getUri());
-                    }
-                    if (episode.getContainer() != null) {
-                        parentUris.add(episode.getContainer().getUri());
-                    }
-                    
-                    ResolvedContent seriesAndBrand = contentResolver.findByCanonicalUris(parentUris);
-                    
-                    if (episode.getSeriesRef() != null) {
-                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Series) seriesAndBrand.get(episode.getSeriesRef().getUri()).requireValue()));   
-                    }
-                    if (episode.getContainer() != null) {
-                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Brand) seriesAndBrand.get(episode.getContainer().getUri()).requireValue()));
+                    if (!added.contains(item.getCanonicalUri())) {
+                        Episode episode = (Episode)item;
+                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(episode));
+                        added.add(episode.getCanonicalUri());
+                        // TODO to be improved...
+                        List<String> parentUris = Lists.newArrayList();
+                        if (episode.getSeriesRef() != null) {
+                            parentUris.add(episode.getSeriesRef().getUri());
+                        }
+                        if (episode.getContainer() != null) {
+                            parentUris.add(episode.getContainer().getUri());
+                        }
+
+                        ResolvedContent seriesAndBrand = contentResolver.findByCanonicalUris(parentUris);
+
+                        if (episode.getSeriesRef() != null) {
+                            if (!added.contains(episode.getSeriesRef().getUri())) {
+                                groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Series) seriesAndBrand.get(episode.getSeriesRef().getUri()).requireValue(), episode));
+                                added.add(episode.getSeriesRef().getUri());
+                            }
+                        }
+                        if (episode.getContainer() != null) {
+                            if (!added.contains(episode.getContainer().getUri())) {
+                                groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Brand) seriesAndBrand.get(episode.getContainer().getUri()).requireValue(), episode));
+                                added.add(episode.getContainer().getUri());
+                            }
+                        }
                     }
                 }
         }

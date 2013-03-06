@@ -237,7 +237,7 @@ public class LovefilmGroupInformationGeneratorTest {
     
     @Test
     public void testSeriesOnDemandGeneration() {
-        GroupInformationType groupInfo = generator.generate(createSeries());
+        GroupInformationType groupInfo = generator.generate(createSeries(), createEpisode());
 
         assertEquals("crid://lovefilm.com/product/179534", groupInfo.getGroupId());
         assertTrue(groupInfo.isOrdered());
@@ -334,7 +334,7 @@ public class LovefilmGroupInformationGeneratorTest {
     
     @Test
     public void testBrandOnDemandGeneration() {
-        GroupInformationType groupInfo = generator.generate(createBrand());
+        GroupInformationType groupInfo = generator.generate(createBrand(), createEpisode());
 
         assertEquals("crid://lovefilm.com/product/184930", groupInfo.getGroupId());
         assertEquals("http://lovefilm.com", groupInfo.getServiceIDRef());
