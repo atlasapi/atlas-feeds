@@ -73,7 +73,10 @@ public class LovefilmOnDemandLocationGenerator implements OnDemandLocationGenera
         onDemand.setInstanceMetadataId("imi:lovefilm.com/t" + getId(item.getCanonicalUri()) + VERSION_SUFFIX);
         onDemand.setInstanceDescription(generateInstanceDescription(item));
         onDemand.setPublishedDuration(generatePublishedDuration(item));
-        onDemand.setStartOfAvailability(generateAvailabilityStart(item));
+        Optional<XMLGregorianCalendar> startOfAvailability = generateAvailabilityStart(item);
+        if (startOfAvailability.isPresent()) {
+            onDemand.setStartOfAvailability(startOfAvailability.get());
+        }
         Optional<XMLGregorianCalendar> endOfAvailability = generateAvailabilityEnd(item);
         if (endOfAvailability.isPresent()) {
             onDemand.setEndOfAvailability(endOfAvailability.get());
@@ -178,11 +181,14 @@ public class LovefilmOnDemandLocationGenerator implements OnDemandLocationGenera
         return null;
     }
 
-    private XMLGregorianCalendar generateAvailabilityStart(Item item) {
+    private Optional<XMLGregorianCalendar> generateAvailabilityStart(Item item) {
         Version version = Iterables.getOnlyElement(item.getVersions());
         Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
         Policy policy = Iterables.getOnlyElement(encoding.getAvailableAt()).getPolicy();
-        return datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityStart().toGregorianCalendar());    
+        if (policy.getAvailabilityStart() != null) {
+            return Optional.of(datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityStart().toGregorianCalendar()));
+        }
+        return Optional.absent();
     }
 
     private Optional<XMLGregorianCalendar> generateAvailabilityEnd(Item item) {
