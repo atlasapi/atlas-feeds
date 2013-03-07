@@ -45,6 +45,7 @@ import tva.mpeg7._2008.TitleType;
 import com.google.common.base.Objects;
 import com.google.inject.internal.ImmutableMap;
 import com.google.inject.internal.Lists;
+import com.metabroadcast.common.text.Truncator;
 
 public class LoveFilmGroupInformationGenerator implements GroupInformationGenerator {
 
@@ -79,6 +80,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         .build();
     
     private final YouViewGenreMapping genreMapping;
+    Truncator truncator = new Truncator();
     
     public LoveFilmGroupInformationGenerator(YouViewGenreMapping genreMapping) {
         this.genreMapping = genreMapping;
@@ -295,11 +297,8 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
             synopsis.setLength(entry.getKey());
             String description = content.getDescription();
             if (description != null) {
-                if (description.length() > entry.getValue()) {
-                    synopsis.setValue(description.substring(0, entry.getValue()) + ELLIPSIS);    
-                } else {
-                    synopsis.setValue(description);
-                }
+                truncator = truncator.withMaxLength(entry.getValue());
+                synopsis.setValue(truncator.truncate(description) + ELLIPSIS);
                 synopses.add(synopsis);
             }
         }

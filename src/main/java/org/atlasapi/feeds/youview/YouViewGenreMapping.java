@@ -2,11 +2,7 @@ package org.atlasapi.feeds.youview;
 
 import static org.atlasapi.feeds.utils.lovefilm.LoveFilmGenreConverter.TO_ATLAS_GENRE;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Collection;
@@ -29,36 +25,28 @@ import com.google.common.io.Resources;
 
 public class YouViewGenreMapping {
     
+    private static final String GENRE_FILE = "TopLevel_LF_YV_GenreMapping.csv";
+
     private final Logger log = LoggerFactory.getLogger(YouViewGenreMapping.class);
     
     private final Multimap<String, String> mapping;
 
-    public YouViewGenreMapping(String filePath) {
-        this.mapping = generateLines(filePath);
+    public YouViewGenreMapping() {
+        this.mapping = generateLines();
     }
 
     public Collection<String> get(String key) {
         return mapping.get(key);
     }
 
-    private Multimap<String, String> generateLines(String fileName) {
+    private Multimap<String, String> generateLines() {
         try {
-            URL resource = Resources.getResource(getClass(), fileName);
+            URL resource = Resources.getResource(getClass(), GENRE_FILE);
             InputSupplier<InputStreamReader> supplier = Resources.newReaderSupplier(resource, Charsets.UTF_8);
-//            final File genreFile = new File(filePath);
-//
-//            InputSupplier<InputStream> inputSupplier = new InputSupplier<InputStream>() {
-//                @Override
-//                public InputStream getInput() throws FileNotFoundException {
-//                    return new FileInputStream(genreFile);
-//                }
-//            };
-//
-//            InputSupplier<InputStreamReader> supplier = CharStreams.newReaderSupplier(inputSupplier, Charsets.UTF_8);
 
             return CharStreams.readLines(supplier, new GenreMappingLineProcessor());
         } catch (IOException e) {
-            log.error(String.format("Error reading genre file %s", fileName), e);
+            log.error(String.format("Error reading genre file %s", GENRE_FILE), e);
             return null;
         }
     }

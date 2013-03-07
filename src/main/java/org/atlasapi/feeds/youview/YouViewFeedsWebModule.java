@@ -20,7 +20,6 @@ import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 public class YouViewFeedsWebModule {
     
     private @Value("${youview.upload.validation}") String validation;
-    private @Value("${youview.upload.genresFile}") String genreFilePath;
     
     private @Autowired DatabasedMongo mongo;
     private @Autowired LastUpdatedContentFinder executor;
@@ -51,6 +50,6 @@ public class YouViewFeedsWebModule {
     }
 
     public @Bean YouViewGenreMapping genreMapping() {
-        return new YouViewGenreMapping(genreFilePath);
+        return new YouViewGenreMapping();
     }
 }

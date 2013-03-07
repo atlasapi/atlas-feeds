@@ -32,13 +32,10 @@ import org.mockito.Mockito;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.metabroadcast.common.intl.Countries;
-import com.metabroadcast.common.properties.Configurer;
 
 public class IntegrationTest {
     
-    // TODO quick test to obtain xmls
-    private static final String filePath = Configurer.get("youview.upload.genresFile").get();
-    private static final YouViewGenreMapping genreMapping = new YouViewGenreMapping(filePath); 
+    private static final YouViewGenreMapping genreMapping = new YouViewGenreMapping(); 
     private static final ProgramInformationGenerator progInfoGenerator = new LoveFilmProgramInformationGenerator();
     private static final GroupInformationGenerator groupInfoGenerator = new LoveFilmGroupInformationGenerator(genreMapping);
     private static final OnDemandLocationGenerator progLocationGenerator = new LoveFilmOnDemandLocationGenerator();

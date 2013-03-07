@@ -29,12 +29,13 @@ import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.time.DateTimeZones;
 
-public abstract class YouViewUploader extends ScheduledTask {
+public class YouViewUploader extends ScheduledTask {
 
     // TODO if more publishers are required, make this a list & a parameter of the class
     private static final Publisher PUBLISHER = Publisher.LOVEFILM;
     private static final DateTime START_OF_TIME = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.UTC);
-    private static final int CHUNK_SIZE = 500;
+    // extract to property
+    private final int chunkSize;
 
     private final String youViewUrl;
     private final LastUpdatedContentFinder contentFinder;
@@ -45,12 +46,13 @@ public abstract class YouViewUploader extends ScheduledTask {
     private final Logger log = LoggerFactory.getLogger(YouViewUploader.class);
     private final YouViewLastUpdatedStore store;
     
-    public YouViewUploader(String youViewUrl, LastUpdatedContentFinder contentFinder, TvAnytimeGenerator generator, UsernameAndPassword credentials, YouViewLastUpdatedStore store, boolean isBootstrap) {
+    public YouViewUploader(String youViewUrl, LastUpdatedContentFinder contentFinder, TvAnytimeGenerator generator, UsernameAndPassword credentials, YouViewLastUpdatedStore store, int chunkSize, boolean isBootstrap) {
         this.youViewUrl = youViewUrl;
         this.contentFinder = contentFinder;
         this.store = store;
         this.isBootstrap = isBootstrap;
         this.generator = generator;
+        this.chunkSize = chunkSize;
         this.httpClient = new SimpleHttpClientBuilder()
             .withHeader("Content-Type", "text/xml")
             .withSocketTimeout(1, TimeUnit.MINUTES)
@@ -82,7 +84,7 @@ public abstract class YouViewUploader extends ScheduledTask {
         
         UpdateProgress progress = UpdateProgress.START;
         
-        for (Iterable<Item> items : Iterables.partition(allItems, CHUNK_SIZE)) {
+        for (Iterable<Item> items : Iterables.partition(allItems, chunkSize)) {
             if (!shouldContinue()) {
                 break;
             }

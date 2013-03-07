@@ -14,8 +14,6 @@ import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,8 +37,6 @@ public class YouViewController {
     private final LastUpdatedContentFinder contentFinder;
     private final ApplicationConfigurationFetcher configFetcher;
     
-    private final Logger log = LoggerFactory.getLogger(YouViewController.class);
-    
     public YouViewController(ApplicationConfigurationFetcher configFetcher, TvAnytimeGenerator feedGenerator, LastUpdatedContentFinder contentFinder) {
         this.configFetcher = configFetcher;
         this.feedGenerator = feedGenerator;
@@ -53,14 +49,17 @@ public class YouViewController {
      * @param lastUpdated - if present, the endpoint will return a delta feed of all items 
      *                      updated since lastUpdated, otherwise it will return a full 
      *                      bootstrap feed
+     * @throws IOException 
      */
-    @RequestMapping("/feeds/youview/")
+    @RequestMapping("/feeds/youview/lovefilm")
     public void generateFeed(HttpServletRequest request, HttpServletResponse response,
-            @RequestParam(value = "lastUpdated", required = false) String lastUpdated) {
+            @RequestParam(value = "lastUpdated", required = false) String lastUpdated) throws IOException {
         try {
             final ApplicationConfiguration appConfig = appConfig(request);
             if (!appConfig.isEnabled(PUBLISHER)) {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid API key");
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.setContentLength(0);
+                return;
             }
             response.setContentType(MimeType.APPLICATION_ATOM_XML.toString());
             response.setStatus(HttpServletResponse.SC_OK);
@@ -69,11 +68,8 @@ public class YouViewController {
             feedGenerator.generateXml(getItems(since), response.getOutputStream(), since.isPresent());
             
         } catch (IOException e) {
-            try {
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-            } catch (IOException e1) {
-                log.error(e1.getMessage(), e1);
-            }
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.setContentLength(0);
         }
     }
     
