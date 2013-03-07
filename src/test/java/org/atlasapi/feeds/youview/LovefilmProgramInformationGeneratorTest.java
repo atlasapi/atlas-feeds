@@ -22,7 +22,7 @@ import com.metabroadcast.common.intl.Countries;
 
 public class LovefilmProgramInformationGeneratorTest {
     
-    private static final ProgramInformationGenerator generator = new LovefilmProgramInformationGenerator();
+    private static final ProgramInformationGenerator generator = new LoveFilmProgramInformationGenerator();
 
     @Test
     public void testFilmProgInfoGeneration() {

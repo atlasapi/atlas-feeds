@@ -24,7 +24,7 @@ import tva.metadata.extended._2010.TargetingInformationType;
 import tva.mpeg7._2008.MediaLocatorType;
 import tva.mpeg7._2008.TextualType;
 
-public class LovefilmInstantServiceInformationGenerator implements ServiceInformationGenerator {
+public class LoveFilmInstantServiceInformationGenerator implements ServiceInformationGenerator {
     
     private static final String GENRE_TYPE_OTHER = "other";
     private static final String GENRE_TYPE_MAIN = "main";

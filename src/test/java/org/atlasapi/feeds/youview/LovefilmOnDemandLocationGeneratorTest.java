@@ -36,7 +36,7 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class LovefilmOnDemandLocationGeneratorTest {
     
-    private static final OnDemandLocationGenerator generator = new LovefilmOnDemandLocationGenerator();
+    private static final OnDemandLocationGenerator generator = new LoveFilmOnDemandLocationGenerator();
 
     @Test
     public void testFilmOnDemandGeneration() {

@@ -1,4 +1,4 @@
-package org.atlasapi.feeds;
+package org.atlasapi.feeds.utils;
 
 public interface Reducible<T extends Reducible<T>> {
     

@@ -1,0 +1,21 @@
+LF_Genre,Mapped_YouView_Genre_1
+Action/Adventure,urn:tva:metadata:cs:ContentCS:2010:3.4.6
+Adult,urn:tva:metadata:cs:ContentCS:2010:3.9
+Animated,urn:tva:metadata:cs:FormatCS:2010:2.3.3
+Bollywood,urn:tva:metadata:cs:ContentCS:2010:3.6.17.3
+Children,urn:tva:metadata:cs:IntendedAudienceCS:2010:4.2.1
+Comedy,urn:tva:metadata:cs:ContentCS:2010:3.5.7
+Documentary,urn:tva:metadata:cs:ContentCS:2010:3.1
+Drama,urn:tva:metadata:cs:ContentCS:2010:3.4
+Family,urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9
+Gay/Lesbian,urn:tva:metadata:cs:ContentCS:2010:3.4
+Horror,urn:tva:metadata:cs:ContentCS:2010:3.4.6.6
+Music/Musical,urn:tva:metadata:cs:ContentCS:2010:3.1.4
+Romance,urn:tva:metadata:cs:ContentCS:2010:3.4.3
+Sci-Fi/Fantasy,urn:tva:metadata:cs:ContentCS:2010:3.4.6.7
+Special Interest,urn:tva:metadata:cs:ContentCS:2010:3.8
+Sport,urn:tva:metadata:cs:ContentCS:2010:3.2
+Teen,http://refdata.youview.com/mpeg7cs/YouViewIntendedAudienceCS/2010-09-20#4.2.3
+Television,urn:tva:metadata:cs:ContentCS:2010:3.5
+Thriller,urn:tva:metadata:cs:ContentCS:2010:3.4.6.10
+World Cinema,urn:tva:metadata:cs:ContentCS:2010:3.4

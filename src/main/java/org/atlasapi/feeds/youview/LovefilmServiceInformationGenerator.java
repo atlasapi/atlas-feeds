@@ -24,7 +24,7 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedServiceInformationType;
 import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
 import com.youview.refdata.schemas._2011_07_06.TargetPlaceType;
 
-public class LovefilmServiceInformationGenerator implements ServiceInformationGenerator {
+public class LoveFilmServiceInformationGenerator implements ServiceInformationGenerator {
 
     private static final String GENRE_TYPE_OTHER = "other";
     private static final String GENRE_TYPE_MAIN = "main";

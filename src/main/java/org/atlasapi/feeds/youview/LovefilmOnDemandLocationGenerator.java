@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview;
 
-import static org.atlasapi.feeds.youview.LovefilmOutputUtils.getId;
+import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getId;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -35,7 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
-public class LovefilmOnDemandLocationGenerator implements OnDemandLocationGenerator {
+public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
     private static final String VERSION_SUFFIX = "_version";
     private static final String ASPECT_RATIO_16_9 = "16:9";
@@ -55,7 +55,7 @@ public class LovefilmOnDemandLocationGenerator implements OnDemandLocationGenera
      * NB DatatypeFactory is required for creation of javax Durations
      * This DatatypeFactory class may not be threadsafe
      */
-    public LovefilmOnDemandLocationGenerator() {
+    public LoveFilmOnDemandLocationGenerator() {
         try {
             this.datatypeFactory = DatatypeFactory.newInstance();
         } catch (DatatypeConfigurationException e) {

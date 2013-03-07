@@ -41,10 +41,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.properties.Configurer;
 
 public class LovefilmGroupInformationGeneratorTest {
     
-    private static final GroupInformationGenerator generator = new LovefilmGroupInformationGenerator();
+    private static final String filePath = Configurer.get("youview.upload.genresFile").get();
+    private static final YouViewGenreMapping genreMapping = new YouViewGenreMapping(filePath); 
+    private static final GroupInformationGenerator generator = new LoveFilmGroupInformationGenerator(genreMapping);
 
     @Test
     public void testFilmOnDemandGeneration() {

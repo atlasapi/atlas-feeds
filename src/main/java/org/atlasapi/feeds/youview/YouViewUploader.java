@@ -6,8 +6,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.feeds.UpdateProgress;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.utils.UpdateProgress;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;

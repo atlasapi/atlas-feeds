@@ -35,6 +35,7 @@ public class YouViewUploadModule {
     private @Value("${youview.upload.url}") String url;
     private @Value("${youview.upload.username}") String username;
     private @Value("${youview.upload.password}") String password;
+    private @Value("${youview.upload.genresFile}") String genreFilePath;
     
     @PostConstruct
     public void startScheduledTasks() {
@@ -56,13 +57,17 @@ public class YouViewUploadModule {
         return new MongoYouViewLastUpdatedStore(mongo);
     }
 
+    public @Bean YouViewGenreMapping genreMapping() {
+        return new YouViewGenreMapping(genreFilePath);
+    }
+
     public @Bean TvAnytimeGenerator feedGenerator() {
         return new DefaultTvAnytimeGenerator(
-            new LovefilmProgramInformationGenerator(), 
-            new LovefilmGroupInformationGenerator(), 
-            new LovefilmOnDemandLocationGenerator(), 
-            new LovefilmServiceInformationGenerator(), 
-            new LovefilmInstantServiceInformationGenerator(), 
+            new LoveFilmProgramInformationGenerator(), 
+            new LoveFilmGroupInformationGenerator(genreMapping()), 
+            new LoveFilmOnDemandLocationGenerator(), 
+            new LoveFilmServiceInformationGenerator(), 
+            new LoveFilmInstantServiceInformationGenerator(), 
             contentResolver,
             Boolean.parseBoolean(validation)
         );

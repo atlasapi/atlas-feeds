@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview;
 
-import static org.atlasapi.feeds.youview.LovefilmOutputUtils.getId;
+import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getId;
 
 import java.util.Collection;
 import java.util.List;
@@ -46,7 +46,7 @@ import com.google.common.base.Objects;
 import com.google.inject.internal.ImmutableMap;
 import com.google.inject.internal.Lists;
 
-public class LovefilmGroupInformationGenerator implements GroupInformationGenerator {
+public class LoveFilmGroupInformationGenerator implements GroupInformationGenerator {
 
     private static final String ELLIPSIS = "...";
     private static final String YOUVIEW_CREDIT_ROLE = "urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN";
@@ -66,35 +66,10 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
     private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
     private static final String TITLE_TYPE_MAIN = "main";
     private static final String LOVEFILM_MEDIATYPE_GENRE_VIDEO = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
-    private static final String LOVEFILM_GENRES_PREFIX = "http://lovefilm.com/genres/";
     
     private static final Map<Specialization, String> YOUVIEW_SPECIALIZATION_GENRE_MAPPING = ImmutableMap.<Specialization, String>builder()
         .put(Specialization.FILM, "urn:tva:metadata:cs:OriginationCS:2005:5.7")
         .put(Specialization.TV, "urn:tva:metadata:cs:OriginationCS:2005:5.8")
-        .build();
-    
-    // TODO ultimately will become a .csv parser, that will populate the appropriate genre mappings
-    private static final Map<String, String> YOUVIEW_ATLAS_GENRE_MAPPING = ImmutableMap.<String, String>builder()
-        .put("action-adventure","rn:tva:metadata:cs:ContentCS:2010:3.4.6")
-        .put("adult","urn:tva:metadata:cs:ContentCS:2010:3.9")
-        .put("animated","urn:tva:metadata:cs:FormatCS:2010:2.3.3")
-        .put("bollywood","urn:tva:metadata:cs:ContentCS:2010:3.6.17.3")
-        .put("children","urn:tva:metadata:cs:IntendedAudienceCS:2010:4.2.1")
-        .put("comedy","urn:tva:metadata:cs:ContentCS:2010:3.5.7")
-        .put("documentary","urn:tva:metadata:cs:ContentCS:2010:3.1")
-        .put("drama","urn:tva:metadata:cs:ContentCS:2010:3.4")
-        .put("family","urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9")
-        .put("gay-lesbian","urn:tva:metadata:cs:ContentCS:2010:3.4")
-        .put("horror","urn:tva:metadata:cs:ContentCS:2010:3.4.6.6")
-        .put("music-musical","urn:tva:metadata:cs:ContentCS:2010:3.1.4")
-        .put("romance","urn:tva:metadata:cs:ContentCS:2010:3.4.3")
-        .put("sci-fi-fantasy","urn:tva:metadata:cs:ContentCS:2010:3.4.6.7")
-        .put("specialinterest","urn:tva:metadata:cs:ContentCS:2010:3.8")
-        .put("sport","urn:tva:metadata:cs:ContentCS:2010:3.2")
-        .put("teen","http://refdata.youview.com/mpeg7cs/YouViewIntendedAudienceCS/2010-09-20#4.2.3")
-        .put("television","urn:tva:metadata:cs:ContentCS:2010:3.5")
-        .put("thriller","urn:tva:metadata:cs:ContentCS:2010:3.4.6.10")
-        .put("worldcinema","urn:tva:metadata:cs:ContentCS:2010:3.4")
         .build();
     
     private static final Map<SynopsisLengthType, Integer> YOUVIEW_SYNOPSIS_LENGTH = ImmutableMap.<SynopsisLengthType, Integer>builder()
@@ -102,6 +77,12 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
         .put(SynopsisLengthType.MEDIUM, 207)
         .put(SynopsisLengthType.LONG, 1197)
         .build();
+    
+    private final YouViewGenreMapping genreMapping;
+    
+    public LoveFilmGroupInformationGenerator(YouViewGenreMapping genreMapping) {
+        this.genreMapping = genreMapping;
+    }
     
     @Override
     public GroupInformationType generate(Film film) {
@@ -279,10 +260,12 @@ public class LovefilmGroupInformationGenerator implements GroupInformationGenera
     private Collection<GenreType> generateGenres(Content content) {
         List<GenreType> genres = Lists.newArrayList();
         for (String genreStr : content.getGenres()) {
-            GenreType genre = new GenreType();
-            genre.setType(GENRE_TYPE_MAIN);
-            genre.setHref(YOUVIEW_ATLAS_GENRE_MAPPING.get(genreStr.replace(LOVEFILM_GENRES_PREFIX, "")));
-            genres.add(genre);
+            for (String youViewGenre : genreMapping.get(genreStr)) {
+                GenreType genre = new GenreType();
+                genre.setType(GENRE_TYPE_MAIN);
+                genre.setHref(youViewGenre);
+                genres.add(genre);                
+            }
         }
         return genres;
     }

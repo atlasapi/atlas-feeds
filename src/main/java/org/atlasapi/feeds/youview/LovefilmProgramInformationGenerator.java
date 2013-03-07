@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview;
 
-import static org.atlasapi.feeds.youview.LovefilmOutputUtils.getId;
+import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getId;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +35,7 @@ import com.google.inject.internal.ImmutableMap;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
 
-public class LovefilmProgramInformationGenerator implements ProgramInformationGenerator {
+public class LoveFilmProgramInformationGenerator implements ProgramInformationGenerator {
 
     private static final String VERSION_SUFFIX = "_version";
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
@@ -77,7 +77,7 @@ public class LovefilmProgramInformationGenerator implements ProgramInformationGe
      * NB DatatypeFactory is required for creation of javax Durations
      * This DatatypeFactory class may not be threadsafe
      */
-    public LovefilmProgramInformationGenerator() {
+    public LoveFilmProgramInformationGenerator() {
         try {
             this.datatypeFactory = DatatypeFactory.newInstance();
         } catch (DatatypeConfigurationException e) {

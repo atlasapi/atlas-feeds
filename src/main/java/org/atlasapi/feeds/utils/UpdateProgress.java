@@ -1,4 +1,4 @@
-package org.atlasapi.feeds;
+package org.atlasapi.feeds.utils;
 
 
 public final class UpdateProgress implements Reducible<UpdateProgress>{
