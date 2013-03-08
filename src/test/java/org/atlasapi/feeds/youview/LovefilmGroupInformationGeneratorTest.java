@@ -62,7 +62,8 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals("Dr. Strangelove", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
         
-        SynopsisType synopsis = Iterables.getOnlyElement(desc.getSynopsis());
+        // TODO test all 3 synopsis lengths. Also check that behaviour around adding ellipses is correct
+        SynopsisType synopsis = Iterables.getFirst(desc.getSynopsis(), null);
         assertEquals("The film is set at the height of the tensions between Russia and the United States", synopsis.getValue());
         assertEquals(SynopsisLengthType.SHORT, synopsis.getLength());
         
@@ -159,7 +160,8 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals("Episode 1", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
         
-        SynopsisType synopsis = Iterables.getOnlyElement(desc.getSynopsis());
+//        TODO test all 3 synopsis lengths. Also check that behaviour around adding ellipses is correct
+        SynopsisType synopsis = Iterables.getFirst(desc.getSynopsis(), null);
         assertEquals("Some episode description", synopsis.getValue());
         assertEquals(SynopsisLengthType.SHORT, synopsis.getLength());
         
@@ -255,9 +257,10 @@ public class LovefilmGroupInformationGeneratorTest {
         TitleType title = Iterables.getOnlyElement(desc.getTitle());
         assertEquals("Series 2", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
-        
-        SynopsisType synopsis = Iterables.getOnlyElement(desc.getSynopsis());
-        assertEquals("Some series description", synopsis.getValue());
+
+//        TODO test all 3 synopsis lengths. Also check that behaviour around adding ellipses is correct
+        SynopsisType synopsis = Iterables.getFirst(desc.getSynopsis(), null);
+        assertEquals("Some series description...", synopsis.getValue());
         assertEquals(SynopsisLengthType.SHORT, synopsis.getLength());
         
         // TODO full list of genres won't be possible until genre mapping is known
@@ -350,8 +353,9 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals("Northern Lights", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
         
-        SynopsisType synopsis = Iterables.getOnlyElement(desc.getSynopsis());
-        assertEquals("Some brand description", synopsis.getValue());
+//        TODO test all 3 synopsis lengths. Also check that behaviour around adding ellipses is correct
+        SynopsisType synopsis = Iterables.getFirst(desc.getSynopsis(), null);
+        assertEquals("Some brand description...", synopsis.getValue());
         assertEquals(SynopsisLengthType.SHORT, synopsis.getLength());
         
         // TODO full list of genres won't be possible until genre mapping is known

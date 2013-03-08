@@ -29,7 +29,7 @@ public class LovefilmProgramInformationGeneratorTest {
         ProgramInformationType progInfo = generator.generate(createFilm());
 
         // TODO this will change when we get the digital release id, is placeholder for now
-        assertEquals("crid://lovefilm.com/product/177221_r177221_version", progInfo.getProgramId());
+        assertEquals("crid://lovefilm.com/product/177221_version", progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
         assertEquals("deep_linking_id.lovefilm.com", otherId.getAuthority());
         assertEquals("177221L", otherId.getValue());
@@ -49,9 +49,9 @@ public class LovefilmProgramInformationGeneratorTest {
         ProgramInformationType progInfo = generator.generate(createEpisode());
         
         // TODO this will change when we get the digital release id, is placeholder for now
-        assertEquals("crid://lovefilm.com/product/180014_r180014_version", progInfo.getProgramId());
+        assertEquals("crid://lovefilm.com/product/180014_version", progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
-        assertEquals("product_id.lovefilm.com", otherId.getAuthority());
+        assertEquals("deep_linking_id.lovefilm.com", otherId.getAuthority());
         assertEquals("180014L", otherId.getValue());
         assertEquals("crid://lovefilm.com/product/180014", progInfo.getDerivedFrom().getCrid());
         
