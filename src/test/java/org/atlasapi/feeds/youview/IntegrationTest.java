@@ -12,10 +12,10 @@ import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.ServiceInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.media.entity.Certificate;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Film;
-import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Policy;
@@ -57,7 +57,7 @@ public class IntegrationTest {
         File testFile = new File("src/test/resources/org/atlasapi/feeds/youview", "xml_test.xml");
         OutputStream out = new FileOutputStream(testFile);
         
-        generator.generateXml(ImmutableList.<Item>of(createFilm()), out, false);
+        generator.generateXml(ImmutableList.<Content>of(createFilm()), out, false);
     }
 
     private Film createFilm() {

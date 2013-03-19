@@ -38,13 +38,11 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
     private static final String VERSION_SUFFIX = "_version";
-    private static final String ASPECT_RATIO_16_9 = "16:9";
     private static final String YOUVIEW_MIX_TYPE = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
     private static final String DEEP_LINKING_ID_SUFFIX = "L";
     private static final String LOVEFILM_DEEP_LINKING_ID = "deep_linking_id.lovefilm.com";
     private static final String YOUVIEW_GENRE_SUBSCRIPTION_REQUIRED = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#subscription";
     private static final String YOUVIEW_GENRE_MEDIA_AVAILABLE = "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available";
-    private static final String LOVEFILM_CRID_SEPARATOR = "_r";
     private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
     private static final String LOVEFILM_IDREF_ONDEMAND = "http://lovefilm.com/OnDemand";
     private static final String GENRE_TYPE_OTHER = "other";
@@ -104,18 +102,21 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
         InstanceDescriptionType instanceDescription = new InstanceDescriptionType();
         
         instanceDescription.getGenre().addAll(generateGenres());
-        instanceDescription.setAVAttributes(generateAvAttributes());
+        instanceDescription.setAVAttributes(generateAvAttributes(item));
         instanceDescription.getOtherIdentifier().add(generateOtherId(item));
         
         return instanceDescription;
     }
 
-    private AVAttributesType generateAvAttributes() {
+    private AVAttributesType generateAvAttributes(Item item) {
         AVAttributesType attributes = new AVAttributesType();
-        
+
+        Version version = Iterables.getOnlyElement(item.getVersions());
+        Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
+
         attributes.getAudioAttributes().add(generateAudioAttributes());
-        attributes.setVideoAttributes(generateVideoAttributes());
-        attributes.setBitRate(generateBitRate());
+        attributes.setVideoAttributes(generateVideoAttributes(encoding));
+        attributes.setBitRate(generateBitRate(encoding));
         
         return attributes;
     }
@@ -128,28 +129,22 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
         return attributes;
     }
 
-    private VideoAttributesType generateVideoAttributes() {
+    private VideoAttributesType generateVideoAttributes(Encoding encoding) {
         VideoAttributesType attributes = new VideoAttributesType();
-        
-        // TODO hardcoded, TBC by Lovefilm
-        attributes.setHorizontalSize(1280);
-        // TODO hardcoded, TBC by Lovefilm
-        attributes.setVerticalSize(960);
+
+        attributes.setHorizontalSize(encoding.getVideoHorizontalSize());
+        attributes.setVerticalSize(encoding.getVideoVerticalSize());
         AspectRatioType aspectRatio = new AspectRatioType();
-        aspectRatio.setValue(ASPECT_RATIO_16_9);
+        aspectRatio.setValue(encoding.getVideoAspectRatio());
         attributes.getAspectRatio().add(aspectRatio);
-        
+
         return attributes;
     }
 
-    // TODO hardcoded values, TBC from Lovefilm
-    private BitRateType generateBitRate() {
+    private BitRateType generateBitRate(Encoding encoding) {
         BitRateType bitRate = new BitRateType();
         bitRate.setVariable(false);
-        bitRate.setMinimum(BigInteger.valueOf(700));
-        bitRate.setMaximum(BigInteger.valueOf(20000));
-        bitRate.setAverage(BigInteger.valueOf(1350));
-        bitRate.setValue(BigInteger.valueOf(900));
+        bitRate.setValue(BigInteger.valueOf(encoding.getBitRate()));
         return bitRate;
     }
 

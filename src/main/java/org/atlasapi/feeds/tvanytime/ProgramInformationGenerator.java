@@ -5,5 +5,5 @@ import org.atlasapi.media.entity.Item;
 import tva.metadata._2010.ProgramInformationType;
 
 public interface ProgramInformationGenerator {
-    public ProgramInformationType generate(Item item);
+    ProgramInformationType generate(Item item);
 }

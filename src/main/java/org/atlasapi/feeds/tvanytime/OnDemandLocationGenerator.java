@@ -6,5 +6,5 @@ import tva.metadata._2010.OnDemandProgramType;
 
 public interface OnDemandLocationGenerator {
     
-    public OnDemandProgramType generate(Item item);
+    OnDemandProgramType generate(Item item);
 }

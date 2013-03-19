@@ -3,7 +3,6 @@ package org.atlasapi.feeds.tvanytime;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.OutputStream;
-import java.util.List;
 import java.util.Set;
 
 import javax.xml.XMLConstants;
@@ -16,9 +15,12 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
 import org.atlasapi.media.entity.Brand;
+import org.atlasapi.media.entity.ChildRef;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
@@ -36,9 +38,11 @@ import tva.metadata._2010.ProgramLocationTableType;
 import tva.metadata._2010.ServiceInformationTableType;
 import tva.metadata._2010.TVAMainType;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
-import com.google.inject.internal.Lists;
-import com.google.inject.internal.Sets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 
 public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
 
@@ -92,13 +96,12 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
     }
     
     @Override
-    public void generateXml(Iterable<Item> items, OutputStream outStream, boolean includeServiceInformation) {
-        JAXBContext context;
+    public void generateXml(Iterable<Content> contents, OutputStream outStream, boolean includeServiceInformation) {
         try {
-            context = JAXBContext.newInstance("tva.metadata._2010");
+            JAXBContext context = JAXBContext.newInstance("tva.metadata._2010");
             Marshaller marshaller = context.createMarshaller();
             
-            JAXBElement<TVAMainType> rootElem = createXml(items, includeServiceInformation);
+            JAXBElement<TVAMainType> rootElem = createXml(contents, includeServiceInformation);
 
             if (performValidation) {
                 JAXBSource source = new JAXBSource(context, rootElem);
@@ -127,7 +130,7 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         }
     }
 
-    private JAXBElement<TVAMainType> createXml(Iterable<Item> items, boolean includeServiceInformation) {
+    private JAXBElement<TVAMainType> createXml(Iterable<Content> contents, boolean includeServiceInformation) {
         
         Set<String> added = Sets.newHashSet();
         TVAMainType tvaMain = factory.createTVAMainType();
@@ -146,46 +149,59 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         GroupInformationTableType groupInfoTable = factory.createGroupInformationTableType();
         ProgramLocationTableType progLocTable = factory.createProgramLocationTableType();
 
-        for (Item item : items) {
-                progInfoTable.getProgramInformation().add(progInfoGenerator.generate((Item)item));
-                progLocTable.getOnDemandProgram().add(progLocationGenerator.generate((Item)item));
+        for (Content content : contents) {
+            if (content instanceof Item) {
+                Item item = (Item) content;
+                progInfoTable.getProgramInformation().add(progInfoGenerator.generate(item));
+                progLocTable.getOnDemandProgram().add(progLocationGenerator.generate(item));
+            }
+            
+
+            if (content instanceof Film && added.add(content.getCanonicalUri())) {
+                groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Film) content));
+            }
+            
+            if (content instanceof Brand) {
+                if (added.add(content.getCanonicalUri())) {
+                    groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Brand) content, getFirstEpisode((Brand) content)));
+                }
+            }
+            
+            if (content instanceof Series) {
+                Series series = (Series) content;
+                if (added.add(series.getCanonicalUri())) {
+                    groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(series, getFirstEpisode(series)));
+                }
+                Optional<Brand> brand = getBrand(series);
+                if (brand.isPresent() && added.add(brand.get().getCanonicalUri())) {
+                    groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(brand.get(), getFirstEpisode(brand.get())));
+                }
+            }
                 
-                if (item instanceof Film) {
-                    if (!added.contains(item.getCanonicalUri())) {
-                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Film)item));
-                        added.add(item.getCanonicalUri());
-                    }
-                } else if (item instanceof Episode) {
+            if (content instanceof Episode) {
+                if (added.add(content.getCanonicalUri())) {
+                    Episode episode = (Episode)content;
+                    groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(episode));
                     
-                    if (!added.contains(item.getCanonicalUri())) {
-                        Episode episode = (Episode)item;
-                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(episode));
-                        added.add(episode.getCanonicalUri());
-                        // TODO to be improved...
-                        List<String> parentUris = Lists.newArrayList();
-                        if (episode.getSeriesRef() != null) {
-                            parentUris.add(episode.getSeriesRef().getUri());
+                    Optional<Series> series = getSeries(episode);
+                    if (series.isPresent()) {
+                        if (added.add(series.get().getCanonicalUri())) {
+                            groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(series.get(), getFirstEpisode(series.get())));
                         }
-                        if (episode.getContainer() != null) {
-                            parentUris.add(episode.getContainer().getUri());
+                        Optional<Brand> brand = getBrand(series.get());
+                        if (brand.isPresent() && added.add(brand.get().getCanonicalUri())) {
+                            groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(brand.get(), getFirstEpisode(brand.get())));
                         }
-
-                        ResolvedContent seriesAndBrand = contentResolver.findByCanonicalUris(parentUris);
-
-                        if (episode.getSeriesRef() != null) {
-                            if (!added.contains(episode.getSeriesRef().getUri())) {
-                                groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Series) seriesAndBrand.get(episode.getSeriesRef().getUri()).requireValue(), episode));
-                                added.add(episode.getSeriesRef().getUri());
-                            }
-                        }
-                        if (episode.getContainer() != null) {
-                            if (!added.contains(episode.getContainer().getUri())) {
-                                groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate((Brand) seriesAndBrand.get(episode.getContainer().getUri()).requireValue(), episode));
-                                added.add(episode.getContainer().getUri());
+                    } else {
+                        Optional<Brand> brand = getBrand(episode);
+                        if (brand.isPresent()) {
+                            if (added.add(brand.get().getCanonicalUri())) {
+                                groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(brand.get(), getFirstEpisode(brand.get())));
                             }
                         }
                     }
                 }
+            }
         }
 
         progDescription.setProgramInformationTable(progInfoTable);
@@ -194,5 +210,44 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         
         tvaMain.setProgramDescription(progDescription);
         return factory.createTVAMain(tvaMain);
+    }
+
+    private Optional<Brand> getBrand(Episode episode) {
+        ParentRef brandRef = episode.getContainer();
+        if (brandRef == null) {
+            return Optional.absent();
+        }
+        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(brandRef.getUri()));
+        return Optional.fromNullable((Brand) resolved.asResolvedMap().get(brandRef.getUri()));
+    }
+
+    private Optional<Series> getSeries(Episode episode) {
+        ParentRef seriesRef = episode.getSeriesRef();
+        if (seriesRef == null) {
+            return Optional.absent();
+        }
+        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(seriesRef.getUri()));
+        return Optional.fromNullable((Series) resolved.asResolvedMap().get(seriesRef.getUri()));
+    }
+
+    private Optional<Brand> getBrand(Series series) {
+        ParentRef brandRef = series.getParent();
+        if (brandRef == null) {
+            return Optional.absent();
+        }
+        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(brandRef.getUri()));
+        return Optional.fromNullable((Brand) resolved.asResolvedMap().get(brandRef.getUri()));
+    }
+
+    private Episode getFirstEpisode(Series series) {
+        ChildRef last = Iterables.getLast(series.getChildRefs());
+        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(last.getUri()));
+        return (Episode) resolved.asResolvedMap().get(last.getUri());
+    }
+
+    private Episode getFirstEpisode(Brand brand) {
+        ChildRef last = Iterables.getLast(brand.getChildRefs());
+        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(last.getUri()));
+        return (Episode) resolved.asResolvedMap().get(last.getUri()); 
     }
 }

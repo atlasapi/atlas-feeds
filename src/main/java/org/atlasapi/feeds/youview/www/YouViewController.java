@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.atlasapi.application.ApplicationConfiguration;
 import org.atlasapi.application.query.ApplicationConfigurationFetcher;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
-import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.time.DateTimeZones;
@@ -65,7 +64,7 @@ public class YouViewController {
             response.setStatus(HttpServletResponse.SC_OK);
             
             Optional<String> since = Optional.fromNullable(lastUpdated);
-            feedGenerator.generateXml(getItems(since), response.getOutputStream(), since.isPresent());
+            feedGenerator.generateXml(getContentSinceDate(since), response.getOutputStream(), since.isPresent());
             
         } catch (IOException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -73,14 +72,10 @@ public class YouViewController {
         }
     }
     
-    private Iterable<Item> getItems(Optional<String> since) {
+    private Iterable<Content> getContentSinceDate(Optional<String> since) {
         
         DateTime start = since.isPresent() ? fmt.parseDateTime(since.get()) : START_OF_TIME;
-        
-        return Iterables.filter(
-            ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start)),
-            Item.class
-        );
+        return ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start));
     }
     
     private ApplicationConfiguration appConfig(HttpServletRequest request) {

@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.utils.UpdateProgress;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
-import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
@@ -34,9 +34,8 @@ public class YouViewUploader extends ScheduledTask {
     // TODO if more publishers are required, make this a list & a parameter of the class
     private static final Publisher PUBLISHER = Publisher.LOVEFILM;
     private static final DateTime START_OF_TIME = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.UTC);
-    // extract to property
-    private final int chunkSize;
 
+    private final int chunkSize;
     private final String youViewUrl;
     private final LastUpdatedContentFinder contentFinder;
     private final boolean isBootstrap;
@@ -63,15 +62,15 @@ public class YouViewUploader extends ScheduledTask {
     @Override
     protected void runTask() {
         
-        Iterable<Item> allItems;
+        Iterable<Content> allContent;
         DateTime lastUpdated;
         
         if (isBootstrap) {
-            allItems = getItems(Optional.<DateTime>absent());
+            allContent = getContentSinceDate(Optional.<DateTime>absent());
         } else {
             try {
                 lastUpdated = store.getLastUpdated();
-                allItems = getItems(Optional.of(lastUpdated));
+                allContent = getContentSinceDate(Optional.of(lastUpdated));
             } catch(NoSuchElementException e) {
                 log.error("The bootstrap has not successfully run. Please run the bootstrap upload and ensure that it succeeds before running the delta upload.");
                 Throwables.propagate(e);
@@ -84,7 +83,7 @@ public class YouViewUploader extends ScheduledTask {
         
         UpdateProgress progress = UpdateProgress.START;
         
-        for (Iterable<Item> items : Iterables.partition(allItems, chunkSize)) {
+        for (Iterable<Content> contents : Iterables.partition(allContent, chunkSize)) {
             if (!shouldContinue()) {
                 break;
             }
@@ -93,7 +92,7 @@ public class YouViewUploader extends ScheduledTask {
                 log.info(String.format("Posting YouView output xml to %s", youViewUrl));
                 
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                generator.generateXml(items, baos, isBootstrap);
+                generator.generateXml(contents, baos, isBootstrap);
                 HttpResponse response = httpClient.post(youViewUrl, new StringPayload(baos.toString(Charsets.UTF_8.name())));
                 
                 if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
@@ -111,12 +110,8 @@ public class YouViewUploader extends ScheduledTask {
         store.setLastUpdated(lastUpdated);
     }
     
-    private Iterable<Item> getItems(Optional<DateTime> since) {
+    private Iterable<Content> getContentSinceDate(Optional<DateTime> since) {
         DateTime start = since.isPresent() ? since.get() : START_OF_TIME;
-        
-        return Iterables.filter(
-            ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start)),
-            Item.class
-        );
+        return ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start));
     }
 }

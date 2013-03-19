@@ -49,7 +49,6 @@ import com.metabroadcast.common.text.Truncator;
 
 public class LoveFilmGroupInformationGenerator implements GroupInformationGenerator {
 
-    private static final String ELLIPSIS = "...";
     private static final String YOUVIEW_CREDIT_ROLE = "urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN";
     private static final String YOUVIEW_IMAGE_FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS:2001:1";
     private static final String YOUVIEW_IMAGE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
@@ -74,13 +73,13 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         .build();
     
     private static final Map<SynopsisLengthType, Integer> YOUVIEW_SYNOPSIS_LENGTH = ImmutableMap.<SynopsisLengthType, Integer>builder()
-        .put(SynopsisLengthType.SHORT, 87)
-        .put(SynopsisLengthType.MEDIUM, 207)
-        .put(SynopsisLengthType.LONG, 1197)
+        .put(SynopsisLengthType.SHORT, 90)
+        .put(SynopsisLengthType.MEDIUM, 210)
+        .put(SynopsisLengthType.LONG, 1200)
         .build();
     
     private final YouViewGenreMapping genreMapping;
-    Truncator truncator = new Truncator();
+    Truncator truncator = new Truncator().omitTrailingPunctuationWhenTruncated().onlyTruncateAtAWordBoundary().withOmissionMarker("...");
     
     public LoveFilmGroupInformationGenerator(YouViewGenreMapping genreMapping) {
         this.genreMapping = genreMapping;
@@ -102,12 +101,14 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         
-        MemberOfType memberOf = new MemberOfType();
-        
-        ParentRef parent = Objects.firstNonNull(episode.getSeriesRef(), episode.getContainer());
-        memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(parent.getUri()));
-        memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
-        groupInfo.getMemberOf().add(memberOf);
+        if (episode.getSeriesRef() != null || episode.getContainer() != null) {
+            MemberOfType memberOf = new MemberOfType();
+
+            ParentRef parent = Objects.firstNonNull(episode.getSeriesRef(), episode.getContainer());
+            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(parent.getUri()));
+            memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
+            groupInfo.getMemberOf().add(memberOf);
+        }
         
         return groupInfo;  
     }
@@ -119,7 +120,9 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));
         groupInfo.setOrdered(true);
         MemberOfType memberOf = new MemberOfType();
-        memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(series.getParent().getUri()));
+        if (series.getParent() != null) {
+            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(series.getParent().getUri()));
+        }
         if (series.getSeriesNumber() != null) {
             memberOf.setIndex(Long.valueOf(series.getSeriesNumber()));
         }
@@ -298,7 +301,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
             String description = content.getDescription();
             if (description != null) {
                 truncator = truncator.withMaxLength(entry.getValue());
-                synopsis.setValue(truncator.truncate(description) + ELLIPSIS);
+                synopsis.setValue(truncator.truncate(description));
                 synopses.add(synopsis);
             }
         }

@@ -76,13 +76,10 @@ public class LovefilmOnDemandLocationGeneratorTest {
         VideoAttributesType videoAttrs = avAttributes.getVideoAttributes();
         
         assertEquals(Integer.valueOf(1280), videoAttrs.getHorizontalSize());
-        assertEquals(Integer.valueOf(960), videoAttrs.getVerticalSize());
+        assertEquals(Integer.valueOf(720), videoAttrs.getVerticalSize());
         assertEquals("16:9", Iterables.getOnlyElement(videoAttrs.getAspectRatio()).getValue());
 
-        assertEquals(BigInteger.valueOf(1350), avAttributes.getBitRate().getAverage());
-        assertEquals(BigInteger.valueOf(700), avAttributes.getBitRate().getMinimum());
-        assertEquals(BigInteger.valueOf(20000), avAttributes.getBitRate().getMaximum());
-        assertEquals(BigInteger.valueOf(900), avAttributes.getBitRate().getValue());
+        assertEquals(BigInteger.valueOf(3308), avAttributes.getBitRate().getValue());
         assertFalse(avAttributes.getBitRate().isVariable());
         
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
@@ -128,14 +125,11 @@ public class LovefilmOnDemandLocationGeneratorTest {
         
         VideoAttributesType videoAttrs = avAttributes.getVideoAttributes();
         
-        assertEquals(Integer.valueOf(1280), videoAttrs.getHorizontalSize());
-        assertEquals(Integer.valueOf(960), videoAttrs.getVerticalSize());
+        assertEquals(Integer.valueOf(720), videoAttrs.getHorizontalSize());
+        assertEquals(Integer.valueOf(576), videoAttrs.getVerticalSize());
         assertEquals("16:9", Iterables.getOnlyElement(videoAttrs.getAspectRatio()).getValue());
 
-        assertEquals(BigInteger.valueOf(1350), avAttributes.getBitRate().getAverage());
-        assertEquals(BigInteger.valueOf(700), avAttributes.getBitRate().getMinimum());
-        assertEquals(BigInteger.valueOf(20000), avAttributes.getBitRate().getMaximum());
-        assertEquals(BigInteger.valueOf(900), avAttributes.getBitRate().getValue());
+        assertEquals(BigInteger.valueOf(1600), avAttributes.getBitRate().getValue());
         assertFalse(avAttributes.getBitRate().isVariable());
         
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
@@ -160,6 +154,12 @@ public class LovefilmOnDemandLocationGeneratorTest {
         
         Version version = new Version();
         Encoding encoding = new Encoding();
+        encoding.setVideoHorizontalSize(720);
+        encoding.setVideoVerticalSize(576);
+        encoding.setVideoAspectRatio("16:9");
+        encoding.setBitRate(1600);
+        
+        
         Location location = new Location();
         Policy policy = new Policy();
 
@@ -189,6 +189,11 @@ public class LovefilmOnDemandLocationGeneratorTest {
         
         Version version = new Version();
         Encoding encoding = new Encoding();
+        encoding.setVideoHorizontalSize(1280);
+        encoding.setVideoVerticalSize(720);
+        encoding.setVideoAspectRatio("16:9");
+        encoding.setBitRate(3308);
+        
         Location location = new Location();
         Policy policy = new Policy();
 

@@ -160,10 +160,32 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals("Episode 1", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
         
-//        TODO test all 3 synopsis lengths. Also check that behaviour around adding ellipses is correct
-        SynopsisType synopsis = Iterables.getFirst(desc.getSynopsis(), null);
-        assertEquals("Some episode description", synopsis.getValue());
-        assertEquals(SynopsisLengthType.SHORT, synopsis.getLength());
+        SynopsisType firstSynopsis = Iterables.get(desc.getSynopsis(), 0);
+        SynopsisType secondSynopsis = Iterables.get(desc.getSynopsis(), 1);
+        SynopsisType thirdSynopsis = Iterables.get(desc.getSynopsis(), 2);
+
+        String shortDesc = "Some lengthy episode description, that manages to go well over the medium description..."; 
+        String mediumDesc = "Some lengthy episode description, that manages to go well over the medium description cut-off" +
+    		" and thus shows the differences between short, medium and long descriptions, particularly regarding the appending..."; 
+        String longDesc = "Some lengthy episode description, that manages to go well over the medium description cut-off and " +
+    		"thus shows the differences between short, medium and long descriptions, particularly regarding the appending or " +
+    		"not of ellipses.";
+        
+        assertThat(firstSynopsis.getValue(), isOneOf(shortDesc, mediumDesc, longDesc));
+        assertThat(secondSynopsis.getValue(), isOneOf(shortDesc, mediumDesc, longDesc));
+        assertThat(thirdSynopsis.getValue(), isOneOf(shortDesc, mediumDesc, longDesc));
+        
+        assertFalse(firstSynopsis.getValue().equals(secondSynopsis.getValue()));
+        assertFalse(firstSynopsis.getValue().equals(thirdSynopsis.getValue()));
+        assertFalse(secondSynopsis.getValue().equals(thirdSynopsis.getValue()));
+        
+        assertThat(firstSynopsis.getLength(), isOneOf(SynopsisLengthType.SHORT, SynopsisLengthType.MEDIUM, SynopsisLengthType.LONG));
+        assertThat(secondSynopsis.getLength(), isOneOf(SynopsisLengthType.SHORT, SynopsisLengthType.MEDIUM, SynopsisLengthType.LONG));
+        assertThat(thirdSynopsis.getLength(), isOneOf(SynopsisLengthType.SHORT, SynopsisLengthType.MEDIUM, SynopsisLengthType.LONG));
+        
+        assertFalse(firstSynopsis.getLength().equals(secondSynopsis.getLength()));
+        assertFalse(firstSynopsis.getLength().equals(thirdSynopsis.getLength()));
+        assertFalse(secondSynopsis.getLength().equals(thirdSynopsis.getLength()));
         
         // TODO full list of genres won't be possible until genre mapping is known
         GenreType first = Iterables.get(desc.getGenre(), 0);
@@ -258,10 +280,21 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals("Series 2", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
 
-//        TODO test all 3 synopsis lengths. Also check that behaviour around adding ellipses is correct
-        SynopsisType synopsis = Iterables.getFirst(desc.getSynopsis(), null);
-        assertEquals("Some series description...", synopsis.getValue());
-        assertEquals(SynopsisLengthType.SHORT, synopsis.getLength());
+        SynopsisType firstSynopsis = Iterables.get(desc.getSynopsis(), 0);
+        SynopsisType secondSynopsis = Iterables.get(desc.getSynopsis(), 1);
+        SynopsisType thirdSynopsis = Iterables.get(desc.getSynopsis(), 2);
+        
+        assertEquals("Some series description", firstSynopsis.getValue());
+        assertEquals("Some series description", secondSynopsis.getValue());
+        assertEquals("Some series description", thirdSynopsis.getValue());
+        
+        assertThat(firstSynopsis.getLength(), isOneOf(SynopsisLengthType.SHORT, SynopsisLengthType.MEDIUM, SynopsisLengthType.LONG));
+        assertThat(secondSynopsis.getLength(), isOneOf(SynopsisLengthType.SHORT, SynopsisLengthType.MEDIUM, SynopsisLengthType.LONG));
+        assertThat(thirdSynopsis.getLength(), isOneOf(SynopsisLengthType.SHORT, SynopsisLengthType.MEDIUM, SynopsisLengthType.LONG));
+        
+        assertFalse(firstSynopsis.getLength().equals(secondSynopsis.getLength()));
+        assertFalse(firstSynopsis.getLength().equals(thirdSynopsis.getLength()));
+        assertFalse(secondSynopsis.getLength().equals(thirdSynopsis.getLength()));
         
         // TODO full list of genres won't be possible until genre mapping is known
         GenreType first = Iterables.get(desc.getGenre(), 0);
@@ -312,7 +345,7 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals("urn:mpeg:mpeg7:cs:FileFormatCS:2001:1", relatedMaterial.getFormat().getHref());
 
         assertEquals(
-            "http://www.lovefilm.com/lovefilm/images/products/heroshots/0/179534-large.jpg", 
+            "http://www.lovefilm.com/lovefilm/images/products/heroshots/0/137640-large.jpg", 
             relatedMaterial.getMediaLocator().getMediaUri()
         );
 
@@ -353,10 +386,21 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals("Northern Lights", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
         
-//        TODO test all 3 synopsis lengths. Also check that behaviour around adding ellipses is correct
-        SynopsisType synopsis = Iterables.getFirst(desc.getSynopsis(), null);
-        assertEquals("Some brand description...", synopsis.getValue());
-        assertEquals(SynopsisLengthType.SHORT, synopsis.getLength());
+        SynopsisType firstSynopsis = Iterables.get(desc.getSynopsis(), 0);
+        SynopsisType secondSynopsis = Iterables.get(desc.getSynopsis(), 1);
+        SynopsisType thirdSynopsis = Iterables.get(desc.getSynopsis(), 2);
+        
+        assertEquals("Some brand description", firstSynopsis.getValue());
+        assertEquals("Some brand description", secondSynopsis.getValue());
+        assertEquals("Some brand description", thirdSynopsis.getValue());
+        
+        assertThat(firstSynopsis.getLength(), isOneOf(SynopsisLengthType.SHORT, SynopsisLengthType.MEDIUM, SynopsisLengthType.LONG));
+        assertThat(secondSynopsis.getLength(), isOneOf(SynopsisLengthType.SHORT, SynopsisLengthType.MEDIUM, SynopsisLengthType.LONG));
+        assertThat(thirdSynopsis.getLength(), isOneOf(SynopsisLengthType.SHORT, SynopsisLengthType.MEDIUM, SynopsisLengthType.LONG));
+        
+        assertFalse(firstSynopsis.getLength().equals(secondSynopsis.getLength()));
+        assertFalse(firstSynopsis.getLength().equals(thirdSynopsis.getLength()));
+        assertFalse(secondSynopsis.getLength().equals(thirdSynopsis.getLength()));
         
         // TODO full list of genres won't be possible until genre mapping is known
         GenreType first = Iterables.get(desc.getGenre(), 0);
@@ -407,7 +451,7 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals("urn:mpeg:mpeg7:cs:FileFormatCS:2001:1", relatedMaterial.getFormat().getHref());
 
         assertEquals(
-            "http://www.lovefilm.com/lovefilm/images/products/heroshots/0/184930-large.jpg", 
+            "http://www.lovefilm.com/lovefilm/images/products/heroshots/0/137640-large.jpg", 
             relatedMaterial.getMediaLocator().getMediaUri()
         );
 
@@ -501,7 +545,7 @@ public class LovefilmGroupInformationGeneratorTest {
             "http://lovefilm.com/genres/television"
         ));
         episode.setTitle("Episode 1");
-        episode.setDescription("Some episode description");
+        episode.setDescription("Some lengthy episode description, that manages to go well over the medium description cut-off and thus shows the differences between short, medium and long descriptions, particularly regarding the appending or not of ellipses.");
         episode.setImage("http://www.lovefilm.com/lovefilm/images/products/heroshots/0/137640-large.jpg");
         episode.setPublisher(Publisher.LOVEFILM);
         episode.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));
@@ -559,5 +603,4 @@ public class LovefilmGroupInformationGeneratorTest {
         
         return film;
     }
-
 }
