@@ -14,8 +14,8 @@ import javax.xml.bind.JAXBElement;
 
 import org.atlasapi.feeds.lakeview.validation.FeedItemStore;
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult.ValidationResultType;
-import org.atlasapi.generated.ElementMovie;
-import org.atlasapi.generated.ElementTVEpisode;
+import org.atlasapi.generated.lakeview.ElementMovie;
+import org.atlasapi.generated.lakeview.ElementTVEpisode;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;

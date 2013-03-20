@@ -3,11 +3,11 @@ package org.atlasapi.feeds.lakeview.validation;
 import java.util.List;
 import java.util.Map;
 
-import org.atlasapi.generated.ElementMovie;
-import org.atlasapi.generated.ElementProduct;
-import org.atlasapi.generated.ElementTVEpisode;
-import org.atlasapi.generated.ElementTVSeason;
-import org.atlasapi.generated.ElementTVSeries;
+import org.atlasapi.generated.lakeview.ElementMovie;
+import org.atlasapi.generated.lakeview.ElementProduct;
+import org.atlasapi.generated.lakeview.ElementTVEpisode;
+import org.atlasapi.generated.lakeview.ElementTVSeason;
+import org.atlasapi.generated.lakeview.ElementTVSeries;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;

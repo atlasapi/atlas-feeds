@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Metadata Status Report schema -->
+<!-- Richard Bradbury, BBC Research & Development -->
+<!-- [28.April.2010, 2.June.2010, 3.June.2010, 25.November.2010, 7.December.2010] -->
+<!-- Copyright 2010 YouView TV Limited. All rights reserved. -->
+<!-- -->
+<schema xmlns:sr="http://refdata.youview.com/schemas/YouViewStatusReport/2010-12-07" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:mpeg7="urn:tva:mpeg7:2008" targetNamespace="http://refdata.youview.com/schemas/YouViewStatusReport/2010-12-07" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<!-- -->
+	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7_2008.xsd"/>
+	<!-- -->
+	<!-- ====================================================================================-->
+	<annotation>
+		<documentation>COMMON TYPES</documentation>
+	</annotation>
+	<!-- ====================================================================================-->
+	<!-- -->
+	<complexType name="ReportType" abstract="true">
+		<annotation>
+			<documentation>Abstract base class for reports.</documentation>
+		</annotation>
+		<sequence>
+			<annotation>
+				<documentation>Optional human-readable Remarks are uncontrolled, one per language; Messages are controlled.</documentation>
+			</annotation>
+			<element name="Remark" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<!-- -->
+	<!-- ====================================================================================-->
+	<annotation>
+		<documentation>ELEMENT TYPES</documentation>
+	</annotation>
+	<!-- ====================================================================================-->
+	<!-- -->
+	<simpleType name="SeverityType">
+		<restriction base="string">
+			<enumeration value="error"/>
+			<enumeration value="warning"/>
+			<enumeration value="information"/>
+		</restriction>
+	</simpleType>
+	<!-- -->
+	<complexType name="ControlledMessageType">
+		<annotation>
+			<documentation>A message.</documentation>
+		</annotation>
+		<sequence>
+			<element name="Comment" type="mpeg7:TextualType"/>
+		</sequence>
+		<attribute name="severity" type="sr:SeverityType" use="required">
+			<annotation>
+				<documentation>Is this message reporting an error, a warning or just for information?</documentation>
+			</annotation>
+		</attribute>
+		<attribute name="location" use="required">
+			<annotation>
+				<documentation>XPath location.</documentation>
+			</annotation>
+		</attribute>
+		<attribute name="reasonCode" type="mpeg7:termReferenceType" use="required">
+			<annotation>
+				<documentation>A fully-qualified controlled term from a Classification Scheme.</documentation>
+			</annotation>
+		</attribute>
+	</complexType>
+	<!-- -->
+	<complexType name="FragmentReportType">
+		<annotation>
+			<documentation>A report on a metadata fragment</documentation>
+		</annotation>
+		<complexContent>
+			<extension base="sr:ReportType">
+				<sequence>
+					<element name="Message" type="sr:ControlledMessageType" minOccurs="0" maxOccurs="unbounded"/>
+				</sequence>
+				<attribute name="success" type="boolean" use="required">
+					<annotation>
+						<documentation>Was the addition/update/deletion of this Fragment successful or not?</documentation>
+					</annotation>
+				</attribute>
+				<attribute name="fragmentId" type="anyURI" use="required">
+					<annotation>
+						<documentation>The TV-Anytime identifier used as a "proxy" Fragment identifier on the interface.</documentation>
+					</annotation>
+				</attribute>
+				<attribute name="recordId" type="NMTOKEN" use="optional">
+					<annotation>
+						<documentation>Optional internal Record identifier.</documentation>
+					</annotation>
+				</attribute>
+			</extension>
+		</complexContent>
+	</complexType>
+	<!-- -->
+	<simpleType name="TransactionStateType">
+		<restriction base="string">
+			<enumeration value="accepted">
+				<annotation>
+					<documentation>Transaction accepted for later processing.</documentation>
+				</annotation>
+			</enumeration>
+			<enumeration value="validating">
+				<annotation>
+					<documentation>Transaction being subjected to syntax, semantic or referential integrity validation.</documentation>
+				</annotation>
+			</enumeration>
+			<enumeration value="failed">
+				<annotation>
+					<documentation>At least one Fragment in the Transaction failed syntax or semantic validation.</documentation>
+				</annotation>
+			</enumeration>
+			<enumeration value="quarantined">
+				<annotation>
+					<documentation>All Fragments in the Transaction pass syntax and semantic validation but at least one Fragment lacks referential integrity.</documentation>
+				</annotation>
+			</enumeration>
+			<enumeration value="committing">
+				<annotation>
+					<documentation>Transaction passes syntax, semantic and referential integrity validation and Fragments are queued for committing to database.</documentation>
+				</annotation>
+			</enumeration>
+			<enumeration value="committed">
+				<annotation>
+					<documentation>All Fragments in the Transaction are successfully committed to the database and awaiting downstream publication.</documentation>
+				</annotation>
+			</enumeration>
+			<enumeration value="publishing">
+				<annotation>
+					<documentation>Fragments are in the process of being published to downstream systems.</documentation>
+				</annotation>
+			</enumeration>
+			<enumeration value="published">
+				<annotation>
+					<documentation>All Fragments in the Transaction have been published successfully to downstream systems.</documentation>
+				</annotation>
+			</enumeration>
+		</restriction>
+	</simpleType>
+	<!-- -->
+	<complexType name="TransactionReportType">
+		<annotation>
+			<documentation>A report on a metadata transaction</documentation>
+		</annotation>
+		<complexContent>
+			<extension base="sr:ReportType">
+				<choice>
+					<element name="FragmentUpdateReport" type="sr:FragmentReportType" minOccurs="0" maxOccurs="unbounded"/>
+					<element name="FragmentDeleteReport" type="sr:FragmentReportType" minOccurs="0"/>
+				</choice>
+				<attribute name="state" type="sr:TransactionStateType" use="required">
+					<annotation>
+						<documentation>What is the current life-cycle state of this Transaction as a whole?</documentation>
+					</annotation>
+				</attribute>
+				<attribute name="transactionId" type="anyURI" use="required">
+					<annotation>
+						<documentation>Fully-qualified URL that can be used to query the live life-cycle state of this Transaction.</documentation>
+					</annotation>
+				</attribute>
+			</extension>
+		</complexContent>
+	</complexType>
+	<!-- -->
+	<element name="StatusReport">
+		<annotation>
+			<documentation>A report of one or more metadata transactions</documentation>
+		</annotation>
+		<complexType>
+			<sequence>
+				<element name="TransactionReport" type="sr:TransactionReportType" maxOccurs="unbounded"/>
+			</sequence>
+		</complexType>
+	</element>
+	<!-- -->
+</schema>
