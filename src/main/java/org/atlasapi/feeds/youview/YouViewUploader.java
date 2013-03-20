@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -112,6 +113,13 @@ public class YouViewUploader extends ScheduledTask {
     
     private Iterable<Content> getContentSinceDate(Optional<DateTime> since) {
         DateTime start = since.isPresent() ? since.get() : START_OF_TIME;
-        return ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start));
+        return Iterables.filter(ImmutableList.copyOf(
+            contentFinder.updatedSince(PUBLISHER, start)), 
+            new Predicate<Content>() {
+                @Override
+                public boolean apply(Content input) {
+                    return input.isActivelyPublished();
+                }
+            });
     }
 }

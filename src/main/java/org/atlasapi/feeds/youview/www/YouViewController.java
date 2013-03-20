@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.time.DateTimeZones;
@@ -75,7 +77,14 @@ public class YouViewController {
     private Iterable<Content> getContentSinceDate(Optional<String> since) {
         
         DateTime start = since.isPresent() ? fmt.parseDateTime(since.get()) : START_OF_TIME;
-        return ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start));
+        return Iterables.filter(ImmutableList.copyOf(
+            contentFinder.updatedSince(PUBLISHER, start)), 
+            new Predicate<Content>() {
+                @Override
+                public boolean apply(Content input) {
+                return input.isActivelyPublished();
+                }
+            });
     }
     
     private ApplicationConfiguration appConfig(HttpServletRequest request) {
