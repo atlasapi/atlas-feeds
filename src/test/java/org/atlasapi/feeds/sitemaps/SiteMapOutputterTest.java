@@ -55,6 +55,7 @@ public class SiteMapOutputterTest extends TestCase {
 		glee.setImage("http://www.channel4.com/assets/programmes/images/grand-designs/series-7/9867d8e4-1c2e-422c-a99d-96257bd0e4ae_625x352.jpg");
 		Brand brand = new Brand("http://www.channel4.com/programmes/grand-designs", "c4:grand-designs", Publisher.C4);
 		brand.setTitle("Grand Designs");
+		brand.setId(1);
 		((Episode)glee).setContainer(brand);
 		Version version = new Version();
 		Encoding encoding = new Encoding();
