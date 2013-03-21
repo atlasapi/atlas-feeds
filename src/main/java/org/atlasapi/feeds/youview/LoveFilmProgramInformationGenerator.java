@@ -90,12 +90,16 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
         ProgramInformationType progInfo = new ProgramInformationType();
 
         // TODO digital_release_id not ingested yet, currently a placeholder of id + '_version'
-        progInfo.setProgramId(LOVEFILM_PRODUCT_CRID_PREFIX + getId(item.getCanonicalUri()) + VERSION_SUFFIX);
+        progInfo.setProgramId(createCrid(item));
         progInfo.setBasicDescription(generateBasicDescription(item));
         progInfo.setDerivedFrom(generateDerivedFrom(item));
         progInfo.getOtherIdentifier().add(generateOtherId(item));
 
         return progInfo;
+    }
+
+    public static String createCrid(Item item) {
+        return LOVEFILM_PRODUCT_CRID_PREFIX + getId(item.getCanonicalUri()) + VERSION_SUFFIX;
     }
 
     private UniqueIDType generateOtherId(Item item) {

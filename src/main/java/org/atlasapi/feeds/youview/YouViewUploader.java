@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview;
 
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
@@ -9,8 +10,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.utils.UpdateProgress;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -22,6 +26,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.inject.internal.Lists;
 import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.SimpleHttpClientBuilder;
@@ -29,9 +34,14 @@ import com.metabroadcast.common.http.StringPayload;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.url.QueryStringParameters;
 
 public class YouViewUploader extends ScheduledTask {
 
+    private static final String INGEST_URL_SUFFIX = "/ingest/transaction";
+    private static final String DELETE_URL_SUFFIX = "/fragment";
+    private static final String DELETE_TYPE_ID = "id";
+    private static final String DELETE_TYPE_CRID = "crid";
     // TODO if more publishers are required, make this a list & a parameter of the class
     private static final Publisher PUBLISHER = Publisher.LOVEFILM;
     private static final DateTime START_OF_TIME = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.UTC);
@@ -63,15 +73,41 @@ public class YouViewUploader extends ScheduledTask {
     @Override
     protected void runTask() {
         
-        Iterable<Content> allContent;
         DateTime lastUpdated;
         
         if (isBootstrap) {
-            allContent = getContentSinceDate(Optional.<DateTime>absent());
+            lastUpdated = new DateTime();
+            Iterable<Content> allContent = Iterables.filter(getContentSinceDate(Optional.<DateTime>absent()), new Predicate<Content>() {
+                @Override
+                public boolean apply(Content input) {
+                    return input.isActivelyPublished();
+                }
+            });
+            UpdateProgress progress = UpdateProgress.START;
+            progress = uploadChunkedContent(allContent, progress);
+            store.setLastUpdated(lastUpdated);
         } else {
             try {
                 lastUpdated = store.getLastUpdated();
-                allContent = getContentSinceDate(Optional.of(lastUpdated));
+                Iterable<Content> updatedContent = getContentSinceDate(Optional.of(lastUpdated));
+                lastUpdated = new DateTime();    
+                
+                List<Content> deleted = Lists.newArrayList();
+                List<Content> notDeleted = Lists.newArrayList();
+                for (Content updated : updatedContent) {
+                    if (updated.isActivelyPublished()) {
+                        notDeleted.add(updated);
+                    } else {
+                        deleted.add(updated);
+                    }
+                }
+                
+                UpdateProgress progress = UpdateProgress.START;
+                progress = uploadChunkedContent(notDeleted, progress);
+                
+                sendDeletes(deleted, progress);
+                
+                store.setLastUpdated(lastUpdated);
             } catch(NoSuchElementException e) {
                 log.error("The bootstrap has not successfully run. Please run the bootstrap upload and ensure that it succeeds before running the delta upload.");
                 Throwables.propagate(e);
@@ -80,21 +116,75 @@ public class YouViewUploader extends ScheduledTask {
             }
         }
         
-        lastUpdated = new DateTime();
+    }
+
+    // TODO better update progress, improve iteration/splitting of types
+    private void sendDeletes(List<Content> deleted, UpdateProgress progress) {
+        // sort into separate lists then iterate, or iterate several times over initial list?
+        List<Item> items = Lists.newArrayList();
+        List<Series> series = Lists.newArrayList();
+        List<Brand> brands = Lists.newArrayList();
+        for (Content deletedContent : deleted) {
+            if (deletedContent instanceof Item) {
+                items.add((Item) deletedContent);
+            } else if (deletedContent instanceof Series) {
+                series.add((Series) deletedContent);
+            } else if (deletedContent instanceof Brand) {
+                brands.add((Brand) deletedContent);
+            }
+        }
         
-        UpdateProgress progress = UpdateProgress.START;
+        for (Item deletedItem : items) {
+            progress = progress.reduce(sendDelete(LoveFilmOnDemandLocationGenerator.createImi(deletedItem), DELETE_TYPE_ID));
+            progress = progress.reduce(sendDelete(LoveFilmProgramInformationGenerator.createCrid(deletedItem), DELETE_TYPE_CRID));
+            progress = progress.reduce(sendDelete(LoveFilmGroupInformationGenerator.createCrid(deletedItem), DELETE_TYPE_CRID));
+            reportStatus("Deletes: " + progress.toString());
+        }
         
+        for (Series deletedSeries : series) {
+            progress = progress.reduce(sendDelete(LoveFilmGroupInformationGenerator.createCrid(deletedSeries), DELETE_TYPE_CRID));
+            reportStatus("Deletes: " + progress.toString());
+        }
+        
+        for (Brand deletedBrand : brands) {
+            progress = progress.reduce(sendDelete(LoveFilmGroupInformationGenerator.createCrid(deletedBrand), DELETE_TYPE_CRID));
+            reportStatus("Deletes: " + progress.toString());
+        }
+    }
+
+    private UpdateProgress sendDelete(String id, String type) {
+        QueryStringParameters qsp = new QueryStringParameters();
+        qsp.add(type, id);
+        try {
+            String queryUrl = youViewUrl + DELETE_URL_SUFFIX;
+            log.info(String.format("Deleting YouView content with %s %s at %s", type, id, queryUrl));
+            HttpResponse response = httpClient.delete(queryUrl + "?" + qsp.toString());
+            if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
+                log.info("Response: " + response.header("Location"));
+            } else {
+                throw new RuntimeException(String.format("An Http status code of %s was returned when POSTing to YouView. Error message:\n%s", response.statusCode(), response.body()));
+            }
+            return UpdateProgress.SUCCESS;
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return UpdateProgress.FAILURE;
+        }
+    }
+
+    private UpdateProgress uploadChunkedContent(Iterable<Content> allContent,
+            UpdateProgress progress) {
         for (Iterable<Content> contents : Iterables.partition(allContent, chunkSize)) {
             if (!shouldContinue()) {
                 break;
             }
            
             try {
-                log.info(String.format("Posting YouView output xml to %s", youViewUrl));
+                String queryUrl = youViewUrl + INGEST_URL_SUFFIX;
+                log.info(String.format("Posting YouView output xml to %s", queryUrl));
                 
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 generator.generateXml(contents, baos, isBootstrap);
-                HttpResponse response = httpClient.post(youViewUrl, new StringPayload(baos.toString(Charsets.UTF_8.name())));
+                HttpResponse response = httpClient.post(queryUrl, new StringPayload(baos.toString(Charsets.UTF_8.name())));
                 
                 if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
                     log.info("Response: " + response.header("Location"));
@@ -106,20 +196,13 @@ public class YouViewUploader extends ScheduledTask {
                 log.error(e.getMessage(), e);
                 progress = progress.reduce(UpdateProgress.FAILURE);
             }
-            reportStatus(progress.toString());
+            reportStatus("Uploads: " + progress.toString());
         }
-        store.setLastUpdated(lastUpdated);
+        return progress;
     }
     
     private Iterable<Content> getContentSinceDate(Optional<DateTime> since) {
         DateTime start = since.isPresent() ? since.get() : START_OF_TIME;
-        return Iterables.filter(ImmutableList.copyOf(
-            contentFinder.updatedSince(PUBLISHER, start)), 
-            new Predicate<Content>() {
-                @Override
-                public boolean apply(Content input) {
-                    return input.isActivelyPublished();
-                }
-            });
+        return ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start));
     }
 }

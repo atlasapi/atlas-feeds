@@ -145,11 +145,15 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     GroupInformationType generateWithCommonFields(Content content, Episode episode) {
         GroupInformationType groupInfo = new GroupInformationType();
         
-        groupInfo.setGroupId(LOVEFILM_PRODUCT_CRID_PREFIX + getId(content.getCanonicalUri()));
+        groupInfo.setGroupId(createCrid(content));
         // this needs tweaking depending on type
         groupInfo.setBasicDescription(generateBasicDescription(content, episode));
         
         return groupInfo;
+    }
+
+    public static String createCrid(Content content) {
+        return LOVEFILM_PRODUCT_CRID_PREFIX + getId(content.getCanonicalUri());
     }
     
     private BaseProgramGroupTypeType generateGroupType(String groupType) {

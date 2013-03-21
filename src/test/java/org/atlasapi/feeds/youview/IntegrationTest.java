@@ -96,9 +96,17 @@ public class IntegrationTest {
         policy.setAvailabilityEnd(new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC));
         
         location.setPolicy(policy);
+        
         encoding.addAvailableAt(location);
+        encoding.addAvailableAt(location);
+        encoding.setVideoHorizontalSize(1280);
+        encoding.setVideoVerticalSize(720);
+        encoding.setVideoAspectRatio("16:9");
+        encoding.setBitRate(3308);
+        
         version.addManifestedAs(encoding);
         version.setDuration(Duration.standardMinutes(90));
+        
         film.addVersion(version);
         
         return film;

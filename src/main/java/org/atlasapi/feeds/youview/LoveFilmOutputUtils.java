@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview;
 
+import org.atlasapi.media.entity.Content;
+
 public class LoveFilmOutputUtils {
 
     private static final String LOVEFILM_URI_PATTERN = "http:\\/\\/lovefilm\\.com\\/[a-z]*\\/";
