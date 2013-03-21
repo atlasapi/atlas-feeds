@@ -11,7 +11,6 @@ import javax.xml.datatype.Duration;
 
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.media.entity.Certificate;
-import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 

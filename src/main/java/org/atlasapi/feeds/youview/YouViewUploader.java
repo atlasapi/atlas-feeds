@@ -183,7 +183,7 @@ public class YouViewUploader extends ScheduledTask {
                 log.info(String.format("Posting YouView output xml to %s", queryUrl));
                 
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                generator.generateXml(contents, baos, isBootstrap);
+                generator.generateXml(contents, baos);
                 HttpResponse response = httpClient.post(queryUrl, new StringPayload(baos.toString(Charsets.UTF_8.name())));
                 
                 if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {

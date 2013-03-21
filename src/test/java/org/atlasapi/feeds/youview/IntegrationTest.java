@@ -9,7 +9,6 @@ import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
-import org.atlasapi.feeds.tvanytime.ServiceInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Content;
@@ -40,15 +39,11 @@ public class IntegrationTest {
     private static final ProgramInformationGenerator progInfoGenerator = new LoveFilmProgramInformationGenerator();
     private static final GroupInformationGenerator groupInfoGenerator = new LoveFilmGroupInformationGenerator(genreMapping);
     private static final OnDemandLocationGenerator progLocationGenerator = new LoveFilmOnDemandLocationGenerator();
-    private static final ServiceInformationGenerator lovefilmServiceInfoGenerator = new LoveFilmServiceInformationGenerator();
-    private static final ServiceInformationGenerator lovefilmInstantServiceInfoGenerator = new LoveFilmInstantServiceInformationGenerator();
     
     private static final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
         progInfoGenerator, 
         groupInfoGenerator, 
         progLocationGenerator, 
-        lovefilmServiceInfoGenerator, 
-        lovefilmInstantServiceInfoGenerator, 
         Mockito.mock(ContentResolver.class),
         false
     );
@@ -59,7 +54,7 @@ public class IntegrationTest {
         File testFile = new File("src/test/resources/org/atlasapi/feeds/youview", "xml_test.xml");
         OutputStream out = new FileOutputStream(testFile);
         
-        generator.generateXml(ImmutableList.<Content>of(createFilm()), out, false);
+        generator.generateXml(ImmutableList.<Content>of(createFilm()), out);
     }
 
     private Film createFilm() {

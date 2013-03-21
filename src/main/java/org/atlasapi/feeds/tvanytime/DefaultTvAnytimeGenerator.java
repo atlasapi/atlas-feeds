@@ -35,7 +35,6 @@ import tva.metadata._2010.ObjectFactory;
 import tva.metadata._2010.ProgramDescriptionType;
 import tva.metadata._2010.ProgramInformationTableType;
 import tva.metadata._2010.ProgramLocationTableType;
-import tva.metadata._2010.ServiceInformationTableType;
 import tva.metadata._2010.TVAMainType;
 
 import com.google.common.base.Optional;
@@ -78,30 +77,26 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
     private final ProgramInformationGenerator progInfoGenerator;
     private final GroupInformationGenerator groupInfoGenerator;
     private final OnDemandLocationGenerator progLocationGenerator;
-    private final ServiceInformationGenerator lovefilmServiceInfoGenerator;
-    private final ServiceInformationGenerator lovefilmInstantServiceInfoGenerator;
     private final ContentResolver contentResolver;
     private final Logger log = LoggerFactory.getLogger(DefaultTvAnytimeGenerator.class);
     private final boolean performValidation;
     private final ObjectFactory factory = new ObjectFactory();
 
-    public DefaultTvAnytimeGenerator(ProgramInformationGenerator progInfoGenerator, GroupInformationGenerator groupInfoGenerator, OnDemandLocationGenerator progLocationGenerator, ServiceInformationGenerator lovefilmServiceInfoGenerator, ServiceInformationGenerator lovefilmInstantServiceInfoGenerator, ContentResolver contentResolver, boolean performValidation) {
+    public DefaultTvAnytimeGenerator(ProgramInformationGenerator progInfoGenerator, GroupInformationGenerator groupInfoGenerator, OnDemandLocationGenerator progLocationGenerator, ContentResolver contentResolver, boolean performValidation) {
         this.progInfoGenerator = progInfoGenerator;
         this.groupInfoGenerator = groupInfoGenerator;
         this.progLocationGenerator = progLocationGenerator;
-        this.lovefilmServiceInfoGenerator = lovefilmServiceInfoGenerator;
-        this.lovefilmInstantServiceInfoGenerator = lovefilmInstantServiceInfoGenerator;
         this.contentResolver = contentResolver;
         this.performValidation = performValidation;
     }
     
     @Override
-    public void generateXml(Iterable<Content> contents, OutputStream outStream, boolean includeServiceInformation) {
+    public void generateXml(Iterable<Content> contents, OutputStream outStream) {
         try {
             JAXBContext context = JAXBContext.newInstance("tva.metadata._2010");
             Marshaller marshaller = context.createMarshaller();
             
-            JAXBElement<TVAMainType> rootElem = createXml(contents, includeServiceInformation);
+            JAXBElement<TVAMainType> rootElem = createXml(contents);
 
             if (performValidation) {
                 JAXBSource source = new JAXBSource(context, rootElem);
@@ -130,20 +125,13 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         }
     }
 
-    private JAXBElement<TVAMainType> createXml(Iterable<Content> contents, boolean includeServiceInformation) {
+    private JAXBElement<TVAMainType> createXml(Iterable<Content> contents) {
         
         Set<String> added = Sets.newHashSet();
         TVAMainType tvaMain = factory.createTVAMainType();
         tvaMain.setLang(TVA_LANGUAGE);
         
         ProgramDescriptionType progDescription = new ProgramDescriptionType();
-
-        if (includeServiceInformation) {
-            ServiceInformationTableType serviceInfoTable = factory.createServiceInformationTableType(); 
-            serviceInfoTable.getServiceInformation().add(lovefilmServiceInfoGenerator.generate());
-            serviceInfoTable.getServiceInformation().add(lovefilmInstantServiceInfoGenerator.generate());
-            progDescription.setServiceInformationTable(serviceInfoTable);
-        }
 
         ProgramInformationTableType progInfoTable = factory.createProgramInformationTableType();
         GroupInformationTableType groupInfoTable = factory.createGroupInformationTableType();

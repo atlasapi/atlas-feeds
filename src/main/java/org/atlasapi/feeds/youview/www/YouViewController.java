@@ -64,7 +64,7 @@ public class YouViewController {
             response.setStatus(HttpServletResponse.SC_OK);
             
             Optional<String> since = Optional.fromNullable(lastUpdated);
-            feedGenerator.generateXml(getContentSinceDate(since), response.getOutputStream(), since.isPresent());
+            feedGenerator.generateXml(getContentSinceDate(since), response.getOutputStream());
             
         } catch (IOException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
