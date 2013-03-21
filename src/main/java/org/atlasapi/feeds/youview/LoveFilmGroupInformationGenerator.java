@@ -60,6 +60,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     private static final String GROUP_TYPE_SERIES = "series";
     private static final String GROUP_TYPE_SHOW = "show";
     private static final String LANGUAGE_TYPE_ORIGINAL = "original";
+    private static final String LANGUAGE = "en";
     private static final String GENRE_TYPE_MAIN = "main";
     private static final String GENRE_TYPE_OTHER = "other";
     private static final String LOVEFILM_URL = "http://lovefilm.com";
@@ -257,12 +258,18 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
 
     private List<ExtendedLanguageType> generateLanguage(Content content) {
         List<ExtendedLanguageType> languages = Lists.newArrayList();
+        /*
         for (String languageStr : content.getLanguages()) {
             ExtendedLanguageType language = new ExtendedLanguageType();
             language.setType(LANGUAGE_TYPE_ORIGINAL);
             language.setValue(languageStr);
             languages.add(language);
         }
+        */
+        ExtendedLanguageType language = new ExtendedLanguageType();
+        language.setType(LANGUAGE_TYPE_ORIGINAL);
+        language.setValue(LANGUAGE);
+        languages.add(language);
         return languages;
     }
 
