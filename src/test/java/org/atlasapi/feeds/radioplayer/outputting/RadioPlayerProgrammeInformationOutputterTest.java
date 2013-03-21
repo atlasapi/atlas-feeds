@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Resources;
 import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerProgrammeInformationOutputterTest {
 
@@ -39,6 +40,8 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 	public static Episode buildItem(){
 		Episode testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c",
 				"bbc:b00f4d9c", Publisher.BBC);
+		testItem.setId(2);
+		testItem.setThisOrChildLastUpdated(new DateTime(DateTimeZones.UTC));
 		testItem.setTitle("BBC Electric Proms: Saturday Night Fever");
 		testItem.setDescription("Another chance to hear Robin Gibb perform the Bee Gees' classic disco album with the BBC Concert Orchestra. It was recorded" +
 				" for the BBC Electric Proms back in October 2008, marking 30 years since Saturday Night Fever soundtrack topped the UK charts.");
@@ -76,10 +79,12 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		Series series = new Series("seriesUri", "seriesCurie", Publisher.BBC);
 		series.setTitle("This is the series title");
+		series.setId(1);
 		testItem.setSeries(series);
 		series.setChildRefs(ImmutableList.of(testItem.childRef()));
 		
 		Brand brand = new Brand("http://www.bbc.co.uk/programmes/b006m9mf", "bbc:b006m9mf", Publisher.BBC);
+		brand.setId(3);
 		brand.setTitle("Electric Proms");
 		((Episode)testItem).setContainer(brand);
 
@@ -94,6 +99,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		
 		Series series = new Series("seriesUri", "seriesCurie", Publisher.BBC);
 		series.setTitle("Series Title");
+		series.setId(1);
         testItem.setSeries(series);
         series.setChildRefs(ImmutableList.of(testItem.childRef()));
 		
