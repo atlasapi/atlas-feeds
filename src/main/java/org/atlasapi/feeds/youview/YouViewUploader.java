@@ -26,6 +26,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Ordering;
 import com.google.inject.internal.Lists;
 import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
@@ -38,13 +39,38 @@ import com.metabroadcast.common.url.QueryStringParameters;
 
 public class YouViewUploader extends ScheduledTask {
 
-    private static final String INGEST_URL_SUFFIX = "/ingest/transaction";
+    private static final String INGEST_URL_SUFFIX = "/transaction";
     private static final String DELETE_URL_SUFFIX = "/fragment";
-    private static final String DELETE_TYPE_ID = "id";
-    private static final String DELETE_TYPE_CRID = "crid";
+    private static final String DELETE_TYPE = "id";
     // TODO if more publishers are required, make this a list & a parameter of the class
     private static final Publisher PUBLISHER = Publisher.LOVEFILM;
     private static final DateTime START_OF_TIME = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.UTC);
+    public static final Ordering<Content> REVERSE_HIERARCHICAL_ORDER = new Ordering<Content>() {
+        @Override
+        public int compare(Content left, Content right) {
+            if (left instanceof Item) {
+                if (right instanceof Item) {
+                    return 0;
+                } else {
+                    return -1;
+                }
+            } else if (left instanceof Series) {
+                if (right instanceof Item) {
+                    return 1;
+                } else if (right instanceof Series) {
+                    return 0;
+                } else {
+                    return -1;
+                }
+            } else {
+                if (right instanceof Brand) {
+                    return 0;
+                } else {
+                    return 1;
+                }
+            }
+        }
+    };
 
     private final int chunkSize;
     private final String youViewUrl;
@@ -118,46 +144,31 @@ public class YouViewUploader extends ScheduledTask {
         
     }
 
-    // TODO better update progress, improve iteration/splitting of types
-    private void sendDeletes(List<Content> deleted, UpdateProgress progress) {
-        // sort into separate lists then iterate, or iterate several times over initial list?
-        List<Item> items = Lists.newArrayList();
-        List<Series> series = Lists.newArrayList();
-        List<Brand> brands = Lists.newArrayList();
-        for (Content deletedContent : deleted) {
-            if (deletedContent instanceof Item) {
-                items.add((Item) deletedContent);
-            } else if (deletedContent instanceof Series) {
-                series.add((Series) deletedContent);
-            } else if (deletedContent instanceof Brand) {
-                brands.add((Brand) deletedContent);
+    // TODO better update progress?
+    private void sendDeletes(Iterable<Content> deleted, UpdateProgress progress) {
+        List<Content> orderedContent = REVERSE_HIERARCHICAL_ORDER.sortedCopy(deleted);
+        
+        for (Content content : orderedContent) {
+            if (content instanceof Item) {
+                progress = progress.reduce(sendDelete(LoveFilmOnDemandLocationGenerator.createImi((Item) content)));
+                progress = progress.reduce(sendDelete(LoveFilmProgramInformationGenerator.createCrid((Item) content)));
+                progress = progress.reduce(sendDelete(LoveFilmGroupInformationGenerator.createCrid(content)));
+            } else if (content instanceof Series) {
+                progress = progress.reduce(sendDelete(LoveFilmGroupInformationGenerator.createCrid(content)));
+            } else if (content instanceof Brand) {
+                progress = progress.reduce(sendDelete(LoveFilmGroupInformationGenerator.createCrid(content)));
             }
-        }
-        
-        for (Item deletedItem : items) {
-            progress = progress.reduce(sendDelete(LoveFilmOnDemandLocationGenerator.createImi(deletedItem), DELETE_TYPE_ID));
-            progress = progress.reduce(sendDelete(LoveFilmProgramInformationGenerator.createCrid(deletedItem), DELETE_TYPE_CRID));
-            progress = progress.reduce(sendDelete(LoveFilmGroupInformationGenerator.createCrid(deletedItem), DELETE_TYPE_CRID));
-            reportStatus("Deletes: " + progress.toString());
-        }
-        
-        for (Series deletedSeries : series) {
-            progress = progress.reduce(sendDelete(LoveFilmGroupInformationGenerator.createCrid(deletedSeries), DELETE_TYPE_CRID));
-            reportStatus("Deletes: " + progress.toString());
-        }
-        
-        for (Brand deletedBrand : brands) {
-            progress = progress.reduce(sendDelete(LoveFilmGroupInformationGenerator.createCrid(deletedBrand), DELETE_TYPE_CRID));
+            
             reportStatus("Deletes: " + progress.toString());
         }
     }
 
-    private UpdateProgress sendDelete(String id, String type) {
+    private UpdateProgress sendDelete(String id) {
         QueryStringParameters qsp = new QueryStringParameters();
-        qsp.add(type, id);
+        qsp.add(DELETE_TYPE, id);
         try {
             String queryUrl = youViewUrl + DELETE_URL_SUFFIX;
-            log.info(String.format("Deleting YouView content with %s %s at %s", type, id, queryUrl));
+            log.info(String.format("Deleting YouView content with %s %s at %s", DELETE_TYPE, id, queryUrl));
             HttpResponse response = httpClient.delete(queryUrl + "?" + qsp.toString());
             if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
                 log.info("Response: " + response.header("Location"));
