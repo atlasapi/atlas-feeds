@@ -513,7 +513,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         item.addVersion(version);
     }
 
-    private static class DummyContentResolver implements ContentResolver {
+    public static class DummyContentResolver implements ContentResolver {
         
         private final Map<String, Content> data = Maps.newHashMap();
         
