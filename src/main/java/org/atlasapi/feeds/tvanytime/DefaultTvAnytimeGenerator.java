@@ -138,6 +138,7 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         ProgramLocationTableType progLocTable = factory.createProgramLocationTableType();
 
         for (Content content : contents) {
+            try {
             if (content instanceof Item) {
                 Item item = (Item) content;
                 progInfoTable.getProgramInformation().add(progInfoGenerator.generate(item));
@@ -189,6 +190,9 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
                         }
                     }
                 }
+            }
+            } catch (Exception e) {
+                log.error("Exception occurred while processing " + content.getCanonicalUri() + " " + e.getMessage(), e);
             }
         }
 

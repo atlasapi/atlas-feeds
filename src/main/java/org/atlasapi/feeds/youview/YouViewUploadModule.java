@@ -46,10 +46,8 @@ public class YouViewUploadModule {
     
     @PostConstruct
     public void startScheduledTasks() {
-        if(Boolean.parseBoolean(enabled)) {
-            scheduler.schedule(deltaUploader().withName("YouView Lovefilm TVAnytime Delta Upload"), DELTA_UPLOAD);
-            scheduler.schedule(bootstrapUploader().withName("YouView Lovefilm TVAnytime Bootstrap Upload"), BOOTSTRAP_UPLOAD);
-        }
+        scheduler.schedule(deltaUploader().withName("YouView Lovefilm TVAnytime Delta Upload"), DELTA_UPLOAD);
+        scheduler.schedule(bootstrapUploader().withName("YouView Lovefilm TVAnytime Bootstrap Upload"), BOOTSTRAP_UPLOAD);
     }
 
     @Bean

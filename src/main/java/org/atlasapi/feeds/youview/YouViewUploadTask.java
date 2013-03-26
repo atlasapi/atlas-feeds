@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview;
 
+import java.util.Iterator;
 import java.util.List;
 
 import org.atlasapi.feeds.utils.UpdateProgress;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
 import com.google.inject.internal.Lists;
 import com.metabroadcast.common.scheduling.ScheduledTask;
@@ -23,6 +25,12 @@ public class YouViewUploadTask extends ScheduledTask {
 
     private static final DateTime START_OF_TIME = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.UTC);
     private static final Publisher PUBLISHER = Publisher.LOVEFILM;
+    private static final Predicate<Content> IS_ACTIVELY_PUBLISHED = new Predicate<Content>() {
+        @Override
+        public boolean apply(Content input) {
+            return input.isActivelyPublished();
+        }
+    };
     
     private final LastUpdatedContentFinder contentFinder;
     private final YouViewLastUpdatedStore store;
@@ -57,13 +65,15 @@ public class YouViewUploadTask extends ScheduledTask {
             throw new RuntimeException("The bootstrap has not successfully run. Please run the bootstrap upload and ensure that it succeeds before running the delta upload.");
         }
         
-        Iterable<Content> updatedContent = getContentSinceDate(Optional.of(lastUpdated.get()));
+        Iterator<Content> updatedContent = getContentSinceDate(Optional.of(lastUpdated.get()));
+        
         lastUpdated = Optional.of(new DateTime());
         
         List<Content> deleted = Lists.newArrayList();
         List<Content> notDeleted = Lists.newArrayList();
         
-        for (Content updated : updatedContent) {
+        while (updatedContent.hasNext()) {
+            Content updated = updatedContent.next();
             if (updated.isActivelyPublished()) {
                 notDeleted.add(updated);
             } else {
@@ -84,24 +94,33 @@ public class YouViewUploadTask extends ScheduledTask {
 
     public void runBootstrap() {
         DateTime lastUpdated = new DateTime();
-        Iterable<Content> allContent = Iterables.filter(getContentSinceDate(Optional.<DateTime>absent()), new Predicate<Content>() {
-            @Override
-            public boolean apply(Content input) {
-                return input.isActivelyPublished();
-            }
-        });
+        Iterator<Content> allContent = getContentSinceDate(Optional.<DateTime>absent());
+        
         YouViewUploadProcessor<UpdateProgress> processor = uploadProcessor();
         
-        for (Iterable<Content> chunk : Iterables.partition(allContent, chunkSize)) {
-            processor.process(chunk);
+        while (allContent.hasNext()) {
+            Builder<Content> chunk = ImmutableList.builder();
+            int chunkCount = 0;
+            while (chunkCount < chunkSize) {
+                if (!allContent.hasNext()) {
+                    break;
+                }
+                Content next = allContent.next();
+                if (IS_ACTIVELY_PUBLISHED.apply(next)) {
+                    chunk.add(next);
+                    chunkCount++;
+                }
+            }
+            processor.process(chunk.build());
         }
+
         store.setLastUpdated(lastUpdated);
         reportStatus(processor.getResult().toString());
     }
     
-    private Iterable<Content> getContentSinceDate(Optional<DateTime> since) {
+    private Iterator<Content> getContentSinceDate(Optional<DateTime> since) {
         DateTime start = since.isPresent() ? since.get() : START_OF_TIME;
-        return ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start));
+        return contentFinder.updatedSince(PUBLISHER, start);
     }
 
     private YouViewUploadProcessor<UpdateProgress> uploadProcessor() {
