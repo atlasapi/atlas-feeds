@@ -26,6 +26,7 @@ import org.atlasapi.persistence.content.ContentResolver;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -53,6 +54,7 @@ public class IntegrationTest {
     );
 
     @Test
+    @Ignore
     public void testXmlOutput() throws FileNotFoundException {
         File testFile = new File("src/test/resources/org/atlasapi/feeds/youview", "xml_test.xml");
         OutputStream out = new FileOutputStream(testFile);
