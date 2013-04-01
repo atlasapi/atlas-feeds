@@ -24,7 +24,8 @@ import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.ChildRef;
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.common.Id;
+import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
@@ -647,17 +648,22 @@ public class LoveFilmGroupInformationHierarchyTest {
 
     public static class DummyContentResolver implements ContentResolver {
         
-        private final Map<String, Content> data = Maps.newHashMap();
+        private final Map<Id, Content> data = Maps.newHashMap();
         
         public void addContent(Content content) {
-            data.put(content.getCanonicalUri(), content);
+            data.put(content.getId(), content);
         }
         
         @Override
         public ResolvedContent findByCanonicalUris(Iterable<String> uris) {
+           throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public ResolvedContent findByIds(Iterable<Id> ids) {
             ResolvedContentBuilder builder = ResolvedContent.builder();
-            for (String uri : uris) {
-                builder.put(uri, data.get(uri));
+            for (Id id : ids) {
+                builder.put(id, data.get(id));
             }
             return builder.build();
         }

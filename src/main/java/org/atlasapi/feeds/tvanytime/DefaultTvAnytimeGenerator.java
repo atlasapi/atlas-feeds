@@ -18,7 +18,7 @@ import javax.xml.validation.Validator;
 
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.ChildRef;
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Identified;
@@ -208,8 +208,8 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         if (brandRef == null) {
             return Optional.absent();
         }
-        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(brandRef.getUri()));
-        Identified identified = resolved.asResolvedMap().get(brandRef.getUri());
+        ResolvedContent resolved = contentResolver.findByIds(ImmutableList.of(brandRef.getId()));
+        Identified identified = resolved.asResolvedMap().get(brandRef.getId());
         if (!(identified instanceof Brand)) {
             return Optional.absent();
         }
@@ -228,8 +228,8 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
                 return Optional.absent();
             }
         }
-        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(seriesRef.getUri()));
-        Identified identified = resolved.asResolvedMap().get(seriesRef.getUri());
+        ResolvedContent resolved = contentResolver.findByIds(ImmutableList.of(seriesRef.getId()));
+        Identified identified = resolved.asResolvedMap().get(seriesRef.getId());
         if (!(identified instanceof Series)) {
             return Optional.absent();
         }
@@ -245,8 +245,8 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         if (brandRef == null) {
             return Optional.absent();
         }
-        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(brandRef.getUri()));
-        Brand brand = (Brand) resolved.asResolvedMap().get(brandRef.getUri());
+        ResolvedContent resolved = contentResolver.findByIds(ImmutableList.of(brandRef.getId()));
+        Brand brand = (Brand) resolved.asResolvedMap().get(brandRef.getId());
         if (!hasAsin(brand)) {
             throw new RuntimeException("brand " + brand.getCanonicalUri() + " has no ASIN, while its series " + series.getCanonicalUri() + " does.");
         }
@@ -255,13 +255,13 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
 
     private Item getFirstItem(Series series) {
         ChildRef last = Iterables.getLast(series.getChildRefs());
-        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(last.getUri()));
-        return (Item) resolved.asResolvedMap().get(last.getUri());
+        ResolvedContent resolved = contentResolver.findByIds(ImmutableList.of(last.getId()));
+        return (Item) resolved.asResolvedMap().get(last.getId());
     }
 
     private Item getFirstItem(Brand brand) {
         ChildRef last = Iterables.getLast(brand.getChildRefs());
-        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(last.getUri()));
-        return (Item) resolved.asResolvedMap().get(last.getUri()); 
+        ResolvedContent resolved = contentResolver.findByIds(ImmutableList.of(last.getId()));
+        return (Item) resolved.asResolvedMap().get(last.getId()); 
     }
 }

@@ -6,7 +6,7 @@ import java.io.UnsupportedEncodingException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.content.Content;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

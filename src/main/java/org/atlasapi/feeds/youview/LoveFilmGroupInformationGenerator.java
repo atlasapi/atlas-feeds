@@ -2,7 +2,6 @@ package org.atlasapi.feeds.youview;
 
 import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getAsin;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,8 +11,8 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
+import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.Brand;
-import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
