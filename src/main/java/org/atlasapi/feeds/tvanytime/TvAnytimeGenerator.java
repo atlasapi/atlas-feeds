@@ -2,8 +2,7 @@ package org.atlasapi.feeds.tvanytime;
 
 import java.io.OutputStream;
 
-import org.atlasapi.media.entity.Content;
-import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.content.Content;
 
 public interface TvAnytimeGenerator {
 

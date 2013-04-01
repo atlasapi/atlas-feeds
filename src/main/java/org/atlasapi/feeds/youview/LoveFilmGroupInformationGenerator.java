@@ -12,7 +12,7 @@ import javax.xml.namespace.QName;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.media.entity.Brand;
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
@@ -105,7 +105,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
             MemberOfType memberOf = new MemberOfType();
 
             ParentRef parent = Objects.firstNonNull(episode.getSeriesRef(), episode.getContainer());
-            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(parent.getUri()));
+            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(parent.toString()));
             memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
             groupInfo.getMemberOf().add(memberOf);
         }
@@ -121,7 +121,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         groupInfo.setOrdered(true);
         MemberOfType memberOf = new MemberOfType();
         if (series.getParent() != null) {
-            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(series.getParent().getUri()));
+            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(series.getParent().toString()));
         }
         if (series.getSeriesNumber() != null) {
             memberOf.setIndex(Long.valueOf(series.getSeriesNumber()));

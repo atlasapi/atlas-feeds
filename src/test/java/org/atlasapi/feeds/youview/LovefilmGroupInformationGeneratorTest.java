@@ -10,6 +10,7 @@ import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.CrewMember;
+import org.atlasapi.media.entity.EntityType;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.MediaType;
@@ -528,7 +529,7 @@ public class LovefilmGroupInformationGeneratorTest {
         mark.withName("Mark Benton");
         series.setPeople(ImmutableList.of(robson, mark));
         
-        ParentRef brandRef = new ParentRef("http://lovefilm.com/series/184930");
+        ParentRef brandRef = new ParentRef(184930, EntityType.BRAND);
         series.setParentRef(brandRef);
         series.withSeriesNumber(2);
         
@@ -565,7 +566,7 @@ public class LovefilmGroupInformationGeneratorTest {
         version.setDuration(Duration.standardMinutes(45));
         episode.addVersion(version);
         
-        ParentRef seriesRef = new ParentRef("http://lovefilm.com/series/179534");
+        ParentRef seriesRef = new ParentRef(179534, EntityType.SERIES);
         episode.setSeriesRef(seriesRef);
         
         episode.setEpisodeNumber(5);

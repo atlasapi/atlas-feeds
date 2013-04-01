@@ -16,7 +16,7 @@ import javax.xml.validation.Validator;
 
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.ChildRef;
-import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
@@ -217,8 +217,8 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         if (brandRef == null) {
             return Optional.absent();
         }
-        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(brandRef.getUri()));
-        return Optional.fromNullable((Brand) resolved.asResolvedMap().get(brandRef.getUri()));
+        ResolvedContent resolved = contentResolver.findByIds(ImmutableList.of(brandRef.getId()));
+        return Optional.fromNullable((Brand) resolved.asResolvedMap().get(brandRef.getId()));
     }
 
     private Optional<Series> getSeries(Episode episode) {
@@ -226,8 +226,8 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         if (seriesRef == null) {
             return Optional.absent();
         }
-        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(seriesRef.getUri()));
-        return Optional.fromNullable((Series) resolved.asResolvedMap().get(seriesRef.getUri()));
+        ResolvedContent resolved = contentResolver.findByIds(ImmutableList.of(seriesRef.getId()));
+        return Optional.fromNullable((Series) resolved.asResolvedMap().get(seriesRef.getId()));
     }
 
     private Optional<Brand> getBrand(Series series) {
@@ -235,19 +235,19 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         if (brandRef == null) {
             return Optional.absent();
         }
-        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(brandRef.getUri()));
-        return Optional.fromNullable((Brand) resolved.asResolvedMap().get(brandRef.getUri()));
+        ResolvedContent resolved = contentResolver.findByIds(ImmutableList.of(brandRef.getId()));
+        return Optional.fromNullable((Brand) resolved.asResolvedMap().get(brandRef.getId()));
     }
 
     private Episode getFirstEpisode(Series series) {
         ChildRef last = Iterables.getLast(series.getChildRefs());
-        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(last.getUri()));
-        return (Episode) resolved.asResolvedMap().get(last.getUri());
+        ResolvedContent resolved = contentResolver.findByIds(ImmutableList.of(last.getId()));
+        return (Episode) resolved.asResolvedMap().get(last.getId());
     }
 
     private Episode getFirstEpisode(Brand brand) {
         ChildRef last = Iterables.getLast(brand.getChildRefs());
-        ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(last.getUri()));
-        return (Episode) resolved.asResolvedMap().get(last.getUri()); 
+        ResolvedContent resolved = contentResolver.findByIds(ImmutableList.of(last.getId()));
+        return (Episode) resolved.asResolvedMap().get(last.getId()); 
     }
 }
