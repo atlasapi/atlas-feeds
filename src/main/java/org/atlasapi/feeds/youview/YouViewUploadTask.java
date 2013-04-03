@@ -101,10 +101,7 @@ public class YouViewUploadTask extends ScheduledTask {
         while (allContent.hasNext()) {
             Builder<Content> chunk = ImmutableList.builder();
             int chunkCount = 0;
-            while (chunkCount < chunkSize) {
-                if (!allContent.hasNext()) {
-                    break;
-                }
+            while (chunkCount < chunkSize && allContent.hasNext()) {
                 Content next = allContent.next();
                 if (IS_ACTIVELY_PUBLISHED.apply(next)) {
                     chunk.add(next);
