@@ -9,6 +9,7 @@ import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+import org.joda.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -27,8 +28,8 @@ import com.metabroadcast.common.security.UsernameAndPassword;
 @Import(YouViewFeedsWebModule.class)
 public class YouViewUploadModule {
     
-    private final static RepetitionRule DELTA_UPLOAD = RepetitionRules.NEVER;//RepetitionRules.every(Duration.standardHours(12));
-    private final static RepetitionRule BOOTSTRAP_UPLOAD = RepetitionRules.NEVER;//RepetitionRules.every(Duration.standardHours(12));
+    private final static RepetitionRule DELTA_UPLOAD = RepetitionRules.every(Duration.standardHours(12)).withOffset(Duration.standardHours(10));
+    private final static RepetitionRule BOOTSTRAP_UPLOAD = RepetitionRules.NEVER;
 
     private @Autowired DatabasedMongo mongo;
     private @Autowired LastUpdatedContentFinder contentFinder;
