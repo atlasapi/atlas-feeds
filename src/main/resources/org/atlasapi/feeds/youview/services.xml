@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TVAMain xml:lang="en-GB" xmlns="urn:tva:metadata:2010" xmlns:tva2="urn:tva:metadata:extended:2010" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:yv="http://refdata.youview.com/schemas/2011-07-06" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://refdata.youview.com/schemas/2011-07-06 ../schemas/youview_metadata_2011-07-06.xsd">
+	<ProgramDescription>
+		<ServiceInformationTable xml:lang="en">
+			<!-- content-owning service -->
+			<ServiceInformation serviceId="http://lovefilm.com" xsi:type="yv:ExtendedServiceInformationType">
+				<Name>LOVEFiLM</Name>
+				<Owner>LOVEFiLM UK Limited</Owner>
+				<ServiceDescription length="short">LOVEFiLM, an Amazon Company</ServiceDescription>
+				<ServiceGenre type="main" href="urn:tva:metadata:cs:OriginationCS:2005:5.7"/> <!-- film -->
+				<ServiceGenre type="main" href="urn:tva:metadata:cs:OriginationCS:2005:5.8"/> <!-- tv -->
+				<ServiceGenre type="other" href="urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3"/> <!-- audio and video -->
+				<ServiceGenre type="other" href="http://refdata.youview.com/mpeg7cs/YouViewServiceTypeCS/2010-10-25#owning_service"/>
+				<ServiceGenre type="other" href="http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-lovefilm"/>
+				<ServiceLanguage>en</ServiceLanguage>
+				<RelatedMaterial xsi:type="tva2:ExtendedRelatedMaterialType">
+					<HowRelated href="urn:tva:metadata:cs:HowRelatedCS:2010:19"/> <!-- promotional still image -->
+					<MediaLocator>
+						<mpeg7:MediaUri>http://g-ec2.images-amazon.com/images/G/01/AIV/youview/lores._V388637400_.png</mpeg7:MediaUri>
+					</MediaLocator>
+					<PromotionalText>LOVEFiLM</PromotionalText>
+					<tva2:ContentProperties>
+						<tva2:ContentAttributes xsi:type="tva2:StillImageContentAttributesType">
+							<tva2:Width>1024</tva2:Width>
+							<tva2:Height>270</tva2:Height>
+							<tva2:IntendedUse href="http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-ident"/>
+							<tva2:IntendedUse href="http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog"/>
+						</tva2:ContentAttributes>
+					</tva2:ContentProperties>
+				</RelatedMaterial>
+				<yv:TargetingInformation xsi:type="yv:ExtendedTargetingInformationType">
+					<yv:TargetPlace exclusive="true" href="http://refdata.youview.com/mpeg7cs/YouViewTargetRegionCS/2010-10-26#GBR"/>				
+				</yv:TargetingInformation>
+			</ServiceInformation>
+			<!-- on demand service -->
+			<ServiceInformation serviceId="http://lovefilm.com/OnDemand" xsi:type="yv:ExtendedServiceInformationType">
+				<Name>LOVEFiLM Instant</Name>
+				<Owner>LOVEFiLM UK Limited</Owner>
+				<ServiceURL>crid://www.lovefilm.com/application/1</ServiceURL>
+				<ServiceDescription length="short">LOVEFiLM, an Amazon Company</ServiceDescription>
+				<ServiceGenre type="main" href="urn:tva:metadata:cs:OriginationCS:2005:5.7"/> <!-- film -->
+				<ServiceGenre type="main" href="urn:tva:metadata:cs:OriginationCS:2005:5.8"/> <!-- tv -->
+				<ServiceGenre type="other" href="urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3"/> <!-- audio and video -->
+				<ServiceGenre type="other" href="http://refdata.youview.com/mpeg7cs/YouViewServiceTypeCS/2010-10-25#on_demand_service"/>
+				<ServiceGenre type="other" href="http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-lovefilm"/>
+				<ServiceLanguage>en</ServiceLanguage>
+				<RelatedMaterial xsi:type="tva2:ExtendedRelatedMaterialType">
+					<HowRelated href="urn:tva:metadata:cs:HowRelatedCS:2010:19"/> <!-- promotional still image -->
+					<MediaLocator>
+						<mpeg7:MediaUri>http://g-ec2.images-amazon.com/images/G/01/AIV/youview/hires._V388117660_.png</mpeg7:MediaUri>
+					</MediaLocator>
+					<PromotionalText>LOVEFiLM Instant</PromotionalText>
+					<tva2:ContentProperties>
+						<tva2:ContentAttributes xsi:type="tva2:StillImageContentAttributesType">
+							<tva2:Width>1024</tva2:Width>
+							<tva2:Height>576</tva2:Height>
+							<tva2:IntendedUse href="http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-ident"/>
+							<tva2:IntendedUse href="http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog"/>
+						</tva2:ContentAttributes>
+					</tva2:ContentProperties>
+				</RelatedMaterial>
+				<yv:TargetingInformation xsi:type="yv:ExtendedTargetingInformationType">
+					<yv:TargetPlace exclusive="true" href="http://refdata.youview.com/mpeg7cs/YouViewTargetRegionCS/2010-10-26#GBR"/>				
+				</yv:TargetingInformation>
+			</ServiceInformation>
+		</ServiceInformationTable>
+	</ProgramDescription>
+</TVAMain>
