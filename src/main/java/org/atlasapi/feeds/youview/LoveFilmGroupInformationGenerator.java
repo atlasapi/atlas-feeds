@@ -63,7 +63,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     private static final String LANGUAGE = "en";
     private static final String GENRE_TYPE_MAIN = "main";
     private static final String GENRE_TYPE_OTHER = "other";
-    private static final String LOVEFILM_URL = "http://lovefilm.com";
+    private static final String LOVEFILM_URL = "http://lovefilm.com/ContentOwning";
     private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
     private static final String TITLE_TYPE_MAIN = "main";
     private static final String LOVEFILM_MEDIATYPE_GENRE_VIDEO = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
