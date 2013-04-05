@@ -194,7 +194,13 @@ public class LakeviewFeedCompiler {
         element.appendChild(stringElement("ItemId", LAKEVIEW, seriesId(series.getCanonicalUri())));
         
         if (genericTitlesEnabled) {
-        	element.appendChild(stringElement("Title", LAKEVIEW, String.format("Series %d", series.getSeriesNumber())));
+            if (series.getSeriesNumber() != null) {
+                element.appendChild(stringElement("Title", LAKEVIEW, String.format("Series %d", series.getSeriesNumber())));
+            } else if (!Strings.isNullOrEmpty(series.getTitle())) {
+                element.appendChild(stringElement("Title", LAKEVIEW, series.getTitle()));
+            } else {
+                element.appendChild(stringElement("Title", LAKEVIEW, parent.getTitle()));
+            }
         } else if (Strings.isNullOrEmpty(series.getTitle()) || series.getTitle().matches("(?i)series \\d+")) {
             element.appendChild(stringElement("Title", LAKEVIEW, String.format("%s Series %s", parent.getTitle(), series.getSeriesNumber())));
         } else {
@@ -215,32 +221,38 @@ public class LakeviewFeedCompiler {
         element.appendChild(stringElement("ItemId", LAKEVIEW, episodeId(episode.getCanonicalUri())));
         
         if (genericTitlesEnabled) {
-        	element.appendChild(stringElement("Title", LAKEVIEW, String.format("Episode %d", episode.getEpisodeNumber())));
+            if (episode.getEpisodeNumber() != null) {
+                element.appendChild(stringElement("Title", LAKEVIEW, String.format("Episode %d", episode.getEpisodeNumber())));
+            } else if (!Strings.isNullOrEmpty(episode.getTitle())) {
+                element.appendChild(stringElement("Title", LAKEVIEW, episode.getTitle()));
+            } else {
+                element.appendChild(stringElement("Title", LAKEVIEW, container.getTitle()));
+            }
         } else if (Strings.isNullOrEmpty(episode.getTitle()) || episode.getTitle().matches("(?i)(series \\d+)? episode \\d+")) {
             element.appendChild(stringElement("Title", LAKEVIEW, String.format("%s Series %s Episode %s", container.getTitle(), episode.getSeriesNumber(), episode.getEpisodeNumber())));
         } else {
             element.appendChild(stringElement("Title", LAKEVIEW, episode.getTitle()));
         }
-    
-    	Element instances = createElement("Instances", LAKEVIEW);
-    	Element videoInstance = createElement("VideoInstance", LAKEVIEW);
-    	videoInstance.appendChild(stringElement("Device", LAKEVIEW, "Xbox360"));
-    	
-    	Element availabilities = createElement("Availabilities", LAKEVIEW);
-    	Element availability = createElement("Availability", LAKEVIEW);
-    	availability.appendChild(stringElement("OfferType", LAKEVIEW, "FreeWithAds"));
-    	availability.appendChild(stringElement("StartDateTime", LAKEVIEW, extractFirstAvailabilityDate(episode).toString(DATETIME_FORMAT)));
-    	availability.appendChild(stringElement("EndDateTime", LAKEVIEW, extractLastAvailabilityDate(episode).toString(DATETIME_FORMAT)));
-    	
-    	availabilities.appendChild(availability);
-    	videoInstance.appendChild(availabilities);
-    	videoInstance.appendChild(stringElement("ResolutionFormat", LAKEVIEW, "SD"));
-    	videoInstance.appendChild(stringElement("DeliveryFormat", LAKEVIEW, "Streaming"));
-    	videoInstance.appendChild(stringElement("PrimaryAudioLanguage", LAKEVIEW, "en-GB"));
-    	videoInstance.appendChild(stringElement("VideoInstanceType", LAKEVIEW, "Full"));
-    	
-    	instances.appendChild(videoInstance);        	
-    
+
+        Element instances = createElement("Instances", LAKEVIEW);
+        Element videoInstance = createElement("VideoInstance", LAKEVIEW);
+        videoInstance.appendChild(stringElement("Device", LAKEVIEW, "Xbox360"));
+        
+        Element availabilities = createElement("Availabilities", LAKEVIEW);
+        Element availability = createElement("Availability", LAKEVIEW);
+        availability.appendChild(stringElement("OfferType", LAKEVIEW, "FreeWithAds"));
+        availability.appendChild(stringElement("StartDateTime", LAKEVIEW, extractFirstAvailabilityDate(episode).toString(DATETIME_FORMAT)));
+        availability.appendChild(stringElement("EndDateTime", LAKEVIEW, extractLastAvailabilityDate(episode).toString(DATETIME_FORMAT)));
+        
+        availabilities.appendChild(availability);
+        videoInstance.appendChild(availabilities);
+        videoInstance.appendChild(stringElement("ResolutionFormat", LAKEVIEW, "SD"));
+        videoInstance.appendChild(stringElement("DeliveryFormat", LAKEVIEW, "Streaming"));
+        videoInstance.appendChild(stringElement("PrimaryAudioLanguage", LAKEVIEW, "en-GB"));
+        videoInstance.appendChild(stringElement("VideoInstanceType", LAKEVIEW, "Full"));
+        
+        instances.appendChild(videoInstance);           
+
         appendCommonElements(element, episode, originalPublicationDate, lastModified, episodeAtomUri(episode.getCanonicalUri(), extractAssetId(episode)), instances);
         
         element.appendChild(stringElement("EpisodeNumber", LAKEVIEW, String.valueOf(episode.getEpisodeNumber())));

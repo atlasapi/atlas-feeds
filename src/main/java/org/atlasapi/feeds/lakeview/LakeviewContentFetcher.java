@@ -44,8 +44,22 @@ public class LakeviewContentFetcher {
         }
     });
     public static final Ordering<Episode> EPISODE_NUMBER_ORDERING = Ordering.from(new Comparator<Episode>() {
+        /**
+         * Null safe compare by episode number, null episode numbers come before non-null values 
+         * @param o1 The first episode to compare
+         * @param o2 The second episode to compare
+         * @return -1, 0, 1 depending if the first episode comes before, at the same time as or after the second episode
+         */
         @Override
         public int compare(Episode o1, Episode o2) {
+            Integer i1 = o1.getEpisodeNumber();
+            Integer i2 = o2.getEpisodeNumber();
+            
+            if (i1 == null) {
+                return i2 == null ? 0: -1;
+            } else if (i2 == null) {
+                return 1;
+            }
             return o1.getEpisodeNumber().compareTo(o2.getEpisodeNumber());
         }
     });
