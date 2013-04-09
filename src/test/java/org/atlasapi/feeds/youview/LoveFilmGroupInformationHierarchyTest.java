@@ -60,6 +60,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.time.DateTimeZones;
 
 public class LoveFilmGroupInformationHierarchyTest {
 
@@ -101,6 +102,8 @@ public class LoveFilmGroupInformationHierarchyTest {
         brand.setImage("Brand Image");
         
         Episode episode = createEpisode("Episode Uri");
+        episode.setId(1);
+        episode.setThisOrChildLastUpdated(new DateTime(DateTimeZones.UTC));
         episode.setImage("Episode Image");
         brand.setChildRefs(ImmutableList.of(episode.childRef()));
 
@@ -121,6 +124,8 @@ public class LoveFilmGroupInformationHierarchyTest {
         series.setImage("Series Image");
 
         Episode episode = createEpisode("Episode Uri");
+        episode.setId(1);
+        episode.setThisOrChildLastUpdated(new DateTime(DateTimeZones.UTC));
         episode.setImage("Episode Image");
         series.setChildRefs(ImmutableList.of(episode.childRef()));
 
@@ -138,12 +143,17 @@ public class LoveFilmGroupInformationHierarchyTest {
     @Test
     public void testSeriesGenerationWithBrand() throws JAXBException {
         Series series = createSeries("Series Uri");
+        series.setId(1);
+        series.setThisOrChildLastUpdated(new DateTime(DateTimeZones.UTC));
         series.setImage("Series Image");
         
         Brand brand = createBrand("Brand Uri");
+        brand.setId(2);
         brand.setImage("Brand Image");
         
         Episode episode = createEpisode("Episode Uri");
+        episode.setId(3);
+        episode.setThisOrChildLastUpdated(new DateTime(DateTimeZones.UTC));
         episode.setImage("Episode Image");
         
         series.setChildRefs(ImmutableList.of(episode.childRef()));
@@ -169,12 +179,15 @@ public class LoveFilmGroupInformationHierarchyTest {
     @Test
     public void testNonFirstSeriesGenerationWithBrand() throws JAXBException {
         Series series1 = createSeries("Series 1 Uri");
+        series1.setId(1);
         series1.setImage("Series 1 Image");
         
         Series series2 = createSeries("Series 2 Uri");
+        series2.setId(2);
         series2.setImage("Series 2 Image");
         
         Brand brand = createBrand("Brand Uri");
+        brand.setId(3);
         brand.setImage("Brand Image");
         
         Episode episode1S1 = createEpisode("Episode 1 Series 1 Uri");
@@ -470,7 +483,8 @@ public class LoveFilmGroupInformationHierarchyTest {
     }
     
     private void populateContentFields(Content content, String uri) {
-        
+        content.setId(uri.hashCode());
+        content.setThisOrChildLastUpdated(new DateTime(DateTimeZones.UTC));
         content.setCanonicalUri(uri);
         content.setCurie("lf:e-177221");
         content.setTitle("Dr. Strangelove");
