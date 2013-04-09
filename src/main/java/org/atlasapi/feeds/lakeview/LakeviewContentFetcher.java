@@ -95,7 +95,7 @@ public class LakeviewContentFetcher {
         
         for (Entry<String, Collection<Episode>> brandEpisodes : containerAvailableEpisodes.asMap().entrySet()) {
             
-            Maybe<Identified> resolvedBrand = contentResolver.findByCanonicalUris(ImmutableList.of(brandEpisodes.getKey())).get(brandEpisodes.getKey());
+            Maybe<Identified> resolvedBrand = contentResolver.findByCanonicalUris(ImmutableList.of(brandEpisodes.getKey())).getFirstValue();
             if(resolvedBrand.hasValue()) {
                 
                 Brand brand = (Brand)resolvedBrand.requireValue();
