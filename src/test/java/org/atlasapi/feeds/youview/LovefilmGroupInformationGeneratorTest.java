@@ -52,7 +52,7 @@ public class LovefilmGroupInformationGeneratorTest {
         GroupInformationType groupInfo = generator.generate(createFilm());
 
         assertEquals("crid://lovefilm.com/product/177221", groupInfo.getGroupId());
-        assertEquals("http://lovefilm.com", groupInfo.getServiceIDRef());
+        assertEquals("http://lovefilm.com/ContentOwning", groupInfo.getServiceIDRef());
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
         
@@ -62,12 +62,10 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals("Dr. Strangelove", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
         
-        // TODO test all 3 synopsis lengths. Also check that behaviour around adding ellipses is correct
         SynopsisType synopsis = Iterables.getFirst(desc.getSynopsis(), null);
         assertEquals("The film is set at the height of the tensions between Russia and the United States", synopsis.getValue());
         assertEquals(SynopsisLengthType.SHORT, synopsis.getLength());
         
-        // TODO full list of genres won't be possible until genre mapping is known
         GenreType first = Iterables.get(desc.getGenre(), 0);
         GenreType second = Iterables.get(desc.getGenre(), 1);
         
@@ -374,7 +372,7 @@ public class LovefilmGroupInformationGeneratorTest {
         GroupInformationType groupInfo = generator.generate(createBrand(), createEpisode());
 
         assertEquals("crid://lovefilm.com/product/184930", groupInfo.getGroupId());
-        assertEquals("http://lovefilm.com", groupInfo.getServiceIDRef());
+        assertEquals("http://lovefilm.com/ContentOwning", groupInfo.getServiceIDRef());
         assertTrue(groupInfo.isOrdered());
                 
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
