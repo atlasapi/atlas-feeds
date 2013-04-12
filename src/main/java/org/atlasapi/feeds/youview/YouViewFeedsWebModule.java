@@ -42,8 +42,6 @@ public class YouViewFeedsWebModule {
             new LoveFilmProgramInformationGenerator(), 
             new LoveFilmGroupInformationGenerator(genreMapping()), 
             new LoveFilmOnDemandLocationGenerator(), 
-            new LoveFilmServiceInformationGenerator(), 
-            new LoveFilmInstantServiceInformationGenerator(), 
             contentResolver,
             Boolean.parseBoolean(validation)
         );

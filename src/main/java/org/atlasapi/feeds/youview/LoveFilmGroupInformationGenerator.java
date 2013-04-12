@@ -60,9 +60,10 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     private static final String GROUP_TYPE_SERIES = "series";
     private static final String GROUP_TYPE_SHOW = "show";
     private static final String LANGUAGE_TYPE_ORIGINAL = "original";
+    private static final String LANGUAGE = "en";
     private static final String GENRE_TYPE_MAIN = "main";
     private static final String GENRE_TYPE_OTHER = "other";
-    private static final String LOVEFILM_URL = "http://lovefilm.com";
+    private static final String LOVEFILM_URL = "http://lovefilm.com/ContentOwning";
     private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
     private static final String TITLE_TYPE_MAIN = "main";
     private static final String LOVEFILM_MEDIATYPE_GENRE_VIDEO = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
@@ -145,11 +146,15 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     GroupInformationType generateWithCommonFields(Content content, Episode episode) {
         GroupInformationType groupInfo = new GroupInformationType();
         
-        groupInfo.setGroupId(LOVEFILM_PRODUCT_CRID_PREFIX + getId(content.getCanonicalUri()));
+        groupInfo.setGroupId(createCrid(content));
         // this needs tweaking depending on type
         groupInfo.setBasicDescription(generateBasicDescription(content, episode));
         
         return groupInfo;
+    }
+
+    public static String createCrid(Content content) {
+        return LOVEFILM_PRODUCT_CRID_PREFIX + getId(content.getCanonicalUri());
     }
     
     private BaseProgramGroupTypeType generateGroupType(String groupType) {
@@ -253,12 +258,18 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
 
     private List<ExtendedLanguageType> generateLanguage(Content content) {
         List<ExtendedLanguageType> languages = Lists.newArrayList();
+        /*
         for (String languageStr : content.getLanguages()) {
             ExtendedLanguageType language = new ExtendedLanguageType();
             language.setType(LANGUAGE_TYPE_ORIGINAL);
             language.setValue(languageStr);
             languages.add(language);
         }
+        */
+        ExtendedLanguageType language = new ExtendedLanguageType();
+        language.setType(LANGUAGE_TYPE_ORIGINAL);
+        language.setValue(LANGUAGE);
+        languages.add(language);
         return languages;
     }
 
