@@ -72,6 +72,9 @@ public class LakeviewModule {
 	private @Value("${lakeview.upload.key}")
 	String key;
 
+	private @Value("${lakeview.feature.genericTitlesEnabled}")
+	boolean genericTitlesEnabled;
+	
 	private static final String SCHEMA_VERSION = "0_4";
 	private static final String FILENAME_PROVIDER_ID = "CA1.Xbox4oD";
 
@@ -88,7 +91,7 @@ public class LakeviewModule {
 
 	public @Bean
 	LakeviewFeedCompiler lakeviewFeedCompiler() {
-		return new LakeviewFeedCompiler(channelResolver);
+		return new LakeviewFeedCompiler(channelResolver, genericTitlesEnabled);
 	}
 
 	public @Bean
