@@ -37,6 +37,7 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
+    private static final String IMI_PREFIX = "imi:lovefilm.com/t";
     private static final String VERSION_SUFFIX = "_version";
     private static final String YOUVIEW_MIX_TYPE = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
     private static final String DEEP_LINKING_ID_SUFFIX = "L";
@@ -68,7 +69,7 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
         onDemand.setServiceIDRef(LOVEFILM_IDREF_ONDEMAND);
         onDemand.setProgram(generateProgram(item));
         // TODO once again, this has a placeholder for the digital release id, which isn't currently ingested
-        onDemand.setInstanceMetadataId("imi:lovefilm.com/t" + getId(item.getCanonicalUri()) + VERSION_SUFFIX);
+        onDemand.setInstanceMetadataId(createImi(item));
         onDemand.setInstanceDescription(generateInstanceDescription(item));
         onDemand.setPublishedDuration(generatePublishedDuration(item));
         Optional<XMLGregorianCalendar> startOfAvailability = generateAvailabilityStart(item);
@@ -82,6 +83,10 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
         onDemand.setFree(generateFree());
 
         return onDemand;
+    }
+
+    public static String createImi(Item item) {
+        return IMI_PREFIX + getId(item.getCanonicalUri()) + VERSION_SUFFIX;
     }
     
     // hardcoded

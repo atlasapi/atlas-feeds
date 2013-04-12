@@ -17,7 +17,6 @@ import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
-import org.atlasapi.feeds.tvanytime.ServiceInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -66,16 +65,12 @@ public class LoveFilmGroupInformationHierarchyTest {
     private static final ProgramInformationGenerator progInfoGenerator = new LoveFilmProgramInformationGenerator();
     private static final GroupInformationGenerator groupInfoGenerator = new LoveFilmGroupInformationGenerator(genreMapping);
     private static final OnDemandLocationGenerator progLocationGenerator = new LoveFilmOnDemandLocationGenerator();
-    private static final ServiceInformationGenerator lovefilmServiceInfoGenerator = new LoveFilmServiceInformationGenerator();
-    private static final ServiceInformationGenerator lovefilmInstantServiceInfoGenerator = new LoveFilmInstantServiceInformationGenerator();
     private static final DummyContentResolver contentResolver = new DummyContentResolver();
     
     private static final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
         progInfoGenerator, 
         groupInfoGenerator, 
         progLocationGenerator, 
-        lovefilmServiceInfoGenerator, 
-        lovefilmInstantServiceInfoGenerator, 
         contentResolver,
         false
     );
@@ -417,7 +412,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         
-        generator.generateXml(ImmutableList.<Content>of(content), baos, false);
+        generator.generateXml(ImmutableList.<Content>of(content), baos);
         
         InputStream input = new ByteArrayInputStream(baos.toByteArray());
         
@@ -518,7 +513,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         item.addVersion(version);
     }
 
-    private static class DummyContentResolver implements ContentResolver {
+    public static class DummyContentResolver implements ContentResolver {
         
         private final Map<String, Content> data = Maps.newHashMap();
         
