@@ -125,18 +125,9 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals(Integer.valueOf(640), imageProperties.getWidth());
         assertEquals(Integer.valueOf(360), imageProperties.getHeight());
         
-        ControlledTermType firstUse = Iterables.get(imageProperties.getIntendedUse(), 0);
-        ControlledTermType secondUse = Iterables.get(imageProperties.getIntendedUse(), 1);
+        ControlledTermType usage = Iterables.getOnlyElement(imageProperties.getIntendedUse());
         
-        assertThat(firstUse.getHref(), isOneOf(
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary",
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-production_still"
-        ));
-        assertThat(secondUse.getHref(), isOneOf(
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary",
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-production_still"
-        ));
-        assertTrue(!firstUse.equals(secondUse));
+        assertEquals("http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary", usage.getHref());
     }
 
     @Test
@@ -185,7 +176,6 @@ public class LovefilmGroupInformationGeneratorTest {
         assertFalse(firstSynopsis.getLength().equals(thirdSynopsis.getLength()));
         assertFalse(secondSynopsis.getLength().equals(thirdSynopsis.getLength()));
         
-        // TODO full list of genres won't be possible until genre mapping is known
         GenreType first = Iterables.get(desc.getGenre(), 0);
         GenreType second = Iterables.get(desc.getGenre(), 1);
         
@@ -244,18 +234,9 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals(Integer.valueOf(640), imageProperties.getWidth());
         assertEquals(Integer.valueOf(360), imageProperties.getHeight());
         
-        ControlledTermType firstUse = Iterables.get(imageProperties.getIntendedUse(), 0);
-        ControlledTermType secondUse = Iterables.get(imageProperties.getIntendedUse(), 1);
+        ControlledTermType usage = Iterables.getOnlyElement(imageProperties.getIntendedUse());
         
-        assertThat(firstUse.getHref(), isOneOf(
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary",
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-production_still"
-        ));
-        assertThat(secondUse.getHref(), isOneOf(
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary",
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-production_still"
-        ));
-        assertTrue(!firstUse.equals(secondUse));
+        assertEquals("http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary", usage.getHref());
     }
     
     @Test
@@ -294,7 +275,6 @@ public class LovefilmGroupInformationGeneratorTest {
         assertFalse(firstSynopsis.getLength().equals(thirdSynopsis.getLength()));
         assertFalse(secondSynopsis.getLength().equals(thirdSynopsis.getLength()));
         
-        // TODO full list of genres won't be possible until genre mapping is known
         GenreType first = Iterables.get(desc.getGenre(), 0);
         GenreType second = Iterables.get(desc.getGenre(), 1);
         
@@ -353,18 +333,9 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals(Integer.valueOf(640), imageProperties.getWidth());
         assertEquals(Integer.valueOf(360), imageProperties.getHeight());
         
-        ControlledTermType firstUse = Iterables.get(imageProperties.getIntendedUse(), 0);
-        ControlledTermType secondUse = Iterables.get(imageProperties.getIntendedUse(), 1);
+        ControlledTermType usage = Iterables.getOnlyElement(imageProperties.getIntendedUse());
         
-        assertThat(firstUse.getHref(), isOneOf(
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary",
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-production_still"
-        ));
-        assertThat(secondUse.getHref(), isOneOf(
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary",
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-production_still"
-        ));
-        assertTrue(!firstUse.equals(secondUse));
+        assertEquals("http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary", usage.getHref());
     }
     
     @Test
@@ -400,7 +371,6 @@ public class LovefilmGroupInformationGeneratorTest {
         assertFalse(firstSynopsis.getLength().equals(thirdSynopsis.getLength()));
         assertFalse(secondSynopsis.getLength().equals(thirdSynopsis.getLength()));
         
-        // TODO full list of genres won't be possible until genre mapping is known
         GenreType first = Iterables.get(desc.getGenre(), 0);
         GenreType second = Iterables.get(desc.getGenre(), 1);
         
@@ -459,18 +429,9 @@ public class LovefilmGroupInformationGeneratorTest {
         assertEquals(Integer.valueOf(640), imageProperties.getWidth());
         assertEquals(Integer.valueOf(360), imageProperties.getHeight());
         
-        ControlledTermType firstUse = Iterables.get(imageProperties.getIntendedUse(), 0);
-        ControlledTermType secondUse = Iterables.get(imageProperties.getIntendedUse(), 1);
+        ControlledTermType usage = Iterables.getOnlyElement(imageProperties.getIntendedUse());
         
-        assertThat(firstUse.getHref(), isOneOf(
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary",
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-production_still"
-        ));
-        assertThat(secondUse.getHref(), isOneOf(
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary",
-            "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-production_still"
-        ));
-        assertTrue(!firstUse.equals(secondUse));
+        assertEquals("http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary", usage.getHref());
     }
     
     private Brand createBrand() {

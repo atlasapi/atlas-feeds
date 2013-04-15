@@ -52,7 +52,6 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     private static final String YOUVIEW_CREDIT_ROLE = "urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN";
     private static final String YOUVIEW_IMAGE_FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS:2001:1";
     private static final String YOUVIEW_IMAGE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
-    private static final String YOUVIEW_IMAGE_ATTRIBUTE_PROD_STILL = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-production_still";
     private static final String YOUVIEW_IMAGE_ATTRIBUTE_PRIMARY_ROLE = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary";
     private static final int IMAGE_HEIGHT = 360;
     private static final int IMAGE_WIDTH = 640;
@@ -205,11 +204,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         ControlledTermType primaryRole = new ControlledTermType();
         primaryRole.setHref(YOUVIEW_IMAGE_ATTRIBUTE_PRIMARY_ROLE);
         attributes.getIntendedUse().add(primaryRole);
-        
-        ControlledTermType productionStill = new ControlledTermType();
-        productionStill.setHref(YOUVIEW_IMAGE_ATTRIBUTE_PROD_STILL);
-        attributes.getIntendedUse().add(productionStill);
-        
+
         contentProperties.getContentAttributes().add(attributes);
         return contentProperties;
     }
