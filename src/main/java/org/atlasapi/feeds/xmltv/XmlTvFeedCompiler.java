@@ -99,42 +99,44 @@ public class XmlTvFeedCompiler {
     }
     
     private Map<Id, Identified> seriesFor(List<Item> items) {
-        Iterable<LookupRef> containerLookups = Iterables.filter(Iterables.transform(Iterables.filter(items, Episode.class), new Function<Episode, LookupRef>() {
-
-            @Override
-            public LookupRef apply(Episode input) {
-                if(input.getSeriesRef() != null) {
-                    return new LookupRef(input.getSeriesRef().getId(), input.getPublisher(), ContentCategory.PROGRAMME_GROUP);
-                }
-                return null;
-            }
-            
-        }),Predicates.notNull());
-        
-        if(Iterables.isEmpty(containerLookups)) {
-            return ImmutableMap.of();
-        }
-        
-        return contentResolver.findByLookupRefs(ImmutableSet.copyOf(containerLookups)).asResolvedMap();
+        throw new UnsupportedOperationException("don't use lookups");
+//        Iterable<LookupRef> containerLookups = Iterables.filter(Iterables.transform(Iterables.filter(items, Episode.class), new Function<Episode, LookupRef>() {
+//
+//            @Override
+//            public LookupRef apply(Episode input) {
+//                if(input.getSeriesRef() != null) {
+//                    return new LookupRef(input.getSeriesRef().getId(), input.getPublisher(), ContentCategory.PROGRAMME_GROUP);
+//                }
+//                return null;
+//            }
+//            
+//        }),Predicates.notNull());
+//        
+//        if(Iterables.isEmpty(containerLookups)) {
+//            return ImmutableMap.of();
+//        }
+//        
+//        return contentResolver.findByLookupRefs(ImmutableSet.copyOf(containerLookups)).asResolvedMap();
     }
     
     private Map<Id, Identified> containersFor(List<Item> items) {
-        Iterable<LookupRef> containerLookups = Iterables.filter(Iterables.transform(items, new Function<Item, LookupRef>() {
-
-            @Override
-            public LookupRef apply(Item input) {
-                if(input.getContainer() != null) {
-                    return new LookupRef(input.getContainer().getId(), input.getPublisher(), ContentCategory.CONTAINER);
-                }
-                return null;
-            }
-            
-        }),Predicates.notNull());
-        
-        if(Iterables.isEmpty(containerLookups)) {
-            return ImmutableMap.of();
-        }
-        
-        return contentResolver.findByLookupRefs(ImmutableSet.copyOf(containerLookups)).asResolvedMap();
+        throw new UnsupportedOperationException("don't use lookups");
+//        Iterable<LookupRef> containerLookups = Iterables.filter(Iterables.transform(items, new Function<Item, LookupRef>() {
+//
+//            @Override
+//            public LookupRef apply(Item input) {
+//                if(input.getContainer() != null) {
+//                    return new LookupRef(input.getContainer().getId(), input.getPublisher(), ContentCategory.CONTAINER);
+//                }
+//                return null;
+//            }
+//            
+//        }),Predicates.notNull());
+//        
+//        if(Iterables.isEmpty(containerLookups)) {
+//            return ImmutableMap.of();
+//        }
+//        
+//        return contentResolver.findByLookupRefs(ImmutableSet.copyOf(containerLookups)).asResolvedMap();
     }
 }

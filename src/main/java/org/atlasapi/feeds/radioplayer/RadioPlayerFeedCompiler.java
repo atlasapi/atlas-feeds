@@ -158,22 +158,23 @@ public abstract class RadioPlayerFeedCompiler {
     }
 
     private Map<Id, Identified> containersFor(List<Item> items) {
-        Iterable<LookupRef> containerLookups = Iterables.filter(Iterables.transform(items, new Function<Item, LookupRef>() {
-
-            @Override
-            public LookupRef apply(Item input) {
-                if(input.getContainer() != null) {
-                    return new LookupRef(input.getContainer().getId(), input.getPublisher(), ContentCategory.CONTAINER);
-                }
-                return null;
-            }
-            
-        }),Predicates.notNull());
-        
-        if(Iterables.isEmpty(containerLookups)) {
-            return ImmutableMap.of();
-        }
-        
-        return knownTypeContentResolver.findByLookupRefs(ImmutableSet.copyOf(containerLookups)).asResolvedMap();
+        throw new UnsupportedOperationException("don't use lookups");
+//        Iterable<LookupRef> containerLookups = Iterables.filter(Iterables.transform(items, new Function<Item, LookupRef>() {
+//
+//            @Override
+//            public LookupRef apply(Item input) {
+//                if(input.getContainer() != null) {
+//                    return new LookupRef(input.getContainer().get(), input.getPublisher(), ContentCategory.CONTAINER);
+//                }
+//                return null;
+//            }
+//            
+//        }),Predicates.notNull());
+//        
+//        if(Iterables.isEmpty(containerLookups)) {
+//            return ImmutableMap.of();
+//        }
+//        
+//        return knownTypeContentResolver.findByLookupRefs(ImmutableSet.copyOf(containerLookups)).asResolvedMap();
     }
 }
