@@ -137,7 +137,7 @@
              </configuration>
          </plugin>
     </plugins>
-       <extensions>
+        <extensions>
             <extension>
                 <groupId>org.apache.maven.wagon</groupId>
                 <artifactId>wagon-webdav-jackrabbit</artifactId>
@@ -357,5 +357,7 @@
 	<properties>
 		<atlas.version>${project.version}</atlas.version>
 		<spring.version>3.0.5.RELEASE</spring.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 </project>
