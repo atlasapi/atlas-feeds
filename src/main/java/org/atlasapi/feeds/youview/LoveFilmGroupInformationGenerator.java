@@ -44,6 +44,7 @@ import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.internal.ImmutableMap;
 import com.google.inject.internal.Lists;
 import com.metabroadcast.common.text.Truncator;
@@ -66,6 +67,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     private static final String LOVEFILM_URL = "http://lovefilm.com/ContentOwning";
     private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
     private static final String TITLE_TYPE_MAIN = "main";
+    private static final String TITLE_TYPE_SECONDARY = "secondary";
     private static final String LOVEFILM_MEDIATYPE_GENRE_VIDEO = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
     
     private static final Map<Specialization, String> YOUVIEW_SPECIALIZATION_GENRE_MAPPING = ImmutableMap.<Specialization, String>builder()
@@ -78,6 +80,8 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         .put(SynopsisLengthType.MEDIUM, 210)
         .put(SynopsisLengthType.LONG, 1200)
         .build();
+    
+    private static final List<String> TITLE_PREFIXES = ImmutableList.of("The ", "the ", "A ", "a ", "An ", "an ");
     
     private final YouViewGenreMapping genreMapping;
     Truncator truncator = new Truncator().omitTrailingPunctuationWhenTruncated().onlyTruncateAtAWordBoundary().withOmissionMarker("...");
@@ -166,7 +170,12 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     private BasicContentDescriptionType generateBasicDescription(Content content, Item item) {
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
         
-        basicDescription.getTitle().add(generateTitle(content));
+        basicDescription.getTitle().add(generateMainTitle(content));
+        
+        String secondaryTitle = generateAlternateTitle(content);
+        if (!content.getTitle().equals(secondaryTitle)) {
+            basicDescription.getTitle().add(generateSecondaryTitle(secondaryTitle));
+        }
         basicDescription.getSynopsis().addAll(generateSynopses(content));
         basicDescription.getGenre().addAll(generateGenres(content));
         basicDescription.getGenre().add(generateGenreFromSpecialization(content));
@@ -182,6 +191,17 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         }
         
         return basicDescription;
+    }
+
+    private String generateAlternateTitle(Content content) {
+        String title = content.getTitle();
+        
+        for (String prefix : TITLE_PREFIXES) {
+            if (content.getTitle().startsWith(prefix)) {
+                return title.replaceFirst(prefix, "").concat(", " + prefix).trim();
+            }    
+        }
+        return title;
     }
 
     private RelatedMaterialType generateRelatedMaterial(Content content) {
@@ -315,10 +335,17 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         return synopses;
     }
 
-    private TitleType generateTitle(Content content) {
+    private TitleType generateMainTitle(Content content) {
         TitleType title = new TitleType();
         title.getType().add(TITLE_TYPE_MAIN);
         title.setValue(content.getTitle());
+        return title;
+    }
+
+    private TitleType generateSecondaryTitle(String secondaryTitle) {
+        TitleType title = new TitleType();
+        title.getType().add(TITLE_TYPE_SECONDARY);
+        title.setValue(secondaryTitle);
         return title;
     }
 }

@@ -1,10 +1,13 @@
 package org.atlasapi.feeds.youview;
 
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+
+import java.util.List;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.media.entity.Brand;
@@ -432,6 +435,119 @@ public class LovefilmGroupInformationGeneratorTest {
         ControlledTermType usage = Iterables.getOnlyElement(imageProperties.getIntendedUse());
         
         assertEquals("http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary", usage.getHref());
+    }
+    
+    @Test
+    public void testSecondaryTitleGeneration() {
+        Film film = createFilm();
+        
+        film.setTitle("The film");
+        GroupInformationType groupInfo = generator.generate(film);
+        
+        List<TitleType> titles = groupInfo.getBasicDescription().getTitle();
+        assertThat(titles.size(), is(2));
+        
+        TitleType first = titles.get(0);
+        TitleType second = titles.get(1);
+        
+        if (Iterables.getOnlyElement(first.getType()).equals("main")) {
+            assertEquals("The film", first.getValue());
+            assertEquals("film, The", second.getValue());
+            assertEquals("secondary", Iterables.getOnlyElement(second.getType()));
+        } else if (Iterables.getOnlyElement(second.getType()).equals("main")) {
+            assertEquals("The film", second.getValue());
+            assertEquals("film, The", first.getValue());
+            assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
+        }
+        
+        film.setTitle("the film");
+        groupInfo = generator.generate(film);
+        
+        titles = groupInfo.getBasicDescription().getTitle();
+        assertThat(titles.size(), is(2));
+        
+        first = titles.get(0);
+        second = titles.get(1);
+        
+        if (Iterables.getOnlyElement(first.getType()).equals("main")) {
+            assertEquals("the film", first.getValue());
+            assertEquals("film, the", second.getValue());
+            assertEquals("secondary", Iterables.getOnlyElement(second.getType()));
+        } else if (Iterables.getOnlyElement(second.getType()).equals("main")) {
+            assertEquals("the film", second.getValue());
+            assertEquals("film, the", first.getValue());
+            assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
+        }
+        
+        film.setTitle("a film");
+        groupInfo = generator.generate(film);
+        
+        titles = groupInfo.getBasicDescription().getTitle();
+        assertThat(titles.size(), is(2));
+        
+        first = titles.get(0);
+        second = titles.get(1);
+        
+        if (Iterables.getOnlyElement(first.getType()).equals("main")) {
+            assertEquals("a film", first.getValue());
+            assertEquals("film, a", second.getValue());
+            assertEquals("secondary", Iterables.getOnlyElement(second.getType()));
+        } else if (Iterables.getOnlyElement(second.getType()).equals("main")) {
+            assertEquals("a film", second.getValue());
+            assertEquals("film, a", first.getValue());
+            assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
+        }
+        
+        film.setTitle("An interesting film");
+        groupInfo = generator.generate(film);
+        
+        titles = groupInfo.getBasicDescription().getTitle();
+        assertThat(titles.size(), is(2));
+        
+        first = titles.get(0);
+        second = titles.get(1);
+        
+        if (Iterables.getOnlyElement(first.getType()).equals("main")) {
+            assertEquals("An interesting film", first.getValue());
+            assertEquals("interesting film, An", second.getValue());
+            assertEquals("secondary", Iterables.getOnlyElement(second.getType()));
+        } else if (Iterables.getOnlyElement(second.getType()).equals("main")) {
+            assertEquals("An interesting film", second.getValue());
+            assertEquals("interesting film, An", first.getValue());
+            assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
+        }
+        
+        film.setTitle("Some interesting film");
+        groupInfo = generator.generate(film);
+        
+        TitleType title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
+        
+        assertEquals("Some interesting film", title.getValue());
+        assertEquals("main", Iterables.getOnlyElement(title.getType()));
+    }
+    
+    @Test
+    public void testSecondaryTitleGenerationDoesntReplaceNonFirstWord() {
+        Film film = createFilm();
+        
+        film.setTitle("the film that contains another instance of the");
+        GroupInformationType groupInfo = generator.generate(film);
+        
+        List<TitleType> titles = groupInfo.getBasicDescription().getTitle();
+        assertThat(titles.size(), is(2));
+        
+        TitleType first = titles.get(0);
+        TitleType second = titles.get(1);
+        
+        if (Iterables.getOnlyElement(first.getType()).equals("main")) {
+            assertEquals("the film that contains another instance of the", first.getValue());
+            assertEquals("film that contains another instance of the, the", second.getValue());
+            assertEquals("secondary", Iterables.getOnlyElement(second.getType()));
+        } else if (Iterables.getOnlyElement(second.getType()).equals("main")) {
+            assertEquals("the film that contains another instance of the", second.getValue());
+            assertEquals("film that contains another instance of the, The", first.getValue());
+            assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
+        }
     }
     
     private Brand createBrand() {
