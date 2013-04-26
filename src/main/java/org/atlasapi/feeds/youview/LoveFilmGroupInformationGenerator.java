@@ -16,6 +16,7 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
+import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Series;
@@ -115,8 +116,8 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     }
     
     @Override
-    public GroupInformationType generate(Series series, Episode episode) {
-        GroupInformationType groupInfo = generateWithCommonFields(series, episode);
+    public GroupInformationType generate(Series series, Item item) {
+        GroupInformationType groupInfo = generateWithCommonFields(series, item);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));
         groupInfo.setOrdered(true);
@@ -133,8 +134,8 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     }
     
     @Override
-    public GroupInformationType generate(Brand brand, Episode episode) {
-        GroupInformationType groupInfo = generateWithCommonFields(brand, episode);
+    public GroupInformationType generate(Brand brand, Item item) {
+        GroupInformationType groupInfo = generateWithCommonFields(brand, item);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
         groupInfo.setOrdered(true);
@@ -143,12 +144,12 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         return groupInfo;
     }
     
-    GroupInformationType generateWithCommonFields(Content content, Episode episode) {
+    GroupInformationType generateWithCommonFields(Content content, Item item) {
         GroupInformationType groupInfo = new GroupInformationType();
         
         groupInfo.setGroupId(createCrid(content));
         // this needs tweaking depending on type
-        groupInfo.setBasicDescription(generateBasicDescription(content, episode));
+        groupInfo.setBasicDescription(generateBasicDescription(content, item));
         
         return groupInfo;
     }
@@ -163,7 +164,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         return type;
     }
 
-    private BasicContentDescriptionType generateBasicDescription(Content content, Episode episode) {
+    private BasicContentDescriptionType generateBasicDescription(Content content, Item item) {
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
         
         basicDescription.getTitle().add(generateTitle(content));
@@ -174,9 +175,9 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         basicDescription.getLanguage().addAll(generateLanguage(content));
         basicDescription.setCreditsList(generateCreditsList(content));
         if (content instanceof Series) {
-            basicDescription.getRelatedMaterial().add(generateRelatedMaterial(episode));
+            basicDescription.getRelatedMaterial().add(generateRelatedMaterial(item));
         } else if (content instanceof Brand) {
-            basicDescription.getRelatedMaterial().add(generateRelatedMaterial(episode));
+            basicDescription.getRelatedMaterial().add(generateRelatedMaterial(item));
         } else {
             basicDescription.getRelatedMaterial().add(generateRelatedMaterial(content));
         }
