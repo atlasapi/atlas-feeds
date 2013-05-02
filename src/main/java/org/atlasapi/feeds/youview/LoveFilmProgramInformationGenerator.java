@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview;
 
-import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getId;
+import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getAsin;
 
 import java.util.List;
 import java.util.Map;
@@ -38,8 +38,6 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
 
     private static final String VERSION_SUFFIX = "_version";
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
-    private static final String LOVEFILM_LINK_SUFFIX = "L";
-//    private static final String LOVEFILM_CRID_SEPARATOR = "_r";
     private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
     private static final String LOVEFILM_CRID_PREFIX = LOVEFILM_PRODUCT_CRID_PREFIX;
     private static final String LOVEFILM_DEEP_LINKING_ID = "deep_linking_id.lovefilm.com";
@@ -88,8 +86,7 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
     public ProgramInformationType generate(Item item) {
         ProgramInformationType progInfo = new ProgramInformationType();
 
-        // TODO digital_release_id not ingested yet, currently a placeholder of id + '_version'
-        progInfo.setProgramId(createCrid(item));
+        progInfo.setProgramId(createCrid(item) + VERSION_SUFFIX);
         progInfo.setBasicDescription(generateBasicDescription(item));
         progInfo.setDerivedFrom(generateDerivedFrom(item));
         progInfo.getOtherIdentifier().add(generateOtherId(item));
@@ -98,13 +95,13 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
     }
 
     public static String createCrid(Item item) {
-        return LOVEFILM_PRODUCT_CRID_PREFIX + getId(item.getCanonicalUri()) + VERSION_SUFFIX;
+        return LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(item);
     }
 
     private UniqueIDType generateOtherId(Item item) {
         UniqueIDType id = new UniqueIDType();
         id.setAuthority(LOVEFILM_DEEP_LINKING_ID);
-        id.setValue(getId(item.getCanonicalUri()) + LOVEFILM_LINK_SUFFIX);
+        id.setValue(getAsin(item));
         return id;
     }
 
@@ -173,7 +170,7 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
 
     private DerivedFromType generateDerivedFrom(Item item) {
         DerivedFromType derivedFrom = new DerivedFromType();
-        derivedFrom.setCrid(LOVEFILM_CRID_PREFIX + getId(item.getCanonicalUri()));
+        derivedFrom.setCrid(LOVEFILM_CRID_PREFIX + getAsin(item));
         return derivedFrom;
     }
 }

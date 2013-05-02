@@ -1,6 +1,8 @@
 package org.atlasapi.feeds.youview;
 
+import static org.hamcrest.Matchers.isOneOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -18,6 +20,7 @@ import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.ChildRef;
@@ -44,6 +47,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.junit.Test;
 
+import tva.metadata._2010.BaseMemberOfType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.GroupInformationTableType;
 import tva.metadata._2010.GroupInformationType;
@@ -76,9 +80,22 @@ public class LoveFilmGroupInformationHierarchyTest {
     );
     
     @Test
+    public void testSkipsAsinIfNoItem() throws JAXBException {
+        Film film = createFilm("Film Uri");
+        film.setImage("Film Image");
+        
+        TVAMainType tvaMain = convertToXmlAndBack(film);
+        
+        GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
+        
+        assert(groupInfoTable.getGroupInformation().isEmpty());
+    }
+    
+    @Test
     public void testFilmGeneration() throws JAXBException {
         Film film = createFilm("Film Uri");
         film.setImage("Film Image");
+        film.addAlias(new Alias("gb:amazon:asin", "123456"));
         
         TVAMainType tvaMain = convertToXmlAndBack(film);
         
@@ -87,12 +104,14 @@ public class LoveFilmGroupInformationHierarchyTest {
         GroupInformationType groupInfo = Iterables.getOnlyElement(groupInfoTable.getGroupInformation());
         
         assertEquals("Film Image", getImage(groupInfo));
+        assertEquals("crid://lovefilm.com/product/123456", groupInfo.getGroupId());
     }
     
     @Test
     public void testBrandGeneration() throws JAXBException {
         Brand brand = createBrand("Brand Uri");
         brand.setImage("Brand Image");
+        brand.addAlias(new Alias("gb:amazon:asin", "123456"));
         
         Episode episode = createEpisode("Episode Uri");
         episode.setImage("Episode Image");
@@ -107,12 +126,14 @@ public class LoveFilmGroupInformationHierarchyTest {
        GroupInformationType groupInfo = Iterables.getOnlyElement(groupInfoTable.getGroupInformation());
        
        assertEquals("Episode Image", getImage(groupInfo));
+       assertEquals("crid://lovefilm.com/product/123456", groupInfo.getGroupId());
     }
     
     @Test
     public void testSeriesGeneration() throws JAXBException {
         Series series = createSeries("Series Uri");
         series.setImage("Series Image");
+        series.addAlias(new Alias("gb:amazon:asin", "123456"));
 
         Episode episode = createEpisode("Episode Uri");
         episode.setImage("Episode Image");
@@ -127,15 +148,18 @@ public class LoveFilmGroupInformationHierarchyTest {
         GroupInformationType groupInfo = Iterables.getOnlyElement(groupInfoTable.getGroupInformation());
 
         assertEquals("Episode Image", getImage(groupInfo));
+        assertEquals("crid://lovefilm.com/product/123456", groupInfo.getGroupId());
     }
     
     @Test
     public void testSeriesGenerationWithBrand() throws JAXBException {
         Series series = createSeries("Series Uri");
         series.setImage("Series Image");
+        series.addAlias(new Alias("gb:amazon:asin", "seriesAsin"));
         
         Brand brand = createBrand("Brand Uri");
         brand.setImage("Brand Image");
+        brand.addAlias(new Alias("gb:amazon:asin", "brandAsin"));
         
         Episode episode = createEpisode("Episode Uri");
         episode.setImage("Episode Image");
@@ -158,6 +182,45 @@ public class LoveFilmGroupInformationHierarchyTest {
        
        assertEquals("Episode Image", getImage(firstGroupInfo));
        assertEquals("Episode Image", getImage(secondGroupInfo));
+       
+       BaseMemberOfType memberOf = null;
+       if (firstGroupInfo.getMemberOf().isEmpty()) {
+           memberOf = Iterables.getOnlyElement(secondGroupInfo.getMemberOf());
+           assertEquals("crid://lovefilm.com/product/seriesAsin", secondGroupInfo.getGroupId());
+       } else {
+           memberOf = Iterables.getOnlyElement(firstGroupInfo.getMemberOf());
+           assertEquals("crid://lovefilm.com/product/seriesAsin", firstGroupInfo.getGroupId());
+       }
+       
+       assertEquals("crid://lovefilm.com/product/brandAsin", memberOf.getCrid());
+    }
+    
+    @Test
+    public void testSeriesGenerationWithBrandWithNoAsin() throws JAXBException {
+        Series series = createSeries("Series Uri");
+        series.setImage("Series Image");
+        series.addAlias(new Alias("gb:amazon:asin", "seriesAsin"));
+        
+        Brand brand = createBrand("Brand Uri");
+        brand.setImage("Brand Image");
+        
+        Episode episode = createEpisode("Episode Uri");
+        episode.setImage("Episode Image");
+        
+        series.setChildRefs(ImmutableList.of(episode.childRef()));
+        series.setParent(brand);
+        
+        brand.setChildRefs(ImmutableList.of(episode.childRef()));
+        brand.setSeriesRefs(ImmutableList.of(series.childRef()));
+
+        contentResolver.addContent(episode);
+        contentResolver.addContent(brand);
+        
+        TVAMainType tvaMain = convertToXmlAndBack(series);
+
+        GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
+        
+        assert(groupInfoTable.getGroupInformation().isEmpty());
     }
     
     @Test
@@ -167,9 +230,11 @@ public class LoveFilmGroupInformationHierarchyTest {
         
         Series series2 = createSeries("Series 2 Uri");
         series2.setImage("Series 2 Image");
+        series2.addAlias(new Alias("gb:amazon:asin", "series2Asin"));
         
         Brand brand = createBrand("Brand Uri");
         brand.setImage("Brand Image");
+        brand.addAlias(new Alias("gb:amazon:asin", "brandAsin"));
         
         Episode episode1S1 = createEpisode("Episode 1 Series 1 Uri");
         episode1S1.setImage("Episode 1 Series 1 Image");
@@ -219,12 +284,24 @@ public class LoveFilmGroupInformationHierarchyTest {
            assertEquals("Episode 1 Series 1 Image", getImage(firstGroupInfo));
            assertEquals("Episode 1 Series 2 Image", getImage(secondGroupInfo));
        }
+       
+       BaseMemberOfType memberOf = null;
+       if (firstGroupInfo.getMemberOf().isEmpty()) {
+           memberOf = Iterables.getOnlyElement(secondGroupInfo.getMemberOf());
+           assertEquals("crid://lovefilm.com/product/series2Asin", secondGroupInfo.getGroupId());
+       } else {
+           memberOf = Iterables.getOnlyElement(firstGroupInfo.getMemberOf());
+           assertEquals("crid://lovefilm.com/product/series2Asin", firstGroupInfo.getGroupId());
+       }
+       
+       assertEquals("crid://lovefilm.com/product/brandAsin", memberOf.getCrid());
     }
     
     @Test
     public void testEpisodeGenerationNoSeriesNoBrand() throws JAXBException {
         Episode episode = createEpisode("Episode Uri");
         episode.setImage("Episode Image");
+        episode.addAlias(new Alias("gb:amazon:asin", "123456"));
 
         TVAMainType tvaMain = convertToXmlAndBack(episode);
 
@@ -233,38 +310,60 @@ public class LoveFilmGroupInformationHierarchyTest {
         GroupInformationType groupInfo = Iterables.getOnlyElement(groupInfoTable.getGroupInformation());
 
         assertEquals("Episode Image", getImage(groupInfo));
+        
+        assertEquals("crid://lovefilm.com/product/123456", groupInfo.getGroupId());
     }
     
     @Test
     public void testEpisodeGenerationNoBrand() throws JAXBException {
         Series series = createSeries("Series Uri");
         series.setImage("Series Image");
+        series.addAlias(new Alias("gb:amazon:asin", "seriesAsin"));
         
         Episode episode = createEpisode("Episode Uri");
         episode.setImage("Episode Image");
         episode.setEpisodeNumber(1);
         episode.setSeriesRef(ParentRef.parentRefFrom(series));
+        episode.addAlias(new Alias("gb:amazon:asin", "episodeAsin"));
         
         series.setChildRefs(ImmutableList.of(episode.childRef()));
+        
+        contentResolver.addContent(series);
+        contentResolver.addContent(episode);
 
         TVAMainType tvaMain = convertToXmlAndBack(episode);
 
         GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
 
-        GroupInformationType groupInfo = Iterables.getOnlyElement(groupInfoTable.getGroupInformation());
+        GroupInformationType firstGroupInfo = Iterables.get(groupInfoTable.getGroupInformation(), 0);
+        GroupInformationType secondGroupInfo = Iterables.get(groupInfoTable.getGroupInformation(), 1);
         
-        assertEquals("Episode Image", getImage(groupInfo));
+        assertEquals("Episode Image", getImage(firstGroupInfo));
+        assertEquals("Episode Image", getImage(secondGroupInfo));
+        
+        BaseMemberOfType memberOf = null;
+        if (firstGroupInfo.getMemberOf().isEmpty()) {
+            memberOf = Iterables.getOnlyElement(secondGroupInfo.getMemberOf());
+            assertEquals("crid://lovefilm.com/product/episodeAsin", secondGroupInfo.getGroupId());
+        } else {
+            memberOf = Iterables.getOnlyElement(firstGroupInfo.getMemberOf());
+            assertEquals("crid://lovefilm.com/product/episodeAsin", firstGroupInfo.getGroupId());
+        }
+        
+        assertEquals("crid://lovefilm.com/product/seriesAsin", memberOf.getCrid());
     }
     
     @Test
     public void testEpisodeGenerationNoSeries() throws JAXBException {
         Brand brand = createBrand("Brand Uri");
         brand.setImage("Brand Image");
+        brand.addAlias(new Alias("gb:amazon:asin", "brandAsin"));
         
         Episode episode = createEpisode("Episode No Series Uri");
         episode.setImage("Episode No Series Image");
         episode.setContainer(brand);
         episode.setEpisodeNumber(1);
+        episode.addAlias(new Alias("gb:amazon:asin", "episodeAsin"));
 
         brand.setChildRefs(ImmutableList.of(episode.childRef()));
         
@@ -280,21 +379,35 @@ public class LoveFilmGroupInformationHierarchyTest {
         
         assertEquals("Episode No Series Image", getImage(firstGroupInfo));
         assertEquals("Episode No Series Image", getImage(secondGroupInfo));
+        
+        BaseMemberOfType memberOf = null;
+        if (firstGroupInfo.getMemberOf().isEmpty()) {
+            memberOf = Iterables.getOnlyElement(secondGroupInfo.getMemberOf());
+            assertEquals("crid://lovefilm.com/product/episodeAsin", secondGroupInfo.getGroupId());
+        } else {
+            memberOf = Iterables.getOnlyElement(firstGroupInfo.getMemberOf());
+            assertEquals("crid://lovefilm.com/product/episodeAsin", firstGroupInfo.getGroupId());
+        }
+        
+        assertEquals("crid://lovefilm.com/product/brandAsin", memberOf.getCrid());
     }
     
     @Test
     public void testEpisodeGeneration() throws JAXBException {
         Brand brand = createBrand("Brand Uri");
         brand.setImage("Brand Image");
+        brand.addAlias(new Alias("gb:amazon:asin", "brandAsin"));
         
         Series series = createSeries("Series Uri");
         series.setImage("Series Image");
+        series.addAlias(new Alias("gb:amazon:asin", "seriesAsin"));
         
         Episode episode = createEpisode("Episode Uri");
         episode.setImage("Episode Image");
         episode.setSeriesRef(ParentRef.parentRefFrom(series));
         episode.setContainer(brand);
         episode.setEpisodeNumber(1);
+        episode.addAlias(new Alias("gb:amazon:asin", "episodeAsin"));
 
         brand.setChildRefs(ImmutableList.of(episode.childRef()));
         brand.setSeriesRefs(ImmutableList.of(series.childRef()));
@@ -316,6 +429,20 @@ public class LoveFilmGroupInformationHierarchyTest {
         assertEquals("Episode Image", getImage(firstGroupInfo));
         assertEquals("Episode Image", getImage(secondGroupInfo));
         assertEquals("Episode Image", getImage(thirdGroupInfo));
+        
+        if (firstGroupInfo.getMemberOf().isEmpty()) {
+            assertThat(Iterables.getOnlyElement(secondGroupInfo.getMemberOf()).getCrid(), isOneOf("crid://lovefilm.com/product/seriesAsin", "crid://lovefilm.com/product/brandAsin"));
+            assertThat(Iterables.getOnlyElement(thirdGroupInfo.getMemberOf()).getCrid(), isOneOf("crid://lovefilm.com/product/seriesAsin", "crid://lovefilm.com/product/brandAsin"));
+            assertEquals("crid://lovefilm.com/product/brandAsin", firstGroupInfo.getGroupId());
+        } else if (secondGroupInfo.getMemberOf().isEmpty()) {
+            assertThat(Iterables.getOnlyElement(firstGroupInfo.getMemberOf()).getCrid(), isOneOf("crid://lovefilm.com/product/seriesAsin", "crid://lovefilm.com/product/brandAsin"));
+            assertThat(Iterables.getOnlyElement(thirdGroupInfo.getMemberOf()).getCrid(), isOneOf("crid://lovefilm.com/product/seriesAsin", "crid://lovefilm.com/product/brandAsin"));
+            assertEquals("crid://lovefilm.com/product/brandAsin", secondGroupInfo.getGroupId());
+        } else {
+            assertThat(Iterables.getOnlyElement(firstGroupInfo.getMemberOf()).getCrid(), isOneOf("crid://lovefilm.com/product/seriesAsin", "crid://lovefilm.com/product/brandAsin"));
+            assertThat(Iterables.getOnlyElement(secondGroupInfo.getMemberOf()).getCrid(), isOneOf("crid://lovefilm.com/product/seriesAsin", "crid://lovefilm.com/product/brandAsin"));
+            assertEquals("crid://lovefilm.com/product/brandAsin", thirdGroupInfo.getGroupId());
+        }
     }
     
     @Test
@@ -323,40 +450,45 @@ public class LoveFilmGroupInformationHierarchyTest {
         Series series1 = createSeries("Series 1 Uri");
         series1.withSeriesNumber(1);
         series1.setImage("Series 1 Image");
+        series1.addAlias(new Alias("gb:amazon:asin", "series1Asin"));
         
         Series series2 = createSeries("Series 2 Uri");
         series2.withSeriesNumber(2);
         series2.setImage("Series 2 Image");
+        series2.addAlias(new Alias("gb:amazon:asin", "series2Asin"));
         
         Brand brand = createBrand("Brand Uri");
         brand.setImage("Brand Image");
-        
+        brand.addAlias(new Alias("gb:amazon:asin", "brandAsin"));
+
         Episode episode1S1 = createEpisode("Episode 1 Series 1 Uri");
         episode1S1.setImage("Episode 1 Series 1 Image");
         episode1S1.setEpisodeNumber(1);
         episode1S1.setSeriesNumber(1);
         episode1S1.setSeries(series1);
         episode1S1.setContainer(brand);
-        
+        episode1S1.addAlias(new Alias("gb:amazon:asin", "episode1S1Asin"));
+
         Episode episode1S2 = createEpisode("Episode 1 Series 2 Uri");
         episode1S2.setImage("Episode 1 Series 2 Image");
         episode1S2.setEpisodeNumber(1);
         episode1S2.setSeriesNumber(2);
         episode1S2.setSeries(series2);
         episode1S2.setContainer(brand);
+        episode1S2.addAlias(new Alias("gb:amazon:asin", "episode1S2Asin"));
 
         series1.setChildRefs(ImmutableList.of(episode1S1.childRef()));
         series1.setParent(brand);
-        
+
         series2.setChildRefs(ImmutableList.of(episode1S2.childRef()));
         series2.setParent(brand);
-        
+
         Map<String, ChildRef> sortedMap = ImmutableSortedMap
                 .<String, ChildRef>orderedBy(new SortKey.SortKeyOutputComparator())
                 .put(SortKey.keyFrom(episode1S1), episode1S1.childRef())
                 .put(SortKey.keyFrom(episode1S2), episode1S2.childRef())
                 .build();
-            
+
         brand.setChildRefs(sortedMap.values());
         brand.setSeriesRefs(ImmutableList.of(series1.childRef(), series2.childRef()));
 
@@ -365,33 +497,33 @@ public class LoveFilmGroupInformationHierarchyTest {
         contentResolver.addContent(series1);
         contentResolver.addContent(series2);
         contentResolver.addContent(brand);
-        
-       TVAMainType tvaMain = convertToXmlAndBack(episode1S2);
-       
-       GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
-       
-       // episode == ep 1 s 2
-       // check that series == ep 1 s 2
-       // and brand == ep 1 s 1
-       boolean foundEpisode = false;
-       boolean foundSeries = false;
-       boolean foundBrand = false;
-       for (GroupInformationType groupInfo : groupInfoTable.getGroupInformation()) {
-           if (isSeries(groupInfo)) {
-               assertEquals("Episode 1 Series 2 Image", getImage(groupInfo));
-               foundSeries = true;
-           } else if (isBrand(groupInfo)) {
-               assertEquals("Episode 1 Series 1 Image", getImage(groupInfo));
-               foundBrand = true;
-           } else {
-               assertEquals("Episode 1 Series 2 Image", getImage(groupInfo));
-               foundEpisode = true;
-           }
-       }
-       
-       assertTrue(foundEpisode);
-       assertTrue(foundSeries);
-       assertTrue(foundBrand);
+
+        TVAMainType tvaMain = convertToXmlAndBack(episode1S2);
+
+        GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
+
+        // episode == ep 1 s 2
+        // check that series == ep 1 s 2
+        // and brand == ep 1 s 1
+        boolean foundEpisode = false;
+        boolean foundSeries = false;
+        boolean foundBrand = false;
+        for (GroupInformationType groupInfo : groupInfoTable.getGroupInformation()) {
+            if (isSeries(groupInfo)) {
+                assertEquals("Episode 1 Series 2 Image", getImage(groupInfo));
+                foundSeries = true;
+            } else if (isBrand(groupInfo)) {
+                assertEquals("Episode 1 Series 1 Image", getImage(groupInfo));
+                foundBrand = true;
+            } else {
+                assertEquals("Episode 1 Series 2 Image", getImage(groupInfo));
+                foundEpisode = true;
+            }
+        }
+
+        assertTrue(foundEpisode);
+        assertTrue(foundSeries);
+        assertTrue(foundBrand);
     }
 
 

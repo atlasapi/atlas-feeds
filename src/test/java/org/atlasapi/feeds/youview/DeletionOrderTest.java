@@ -1,9 +1,12 @@
 package org.atlasapi.feeds.youview;
 
+import static org.mockito.Mockito.times;
+
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -34,57 +37,55 @@ public class DeletionOrderTest {
     
     @Test
     public void testItemDeletion() throws HttpException {
-        List<Content> deletes = ImmutableList.<Content>of(createItem("http://lovefilm.com/episodes/1234"), createItem("http://lovefilm.com/episodes/5678")); 
+        List<Content> deletes = ImmutableList.<Content>of(createItem("http://lovefilm.com/episodes/1234", "episode1234"), createItem("http://lovefilm.com/episodes/5678", "episode5678")); 
         // monitor http calls
         deleter.sendDeletes(deletes);
 
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/t1234_version"));
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/1234_version"));
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/1234"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/episode1234"));
+        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/episode1234"));
         
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/t5678_version"));
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/5678_version"));
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/5678"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/episode5678"));
+        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/episode5678"));
     }
     
     @Test
     public void testOrderedContentDeletion() throws HttpException {
-        List<Content> deletes = ImmutableList.<Content>of(createBrand("http://lovefilm.com/shows/1234"), createSeries("http://lovefilm.com/seasons/2345"), createItem("http://lovefilm.com/episodes/3456"));
+        List<Content> deletes = ImmutableList.<Content>of(createBrand("http://lovefilm.com/shows/1234", "brand1234"), createSeries("http://lovefilm.com/seasons/2345", "series2345"), createItem("http://lovefilm.com/episodes/3456", "episode3456"));
         // do all possible permutations of this iterable 
         // monitor http calls
         deleter.sendDeletes(deletes);
 
         // Item
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/t3456_version"));
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/3456_version"));
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/3456"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/episode3456"));
+        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/episode3456"));
         // Series
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/2345"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/series2345"));
         // Brand
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/1234"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/brand1234"));
     }
 
-    private Brand createBrand(String uri) {
+    private Brand createBrand(String uri, String asin) {
         Brand brand= new Brand();
-        setCommonFields(brand, uri);
+        setCommonFields(brand, uri, asin);
         return brand;
     }
 
-    private void setCommonFields(Content content, String uri) {
+    private void setCommonFields(Content content, String uri, String asin) {
         content.setPublisher(Publisher.LOVEFILM);
         content.setCanonicalUri(uri);
+        content.addAlias(new Alias("gb:amazon:asin", asin));
         content.setLastUpdated(new DateTime());
     }
 
-    private Series createSeries(String uri) {
+    private Series createSeries(String uri, String asin) {
         Series series = new Series();
-        setCommonFields(series, uri);
+        setCommonFields(series, uri, asin);
         return series;
     }
 
-    private Item createItem(String uri) {
+    private Item createItem(String uri, String asin) {
         Item item = new Item();
-        setCommonFields(item, uri);
+        setCommonFields(item, uri, asin);
         return item;
     }
 }

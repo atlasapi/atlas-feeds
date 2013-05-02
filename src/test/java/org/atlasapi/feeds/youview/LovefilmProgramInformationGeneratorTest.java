@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview;
 import static org.junit.Assert.assertEquals;
 
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
@@ -28,12 +29,11 @@ public class LovefilmProgramInformationGeneratorTest {
     public void testFilmProgInfoGeneration() {
         ProgramInformationType progInfo = generator.generate(createFilm());
 
-        // TODO this will change when we get the digital release id, is placeholder for now
-        assertEquals("crid://lovefilm.com/product/177221_version", progInfo.getProgramId());
+        assertEquals("crid://lovefilm.com/product/filmAsin_version", progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
         assertEquals("deep_linking_id.lovefilm.com", otherId.getAuthority());
-        assertEquals("177221L", otherId.getValue());
-        assertEquals("crid://lovefilm.com/product/177221", progInfo.getDerivedFrom().getCrid());
+        assertEquals("filmAsin", otherId.getValue());
+        assertEquals("crid://lovefilm.com/product/filmAsin", progInfo.getDerivedFrom().getCrid());
         
         ExtendedContentDescriptionType basicDescription = (ExtendedContentDescriptionType) progInfo.getBasicDescription();
         
@@ -48,12 +48,11 @@ public class LovefilmProgramInformationGeneratorTest {
     public void testEpisodeProgInfoGeneration() {
         ProgramInformationType progInfo = generator.generate(createEpisode());
         
-        // TODO this will change when we get the digital release id, is placeholder for now
-        assertEquals("crid://lovefilm.com/product/180014_version", progInfo.getProgramId());
+        assertEquals("crid://lovefilm.com/product/episodeAsin_version", progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
         assertEquals("deep_linking_id.lovefilm.com", otherId.getAuthority());
-        assertEquals("180014L", otherId.getValue());
-        assertEquals("crid://lovefilm.com/product/180014", progInfo.getDerivedFrom().getCrid());
+        assertEquals("episodeAsin", otherId.getValue());
+        assertEquals("crid://lovefilm.com/product/episodeAsin", progInfo.getDerivedFrom().getCrid());
         
         ExtendedContentDescriptionType basicDescription = (ExtendedContentDescriptionType) progInfo.getBasicDescription();
         
@@ -78,6 +77,7 @@ public class LovefilmProgramInformationGeneratorTest {
         episode.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));
         episode.setCertificates(ImmutableList.of(new Certificate("15", Countries.GB)));
         episode.setYear(2006);
+        episode.addAlias(new Alias("gb:amazon:asin", "episodeAsin"));
         
         Version version = new Version();
         version.setDuration(Duration.standardMinutes(45));
@@ -97,6 +97,7 @@ public class LovefilmProgramInformationGeneratorTest {
         film.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));
         film.setCertificates(ImmutableList.of(new Certificate("PG", Countries.GB)));
         film.setYear(1963);
+        film.addAlias(new Alias("gb:amazon:asin", "filmAsin"));
         
         Version version = new Version();
         version.setDuration(Duration.standardMinutes(90));
