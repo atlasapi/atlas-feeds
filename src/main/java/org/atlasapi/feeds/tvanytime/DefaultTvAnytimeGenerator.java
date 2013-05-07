@@ -21,6 +21,7 @@ import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Series;
@@ -208,7 +209,11 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
             return Optional.absent();
         }
         ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(brandRef.getUri()));
-        Brand brand = (Brand) resolved.asResolvedMap().get(brandRef.getUri());
+        Identified identified = resolved.asResolvedMap().get(brandRef.getUri());
+        if (!(identified instanceof Brand)) {
+            return Optional.absent();
+        }
+        Brand brand = (Brand) identified;
         if (!hasAsin(brand)) {
             throw new RuntimeException("brand " + brand.getCanonicalUri() + " has no ASIN, while its episode " + episode.getCanonicalUri() + " does.");
         }
