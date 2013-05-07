@@ -223,10 +223,17 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
     private Optional<Series> getSeries(Episode episode) {
         ParentRef seriesRef = episode.getSeriesRef();
         if (seriesRef == null) {
-            return Optional.absent();
+            seriesRef = episode.getContainer();
+            if (seriesRef == null) {
+                return Optional.absent();
+            }
         }
         ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(seriesRef.getUri()));
-        Series series = (Series) resolved.asResolvedMap().get(seriesRef.getUri());
+        Identified identified = resolved.asResolvedMap().get(seriesRef.getUri());
+        if (!(identified instanceof Series)) {
+            return Optional.absent();
+        }
+        Series series = (Series) identified;
         if (!hasAsin(series)) {
             throw new RuntimeException("series " + series.getCanonicalUri() + " has no ASIN, while its episode " + episode.getCanonicalUri() + " does.");
         }
