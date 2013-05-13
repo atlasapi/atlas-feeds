@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview;
+    package org.atlasapi.feeds.youview;
 
 import java.util.Iterator;
 import java.util.List;
@@ -99,6 +99,9 @@ public class YouViewUploadTask extends ScheduledTask {
         YouViewUploadProcessor<UpdateProgress> processor = uploadProcessor();
         
         while (allContent.hasNext()) {
+            if (!shouldContinue()) {
+                return;
+            }
             Builder<Content> chunk = ImmutableList.builder();
             int chunkCount = 0;
             while (chunkCount < chunkSize && allContent.hasNext()) {
