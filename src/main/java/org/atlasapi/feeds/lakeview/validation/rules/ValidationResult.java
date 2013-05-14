@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.lakeview.validation.rules;
 
-import com.google.inject.internal.Objects;
+import com.google.common.base.Objects;
 
 public class ValidationResult {
 

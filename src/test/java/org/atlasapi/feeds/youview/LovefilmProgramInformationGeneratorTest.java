@@ -17,7 +17,7 @@ import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.inject.internal.Iterables;
+import com.google.common.collect.Iterables;
 import com.metabroadcast.common.intl.Countries;
 
 public class LovefilmProgramInformationGeneratorTest {

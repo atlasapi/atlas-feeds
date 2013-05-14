@@ -11,9 +11,9 @@ import org.atlasapi.generated.lakeview.ElementTVSeries;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.inject.internal.ImmutableMap;
-import com.google.inject.internal.Lists;
-import com.google.inject.internal.Maps;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 public class FeedItemStore {
 

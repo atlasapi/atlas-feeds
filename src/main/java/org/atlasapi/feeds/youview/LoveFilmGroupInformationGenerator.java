@@ -45,8 +45,8 @@ import tva.mpeg7._2008.TitleType;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.google.inject.internal.ImmutableMap;
-import com.google.inject.internal.Lists;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.metabroadcast.common.text.Truncator;
 
 public class LoveFilmGroupInformationGenerator implements GroupInformationGenerator {

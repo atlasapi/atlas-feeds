@@ -28,7 +28,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.google.inject.internal.Lists;
+import com.google.common.collect.Lists;
 
 /**
  * Validation rule to check all on-demands that we expect to be present, are.

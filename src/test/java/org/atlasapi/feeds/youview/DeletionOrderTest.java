@@ -13,8 +13,8 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.google.inject.internal.ImmutableList;
-import com.google.inject.internal.ImmutableMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;

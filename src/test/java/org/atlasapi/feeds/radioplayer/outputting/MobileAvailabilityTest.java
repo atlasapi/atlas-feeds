@@ -20,7 +20,7 @@ import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
 import org.junit.Test;
 
-import com.google.inject.internal.Lists;
+import com.google.common.collect.Lists;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
 

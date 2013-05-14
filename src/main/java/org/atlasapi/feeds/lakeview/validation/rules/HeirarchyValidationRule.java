@@ -10,7 +10,7 @@ import org.atlasapi.generated.lakeview.ElementProduct;
 import org.atlasapi.generated.lakeview.ElementTVEpisode;
 import org.atlasapi.generated.lakeview.ElementTVSeason;
 
-import com.google.inject.internal.Lists;
+import com.google.common.collect.Lists;
 import com.metabroadcast.common.base.Maybe;
 
 /**

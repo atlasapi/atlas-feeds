@@ -9,7 +9,7 @@ import org.joda.time.DateTime;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Ordering;
-import com.google.inject.internal.Objects;
+import com.google.common.base.Objects;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public final class FileUploadResult {
