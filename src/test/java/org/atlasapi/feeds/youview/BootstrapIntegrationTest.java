@@ -96,7 +96,7 @@ public class BootstrapIntegrationTest {
         series1.withSeriesNumber(1);
         series1.setParent(brand1);
         series1.addAlias(new Alias("gb:amazon:asin", "series1Asin"));
-        brand1.setSeriesRefs(ImmutableList.of(series1.childRef()));
+        brand1.setSeriesRefs(ImmutableList.of(series1.seriesRef()));
         brand1.setChildRefs(ImmutableList.of(episode1.childRef()));
         brand1.addAlias(new Alias("gb:amazon:asin", "brand1Asin"));
         
@@ -112,7 +112,7 @@ public class BootstrapIntegrationTest {
         series2.setParent(brand2);
         series2.withSeriesNumber(2);
         series2.addAlias(new Alias("gb:amazon:asin", "series2Asin"));
-        brand2.setSeriesRefs(ImmutableList.of(series2.childRef()));
+        brand2.setSeriesRefs(ImmutableList.of(series2.seriesRef()));
         brand2.setChildRefs(ImmutableList.of(episode2.childRef()));
         brand2.addAlias(new Alias("gb:amazon:asin", "brand2Asin"));
         
