@@ -7,9 +7,9 @@ import java.util.List;
 import org.atlasapi.persistence.logging.AdapterLogEntry.ExceptionSummary;
 import org.joda.time.DateTime;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Ordering;
-import com.google.common.base.Objects;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public final class FileUploadResult {
