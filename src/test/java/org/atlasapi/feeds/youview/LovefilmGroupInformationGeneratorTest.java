@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.CrewMember;
@@ -40,6 +41,7 @@ import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -54,7 +56,7 @@ public class LovefilmGroupInformationGeneratorTest {
     public void testFilmOnDemandGeneration() {
         GroupInformationType groupInfo = generator.generate(createFilm());
 
-        assertEquals("crid://lovefilm.com/product/177221", groupInfo.getGroupId());
+        assertEquals("crid://lovefilm.com/product/filmAsin", groupInfo.getGroupId());
         assertEquals("http://lovefilm.com/ContentOwning", groupInfo.getServiceIDRef());
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
@@ -135,12 +137,12 @@ public class LovefilmGroupInformationGeneratorTest {
 
     @Test
     public void testEpisodeOnDemandGeneration() {
-        GroupInformationType groupInfo = generator.generate(createEpisode());
+        GroupInformationType groupInfo = generator.generate(createEpisode(), Optional.of(createSeries()), Optional.of(createBrand()));
 
-        assertEquals("crid://lovefilm.com/product/180014", groupInfo.getGroupId());
+        assertEquals("crid://lovefilm.com/product/episodeAsin", groupInfo.getGroupId());
         
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://lovefilm.com/product/179534", memberOf.getCrid());
+        assertEquals("crid://lovefilm.com/product/seriesAsin", memberOf.getCrid());
         assertEquals(Long.valueOf(5), memberOf.getIndex());
         
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -244,13 +246,13 @@ public class LovefilmGroupInformationGeneratorTest {
     
     @Test
     public void testSeriesOnDemandGeneration() {
-        GroupInformationType groupInfo = generator.generate(createSeries(), createEpisode());
+        GroupInformationType groupInfo = generator.generate(createSeries(), Optional.of(createBrand()), createEpisode());
 
-        assertEquals("crid://lovefilm.com/product/179534", groupInfo.getGroupId());
+        assertEquals("crid://lovefilm.com/product/seriesAsin", groupInfo.getGroupId());
         assertTrue(groupInfo.isOrdered());
         
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://lovefilm.com/product/184930", memberOf.getCrid());
+        assertEquals("crid://lovefilm.com/product/brandAsin", memberOf.getCrid());
         assertEquals(Long.valueOf(2), memberOf.getIndex());
         
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -345,7 +347,7 @@ public class LovefilmGroupInformationGeneratorTest {
     public void testBrandOnDemandGeneration() {
         GroupInformationType groupInfo = generator.generate(createBrand(), createEpisode());
 
-        assertEquals("crid://lovefilm.com/product/184930", groupInfo.getGroupId());
+        assertEquals("crid://lovefilm.com/product/brandAsin", groupInfo.getGroupId());
         assertEquals("http://lovefilm.com/ContentOwning", groupInfo.getServiceIDRef());
         assertTrue(groupInfo.isOrdered());
                 
@@ -568,6 +570,7 @@ public class LovefilmGroupInformationGeneratorTest {
         brand.setLanguages(ImmutableList.of("en"));
         brand.setMediaType(MediaType.VIDEO);
         brand.setSpecialization(Specialization.TV);
+        brand.addAlias(new Alias("gb:amazon:asin", "brandAsin"));
         
         CrewMember robson = new CrewMember();
         robson.withName("Robson Green");
@@ -596,6 +599,7 @@ public class LovefilmGroupInformationGeneratorTest {
         series.setLanguages(ImmutableList.of("en"));
         series.setMediaType(MediaType.VIDEO);
         series.setSpecialization(Specialization.TV);
+        series.addAlias(new Alias("gb:amazon:asin", "seriesAsin"));
         
         CrewMember robson = new CrewMember();
         robson.withName("Robson Green");
@@ -629,6 +633,7 @@ public class LovefilmGroupInformationGeneratorTest {
         episode.setLanguages(ImmutableList.of("en"));
         episode.setMediaType(MediaType.VIDEO);
         episode.setSpecialization(Specialization.TV);
+        episode.addAlias(new Alias("gb:amazon:asin", "episodeAsin"));
         
         CrewMember robson = new CrewMember();
         robson.withName("Robson Green");
@@ -665,6 +670,7 @@ public class LovefilmGroupInformationGeneratorTest {
         film.setLanguages(ImmutableList.of("en"));
         film.setMediaType(MediaType.VIDEO);
         film.setSpecialization(Specialization.FILM);
+        film.addAlias(new Alias("gb:amazon:asin", "filmAsin"));
         
         CrewMember georgeScott = new CrewMember();
         georgeScott.withName("George C. Scott");
