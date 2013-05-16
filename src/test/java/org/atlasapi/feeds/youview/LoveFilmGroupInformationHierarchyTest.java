@@ -196,7 +196,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     }
     
     @Test
-    public void testSeriesGenerationWithBrandWithNoAsin() throws JAXBException {
+    public void testSeriesGenerationWithBrandWithNoAsinSucceedsWithNoGroupInformation() throws JAXBException {
         Series series = createSeries("Series Uri");
         series.setImage("Series Image");
         series.addAlias(new Alias("gb:amazon:asin", "seriesAsin"));
@@ -211,7 +211,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         series.setParent(brand);
         
         brand.setChildRefs(ImmutableList.of(episode.childRef()));
-        brand.setSeriesRefs(ImmutableList.of(series.childRef()));
+        brand.setSeriesRefs(ImmutableList.of(series.seriesRef()));
 
         contentResolver.addContent(episode);
         contentResolver.addContent(brand);
@@ -220,7 +220,7 @@ public class LoveFilmGroupInformationHierarchyTest {
 
         GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
         
-        assert(groupInfoTable.getGroupInformation().isEmpty());
+        assertTrue(groupInfoTable.getGroupInformation().isEmpty());
     }
     
     @Test
