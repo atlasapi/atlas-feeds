@@ -138,7 +138,7 @@ public class BootstrapIntegrationTest {
         contentFinder.addContent(series2);
         contentFinder.addContent(brand3);
         
-        bootStrapUploader.runTask();
+        bootStrapUploader.run();
         
         Mockito.verify(httpClient).post(Mockito.eq("youviewurl/transaction"), Mockito.eq(new StringPayload(fromXmlFile("youview-bootstrap.xml"))));
     }
