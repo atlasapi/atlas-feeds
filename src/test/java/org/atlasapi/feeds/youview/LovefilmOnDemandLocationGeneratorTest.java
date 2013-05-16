@@ -8,6 +8,7 @@ import static org.junit.Assert.assertThat;
 import java.math.BigInteger;
 
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
@@ -44,9 +45,9 @@ public class LovefilmOnDemandLocationGeneratorTest {
 
         assertEquals("http://lovefilm.com/OnDemand", onDemand.getServiceIDRef());
         // TODO this will change when we get the digital release id, is placeholder for now        
-        assertEquals("crid://lovefilm.com/product/177221_version", onDemand.getProgram().getCrid());
+        assertEquals("crid://lovefilm.com/product/filmAsin_version", onDemand.getProgram().getCrid());
         // TODO this will change when we get the digital release id, is placeholder for now
-        assertEquals("imi:lovefilm.com/t177221_version", onDemand.getInstanceMetadataId());
+        assertEquals("imi:lovefilm.com/filmAsin", onDemand.getInstanceMetadataId());
         assertEquals("PT1H30M0.000S", onDemand.getPublishedDuration().toString());
         assertEquals("2012-07-03T00:00:00.000Z", onDemand.getStartOfAvailability().toString());
         assertEquals("2013-07-17T00:00:00.000Z", onDemand.getEndOfAvailability().toString());
@@ -84,7 +85,7 @@ public class LovefilmOnDemandLocationGeneratorTest {
         
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
         assertEquals("deep_linking_id.lovefilm.com", otherId.getAuthority());
-        assertEquals("177221L", otherId.getValue());
+        assertEquals("filmAsin", otherId.getValue());
     }
 
     @Test
@@ -93,9 +94,9 @@ public class LovefilmOnDemandLocationGeneratorTest {
 
         assertEquals("http://lovefilm.com/OnDemand", onDemand.getServiceIDRef());
         // TODO this will change when we get the digital release id, is placeholder for now        
-        assertEquals("crid://lovefilm.com/product/180014_version", onDemand.getProgram().getCrid());
+        assertEquals("crid://lovefilm.com/product/episodeAsin_version", onDemand.getProgram().getCrid());
         // TODO this will change when we get the digital release id, is placeholder for now
-        assertEquals("imi:lovefilm.com/t180014_version", onDemand.getInstanceMetadataId());
+        assertEquals("imi:lovefilm.com/episodeAsin", onDemand.getInstanceMetadataId());
         assertEquals("PT45M0.000S", onDemand.getPublishedDuration().toString());
         assertEquals("2009-09-21T00:00:00.000Z", onDemand.getStartOfAvailability().toString());
         assertEquals("2013-03-01T00:00:00.000Z", onDemand.getEndOfAvailability().toString());
@@ -134,7 +135,7 @@ public class LovefilmOnDemandLocationGeneratorTest {
         
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
         assertEquals("deep_linking_id.lovefilm.com", otherId.getAuthority());
-        assertEquals("180014L", otherId.getValue());
+        assertEquals("episodeAsin", otherId.getValue());
     }
     
     private Episode createEpisode() {
@@ -151,6 +152,7 @@ public class LovefilmOnDemandLocationGeneratorTest {
         episode.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));
         episode.setCertificates(ImmutableList.of(new Certificate("15", Countries.GB)));
         episode.setYear(2006);
+        episode.addAlias(new Alias("gb:amazon:asin", "episodeAsin"));
         
         Version version = new Version();
         Encoding encoding = new Encoding();
@@ -186,6 +188,7 @@ public class LovefilmOnDemandLocationGeneratorTest {
         film.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));
         film.setCertificates(ImmutableList.of(new Certificate("PG", Countries.GB)));
         film.setYear(1963);
+        film.addAlias(new Alias("gb:amazon:asin", "filmAsin"));
         
         Version version = new Version();
         Encoding encoding = new Encoding();

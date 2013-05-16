@@ -18,6 +18,7 @@ import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.LoveFilmGroupInformationHierarchyTest.DummyContentResolver;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Content;
@@ -81,6 +82,7 @@ public class BootstrapIntegrationTest {
     @Test
     public void testBootstrapOutput() throws ValidityException, HttpException, ParsingException, IOException {
         Film film = createFilm("http://lovefilm.com/films/film1");
+        film.addAlias(new Alias("gb:amazon:asin", "film1Asin"));
         
         Episode episode1 = createEpisode("http://lovefilm.com/episodes/episode1");
         Series series1 = createSeries("http://lovefilm.com/seasons/series1");
@@ -89,11 +91,14 @@ public class BootstrapIntegrationTest {
         episode1.setEpisodeNumber(1);
         episode1.setSeriesNumber(1);
         episode1.setParentRef(ParentRef.parentRefFrom(brand1));
+        episode1.addAlias(new Alias("gb:amazon:asin", "episode1Asin"));
         series1.setChildRefs(ImmutableList.of(episode1.childRef()));
         series1.withSeriesNumber(1);
         series1.setParent(brand1);
+        series1.addAlias(new Alias("gb:amazon:asin", "series1Asin"));
         brand1.setSeriesRefs(ImmutableList.of(series1.childRef()));
         brand1.setChildRefs(ImmutableList.of(episode1.childRef()));
+        brand1.addAlias(new Alias("gb:amazon:asin", "brand1Asin"));
         
         Episode episode2 = createEpisode("http://lovefilm.com/episodes/episode2");
         Series series2 = createSeries("http://lovefilm.com/seasons/series2");
@@ -102,17 +107,22 @@ public class BootstrapIntegrationTest {
         episode2.setEpisodeNumber(1);
         episode2.setSeriesNumber(2);
         episode2.setParentRef(ParentRef.parentRefFrom(brand2));
+        episode2.addAlias(new Alias("gb:amazon:asin", "episode2Asin"));
         series2.setChildRefs(ImmutableList.of(episode2.childRef()));
         series2.setParent(brand2);
         series2.withSeriesNumber(2);
+        series2.addAlias(new Alias("gb:amazon:asin", "series2Asin"));
         brand2.setSeriesRefs(ImmutableList.of(series2.childRef()));
         brand2.setChildRefs(ImmutableList.of(episode2.childRef()));
+        brand2.addAlias(new Alias("gb:amazon:asin", "brand2Asin"));
         
         Episode episode3 = createEpisode("http://lovefilm.com/episodes/episode3");
         Brand brand3 = createBrand("http://lovefilm.com/shows/brand3");
         episode3.setEpisodeNumber(1);
         episode3.setParentRef(ParentRef.parentRefFrom(brand3));
+        episode3.addAlias(new Alias("gb:amazon:asin", "episode3Asin"));
         brand3.setChildRefs(ImmutableList.of(episode3.childRef()));
+        brand3.addAlias(new Alias("gb:amazon:asin", "brand3Asin"));
         
         contentResolver.addContent(episode1);
         contentResolver.addContent(episode2);

@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview;
 
-import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getId;
+import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getAsin;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -37,10 +37,9 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
-    private static final String IMI_PREFIX = "imi:lovefilm.com/t";
     private static final String VERSION_SUFFIX = "_version";
+    private static final String IMI_PREFIX = "imi:lovefilm.com/";
     private static final String YOUVIEW_MIX_TYPE = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
-    private static final String DEEP_LINKING_ID_SUFFIX = "L";
     private static final String LOVEFILM_DEEP_LINKING_ID = "deep_linking_id.lovefilm.com";
     private static final String YOUVIEW_GENRE_SUBSCRIPTION_REQUIRED = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#subscription";
     private static final String YOUVIEW_GENRE_MEDIA_AVAILABLE = "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available";
@@ -68,7 +67,6 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
         
         onDemand.setServiceIDRef(LOVEFILM_IDREF_ONDEMAND);
         onDemand.setProgram(generateProgram(item));
-        // TODO once again, this has a placeholder for the digital release id, which isn't currently ingested
         onDemand.setInstanceMetadataId(createImi(item));
         onDemand.setInstanceDescription(generateInstanceDescription(item));
         onDemand.setPublishedDuration(generatePublishedDuration(item));
@@ -86,7 +84,7 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
     }
 
     public static String createImi(Item item) {
-        return IMI_PREFIX + getId(item.getCanonicalUri()) + VERSION_SUFFIX;
+        return IMI_PREFIX + getAsin(item);
     }
     
     // hardcoded
@@ -98,8 +96,7 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
 
     private CRIDRefType generateProgram(Item item) {
         CRIDRefType program = new CRIDRefType();
-        // TODO digital_release_id not ingested yet, currently a placeholder of id + '_version'
-        program.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(item.getCanonicalUri()) + VERSION_SUFFIX);
+        program.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(item) + VERSION_SUFFIX);
         return program;
     }
 
@@ -156,7 +153,7 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
     private UniqueIDType generateOtherId(Item item) {
         UniqueIDType id = new UniqueIDType();
         id.setAuthority(LOVEFILM_DEEP_LINKING_ID);
-        id.setValue(getId(item.getCanonicalUri()) + DEEP_LINKING_ID_SUFFIX);
+        id.setValue(getAsin(item));
         return id;
     }
 

@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview;
 
-import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getId;
+import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getAsin;
 
 import java.util.Collection;
 import java.util.List;
@@ -18,7 +18,6 @@ import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
-import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 
@@ -43,7 +42,7 @@ import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 
-import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -101,16 +100,19 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     }
     
     @Override
-    public GroupInformationType generate(Episode episode) {
+    public GroupInformationType generate(Episode episode, Optional<Series> series, Optional<Brand> brand) {
         GroupInformationType groupInfo = generateWithCommonFields(episode, null);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         
-        if (episode.getSeriesRef() != null || episode.getContainer() != null) {
+        if (series.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
-
-            ParentRef parent = Objects.firstNonNull(episode.getSeriesRef(), episode.getContainer());
-            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(parent.getUri()));
+            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(series.get()));
+            memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
+            groupInfo.getMemberOf().add(memberOf);
+        } else if (brand.isPresent()) {
+            MemberOfType memberOf = new MemberOfType();
+            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(brand.get()));
             memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
             groupInfo.getMemberOf().add(memberOf);
         }
@@ -119,19 +121,20 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     }
     
     @Override
-    public GroupInformationType generate(Series series, Item item) {
-        GroupInformationType groupInfo = generateWithCommonFields(series, item);
+    public GroupInformationType generate(Series series, Optional<Brand> brand, Item firstChild) {
+        GroupInformationType groupInfo = generateWithCommonFields(series, firstChild);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));
         groupInfo.setOrdered(true);
-        MemberOfType memberOf = new MemberOfType();
-        if (series.getParent() != null) {
-            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(series.getParent().getUri()));
+        
+        if (brand.isPresent()) {
+            MemberOfType memberOf = new MemberOfType();
+            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(brand.get()));
+            if (series.getSeriesNumber() != null) {
+                memberOf.setIndex(Long.valueOf(series.getSeriesNumber()));
+            }
+            groupInfo.getMemberOf().add(memberOf);
         }
-        if (series.getSeriesNumber() != null) {
-            memberOf.setIndex(Long.valueOf(series.getSeriesNumber()));
-        }
-        groupInfo.getMemberOf().add(memberOf);
         
         return groupInfo;
     }
@@ -158,7 +161,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     }
 
     public static String createCrid(Content content) {
-        return LOVEFILM_PRODUCT_CRID_PREFIX + getId(content.getCanonicalUri());
+        return LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(content);
     }
     
     private BaseProgramGroupTypeType generateGroupType(String groupType) {
@@ -180,7 +183,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         basicDescription.getGenre().addAll(generateGenres(content));
         basicDescription.getGenre().add(generateGenreFromSpecialization(content));
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
-        basicDescription.getLanguage().addAll(generateLanguage(content));
+        basicDescription.getLanguage().addAll(generateLanguage());
         basicDescription.setCreditsList(generateCreditsList(content));
         if (content instanceof Series) {
             basicDescription.getRelatedMaterial().add(generateRelatedMaterial(item));
@@ -272,16 +275,8 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
        return creditsList;
     }
 
-    private List<ExtendedLanguageType> generateLanguage(Content content) {
+    private List<ExtendedLanguageType> generateLanguage() {
         List<ExtendedLanguageType> languages = Lists.newArrayList();
-        /*
-        for (String languageStr : content.getLanguages()) {
-            ExtendedLanguageType language = new ExtendedLanguageType();
-            language.setType(LANGUAGE_TYPE_ORIGINAL);
-            language.setValue(languageStr);
-            languages.add(language);
-        }
-        */
         ExtendedLanguageType language = new ExtendedLanguageType();
         language.setType(LANGUAGE_TYPE_ORIGINAL);
         language.setValue(LANGUAGE);
