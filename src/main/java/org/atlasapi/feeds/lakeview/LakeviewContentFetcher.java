@@ -19,6 +19,7 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
+import org.atlasapi.media.entity.SeriesRef;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.listing.ContentLister;
@@ -97,7 +98,7 @@ public class LakeviewContentFetcher {
             if(resolvedBrand.hasValue()) {
                 
                 Brand brand = (Brand)resolvedBrand.requireValue();
-                List<Series> resolvedSeries = resolveSeries(Iterables.transform(brand.getSeriesRefs(), ChildRef.TO_URI));
+                List<Series> resolvedSeries = resolveSeries(Iterables.transform(brand.getSeriesRefs(), SeriesRef.TO_URI));
                 ImmutableList<Episode> orderedEpisodes = EPISODE_NUMBER_ORDERING.immutableSortedCopy(brandEpisodes.getValue());
                 
                 if (!brandEpisodes.getValue().isEmpty()) {
