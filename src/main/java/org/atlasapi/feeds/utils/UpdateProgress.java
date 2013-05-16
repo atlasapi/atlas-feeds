@@ -33,6 +33,10 @@ public final class UpdateProgress implements Reducible<UpdateProgress>{
         return processed;
     }
     
+    public int getTotalProgress() {
+        return processed + failures;
+    }
+    
     public boolean hasFailures() {
         return failures > 0;
     }
