@@ -168,7 +168,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         series.setParent(brand);
         
         brand.setChildRefs(ImmutableList.of(episode.childRef()));
-        brand.setSeriesRefs(ImmutableList.of(series.childRef()));
+        brand.setSeriesRefs(ImmutableList.of(series.seriesRef()));
 
         contentResolver.addContent(episode);
         contentResolver.addContent(brand);
@@ -263,7 +263,7 @@ public class LoveFilmGroupInformationHierarchyTest {
             .build();
         
         brand.setChildRefs(sortedMap.values());
-        brand.setSeriesRefs(ImmutableList.of(series1.childRef(), series2.childRef()));
+        brand.setSeriesRefs(ImmutableList.of(series1.seriesRef(), series2.seriesRef()));
 
         contentResolver.addContent(episode1S1);
         contentResolver.addContent(episode1S2);
@@ -410,7 +410,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         episode.addAlias(new Alias("gb:amazon:asin", "episodeAsin"));
 
         brand.setChildRefs(ImmutableList.of(episode.childRef()));
-        brand.setSeriesRefs(ImmutableList.of(series.childRef()));
+        brand.setSeriesRefs(ImmutableList.of(series.seriesRef()));
         series.setChildRefs(ImmutableList.of(episode.childRef()));
         series.setParent(brand);
         
@@ -490,7 +490,7 @@ public class LoveFilmGroupInformationHierarchyTest {
                 .build();
 
         brand.setChildRefs(sortedMap.values());
-        brand.setSeriesRefs(ImmutableList.of(series1.childRef(), series2.childRef()));
+        brand.setSeriesRefs(ImmutableList.of(series1.seriesRef(), series2.seriesRef()));
 
         contentResolver.addContent(episode1S1);
         contentResolver.addContent(episode1S2);
