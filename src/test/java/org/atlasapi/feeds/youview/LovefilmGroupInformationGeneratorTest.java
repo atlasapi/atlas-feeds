@@ -5,8 +5,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.media.entity.Alias;
@@ -46,6 +46,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.metabroadcast.common.intl.Countries;
 
 public class LovefilmGroupInformationGeneratorTest {
@@ -63,27 +64,35 @@ public class LovefilmGroupInformationGeneratorTest {
     private final YouViewGenreMapping genreMapping = new YouViewGenreMapping(); 
     private final GroupInformationGenerator generator = new LoveFilmGroupInformationGenerator(genreMapping);
 
+    /**
+     * This tests both the conversion from lovefilm genre uris to the youview
+     * genres, as well as de-duplication of the resulting genre collection
+     */
     @Test
     public void testFilmGenreGeneration() {
         
         Film film = createFilm();
         film.setGenres(ImmutableSet.of(
             "http://lovefilm.com/genres/comedy",
-            "http://lovefilm.com/genres/comedy/family"
+            "http://lovefilm.com/genres/comedy/family",
+            "http://lovefilm.com/genres/comedy/general"
             ));
         
         GroupInformationType groupInfo = generator.generate(film);
         
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
         
-        Set<String> genreHrefs = ImmutableSet.copyOf(Iterables.transform(desc.getGenre(), TO_HREF));
+        List<String> genreHrefs = Lists.newArrayList(Iterables.transform(desc.getGenre(), TO_HREF));
         
-        Set<String> expectedGenres = ImmutableSet.of(
+        List<String> expectedGenres = Lists.newArrayList(
             "urn:tva:metadata:cs:OriginationCS:2005:5.7",
             "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3",
             "urn:tva:metadata:cs:ContentCS:2010:3.5.7",
             "urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9"
             );
+        
+        Collections.sort(expectedGenres);
+        Collections.sort(genreHrefs);
         
         assertEquals(expectedGenres, genreHrefs);
     }
@@ -101,14 +110,17 @@ public class LovefilmGroupInformationGeneratorTest {
         
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
         
-        Set<String> genreHrefs = ImmutableSet.copyOf(Iterables.transform(desc.getGenre(), TO_HREF));
+        List<String> genreHrefs = Lists.newArrayList(Iterables.transform(desc.getGenre(), TO_HREF));
         
-        Set<String> expectedGenres = ImmutableSet.of(
+        List<String> expectedGenres = Lists.newArrayList(
             "urn:tva:metadata:cs:OriginationCS:2005:5.8",
             "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3",
             "urn:tva:metadata:cs:ContentCS:2010:3.5.7",
             "urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9"
             );
+        
+        Collections.sort(expectedGenres);
+        Collections.sort(genreHrefs);
         
         assertEquals(expectedGenres, genreHrefs);
     }
