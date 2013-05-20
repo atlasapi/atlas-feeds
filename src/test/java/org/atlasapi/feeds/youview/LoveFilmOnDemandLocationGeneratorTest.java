@@ -35,7 +35,7 @@ import com.google.common.collect.Iterables;
 import com.metabroadcast.common.intl.Countries;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
-public class LovefilmOnDemandLocationGeneratorTest {
+public class LoveFilmOnDemandLocationGeneratorTest {
     
     private static final OnDemandLocationGenerator generator = new LoveFilmOnDemandLocationGenerator();
 

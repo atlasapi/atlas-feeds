@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
@@ -42,10 +43,13 @@ import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.metabroadcast.common.text.Truncator;
 
 public class LoveFilmGroupInformationGenerator implements GroupInformationGenerator {
@@ -81,6 +85,16 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         .build();
     
     private static final List<String> TITLE_PREFIXES = ImmutableList.of("The ", "the ", "A ", "a ", "An ", "an ");
+    
+    private static final Function<String, GenreType> TO_GENRE = new Function<String, GenreType>() {
+        @Override
+        public GenreType apply(String input) {
+            GenreType genre = new GenreType();
+            genre.setType(GENRE_TYPE_MAIN);
+            genre.setHref(input);
+            return genre;
+        }
+    };
     
     private final YouViewGenreMapping genreMapping;
     Truncator truncator = new Truncator().omitTrailingPunctuationWhenTruncated().onlyTruncateAtAWordBoundary().withOmissionMarker("...");
@@ -284,17 +298,15 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         return languages;
     }
 
-    private Collection<GenreType> generateGenres(Content content) {
-        List<GenreType> genres = Lists.newArrayList();
+    private List<GenreType> generateGenres(Content content) {
+        Set<String> genreHrefs = Sets.newHashSet();
         for (String genreStr : content.getGenres()) {
             for (String youViewGenre : genreMapping.get(genreStr)) {
-                GenreType genre = new GenreType();
-                genre.setType(GENRE_TYPE_MAIN);
-                genre.setHref(youViewGenre);
-                genres.add(genre);                
+                 genreHrefs.add(youViewGenre);               
             }
         }
-        return genres;
+        
+        return ImmutableList.copyOf(Iterables.transform(genreHrefs, TO_GENRE));
     }
 
     private GenreType generateGenreFromSpecialization(Content content) {

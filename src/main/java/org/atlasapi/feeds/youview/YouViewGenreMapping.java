@@ -1,6 +1,8 @@
 package org.atlasapi.feeds.youview;
 
+import static org.atlasapi.feeds.utils.lovefilm.LoveFilmGenreConverter.IS_SUB_GENRE;
 import static org.atlasapi.feeds.utils.lovefilm.LoveFilmGenreConverter.TO_ATLAS_GENRE;
+import static org.atlasapi.feeds.utils.lovefilm.LoveFilmGenreConverter.TO_ATLAS_SUB_GENRE;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,7 +27,7 @@ import com.google.common.io.Resources;
 
 public class YouViewGenreMapping {
     
-    private static final String GENRE_FILE = "TopLevel_LF_YV_GenreMapping.csv";
+    private static final String GENRE_FILE = "LOVEFiLM_YouView_GenreMapping.csv";
 
     private final Logger log = LoggerFactory.getLogger(YouViewGenreMapping.class);
     
@@ -53,7 +55,7 @@ public class YouViewGenreMapping {
     
     private static class GenreMappingLineProcessor implements LineProcessor<Multimap<String, String>> {
 
-        private static final Splitter ON_COMMA = Splitter.on(",");
+        private static final Splitter ON_COMMA = Splitter.on(",").omitEmptyStrings();
         
         private boolean headersSeen = false;
         Builder<String, String> mapping = ImmutableMultimap.builder();
@@ -72,12 +74,18 @@ public class YouViewGenreMapping {
             if (Iterables.size(values) < 2) {
                 return true;
             }
-            String key = TO_ATLAS_GENRE.apply(values.get(0));
+            String genre = values.get(0);
+            String key = null;
+            if (IS_SUB_GENRE.apply(genre)) {
+                key = TO_ATLAS_SUB_GENRE.apply(genre);                
+            } else {
+                key = TO_ATLAS_GENRE.apply(genre);
+            }
             for (String value : Iterables.skip(values, 1)) { 
                 mapping.put(key, value);
             }
             
-            return false;
+            return true;
         }
 
         @Override
