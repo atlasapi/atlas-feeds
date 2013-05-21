@@ -21,7 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.intl.Countries;
 
-public class LovefilmProgramInformationGeneratorTest {
+public class LoveFilmProgramInformationGeneratorTest {
     
     private static final ProgramInformationGenerator generator = new LoveFilmProgramInformationGenerator();
 
