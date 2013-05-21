@@ -2,7 +2,6 @@ package org.atlasapi.feeds.youview;
 
 import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getAsin;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -148,6 +147,8 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
                 memberOf.setIndex(Long.valueOf(series.getSeriesNumber()));
             }
             groupInfo.getMemberOf().add(memberOf);
+        } else {
+            groupInfo.setServiceIDRef(LOVEFILM_URL);
         }
         
         return groupInfo;
