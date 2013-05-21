@@ -6,6 +6,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 
 import java.math.BigInteger;
+import java.util.Set;
 
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.media.entity.Alias;
@@ -26,12 +27,15 @@ import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.InstanceDescriptionType;
+import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.metabroadcast.common.intl.Countries;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
@@ -40,8 +44,19 @@ public class LovefilmOnDemandLocationGeneratorTest {
     private static final OnDemandLocationGenerator generator = new LoveFilmOnDemandLocationGenerator();
 
     @Test
+    public void testOnDemandNotCreatedWhenNoEncoding() {
+        Film film = createFilm();
+        
+        Set<Version> versions = Sets.newHashSet(new Version());
+        film.setVersions(versions);
+        
+        Optional<OnDemandProgramType> onDemand = generator.generate(film);
+        assertFalse(onDemand.isPresent());
+    }
+    
+    @Test
     public void testFilmOnDemandGeneration() {
-        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(createFilm());
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(createFilm()).get();
 
         assertEquals("http://lovefilm.com/OnDemand", onDemand.getServiceIDRef());
         // TODO this will change when we get the digital release id, is placeholder for now        
@@ -90,7 +105,7 @@ public class LovefilmOnDemandLocationGeneratorTest {
 
     @Test
     public void testEpisodeOnDemandGeneration() {
-        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(createEpisode());
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(createEpisode()).get();
 
         assertEquals("http://lovefilm.com/OnDemand", onDemand.getServiceIDRef());
         // TODO this will change when we get the digital release id, is placeholder for now        
