@@ -64,6 +64,22 @@ public class LoveFilmGroupInformationGeneratorTest {
     private final YouViewGenreMapping genreMapping = new YouViewGenreMapping(); 
     private final GroupInformationGenerator generator = new LoveFilmGroupInformationGenerator(genreMapping);
 
+    
+    @Test
+    public void testServiceIdRefCreatedForTopLevelSeries() {
+        Series series = createSeries();
+        series.setParentRef(null);
+        
+        Episode child = createEpisode();
+        child.setParentRef(ParentRef.parentRefFrom(series));
+        child.setSeriesRef(null);
+        child.setSeriesNumber(null);
+        
+        GroupInformationType groupInfo = generator.generate(series, Optional.<Brand>absent(), child);
+        
+        assertEquals("http://lovefilm.com/ContentOwning", groupInfo.getServiceIDRef());
+    }
+    
     /**
      * This tests both the conversion from lovefilm genre uris to the youview
      * genres, as well as de-duplication of the resulting genre collection
