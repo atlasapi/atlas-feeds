@@ -44,6 +44,7 @@ import tva.mpeg7._2008.TitleType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -200,12 +201,16 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
         basicDescription.getLanguage().addAll(generateLanguage());
         basicDescription.setCreditsList(generateCreditsList(content));
+        Optional<RelatedMaterialType> relatedMaterial = Optional.absent();
         if (content instanceof Series) {
-            basicDescription.getRelatedMaterial().add(generateRelatedMaterial(item));
+            relatedMaterial = generateRelatedMaterial(item);
         } else if (content instanceof Brand) {
-            basicDescription.getRelatedMaterial().add(generateRelatedMaterial(item));
+            relatedMaterial = generateRelatedMaterial(item);
         } else {
-            basicDescription.getRelatedMaterial().add(generateRelatedMaterial(content));
+            relatedMaterial = generateRelatedMaterial(content);
+        }
+        if (relatedMaterial.isPresent()) {
+            basicDescription.getRelatedMaterial().add(relatedMaterial.get());
         }
         
         return basicDescription;
@@ -222,7 +227,10 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         return title;
     }
 
-    private RelatedMaterialType generateRelatedMaterial(Content content) {
+    private Optional<RelatedMaterialType> generateRelatedMaterial(Content content) {
+        if (Strings.isNullOrEmpty(content.getImage())) {
+            return Optional.absent();
+        }
         ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
         
         relatedMaterial.setHowRelated(generateHowRelated());
@@ -230,7 +238,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         relatedMaterial.setMediaLocator(generateMediaLocator(content));
         relatedMaterial.setContentProperties(generateContentProperties());
         
-        return relatedMaterial;
+        return Optional.<RelatedMaterialType>of(relatedMaterial);
     }
 
     private ContentPropertiesType generateContentProperties() {
