@@ -63,6 +63,18 @@ public class LoveFilmGroupInformationGeneratorTest {
     
     private final YouViewGenreMapping genreMapping = new YouViewGenreMapping(); 
     private final GroupInformationGenerator generator = new LoveFilmGroupInformationGenerator(genreMapping);
+    
+    @Test
+    public void testRelatedMaterialNotGeneratedIfNullOrEmptyImageString() {
+        Film film = createFilm();
+        film.setImage("");
+        
+        GroupInformationType groupInfo = generator.generate(film);
+        
+        BasicContentDescriptionType desc = groupInfo.getBasicDescription();
+        
+        assertTrue(desc.getRelatedMaterial().isEmpty());
+    }
 
     /**
      * This tests both the conversion from lovefilm genre uris to the youview
