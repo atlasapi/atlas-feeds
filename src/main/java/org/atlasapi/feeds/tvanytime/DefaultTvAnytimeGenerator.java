@@ -35,6 +35,7 @@ import org.xml.sax.SAXParseException;
 
 import tva.metadata._2010.GroupInformationTableType;
 import tva.metadata._2010.ObjectFactory;
+import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.ProgramDescriptionType;
 import tva.metadata._2010.ProgramInformationTableType;
 import tva.metadata._2010.ProgramLocationTableType;
@@ -149,7 +150,10 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
                 if (content instanceof Item) {
                     Item item = (Item) content;
                     progInfoTable.getProgramInformation().add(progInfoGenerator.generate(item));
-                    progLocTable.getOnDemandProgram().add(progLocationGenerator.generate(item));
+                    Optional<OnDemandProgramType> onDemand = progLocationGenerator.generate(item);
+                    if (onDemand.isPresent()) {
+                        progLocTable.getOnDemandProgram().add(onDemand.get());
+                    }
                 }
 
 

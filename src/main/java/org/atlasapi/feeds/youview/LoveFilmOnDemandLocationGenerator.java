@@ -62,7 +62,12 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
     }
     
     @Override
-    public OnDemandProgramType generate(Item item) {
+    public Optional<OnDemandProgramType> generate(Item item) {
+        Version version = Iterables.getOnlyElement(item.getVersions());
+        if (version.getManifestedAs().isEmpty()) {
+            return Optional.absent();
+        }
+        
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
         
         onDemand.setServiceIDRef(LOVEFILM_IDREF_ONDEMAND);
@@ -70,17 +75,11 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
         onDemand.setInstanceMetadataId(createImi(item));
         onDemand.setInstanceDescription(generateInstanceDescription(item));
         onDemand.setPublishedDuration(generatePublishedDuration(item));
-        Optional<XMLGregorianCalendar> startOfAvailability = generateAvailabilityStart(item);
-        if (startOfAvailability.isPresent()) {
-            onDemand.setStartOfAvailability(startOfAvailability.get());
-        }
-        Optional<XMLGregorianCalendar> endOfAvailability = generateAvailabilityEnd(item);
-        if (endOfAvailability.isPresent()) {
-            onDemand.setEndOfAvailability(endOfAvailability.get());
-        }
+        onDemand.setStartOfAvailability(generateAvailabilityStart(item));
+        onDemand.setEndOfAvailability(generateAvailabilityEnd(item));
         onDemand.setFree(generateFree());
 
-        return onDemand;
+        return Optional.<OnDemandProgramType>fromNullable(onDemand);
     }
 
     public static String createImi(Item item) {
@@ -178,23 +177,17 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
         return null;
     }
 
-    private Optional<XMLGregorianCalendar> generateAvailabilityStart(Item item) {
+    private XMLGregorianCalendar generateAvailabilityStart(Item item) {
         Version version = Iterables.getOnlyElement(item.getVersions());
         Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
         Policy policy = Iterables.getOnlyElement(encoding.getAvailableAt()).getPolicy();
-        if (policy.getAvailabilityStart() != null) {
-            return Optional.of(datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityStart().toGregorianCalendar()));
-        }
-        return Optional.absent();
+        return datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityStart().toGregorianCalendar());
     }
 
-    private Optional<XMLGregorianCalendar> generateAvailabilityEnd(Item item) {
+    private XMLGregorianCalendar generateAvailabilityEnd(Item item) {
         Version version = Iterables.getOnlyElement(item.getVersions());
         Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
         Policy policy = Iterables.getOnlyElement(encoding.getAvailableAt()).getPolicy();
-        if (policy.getAvailabilityEnd() != null) {
-            return Optional.of(datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityEnd().toGregorianCalendar()));
-        }
-        return Optional.absent();
+        return datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityEnd().toGregorianCalendar());
     }
 }
