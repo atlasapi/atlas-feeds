@@ -15,15 +15,15 @@ Action/Adventure > Superheroes,urn:tva:metadata:cs:ContentCS:2010:3.4.6,urn:tva:
 Action/Adventure > Thriller,urn:tva:metadata:cs:ContentCS:2010:3.4.6,urn:tva:metadata:cs:ContentCS:2010:3.4.6.10
 Action/Adventure > War,urn:tva:metadata:cs:ContentCS:2010:3.4.6,urn:tva:metadata:cs:ContentCS:2010:3.4.6.8
 Action/Adventure > Westerns,urn:tva:metadata:cs:ContentCS:2010:3.4.6,urn:tva:metadata:cs:ContentCS:2010:3.4.6.9
-Adult > Ben Dover,urn:tva:metadata:cs:ContentCS:2010:3.9,
-Adult > Comedy,urn:tva:metadata:cs:ContentCS:2010:3.9,
-Adult > Drama,urn:tva:metadata:cs:ContentCS:2010:3.9,
-Adult > Gay/Lesbian,urn:tva:metadata:cs:ContentCS:2010:3.9,
-Adult > General,urn:tva:metadata:cs:ContentCS:2010:3.9,
-Adult > Playboy,urn:tva:metadata:cs:ContentCS:2010:3.9,
-Adult > Romance,urn:tva:metadata:cs:ContentCS:2010:3.9,
-Adult > Sex Education,urn:tva:metadata:cs:ContentCS:2010:3.9,http://refdata.youview.com/mpeg7cs/YouViewContentCS/2010-12-16#3.8.7.7
-Adult > XXX,urn:tva:metadata:cs:ContentCS:2010:3.9,
+Adult > Ben Dover,,
+Adult > Comedy,,
+Adult > Drama,,
+Adult > Gay/Lesbian,,
+Adult > General,,
+Adult > Playboy,,
+Adult > Romance,,
+Adult > Sex Education,,
+Adult > XXX,,
 Animated > Anime,urn:tva:metadata:cs:FormatCS:2010:2.3.3,urn:tva:metadata:cs:ContentCS:2010:3.4.6
 Animated > Children,urn:tva:metadata:cs:FormatCS:2010:2.3.3,urn:tva:metadata:cs:IntendedAudienceCS:2010:4.2.1
 Animated > Comedy,urn:tva:metadata:cs:FormatCS:2010:2.3.3,urn:tva:metadata:cs:ContentCS:2010:3.5.7
@@ -107,7 +107,7 @@ Family > Musical,urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9,urn:tva:metad
 Family > Sci-Fi/Fantasy,urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9,urn:tva:metadata:cs:ContentCS:2010:3.4.6.7
 Family > Teen,urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9,http://refdata.youview.com/mpeg7cs/YouViewIntendedAudienceCS/2010-09-20#4.2.3
 Family > Television,urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9,
-Gay/Lesbian > Adult,urn:tva:metadata:cs:ContentCS:2010:3.4,urn:tva:metadata:cs:ContentCS:2010:3.9
+Gay/Lesbian > Adult,,
 Gay/Lesbian > Comedy,urn:tva:metadata:cs:ContentCS:2010:3.4,urn:tva:metadata:cs:ContentCS:2010:3.5.7
 Gay/Lesbian > Drama,urn:tva:metadata:cs:ContentCS:2010:3.4,urn:tva:metadata:cs:ContentCS:2010:3.4
 Gay/Lesbian > Gay,urn:tva:metadata:cs:ContentCS:2010:3.4,
@@ -241,7 +241,7 @@ Thriller > Action/Adventure,urn:tva:metadata:cs:ContentCS:2010:3.4.6.10,urn:tva:
 Thriller > African-American,urn:tva:metadata:cs:ContentCS:2010:3.4.6.10,
 Thriller > Crime,urn:tva:metadata:cs:ContentCS:2010:3.4.6.10,urn:tva:metadata:cs:ContentCS:2010:3.4.6.4
 Thriller > Drama,urn:tva:metadata:cs:ContentCS:2010:3.4.6.10,urn:tva:metadata:cs:ContentCS:2010:3.4
-Thriller > Erotic,urn:tva:metadata:cs:ContentCS:2010:3.4.6.10,urn:tva:metadata:cs:ContentCS:2010:3.9
+Thriller > Erotic,urn:tva:metadata:cs:ContentCS:2010:3.4.6.10,
 Thriller > General,urn:tva:metadata:cs:ContentCS:2010:3.4.6.10,
 Thriller > Bollywood,urn:tva:metadata:cs:ContentCS:2010:3.4.6.10,urn:tva:metadata:cs:ContentCS:2010:3.6.17.3
 Thriller > Mystery,urn:tva:metadata:cs:ContentCS:2010:3.4.6.10,urn:tva:metadata:cs:ContentCS:2010:3.4.6.4
