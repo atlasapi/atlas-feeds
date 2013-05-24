@@ -11,7 +11,12 @@
 				<ServiceGenre type="main" href="urn:tva:metadata:cs:OriginationCS:2005:5.8"/> <!-- tv -->
 				<ServiceGenre type="other" href="urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3"/> <!-- audio and video -->
 				<ServiceGenre type="other" href="http://refdata.youview.com/mpeg7cs/YouViewServiceTypeCS/2010-10-25#owning_service"/>
-				<ServiceGenre type="other" href="http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-lovefilm"/>
+<!--
+
+The ServiceGenre http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-lovefilm is not yet configured by YouView. 
+It is therefore commented out for now. They will advise when it is configured, at which point the ServiceInformation records should be
+re-uploaded with this ServiceGenre re-added.
+				<ServiceGenre type="other" href="http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-lovefilm"/> -->
 				<ServiceLanguage>en</ServiceLanguage>
 				<RelatedMaterial xsi:type="tva2:ExtendedRelatedMaterialType">
 					<HowRelated href="urn:tva:metadata:cs:HowRelatedCS:2010:19"/> <!-- promotional still image -->
@@ -55,7 +60,12 @@
 				<ServiceGenre type="main" href="urn:tva:metadata:cs:OriginationCS:2005:5.8"/> <!-- tv -->
 				<ServiceGenre type="other" href="urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3"/> <!-- audio and video -->
 				<ServiceGenre type="other" href="http://refdata.youview.com/mpeg7cs/YouViewServiceTypeCS/2010-10-25#on_demand_service"/>
-				<ServiceGenre type="other" href="http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-lovefilm"/>
+<!-- 
+
+The ServiceGenre http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-lovefilm is not yet configured by YouView. 
+It is therefore commented out for now. They will advise when it is configured, at which point the ServiceInformation records should be
+re-uploaded with this ServiceGenre re-added.
+				<ServiceGenre type="other" href="http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-lovefilm"/> -->
 				<ServiceLanguage>en</ServiceLanguage>
 				<RelatedMaterial xsi:type="tva2:ExtendedRelatedMaterialType">
 					<HowRelated href="urn:tva:metadata:cs:HowRelatedCS:2010:19"/> <!-- promotional still image -->
