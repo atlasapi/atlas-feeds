@@ -179,13 +179,13 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
                     }
                 }
 
-                if (content instanceof Episode) {
+                if (content instanceof Item) {
                     if (added.add(content.getCanonicalUri())) {
-                        Episode episode = (Episode)content;
-                        Optional<Series> series = getSeries(episode);
-                        Optional<Brand> brand = getBrand(episode);
+                        Item item = (Item) content;
+                        Optional<Series> series = getSeries(item);
+                        Optional<Brand> brand = getBrand(item);
 
-                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(episode, series, brand));
+                        groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(item, series, brand));
                         if (series.isPresent() && added.add(series.get().getCanonicalUri())) {
                             groupInfoTable.getGroupInformation().add(groupInfoGenerator.generate(series.get(), brand, getFirstItem(series.get())));
                         }
@@ -207,8 +207,8 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         return factory.createTVAMain(tvaMain);
     }
 
-    private Optional<Brand> getBrand(Episode episode) {
-        ParentRef brandRef = episode.getContainer();
+    private Optional<Brand> getBrand(Item item) {
+        ParentRef brandRef = item.getContainer();
         if (brandRef == null) {
             return Optional.absent();
         }
@@ -219,12 +219,16 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         }
         Brand brand = (Brand) identified;
         if (!hasAsin(brand)) {
-            throw new RuntimeException("brand " + brand.getCanonicalUri() + " has no ASIN, while its episode " + episode.getCanonicalUri() + " does.");
+            throw new RuntimeException("brand " + brand.getCanonicalUri() + " has no ASIN, while its item " + item.getCanonicalUri() + " does.");
         }
         return Optional.fromNullable(brand);
     }
 
-    private Optional<Series> getSeries(Episode episode) {
+    private Optional<Series> getSeries(Item item) {
+        if (!(item instanceof Episode)) {
+            return Optional.absent();
+        }
+        Episode episode = (Episode) item;
         ParentRef seriesRef = episode.getSeriesRef();
         if (seriesRef == null) {
             seriesRef = episode.getContainer();

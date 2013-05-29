@@ -114,12 +114,13 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     }
     
     @Override
-    public GroupInformationType generate(Episode episode, Optional<Series> series, Optional<Brand> brand) {
-        GroupInformationType groupInfo = generateWithCommonFields(episode, null);
+    public GroupInformationType generate(Item item, Optional<Series> series, Optional<Brand> brand) {
+        GroupInformationType groupInfo = generateWithCommonFields(item, null);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
-        
+
         if (series.isPresent()) {
+            Episode episode = (Episode) item;
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(series.get()));
             memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
@@ -127,7 +128,9 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         } else if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(brand.get()));
-            memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
+            if (item instanceof Episode) {
+                memberOf.setIndex(Long.valueOf(((Episode)item).getEpisodeNumber()));
+            }
             groupInfo.getMemberOf().add(memberOf);
         }
         
