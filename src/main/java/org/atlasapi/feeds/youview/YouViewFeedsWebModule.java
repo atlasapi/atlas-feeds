@@ -26,7 +26,7 @@ public class YouViewFeedsWebModule {
     private @Autowired ContentResolver contentResolver;
     
     public @Bean YouViewController feedController() {
-        return new YouViewController(configFetcher(), feedGenerator(), executor);
+        return new YouViewController(configFetcher(), feedGenerator(), executor, contentResolver);
     }
     
     public @Bean ApplicationConfigurationFetcher configFetcher(){
