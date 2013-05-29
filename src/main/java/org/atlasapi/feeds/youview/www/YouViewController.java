@@ -60,7 +60,8 @@ public class YouViewController {
      */
     @RequestMapping("/feeds/youview/lovefilm")
     public void generateFeed(HttpServletRequest request, HttpServletResponse response,
-            @RequestParam(value = "lastUpdated", required = false) String lastUpdated) throws IOException {
+            @RequestParam(value = "lastUpdated", required = false) String lastUpdated,
+            @RequestParam(value = "uri", required = false) String uri) throws IOException {
         try {
             final ApplicationConfiguration appConfig = appConfig(request);
             if (!appConfig.isEnabled(PUBLISHER)) {
@@ -72,7 +73,8 @@ public class YouViewController {
             response.setStatus(HttpServletResponse.SC_OK);
             
             Optional<String> since = Optional.fromNullable(lastUpdated);
-            feedGenerator.generateXml(getContentSinceDate(since), response.getOutputStream());
+            Optional<String> possibleUri = Optional.fromNullable(uri);
+            feedGenerator.generateXml(getContent(since, possibleUri), response.getOutputStream());
             
         } catch (IOException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -80,33 +82,15 @@ public class YouViewController {
         }
     }
     
-    @RequestMapping("/feeds/youview/lovefilm/content")
-    public void generateFeedForItem(HttpServletRequest request, HttpServletResponse response,
-            @RequestParam(value = "uri", required = true) String uri) throws IOException {
-        try {
-            final ApplicationConfiguration appConfig = appConfig(request);
-            if (!appConfig.isEnabled(PUBLISHER)) {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.setContentLength(0);
-                return;
-            }
-            response.setContentType(MimeType.APPLICATION_ATOM_XML.toString());
-            response.setStatus(HttpServletResponse.SC_OK);
-            
-            ResolvedContent resolvedContent = contentResolver.findByCanonicalUris(ImmutableList.of(uri));
+    private Iterable<Content> getContent(Optional<String> since, Optional<String> possibleUri) {
+        if (possibleUri.isPresent()) {
+            ResolvedContent resolvedContent = contentResolver.findByCanonicalUris(ImmutableList.of(possibleUri.get()));
             Collection<Identified> resolved = resolvedContent.asResolvedMap().values();
-            feedGenerator.generateXml(ImmutableList.of((Content) Iterables.getOnlyElement(resolved)), response.getOutputStream());
-            
-        } catch (IOException e) {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.setContentLength(0);
+            return ImmutableList.of((Content) Iterables.getOnlyElement(resolved));
+        } else {
+            DateTime start = since.isPresent() ? fmt.parseDateTime(since.get()) : START_OF_TIME;
+            return ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start));
         }
-    }
-    
-    private Iterable<Content> getContentSinceDate(Optional<String> since) {
-        
-        DateTime start = since.isPresent() ? fmt.parseDateTime(since.get()) : START_OF_TIME;
-        return ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start));
     }
     
     private ApplicationConfiguration appConfig(HttpServletRequest request) {
