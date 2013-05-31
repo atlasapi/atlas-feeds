@@ -225,13 +225,18 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
     }
 
     private Optional<Series> getSeries(Item item) {
-        if (!(item instanceof Episode)) {
-            return Optional.absent();
-        }
-        Episode episode = (Episode) item;
-        ParentRef seriesRef = episode.getSeriesRef();
-        if (seriesRef == null) {
-            seriesRef = episode.getContainer();
+        ParentRef seriesRef;
+        if (item instanceof Episode) {
+            Episode episode = (Episode) item;
+            seriesRef = episode.getSeriesRef();
+            if (seriesRef == null) {
+                seriesRef = episode.getContainer();
+                if (seriesRef == null) {
+                    return Optional.absent();
+                }
+            }
+        } else {
+            seriesRef = item.getContainer();
             if (seriesRef == null) {
                 return Optional.absent();
             }
@@ -243,7 +248,7 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         }
         Series series = (Series) identified;
         if (!hasAsin(series)) {
-            throw new RuntimeException("series " + series.getCanonicalUri() + " has no ASIN, while its episode " + episode.getCanonicalUri() + " does.");
+            throw new RuntimeException("series " + series.getCanonicalUri() + " has no ASIN, while its episode " + item.getCanonicalUri() + " does.");
         }
         return Optional.fromNullable(series);
     }
