@@ -32,6 +32,7 @@ import org.atlasapi.media.entity.LookupRef;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.util.ItemAndBroadcast;
 import org.atlasapi.persistence.content.ContentCategory;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
@@ -91,7 +92,7 @@ public abstract class RadioPlayerFeedCompiler {
             DateTime date = ((RadioPlayerPiFeedSpec)spec).getDay().toDateTimeAtStartOfDay(DateTimeZones.UTC);
             Channel channel = channelResolver.fromUri(spec.getService().getServiceUri()).requireValue();
             Schedule schedule = scheduleResolver.schedule(date.minusMillis(1), date.plusDays(1), ImmutableSet.of(channel), ImmutableSet.of(Publisher.BBC), Optional.<ApplicationConfiguration>absent());
-            return Iterables.getOnlyElement(schedule.channelSchedules()).items();
+            return Lists.transform(Iterables.getOnlyElement(schedule.channelSchedules()).getEntries(), ItemAndBroadcast.toItem());
         }
     }
     

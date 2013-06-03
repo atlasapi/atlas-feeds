@@ -16,12 +16,11 @@ import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
-import org.atlasapi.media.entity.LookupRef;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
-import org.atlasapi.persistence.content.ContentCategory;
+import org.atlasapi.media.util.ItemAndBroadcast;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.joda.time.DateTime;
@@ -30,9 +29,7 @@ import org.joda.time.LocalTime;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -94,7 +91,7 @@ public class XmlTvFeedCompiler {
         DateTime from = days.lowerEndpoint().toDateTime(SCHEDULE_START, DateTimeZones.UTC);
         DateTime to = days.upperEndpoint().toDateTime(SCHEDULE_START, DateTimeZones.UTC);
         Schedule schedule = scheduleResolver.schedule(from, to, ImmutableList.of(channel), ImmutableSet.of(publisher), Optional.<ApplicationConfiguration>absent());
-        List<Item> items = Iterables.getOnlyElement(schedule.channelSchedules()).items();
+        List<Item> items = Lists.transform(Iterables.getOnlyElement(schedule.channelSchedules()).getEntries(), ItemAndBroadcast.toItem());
         return items;
     }
     

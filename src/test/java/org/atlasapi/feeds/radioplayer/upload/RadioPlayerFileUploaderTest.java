@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -47,6 +46,7 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.util.ItemAndBroadcast;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
@@ -121,7 +121,7 @@ public class RadioPlayerFileUploaderTest {
 	@Test
 	@Ignore("fix lookups")
 	public void testRun() throws Exception {
-	    Map<Channel, List<Item>> channelMap = Maps.newHashMap();
+	    Map<Channel, List<ItemAndBroadcast>> channelMap = Maps.newHashMap();
 	    channelMap.put(channel, ImmutableList.of(buildItem(service.getServiceUri(), day, day.plus(1))));
 	    
 	    final Schedule schedule = Schedule.fromChannelMap(channelMap, new Interval(day, day.plusDays(1)));
@@ -207,7 +207,7 @@ public class RadioPlayerFileUploaderTest {
 		server.start();
 	}
 
-	public static Item buildItem(String service, DateTime transmissionStart, DateTime transmissionEnd) {
+	public static ItemAndBroadcast buildItem(String service, DateTime transmissionStart, DateTime transmissionEnd) {
 		
 		Item testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c", "bbc:b00f4d9c", Publisher.BBC);
 		testItem.setTitle("BBC Electric Proms: Saturday Night Fever");
@@ -235,7 +235,7 @@ public class RadioPlayerFileUploaderTest {
 
 		testItem.addVersion(version);
 
-		return testItem;
+		return new ItemAndBroadcast(testItem, broadcast);
 	}
 
 	private static final DateTimeZone TIMEZONE = DateTimeZone.forOffsetHours(8);
