@@ -102,6 +102,7 @@ public class LakeviewFeedCompilerTest {
         LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, genericTitleEnabled);
 	    Episode episode = new Episode("episodeUri", "episodeCurie", null);
 	    Brand container = new Brand("brandUri", "brandCurie", null);
+	    container.setId(1);
 	    episode.setTitle(episodeTitle);
 	    episode.setEpisodeNumber(episodeNumber);
 	    

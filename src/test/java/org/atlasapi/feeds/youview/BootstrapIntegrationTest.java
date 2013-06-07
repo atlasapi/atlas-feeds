@@ -54,6 +54,7 @@ import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.StringPayload;
 import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.time.DateTimeZones;
 
 public class BootstrapIntegrationTest {
     
@@ -188,7 +189,8 @@ public class BootstrapIntegrationTest {
     }
     
     private void populateContentFields(Content content, String uri) {
-        
+        content.setId(uri.hashCode());
+        content.setThisOrChildLastUpdated(new DateTime(DateTimeZones.UTC));
         content.setCanonicalUri(uri);
         content.setCurie("lf:e-177221");
         content.setTitle("Dr. Strangelove");

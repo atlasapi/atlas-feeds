@@ -55,6 +55,7 @@ import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.StringPayload;
 import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.time.DateTimeZones;
 import com.metabroadcast.common.url.UrlEncoding;
 
 public class DeltaIntegrationTest {
@@ -206,7 +207,8 @@ public class DeltaIntegrationTest {
     }
     
     private void populateContentFields(Content content, String uri) {
-        
+        content.setId(uri.hashCode());
+        content.setThisOrChildLastUpdated(new DateTime(DateTimeZones.UTC));
         content.setCanonicalUri(uri);
         content.setCurie("lf:e-177221");
         content.setTitle("Dr. Strangelove");
