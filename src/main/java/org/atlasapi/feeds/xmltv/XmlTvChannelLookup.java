@@ -64,7 +64,7 @@ public class XmlTvChannelLookup {
 
         @Override
         public String toString() {
-            return String.format("XmlTv Channel: %s (%s)", channel.uri(), title);
+            return String.format("XmlTv Channel: %s (%s)", channel.getUri(), title);
         }
     }
     
@@ -78,7 +78,7 @@ public class XmlTvChannelLookup {
     			Integer key = Integer.decode(m.group(1));
     			String overrideTitle = CHANNEL_NAME_OVERRIDES.get(key);
     			Channel channel = entry.getValue();
-    			map.put(key, new XmlTvChannel(channel, overrideTitle == null ? channel.title() : overrideTitle));
+    			map.put(key, new XmlTvChannel(channel, overrideTitle == null ? channel.getTitle() : overrideTitle));
     		}
     	}
     	
@@ -93,7 +93,7 @@ public class XmlTvChannelLookup {
     }
     
     public static XmlTvChannel channelFrom(Channel channel) {
-        return new XmlTvChannel(channel, channel.title());
+        return new XmlTvChannel(channel, channel.getTitle());
     }
     
     public static XmlTvChannel channelFrom(Channel channel, String title) {
