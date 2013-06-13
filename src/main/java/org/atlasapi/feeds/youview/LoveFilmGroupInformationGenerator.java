@@ -120,10 +120,12 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
 
         if (series.isPresent()) {
-            Episode episode = (Episode) item;
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(series.get()));
-            memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
+            if (item instanceof Episode) {
+                Episode episode = (Episode) item;
+                memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
+            }
             groupInfo.getMemberOf().add(memberOf);
         } else if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
