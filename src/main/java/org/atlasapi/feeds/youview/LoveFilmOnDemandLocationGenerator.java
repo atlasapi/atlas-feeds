@@ -86,6 +86,10 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
         return IMI_PREFIX + getAsin(item);
     }
     
+    public static String createVersionCrid(Item item) { 
+        return LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(item) + VERSION_SUFFIX;
+    }
+    
     // hardcoded
     private FlagType generateFree() {
         FlagType free = new FlagType();
@@ -95,7 +99,7 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
 
     private CRIDRefType generateProgram(Item item) {
         CRIDRefType program = new CRIDRefType();
-        program.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(item) + VERSION_SUFFIX);
+        program.setCrid(createVersionCrid(item));
         return program;
     }
 

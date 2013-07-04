@@ -66,6 +66,9 @@ public class YouViewDeleter {
         for (Content deleted : orderedDeletes) {
             try {
                 if (deleted instanceof Item) {
+                    if (sendDelete(LoveFilmOnDemandLocationGenerator.createVersionCrid((Item) deleted))) {
+                        successes++;
+                    }
                     if (sendDelete(LoveFilmOnDemandLocationGenerator.createImi((Item) deleted))) {
                         successes++;
                     }
