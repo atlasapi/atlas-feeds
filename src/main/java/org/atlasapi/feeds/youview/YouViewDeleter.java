@@ -64,24 +64,31 @@ public class YouViewDeleter {
         List<Content> orderedDeletes = REVERSE_HIERARCHICAL_ORDER.sortedCopy(toBeDeleted);
         int successes = 0;
         for (Content deleted : orderedDeletes) {
-            if (deleted instanceof Item) {
-                if (sendDelete(LoveFilmOnDemandLocationGenerator.createImi((Item) deleted))) {
-                    successes++;
+            try {
+                if (deleted instanceof Item) {
+                    if (sendDelete(LoveFilmOnDemandLocationGenerator.createVersionCrid((Item) deleted))) {
+                        successes++;
+                    }
+                    if (sendDelete(LoveFilmOnDemandLocationGenerator.createImi((Item) deleted))) {
+                        successes++;
+                    }
+                    if (sendDelete(LoveFilmProgramInformationGenerator.createCrid((Item) deleted))) {
+                        successes++;
+                    }
+                    if (sendDelete(LoveFilmGroupInformationGenerator.createCrid(deleted))) {
+                        successes++;
+                    }
+                } else if (deleted instanceof Series) {
+                    if (sendDelete(LoveFilmGroupInformationGenerator.createCrid(deleted))) {
+                        successes++;
+                    }
+                } else if (deleted instanceof Brand) {
+                    if (sendDelete(LoveFilmGroupInformationGenerator.createCrid(deleted))) {
+                        successes++;
+                    }
                 }
-                if (sendDelete(LoveFilmProgramInformationGenerator.createCrid((Item) deleted))) {
-                    successes++;
-                }
-                if (sendDelete(LoveFilmGroupInformationGenerator.createCrid(deleted))) {
-                    successes++;
-                }
-            } else if (deleted instanceof Series) {
-                if (sendDelete(LoveFilmGroupInformationGenerator.createCrid(deleted))) {
-                    successes++;
-                }
-            } else if (deleted instanceof Brand) {
-                if (sendDelete(LoveFilmGroupInformationGenerator.createCrid(deleted))) {
-                    successes++;
-                }
+            } catch (RuntimeException e) {
+                log.error("Failed to delete content", e); 
             }
         }
         return successes;
