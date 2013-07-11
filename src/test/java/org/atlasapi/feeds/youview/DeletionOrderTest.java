@@ -41,11 +41,11 @@ public class DeletionOrderTest {
         // monitor http calls
         deleter.sendDeletes(deletes);
 
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/episode1234"));
-        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/episode1234"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/1234"));
+        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/1234"));
         
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/episode5678"));
-        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/episode5678"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/5678"));
+        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/5678"));
     }
     
     @Test
@@ -56,12 +56,12 @@ public class DeletionOrderTest {
         deleter.sendDeletes(deletes);
 
         // Item
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/episode3456"));
-        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/episode3456"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/3456"));
+        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/3456"));
         // Series
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/series2345"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/2345"));
         // Brand
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/brand1234"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/1234"));
     }
 
     private Brand createBrand(String uri, String asin) {

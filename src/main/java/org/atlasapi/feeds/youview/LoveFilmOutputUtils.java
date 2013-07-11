@@ -8,8 +8,8 @@ public class LoveFilmOutputUtils {
     private static final String ASIN_NAMESPACE = "gb:amazon:asin";
     private static final String LOVEFILM_URI_PATTERN = "http:\\/\\/lovefilm\\.com\\/[a-z]*\\/";
     
-    public static String getId(String uri) {
-        return uri.replaceAll(LOVEFILM_URI_PATTERN, "");
+    public static String getId(Content content) {
+        return content.getCanonicalUri().replaceAll(LOVEFILM_URI_PATTERN, "");
     }
     
     public static String getAsin(Content content) {

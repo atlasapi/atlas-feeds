@@ -77,8 +77,8 @@ public class SingleItemEndpointTest {
 
         controller.deleteContent(response, "itemUri");
 
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/itemASIN"));
-        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/itemASIN"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/itemUri"));
+        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/itemUri"));
     }
     
     @Test

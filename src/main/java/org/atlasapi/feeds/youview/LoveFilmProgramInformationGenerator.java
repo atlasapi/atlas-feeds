@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview;
 
 import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getAsin;
+import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getId;
 
 import java.util.List;
 import java.util.Map;
@@ -95,7 +96,7 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
     }
 
     public static String createCrid(Item item) {
-        return LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(item);
+        return LOVEFILM_PRODUCT_CRID_PREFIX + getId(item);
     }
 
     private UniqueIDType generateOtherId(Item item) {
@@ -170,7 +171,7 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
 
     private DerivedFromType generateDerivedFrom(Item item) {
         DerivedFromType derivedFrom = new DerivedFromType();
-        derivedFrom.setCrid(LOVEFILM_CRID_PREFIX + getAsin(item));
+        derivedFrom.setCrid(LOVEFILM_CRID_PREFIX + getId(item));
         return derivedFrom;
     }
 }

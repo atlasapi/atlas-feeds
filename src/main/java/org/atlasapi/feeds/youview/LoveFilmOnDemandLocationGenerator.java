@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview;
 
+import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getId;
 import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getAsin;
 
 import java.math.BigInteger;
@@ -83,11 +84,11 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
     }
 
     public static String createImi(Item item) {
-        return IMI_PREFIX + getAsin(item);
+        return IMI_PREFIX + getId(item);
     }
     
     public static String createVersionCrid(Item item) { 
-        return LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(item) + VERSION_SUFFIX;
+        return LOVEFILM_PRODUCT_CRID_PREFIX + getId(item) + VERSION_SUFFIX;
     }
     
     // hardcoded
