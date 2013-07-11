@@ -167,7 +167,7 @@ public class LakeviewFeedCompiler {
         }
         
         if (brand.getPresentationChannel() != null && channelResolver.fromKey(brand.getPresentationChannel()).hasValue()) {
-            element.appendChild(stringElement("Network", LAKEVIEW, channelResolver.fromKey(brand.getPresentationChannel()).requireValue().title()));
+            element.appendChild(stringElement("Network", LAKEVIEW, channelResolver.fromKey(brand.getPresentationChannel()).requireValue().getTitle()));
         } else {
             List<Broadcast> broadcasts = extractBroadcasts(contentGroup.episodes());
             if (!broadcasts.isEmpty()) {
@@ -185,7 +185,7 @@ public class LakeviewFeedCompiler {
     }
 
     private String extractNetwork(List<Broadcast> broadcasts) {
-        return channelResolver.fromUri(TRANSMISSION_ORDERING.min(broadcasts).getBroadcastOn()).requireValue().title();
+        return channelResolver.fromUri(TRANSMISSION_ORDERING.min(broadcasts).getBroadcastOn()).requireValue().getTitle();
     }
 
     Element createSeriesElem(Series series, Brand parent, DateTime originalPublicationDate, String lastModified) {
