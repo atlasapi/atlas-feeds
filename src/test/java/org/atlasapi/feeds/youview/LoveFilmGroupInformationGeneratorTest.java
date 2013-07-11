@@ -261,10 +261,10 @@ public class LoveFilmGroupInformationGeneratorTest {
     }
     
     @Test
-    public void testFilmOnDemandGeneration() {
+    public void testFilmGroupInformationGeneration() {
         GroupInformationType groupInfo = generator.generate(createFilm());
 
-        assertEquals("crid://lovefilm.com/product/filmAsin", groupInfo.getGroupId());
+        assertEquals("crid://lovefilm.com/product/177221", groupInfo.getGroupId());
         assertEquals("http://lovefilm.com/ContentOwning", groupInfo.getServiceIDRef());
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
@@ -281,13 +281,13 @@ public class LoveFilmGroupInformationGeneratorTest {
     }
 
     @Test
-    public void testEpisodeOnDemandGeneration() {
+    public void testEpisodeGroupInformationGeneration() {
         GroupInformationType groupInfo = generator.generate(createEpisode(), Optional.of(createSeries()), Optional.of(createBrand()));
 
-        assertEquals("crid://lovefilm.com/product/episodeAsin", groupInfo.getGroupId());
+        assertEquals("crid://lovefilm.com/product/180014", groupInfo.getGroupId());
         
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://lovefilm.com/product/seriesAsin", memberOf.getCrid());
+        assertEquals("crid://lovefilm.com/product/179534", memberOf.getCrid());
         assertEquals(Long.valueOf(5), memberOf.getIndex());
         
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -305,17 +305,17 @@ public class LoveFilmGroupInformationGeneratorTest {
     }
     
     @Test
-    public void testSeriesOnDemandGeneration() {
+    public void testSeriesGroupInformationGeneration() {
         Episode episode = createEpisode();
         episode.setImage("episode image");
         
         GroupInformationType groupInfo = generator.generate(createSeries(), Optional.of(createBrand()), episode);
 
-        assertEquals("crid://lovefilm.com/product/seriesAsin", groupInfo.getGroupId());
+        assertEquals("crid://lovefilm.com/product/179534", groupInfo.getGroupId());
         assertTrue(groupInfo.isOrdered());
         
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://lovefilm.com/product/brandAsin", memberOf.getCrid());
+        assertEquals("crid://lovefilm.com/product/184930", memberOf.getCrid());
         assertEquals(Long.valueOf(2), memberOf.getIndex());
         
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -340,13 +340,13 @@ public class LoveFilmGroupInformationGeneratorTest {
     }
     
     @Test
-    public void testBrandOnDemandGeneration() {
+    public void testBrandGroupInformationGeneration() {
         Episode episode = createEpisode();
         episode.setImage("episode image");
         
         GroupInformationType groupInfo = generator.generate(createBrand(), episode);
 
-        assertEquals("crid://lovefilm.com/product/brandAsin", groupInfo.getGroupId());
+        assertEquals("crid://lovefilm.com/product/184930", groupInfo.getGroupId());
         assertEquals("http://lovefilm.com/ContentOwning", groupInfo.getServiceIDRef());
         assertTrue(groupInfo.isOrdered());
                 

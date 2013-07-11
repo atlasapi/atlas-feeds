@@ -29,11 +29,11 @@ public class LoveFilmProgramInformationGeneratorTest {
     public void testFilmProgInfoGeneration() {
         ProgramInformationType progInfo = generator.generate(createFilm());
 
-        assertEquals("crid://lovefilm.com/product/filmAsin_version", progInfo.getProgramId());
+        assertEquals("crid://lovefilm.com/product/177221_version", progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
         assertEquals("deep_linking_id.lovefilm.com", otherId.getAuthority());
         assertEquals("filmAsin", otherId.getValue());
-        assertEquals("crid://lovefilm.com/product/filmAsin", progInfo.getDerivedFrom().getCrid());
+        assertEquals("crid://lovefilm.com/product/177221", progInfo.getDerivedFrom().getCrid());
         
         ExtendedContentDescriptionType basicDescription = (ExtendedContentDescriptionType) progInfo.getBasicDescription();
         
@@ -48,11 +48,11 @@ public class LoveFilmProgramInformationGeneratorTest {
     public void testEpisodeProgInfoGeneration() {
         ProgramInformationType progInfo = generator.generate(createEpisode());
         
-        assertEquals("crid://lovefilm.com/product/episodeAsin_version", progInfo.getProgramId());
+        assertEquals("crid://lovefilm.com/product/180014_version", progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
         assertEquals("deep_linking_id.lovefilm.com", otherId.getAuthority());
         assertEquals("episodeAsin", otherId.getValue());
-        assertEquals("crid://lovefilm.com/product/episodeAsin", progInfo.getDerivedFrom().getCrid());
+        assertEquals("crid://lovefilm.com/product/180014", progInfo.getDerivedFrom().getCrid());
         
         ExtendedContentDescriptionType basicDescription = (ExtendedContentDescriptionType) progInfo.getBasicDescription();
         
