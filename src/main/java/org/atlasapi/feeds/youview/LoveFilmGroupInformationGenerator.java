@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview;
 
-import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getAsin;
+import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getId;
 
 import java.util.List;
 import java.util.Map;
@@ -121,7 +121,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
 
         if (series.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
-            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(series.get()));
+            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(series.get()));
             if (item instanceof Episode) {
                 Episode episode = (Episode) item;
                 memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
@@ -129,7 +129,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
             groupInfo.getMemberOf().add(memberOf);
         } else if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
-            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(brand.get()));
+            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(brand.get()));
             if (item instanceof Episode) {
                 memberOf.setIndex(Long.valueOf(((Episode)item).getEpisodeNumber()));
             }
@@ -148,7 +148,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         
         if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
-            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(brand.get()));
+            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(brand.get()));
             if (series.getSeriesNumber() != null) {
                 memberOf.setIndex(Long.valueOf(series.getSeriesNumber()));
             }
@@ -182,7 +182,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     }
 
     public static String createCrid(Content content) {
-        return LOVEFILM_PRODUCT_CRID_PREFIX + getAsin(content);
+        return LOVEFILM_PRODUCT_CRID_PREFIX + getId(content);
     }
     
     private BaseProgramGroupTypeType generateGroupType(String groupType) {

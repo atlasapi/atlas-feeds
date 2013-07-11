@@ -60,9 +60,9 @@ public class LoveFilmOnDemandLocationGeneratorTest {
 
         assertEquals("http://lovefilm.com/OnDemand", onDemand.getServiceIDRef());
         // TODO this will change when we get the digital release id, is placeholder for now        
-        assertEquals("crid://lovefilm.com/product/filmAsin_version", onDemand.getProgram().getCrid());
+        assertEquals("crid://lovefilm.com/product/177221_version", onDemand.getProgram().getCrid());
         // TODO this will change when we get the digital release id, is placeholder for now
-        assertEquals("imi:lovefilm.com/filmAsin", onDemand.getInstanceMetadataId());
+        assertEquals("imi:lovefilm.com/177221", onDemand.getInstanceMetadataId());
         assertEquals("PT1H30M0.000S", onDemand.getPublishedDuration().toString());
         assertEquals("2012-07-03T00:00:00.000Z", onDemand.getStartOfAvailability().toString());
         assertEquals("2013-07-17T00:00:00.000Z", onDemand.getEndOfAvailability().toString());
@@ -109,9 +109,9 @@ public class LoveFilmOnDemandLocationGeneratorTest {
 
         assertEquals("http://lovefilm.com/OnDemand", onDemand.getServiceIDRef());
         // TODO this will change when we get the digital release id, is placeholder for now        
-        assertEquals("crid://lovefilm.com/product/episodeAsin_version", onDemand.getProgram().getCrid());
+        assertEquals("crid://lovefilm.com/product/180014_version", onDemand.getProgram().getCrid());
         // TODO this will change when we get the digital release id, is placeholder for now
-        assertEquals("imi:lovefilm.com/episodeAsin", onDemand.getInstanceMetadataId());
+        assertEquals("imi:lovefilm.com/180014", onDemand.getInstanceMetadataId());
         assertEquals("PT45M0.000S", onDemand.getPublishedDuration().toString());
         assertEquals("2009-09-21T00:00:00.000Z", onDemand.getStartOfAvailability().toString());
         assertEquals("2013-03-01T00:00:00.000Z", onDemand.getEndOfAvailability().toString());
