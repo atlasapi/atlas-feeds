@@ -144,10 +144,10 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
 
         for (Content content : contents) {
             try {
-                if (!hasAsin(content)) {
-                    continue;
-                }
                 if (content instanceof Item) {
+                    if (!hasAsin(content)) {
+                        continue;
+                    }
                     Item item = (Item) content;
                     progInfoTable.getProgramInformation().add(progInfoGenerator.generate(item));
                     Optional<OnDemandProgramType> onDemand = progLocationGenerator.generate(item);
@@ -247,9 +247,6 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
             return Optional.absent();
         }
         Series series = (Series) identified;
-        if (!hasAsin(series)) {
-            throw new RuntimeException("series " + series.getCanonicalUri() + " has no ASIN, while its episode " + item.getCanonicalUri() + " does.");
-        }
         return Optional.fromNullable(series);
     }
 
@@ -260,9 +257,6 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
         }
         ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(brandRef.getUri()));
         Brand brand = (Brand) resolved.asResolvedMap().get(brandRef.getUri());
-        if (!hasAsin(brand)) {
-            throw new RuntimeException("brand " + brand.getCanonicalUri() + " has no ASIN, while its series " + series.getCanonicalUri() + " does.");
-        }
         return Optional.fromNullable(brand);
     }
 
