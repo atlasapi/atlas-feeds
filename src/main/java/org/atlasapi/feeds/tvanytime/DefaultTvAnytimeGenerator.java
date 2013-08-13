@@ -218,6 +218,9 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
             return Optional.absent();
         }
         Brand brand = (Brand) identified;
+        if (!hasAsin(brand)) {
+            throw new RuntimeException("brand " + brand.getCanonicalUri() + " has no ASIN, while its item " + item.getCanonicalUri() + " does.");
+        }
         return Optional.fromNullable(brand);
     }
 
