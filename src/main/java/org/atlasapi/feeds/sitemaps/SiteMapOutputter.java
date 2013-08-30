@@ -23,6 +23,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Policy;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
@@ -163,13 +164,22 @@ public class SiteMapOutputter {
         for (Version version : item.nativeVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if (TransportType.LINK.equals(location.getTransportType())) {
+                    if (isPcOrNullPlatformLinkLocation(location)) {
                         return location;
                     }
                 }
             }
         }
         return null;
+    }
+
+    private boolean isPcOrNullPlatformLinkLocation(Location location) {
+        boolean isLinkLocation = TransportType.LINK.equals(location.getTransportType());
+        Policy policy = location.getPolicy();
+        if (policy == null) {
+            return isLinkLocation;
+        }
+        return isLinkLocation && (policy.getPlatform() == null || Platform.PC.equals(policy.getPlatform()));
     }
 
     private void write(OutputStream out, Element feed) throws UnsupportedEncodingException, IOException {
