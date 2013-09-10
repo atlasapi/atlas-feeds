@@ -17,7 +17,7 @@ import org.joda.time.DateTime;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-public class RadioPlayerSuccessChecker implements Runnable {
+public class RadioPlayerFtpSuccessChecker implements Runnable {
 
     private final static String SUCCESS_DIR = "Processed";
     private final static String FAILURE_DIR = "Failed";
@@ -27,7 +27,7 @@ public class RadioPlayerSuccessChecker implements Runnable {
     private final AdapterLog log;
     private final String remoteService;
 
-    public RadioPlayerSuccessChecker(String remoteService, CommonsDirectoryLister ftp, RadioPlayerUploadResultStore resultStore, AdapterLog log) {
+    public RadioPlayerFtpSuccessChecker(String remoteService, CommonsDirectoryLister ftp, RadioPlayerUploadResultStore resultStore, AdapterLog log) {
         this.remoteService = remoteService;
         this.ftp = ftp;
         this.resultStore = resultStore;
@@ -60,6 +60,7 @@ public class RadioPlayerSuccessChecker implements Runnable {
                 }
 
                 RadioPlayerFilenameMatcher matcher = RadioPlayerFilenameMatcher.on(file.fileName().replace(".xml", ""));
+                // this check is redundant
                 if (RadioPlayerFilenameMatcher.hasMatch(matcher)) {
                     for (FileUploadResult result : getCurrentResults(matcher)) {
                         resultStore.record(radioPlayerResult(matcher, result.withRemoteProcessingResult(processSuccess)));

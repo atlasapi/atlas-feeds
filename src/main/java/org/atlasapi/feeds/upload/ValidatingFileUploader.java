@@ -21,9 +21,9 @@ public class ValidatingFileUploader implements FileUploader {
     }
 
     @Override
-    public void upload(FileUpload upload) throws Exception {
+    public FileUploaderResult upload(FileUpload upload) throws Exception {
         validator.validate(new ByteArrayInputStream(upload.getFileData()));
-        delegate.upload(upload);
+        return delegate.upload(upload);
     }
 
 }

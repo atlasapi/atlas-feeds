@@ -22,8 +22,15 @@ public class FileUploadService {
     
     public FileUploadResult upload(FileUpload upload) {
         try {
-            uploader.upload(upload);
-            return new FileUploadResult(serviceIdentifier, upload.getFilename(), new DateTime(DateTimeZones.UTC), FileUploadResultType.SUCCESS);
+            FileUploaderResult result = uploader.upload(upload);
+            FileUploadResult fileUploadResult = new FileUploadResult(serviceIdentifier, upload.getFilename(), new DateTime(DateTimeZones.UTC), result.getStatus());
+            if (result.getTransactionId().isPresent()) {
+                return fileUploadResult.withTransactionId(result.getTransactionId().get());
+            }
+            if (result.getMessage().isPresent()) {
+                return fileUploadResult.withMessage(result.getMessage().get());
+            }
+            return fileUploadResult;
         } catch (ConnectException e) {
             return failedUploadResult(upload, e).withConnectionSuccess(false);
         } catch (Exception e) {

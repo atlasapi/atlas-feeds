@@ -60,28 +60,45 @@ public abstract class RadioPlayerFeedCompiler {
         this.knownTypeContentResolver = contentResolver;
     }
     
-    private static Map<FileType, RadioPlayerFeedCompiler> compilerMap;
+    private static Map<Publisher, Map<FileType, RadioPlayerFeedCompiler>> compilerMap;
     
-    public static void init(ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, ContentResolver contentResolver, ChannelResolver channelResolver) {
-        compilerMap = ImmutableMap.<FileType, RadioPlayerFeedCompiler>of(
-                PI, new RadioPlayerProgrammeInformationFeedCompiler(scheduleResolver, knownTypeContentResolver, channelResolver),
+    // not ideal - this leads to identical OD compilers for each publisher 
+    public static void init(ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, ContentResolver contentResolver, ChannelResolver channelResolver, Iterable<Publisher> publishers) {
+        ImmutableMap.Builder<Publisher, Map<FileType, RadioPlayerFeedCompiler>> map = ImmutableMap.builder();
+        for (Publisher publisher : publishers) {
+            map.put(publisher, createCompilerMapForPublisher(publisher, scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver));
+        }
+        compilerMap = map.build();
+    }
+    
+    
+    
+    private static Map<FileType, RadioPlayerFeedCompiler> createCompilerMapForPublisher(Publisher publisher, 
+            ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, 
+            ContentResolver contentResolver, ChannelResolver channelResolver) {
+        return ImmutableMap.<FileType, RadioPlayerFeedCompiler>of(
+                PI, new RadioPlayerProgrammeInformationFeedCompiler(scheduleResolver, knownTypeContentResolver, channelResolver, publisher),
                 OD, new RadioPlayerOnDemandFeedCompiler(knownTypeContentResolver, contentResolver)
             );
     }
-    
-    public static RadioPlayerFeedCompiler valueOf(FileType type) {
+
+
+
+    public static RadioPlayerFeedCompiler valueOf(Publisher publisher, FileType type) {
         checkState(compilerMap != null, "Compiler map not initialised");
-        return checkNotNull(compilerMap.get(type), "No compiler for type " + type);
+        return checkNotNull(compilerMap.get(publisher).get(type), "No compiler for publisher " + publisher + " and type " + type);
     }
 	
     private static class RadioPlayerProgrammeInformationFeedCompiler extends RadioPlayerFeedCompiler {
         private final ScheduleResolver scheduleResolver;
         private final ChannelResolver channelResolver;
+        private final Publisher publisher;
 
-        public RadioPlayerProgrammeInformationFeedCompiler(ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, ChannelResolver channelResolver) {
+        public RadioPlayerProgrammeInformationFeedCompiler(ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, ChannelResolver channelResolver, Publisher publisher) {
             super(new RadioPlayerProgrammeInformationOutputter(), knownTypeContentResolver);
             this.scheduleResolver = scheduleResolver;
             this.channelResolver = channelResolver;
+            this.publisher = publisher;
         }
 
         @Override
@@ -89,7 +106,7 @@ public abstract class RadioPlayerFeedCompiler {
             checkArgument(spec instanceof RadioPlayerPiFeedSpec);
             DateTime date = ((RadioPlayerPiFeedSpec)spec).getDay().toDateTimeAtStartOfDay(DateTimeZones.UTC);
             Channel channel = channelResolver.fromUri(spec.getService().getServiceUri()).requireValue();
-            Schedule schedule = scheduleResolver.schedule(date.minusMillis(1), date.plusDays(1), ImmutableSet.of(channel), ImmutableSet.of(Publisher.BBC), Optional.<ApplicationConfiguration>absent());
+            Schedule schedule = scheduleResolver.schedule(date.minusMillis(1), date.plusDays(1), ImmutableSet.of(channel), ImmutableSet.of(publisher), Optional.<ApplicationConfiguration>absent());
             return Iterables.getOnlyElement(schedule.scheduleChannels()).items();
         }
     }

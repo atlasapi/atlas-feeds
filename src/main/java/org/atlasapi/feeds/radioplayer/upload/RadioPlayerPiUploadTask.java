@@ -9,6 +9,7 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
 import org.atlasapi.feeds.upload.FileUploadService;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.joda.time.LocalDate;
 
@@ -16,8 +17,8 @@ import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerPiUploadTask extends RadioPlayerUploadTask {
 
-    public RadioPlayerPiUploadTask(Iterable<FileUploadService> remoteTargets, LocalDate day, RadioPlayerService service, AdapterLog log) {
-        super(PI, remoteTargets, new RadioPlayerPiFeedSpec(service, day), log);
+    public RadioPlayerPiUploadTask(Iterable<FileUploadService> remoteTargets, LocalDate day, RadioPlayerService service, AdapterLog log, Publisher publisher) {
+        super(PI, remoteTargets, new RadioPlayerPiFeedSpec(service, day), log, publisher);
     }
 
     @Override

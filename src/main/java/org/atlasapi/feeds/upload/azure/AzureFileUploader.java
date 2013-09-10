@@ -5,7 +5,7 @@ import java.net.URI;
 
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploader;
-import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
+import org.atlasapi.feeds.upload.FileUploaderResult;
 import org.soyatec.windowsazure.blob.BlobStorageClient;
 import org.soyatec.windowsazure.blob.IBlobContainer;
 import org.soyatec.windowsazure.blob.IBlobContents;
@@ -39,7 +39,7 @@ public class AzureFileUploader implements FileUploader {
 	}
 
 	@Override
-	public void upload(FileUpload upload) throws Exception {
+	public FileUploaderResult upload(FileUpload upload) throws Exception {
 		
 		IBlobProperties properties = new BlobProperties(upload.getFilename());
 		properties.setContentType(CONTENT_TYPE_BINARY);
@@ -56,5 +56,6 @@ public class AzureFileUploader implements FileUploader {
 		if(blobContainer.createBlockBlob(properties, blobContents) == null) {
 			throw new Exception("Failed to create blob");
 		}
+		return FileUploaderResult.success();
 	}
 }
