@@ -26,7 +26,7 @@ public class FileUploadResultTranslatorTest {
         
         DateTime time = new DateTime(DateTimeZones.UTC);
         
-        FileUploadResult result = new FileUploadResult(REMOTE_SERVICE_ID, "success", time, FileUploadResultType.SUCCESS).withMessage("SUCCESS");
+        FileUploadResult result = new FileUploadResult(REMOTE_SERVICE_ID, "success", time, FileUploadResultType.SUCCESS).copyWithMessage("SUCCESS");
         
         DBObject encoded = translator.toDBObject(result);
         
@@ -53,7 +53,7 @@ public class FileUploadResultTranslatorTest {
         
         assertThat(exception, is(notNullValue()));
         
-        FileUploadResult result = new FileUploadResult(REMOTE_SERVICE_ID, "failed", time, FileUploadResultType.FAILURE).withMessage("FAILURE").withCause(exception);
+        FileUploadResult result = new FileUploadResult(REMOTE_SERVICE_ID, "failed", time, FileUploadResultType.FAILURE).copyWithMessage("FAILURE").withCause(exception);
         
         DBObject encoded = translator.toDBObject(result);
         

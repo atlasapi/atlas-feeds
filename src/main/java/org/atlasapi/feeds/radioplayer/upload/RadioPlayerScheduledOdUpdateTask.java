@@ -2,6 +2,7 @@ package org.atlasapi.feeds.radioplayer.upload;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.upload.FileUploadService;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
@@ -19,8 +20,9 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
     private final boolean fullSnapshot;
     private final LastUpdatedContentFinder lastUpdatedContentFinder;
     private final ContentLister contentLister;
+    private final Publisher publisher;
 
-    public RadioPlayerScheduledOdUpdateTask(Iterable<FileUploadService> uploaders, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, AdapterLog log, boolean fullSnapshot, LastUpdatedContentFinder lastUpdatedContentFinder, ContentLister contentLister) {
+    public RadioPlayerScheduledOdUpdateTask(Iterable<FileUploadService> uploaders, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, AdapterLog log, boolean fullSnapshot, LastUpdatedContentFinder lastUpdatedContentFinder, ContentLister contentLister, Publisher publisher) {
         this.uploaders = uploaders;
         this.executor = executor;
         this.services = services;
@@ -28,6 +30,7 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
         this.fullSnapshot = fullSnapshot;
         this.lastUpdatedContentFinder = lastUpdatedContentFinder;
         this.contentLister = contentLister;
+        this.publisher = publisher;
     }
     
     @Override
@@ -36,6 +39,6 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
         if (fullSnapshot) {
             date = date.minusDays(1);
         }
-        new RadioPlayerOdBatchUploadTask(uploaders, executor, services, date, fullSnapshot, log, lastUpdatedContentFinder, contentLister).run();
+        new RadioPlayerOdBatchUploadTask(uploaders, executor, services, date, fullSnapshot, log, lastUpdatedContentFinder, contentLister, publisher).run();
     }
 }

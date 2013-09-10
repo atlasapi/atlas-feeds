@@ -10,6 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.upload.FileUploadService;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.joda.time.DateTime;
@@ -28,13 +29,15 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
     private final Iterable<RadioPlayerService> services;
     private final Iterable<LocalDate> days;
     private final AdapterLog log;
+    private final Publisher publisher;
 
-    public RadioPlayerPiBatchUploadTask(Iterable<FileUploadService> uploaders, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, Iterable<LocalDate> dayRange, AdapterLog log) {
+    public RadioPlayerPiBatchUploadTask(Iterable<FileUploadService> uploaders, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, Iterable<LocalDate> dayRange, AdapterLog log, Publisher publisher) {
         this.uploaders = uploaders;
         this.executor = executor;
         this.services = services;
         this.days = dayRange;
         this.log = log;
+        this.publisher = publisher;
     }
     
     @Override
@@ -47,7 +50,7 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
         
         for (RadioPlayerService service : services) {
             for (LocalDate day : days) {
-                uploadTasks.add(new RadioPlayerPiUploadTask(uploaders, day, service, log));
+                uploadTasks.add(new RadioPlayerPiUploadTask(uploaders, day, service, log, publisher));
             }
         }
 

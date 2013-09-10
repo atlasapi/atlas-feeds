@@ -10,8 +10,10 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.radioplayer.upload.CachingRadioPlayerUploadResultStore;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerHttpsFileUploader;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerHttpsRemoteProcessingChecker;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRemoteProcessingChecker;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpRemoteProcessingChecker;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
@@ -26,6 +28,7 @@ import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.media.channel.ChannelResolver;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
@@ -53,6 +56,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.Resources;
 import com.google.common.net.HostSpecifier;
 import com.metabroadcast.common.health.HealthProbe;
+import com.metabroadcast.common.http.SimpleHttpClient;
+import com.metabroadcast.common.http.SimpleHttpClientBuilder;
+import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.properties.Parameter;
@@ -67,11 +73,22 @@ import com.metabroadcast.common.webapp.health.HealthController;
 public class RadioPlayerModule {
 
 	private static final String RP_UPLOAD_SERVICE_PREFIX = "rp.upload.";
+	private static final Every UPLOAD_EVERY_FIVE_MINUTES = RepetitionRules.every(Duration.standardMinutes(5));
     private static final Every UPLOAD_EVERY_TEN_MINUTES = RepetitionRules.every(Duration.standardMinutes(10));
 	private static final Every UPLOAD_EVERY_TWO_HOURS = RepetitionRules.every(Duration.standardHours(2));
+	
+	private static final Publisher BBC = Publisher.BBC;
+	// TODO switch the new stuff to this once it's in use
+//	private static final Publisher NITRO = Publisher.NITRO;
 
-	private @Value("${rp.ftp.enabled}") String upload;
+	private @Value("${rp.ftp.enabled}") String ftpUpload;
 	private @Value("${rp.ftp.services}") String uploadServices;
+	
+	private @Value("${rp.https.service}") String httpsService;
+	private @Value("${rp.https.enabled}") String httpsUpload;
+	private @Value("${rp.https.baseUrl}") String httpsUrl;
+	private @Value("${rp.https.username}") String httpsUsername;
+	private @Value("${rp.https.password}") String httpsPassword;
 	
     private @Autowired KnownTypeContentResolver knownTypeContentResolver;
 	private @Autowired SimpleScheduler scheduler;
@@ -89,8 +106,9 @@ public class RadioPlayerModule {
 	
 	private static DayRangeGenerator dayRangeGenerator = new DayRangeGenerator().withLookAhead(7).withLookBack(7);
 
+	// this publisher will need to change if the output controller is to display files generated from a different publisher's content.
 	public @Bean RadioPlayerController radioPlayerController() {
-		return new RadioPlayerController(lastUpdatedContentFinder, contentLister);
+		return new RadioPlayerController(lastUpdatedContentFinder, contentLister, BBC);
 	}
 	
 	public @Bean Map<String,RemoteServiceDetails> radioPlayerUploadServiceDetails() {
@@ -120,7 +138,8 @@ public class RadioPlayerModule {
         }
     }
 
-    public @Bean Iterable<FileUploadService> radioPlayerUploadServices() {
+    // TODO add S3 uploader
+    public @Bean Iterable<FileUploadService> radioPlayerFtpUploadServices() {
         return Iterables.transform(radioPlayerUploadServiceDetails().entrySet(), new Function<Entry<String, RemoteServiceDetails>, FileUploadService>() {
             @Override
             public FileUploadService apply(Entry<String, RemoteServiceDetails> input) {
@@ -128,19 +147,40 @@ public class RadioPlayerModule {
             }
         });
     }
+
+    // TODO add S3 uploader
+    public @Bean Iterable<FileUploadService> radioPlayerHttpsUploadServices() {
+        return ImmutableSet.of(new FileUploadService(
+                httpsService, 
+                new LoggingFileUploader(
+                        log, 
+                        new ValidatingFileUploader(radioPlayerValidator(), new RadioPlayerHttpsFileUploader(httpClient(), httpsUrl))
+                )
+        ));
+    }
+    
+    public @Bean SimpleHttpClient httpClient() {
+        return new SimpleHttpClientBuilder()
+                .withPreemptiveBasicAuth(new UsernameAndPassword(httpsUsername, httpsPassword))
+                .withHeader("Content-Type", MimeType.TEXT_XML.toString())
+                .build();
+    }
 	   
     public @Bean RadioPlayerHealthController radioPlayerHealthController() {
         return new RadioPlayerHealthController(health, radioPlayerUploadServiceDetails().keySet(), Configurer.get("rp.health.password", "").get());
     }
     
     public @Bean RadioPlayerUploadController radioPlayerUploadController() {
-        return new RadioPlayerUploadController(radioPlayerUploadTaskBuilder(), dayRangeGenerator, Configurer.get("rp.health.password", "").get());
+        return new RadioPlayerUploadController(radioPlayerFtpUploadTaskBuilder(), dayRangeGenerator, Configurer.get("rp.health.password", "").get());
     }
     
     @Bean RadioPlayerUploadResultStore uploadResultRecorder() {
-        return new CachingRadioPlayerUploadResultStore(radioPlayerUploadServiceDetails().keySet(), new UploadResultStoreBackedRadioPlayerResultStore(fileUploadResultStore()));
+        return new CachingRadioPlayerUploadResultStore(
+                remoteServices(), 
+                new UploadResultStoreBackedRadioPlayerResultStore(fileUploadResultStore())
+        );
     }
-
+    
     private MongoFileUploadResultStore fileUploadResultStore() {
         return new MongoFileUploadResultStore(mongo);
     }
@@ -159,43 +199,79 @@ public class RadioPlayerModule {
         }
     }
     
-    @Bean RadioPlayerUploadTaskBuilder radioPlayerUploadTaskBuilder() {
-        return new RadioPlayerUploadTaskBuilder(radioPlayerUploadServices(), radioPlayerUploadTaskRunner(), lastUpdatedContentFinder, contentLister).withLog(log);
+    @Bean RadioPlayerUploadTaskBuilder radioPlayerFtpUploadTaskBuilder() {
+        return new RadioPlayerUploadTaskBuilder(radioPlayerFtpUploadServices(), radioPlayerUploadTaskRunner(), lastUpdatedContentFinder, contentLister, BBC).withLog(log);
+    }
+    
+    @Bean RadioPlayerUploadTaskBuilder radioPlayerHttpsUploadTaskBuilder() {
+        return new RadioPlayerUploadTaskBuilder(radioPlayerHttpsUploadServices(), radioPlayerUploadTaskRunner(), lastUpdatedContentFinder, contentLister, BBC).withLog(log);
     }
     
     @Bean RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner() {
         return new RadioPlayerRecordingExecutor(uploadResultRecorder());
     }
     
+    @Bean Set<String> remoteServices() {
+        return ImmutableSet.<String>builder()
+                .addAll(radioPlayerUploadServiceDetails().keySet())
+                .add(httpsService)
+                .build();
+    }
+    
 	@PostConstruct 
 	public void scheduleTasks() {
-	    RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver);
+	    RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, ImmutableList.of(BBC));
 		if (!radioPlayerUploadServiceDetails().isEmpty()) {
-		    createHealthProbes(radioPlayerUploadServiceDetails().keySet());
+		    createHealthProbes(remoteServices());
 	
-		    if (Boolean.parseBoolean(upload)) {
+		    if (Boolean.parseBoolean(ftpUpload)) {
 				
 	            scheduler.schedule(
-	                    radioPlayerUploadTaskBuilder().newScheduledPiTask(uploadServices(), dayRangeGenerator).withName("Radioplayer PI Full Upload"), 
+	                    radioPlayerFtpUploadTaskBuilder().newScheduledPiTask(uploadServices(), dayRangeGenerator).withName("Radioplayer PI Full Upload"), 
 	                    UPLOAD_EVERY_TWO_HOURS);
 	            scheduler.schedule(
-	                    radioPlayerUploadTaskBuilder().newScheduledPiTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer PI Today Upload"), 
+	                    radioPlayerFtpUploadTaskBuilder().newScheduledPiTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer PI Today Upload"), 
 	                    UPLOAD_EVERY_TEN_MINUTES);
 	            scheduler.schedule(
-	                    new RadioPlayerRemoteProcessingChecker(radioPlayerUploadServiceDetails(), uploadResultRecorder(), log).withName("Radioplayer Remote Processing Checker"),
+	                    new RadioPlayerFtpRemoteProcessingChecker(radioPlayerUploadServiceDetails(), uploadResultRecorder(), log).withName("Radioplayer Remote Processing Checker"),
 	                    UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(5)));
 	            
 	            scheduler.schedule(
-	                    radioPlayerUploadTaskBuilder().newScheduledOdTask(uploadServices(), true).withName("Radioplayer OD Full Upload"), 
+	                    radioPlayerFtpUploadTaskBuilder().newScheduledOdTask(uploadServices(), true).withName("Radioplayer OD Full Upload"), 
 	                    NEVER);
 	            scheduler.schedule(
-	                    radioPlayerUploadTaskBuilder().newScheduledOdTask(uploadServices(), false).withName("Radioplayer OD Today Upload"),
+	                    radioPlayerFtpUploadTaskBuilder().newScheduledOdTask(uploadServices(), false).withName("Radioplayer OD Today Upload"),
 	                    UPLOAD_EVERY_TEN_MINUTES);
 	            
 	
-			} else {
-				log.record(new AdapterLogEntry(Severity.INFO).withSource(getClass())
-				.withDescription("Not installing Radioplayer uploader"));
+			} 
+		    if (Boolean.parseBoolean(httpsUpload)) {
+                
+                scheduler.schedule(
+                        radioPlayerHttpsUploadTaskBuilder().newScheduledPiTask(uploadServices(), dayRangeGenerator).withName("Radioplayer HTTPS PI Full Upload"), 
+                        UPLOAD_EVERY_TWO_HOURS);
+                scheduler.schedule(
+                        radioPlayerHttpsUploadTaskBuilder().newScheduledPiTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer HTTPS PI Today Upload"), 
+                        UPLOAD_EVERY_TEN_MINUTES);
+                scheduler.schedule(
+                        new RadioPlayerHttpsRemoteProcessingChecker(httpClient(), httpsService, uploadResultRecorder(), log).withName("Radioplayer HTTPS Remote Processing Checker"),
+                        UPLOAD_EVERY_FIVE_MINUTES.withOffset(Duration.standardMinutes(5)));
+                
+                scheduler.schedule(
+                        radioPlayerHttpsUploadTaskBuilder().newScheduledOdTask(uploadServices(), true).withName("Radioplayer HTTPS OD Full Upload"), 
+                        NEVER);
+                scheduler.schedule(
+                        radioPlayerHttpsUploadTaskBuilder().newScheduledOdTask(uploadServices(), false).withName("Radioplayer HTTPS OD Today Upload"),
+                        UPLOAD_EVERY_TEN_MINUTES);
+                
+    
+            } 
+		    if (!Boolean.parseBoolean(ftpUpload) && !Boolean.parseBoolean(httpsUpload)) {
+				log.record(
+				        new AdapterLogEntry(Severity.INFO)
+				                .withSource(getClass())
+				                .withDescription("Not installing Radioplayer uploader")
+                );
 			}
 		}
 	}
@@ -222,10 +298,10 @@ public class RadioPlayerModule {
                 }
             };
             
-            health.addProbes(
-                    Iterables.concat(Iterables.transform(uploadServices(), createProbe),
-                            ImmutableList.of(new RadioPlayerServerHealthProbe(remoteId, fileUploadResultStore())))
-                    );
+            health.addProbes(Iterables.concat(
+                    Iterables.transform(uploadServices(), createProbe),
+                    ImmutableList.of(new RadioPlayerServerHealthProbe(remoteId, fileUploadResultStore()))
+            ));
         }
     }
     
