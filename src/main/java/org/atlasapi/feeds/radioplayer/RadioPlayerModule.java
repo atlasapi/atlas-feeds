@@ -10,21 +10,19 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.radioplayer.upload.CachingRadioPlayerUploadResultStore;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerHttpsFileUploader;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerHttpsRemoteProcessingChecker;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpRemoteProcessingChecker;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpUploadServicesSupplier;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerHttpsRemoteProcessingChecker;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerHttpsUploadServicesSupplier;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadResultStore;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadServicesSupplier;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskBuilder;
 import org.atlasapi.feeds.radioplayer.upload.UploadResultStoreBackedRadioPlayerResultStore;
-import org.atlasapi.feeds.upload.FileUploadService;
-import org.atlasapi.feeds.upload.LoggingFileUploader;
 import org.atlasapi.feeds.upload.RemoteServiceDetails;
-import org.atlasapi.feeds.upload.ValidatingFileUploader;
-import org.atlasapi.feeds.upload.ftp.CommonsFTPFileUploader;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.media.channel.ChannelResolver;
@@ -84,8 +82,18 @@ public class RadioPlayerModule {
 	private @Value("${rp.ftp.enabled}") String ftpUpload;
 	private @Value("${rp.ftp.services}") String uploadServices;
 	
-	private @Value("${rp.https.service}") String httpsService;
+	private @Value("${rp.s3.serviceId}") String s3ServiceId;
+	private @Value("${rp.s3.bucket}") String s3Bucket;
+	private @Value("${s3.access}") String s3AccessKey;
+	private @Value("${s3.secret}") String s3Secret;
+	
+	private @Value("${rp.https.serviceId}") String httpsServiceId;
 	private @Value("${rp.https.enabled}") String httpsUpload;
+	// This flag is only evaluated if rp.https.enabled == "true".
+	// If it evaluates to "true", then the https upload code will upload to both
+	// S3 and to the HTTPS RadioPlayer service. If "false" / null, then the https upload
+	// code will only upload to S3.
+	private @Value("${rp.https.httpsSend.enabled}") String httpsSend;
 	private @Value("${rp.https.baseUrl}") String httpsUrl;
 	private @Value("${rp.https.username}") String httpsUsername;
 	private @Value("${rp.https.password}") String httpsPassword;
@@ -138,28 +146,36 @@ public class RadioPlayerModule {
         }
     }
 
-    // TODO add S3 uploader
-    public @Bean Iterable<FileUploadService> radioPlayerFtpUploadServices() {
-        return Iterables.transform(radioPlayerUploadServiceDetails().entrySet(), new Function<Entry<String, RemoteServiceDetails>, FileUploadService>() {
-            @Override
-            public FileUploadService apply(Entry<String, RemoteServiceDetails> input) {
-                return new FileUploadService(input.getKey(), new LoggingFileUploader(log, new ValidatingFileUploader(radioPlayerValidator(), new CommonsFTPFileUploader(input.getValue()))));
-            }
-        });
+    public @Bean RadioPlayerUploadServicesSupplier radioPlayerFtpUploadServices() {
+        return new RadioPlayerFtpUploadServicesSupplier(
+                s3ServiceId, 
+                s3Bucket, 
+                radioPlayerS3Credentials(), 
+                log, 
+                radioPlayerValidator(), 
+                radioPlayerUploadServiceDetails()
+        );
     }
 
-    // TODO add S3 uploader
-    public @Bean Iterable<FileUploadService> radioPlayerHttpsUploadServices() {
-        return ImmutableSet.of(new FileUploadService(
-                httpsService, 
-                new LoggingFileUploader(
-                        log, 
-                        new ValidatingFileUploader(radioPlayerValidator(), new RadioPlayerHttpsFileUploader(httpClient(), httpsUrl))
-                )
-        ));
+    public @Bean RadioPlayerUploadServicesSupplier radioPlayerHttpsUploadServices() {
+        return new RadioPlayerHttpsUploadServicesSupplier(
+                Boolean.parseBoolean(httpsSend), 
+                s3ServiceId, 
+                s3Bucket, 
+                radioPlayerS3Credentials(), 
+                log, 
+                radioPlayerValidator(), 
+                httpsServiceId, 
+                radioPlayerHttpClient(), 
+                httpsUrl
+        );
     }
     
-    public @Bean SimpleHttpClient httpClient() {
+    public @Bean UsernameAndPassword radioPlayerS3Credentials() {
+        return new UsernameAndPassword(s3AccessKey, s3Secret);
+    }
+    
+    public @Bean SimpleHttpClient radioPlayerHttpClient() {
         return new SimpleHttpClientBuilder()
                 .withPreemptiveBasicAuth(new UsernameAndPassword(httpsUsername, httpsPassword))
                 .withHeader("Content-Type", MimeType.TEXT_XML.toString())
@@ -214,7 +230,7 @@ public class RadioPlayerModule {
     @Bean Set<String> remoteServices() {
         return ImmutableSet.<String>builder()
                 .addAll(radioPlayerUploadServiceDetails().keySet())
-                .add(httpsService)
+                .add(httpsServiceId)
                 .build();
     }
     
@@ -254,7 +270,7 @@ public class RadioPlayerModule {
                         radioPlayerHttpsUploadTaskBuilder().newScheduledPiTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer HTTPS PI Today Upload"), 
                         UPLOAD_EVERY_TEN_MINUTES);
                 scheduler.schedule(
-                        new RadioPlayerHttpsRemoteProcessingChecker(httpClient(), httpsService, uploadResultRecorder(), log).withName("Radioplayer HTTPS Remote Processing Checker"),
+                        new RadioPlayerHttpsRemoteProcessingChecker(radioPlayerHttpClient(), httpsServiceId, uploadResultRecorder(), log).withName("Radioplayer HTTPS Remote Processing Checker"),
                         UPLOAD_EVERY_FIVE_MINUTES.withOffset(Duration.standardMinutes(5)));
                 
                 scheduler.schedule(
