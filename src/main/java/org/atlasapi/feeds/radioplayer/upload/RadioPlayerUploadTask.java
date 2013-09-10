@@ -19,6 +19,7 @@ import org.atlasapi.persistence.logging.AdapterLogEntry;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.metabroadcast.common.media.MimeType;
 
 public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPlayerUploadResult>> {
     
@@ -43,7 +44,9 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
         
         try {
             byte[] filebytes = getFileContent();
-            FileUpload upload = new FileUpload(spec.filename(), filebytes);
+            FileUpload upload = new FileUpload.Builder(spec.filename(), filebytes)
+                    .withContentType(MimeType.TEXT_XML)
+                    .build();
             
             log.record(AdapterLogEntry.infoEntry().withDescription("Compiled file for uploading for %s", spec).withSource(getClass()));
             
