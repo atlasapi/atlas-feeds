@@ -136,8 +136,9 @@ public class RadioPlayerFileUploaderTest {
         ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
         RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("127.0.0.1")).withPort(9521).withCredentials(new UsernameAndPassword("test","testpassword")).build();
         FileUploadService fileUploader = new FileUploadService("remoteService", new CommonsFTPFileUploader(credentials));
+        DummyRadioPlayerUploadServicesSupplier supplier = new DummyRadioPlayerUploadServicesSupplier(ImmutableSet.of(fileUploader));
 		
-		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(ImmutableSet.of(fileUploader), new RadioPlayerRecordingExecutor(recorder, MoreExecutors.sameThreadExecutor()), services, new DayRangeGenerator(), new SystemOutAdapterLog(), Iterables.getOnlyElement(publishers));
+		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(supplier, new RadioPlayerRecordingExecutor(recorder, MoreExecutors.sameThreadExecutor()), services, new DayRangeGenerator(), new SystemOutAdapterLog(), Iterables.getOnlyElement(publishers));
 
 		Executor executor = MoreExecutors.sameThreadExecutor();
 		executor.execute(uploader);
