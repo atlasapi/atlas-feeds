@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import org.apache.commons.net.ftp.FTPClient;
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.FileUploaderResult;
 import org.atlasapi.feeds.upload.RemoteServiceDetails;
 
 public class CommonsFTPFileUploader implements FileUploader {
@@ -21,8 +22,9 @@ public class CommonsFTPFileUploader implements FileUploader {
     }
     
     @Override
-    public void upload(FileUpload upload) throws Exception {
+    public FileUploaderResult upload(FileUpload upload) throws Exception {
         attemptUpload(upload);
+        return FileUploaderResult.success();
     }
     
     private void attemptUpload(FileUpload upload) throws Exception {

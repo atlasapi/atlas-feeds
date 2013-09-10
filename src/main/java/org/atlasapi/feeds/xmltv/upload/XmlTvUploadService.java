@@ -69,7 +69,7 @@ public class XmlTvUploadService extends AbstractService implements AsyncFileUplo
     }
     
     private FileUploadResult failedUploadResult(FileUpload upload, Exception e) {
-        return new FileUploadResult(serviceName(), upload.getFilename(), clock.now(), FAILURE).withCause(e).withMessage(e.getMessage());
+        return new FileUploadResult(serviceName(), upload.getFilename(), clock.now(), FAILURE).withCause(e).copyWithMessage(e.getMessage());
     }
 
     @Override

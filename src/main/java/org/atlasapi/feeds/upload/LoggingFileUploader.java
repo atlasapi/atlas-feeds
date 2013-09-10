@@ -19,9 +19,9 @@ public class LoggingFileUploader implements FileUploader {
     }
 
     @Override
-    public void upload(FileUpload upload) throws Exception {
+    public FileUploaderResult upload(FileUpload upload) throws Exception {
         try {
-            delegate.upload(upload);
+           return delegate.upload(upload);
         } catch (Exception e) {
             log(upload, e);
             throw e;

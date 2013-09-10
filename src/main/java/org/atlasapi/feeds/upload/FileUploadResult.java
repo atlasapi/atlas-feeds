@@ -13,7 +13,7 @@ import com.google.common.base.Objects;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public final class FileUploadResult {
-
+    
     public enum FileUploadResultType {
         SUCCESS("Success"), 
         FAILURE("Failure"), 
@@ -72,6 +72,13 @@ public final class FileUploadResult {
         }
     };
 
+    public static final Predicate<FileUploadResult> UNKNOWN_REMOTE_RESULT = new Predicate<FileUploadResult>() {
+        @Override
+        public boolean apply(FileUploadResult input) {
+            return input.remoteProcessingResult() == null || FileUploadResultType.UNKNOWN == input.remoteProcessingResult();
+        }
+    };
+
     private final String remoteId;
     private final String filename;
     private final DateTime dateTime;
@@ -82,6 +89,7 @@ public final class FileUploadResult {
     private ExceptionSummary exceptionSummary;
     private Boolean successfulConnection = true;
     private FileUploadResultType remoteProcessingResult;
+    private String transactionId;
 
     public FileUploadResult(String remoteId, String filename, DateTime dateTime, FileUploadResultType success) {
         this.remoteId = remoteId;
@@ -109,6 +117,11 @@ public final class FileUploadResult {
     public String message() {
         return message;
     }
+    
+    public FileUploadResult withMessage(String message) {
+        this.message = message;
+        return this;
+    }
 
     public ExceptionSummary exceptionSummary() {
         return exceptionSummary;
@@ -125,15 +138,24 @@ public final class FileUploadResult {
     public FileUploadResultType remoteProcessingResult() {
         return remoteProcessingResult;
     }
+    
+    public FileUploadResult withTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+        return this;
+    }
+    
+    public String transactionId() {
+        return transactionId;
+    }
 
-    public FileUploadResult withMessage(String message) {
+    public FileUploadResult copyWithMessage(String message) {
         FileUploadResult result = copy();
         result.message = message;
         return result;
     }
     
     public FileUploadResult withMessage(String pattern, Object... args) {
-        return withMessage(String.format(pattern, args));
+        return copyWithMessage(String.format(pattern, args));
     }
 
     public FileUploadResult withCause(Exception e) {

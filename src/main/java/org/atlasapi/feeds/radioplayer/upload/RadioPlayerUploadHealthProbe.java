@@ -28,6 +28,7 @@ import com.metabroadcast.common.time.DayRangeGenerator;
 
 public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
+    private static final String TRANSACTION_URL_PREFIX = "https://dev02.radioplayer.co.uk/ingestor/metadata/v1/";
     protected static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
 
     protected static final Predicate<DateTime> PI_STALE = new Predicate<DateTime>() {
@@ -126,7 +127,9 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         builder.append(": ");
         builder.append(result.uploadTime().toString(DATE_TIME));
         builder.append("</td><td>");
-        if (result.message() != null) {
+        if (result.transactionId() != null) {
+            builder.append("Transaction id: " + parseTransactionIdFromTransactionUrl(result.transactionId()));
+        } else if (result.message() != null) {
             builder.append(result.message());
         } else {
             if (FileUploadResultType.SUCCESS == result.type()) {
@@ -139,6 +142,16 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         FileUploadResultType processSuccess = result.remoteProcessingResult() == null ? FileUploadResultType.UNKNOWN : result.remoteProcessingResult();
         builder.append("Processing Result: " + processSuccess.toNiceString());
         builder.append("</td></tr>");
+    }
+    
+    /**
+     * This takes the status url (stored in the transactionId field on FileUploadResult), 
+     * returned by the HTTPS RadioPlayer upload system, and parses it for the transaction Id
+     * @param transactionUrl the url to be parsed for a transaction id
+     * @return the transaction id
+     */
+    private String parseTransactionIdFromTransactionUrl(String transactionUrl) {
+        return transactionUrl.replaceAll(TRANSACTION_URL_PREFIX, "");
     }
 
     private String uploadButton(FileType type, LocalDate day) {
