@@ -21,13 +21,13 @@ re-uploaded with this ServiceGenre re-added.
 				<RelatedMaterial xsi:type="tva2:ExtendedRelatedMaterialType">
 					<HowRelated href="urn:tva:metadata:cs:HowRelatedCS:2010:19"/> <!-- promotional still image -->
 					<MediaLocator>
-						<mpeg7:MediaUri>http://g-ec2.images-amazon.com/images/G/01/AIV/youview/lores._V388637400_.png</mpeg7:MediaUri>
+						<mpeg7:MediaUri>http://g-ec2.images-amazon.com/images/G/01/AIV/youview/amz_lf_dog1.png</mpeg7:MediaUri>
 					</MediaLocator>
 					<PromotionalText>LOVEFiLM</PromotionalText>
 					<tva2:ContentProperties>
 						<tva2:ContentAttributes xsi:type="tva2:StillImageContentAttributesType">
-							<tva2:Width>1024</tva2:Width>
-							<tva2:Height>270</tva2:Height>
+							<tva2:Width>760</tva2:Width>
+							<tva2:Height>576</tva2:Height>
 							<tva2:IntendedUse href="http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-ident"/>
 						</tva2:ContentAttributes>
 					</tva2:ContentProperties>
@@ -35,13 +35,13 @@ re-uploaded with this ServiceGenre re-added.
 				<RelatedMaterial xsi:type="tva2:ExtendedRelatedMaterialType">
 					<HowRelated href="urn:tva:metadata:cs:HowRelatedCS:2010:19"/> <!-- promotional still image -->
 					<MediaLocator>
-						<mpeg7:MediaUri>http://g-ec2.images-amazon.com/images/G/01/AIV/youview/lores._V388637400_.png</mpeg7:MediaUri>
+						<mpeg7:MediaUri>http://g-ec2.images-amazon.com/images/G/01/AIV/youview/amz_lf_dog1.png</mpeg7:MediaUri>
 					</MediaLocator>
 					<PromotionalText>LOVEFiLM</PromotionalText>
 					<tva2:ContentProperties>
 						<tva2:ContentAttributes xsi:type="tva2:StillImageContentAttributesType">
-							<tva2:Width>1024</tva2:Width>
-							<tva2:Height>270</tva2:Height>
+							<tva2:Width>760</tva2:Width>
+							<tva2:Height>576</tva2:Height>
 							<tva2:IntendedUse href="http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog"/>
 						</tva2:ContentAttributes>
 					</tva2:ContentProperties>
@@ -70,7 +70,7 @@ re-uploaded with this ServiceGenre re-added.
 				<RelatedMaterial xsi:type="tva2:ExtendedRelatedMaterialType">
 					<HowRelated href="urn:tva:metadata:cs:HowRelatedCS:2010:19"/> <!-- promotional still image -->
 					<MediaLocator>
-						<mpeg7:MediaUri>http://g-ec2.images-amazon.com/images/G/01/AIV/youview/hires._V388117660_.png</mpeg7:MediaUri>
+						<mpeg7:MediaUri>http://g-ec2.images-amazon.com/images/G/01/AIV/youview/amz_lf_portal_ident1.png</mpeg7:MediaUri>
 					</MediaLocator>
 					<PromotionalText>LOVEFiLM Instant</PromotionalText>
 					<tva2:ContentProperties>
