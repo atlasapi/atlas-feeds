@@ -37,11 +37,10 @@ public class MongoYouViewLastUpdatedStore implements YouViewLastUpdatedStore {
 
     @Override
     public Optional<DateTime> getLastUpdated() {
-        DBCursor cursor = collection.find();
-        if (Iterables.isEmpty(cursor)) {
+        DBObject lastUpdated = collection.findOne(new BasicDBObject(MongoConstants.ID, ID_VALUE));
+        if (lastUpdated == null) {
             return Optional.absent();
         }
-        DBObject lastUpdated = Iterables.getOnlyElement(cursor);
         return Optional.of(TranslatorUtils.toDateTime(lastUpdated, LAST_UPDATED_KEY));
     }
 
