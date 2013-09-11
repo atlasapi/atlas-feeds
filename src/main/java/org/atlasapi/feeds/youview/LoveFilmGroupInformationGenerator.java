@@ -199,12 +199,15 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     private BasicContentDescriptionType generateBasicDescription(Content content, Item item) {
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
         
-        basicDescription.getTitle().add(generateMainTitle(content));
-        
-        String secondaryTitle = generateAlternateTitle(content);
-        if (!content.getTitle().equals(secondaryTitle)) {
-            basicDescription.getTitle().add(generateSecondaryTitle(secondaryTitle));
+        if (content.getTitle() != null) {
+            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, content.getTitle()));
+            
+            String secondaryTitle = generateAlternateTitle(content.getTitle());
+            if (!content.getTitle().equals(secondaryTitle)) {
+                basicDescription.getTitle().add(generateTitle(TITLE_TYPE_SECONDARY, secondaryTitle));
+            }            
         }
+        
         basicDescription.getSynopsis().addAll(generateSynopses(content));
         basicDescription.getGenre().addAll(generateGenres(content));
         basicDescription.getGenre().add(generateGenreFromSpecialization(content));
@@ -226,11 +229,9 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         return basicDescription;
     }
 
-    private String generateAlternateTitle(Content content) {
-        String title = content.getTitle();
-        
+    private String generateAlternateTitle(String title) {
         for (String prefix : TITLE_PREFIXES) {
-            if (content.getTitle().startsWith(prefix)) {
+            if (title.startsWith(prefix)) {
                 return title.replaceFirst(prefix, "").concat(", " + prefix).trim();
             }    
         }
@@ -361,17 +362,10 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         return synopses;
     }
 
-    private TitleType generateMainTitle(Content content) {
+    private TitleType generateTitle(String titleType, String contentTitle) {
         TitleType title = new TitleType();
-        title.getType().add(TITLE_TYPE_MAIN);
-        title.setValue(content.getTitle());
-        return title;
-    }
-
-    private TitleType generateSecondaryTitle(String secondaryTitle) {
-        TitleType title = new TitleType();
-        title.getType().add(TITLE_TYPE_SECONDARY);
-        title.setValue(secondaryTitle);
+        title.getType().add(titleType);
+        title.setValue(contentTitle);
         return title;
     }
 }
