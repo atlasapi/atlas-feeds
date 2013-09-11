@@ -124,14 +124,19 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
             memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(series.get()));
             if (item instanceof Episode) {
                 Episode episode = (Episode) item;
-                memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
+                if (episode.getEpisodeNumber() != null) {
+                    memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
+                }
             }
             groupInfo.getMemberOf().add(memberOf);
         } else if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(brand.get()));
             if (item instanceof Episode) {
-                memberOf.setIndex(Long.valueOf(((Episode)item).getEpisodeNumber()));
+                Episode episode = (Episode) item;
+                if (episode.getEpisodeNumber() != null) {
+                    memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
+                }
             }
             groupInfo.getMemberOf().add(memberOf);
         }
