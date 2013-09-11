@@ -24,7 +24,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Ranges;
+import com.google.common.collect.Range;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.Futures;
@@ -115,7 +115,7 @@ public class XmlTvUploadTask extends ScheduledTask {
             @Override
             public FileUpload call() throws Exception {
                 ByteArrayOutputStream writeTo = new ByteArrayOutputStream();
-                feedCompiler.compileChannelFeed(Ranges.closed(startDay, startDay.plusWeeks(2)), channel.getValue().channel(), writeTo);
+                feedCompiler.compileChannelFeed(Range.closed(startDay, startDay.plusWeeks(2)), channel.getValue().channel(), writeTo);
                 return fileUpload(filename, writeTo.toByteArray()).withContentType(TEXT_PLAIN).build();
             }
         });
