@@ -1,8 +1,10 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.feeds.upload.FileUploadService;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 
 import com.metabroadcast.common.scheduling.ScheduledTask;
@@ -13,21 +15,23 @@ public class RadioPlayerScheduledPiUploadTask extends ScheduledTask {
 
     private final Iterable<RadioPlayerService> services;
     private final RadioPlayerRecordingExecutor executor;
-    private final Iterable<FileUploadService> uploaders;
+    private final RadioPlayerUploadServicesSupplier uploadersSupplier;
     private final DayRangeGenerator dayRangeGenerator;
     private final AdapterLog log;
+    private final Publisher publisher;
 
-    public RadioPlayerScheduledPiUploadTask(Iterable<FileUploadService> uploaders, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator, AdapterLog log) {
-        this.uploaders = uploaders;
+    public RadioPlayerScheduledPiUploadTask(RadioPlayerUploadServicesSupplier uploadServicesSupplier, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator, AdapterLog log, Publisher publisher) {
+        this.uploadersSupplier = uploadServicesSupplier;
         this.executor = executor;
         this.services = services;
         this.dayRangeGenerator = dayRangeGenerator;
         this.log = log;
+        this.publisher = publisher;
     }
 
     @Override
     public void runTask() {
-        new RadioPlayerPiBatchUploadTask(uploaders, executor, services, dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC)), log).run();
+        new RadioPlayerPiBatchUploadTask(uploadersSupplier.get(new DateTime(DateTimeZone.UTC), FileType.PI), executor, services, dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC)), log, publisher).run();
         
     }
 

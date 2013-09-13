@@ -2,6 +2,7 @@ package org.atlasapi.feeds.upload.s3;
 
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.FileUploaderResult;
 import org.jets3t.service.S3Service;
 import org.jets3t.service.impl.rest.httpclient.RestS3Service;
 import org.jets3t.service.model.S3Object;
@@ -22,11 +23,12 @@ public class S3FileUploader implements FileUploader {
     }
     
     @Override
-    public void upload(FileUpload upload) throws Exception {
+    public FileUploaderResult upload(FileUpload upload) throws Exception {
         S3Service s3Service = new RestS3Service(creds);
         final S3Object object = new S3Object(String.format("%s/%s", folder, upload.getFilename()),upload.getFileData());
         object.setContentType(upload.getContentType().toString());
         s3Service.putObject(s3Service.getBucket(bucket), object);
+        return FileUploaderResult.success();
     }
 
 }

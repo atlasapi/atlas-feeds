@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.radioplayer.upload.FileType;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerOdUriResolver;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
@@ -22,9 +23,11 @@ import com.google.common.base.Optional;
 public class RadioPlayerController {
     
     private final RadioPlayerOdUriResolver odUriResolver;
+    private final Publisher publisher;
 
-    public RadioPlayerController(LastUpdatedContentFinder lastUpdatedContentFinder, ContentLister contentLister) {
-        odUriResolver = new RadioPlayerOdUriResolver(contentLister, lastUpdatedContentFinder);
+    public RadioPlayerController(LastUpdatedContentFinder lastUpdatedContentFinder, ContentLister contentLister, Publisher publisher) {
+        this.publisher = publisher;
+        odUriResolver = new RadioPlayerOdUriResolver(contentLister, lastUpdatedContentFinder, publisher);
     }
 
     @RequestMapping("feeds/ukradioplayer/{filename}.xml")
@@ -46,7 +49,7 @@ public class RadioPlayerController {
                     throw new IllegalArgumentException("Unknown file type");
                 }
                 
-                RadioPlayerFeedCompiler.valueOf(feedType).compileFeedFor(spec, response.getOutputStream());
+                RadioPlayerFeedCompiler.valueOf(publisher, feedType).compileFeedFor(spec, response.getOutputStream());
             } catch (Exception e) {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
             }

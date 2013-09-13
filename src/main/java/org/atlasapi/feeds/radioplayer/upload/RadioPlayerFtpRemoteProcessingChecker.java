@@ -11,13 +11,13 @@ import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 
-public class RadioPlayerRemoteProcessingChecker extends ScheduledTask {
+public class RadioPlayerFtpRemoteProcessingChecker extends ScheduledTask {
 
     private final Map<String, CommonsDirectoryLister> serviceDetails;
     private final RadioPlayerUploadResultStore resultStore;
     private final AdapterLog log;
 
-    public RadioPlayerRemoteProcessingChecker(Map<String,RemoteServiceDetails> serviceDetails, RadioPlayerUploadResultStore resultStore, AdapterLog log) {
+    public RadioPlayerFtpRemoteProcessingChecker(Map<String,RemoteServiceDetails> serviceDetails, RadioPlayerUploadResultStore resultStore, AdapterLog log) {
         this.serviceDetails = Maps.transformValues(serviceDetails, new Function<RemoteServiceDetails, CommonsDirectoryLister>() {
             @Override
             public CommonsDirectoryLister apply(RemoteServiceDetails input) {
@@ -31,7 +31,7 @@ public class RadioPlayerRemoteProcessingChecker extends ScheduledTask {
     @Override
     protected void runTask() {
         for (Entry<String, CommonsDirectoryLister> service : serviceDetails.entrySet()) {
-            new RadioPlayerSuccessChecker(service.getKey(), service.getValue(), resultStore, log).run();
+            new RadioPlayerFtpSuccessChecker(service.getKey(), service.getValue(), resultStore, log).run();
         }
     }
 

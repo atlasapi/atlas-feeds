@@ -11,6 +11,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.upload.FileUploadService;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
@@ -37,16 +38,18 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
     private final LocalDate day;
     private final Optional<DateTime> since;
     private final RadioPlayerOdUriResolver uriResolver;
+    private final Publisher publisher;
 
-    public RadioPlayerOdBatchUploadTask(Iterable<FileUploadService> uploaders, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, LocalDate day, boolean fullSnapshot, AdapterLog log, LastUpdatedContentFinder lastUpdatedContentFinder, ContentLister contentLister) {
+    public RadioPlayerOdBatchUploadTask(Iterable<FileUploadService> uploaders, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, LocalDate day, boolean fullSnapshot, AdapterLog log, LastUpdatedContentFinder lastUpdatedContentFinder, ContentLister contentLister, Publisher publisher) {
         this.uploaders = uploaders;
         this.executor = executor;
         this.services = services;
         this.day = day;
         this.fullSnapshot = fullSnapshot;
         this.log = log;
+        this.publisher = publisher;
         this.since = fullSnapshot ? Optional.<DateTime>absent() : Optional.of(day.toDateTimeAtStartOfDay(DateTimeZone.UTC).minusHours(2));
-        this.uriResolver = new RadioPlayerOdUriResolver(contentLister, lastUpdatedContentFinder);
+        this.uriResolver = new RadioPlayerOdUriResolver(contentLister, lastUpdatedContentFinder, publisher);
     }
     
     @Override
@@ -65,7 +68,7 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
             if (uris.isEmpty()) {
                 log.record(AdapterLogEntry.infoEntry().withDescription("No items for OD %s upload for service %s", (fullSnapshot ? "snapshot" : "change"), service).withSource(getClass()));
             } else {
-                uploadTasks.add(new RadioPlayerOdUploadTask(uploaders, since, day, service, uris, log));
+                uploadTasks.add(new RadioPlayerOdUploadTask(uploaders, since, day, service, uris, log, publisher));
             }
         }
 

@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -13,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
@@ -71,6 +68,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.net.HostSpecifier;
@@ -133,13 +131,14 @@ public class RadioPlayerFileUploaderTest {
 		    oneOf(recorder).record(with(successfulUploadResult()));
 		}});
 		
-		RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver);
+		RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, publishers);
 		
         ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
         RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("127.0.0.1")).withPort(9521).withCredentials(new UsernameAndPassword("test","testpassword")).build();
         FileUploadService fileUploader = new FileUploadService("remoteService", new CommonsFTPFileUploader(credentials));
+        DummyRadioPlayerUploadServicesSupplier supplier = new DummyRadioPlayerUploadServicesSupplier(ImmutableSet.of(fileUploader));
 		
-		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(ImmutableSet.of(fileUploader), new RadioPlayerRecordingExecutor(recorder, MoreExecutors.sameThreadExecutor()), services, new DayRangeGenerator(), new SystemOutAdapterLog());
+		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(supplier, new RadioPlayerRecordingExecutor(recorder, MoreExecutors.sameThreadExecutor()), services, new DayRangeGenerator(), new SystemOutAdapterLog(), Iterables.getOnlyElement(publishers));
 
 		Executor executor = MoreExecutors.sameThreadExecutor();
 		executor.execute(uploader);
