@@ -31,7 +31,7 @@ public class RadioPlayerHttpsFileUploaderTest {
         
         FileUploaderResult result = uploader.upload(file);
         
-        assertEquals(FileUploadResultType.UNKNOWN, result.getStatus());
+        assertEquals(FileUploadResultType.SUCCESS, result.getStatus());
         
         assertEquals(urlToPoll, result.getTransactionId().get());
         assertFalse(result.getMessage().isPresent());
@@ -60,7 +60,7 @@ public class RadioPlayerHttpsFileUploaderTest {
         FileUpload file = new FileUpload("20130905_352_PI.xml", fileData);
         String retryAfter = "1000";
         HttpResponse response = new HttpResponse("retry after", 503, "statusLine", ImmutableMap.of("RetryAfter", retryAfter ));
-        Mockito.when(httpClient.post(radioPlayerUrl + "/pi", new BytesPayload(fileData))).thenReturn(response);
+        Mockito.when(httpClient.post(radioPlayerUrl + "/pi/", new BytesPayload(fileData))).thenReturn(response);
         
         FileUploaderResult result = uploader.upload(file);
         
