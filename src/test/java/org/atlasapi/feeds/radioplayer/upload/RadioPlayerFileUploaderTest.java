@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -90,6 +91,7 @@ public class RadioPlayerFileUploaderTest {
 	private final ContentResolver contentResolver = context.mock(ContentResolver.class);
 	private final ScheduleResolver scheduleResolver = context.mock(ScheduleResolver.class);
 	private final RadioPlayerUploadResultStore recorder = context.mock(RadioPlayerUploadResultStore.class);
+	private final RadioPlayerUploadServicesSupplier supplier = context.mock(RadioPlayerUploadServicesSupplier.class);
 	
 	private final RadioPlayerService service = RadioPlayerServices.all.get("340");
     private final DateTime day = new DateTime(DateTimeZones.UTC);
@@ -135,8 +137,11 @@ public class RadioPlayerFileUploaderTest {
 		
         ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
         RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("127.0.0.1")).withPort(9521).withCredentials(new UsernameAndPassword("test","testpassword")).build();
-        FileUploadService fileUploader = new FileUploadService("remoteService", new CommonsFTPFileUploader(credentials));
-        DummyRadioPlayerUploadServicesSupplier supplier = new DummyRadioPlayerUploadServicesSupplier(ImmutableSet.of(fileUploader));
+        final FileUploadService fileUploader = new FileUploadService("remoteService", new CommonsFTPFileUploader(credentials));
+        context.checking(new Expectations(){{
+            allowing(supplier).get(with(notNullValue(DateTime.class)), with(notNullValue(FileType.class)));
+            will(returnValue(ImmutableList.of(fileUploader)));
+        }});
 		
 		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(supplier, new RadioPlayerRecordingExecutor(recorder, MoreExecutors.sameThreadExecutor()), services, new DayRangeGenerator(), new SystemOutAdapterLog(), Iterables.getOnlyElement(publishers));
 

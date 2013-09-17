@@ -22,6 +22,10 @@ import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadServicesSupplier;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskBuilder;
 import org.atlasapi.feeds.radioplayer.upload.UploadResultStoreBackedRadioPlayerResultStore;
+<<<<<<< HEAD
+=======
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadServicesSupplier;
+>>>>>>> mbst-7051-radioplayer-https-upload
 import org.atlasapi.feeds.upload.RemoteServiceDetails;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;

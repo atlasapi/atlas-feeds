@@ -14,7 +14,7 @@ import com.google.common.collect.Iterables;
 import com.metabroadcast.common.security.UsernameAndPassword;
 
 
-public class RadioPlayerFtpUploadServicesSupplier extends RadioPlayerUploadServicesSupplier {
+public class RadioPlayerFtpUploadServicesSupplier extends RadioPlayerS3ProvidingUploadServicesSupplier {
 
     private static final String UPLOAD_TYPE_FTP = "ftp";
     

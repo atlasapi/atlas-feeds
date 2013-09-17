@@ -9,7 +9,7 @@ import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.security.UsernameAndPassword;
 
 
-public class RadioPlayerHttpsUploadServicesSupplier extends RadioPlayerUploadServicesSupplier {
+public class RadioPlayerHttpsUploadServicesSupplier extends RadioPlayerS3ProvidingUploadServicesSupplier {
     
     private static final String UPLOAD_TYPE_HTTPS = "https";
     
