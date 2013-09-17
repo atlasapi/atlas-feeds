@@ -3,10 +3,8 @@ package org.atlasapi.feeds.radioplayer.upload;
 import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.persistence.logging.AdapterLog;
-import org.joda.time.DateTime;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSet.Builder;
+import com.google.common.collect.ImmutableList;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.security.UsernameAndPassword;
 
@@ -18,24 +16,25 @@ public class RadioPlayerHttpsUploadServicesSupplier extends RadioPlayerUploadSer
     private final String httpsServiceId;
     private final SimpleHttpClient httpClient;
     private final String httpsBaseUrl;
-    private final boolean createHttpsUploadService;
 
-    public RadioPlayerHttpsUploadServicesSupplier(boolean createHttpsUploadService, String s3ServiceId, String s3Bucket, UsernameAndPassword s3Credentials, AdapterLog log, 
+    public RadioPlayerHttpsUploadServicesSupplier(boolean uploadToS3Only, String s3ServiceId, String s3Bucket, UsernameAndPassword s3Credentials, AdapterLog log, 
             XMLValidator validator, String httpsServiceId, SimpleHttpClient httpClient, String httpsBaseUrl) {
-        super(s3ServiceId, s3Bucket, s3Credentials, log, validator);
-        this.createHttpsUploadService = createHttpsUploadService;
+        super(uploadToS3Only, s3ServiceId, s3Bucket, s3Credentials, log, validator);
         this.httpsServiceId = httpsServiceId;
         this.httpClient = httpClient;
         this.httpsBaseUrl = httpsBaseUrl;
     }
     
     @Override
-    public Iterable<FileUploadService> get(DateTime uploadTime, FileType type) {
-        Builder<FileUploadService> uploadServices = ImmutableSet.<FileUploadService>builder();
-        if (createHttpsUploadService) {
-            uploadServices.add(createServiceWithLoggingAndValidation(httpsServiceId, new RadioPlayerHttpsFileUploader(httpClient, httpsBaseUrl)));
-        }
-        uploadServices.add(createS3UploadService(UPLOAD_TYPE_HTTPS, uploadTime, type));
-        return uploadServices.build();
+    Iterable<? extends FileUploadService> createUploadServices() {
+        return ImmutableList.of(createServiceWithLoggingAndValidation(
+                httpsServiceId, 
+                new RadioPlayerHttpsFileUploader(httpClient, httpsBaseUrl)
+        ));
+    }
+
+    @Override
+    String getUploadType() {
+        return UPLOAD_TYPE_HTTPS;
     }
 }

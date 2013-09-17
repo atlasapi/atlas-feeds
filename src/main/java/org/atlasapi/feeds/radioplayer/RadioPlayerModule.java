@@ -86,14 +86,12 @@ public class RadioPlayerModule {
 	private @Value("${rp.s3.bucket}") String s3Bucket;
 	private @Value("${s3.access}") String s3AccessKey;
 	private @Value("${s3.secret}") String s3Secret;
+	// This flag enables the jobs for both the ftp and https uploaders, but only adds
+	// upload capability to s3. this allows diff-ing of the output from the two uploaders.
+	private @Value("${rp.s3.s3UploadOnly.enabled}") String s3UploadOnly;
 	
 	private @Value("${rp.https.serviceId}") String httpsServiceId;
 	private @Value("${rp.https.enabled}") String httpsUpload;
-	// This flag is only evaluated if rp.https.enabled == "true".
-	// If it evaluates to "true", then the https upload code will upload to both
-	// S3 and to the HTTPS RadioPlayer service. If "false" / null, then the https upload
-	// code will only upload to S3.
-	private @Value("${rp.https.httpsSend.enabled}") String httpsSend;
 	private @Value("${rp.https.baseUrl}") String httpsUrl;
 	private @Value("${rp.https.username}") String httpsUsername;
 	private @Value("${rp.https.password}") String httpsPassword;
@@ -148,6 +146,7 @@ public class RadioPlayerModule {
 
     public @Bean RadioPlayerUploadServicesSupplier radioPlayerFtpUploadServices() {
         return new RadioPlayerFtpUploadServicesSupplier(
+                Boolean.parseBoolean(s3UploadOnly),
                 s3ServiceId, 
                 s3Bucket, 
                 radioPlayerS3Credentials(), 
@@ -159,7 +158,7 @@ public class RadioPlayerModule {
 
     public @Bean RadioPlayerUploadServicesSupplier radioPlayerHttpsUploadServices() {
         return new RadioPlayerHttpsUploadServicesSupplier(
-                Boolean.parseBoolean(httpsSend), 
+                Boolean.parseBoolean(s3UploadOnly), 
                 s3ServiceId, 
                 s3Bucket, 
                 radioPlayerS3Credentials(), 
@@ -240,7 +239,7 @@ public class RadioPlayerModule {
 		if (!radioPlayerUploadServiceDetails().isEmpty()) {
 		    createHealthProbes(remoteServices());
 	
-		    if (Boolean.parseBoolean(ftpUpload)) {
+		    if (Boolean.parseBoolean(s3UploadOnly) || Boolean.parseBoolean(ftpUpload)) {
 				
 	            scheduler.schedule(
 	                    radioPlayerFtpUploadTaskBuilder().newScheduledPiTask(uploadServices(), dayRangeGenerator).withName("Radioplayer PI Full Upload"), 
@@ -261,7 +260,7 @@ public class RadioPlayerModule {
 	            
 	
 			} 
-		    if (Boolean.parseBoolean(httpsUpload)) {
+		    if (Boolean.parseBoolean(s3UploadOnly) || Boolean.parseBoolean(httpsUpload)) {
                 
                 scheduler.schedule(
                         radioPlayerHttpsUploadTaskBuilder().newScheduledPiTask(uploadServices(), dayRangeGenerator).withName("Radioplayer HTTPS PI Full Upload"), 
@@ -282,7 +281,7 @@ public class RadioPlayerModule {
                 
     
             } 
-		    if (!Boolean.parseBoolean(ftpUpload) && !Boolean.parseBoolean(httpsUpload)) {
+		    if (!Boolean.parseBoolean(ftpUpload) && !Boolean.parseBoolean(httpsUpload) && !Boolean.parseBoolean(s3UploadOnly)) {
 				log.record(
 				        new AdapterLogEntry(Severity.INFO)
 				                .withSource(getClass())
