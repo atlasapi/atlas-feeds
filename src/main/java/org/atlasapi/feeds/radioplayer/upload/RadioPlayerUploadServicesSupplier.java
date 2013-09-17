@@ -26,7 +26,7 @@ public abstract class RadioPlayerUploadServicesSupplier {
 
     private static final Joiner JOIN_ON_FORWARD_SLASH = Joiner.on('/').skipNulls();
     private static final DateTimeFormatter DATE_FORMATTER = ISODateTimeFormat.date();
-    private static final DateTimeFormatter TIME_FORMATTER = ISODateTimeFormat.timeNoMillis();
+    private static final DateTimeFormatter TIME_FORMATTER = ISODateTimeFormat.hourMinute();
     
     private final String s3ServiceId;
     private final String s3Bucket;
