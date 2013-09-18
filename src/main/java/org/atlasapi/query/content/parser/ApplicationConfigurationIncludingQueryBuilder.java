@@ -2,7 +2,7 @@ package org.atlasapi.query.content.parser;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.atlasapi.application.ApplicationConfiguration;
+import org.atlasapi.application.OldApplicationConfiguration;
 import org.atlasapi.application.query.ApplicationConfigurationFetcher;
 import org.atlasapi.content.criteria.AtomicQuery;
 import org.atlasapi.content.criteria.ContentQuery;
@@ -22,7 +22,7 @@ public class ApplicationConfigurationIncludingQueryBuilder {
 
 	public ContentQuery build(HttpServletRequest request) {
 		ContentQuery query = queryBuilder.build(request);
-		ApplicationConfiguration config = configFetcher.configurationFor(request).valueOrNull();
+		OldApplicationConfiguration config = configFetcher.configurationFor(request).valueOrNull();
 		if (config != null) {
 			query = query.copyWithApplicationConfiguration(config);			
 		}
@@ -31,7 +31,7 @@ public class ApplicationConfigurationIncludingQueryBuilder {
 	
 	public ContentQuery build(HttpServletRequest request, Iterable<AtomicQuery> operands, Selection selection) {
 		ContentQuery query = new ContentQuery(operands, selection);
-		ApplicationConfiguration config = configFetcher.configurationFor(request).valueOrNull();
+		OldApplicationConfiguration config = configFetcher.configurationFor(request).valueOrNull();
 		if (config != null) {
 			query = query.copyWithApplicationConfiguration(config);			
 		}
