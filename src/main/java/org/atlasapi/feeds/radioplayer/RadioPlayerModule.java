@@ -76,8 +76,7 @@ public class RadioPlayerModule {
 	private static final Every UPLOAD_EVERY_TWO_HOURS = RepetitionRules.every(Duration.standardHours(2));
 	
 	private static final Publisher BBC = Publisher.BBC;
-	// TODO switch the new stuff to this once it's in use
-//	private static final Publisher NITRO = Publisher.NITRO;
+	private static final Publisher NITRO = Publisher.BBC_NITRO;
 
 	private @Value("${rp.ftp.enabled}") String ftpUpload;
 	private @Value("${rp.ftp.services}") String uploadServices;
@@ -219,7 +218,7 @@ public class RadioPlayerModule {
     }
     
     @Bean RadioPlayerUploadTaskBuilder radioPlayerHttpsUploadTaskBuilder() {
-        return new RadioPlayerUploadTaskBuilder(radioPlayerHttpsUploadServices(), radioPlayerUploadTaskRunner(), lastUpdatedContentFinder, contentLister, BBC).withLog(log);
+        return new RadioPlayerUploadTaskBuilder(radioPlayerHttpsUploadServices(), radioPlayerUploadTaskRunner(), lastUpdatedContentFinder, contentLister, NITRO).withLog(log);
     }
     
     @Bean RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner() {
@@ -235,7 +234,7 @@ public class RadioPlayerModule {
     
 	@PostConstruct 
 	public void scheduleTasks() {
-	    RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, ImmutableList.of(BBC));
+	    RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, ImmutableList.of(BBC, NITRO));
 		if (!radioPlayerUploadServiceDetails().isEmpty()) {
 		    createHealthProbes(remoteServices());
 	
