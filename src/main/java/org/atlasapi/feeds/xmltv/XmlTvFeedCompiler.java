@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.atlasapi.application.ApplicationConfiguration;
+import org.atlasapi.application.OldApplicationConfiguration;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.common.Id;
 import org.atlasapi.media.content.Container;
@@ -90,7 +90,7 @@ public class XmlTvFeedCompiler {
         }
         DateTime from = days.lowerEndpoint().toDateTime(SCHEDULE_START, DateTimeZones.UTC);
         DateTime to = days.upperEndpoint().toDateTime(SCHEDULE_START, DateTimeZones.UTC);
-        Schedule schedule = scheduleResolver.schedule(from, to, ImmutableList.of(channel), ImmutableSet.of(publisher), Optional.<ApplicationConfiguration>absent());
+        Schedule schedule = scheduleResolver.schedule(from, to, ImmutableList.of(channel), ImmutableSet.of(publisher), Optional.<OldApplicationConfiguration>absent());
         List<Item> items = Lists.transform(Iterables.getOnlyElement(schedule.channelSchedules()).getEntries(), ItemAndBroadcast.toItem());
         return items;
     }

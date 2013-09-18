@@ -4,9 +4,9 @@ import static org.junit.Assert.assertEquals;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.atlasapi.application.Application;
-import org.atlasapi.application.ApplicationCredentials;
-import org.atlasapi.application.ApplicationStore;
+import org.atlasapi.application.OldApplication;
+import org.atlasapi.application.OldApplicationCredentials;
+import org.atlasapi.application.OldApplicationStore;
 import org.atlasapi.application.query.ApplicationConfigurationFetcher;
 import org.atlasapi.application.query.IpCheckingApiKeyConfigurationFetcher;
 import org.atlasapi.content.criteria.ContentQuery;
@@ -32,10 +32,10 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 	@Test
 	public void testBuild() {
 		final String testApiKey = "testKey";
-		final Application testApp = Application.application("testSlug").withCredentials(new ApplicationCredentials(testApiKey)).build();
+		final OldApplication testApp = OldApplication.application("testSlug").withCredentials(new OldApplicationCredentials(testApiKey)).build();
 		
 		Mockery context = new Mockery();
-		final ApplicationStore reader = context.mock(ApplicationStore.class);
+		final OldApplicationStore reader = context.mock(OldApplicationStore.class);
 		
 		
 		context.checking(new Expectations(){{

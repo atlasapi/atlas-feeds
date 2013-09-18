@@ -5,7 +5,7 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.application.ApplicationConfiguration;
+import org.atlasapi.application.OldApplicationConfiguration;
 import org.atlasapi.application.query.ApplicationConfigurationFetcher;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.media.content.Content;
@@ -54,7 +54,7 @@ public class YouViewController {
     public void generateFeed(HttpServletRequest request, HttpServletResponse response,
             @RequestParam(value = "lastUpdated", required = false) String lastUpdated) throws IOException {
         try {
-            final ApplicationConfiguration appConfig = appConfig(request);
+            final OldApplicationConfiguration appConfig = appConfig(request);
             if (!appConfig.isEnabled(PUBLISHER)) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.setContentLength(0);
@@ -78,8 +78,8 @@ public class YouViewController {
         return ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start));
     }
     
-    private ApplicationConfiguration appConfig(HttpServletRequest request) {
-        Maybe<ApplicationConfiguration> config = configFetcher.configurationFor(request);
-        return config.hasValue() ? config.requireValue() : ApplicationConfiguration.defaultConfiguration();
+    private OldApplicationConfiguration appConfig(HttpServletRequest request) {
+        Maybe<OldApplicationConfiguration> config = configFetcher.configurationFor(request);
+        return config.hasValue() ? config.requireValue() : OldApplicationConfiguration.defaultConfiguration();
     }
 }
