@@ -17,9 +17,9 @@ public class RadioPlayerHttpsUploadServicesSupplier extends RadioPlayerS3Providi
     private final SimpleHttpClient httpClient;
     private final String httpsBaseUrl;
 
-    public RadioPlayerHttpsUploadServicesSupplier(boolean uploadToS3Only, String s3ServiceId, String s3Bucket, UsernameAndPassword s3Credentials, AdapterLog log, 
+    public RadioPlayerHttpsUploadServicesSupplier(boolean uploadToS3, boolean uploadToRemote, String s3ServiceId, String s3Bucket, UsernameAndPassword s3Credentials, AdapterLog log, 
             XMLValidator validator, String httpsServiceId, SimpleHttpClient httpClient, String httpsBaseUrl) {
-        super(uploadToS3Only, s3ServiceId, s3Bucket, s3Credentials, log, validator);
+        super(uploadToS3, uploadToRemote, s3ServiceId, s3Bucket, s3Credentials, log, validator);
         this.httpsServiceId = httpsServiceId;
         this.httpClient = httpClient;
         this.httpsBaseUrl = httpsBaseUrl;
