@@ -79,7 +79,7 @@ public class RadioPlayerModule {
 	private static final Publisher NITRO = Publisher.BBC_NITRO;
 
 	private @Value("${rp.ftp.enabled}") String ftpUpload;
-	private @Value("${rp.ftp.services}") String uploadServices;
+	private @Value("${rp.ftp.services}") String ftpUploadServices;
 	
 	private @Value("${rp.s3.serviceId}") String s3ServiceId;
 	private @Value("${rp.s3.bucket}") String s3Bucket;
@@ -91,6 +91,7 @@ public class RadioPlayerModule {
 	
 	private @Value("${rp.https.serviceId}") String httpsServiceId;
 	private @Value("${rp.https.enabled}") String httpsUpload;
+	private @Value("${rp.https.services}") String httpsUploadServices;
 	private @Value("${rp.https.baseUrl}") String httpsUrl;
 	private @Value("${rp.https.username}") String httpsUsername;
 	private @Value("${rp.https.password}") String httpsPassword;
@@ -190,7 +191,7 @@ public class RadioPlayerModule {
     
     @Bean RadioPlayerUploadResultStore uploadResultRecorder() {
         return new CachingRadioPlayerUploadResultStore(
-                remoteServices(), 
+                ftpRemoteServices(), 
                 new UploadResultStoreBackedRadioPlayerResultStore(fileUploadResultStore())
         );
     }
@@ -225,36 +226,38 @@ public class RadioPlayerModule {
         return new RadioPlayerRecordingExecutor(uploadResultRecorder());
     }
     
-    @Bean Set<String> remoteServices() {
-        return ImmutableSet.<String>builder()
-                .addAll(radioPlayerUploadServiceDetails().keySet())
-                .add(httpsServiceId)
-                .build();
+    @Bean Set<String> ftpRemoteServices() {
+        return radioPlayerUploadServiceDetails().keySet();
+    }
+    
+    @Bean Set<String> httpsRemoteServices() {
+        return ImmutableSet.of(httpsServiceId);
     }
     
 	@PostConstruct 
 	public void scheduleTasks() {
 	    RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, ImmutableList.of(BBC, NITRO));
 		if (!radioPlayerUploadServiceDetails().isEmpty()) {
-		    createHealthProbes(remoteServices());
+		    createHealthProbes(ftpRemoteServices(), ftpUploadServices());
+		    createHealthProbes(httpsRemoteServices(), httpsUploadServices());
 	
 		    if (Boolean.parseBoolean(s3UploadOnly) || Boolean.parseBoolean(ftpUpload)) {
 				
 	            scheduler.schedule(
-	                    radioPlayerFtpUploadTaskBuilder().newScheduledPiTask(uploadServices(), dayRangeGenerator).withName("Radioplayer PI Full Upload"), 
+	                    radioPlayerFtpUploadTaskBuilder().newScheduledPiTask(ftpUploadServices(), dayRangeGenerator).withName("Radioplayer PI Full Upload"), 
 	                    UPLOAD_EVERY_TWO_HOURS);
 	            scheduler.schedule(
-	                    radioPlayerFtpUploadTaskBuilder().newScheduledPiTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer PI Today Upload"), 
+	                    radioPlayerFtpUploadTaskBuilder().newScheduledPiTask(ftpUploadServices(), new DayRangeGenerator()).withName("Radioplayer PI Today Upload"), 
 	                    UPLOAD_EVERY_TEN_MINUTES);
 	            scheduler.schedule(
 	                    new RadioPlayerFtpRemoteProcessingChecker(radioPlayerUploadServiceDetails(), uploadResultRecorder(), log).withName("Radioplayer Remote Processing Checker"),
 	                    UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(5)));
 	            
 	            scheduler.schedule(
-	                    radioPlayerFtpUploadTaskBuilder().newScheduledOdTask(uploadServices(), true).withName("Radioplayer OD Full Upload"), 
+	                    radioPlayerFtpUploadTaskBuilder().newScheduledOdTask(ftpUploadServices(), true).withName("Radioplayer OD Full Upload"), 
 	                    NEVER);
 	            scheduler.schedule(
-	                    radioPlayerFtpUploadTaskBuilder().newScheduledOdTask(uploadServices(), false).withName("Radioplayer OD Today Upload"),
+	                    radioPlayerFtpUploadTaskBuilder().newScheduledOdTask(ftpUploadServices(), false).withName("Radioplayer OD Today Upload"),
 	                    UPLOAD_EVERY_TEN_MINUTES);
 	            
 	
@@ -262,20 +265,20 @@ public class RadioPlayerModule {
 		    if (Boolean.parseBoolean(s3UploadOnly) || Boolean.parseBoolean(httpsUpload)) {
                 
                 scheduler.schedule(
-                        radioPlayerHttpsUploadTaskBuilder().newScheduledPiTask(uploadServices(), dayRangeGenerator).withName("Radioplayer HTTPS PI Full Upload"), 
+                        radioPlayerHttpsUploadTaskBuilder().newScheduledPiTask(httpsUploadServices(), dayRangeGenerator).withName("Radioplayer HTTPS PI Full Upload"), 
                         UPLOAD_EVERY_TWO_HOURS);
                 scheduler.schedule(
-                        radioPlayerHttpsUploadTaskBuilder().newScheduledPiTask(uploadServices(), new DayRangeGenerator()).withName("Radioplayer HTTPS PI Today Upload"), 
+                        radioPlayerHttpsUploadTaskBuilder().newScheduledPiTask(httpsUploadServices(), new DayRangeGenerator()).withName("Radioplayer HTTPS PI Today Upload"), 
                         UPLOAD_EVERY_TEN_MINUTES);
                 scheduler.schedule(
                         new RadioPlayerHttpsRemoteProcessingChecker(radioPlayerHttpClient(), httpsServiceId, uploadResultRecorder(), log).withName("Radioplayer HTTPS Remote Processing Checker"),
                         UPLOAD_EVERY_FIVE_MINUTES.withOffset(Duration.standardMinutes(5)));
                 
                 scheduler.schedule(
-                        radioPlayerHttpsUploadTaskBuilder().newScheduledOdTask(uploadServices(), true).withName("Radioplayer HTTPS OD Full Upload"), 
+                        radioPlayerHttpsUploadTaskBuilder().newScheduledOdTask(httpsUploadServices(), true).withName("Radioplayer HTTPS OD Full Upload"), 
                         NEVER);
                 scheduler.schedule(
-                        radioPlayerHttpsUploadTaskBuilder().newScheduledOdTask(uploadServices(), false).withName("Radioplayer HTTPS OD Today Upload"),
+                        radioPlayerHttpsUploadTaskBuilder().newScheduledOdTask(httpsUploadServices(), false).withName("Radioplayer HTTPS OD Today Upload"),
                         UPLOAD_EVERY_TEN_MINUTES);
                 
     
@@ -290,7 +293,15 @@ public class RadioPlayerModule {
 		}
 	}
 
-    @Bean Iterable<RadioPlayerService> uploadServices() {
+    @Bean Iterable<RadioPlayerService> ftpUploadServices() {
+        return generateUploadServices(ftpUploadServices);
+    }
+
+    @Bean Iterable<RadioPlayerService> httpsUploadServices() {
+        return generateUploadServices(httpsUploadServices);
+    }
+
+    private Iterable<RadioPlayerService> generateUploadServices(String uploadServices) {
         if (Strings.isNullOrEmpty(uploadServices) || uploadServices.toLowerCase().equals("all")) {
             return RadioPlayerServices.services;
         } else {
@@ -303,7 +314,7 @@ public class RadioPlayerModule {
         }
     }
 
-    private void createHealthProbes(Set<String> remoteIds) {
+    private void createHealthProbes(Set<String> remoteIds, Iterable<RadioPlayerService> radioPlayerServices) {
         for (final String remoteId : remoteIds) {
             Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>() {
                 @Override
@@ -313,7 +324,7 @@ public class RadioPlayerModule {
             };
             
             health.addProbes(Iterables.concat(
-                    Iterables.transform(uploadServices(), createProbe),
+                    Iterables.transform(radioPlayerServices, createProbe),
                     ImmutableList.of(new RadioPlayerServerHealthProbe(remoteId, fileUploadResultStore()))
             ));
         }
