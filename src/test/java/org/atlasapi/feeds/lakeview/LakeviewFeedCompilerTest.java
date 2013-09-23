@@ -100,7 +100,7 @@ public class LakeviewFeedCompilerTest {
 
     private Element getEpisodeElement(String episodeTitle, int episodeNumber, boolean genericTitleEnabled) {
         LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, genericTitleEnabled);
-	    Episode episode = new Episode("episodeUri", "episodeCurie", null);
+	    Episode episode = new Episode("http://www.channel4.com/programmes/hierarchical-uri/episode-guide/series-1/episode-1", "episodeCurie", null);
 	    Brand container = new Brand("brandUri", "brandCurie", null);
 	    episode.setTitle(episodeTitle);
 	    episode.setEpisodeNumber(episodeNumber);
@@ -121,4 +121,43 @@ public class LakeviewFeedCompilerTest {
 	    
 	    return feedCompiler.createEpisodeElem(episode, container, new DateTime(), null);
     }
+    
+    @Test
+    public void testGeneratesCorrectIdsForProgrammeIdUri() {
+        
+        LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, true);
+        Episode episode = new Episode();
+        episode.setCanonicalUri("http://www.channel4.com/programmes/55103/175");
+        episode.addAliasUrl("http://www.channel4.com/programmes/hollyoaks/episode-guide/series-22/episode-175");
+        episode.setTitle("Title");
+        episode.setEpisodeNumber(3);
+        
+        Brand container = new Brand("brandUri", "brandCurie", null);
+        
+        Version version = new Version();
+        Encoding encoding = new Encoding();
+        Location location = new Location();
+        location.setUri("https://ais.channel4.com/asset/3567007");
+        location.setPolicy(new Policy()
+                    .withPlatform(Platform.XBOX)
+                    .withAvailabilityStart(new DateTime())
+                    .withAvailabilityEnd(new DateTime()));
+        location.setTransportType(TransportType.LINK);
+        
+        encoding.setAvailableAt(ImmutableSet.of(location));
+        version.setManifestedAs(ImmutableSet.of(encoding));
+        episode.setVersions(ImmutableSet.of(version));
+        episode.setContainer(container);
+        
+        Element elem = feedCompiler.createEpisodeElem(episode, container, new DateTime(), null);
+        
+        assertEquals("http://channel4.com/en-GB/TVEpisode/hollyoaks-series-22-episode-175", 
+            elem.getFirstChildElement("ItemId", LAKEVIEW.getUri()).getValue());
+        assertEquals("http://www.channel4.com/programmes/hollyoaks/episode-guide/series-22/episode-175.atom",
+            elem.getFirstChildElement("PublicWebUri", LAKEVIEW.getUri()).getValue());
+        assertEquals("https://xbox.channel4.com/pmlsd/hollyoaks/4od.atom#3567007",
+            elem.getFirstChildElement("ApplicationSpecificData", LAKEVIEW.getUri()).getValue());
+        
+    }
+    
 }
