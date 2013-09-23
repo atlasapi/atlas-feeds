@@ -147,6 +147,7 @@ public class RadioPlayerModule {
     public @Bean RadioPlayerUploadServicesSupplier radioPlayerFtpUploadServices() {
         return new RadioPlayerFtpUploadServicesSupplier(
                 Boolean.parseBoolean(s3UploadOnly),
+                Boolean.parseBoolean(ftpUpload),
                 s3ServiceId, 
                 s3Bucket, 
                 radioPlayerS3Credentials(), 
@@ -158,7 +159,8 @@ public class RadioPlayerModule {
 
     public @Bean RadioPlayerUploadServicesSupplier radioPlayerHttpsUploadServices() {
         return new RadioPlayerHttpsUploadServicesSupplier(
-                Boolean.parseBoolean(s3UploadOnly), 
+                Boolean.parseBoolean(s3UploadOnly),
+                Boolean.parseBoolean(httpsUpload),
                 s3ServiceId, 
                 s3Bucket, 
                 radioPlayerS3Credentials(), 
@@ -259,8 +261,6 @@ public class RadioPlayerModule {
 	            scheduler.schedule(
 	                    radioPlayerFtpUploadTaskBuilder().newScheduledOdTask(ftpUploadServices(), false).withName("Radioplayer OD Today Upload"),
 	                    UPLOAD_EVERY_TEN_MINUTES);
-	            
-	
 			} 
 		    if (Boolean.parseBoolean(s3UploadOnly) || Boolean.parseBoolean(httpsUpload)) {
                 
@@ -280,8 +280,6 @@ public class RadioPlayerModule {
                 scheduler.schedule(
                         radioPlayerHttpsUploadTaskBuilder().newScheduledOdTask(httpsUploadServices(), false).withName("Radioplayer HTTPS OD Today Upload"),
                         UPLOAD_EVERY_TEN_MINUTES);
-                
-    
             } 
 		    if (!Boolean.parseBoolean(ftpUpload) && !Boolean.parseBoolean(httpsUpload) && !Boolean.parseBoolean(s3UploadOnly)) {
 				log.record(

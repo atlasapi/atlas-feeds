@@ -13,6 +13,7 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
 import com.metabroadcast.common.security.UsernameAndPassword;
 
 /**
@@ -29,15 +30,17 @@ public abstract class RadioPlayerS3ProvidingUploadServicesSupplier implements Ra
     private static final DateTimeFormatter DATE_FORMATTER = ISODateTimeFormat.date();
     private static final DateTimeFormatter TIME_FORMATTER = ISODateTimeFormat.hourMinute();
     
-    private final boolean uploadToS3Only;
+    private final boolean uploadToS3;
+    private final boolean uploadToRemote;
     private final String s3ServiceId;
     private final String s3Bucket;
     private final UsernameAndPassword s3Credentials;
     private final AdapterLog log;
     private final XMLValidator validator;
 
-    public RadioPlayerS3ProvidingUploadServicesSupplier(boolean uploadToS3Only, String s3ServiceId, String s3Bucket, UsernameAndPassword s3Credentials, AdapterLog log, XMLValidator validator) {
-        this.uploadToS3Only = uploadToS3Only;
+    public RadioPlayerS3ProvidingUploadServicesSupplier(boolean uploadToS3, boolean uploadToRemote, String s3ServiceId, String s3Bucket, UsernameAndPassword s3Credentials, AdapterLog log, XMLValidator validator) {
+        this.uploadToS3 = uploadToS3;
+        this.uploadToRemote = uploadToRemote;
         this.s3ServiceId = s3ServiceId;
         this.s3Bucket = s3Bucket;
         this.s3Credentials = s3Credentials;
@@ -87,16 +90,14 @@ public abstract class RadioPlayerS3ProvidingUploadServicesSupplier implements Ra
      */
     @Override
     public final Iterable<FileUploadService> get(DateTime uploadTime, FileType type) {
-        FileUploadService s3UploadService = createS3UploadService(getUploadType(), uploadTime, type);
-        
-        if (uploadToS3Only) {
-            return ImmutableSet.of(s3UploadService);
-        } else {
-            return ImmutableSet.<FileUploadService>builder()
-                    .addAll(createUploadServices())
-                    .add(s3UploadService)
-                    .build();
+        Builder<FileUploadService> services = ImmutableSet.<FileUploadService>builder();
+        if (uploadToS3) {
+            services.add(createS3UploadService(getUploadType(), uploadTime, type));
+        } 
+        if (uploadToRemote) {
+            services.addAll(createUploadServices());
         }
+        return services.build();
     }
 
     abstract Iterable<? extends FileUploadService> createUploadServices();
