@@ -149,7 +149,7 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                 Element programme = createElement("programme", EPGSCHEDULE);
                 programme.addAttribute(new Attribute("shortId", "0"));
                 
-                programme.addAttribute(new Attribute("id", clip.getCanonicalUri().replace("http://", "crid://")));
+                programme.addAttribute(new Attribute("id", createCridFromUri(clip.getCanonicalUri())));
         
                 String title = clipTitle(itemOrContainerTitle(broadcastItem), clip);
                 programme.appendChild(stringElement("mediumName", EPGDATATYPES, MEDIUM_TITLE.truncatePossibleNull(title)));

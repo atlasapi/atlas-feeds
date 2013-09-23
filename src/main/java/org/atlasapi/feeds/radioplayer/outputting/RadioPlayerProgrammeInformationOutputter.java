@@ -83,7 +83,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
     private Element createProgrammeElement(RadioPlayerBroadcastItem broadcastItem, RadioPlayerService id) {
         Element programme = createElement("programme", EPGSCHEDULE);
         programme.addAttribute(new Attribute("shortId", "0"));
-        programme.addAttribute(new Attribute("id", broadcastItem.getItem().getCanonicalUri().replace("http://", "crid://")));
+        programme.addAttribute(new Attribute("id", createCridFromUri(broadcastItem.getItem().getCanonicalUri())));
 
         String title = itemTitle(broadcastItem);
         programme.appendChild(stringElement("mediumName", EPGDATATYPES, MEDIUM_TITLE.truncatePossibleNull(title)));
