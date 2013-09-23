@@ -53,6 +53,8 @@ public class LakeviewFeedCompiler {
     private static final DateTimeFormatter DATETIME_FORMAT = ISODateTimeFormat.dateTimeNoMillis();
     private static final XMLNamespace LAKEVIEW = new XMLNamespace("", "http://schemas.microsoft.com/Lakeview/2011/06/13/ingestion");
     private static final String PROVIDER_ID = "0x484707D1";
+    private static final Pattern HIERARCHICAL_URI_PATTERN
+        = Pattern.compile("http://www.channel4.com/programmes/[a-z0-9\\-]+/episode-guide/series-\\d+/episode-\\d+");
     
     private final Clock clock;
 	private ChannelResolver channelResolver;
@@ -218,7 +220,7 @@ public class LakeviewFeedCompiler {
     Element createEpisodeElem(Episode episode, Brand container, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVEpisode", LAKEVIEW);
         element.appendChild(stringElement("Provider", LAKEVIEW, PROVIDER_ID));
-        element.appendChild(stringElement("ItemId", LAKEVIEW, episodeId(episode.getCanonicalUri())));
+        element.appendChild(stringElement("ItemId", LAKEVIEW, episodeId(episode)));
         
         if (genericTitlesEnabled) {
             if (episode.getEpisodeNumber() != null) {
@@ -253,7 +255,7 @@ public class LakeviewFeedCompiler {
         
         instances.appendChild(videoInstance);           
 
-        appendCommonElements(element, episode, originalPublicationDate, lastModified, episodeAtomUri(episode.getCanonicalUri(), extractAssetId(episode)), instances);
+        appendCommonElements(element, episode, originalPublicationDate, lastModified, episodeAtomUri(findHierarchicalUri(episode), extractAssetId(episode)), instances);
         
         element.appendChild(stringElement("EpisodeNumber", LAKEVIEW, String.valueOf(episode.getEpisodeNumber())));
         element.appendChild(stringElement("DurationInSeconds", LAKEVIEW, String.valueOf(duration(episode))));
@@ -381,11 +383,18 @@ public class LakeviewFeedCompiler {
         	element.appendChild(instances);
         }
         
-        element.appendChild(stringElement("PublicWebUri", LAKEVIEW, String.format("%s.atom", content.getCanonicalUri())));
+        element.appendChild(stringElement("PublicWebUri", LAKEVIEW, String.format("%s.atom", webUriRoot(content))));
         if(applicationSpecificData != null) {
         	element.appendChild(stringElement("ApplicationSpecificData", LAKEVIEW, applicationSpecificData));
         }
         element.appendChild(stringElement("OriginalPublicationDate", LAKEVIEW, originalPublicationDate.toString(DATETIME_FORMAT)));
+    }
+
+    private String webUriRoot(Content content) {
+        if (content instanceof Episode) {
+            return findHierarchicalUri((Episode)content);
+        }
+        return content.getCanonicalUri();
     }
 
     private static final String ID_PREFIX = "http://channel4.com/en-GB";
@@ -416,8 +425,25 @@ public class LakeviewFeedCompiler {
         return String.format("%s/TVSeason/%s", ID_PREFIX, seriesUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "-"));
     }
 
-    private String episodeId(String episodeUri) {
+    private String episodeId(Episode episode) {
+        String episodeUri = findHierarchicalUri(episode);
         return String.format("%s/TVEpisode/%s", ID_PREFIX, episodeUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/(series-\\d+)/(episode-\\d+)", "-$1-$2"));
+    }
+    
+    private String findHierarchicalUri(Episode episode) {
+        if (isHierarchicalUri(episode.getCanonicalUri())) {
+            return episode.getCanonicalUri();
+        }
+        for (String alias : episode.getAliasUrls()) {
+            if (isHierarchicalUri(alias)) {
+                return alias;
+            }
+        }
+        throw new IllegalStateException(episode + " : no hierarchical uri");
+    }
+
+    private boolean isHierarchicalUri(String uri) {
+        return HIERARCHICAL_URI_PATTERN.matcher(uri).matches();
     }
 
     private Integer duration(Episode episode) {
