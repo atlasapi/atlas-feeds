@@ -102,6 +102,10 @@ public abstract class RadioPlayerXMLOutputter {
         }
         return null;
     }
+    
+    protected String createCridFromUri(String uri) {
+        return uri.replaceAll("http://[a-z]*\\.bbc\\.co\\.uk", "crid://www\\.bbc\\.co\\.uk");
+    }
 
     protected Broadcast broadcastFrom(Item item, String broadcaster) {
         for (Version version : item.getVersions()) {
