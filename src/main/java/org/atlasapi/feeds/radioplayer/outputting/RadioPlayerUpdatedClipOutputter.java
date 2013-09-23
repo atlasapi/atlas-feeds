@@ -8,8 +8,6 @@ import static com.google.common.collect.Iterables.transform;
 
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import nu.xom.Attribute;
 import nu.xom.Element;
@@ -157,7 +155,7 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
         
                 programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(clip.getDescription()))));
                 if (!Strings.isNullOrEmpty(clip.getImage())) {
-                    programme.appendChild(mediaDescription(imageDescriptionElem(clip)));
+                    programme.appendChild(mediaDescription(createImageDescriptionElem(clip)));
                 }
         
                 for (Element genreElement : genreElementCreator.genreElementsFor(broadcastItem.getItem())) {
@@ -204,24 +202,6 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
         Element descriptionElement = createElement("mediaDescription", EPGDATATYPES);
         descriptionElement.appendChild(childElem);
         return descriptionElement;
-    }
-    
-    private Element imageDescriptionElem(Item item) {
-        Element imageElement = createElement("multimedia", EPGDATATYPES);
-        imageElement.addAttribute(new Attribute("mimeValue", "image/jpeg"));
-        imageElement.addAttribute(new Attribute("url", imageLocationFrom(item)));
-        imageElement.addAttribute(new Attribute("width", "86"));
-        imageElement.addAttribute(new Attribute("height", "48"));
-        return imageElement;
-    }
-
-    private String imageLocationFrom(Item item) {
-        Pattern p = Pattern.compile("(.*)_\\d+_\\d+.jpg");
-        Matcher m = p.matcher(item.getImage());
-        if (m.matches()) {
-            return m.group(1) + "_86_48.jpg";
-        }
-        return item.getImage();
     }
     
     private Element ondemandElement(Clip item, Location location) {
