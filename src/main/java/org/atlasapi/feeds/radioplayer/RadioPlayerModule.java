@@ -51,6 +51,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.common.io.Resources;
 import com.google.common.net.HostSpecifier;
 import com.metabroadcast.common.health.HealthProbe;
@@ -184,7 +185,7 @@ public class RadioPlayerModule {
     }
 	   
     public @Bean RadioPlayerHealthController radioPlayerHealthController() {
-        return new RadioPlayerHealthController(health, radioPlayerUploadServiceDetails().keySet(), Configurer.get("rp.health.password", "").get());
+        return new RadioPlayerHealthController(health, Sets.union(ftpRemoteServices(), httpsRemoteServices()), Configurer.get("rp.health.password", "").get());
     }
     
     public @Bean RadioPlayerUploadController radioPlayerUploadController() {
@@ -239,7 +240,7 @@ public class RadioPlayerModule {
 	@PostConstruct 
 	public void scheduleTasks() {
 	    RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, ImmutableList.of(BBC, NITRO));
-		if (!radioPlayerUploadServiceDetails().isEmpty()) {
+		if (!ftpRemoteServices().isEmpty() || !httpsRemoteServices().isEmpty()) {
 		    createHealthProbes(ftpRemoteServices(), ftpUploadServices());
 		    createHealthProbes(httpsRemoteServices(), httpsUploadServices());
 	
