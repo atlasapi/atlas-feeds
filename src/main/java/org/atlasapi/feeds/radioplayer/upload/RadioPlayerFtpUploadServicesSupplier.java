@@ -20,9 +20,9 @@ public class RadioPlayerFtpUploadServicesSupplier extends RadioPlayerS3Providing
     
     private final Map<String, RemoteServiceDetails> radioPlayerRemoteServiceDetails;
 
-    public RadioPlayerFtpUploadServicesSupplier(boolean uploadToS3Only, String s3ServiceId, String s3Bucket, UsernameAndPassword s3Credentials, 
+    public RadioPlayerFtpUploadServicesSupplier(boolean uploadToS3, boolean uploadToRemote, String s3ServiceId, String s3Bucket, UsernameAndPassword s3Credentials, 
             AdapterLog log, XMLValidator validator, Map<String,RemoteServiceDetails> radioPlayerRemoteServiceDetails) {
-        super(uploadToS3Only, s3ServiceId, s3Bucket, s3Credentials, log, validator);
+        super(uploadToS3, uploadToRemote, s3ServiceId, s3Bucket, s3Credentials, log, validator);
         this.radioPlayerRemoteServiceDetails = radioPlayerRemoteServiceDetails;
     }
     
