@@ -3,7 +3,10 @@ package org.atlasapi.feeds.radioplayer.outputting;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import nu.xom.Attribute;
 import nu.xom.Document;
 import nu.xom.Element;
 import nu.xom.Serializer;
@@ -105,6 +108,32 @@ public abstract class RadioPlayerXMLOutputter {
     
     protected String createCridFromUri(String uri) {
         return uri.replaceAll("http://[a-z]*\\.bbc\\.co\\.uk", "crid://www\\.bbc\\.co\\.uk");
+    }
+    
+    protected Element createImageDescriptionElem(Item item) {
+        Element imageElement = createElement("multimedia", EPGDATATYPES);
+        imageElement.addAttribute(new Attribute("mimeValue", "image/jpeg"));
+        imageElement.addAttribute(new Attribute("url", generateImageLocationFrom(item)));
+        imageElement.addAttribute(new Attribute("width", "86"));
+        imageElement.addAttribute(new Attribute("height", "48"));
+        return imageElement;
+    }
+
+    private String generateImageLocationFrom(Item item) {
+        Pattern p = Pattern.compile("(.*/)\\d+x\\d+(/.*).jpg");
+        Matcher m = p.matcher(item.getImage());
+        if (m.matches()) {
+            return m.group(1) + "86x48" + m.group(2) + ".jpg";
+        }
+        
+        p = Pattern.compile("(.*)_\\d+_\\d+.jpg");
+        m = p.matcher(item.getImage());
+        if (m.matches()) {
+            return m.group(1) + "_86_48.jpg";
+        }
+        
+        
+        return item.getImage();
     }
 
     protected Broadcast broadcastFrom(Item item, String broadcaster) {

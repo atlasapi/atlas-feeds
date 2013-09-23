@@ -3,8 +3,6 @@ package org.atlasapi.feeds.radioplayer.outputting;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import nu.xom.Attribute;
 import nu.xom.Element;
@@ -35,10 +33,10 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Lists;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
 import com.metabroadcast.common.time.DateTimeZones;
@@ -93,7 +91,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         programme.appendChild(locationElement(broadcast, id));
         programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(broadcastItem.getItem().getDescription()))));
         if (!Strings.isNullOrEmpty(broadcastItem.getItem().getImage())) {
-            programme.appendChild(mediaDescription(imageDescriptionElem(broadcastItem.getItem())));
+            programme.appendChild(mediaDescription(createImageDescriptionElem(broadcastItem.getItem())));
         }
 
         for (Element genreElement : genreElementCreator.genreElementsFor(broadcastItem.getItem())) {
@@ -175,24 +173,6 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         Element descriptionElement = createElement("mediaDescription", EPGDATATYPES);
         descriptionElement.appendChild(childElem);
         return descriptionElement;
-    }
-
-    private Element imageDescriptionElem(Item item) {
-        Element imageElement = createElement("multimedia", EPGDATATYPES);
-        imageElement.addAttribute(new Attribute("mimeValue", "image/jpeg"));
-        imageElement.addAttribute(new Attribute("url", imageLocationFrom(item)));
-        imageElement.addAttribute(new Attribute("width", "86"));
-        imageElement.addAttribute(new Attribute("height", "48"));
-        return imageElement;
-    }
-
-    private String imageLocationFrom(Item item) {
-        Pattern p = Pattern.compile("(.*)_\\d+_\\d+.jpg");
-        Matcher m = p.matcher(item.getImage());
-        if (m.matches()) {
-            return m.group(1) + "_86_48.jpg";
-        }
-        return item.getImage();
     }
 
     Element ondemandElement(RadioPlayerBroadcastItem broadcastItem,  Collection<Location> locations, RadioPlayerService service) {
