@@ -182,6 +182,7 @@ public class RadioPlayerModule {
         return new SimpleHttpClientBuilder()
                 .withPreemptiveBasicAuth(new UsernameAndPassword(httpsUsername, httpsPassword))
                 .withHeader("Content-Type", MimeType.TEXT_XML.toString())
+                .withTrustUnverifiedCerts()
                 .build();
     }
 	   
