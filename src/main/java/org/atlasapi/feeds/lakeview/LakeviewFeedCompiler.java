@@ -5,6 +5,7 @@ import static org.atlasapi.feeds.lakeview.LakeviewContentFetcher.EPISODE_NUMBER_
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +40,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
+import com.google.common.collect.Sets;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
 
@@ -96,6 +98,7 @@ public class LakeviewFeedCompiler {
         int addedSeasons = 0;
         
         List<Element> elements = Lists.newLinkedList();
+        Set<String> seenItems = Sets.newHashSet();
         
         if (contentGroup.isFlattened()) {
             for (Episode episode : contentGroup.episodes()) {
@@ -117,10 +120,13 @@ public class LakeviewFeedCompiler {
                 for (Episode episode : sortedSeriesEpisodes(series.getChildRefs(),childRefToEpisode)) {
                     DateTime publicationDate = orginalPublicationDate(episode);
                     if (publicationDate != null) {
-                        elements.add(createEpisodeElem(episode, contentGroup.brand(), publicationDate, lastModified));
-                        addedEpisodes++;
-                        seriesPublicationDate = earliestOf(publicationDate, seriesPublicationDate);
-                        brandEndDate = latestOf(publicationDate, brandEndDate);
+                        Element epElem = createEpisodeElem(episode, contentGroup.brand(), publicationDate, lastModified);
+                        if (!seenItems.contains(itemId(epElem))) {
+                            elements.add(epElem);
+                            addedEpisodes++;
+                            seriesPublicationDate = earliestOf(publicationDate, seriesPublicationDate);
+                            brandEndDate = latestOf(publicationDate, brandEndDate);
+                        }
                     }
                 }
                 
@@ -143,10 +149,13 @@ public class LakeviewFeedCompiler {
         return brandElem != null ? elements : ImmutableList.<Element>of();
     }
 
+    private String itemId(Element epElem) {
+        return epElem.getFirstChildElement("ItemId", LAKEVIEW.getUri()).getValue();
+    }
+
     public ImmutableList<Episode> sortedSeriesEpisodes(ImmutableList<ChildRef> childRefs, Function<ChildRef, Episode> childRefToEpisode) {
         Iterable<Episode> episodes = Iterables.filter(Iterables.transform(childRefs, childRefToEpisode),Predicates.notNull());
-        ImmutableList<Episode> sortedSeriesEpisodes = EPISODE_NUMBER_ORDERING.immutableSortedCopy(episodes);
-        return sortedSeriesEpisodes;
+        return EPISODE_NUMBER_ORDERING.immutableSortedCopy(episodes);
     }
 
     private DateTime latestOf(DateTime publicationDate, DateTime brandEndDate) {
