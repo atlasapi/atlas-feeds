@@ -121,9 +121,11 @@ public class LakeviewFeedCompiler {
                     DateTime publicationDate = orginalPublicationDate(episode);
                     if (publicationDate != null) {
                         Element epElem = createEpisodeElem(episode, contentGroup.brand(), publicationDate, lastModified);
-                        if (!seenItems.contains(itemId(epElem))) {
+                        String itemId = itemId(epElem);
+                        if (!seenItems.contains(itemId)) {
                             elements.add(epElem);
                             addedEpisodes++;
+                            seenItems.add(itemId);
                             seriesPublicationDate = earliestOf(publicationDate, seriesPublicationDate);
                             brandEndDate = latestOf(publicationDate, brandEndDate);
                         }
