@@ -181,7 +181,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         
         Element ondemandElement = createElement("ondemand", EPGDATATYPES);
 
-        ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCurie().substring(item.getCurie().indexOf(":") + 1)));
+        ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCanonicalUri().substring(item.getCanonicalUri().lastIndexOf("/") + 1)));
 
 
         Version version = broadcastItem.getVersion();
