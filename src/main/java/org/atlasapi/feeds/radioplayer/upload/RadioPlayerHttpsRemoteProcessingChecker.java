@@ -72,12 +72,12 @@ public class RadioPlayerHttpsRemoteProcessingChecker extends ScheduledTask {
             return fileResult.type();
         }
         
-        String message = fileResult.message();
-        if (message == null) {
+        String transactionId = fileResult.transactionId();
+        if (transactionId == null) {
             return FileUploadResultType.FAILURE;
         }
         
-        return httpClient.get(SimpleHttpRequest.httpRequestFrom(message, new HttpResponseTransformer<FileUploadResultType>() {
+        return httpClient.get(SimpleHttpRequest.httpRequestFrom(transactionId, new HttpResponseTransformer<FileUploadResultType>() {
 
             @Override
             public FileUploadResultType transform(HttpResponsePrologue prologue, InputStream body)
