@@ -16,7 +16,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class RadioPlayerRecordingExecutor {
 
     private static final int MAX_CONNECTIONS = 5;
-    private static final long MAX_RUN_TIME = 2*60*1000;//2 mins
+    private static final long MAX_RUN_TIME = 10*60*1000;//2 mins
 
     private final RadioPlayerUploadResultStore recorder;
     private final ExecutorService executor;
