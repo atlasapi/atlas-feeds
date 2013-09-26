@@ -13,6 +13,6 @@ public interface RadioPlayerUploadResultStore {
     
     Iterable<FileUploadResult> resultsFor(FileType type, String remoteServiceId, RadioPlayerService service, LocalDate day);
     
-    List<FileUploadResult> allUnknownResults(String remoteServiceId);
+    List<FileUploadResult> allSuccessfulResults(String remoteServiceId);
 
 }

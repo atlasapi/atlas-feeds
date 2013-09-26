@@ -13,7 +13,6 @@ import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.persistence.logging.AdapterLog;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -54,7 +53,7 @@ public class RadioPlayerHttpsRemoteProcessingChecker extends ScheduledTask {
     }
 
     private void pollStatuses() throws HttpException, Exception {
-        List<FileUploadResult> allResults = resultStore.allUnknownResults(service);
+        List<FileUploadResult> allResults = resultStore.allSuccessfulResults(service);
         
         List<FileUploadResult> unknowns = unknownsFrom(allResults);
         
@@ -93,12 +92,7 @@ public class RadioPlayerHttpsRemoteProcessingChecker extends ScheduledTask {
     }
     
     private List<FileUploadResult> unknownsFrom(List<FileUploadResult> allResults) {
-        return ImmutableList.copyOf(Iterables.filter(allResults, new Predicate<FileUploadResult>() {
-            @Override
-            public boolean apply(FileUploadResult input) {
-                return FileUploadResultType.UNKNOWN.equals(input.type());
-            }
-        }));
+        return ImmutableList.copyOf(Iterables.filter(allResults, FileUploadResult.UNKNOWN_REMOTE_RESULT));
     }
 
     private RadioPlayerUploadResult radioPlayerResult(RadioPlayerFilenameMatcher matcher, FileUploadResult result) {
