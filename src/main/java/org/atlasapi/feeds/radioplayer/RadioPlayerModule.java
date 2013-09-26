@@ -195,7 +195,7 @@ public class RadioPlayerModule {
     
     @Bean RadioPlayerUploadResultStore uploadResultRecorder() {
         return new CachingRadioPlayerUploadResultStore(
-                Sets.union(ftpRemoteServices().keySet(), httpsRemoteServices().keySet()), 
+                Sets.union(Sets.union(ftpRemoteServices().keySet(), s3RemoteServices().keySet()), httpsRemoteServices().keySet()), 
                 new UploadResultStoreBackedRadioPlayerResultStore(fileUploadResultStore())
         );
     }
@@ -235,19 +235,21 @@ public class RadioPlayerModule {
         for (String remote : radioPlayerUploadServiceDetails().keySet()) {
             serviceMapping.put(remote, BBC);
         }
-        if (Boolean.parseBoolean(s3UploadOnly)) {
-            serviceMapping.put(s3ServiceId, BBC);
-        }
         return serviceMapping.build();
     }
     
     @Bean Map<String, Publisher> httpsRemoteServices() {
-        Builder<String, Publisher> serviceMapping = ImmutableMap.builder();
-        serviceMapping.put(httpsServiceId, NITRO);
+        return ImmutableMap.of(httpsServiceId, NITRO);
+    }
+    
+    @Bean Map<String, Publisher> s3RemoteServices() {
         if (Boolean.parseBoolean(s3UploadOnly)) {
-            serviceMapping.put(s3ServiceId, NITRO);
+            return ImmutableMap.<String, Publisher>builder()
+                    .put(s3ServiceId, NITRO)
+                    .put(s3ServiceId, BBC)
+                    .build();
         }
-        return serviceMapping.build();
+        return ImmutableMap.of();
     }
     
 	@PostConstruct 
