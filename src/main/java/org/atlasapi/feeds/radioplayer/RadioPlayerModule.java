@@ -5,6 +5,7 @@ import static org.atlasapi.persistence.logging.AdapterLogEntry.infoEntry;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
@@ -195,7 +196,7 @@ public class RadioPlayerModule {
     
     @Bean RadioPlayerUploadResultStore uploadResultRecorder() {
         return new CachingRadioPlayerUploadResultStore(
-                Sets.union(Sets.union(ftpRemoteServices().keySet(), s3RemoteServices().keySet()), httpsRemoteServices().keySet()), 
+                Sets.union(Sets.union(ftpRemoteServices().keySet(), s3RemoteServices()), httpsRemoteServices().keySet()), 
                 new UploadResultStoreBackedRadioPlayerResultStore(fileUploadResultStore())
         );
     }
@@ -242,14 +243,11 @@ public class RadioPlayerModule {
         return ImmutableMap.of(httpsServiceId, NITRO);
     }
     
-    @Bean Map<String, Publisher> s3RemoteServices() {
+    @Bean Set<String> s3RemoteServices() {
         if (Boolean.parseBoolean(s3UploadOnly)) {
-            return ImmutableMap.<String, Publisher>builder()
-                    .put(s3ServiceId, NITRO)
-                    .put(s3ServiceId, BBC)
-                    .build();
+            return ImmutableSet.of(s3ServiceId);
         }
-        return ImmutableMap.of();
+        return ImmutableSet.of();
     }
     
 	@PostConstruct 
