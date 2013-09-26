@@ -235,11 +235,19 @@ public class RadioPlayerModule {
         for (String remote : radioPlayerUploadServiceDetails().keySet()) {
             serviceMapping.put(BBC, remote);
         }
+        if (Boolean.parseBoolean(s3UploadOnly)) {
+            serviceMapping.put(BBC, s3ServiceId);
+        }
         return serviceMapping.build();
     }
     
     @Bean Map<Publisher, String> httpsRemoteServices() {
-        return ImmutableMap.of(NITRO, httpsServiceId);
+        Builder<Publisher, String> serviceMapping = ImmutableMap.builder();
+        serviceMapping.put(NITRO, httpsServiceId);
+        if (Boolean.parseBoolean(s3UploadOnly)) {
+            serviceMapping.put(BBC, s3ServiceId);
+        }
+        return serviceMapping.build();
     }
     
 	@PostConstruct 
