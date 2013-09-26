@@ -207,7 +207,7 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
     private Element ondemandElement(Clip item, Location location) {
         Element ondemandElement = createElement("ondemand", EPGDATATYPES);
 
-        ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCurie().substring(item.getCurie().indexOf(":") + 1)));
+        ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCanonicalUri().substring(item.getCanonicalUri().lastIndexOf("/") + 1)));
 
         Policy policy = location.getPolicy();
         if (policy != null) {
