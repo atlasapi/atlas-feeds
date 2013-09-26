@@ -195,7 +195,7 @@ public class RadioPlayerModule {
     
     @Bean RadioPlayerUploadResultStore uploadResultRecorder() {
         return new CachingRadioPlayerUploadResultStore(
-                ftpRemoteServices(), 
+                Sets.union(ftpRemoteServices(), httpsRemoteServices()), 
                 new UploadResultStoreBackedRadioPlayerResultStore(fileUploadResultStore())
         );
     }
