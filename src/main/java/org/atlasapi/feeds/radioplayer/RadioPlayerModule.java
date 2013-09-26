@@ -186,7 +186,7 @@ public class RadioPlayerModule {
     }
 	   
     public @Bean RadioPlayerHealthController radioPlayerHealthController() {
-        return new RadioPlayerHealthController(health, Sets.union(ImmutableSet.copyOf(ftpRemoteServices().values()), ImmutableSet.copyOf(httpsRemoteServices().values())), Configurer.get("rp.health.password", "").get());
+        return new RadioPlayerHealthController(health, Sets.union(ftpRemoteServices().keySet(), httpsRemoteServices().keySet()), Configurer.get("rp.health.password", "").get());
     }
     
     public @Bean RadioPlayerUploadController radioPlayerUploadController() {
@@ -195,7 +195,7 @@ public class RadioPlayerModule {
     
     @Bean RadioPlayerUploadResultStore uploadResultRecorder() {
         return new CachingRadioPlayerUploadResultStore(
-                Sets.union(ImmutableSet.copyOf(ftpRemoteServices().values()), ImmutableSet.copyOf(httpsRemoteServices().values())), 
+                Sets.union(ftpRemoteServices().keySet(), httpsRemoteServices().keySet()), 
                 new UploadResultStoreBackedRadioPlayerResultStore(fileUploadResultStore())
         );
     }
@@ -230,22 +230,22 @@ public class RadioPlayerModule {
         return new RadioPlayerRecordingExecutor(uploadResultRecorder());
     }
     
-    @Bean Map<Publisher, String> ftpRemoteServices() {
-        Builder<Publisher, String> serviceMapping = ImmutableMap.builder();
+    @Bean Map<String, Publisher> ftpRemoteServices() {
+        Builder<String, Publisher> serviceMapping = ImmutableMap.builder();
         for (String remote : radioPlayerUploadServiceDetails().keySet()) {
-            serviceMapping.put(BBC, remote);
+            serviceMapping.put(remote, BBC);
         }
         if (Boolean.parseBoolean(s3UploadOnly)) {
-            serviceMapping.put(BBC, s3ServiceId);
+            serviceMapping.put(s3ServiceId, BBC);
         }
         return serviceMapping.build();
     }
     
-    @Bean Map<Publisher, String> httpsRemoteServices() {
-        Builder<Publisher, String> serviceMapping = ImmutableMap.builder();
-        serviceMapping.put(NITRO, httpsServiceId);
+    @Bean Map<String, Publisher> httpsRemoteServices() {
+        Builder<String, Publisher> serviceMapping = ImmutableMap.builder();
+        serviceMapping.put(httpsServiceId, NITRO);
         if (Boolean.parseBoolean(s3UploadOnly)) {
-            serviceMapping.put(BBC, s3ServiceId);
+            serviceMapping.put(s3ServiceId, NITRO);
         }
         return serviceMapping.build();
     }
@@ -326,18 +326,18 @@ public class RadioPlayerModule {
         }
     }
 
-    private void createHealthProbes(Map<Publisher, String> remoteIds, Iterable<RadioPlayerService> radioPlayerServices) {
-        for (final Entry<Publisher, String> remoteId : remoteIds.entrySet()) {
+    private void createHealthProbes(Map<String, Publisher> remoteIds, Iterable<RadioPlayerService> radioPlayerServices) {
+        for (final Entry<String, Publisher> remoteId : remoteIds.entrySet()) {
             Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>() {
                 @Override
                 public HealthProbe apply(RadioPlayerService service) {
-                    return new RadioPlayerUploadHealthProbe(remoteId.getValue(), remoteId.getKey(), uploadResultRecorder(), service, dayRangeGenerator);
+                    return new RadioPlayerUploadHealthProbe(remoteId.getKey(), remoteId.getValue(), uploadResultRecorder(), service, dayRangeGenerator);
                 }
             };
             
             health.addProbes(Iterables.concat(
                     Iterables.transform(radioPlayerServices, createProbe),
-                    ImmutableList.of(new RadioPlayerServerHealthProbe(remoteId.getValue(), fileUploadResultStore()))
+                    ImmutableList.of(new RadioPlayerServerHealthProbe(remoteId.getKey(), fileUploadResultStore()))
             ));
         }
     }
