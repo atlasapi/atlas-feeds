@@ -83,20 +83,20 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
     }
 
     @Override
-    public List<FileUploadResult> allUnknownResults(final String remoteServiceId) {
+    public List<FileUploadResult> allSuccessfulResults(final String remoteServiceId) {
         return ImmutableList.copyOf(Iterables.concat(Iterables.transform(
                 Arrays.asList(FileType.values()), 
                 new Function<FileType, Iterable<FileUploadResult>>() {
                     @Override
                     public Iterable<FileUploadResult> apply(FileType input) {
-                        return getUnknownResultsForFileTypeAndService(input, remoteServiceId);
+                        return getSuccessfulResultsForFileTypeAndService(input, remoteServiceId);
                     }
                 }
         )));
     }
     
     // TODO break this up a little
-    private Iterable<FileUploadResult> getUnknownResultsForFileTypeAndService(FileType type, String remoteServiceId) {
+    private Iterable<FileUploadResult> getSuccessfulResultsForFileTypeAndService(FileType type, String remoteServiceId) {
         final RemoteServiceSpecificResultCache resultCache = fileTypeToRemoteServiceCacheMap.get(type).get(remoteServiceId);
         return Iterables.concat(Iterables.transform(
                 RadioPlayerServices.all.entrySet(), 
@@ -106,7 +106,7 @@ public class CachingRadioPlayerUploadResultStore implements RadioPlayerUploadRes
                         LoadingCache<LocalDate,Set<FileUploadResult>> loadingCache = resultCache.get(input.getValue());
                         return Iterables.filter(
                                 Iterables.concat(loadingCache.asMap().values()),
-                                FileUploadResult.UNKNOWN_REMOTE_RESULT
+                                FileUploadResult.SUCCESSFUL
                         );
                     }
                 }

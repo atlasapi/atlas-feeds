@@ -29,10 +29,10 @@ public class UploadResultStoreBackedRadioPlayerResultStore implements RadioPlaye
     }
 
     @Override
-    public List<FileUploadResult> allUnknownResults(final String remoteServiceId) {
+    public List<FileUploadResult> allSuccessfulResults(final String remoteServiceId) {
         return ImmutableList.copyOf(Iterables.filter(
                 backingStore.results(remoteServiceId),
-                FileUploadResult.UNKNOWN_REMOTE_RESULT
+                FileUploadResult.SUCCESSFUL
         ));
     }
 
