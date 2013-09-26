@@ -68,10 +68,6 @@ public class RadioPlayerHttpsRemoteProcessingChecker extends ScheduledTask {
     }
 
     private FileUploadResultType performRemoteCheck(FileUploadResult fileResult) throws HttpException, Exception {
-        if (!fileResult.remoteProcessingResult().equals(FileUploadResultType.UNKNOWN)) {
-            return fileResult.type();
-        }
-        
         String transactionId = fileResult.transactionId();
         if (transactionId == null) {
             return FileUploadResultType.FAILURE;
