@@ -12,6 +12,7 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
+import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -29,6 +30,7 @@ import com.mongodb.BasicDBObjectBuilder;
 
 public class RadioPlayerUploadHealthProbeTest {
 
+    private static final Publisher PUBLISHER = Publisher.BBC;
     private static final String REMOTE_SERVICE_ID = "remote";
     private static final String DATE_FORMAT = "yyyyMMdd";
     private static final RadioPlayerService SERVICE = RadioPlayerServices.all.get("340");
@@ -36,7 +38,7 @@ public class RadioPlayerUploadHealthProbeTest {
     //TODO: remove mongo and mock RadioPlayerUploadResultStore
     private final static DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     private final RadioPlayerUploadResultStore recorder = new UploadResultStoreBackedRadioPlayerResultStore(new MongoFileUploadResultStore(mongo));
-    private final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(REMOTE_SERVICE_ID, recorder, SERVICE, new DayRangeGenerator().withLookAhead(0).withLookBack(0));
+    private final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(REMOTE_SERVICE_ID, PUBLISHER, recorder, SERVICE, new DayRangeGenerator().withLookAhead(0).withLookBack(0));
     
     @BeforeClass
     public static void setup() {
@@ -94,7 +96,7 @@ public class RadioPlayerUploadHealthProbeTest {
     @Test
     public void testFutureFailureIsInfo() {
         
-        RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(REMOTE_SERVICE_ID, recorder, SERVICE, new DayRangeGenerator().withLookAhead(4).withLookBack(0));
+        RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(REMOTE_SERVICE_ID, PUBLISHER, recorder, SERVICE, new DayRangeGenerator().withLookAhead(4).withLookBack(0));
 
         
         DateTime futureDay = new DateTime(DateTimeZones.UTC).plusDays(4);

@@ -12,6 +12,7 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.LocalDate;
@@ -39,12 +40,14 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     };
     
     private final String remoteServiceId;
+    private final Publisher publisher;
     protected final RadioPlayerUploadResultStore store;
     private final RadioPlayerService service;
     protected final DayRangeGenerator rangeGenerator;
 
-    public RadioPlayerUploadHealthProbe(String remoteServiceId, RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
+    public RadioPlayerUploadHealthProbe(String remoteServiceId, Publisher publisher, RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
         this.remoteServiceId = remoteServiceId;
+        this.publisher = publisher;
         this.store = store;
         this.service = service;
         this.rangeGenerator = dayRangeGenerator;
@@ -81,7 +84,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     }
 
     private String linkedFilename(FileType type, LocalDate day) {
-        return String.format("<a style=\"text-decoration:none\" href=\"/feeds/ukradioplayer/%1$s_%2$s_%3$s.xml\">%1$s_%2$s_%3$s.xml</a>", day.toString("yyyyMMdd"), service.getRadioplayerId(), type.name());
+        return String.format("<a style=\"text-decoration:none\" href=\"/feeds/%1$s/ukradioplayer/%2$s_%3$s_%4$s.xml\">%2$s_%3$s_%4$s.xml</a>", publisher.name().toLowerCase(), day.toString("yyyyMMdd"), service.getRadioplayerId(), type.name());
     }
 
     private ProbeResultType entryResultType(FileUploadResult mostRecent, LocalDate day, FileType type) {

@@ -5,7 +5,6 @@ import static org.atlasapi.persistence.logging.AdapterLogEntry.infoEntry;
 
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
@@ -19,9 +18,9 @@ import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadResultStore;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadServicesSupplier;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskBuilder;
 import org.atlasapi.feeds.radioplayer.upload.UploadResultStoreBackedRadioPlayerResultStore;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadServicesSupplier;
 import org.atlasapi.feeds.upload.RemoteServiceDetails;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;
@@ -49,6 +48,7 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
@@ -115,7 +115,7 @@ public class RadioPlayerModule {
 
 	// this publisher will need to change if the output controller is to display files generated from a different publisher's content.
 	public @Bean RadioPlayerController radioPlayerController() {
-		return new RadioPlayerController(lastUpdatedContentFinder, contentLister, BBC);
+		return new RadioPlayerController(lastUpdatedContentFinder, contentLister, ImmutableSet.of(BBC, NITRO));
 	}
 	
 	public @Bean Map<String,RemoteServiceDetails> radioPlayerUploadServiceDetails() {
@@ -186,7 +186,7 @@ public class RadioPlayerModule {
     }
 	   
     public @Bean RadioPlayerHealthController radioPlayerHealthController() {
-        return new RadioPlayerHealthController(health, Sets.union(ftpRemoteServices(), httpsRemoteServices()), Configurer.get("rp.health.password", "").get());
+        return new RadioPlayerHealthController(health, Sets.union(ImmutableSet.copyOf(ftpRemoteServices().values()), ImmutableSet.copyOf(httpsRemoteServices().values())), Configurer.get("rp.health.password", "").get());
     }
     
     public @Bean RadioPlayerUploadController radioPlayerUploadController() {
@@ -195,7 +195,7 @@ public class RadioPlayerModule {
     
     @Bean RadioPlayerUploadResultStore uploadResultRecorder() {
         return new CachingRadioPlayerUploadResultStore(
-                Sets.union(ftpRemoteServices(), httpsRemoteServices()), 
+                Sets.union(ImmutableSet.copyOf(ftpRemoteServices().values()), ImmutableSet.copyOf(httpsRemoteServices().values())), 
                 new UploadResultStoreBackedRadioPlayerResultStore(fileUploadResultStore())
         );
     }
@@ -230,12 +230,16 @@ public class RadioPlayerModule {
         return new RadioPlayerRecordingExecutor(uploadResultRecorder());
     }
     
-    @Bean Set<String> ftpRemoteServices() {
-        return radioPlayerUploadServiceDetails().keySet();
+    @Bean Map<Publisher, String> ftpRemoteServices() {
+        Builder<Publisher, String> serviceMapping = ImmutableMap.builder();
+        for (String remote : radioPlayerUploadServiceDetails().keySet()) {
+            serviceMapping.put(BBC, remote);
+        }
+        return serviceMapping.build();
     }
     
-    @Bean Set<String> httpsRemoteServices() {
-        return ImmutableSet.of(httpsServiceId);
+    @Bean Map<Publisher, String> httpsRemoteServices() {
+        return ImmutableMap.of(NITRO, httpsServiceId);
     }
     
 	@PostConstruct 
@@ -314,18 +318,18 @@ public class RadioPlayerModule {
         }
     }
 
-    private void createHealthProbes(Set<String> remoteIds, Iterable<RadioPlayerService> radioPlayerServices) {
-        for (final String remoteId : remoteIds) {
+    private void createHealthProbes(Map<Publisher, String> remoteIds, Iterable<RadioPlayerService> radioPlayerServices) {
+        for (final Entry<Publisher, String> remoteId : remoteIds.entrySet()) {
             Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>() {
                 @Override
                 public HealthProbe apply(RadioPlayerService service) {
-                    return new RadioPlayerUploadHealthProbe(remoteId, uploadResultRecorder(), service, dayRangeGenerator);
+                    return new RadioPlayerUploadHealthProbe(remoteId.getValue(), remoteId.getKey(), uploadResultRecorder(), service, dayRangeGenerator);
                 }
             };
             
             health.addProbes(Iterables.concat(
                     Iterables.transform(radioPlayerServices, createProbe),
-                    ImmutableList.of(new RadioPlayerServerHealthProbe(remoteId, fileUploadResultStore()))
+                    ImmutableList.of(new RadioPlayerServerHealthProbe(remoteId.getValue(), fileUploadResultStore()))
             ));
         }
     }
