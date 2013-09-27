@@ -1,42 +1,24 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
 import nu.xom.Attribute;
 import nu.xom.Element;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerPiFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Encoding;
-import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
-import org.atlasapi.media.entity.Policy;
-import org.atlasapi.media.entity.Policy.Network;
-import org.atlasapi.media.entity.Policy.Platform;
-import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.LocalDate;
 import org.joda.time.format.ISOPeriodFormat;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Ordering;
-import com.google.common.collect.Sets;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
 import com.metabroadcast.common.time.DateTimeZones;
@@ -44,8 +26,6 @@ import com.metabroadcast.common.time.DateTimeZones;
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {
 
     private static final String ORIGINATOR = "Metabroadcast";
-    private static final String ONDEMAND_LOCATION = "http://www.bbc.co.uk/radio/player/";
-    private static final DateTime MAX_AVAILABLE_TILL = new DateTime(2037, 01, 01, 0, 0, 0, 0, DateTimeZones.UTC);
 
     private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
 
@@ -118,25 +98,6 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         return programme;
     }
     
-    private final Set<Country> representedBy(Encoding encoding, Location location) {
-    	Policy policy = location.getPolicy();
-		if (policy == null) {
-    		return ImmutableSet.of();
-    	}
-		Set<Country> countries = Sets.newHashSet();
-		if (policy.getAvailableCountries().contains(Countries.ALL)) {
-			countries.add(Countries.ALL);
-			countries.add(Countries.GB);
-		}
-		if (policy.getAvailableCountries().contains(Countries.GB)) {
-			countries.add(Countries.GB);
-		}
-		if (policy.getAvailableCountries().isEmpty()) {
-			countries.add(Countries.ALL);
-		}
-		return countries;
-    }
-
     private String itemTitle(RadioPlayerBroadcastItem broadcastItem) {
         String title = Strings.nullToEmpty(broadcastItem.getItem().getTitle());
         if (broadcastItem.hasContainer()) {
@@ -173,123 +134,6 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         Element descriptionElement = createElement("mediaDescription", EPGDATATYPES);
         descriptionElement.appendChild(childElem);
         return descriptionElement;
-    }
-
-    Element ondemandElement(RadioPlayerBroadcastItem broadcastItem,  Collection<Location> locations, RadioPlayerService service) {
-        
-        Item item = broadcastItem.getItem();
-        
-        Element ondemandElement = createElement("ondemand", EPGDATATYPES);
-
-        ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCanonicalUri().substring(item.getCanonicalUri().lastIndexOf("/") + 1)));
-
-
-        Version version = broadcastItem.getVersion();
-        
-        // get the list of non-null policies from the provided list of locations
-        List<Policy> policies = Lists.newArrayList(Iterables.filter(Iterables.transform(locations, new Function<Location, Policy>() {
-            @Override
-            public Policy apply(Location input) {
-                return input.getPolicy();
-            }
-        }), new Predicate<Policy>() {
-            @Override
-            public boolean apply(Policy input) {
-                return input != null;
-            }
-        }));
-        
-        if (policies.isEmpty()) {
-            addAudioStreamElement(ondemandElement, version, service);
-        } else {
-            Optional<Policy> pcPolicy = Iterables.tryFind(policies, new Predicate<Policy>() {
-                @Override
-                public boolean apply(Policy input) {
-                    return (input.getPlatform() != null && input.getPlatform().equals(Platform.PC)); 
-                }
-            });
-            if (!pcPolicy.isPresent()) {
-                // add availability details for first policy in list
-                addAvailabilityDetailsToOndemand(ondemandElement, policies.get(0));
-                addAudioStreamElement(ondemandElement, version, service);
-            } else {
-                addAvailabilityDetailsToOndemand(ondemandElement, pcPolicy.get());
-                Policy ios3G = null;
-                Policy iosWifi = null;
-                for (Policy policy : policies) {
-                    if (policy.getNetwork() !=  null) {
-                        if (policy.getPlatform().equals(Platform.IOS) 
-                                && policy.getNetwork().equals(Network.THREE_G)) {
-                            ios3G = policy;
-                        }
-                        if (policy.getPlatform().equals(Platform.IOS) 
-                                && policy.getNetwork().equals(Network.WIFI)) {
-                            iosWifi = policy;
-                        }
-                    }
-                }
-                // if there are policies for both IOS-3G and IOS-Wifi, and both have actualAvailabilityStarts, and both of those times are before now, 
-                // add the audiostreamgroup
-                if (ios3G != null && iosWifi != null) {
-                    if (ios3G.getActualAvailabilityStart() != null && iosWifi.getActualAvailabilityStart() != null) {
-                        if (ios3G.getActualAvailabilityStart().isBefore(new DateTime()) && iosWifi.getActualAvailabilityStart().isBefore(new DateTime())) {
-                            addAudioStreamElement(ondemandElement, version, service);
-                        }
-                    }
-                }
-            }
-        }
-           
-
-        return ondemandElement;
-    }
-    
-    private void addAvailabilityDetailsToOndemand(Element ondemandElement, Policy policy) {
-        DateTime availableTill = Ordering.natural().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
-        DateTime availableFrom = policy.getAvailabilityStart();
-        if (availableTill != null && availableFrom != null) {
-            Element availabilityElem = createElement("availability", RADIOPLAYER);
-            Element availabilityScopeElem = createElement("scope", RADIOPLAYER);
-            availabilityScopeElem.addAttribute(new Attribute("startTime", DATE_TIME_FORMAT.print(availableFrom)));
-            availabilityScopeElem.addAttribute(new Attribute("stopTime", DATE_TIME_FORMAT.print(availableTill)));
-            availabilityElem.appendChild(availabilityScopeElem);
-            ondemandElement.appendChild(availabilityElem);
-        }
-    }
-    
-    private void addAudioStreamElement(Element ondemandElement, Version version, RadioPlayerService service) {
-        if (RadioPlayerServices.nationalNetworks.contains(service) && Strings.emptyToNull(version.getCanonicalUri()) != null) {
-            ondemandElement.appendChild(audioStreamGroupElement(version));
-        }
-    }
-
-	private Element audioStreamGroupElement(Version version) {
-        Element audioStreamGroupElem = createElement("audioStreamGroup", RADIOPLAYER);
-        Element audioStreamElem = createElement("audioStream", RADIOPLAYER);
-        
-        Element audioSourceElem = createElement("audioSource", RADIOPLAYER);
-        audioSourceElem.addAttribute(new Attribute("url", audioSourceUrl(version.getCanonicalUri())));
-        audioSourceElem.addAttribute(new Attribute("mimeValue", "application/vnd.bbc-mediaselector+json"));
-        audioStreamElem.appendChild(audioSourceElem);
-        
-        Element audioFormatElem = createElement("audioFormat", RADIOPLAYER);
-        audioFormatElem.addAttribute(new Attribute("href","urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3"));
-        audioStreamElem.appendChild(audioFormatElem);
-        
-        Element bitRateElem = createElement("bitRate", RADIOPLAYER);
-        bitRateElem.addAttribute(new Attribute("target","128000"));
-        bitRateElem.addAttribute(new Attribute("variable","true"));
-        audioStreamElem.appendChild(bitRateElem);
-        
-        audioStreamGroupElem.appendChild(audioStreamElem);
-        return audioStreamGroupElem;
-    }
-
-    private String audioSourceUrl(String versionUri) {
-        return String.format(
-            "http://open.live.bbc.co.uk/mediaselector/5/select/version/2.0/proto/http/format/json/vpid/%s/mediaset/",
-            versionUri.replaceAll("http://[a-z]*.bbc.co.uk/programmes/","")
-        );
     }
 
     @SuppressWarnings("unused")
