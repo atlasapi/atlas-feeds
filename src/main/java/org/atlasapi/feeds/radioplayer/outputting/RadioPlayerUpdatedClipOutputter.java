@@ -214,7 +214,12 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
 
         Policy policy = location.getPolicy();
         if (policy != null) {
-            DateTime availableTill = Ordering.natural().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
+            DateTime availableTill;
+            if (policy.getAvailabilityEnd() == null) {
+                availableTill = MAX_AVAILABLE_TILL;
+            } else {
+                availableTill = Ordering.natural().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
+            }
             DateTime availableFrom = policy.getAvailabilityStart();
             if (availableTill != null && availableFrom != null) {
                 Element availabilityElem = createElement("availability", RADIOPLAYER);
