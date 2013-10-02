@@ -633,5 +633,10 @@ public class LoveFilmGroupInformationHierarchyTest {
             }
             return builder.build();
         }
+
+        @Override
+        public ResolvedContent findByUris(Iterable<String> uris) {
+            throw new UnsupportedOperationException();
+        }
     };
 }
