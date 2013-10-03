@@ -69,7 +69,10 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 
         Broadcast broadcast = broadcastItem.getBroadcast();
         programme.appendChild(locationElement(broadcast, id));
-        programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(broadcastItem.getItem().getDescription()))));
+        
+        String desc = broadcastItem.getItem().getMediumDescription();
+        desc = desc == null ? broadcastItem.getItem().getDescription() : desc;
+        programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(desc))));
         if (!Strings.isNullOrEmpty(broadcastItem.getItem().getImage())) {
             programme.appendChild(mediaDescription(createImageDescriptionElem(broadcastItem.getItem())));
         }
