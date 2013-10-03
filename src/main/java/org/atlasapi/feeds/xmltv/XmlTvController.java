@@ -18,7 +18,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Range;
-import com.google.common.collect.Ranges;
 import com.metabroadcast.common.http.HttpStatusCode;
 import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.webapp.health.HealthController;
@@ -72,7 +71,7 @@ public class XmlTvController {
     }
 
     private Range<LocalDate> daysFrom(LocalDate startDay) {
-        return Ranges.closed(startDay, startDay.plusWeeks(2));
+        return Range.closed(startDay, startDay.plusWeeks(2));
     }
     
     @RequestMapping("/feeds/xmltv/channels.dat")

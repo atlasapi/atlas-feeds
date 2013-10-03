@@ -10,7 +10,7 @@ import com.google.common.base.Functions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Ranges;
+import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.base.MorePredicates;
 
@@ -106,7 +106,7 @@ public class RadioPlayerServices {
         
         untracked = ImmutableSet.of(all.get("346"), all.get("358"), all.get("359"));
             
-        nationalNetworks = Sets.filter(services, MorePredicates.transformingPredicate(TO_ID, Predicates.or(Ranges.closedOpen(340, 350),Predicates.equalTo(358))));
+        nationalNetworks = Sets.filter(services, MorePredicates.transformingPredicate(TO_ID, Predicates.or(Range.closedOpen(340, 350),Predicates.equalTo(358))));
 	}
 
 }
