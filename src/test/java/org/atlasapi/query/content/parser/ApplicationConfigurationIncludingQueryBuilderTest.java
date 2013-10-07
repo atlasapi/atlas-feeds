@@ -4,12 +4,13 @@ import static org.junit.Assert.assertEquals;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.atlasapi.application.OldApplication;
-import org.atlasapi.application.OldApplicationCredentials;
-import org.atlasapi.application.OldApplicationStore;
+import org.atlasapi.application.Application;
+import org.atlasapi.application.ApplicationCredentials;
 import org.atlasapi.application.query.ApplicationSourcesFetcher;
 import org.atlasapi.application.query.ApiKeyConfigurationFetcher;
 import org.atlasapi.content.criteria.ContentQuery;
+import org.atlasapi.media.common.Id;
+import org.atlasapi.persistence.application.ApplicationStore;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.junit.AfterClass;
@@ -32,10 +33,14 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 	@Test
 	public void testBuild() {
 		final String testApiKey = "testKey";
-		final OldApplication testApp = OldApplication.application("testSlug").withCredentials(new OldApplicationCredentials(testApiKey)).build();
+		final Application testApp = Application.builder()
+		        .withId(Id.valueOf(5000))
+		        .withSlug("testSlug")
+		        .withCredentials(ApplicationCredentials.builder().withApiKey(testApiKey).build())
+		        .build();
 		
 		Mockery context = new Mockery();
-		final OldApplicationStore reader = context.mock(OldApplicationStore.class);
+		final ApplicationStore reader = context.mock(ApplicationStore.class);
 		
 		
 		context.checking(new Expectations(){{
@@ -43,13 +48,13 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 			will(returnValue(Optional.of(testApp)));
 		}});
 		
-		ApplicationSourcesFetcher configFetcher = new ApiKeyConfigurationFetcher(reader);
-		ApplicationConfigurationIncludingQueryBuilder builder = new ApplicationConfigurationIncludingQueryBuilder(new QueryStringBackedQueryBuilder(), configFetcher) ;
+		ApplicationSourcesFetcher sourcesFetcher = new ApiKeyConfigurationFetcher(reader);
+		ApplicationConfigurationIncludingQueryBuilder builder = new ApplicationConfigurationIncludingQueryBuilder(new QueryStringBackedQueryBuilder(), sourcesFetcher) ;
 
 		HttpServletRequest request = new StubHttpServletRequest().withParam("tag", "East").withParam("apiKey", testApiKey);
 		ContentQuery query = builder.build(request);
 		
-		assertEquals(testApp.getConfiguration(), query.getConfiguration());		
+		assertEquals(testApp.getSources(), query.getSources());		
 	}
 
 }
