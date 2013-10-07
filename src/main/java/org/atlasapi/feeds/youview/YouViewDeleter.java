@@ -61,21 +61,22 @@ public class YouViewDeleter {
 
     // TODO refactor progress count out
     public int sendDeletes(Iterable<Content> toBeDeleted) {
-        List<Content> orderedDeletes = REVERSE_HIERARCHICAL_ORDER.sortedCopy(toBeDeleted);
+        // TODO create HIERARCHICAL ORDER, then reverse() where it's used in the LF adapter?
+        List<Content> orderedDeletes = REVERSE_HIERARCHICAL_ORDER.reverse().sortedCopy(toBeDeleted);
         int successes = 0;
         for (Content deleted : orderedDeletes) {
             try {
                 if (deleted instanceof Item) {
-                    if (sendDelete(LoveFilmOnDemandLocationGenerator.createVersionCrid((Item) deleted))) {
-                        successes++;
-                    }
-                    if (sendDelete(LoveFilmOnDemandLocationGenerator.createImi((Item) deleted))) {
+                    if (sendDelete(LoveFilmGroupInformationGenerator.createCrid(deleted))) {
                         successes++;
                     }
                     if (sendDelete(LoveFilmProgramInformationGenerator.createCrid((Item) deleted))) {
                         successes++;
                     }
-                    if (sendDelete(LoveFilmGroupInformationGenerator.createCrid(deleted))) {
+                    if (sendDelete(LoveFilmOnDemandLocationGenerator.createVersionCrid((Item) deleted))) {
+                        successes++;
+                    }
+                    if (sendDelete(LoveFilmOnDemandLocationGenerator.createImi((Item) deleted))) {
                         successes++;
                     }
                 } else if (deleted instanceof Series) {
