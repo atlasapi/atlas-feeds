@@ -7,8 +7,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.atlasapi.application.OldApplication;
 import org.atlasapi.application.OldApplicationCredentials;
 import org.atlasapi.application.OldApplicationStore;
-import org.atlasapi.application.query.ApplicationConfigurationFetcher;
-import org.atlasapi.application.query.IpCheckingApiKeyConfigurationFetcher;
+import org.atlasapi.application.query.ApplicationSourcesFetcher;
+import org.atlasapi.application.query.ApiKeyConfigurationFetcher;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -43,7 +43,7 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 			will(returnValue(Optional.of(testApp)));
 		}});
 		
-		ApplicationConfigurationFetcher configFetcher = new IpCheckingApiKeyConfigurationFetcher(reader);
+		ApplicationSourcesFetcher configFetcher = new ApiKeyConfigurationFetcher(reader);
 		ApplicationConfigurationIncludingQueryBuilder builder = new ApplicationConfigurationIncludingQueryBuilder(new QueryStringBackedQueryBuilder(), configFetcher) ;
 
 		HttpServletRequest request = new StubHttpServletRequest().withParam("tag", "East").withParam("apiKey", testApiKey);

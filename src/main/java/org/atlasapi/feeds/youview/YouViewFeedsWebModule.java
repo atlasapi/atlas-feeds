@@ -2,8 +2,8 @@ package org.atlasapi.feeds.youview;
 
 import org.atlasapi.application.OldApplicationStore;
 import org.atlasapi.application.OldMongoApplicationStore;
-import org.atlasapi.application.query.ApplicationConfigurationFetcher;
-import org.atlasapi.application.query.IpCheckingApiKeyConfigurationFetcher;
+import org.atlasapi.application.query.ApplicationSourcesFetcher;
+import org.atlasapi.application.query.ApiKeyConfigurationFetcher;
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.www.YouViewController;
@@ -29,8 +29,8 @@ public class YouViewFeedsWebModule {
         return new YouViewController(configFetcher(), feedGenerator(), executor);
     }
     
-    public @Bean ApplicationConfigurationFetcher configFetcher(){
-        return new IpCheckingApiKeyConfigurationFetcher(applicationStore());
+    public @Bean ApplicationSourcesFetcher configFetcher(){
+        return new ApiKeyConfigurationFetcher(applicationStore());
     }
     
     public @Bean OldApplicationStore applicationStore() {

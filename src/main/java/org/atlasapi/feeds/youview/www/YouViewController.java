@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.application.OldApplicationConfiguration;
-import org.atlasapi.application.query.ApplicationConfigurationFetcher;
+import org.atlasapi.application.query.ApplicationSourcesFetcher;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.Publisher;
@@ -34,9 +34,9 @@ public class YouViewController {
     private final DateTimeFormatter fmt = ISODateTimeFormat.dateHourMinuteSecond().withZone(DateTimeZones.UTC);
     private final TvAnytimeGenerator feedGenerator;
     private final LastUpdatedContentFinder contentFinder;
-    private final ApplicationConfigurationFetcher configFetcher;
+    private final ApplicationSourcesFetcher configFetcher;
     
-    public YouViewController(ApplicationConfigurationFetcher configFetcher, TvAnytimeGenerator feedGenerator, LastUpdatedContentFinder contentFinder) {
+    public YouViewController(ApplicationSourcesFetcher configFetcher, TvAnytimeGenerator feedGenerator, LastUpdatedContentFinder contentFinder) {
         this.configFetcher = configFetcher;
         this.feedGenerator = feedGenerator;
         this.contentFinder = contentFinder;

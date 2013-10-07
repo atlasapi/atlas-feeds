@@ -2,19 +2,20 @@ package org.atlasapi.query.content.parser;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.atlasapi.application.OldApplicationConfiguration;
-import org.atlasapi.application.query.ApplicationConfigurationFetcher;
+import org.atlasapi.application.ApplicationSources;
+import org.atlasapi.application.query.ApplicationSourcesFetcher;
 import org.atlasapi.content.criteria.AtomicQuery;
 import org.atlasapi.content.criteria.ContentQuery;
 
+import com.google.common.base.Optional;
 import com.metabroadcast.common.query.Selection;
 
 public class ApplicationConfigurationIncludingQueryBuilder {
 	
 	private final QueryStringBackedQueryBuilder queryBuilder;
-	private final ApplicationConfigurationFetcher configFetcher;
+	private final ApplicationSourcesFetcher configFetcher;
 
-	public ApplicationConfigurationIncludingQueryBuilder(QueryStringBackedQueryBuilder queryBuilder, ApplicationConfigurationFetcher appFetcher) {
+	public ApplicationConfigurationIncludingQueryBuilder(QueryStringBackedQueryBuilder queryBuilder, ApplicationSourcesFetcher appFetcher) {
 		this.queryBuilder = queryBuilder;
 		this.queryBuilder.withIgnoreParams("apiKey").withIgnoreParams("uri","id");
 		this.configFetcher = appFetcher;
@@ -22,18 +23,18 @@ public class ApplicationConfigurationIncludingQueryBuilder {
 
 	public ContentQuery build(HttpServletRequest request) {
 		ContentQuery query = queryBuilder.build(request);
-		OldApplicationConfiguration config = configFetcher.configurationFor(request).valueOrNull();
-		if (config != null) {
-			query = query.copyWithApplicationConfiguration(config);			
+		Optional<ApplicationSources> sources = configFetcher.sourcesFor(request);
+		if (sources.isPresent()) {
+			query = query.copyWithApplicationSources(sources.get());			
 		}
 		return query;
 	}
 	
 	public ContentQuery build(HttpServletRequest request, Iterable<AtomicQuery> operands, Selection selection) {
 		ContentQuery query = new ContentQuery(operands, selection);
-		OldApplicationConfiguration config = configFetcher.configurationFor(request).valueOrNull();
-		if (config != null) {
-			query = query.copyWithApplicationConfiguration(config);			
+		Optional<ApplicationSources> sources = configFetcher.sourcesFor(request);
+		if (sources.isPresent()) {
+			query = query.copyWithApplicationSources(sources.get());			
 		}
 		return query;
 	}
