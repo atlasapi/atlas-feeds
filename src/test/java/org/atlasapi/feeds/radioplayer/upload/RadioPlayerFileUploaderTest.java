@@ -25,7 +25,7 @@ import org.apache.ftpserver.ftplet.UserManager;
 import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
-import org.atlasapi.application.OldApplicationConfiguration;
+import org.atlasapi.application.ApplicationSources;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
@@ -129,7 +129,7 @@ public class RadioPlayerFileUploaderTest {
 		context.checking(new Expectations(){{
 			allowing(channelResolver).fromUri("http://www.bbc.co.uk/services/radio1/england");
 			will(returnValue(Maybe.just(channel)));
-		    oneOf(scheduleResolver).schedule(with(any(DateTime.class)), with(any(DateTime.class)), with(channels), with(publishers), with(Optional.<OldApplicationConfiguration>absent())); will(returnValue(schedule));
+		    oneOf(scheduleResolver).schedule(with(any(DateTime.class)), with(any(DateTime.class)), with(channels), with(publishers), with(Optional.<ApplicationSources>absent())); will(returnValue(schedule));
 		    oneOf(recorder).record(with(successfulUploadResult()));
 		}});
 		

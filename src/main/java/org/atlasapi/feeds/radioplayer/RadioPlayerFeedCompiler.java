@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.atlasapi.application.OldApplicationConfiguration;
+import org.atlasapi.application.ApplicationSources;
 import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerBroadcastItem;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerProgrammeInformationOutputter;
@@ -91,7 +91,7 @@ public abstract class RadioPlayerFeedCompiler {
             checkArgument(spec instanceof RadioPlayerPiFeedSpec);
             DateTime date = ((RadioPlayerPiFeedSpec)spec).getDay().toDateTimeAtStartOfDay(DateTimeZones.UTC);
             Channel channel = channelResolver.fromUri(spec.getService().getServiceUri()).requireValue();
-            Schedule schedule = scheduleResolver.schedule(date.minusMillis(1), date.plusDays(1), ImmutableSet.of(channel), ImmutableSet.of(Publisher.BBC), Optional.<OldApplicationConfiguration>absent());
+            Schedule schedule = scheduleResolver.schedule(date.minusMillis(1), date.plusDays(1), ImmutableSet.of(channel), ImmutableSet.of(Publisher.BBC), Optional.<ApplicationSources>absent());
             return Lists.transform(Iterables.getOnlyElement(schedule.channelSchedules()).getEntries(), ItemAndBroadcast.toItem());
         }
     }

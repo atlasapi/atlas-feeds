@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.sitemaps;
 
-import org.atlasapi.application.query.ApplicationConfigurationFetcher;
+import org.atlasapi.application.query.ApplicationSourcesFetcher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.query.content.parser.ApplicationConfigurationIncludingQueryBuilder;
@@ -17,7 +17,7 @@ public class SiteMapModule {
 	private @Autowired @Qualifier("queryExecutor") KnownTypeQueryExecutor queryExecutor;
 	private @Autowired ContentLister contentLister;
 	private @Value("${local.host.name}") String localHostName;
-	private @Autowired ApplicationConfigurationFetcher configFetcher;
+	private @Autowired ApplicationSourcesFetcher configFetcher;
 
     public @Bean ApplicationConfigurationIncludingQueryBuilder sitemapQueryBuilder() {
         return new ApplicationConfigurationIncludingQueryBuilder(new QueryStringBackedQueryBuilder().withIgnoreParams("format", "host"), configFetcher);
