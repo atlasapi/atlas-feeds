@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview;
 
-import org.atlasapi.application.query.ApplicationSourcesFetcher;
-import org.atlasapi.application.query.ApiKeyConfigurationFetcher;
+import org.atlasapi.application.ApiKeySourcesFetcher;
+import org.atlasapi.application.ApplicationSourcesFetcher;
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.www.YouViewController;
@@ -29,7 +29,7 @@ public class YouViewFeedsWebModule {
     }
     
     public @Bean ApplicationSourcesFetcher configFetcher(){
-        return new ApiKeyConfigurationFetcher(deerApplicationsStore);
+        return new ApiKeySourcesFetcher(deerApplicationsStore);
     }
 
     public @Bean TvAnytimeGenerator feedGenerator() {

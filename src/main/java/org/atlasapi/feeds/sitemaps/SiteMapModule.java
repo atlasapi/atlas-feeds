@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.sitemaps;
 
-import org.atlasapi.application.query.ApplicationSourcesFetcher;
+import org.atlasapi.application.ApplicationSourcesFetcher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.query.content.parser.ApplicationConfigurationIncludingQueryBuilder;

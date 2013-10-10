@@ -4,10 +4,10 @@ import static org.junit.Assert.assertEquals;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.atlasapi.application.ApiKeySourcesFetcher;
 import org.atlasapi.application.Application;
 import org.atlasapi.application.ApplicationCredentials;
-import org.atlasapi.application.query.ApplicationSourcesFetcher;
-import org.atlasapi.application.query.ApiKeyConfigurationFetcher;
+import org.atlasapi.application.ApplicationSourcesFetcher;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.media.common.Id;
 import org.atlasapi.persistence.application.ApplicationStore;
@@ -48,7 +48,7 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 			will(returnValue(Optional.of(testApp)));
 		}});
 		
-		ApplicationSourcesFetcher sourcesFetcher = new ApiKeyConfigurationFetcher(reader);
+		ApplicationSourcesFetcher sourcesFetcher = new ApiKeySourcesFetcher(reader);
 		ApplicationConfigurationIncludingQueryBuilder builder = new ApplicationConfigurationIncludingQueryBuilder(new QueryStringBackedQueryBuilder(), sourcesFetcher) ;
 
 		HttpServletRequest request = new StubHttpServletRequest().withParam("tag", "East").withParam("apiKey", testApiKey);
