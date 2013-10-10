@@ -81,7 +81,7 @@ public class SiteMapController {
         }
         
         ContentQuery query = queryBuilder.build(request);
-        Set<Publisher> includedPublishers = query.getConfiguration().getEnabledSources();
+        Set<Publisher> includedPublishers = query.getSources().getEnabledReadSources();
         
         Iterable<SiteMapRef> sitemapRefs;
         if (includedPublishers.contains(possiblePublisher.requireValue())) {

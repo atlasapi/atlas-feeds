@@ -5,8 +5,8 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.application.OldApplicationConfiguration;
-import org.atlasapi.application.query.ApplicationConfigurationFetcher;
+import org.atlasapi.application.ApplicationSources;
+import org.atlasapi.application.query.ApplicationSourcesFetcher;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.Publisher;
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.time.DateTimeZones;
 
@@ -34,10 +33,10 @@ public class YouViewController {
     private final DateTimeFormatter fmt = ISODateTimeFormat.dateHourMinuteSecond().withZone(DateTimeZones.UTC);
     private final TvAnytimeGenerator feedGenerator;
     private final LastUpdatedContentFinder contentFinder;
-    private final ApplicationConfigurationFetcher configFetcher;
+    private final ApplicationSourcesFetcher sourcesFetcher;
     
-    public YouViewController(ApplicationConfigurationFetcher configFetcher, TvAnytimeGenerator feedGenerator, LastUpdatedContentFinder contentFinder) {
-        this.configFetcher = configFetcher;
+    public YouViewController(ApplicationSourcesFetcher sourcesFetcher, TvAnytimeGenerator feedGenerator, LastUpdatedContentFinder contentFinder) {
+        this.sourcesFetcher = sourcesFetcher;
         this.feedGenerator = feedGenerator;
         this.contentFinder = contentFinder;
     }
@@ -54,8 +53,8 @@ public class YouViewController {
     public void generateFeed(HttpServletRequest request, HttpServletResponse response,
             @RequestParam(value = "lastUpdated", required = false) String lastUpdated) throws IOException {
         try {
-            final OldApplicationConfiguration appConfig = appConfig(request);
-            if (!appConfig.isEnabled(PUBLISHER)) {
+            final ApplicationSources appConfig = appSources(request);
+            if (!appConfig.isReadEnabled(PUBLISHER)) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.setContentLength(0);
                 return;
@@ -78,8 +77,8 @@ public class YouViewController {
         return ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start));
     }
     
-    private OldApplicationConfiguration appConfig(HttpServletRequest request) {
-        Maybe<OldApplicationConfiguration> config = configFetcher.configurationFor(request);
-        return config.hasValue() ? config.requireValue() : OldApplicationConfiguration.defaultConfiguration();
+    private ApplicationSources appSources(HttpServletRequest request) {
+        Optional<ApplicationSources> config = sourcesFetcher.sourcesFor(request);
+        return config.isPresent() ? config.get() : ApplicationSources.DEFAULT_SOURCES;
     }
 }
