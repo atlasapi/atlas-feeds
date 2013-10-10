@@ -79,6 +79,6 @@ public class YouViewController {
     
     private ApplicationSources appSources(HttpServletRequest request) {
         Optional<ApplicationSources> config = sourcesFetcher.sourcesFor(request);
-        return config.isPresent() ? config.get() : ApplicationSources.DEFAULT_SOURCES;
+        return config.isPresent() ? config.get() : ApplicationSources.defaults();
     }
 }
