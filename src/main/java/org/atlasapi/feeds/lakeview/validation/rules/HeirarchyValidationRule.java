@@ -6,7 +6,7 @@ import javax.xml.bind.JAXBElement;
 
 import org.atlasapi.feeds.lakeview.validation.FeedItemStore;
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult.ValidationResultType;
-import org.atlasapi.generated.lakeview.ElementProduct;
+import org.atlasapi.generated.lakeview.ElementItem;
 import org.atlasapi.generated.lakeview.ElementTVEpisode;
 import org.atlasapi.generated.lakeview.ElementTVSeason;
 
@@ -76,7 +76,7 @@ public class HeirarchyValidationRule implements LakeviewFeedValidationRule {
 	}
 
 	private void addError(List<String> errors,
-			ElementProduct element, String description) {
+			ElementItem element, String description) {
 		errors.add(description + element.getItemId());
 	}
 
