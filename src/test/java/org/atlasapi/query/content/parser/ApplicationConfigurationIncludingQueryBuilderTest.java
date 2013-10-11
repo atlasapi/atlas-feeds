@@ -4,10 +4,10 @@ import static org.junit.Assert.assertEquals;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.atlasapi.application.ApiKeySourcesFetcher;
 import org.atlasapi.application.Application;
 import org.atlasapi.application.ApplicationCredentials;
-import org.atlasapi.application.ApplicationSourcesFetcher;
+import org.atlasapi.application.auth.ApiKeySourcesFetcher;
+import org.atlasapi.application.auth.ApplicationSourcesFetcher;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.media.common.Id;
 import org.atlasapi.persistence.application.ApplicationStore;
