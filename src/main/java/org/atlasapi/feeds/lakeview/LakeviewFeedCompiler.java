@@ -178,7 +178,7 @@ public class LakeviewFeedCompiler {
 
     private Element createBrandElem(Brand brand, DateTime originalPublicationDate, DateTime brandEndDate, String lastModified, LakeviewContentGroup contentGroup, int addedSeasons) {
         Element element = createElement("TVSeries", LAKEVIEW);
-        addIdElements(element, "TVSeries", brandId(brand.getCanonicalUri()));
+        addIdElements(element, "TVSeries", brandId(brand.getCanonicalUri()), brandAtomUri(findHierarchicalUri(brand)));
         element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle()));
         
         appendCommonElements(element, brand, originalPublicationDate, lastModified, null, null);
@@ -210,7 +210,7 @@ public class LakeviewFeedCompiler {
 
     Element createSeriesElem(Series series, Brand parent, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVSeason", LAKEVIEW);
-        addIdElements(element, "TVSeason", seriesId(series.getCanonicalUri()));
+        addIdElements(element, "TVSeason", seriesId(series.getCanonicalUri()), seriesAtomUri(findHierarchicalUri(series)));
         
         if (genericTitlesEnabled) {
             if (series.getSeriesNumber() != null) {
@@ -236,7 +236,8 @@ public class LakeviewFeedCompiler {
 
     Element createEpisodeElem(Episode episode, Brand container, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVEpisode", LAKEVIEW);
-        addIdElements(element, "TVEpisode", episodeId(episode));
+        String mediaId = episodeAtomUri(findHierarchicalUri(episode), extractAssetId(episode));
+        addIdElements(element, "TVEpisode", episodeId(episode), mediaId);
         
         if (genericTitlesEnabled) {
             if (episode.getEpisodeNumber() != null) {
@@ -271,7 +272,7 @@ public class LakeviewFeedCompiler {
         
         instances.appendChild(videoInstance);           
 
-        appendCommonElements(element, episode, originalPublicationDate, lastModified, episodeAtomUri(findHierarchicalUri(episode), extractAssetId(episode)), instances);
+        appendCommonElements(element, episode, originalPublicationDate, lastModified, mediaId, instances);
         
         element.appendChild(stringElement("EpisodeNumber", LAKEVIEW, String.valueOf(episode.getEpisodeNumber())));
         element.appendChild(stringElement("DurationInSeconds", LAKEVIEW, String.valueOf(duration(episode))));
@@ -293,9 +294,9 @@ public class LakeviewFeedCompiler {
         return availability;
     }
 
-    private void addIdElements(Element element, String hierarchyType, String id) {
+    private void addIdElements(Element element, String hierarchyType, String id, String providerMediaId) {
         element.appendChild(stringElement("ItemId", LAKEVIEW, String.format("%s/%s/%s", ID_PREFIX, hierarchyType, id)));
-        element.appendChild(stringElement("ProviderMediaId", LAKEVIEW, id));
+        element.appendChild(stringElement("ProviderMediaId", LAKEVIEW, providerMediaId));
     }
     
     private DateTime orginalPublicationDate(Episode episode) {
@@ -447,14 +448,10 @@ public class LakeviewFeedCompiler {
         return episodeUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/(series-\\d+)/(episode-\\d+)", "-$1-$2");
     }
     
-    @VisibleForTesting
-    @Deprecated
     public String brandAtomUri(String brandUri) {
     	return String.format("%s%s/4od.atom", C4_API_BASE, brandUri.replaceAll(C4_PROG_BASE, ""));
     }
     
-    @VisibleForTesting
-    @Deprecated
     public String seriesAtomUri(String seriesUri) {
     	return String.format("%s%s/4od.atom#%s", C4_API_BASE, seriesUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide.*", ""), seriesUri.replaceAll(C4_PROG_BASE + ".*/episode-guide/", ""));
     }
@@ -464,16 +461,16 @@ public class LakeviewFeedCompiler {
     	return String.format("%s%s/4od.atom#%s", C4_API_BASE, episodeUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide.*", ""), assetId);
     }
     
-    private String findHierarchicalUri(Episode episode) {
-        if (isHierarchicalUri(episode.getCanonicalUri())) {
-            return episode.getCanonicalUri();
+    private String findHierarchicalUri(Identified id) {
+        if (isHierarchicalUri(id.getCanonicalUri())) {
+            return id.getCanonicalUri();
         }
-        for (String alias : episode.getAliasUrls()) {
+        for (String alias : id.getAliasUrls()) {
             if (isHierarchicalUri(alias)) {
                 return alias;
             }
         }
-        throw new IllegalStateException(episode + " : no hierarchical uri");
+        throw new IllegalStateException(id + " : no hierarchical uri");
     }
 
     private boolean isHierarchicalUri(String uri) {
