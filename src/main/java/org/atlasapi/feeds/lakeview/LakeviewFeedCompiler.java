@@ -183,10 +183,11 @@ public class LakeviewFeedCompiler {
 
     private Element createBrandElem(Brand brand, DateTime originalPublicationDate, DateTime brandEndDate, String lastModified, LakeviewContentGroup contentGroup, int addedSeasons) {
         Element element = createElement("TVSeries", LAKEVIEW);
-        addIdElements(element, brandId(brand), brandAtomUri(findHierarchicalUri(brand)));
+        String providerMediaId = brandAtomUri(findHierarchicalUri(brand));
+        addIdElements(element, brandId(brand), providerMediaId);
         element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle()));
         
-        appendCommonElements(element, brand, originalPublicationDate, lastModified, null, null);
+        appendCommonElements(element, brand, originalPublicationDate, lastModified, providerMediaId, null);
         if (addedSeasons > 0) {
             element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(addedSeasons)));
         }
@@ -215,7 +216,8 @@ public class LakeviewFeedCompiler {
 
     Element createSeriesElem(Series series, Brand parent, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVSeason", LAKEVIEW);
-        addIdElements(element, seriesId(series), seriesAtomUri(findHierarchicalUri(series)));
+        String providerMediaId = seriesAtomUri(findHierarchicalUri(series));
+        addIdElements(element, seriesId(series), providerMediaId);
         
         if (genericTitlesEnabled) {
             if (series.getSeriesNumber() != null) {
