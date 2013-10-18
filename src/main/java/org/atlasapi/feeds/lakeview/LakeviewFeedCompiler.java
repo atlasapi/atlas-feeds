@@ -9,8 +9,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
-
 import nu.xom.Attribute;
 import nu.xom.Document;
 import nu.xom.Element;
@@ -26,7 +24,6 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Location;
-import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
@@ -40,7 +37,6 @@ import com.google.common.base.Functions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -65,6 +61,13 @@ public class LakeviewFeedCompiler {
     private static final String XBOX_ONE_PROVIDER_ID = "25148946";
     private static final Pattern HIERARCHICAL_URI_PATTERN
         = Pattern.compile("http://www.channel4.com/programmes/[a-z0-9\\-]+(\\/.*)?");
+
+    private static final String ID_PREFIX = "http://channel4.com/en-GB";
+    private static final String C4_PROG_BASE = "http://www.channel4.com/programmes/";
+    private static final String C4_API_BASE = "https://xbox.channel4.com/pmlsd/";
+    
+    private static final String SERIES_ID_PREFIX = ID_PREFIX + "/TVSeries/";
+    private static final String SEASON_ID_PREFIX = ID_PREFIX + "/TVSeason/";
     
     private final Clock clock;
 	private ChannelResolver channelResolver;
@@ -184,7 +187,8 @@ public class LakeviewFeedCompiler {
     private Element createBrandElem(Brand brand, DateTime originalPublicationDate, DateTime brandEndDate, String lastModified, LakeviewContentGroup contentGroup, int addedSeasons) {
         Element element = createElement("TVSeries", LAKEVIEW);
         String providerMediaId = brandAtomUri(findHierarchicalUri(brand));
-        addIdElements(element, brandId(brand), providerMediaId);
+        String brandId = brandId(brand);
+        addIdElements(element, brandId, brandId.replaceAll(SERIES_ID_PREFIX, ""));
         element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle()));
         
         appendCommonElements(element, brand, originalPublicationDate, lastModified, providerMediaId, null);
@@ -217,7 +221,8 @@ public class LakeviewFeedCompiler {
     Element createSeriesElem(Series series, Brand parent, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVSeason", LAKEVIEW);
         String providerMediaId = seriesAtomUri(findHierarchicalUri(series));
-        addIdElements(element, seriesId(series), providerMediaId);
+        String seriesId = seriesId(series);
+        addIdElements(element, seriesId, seriesId.replaceAll(SEASON_ID_PREFIX, ""));
         
         if (genericTitlesEnabled) {
             if (series.getSeriesNumber() != null) {
@@ -233,7 +238,7 @@ public class LakeviewFeedCompiler {
             element.appendChild(stringElement("Title", LAKEVIEW, series.getTitle()));
         }
         
-        appendCommonElements(element, series, originalPublicationDate, lastModified, null, null);
+        appendCommonElements(element, series, originalPublicationDate, lastModified, providerMediaId, null);
         
         element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(series.getSeriesNumber())));
         element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(parent)));
@@ -434,10 +439,6 @@ public class LakeviewFeedCompiler {
         }
         return content.getCanonicalUri();
     }
-
-    private static final String ID_PREFIX = "http://channel4.com/en-GB";
-    private static final String C4_PROG_BASE = "http://www.channel4.com/programmes/";
-    private static final String C4_API_BASE = "https://xbox.channel4.com/pmlsd/";
     
     private String brandId(Brand brand) {
         // TVSeries
