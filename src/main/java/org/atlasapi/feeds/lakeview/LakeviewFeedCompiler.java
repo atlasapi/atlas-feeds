@@ -66,8 +66,7 @@ public class LakeviewFeedCompiler {
     private static final String C4_PROG_BASE = "http://www.channel4.com/programmes/";
     private static final String C4_API_BASE = "https://xbox.channel4.com/pmlsd/";
     
-    private static final String SERIES_ID_PREFIX = ID_PREFIX + "/TVSeries/";
-    private static final String SEASON_ID_PREFIX = ID_PREFIX + "/TVSeason/";
+    private static final String SERIES_ID_PREFIX = ID_PREFIX + "/TVSeries/"; 
     
     private final Clock clock;
 	private ChannelResolver channelResolver;
@@ -220,9 +219,10 @@ public class LakeviewFeedCompiler {
 
     Element createSeriesElem(Series series, Brand parent, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVSeason", LAKEVIEW);
-        String providerMediaId = seriesAtomUri(findHierarchicalUri(series));
+        String applicationSpecificData = seriesAtomUri(findHierarchicalUri(series));
         String seriesId = seriesId(series);
-        addIdElements(element, seriesId, seriesId.replaceAll(SEASON_ID_PREFIX, ""));
+        String providerMediaId = findHierarchicalUri(series).replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "/");
+        addIdElements(element, seriesId, providerMediaId);
         
         if (genericTitlesEnabled) {
             if (series.getSeriesNumber() != null) {
@@ -238,7 +238,7 @@ public class LakeviewFeedCompiler {
             element.appendChild(stringElement("Title", LAKEVIEW, series.getTitle()));
         }
         
-        appendCommonElements(element, series, originalPublicationDate, lastModified, providerMediaId, null);
+        appendCommonElements(element, series, originalPublicationDate, lastModified, applicationSpecificData, null);
         
         element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(series.getSeriesNumber())));
         element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(parent)));
