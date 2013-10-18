@@ -456,7 +456,7 @@ public class LakeviewFeedCompiler {
 
     private String seriesId(Series series) {
         // TVSeason
-        return idFrom("TVSeason", findHierarchicalUri(series).replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "-"));
+        return idFrom("TVSeason", findHierarchicalUri(series).replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "/"));
     }
 
     private String episodeId(Episode episode) {
