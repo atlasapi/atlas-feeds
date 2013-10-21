@@ -6,9 +6,9 @@ import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.util.Date;
 
-import org.elasticsearch.common.base.Throwables;
 import org.joda.time.DateTime;
 
+import com.google.common.base.Throwables;
 import com.microsoft.windowsazure.services.blob.client.CloudBlob;
 import com.microsoft.windowsazure.services.blob.client.CloudBlobClient;
 import com.microsoft.windowsazure.services.blob.client.CloudBlobDirectory;
