@@ -9,6 +9,18 @@ import org.atlasapi.feeds.lakeview.validation.LakeviewServerHealthProbe;
 import org.atlasapi.feeds.lakeview.validation.rules.CompletenessValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.HeirarchyValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.LakeviewFeedValidationRule;
+import org.atlasapi.feeds.lakeview.validation.rules.UpToDateValidationRule;
+import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.ResultStoringFileUploader;
+import org.atlasapi.feeds.upload.azure.AzureFileUploader;
+import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
+import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
+import org.atlasapi.feeds.xml.XMLValidator;
+import org.atlasapi.feeds.lakeview.validation.LakeviewFileValidator;
+import org.atlasapi.feeds.lakeview.validation.LakeviewServerHealthProbe;
+import org.atlasapi.feeds.lakeview.validation.rules.CompletenessValidationRule;
+import org.atlasapi.feeds.lakeview.validation.rules.HeirarchyValidationRule;
+import org.atlasapi.feeds.lakeview.validation.rules.LakeviewFeedValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.RecentUpdateToBrandValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.UpToDateValidationRule;
 import org.atlasapi.feeds.upload.FileUploader;
@@ -73,6 +85,9 @@ public class LakeviewModule {
 	private @Value("${lakeview.feature.genericTitlesEnabled}")
 	boolean genericTitlesEnabled;
 	
+    private @Value("${lakeview.feature.addXBoxOneAvailability}")
+    boolean addXboxOneAvailability;
+	
 	private static final String SCHEMA_VERSION = "0_4";
 	private static final String FILENAME_PROVIDER_ID = "CA1.Xbox4oD";
 
@@ -89,7 +104,7 @@ public class LakeviewModule {
 
 	public @Bean
 	LakeviewFeedCompiler lakeviewFeedCompiler() {
-		return new LakeviewFeedCompiler(channelResolver, genericTitlesEnabled);
+		return new LakeviewFeedCompiler(channelResolver, genericTitlesEnabled, addXboxOneAvailability);
 	}
 
 	public @Bean
