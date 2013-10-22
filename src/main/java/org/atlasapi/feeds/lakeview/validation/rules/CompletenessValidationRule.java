@@ -105,7 +105,7 @@ public class CompletenessValidationRule implements LakeviewFeedValidationRule {
 	private Map<String, String> getExpectedOnDemandsFromDatabase() {
 		Iterator<Item> listContent = Iterators.filter(
 				contentLister.listContent(defaultCriteria()
-						.forPublisher(Publisher.C4).forContent(ImmutableList.copyOf(ITEMS))
+						.forPublisher(Publisher.C4_PMLSD).forContent(ImmutableList.copyOf(ITEMS))
 						.build()), Item.class);
 
 		com.google.common.collect.ImmutableMap.Builder<String, String> expectedOnDemands = ImmutableMap.builder();

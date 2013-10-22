@@ -50,7 +50,7 @@ public class LakeviewFileValidator {
 		Builder<ValidationResult> results = ImmutableList.builder();
 		try {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent(Publisher.C4)), os);
+			feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent(Publisher.C4_PMLSD)), os);
 			InputStream is = new ByteArrayInputStream(os.toByteArray());
 		
 			JAXBContext ctx = JAXBContext

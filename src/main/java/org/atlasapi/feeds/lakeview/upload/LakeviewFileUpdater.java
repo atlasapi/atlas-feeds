@@ -50,7 +50,7 @@ public class LakeviewFileUpdater extends ScheduledTask {
         	OutputStream gzippedStream = new GZIPOutputStream(bos);
         	String filename = filenameProviderID + "." + clock.now().toString(DATE_FORMATTER) + ".full.Lakeview_v" + schemaVersion +".gz";
 	
-			feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent(Publisher.C4)), gzippedStream);
+			feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent(Publisher.C4_PMLSD)), gzippedStream);
 			gzippedStream.close();
 			FileUpload ftpUpload = new FileUpload(filename, bos.toByteArray());
 			uploader.upload(ftpUpload);
