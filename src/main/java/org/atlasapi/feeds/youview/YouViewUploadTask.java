@@ -1,5 +1,8 @@
     package org.atlasapi.feeds.youview;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.youview.YouViewRemoteClient.orderContentForDeletion;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -23,6 +26,7 @@ import com.metabroadcast.common.time.DateTimeZones;
 
 public class YouViewUploadTask extends ScheduledTask {
 
+    private static final String DELTA_STATUS_PATTERN = "Updates: processed %d of %d, %d failures. Deletes: processed %d of %d total, %d failures.";
     private static final DateTime START_OF_TIME = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.UTC);
     private static final Publisher PUBLISHER = Publisher.LOVEFILM;
     private static final Predicate<Content> IS_ACTIVELY_PUBLISHED = new Predicate<Content>() {
@@ -34,20 +38,20 @@ public class YouViewUploadTask extends ScheduledTask {
     
     private final LastUpdatedContentFinder contentFinder;
     private final YouViewLastUpdatedStore store;
-    private final YouViewUploader uploader;
-    private final YouViewDeleter deleter;
     private final boolean isBootstrap;
     private final int chunkSize;
     
     private final Logger log = LoggerFactory.getLogger(YouViewUploadTask.class);
+    private final Publisher publisher;
+    private final YouViewRemoteClient remoteClient;
     
-    public YouViewUploadTask(YouViewUploader uploader, YouViewDeleter deleter, int chunkSize, LastUpdatedContentFinder contentFinder, YouViewLastUpdatedStore store, boolean isBootstrap) {
-        this.uploader = uploader;
-        this.deleter = deleter;
-        this.chunkSize = chunkSize;
-        this.contentFinder = contentFinder;
-        this.store = store;
-        this.isBootstrap = isBootstrap;
+    public YouViewUploadTask(YouViewRemoteClient remoteClient, int chunkSize, LastUpdatedContentFinder contentFinder, YouViewLastUpdatedStore store, Publisher publisher, boolean isBootstrap) {
+        this.remoteClient = checkNotNull(remoteClient);
+        this.chunkSize = checkNotNull(chunkSize);
+        this.contentFinder = checkNotNull(contentFinder);
+        this.store = checkNotNull(store);
+        this.publisher = checkNotNull(publisher);
+        this.isBootstrap = checkNotNull(isBootstrap);
     }
     
     @Override
@@ -60,7 +64,7 @@ public class YouViewUploadTask extends ScheduledTask {
     }
 
     public void runDelta() {
-        Optional<DateTime> lastUpdated = store.getLastUpdated();
+        Optional<DateTime> lastUpdated = store.getLastUpdated(publisher);
         if (!lastUpdated.isPresent()) {
             throw new RuntimeException("The bootstrap has not successfully run. Please run the bootstrap upload and ensure that it succeeds before running the delta upload.");
         }
@@ -81,15 +85,33 @@ public class YouViewUploadTask extends ScheduledTask {
             }
         }
         
+        int deletesSize = deleted.size();
+        int updatesSize = notDeleted.size();
+        UpdateProgress deletionProgress = UpdateProgress.START;
+        
         YouViewUploadProcessor<UpdateProgress> uploadProcessor = uploadProcessor();
         for (Iterable<Content> chunk : Iterables.partition(notDeleted, chunkSize)) {
             uploadProcessor.process(chunk);
+            reportStatus(createDeltaStatus(uploadProcessor.getResult(), deletionProgress, updatesSize, deletesSize));
         }
         
-        int successes = deleter.sendDeletes(deleted);
-        store.setLastUpdated(lastUpdated.get());
+        List<Content> orderedForDeletion = orderContentForDeletion(deleted);
+
+        for (Content toBeDeleted : orderedForDeletion) {
+            if (remoteClient.sendDeleteFor(toBeDeleted)) {
+                deletionProgress = deletionProgress.reduce(UpdateProgress.SUCCESS);
+            } else {
+                deletionProgress = deletionProgress.reduce(UpdateProgress.FAILURE);
+            }
+            reportStatus(createDeltaStatus(uploadProcessor.getResult(), deletionProgress, updatesSize, deletesSize));
+        }
         
-        reportStatus(String.format("Deletes: %d succeeded of %d total", successes, Iterables.size(deleted)));
+        store.setLastUpdated(lastUpdated.get(), publisher);
+        reportStatus("Complete. " + createDeltaStatus(uploadProcessor.getResult(), deletionProgress, updatesSize, deletesSize));
+    }
+    
+    private String createDeltaStatus(UpdateProgress updateProgress, UpdateProgress deletionProgress, int updatesSize, int deletesSize) {
+        return String.format(DELTA_STATUS_PATTERN, updateProgress.getProcessed(), updatesSize, updateProgress.getFailures(), deletionProgress.getProcessed(), deletesSize, deletionProgress.getFailures());
     }
 
     public void runBootstrap() {
@@ -112,9 +134,10 @@ public class YouViewUploadTask extends ScheduledTask {
                 }
             }
             processor.process(chunk.build());
+            reportStatus(processor.getResult().toString());
         }
 
-        store.setLastUpdated(lastUpdated);
+        store.setLastUpdated(lastUpdated, publisher);
         reportStatus(processor.getResult().toString());
     }
     
@@ -131,13 +154,12 @@ public class YouViewUploadTask extends ScheduledTask {
             @Override
             public boolean process(Iterable<Content> chunk) {
                 try {
-                    uploader.upload(chunk);
+                    remoteClient.upload(chunk);
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch (Exception e) {
                     log.error("error on chunk upload: " + e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
                 }
-                reportStatus(progress.toString());
                 return shouldContinue();
             }
 

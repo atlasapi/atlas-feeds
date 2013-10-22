@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview;
 
-import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getId;
-import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getAsin;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -15,6 +15,7 @@ import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Policy;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 
 import tva.metadata._2010.AVAttributesType;
@@ -36,25 +37,22 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
-public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenerator {
+public class DefaultOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
-    private static final String VERSION_SUFFIX = "_version";
-    private static final String IMI_PREFIX = "imi:lovefilm.com/";
     private static final String YOUVIEW_MIX_TYPE = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
-    private static final String LOVEFILM_DEEP_LINKING_ID = "deep_linking_id.lovefilm.com";
     private static final String YOUVIEW_GENRE_SUBSCRIPTION_REQUIRED = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#subscription";
     private static final String YOUVIEW_GENRE_MEDIA_AVAILABLE = "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available";
-    private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
-    private static final String LOVEFILM_IDREF_ONDEMAND = "http://lovefilm.com/OnDemand";
     private static final String GENRE_TYPE_OTHER = "other";
 
     private DatatypeFactory datatypeFactory;
+    private final YouViewPerPublisherFactory configFactory;
 
     /**
      * NB DatatypeFactory is required for creation of javax Durations
      * This DatatypeFactory class may not be threadsafe
      */
-    public LoveFilmOnDemandLocationGenerator() {
+    public DefaultOnDemandLocationGenerator(YouViewPerPublisherFactory configFactory) {
+        this.configFactory = checkNotNull(configFactory);
         try {
             this.datatypeFactory = DatatypeFactory.newInstance();
         } catch (DatatypeConfigurationException e) {
@@ -64,6 +62,10 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
     
     @Override
     public Optional<OnDemandProgramType> generate(Item item) {
+        Publisher publisher = item.getPublisher();
+        PublisherConfiguration config = configFactory.getConfiguration(publisher);
+        IdParser idParser = configFactory.getIdParser(publisher);
+        
         Version version = Iterables.getOnlyElement(item.getVersions());
         if (version.getManifestedAs().isEmpty()) {
             return Optional.absent();
@@ -71,9 +73,9 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
         
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
         
-        onDemand.setServiceIDRef(LOVEFILM_IDREF_ONDEMAND);
+        onDemand.setServiceIDRef(config.getOnDemandServiceId());
         onDemand.setProgram(generateProgram(item));
-        onDemand.setInstanceMetadataId(createImi(item));
+        onDemand.setInstanceMetadataId(idParser.createImi(config.getImiPrefix(), item));
         onDemand.setInstanceDescription(generateInstanceDescription(item));
         onDemand.setPublishedDuration(generatePublishedDuration(item));
         onDemand.setStartOfAvailability(generateAvailabilityStart(item));
@@ -81,14 +83,6 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
         onDemand.setFree(generateFree());
 
         return Optional.<OnDemandProgramType>fromNullable(onDemand);
-    }
-
-    public static String createImi(Item item) {
-        return IMI_PREFIX + getId(item);
-    }
-    
-    public static String createVersionCrid(Item item) { 
-        return LOVEFILM_PRODUCT_CRID_PREFIX + getId(item) + VERSION_SUFFIX;
     }
     
     // hardcoded
@@ -99,8 +93,12 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
     }
 
     private CRIDRefType generateProgram(Item item) {
+        Publisher publisher = item.getPublisher();
+        PublisherConfiguration config = configFactory.getConfiguration(publisher);
+        IdParser idParser = configFactory.getIdParser(publisher);
+                
         CRIDRefType program = new CRIDRefType();
-        program.setCrid(createVersionCrid(item));
+        program.setCrid(idParser.createVersionCrid(config.getCridPrefix(), item));
         return program;
     }
 
@@ -155,8 +153,9 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
     }
 
     private UniqueIDType generateOtherId(Item item) {
+        PublisherConfiguration config = configFactory.getConfiguration(item.getPublisher());
         UniqueIDType id = new UniqueIDType();
-        id.setAuthority(LOVEFILM_DEEP_LINKING_ID);
+        id.setAuthority(config.getDeepLinkingAuthorityId());
         id.setValue(getAsin(item));
         return id;
     }

@@ -3,14 +3,10 @@ package org.atlasapi.feeds.youview;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Content;
 
-public class LoveFilmOutputUtils {
+
+public class YouViewGeneratorUtils {
 
     private static final String ASIN_NAMESPACE = "gb:amazon:asin";
-    private static final String LOVEFILM_URI_PATTERN = "http:\\/\\/lovefilm\\.com\\/[a-z]*\\/";
-    
-    public static String getId(Content content) {
-        return content.getCanonicalUri().replaceAll(LOVEFILM_URI_PATTERN, "");
-    }
     
     public static String getAsin(Content content) {
         for (Alias alias : content.getAliases()) {
@@ -20,8 +16,6 @@ public class LoveFilmOutputUtils {
         }
         throw new RuntimeException("no ASIN on " + content.getCanonicalUri());
     }
-    
-
     
     public static boolean hasAsin(Content content) {
         for (Alias alias : content.getAliases()) {

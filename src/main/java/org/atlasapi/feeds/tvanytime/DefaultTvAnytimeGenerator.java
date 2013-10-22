@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.tvanytime;
 
-import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.hasAsin;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.hasAsin;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

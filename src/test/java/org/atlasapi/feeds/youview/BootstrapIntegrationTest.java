@@ -6,6 +6,7 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import nu.xom.ParsingException;
 import nu.xom.ValidityException;
@@ -49,6 +50,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.SimpleHttpClient;
@@ -57,13 +59,16 @@ import com.metabroadcast.common.intl.Countries;
 
 public class BootstrapIntegrationTest {
     
-    private static final YouViewGenreMapping genreMapping = new YouViewGenreMapping(); 
-    private static final ProgramInformationGenerator progInfoGenerator = new LoveFilmProgramInformationGenerator();
-    private static final GroupInformationGenerator groupInfoGenerator = new LoveFilmGroupInformationGenerator(genreMapping);
-    private static final OnDemandLocationGenerator progLocationGenerator = new LoveFilmOnDemandLocationGenerator();
-    private static DummyContentResolver contentResolver = new DummyContentResolver();
+    private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
+    private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
+            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("youviewurl"), new LoveFilmIdParser(), new LoveFilmGenreMap(), httpClient)
+            .build();
+    private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
+    private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
+    private OnDemandLocationGenerator progLocationGenerator = new DefaultOnDemandLocationGenerator(configFactory);
+    private DummyContentResolver contentResolver = new DummyContentResolver();
     
-    private static final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
+    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
         progInfoGenerator, 
         groupInfoGenerator, 
         progLocationGenerator, 
@@ -71,13 +76,12 @@ public class BootstrapIntegrationTest {
         false
     );
 
-    private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
-    private final YouViewUploader uploader = new YouViewUploader("youviewurl", generator, httpClient);
-    private final YouViewDeleter deleter = new YouViewDeleter("youviewurl", httpClient);
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
+    
     private DummyContentFinder contentFinder = new DummyContentFinder();
     private YouViewLastUpdatedStore store = new DummyLastUpdatedStore();
     
-    private final YouViewUploadTask bootStrapUploader = new YouViewUploadTask(uploader, deleter, 5, contentFinder, store, true);
+    private final YouViewUploadTask bootStrapUploader = new YouViewUploadTask(youViewClient, 5, contentFinder, store, Publisher.LOVEFILM, true);
 
     @Test
     public void testBootstrapOutput() throws ValidityException, HttpException, ParsingException, IOException {
@@ -239,16 +243,16 @@ public class BootstrapIntegrationTest {
     
     public static class DummyLastUpdatedStore implements YouViewLastUpdatedStore {
         
-        DateTime lastUpdated = null;
+        Map<Publisher, DateTime> lastUpdatedMap = Maps.newHashMap();
 
         @Override
-        public Optional<DateTime> getLastUpdated() {
-            return Optional.fromNullable(lastUpdated);
+        public Optional<DateTime> getLastUpdated(Publisher publisher) {
+            return Optional.fromNullable(lastUpdatedMap.get(publisher));
         }
 
         @Override
-        public void setLastUpdated(DateTime lastUpdated) {
-            this.lastUpdated = lastUpdated;
+        public void setLastUpdated(DateTime lastUpdated, Publisher publisher) {
+            this.lastUpdatedMap.put(publisher, lastUpdated);
         }
         
     }

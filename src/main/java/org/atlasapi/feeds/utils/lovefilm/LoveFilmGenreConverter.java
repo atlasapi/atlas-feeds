@@ -6,6 +6,9 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 
 public class LoveFilmGenreConverter {
+    
+    // TODO SORT THIS OUT.
+    
     private static final String LOVEFILM_GENRES_PREFIX = "http://lovefilm.com/genres/";
     
     public static final Predicate<String> IS_SUB_GENRE = new Predicate<String>() {
