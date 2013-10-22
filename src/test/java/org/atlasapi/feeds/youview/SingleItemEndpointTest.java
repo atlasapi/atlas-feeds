@@ -42,7 +42,7 @@ public class SingleItemEndpointTest {
     private HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
     private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
-            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("youviewurl"), new LoveFilmIdParser(), new LoveFilmGenreMap(), httpClient)
+            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("youviewurl"), new LoveFilmIdParser(), new LoveFilmGenreMapping(), httpClient)
             .build();
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);

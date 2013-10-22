@@ -60,7 +60,7 @@ public class DeltaIntegrationTest {
     private static final Publisher PUBLISHER = Publisher.LOVEFILM;
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
     private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
-            .withPublisher(PUBLISHER, new LoveFilmPublisherConfiguration("youviewurl"), new LoveFilmIdParser(), new LoveFilmGenreMap(), httpClient)
+            .withPublisher(PUBLISHER, new LoveFilmPublisherConfiguration("youviewurl"), new LoveFilmIdParser(), new LoveFilmGenreMapping(), httpClient)
             .build();
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);

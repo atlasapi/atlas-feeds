@@ -68,7 +68,7 @@ import com.metabroadcast.common.intl.Countries;
 public class LoveFilmGroupInformationHierarchyTest {
 
     private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
-            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("base uri"), new LoveFilmIdParser(), new LoveFilmGenreMap(), Mockito.mock(SimpleHttpClient.class))
+            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("base uri"), new LoveFilmIdParser(), new LoveFilmGenreMapping(), Mockito.mock(SimpleHttpClient.class))
             .build();
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);

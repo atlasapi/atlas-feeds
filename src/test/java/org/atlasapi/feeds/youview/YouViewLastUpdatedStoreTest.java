@@ -28,7 +28,7 @@ public class YouViewLastUpdatedStoreTest {
     private LastUpdatedContentFinder lastUpdatedContentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
     private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
-            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("baseUri"), new LoveFilmIdParser(), new LoveFilmGenreMap(), httpClient)
+            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("baseUri"), new LoveFilmIdParser(), new LoveFilmGenreMapping(), httpClient)
             .build();
     TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
             new DefaultProgramInformationGenerator(configFactory), 

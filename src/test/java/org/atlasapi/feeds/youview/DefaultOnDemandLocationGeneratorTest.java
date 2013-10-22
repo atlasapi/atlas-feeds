@@ -56,8 +56,8 @@ public class DefaultOnDemandLocationGeneratorTest {
     };
     
     private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
-            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("base uri"), new LoveFilmIdParser(), new LoveFilmGenreMap(), Mockito.mock(SimpleHttpClient.class))
-            .withPublisher(Publisher.AMAZON_UNBOX, new UnboxPublisherConfiguration("base uri"), new UnboxIdParser(), new UnboxGenreMap(), Mockito.mock(SimpleHttpClient.class))
+            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("base uri"), new LoveFilmIdParser(), new LoveFilmGenreMapping(), Mockito.mock(SimpleHttpClient.class))
+            .withPublisher(Publisher.AMAZON_UNBOX, new UnboxPublisherConfiguration("base uri"), new UnboxIdParser(), new UnboxGenreMapping(), Mockito.mock(SimpleHttpClient.class))
             .build();
     private final OnDemandLocationGenerator generator = new DefaultOnDemandLocationGenerator(configFactory);
 
