@@ -104,7 +104,7 @@ public class LoveFilmGenreMap implements GenreMap {
             }
         };
         
-        private static final Function<String, String> TO_ATLAS_GENRE = new Function<String, String>() {
+        public static final Function<String, String> TO_ATLAS_GENRE = new Function<String, String>() {
             @Override
             public String apply(@Nullable String input) {
                 input = input.toLowerCase();
@@ -112,7 +112,7 @@ public class LoveFilmGenreMap implements GenreMap {
             }
         };
         
-        private static final Function<String, String> TO_ATLAS_SUB_GENRE = new Function<String, String>() {
+        public static final Function<String, String> TO_ATLAS_SUB_GENRE = new Function<String, String>() {
             @Override
             public String apply(@Nullable String input) {
                 input = input.toLowerCase();
