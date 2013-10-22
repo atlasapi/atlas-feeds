@@ -15,7 +15,7 @@ public class YouViewPerPublisherFactory {
     
     private final Map<Publisher, PublisherConfiguration> configurations;
     private final Map<Publisher, IdParser> idParsers;
-    private final Map<Publisher, GenreMap> genreMaps;
+    private final Map<Publisher, GenreMapping> genreMaps;
     private final Map<Publisher, SimpleHttpClient> httpClients;
     
     public static Builder builder() {
@@ -23,7 +23,7 @@ public class YouViewPerPublisherFactory {
     }
     
     private YouViewPerPublisherFactory(Map<Publisher, PublisherConfiguration> configurations, Map<Publisher, IdParser> idParsers,
-            Map<Publisher, GenreMap> genreMaps, Map<Publisher, SimpleHttpClient> httpClients) {
+            Map<Publisher, GenreMapping> genreMaps, Map<Publisher, SimpleHttpClient> httpClients) {
                 this.configurations = ImmutableMap.copyOf(checkNotNull(configurations));
                 this.idParsers = ImmutableMap.copyOf(checkNotNull(idParsers));
                 this.genreMaps = ImmutableMap.copyOf(checkNotNull(genreMaps));
@@ -46,8 +46,8 @@ public class YouViewPerPublisherFactory {
         return idParser;
     }
     
-    public GenreMap getGenreMapping(Publisher publisher) {
-        GenreMap genreMap = genreMaps.get(publisher);
+    public GenreMapping getGenreMapping(Publisher publisher) {
+        GenreMapping genreMap = genreMaps.get(publisher);
         if (genreMap == null) {
             throw new InvalidPublisherException(publisher);
         }
@@ -66,7 +66,7 @@ public class YouViewPerPublisherFactory {
         
         private Map<Publisher, PublisherConfiguration> configurations = Maps.newHashMap();
         private Map<Publisher, IdParser> idParsers = Maps.newHashMap();
-        private Map<Publisher, GenreMap> genreMaps = Maps.newHashMap();
+        private Map<Publisher, GenreMapping> genreMaps = Maps.newHashMap();
         private Map<Publisher, SimpleHttpClient> httpClients = Maps.newHashMap();
         
         private Builder() {}
@@ -76,7 +76,7 @@ public class YouViewPerPublisherFactory {
         }
         
         public Builder withPublisher(Publisher publisher, PublisherConfiguration config, IdParser idParser, 
-                GenreMap genreMap, SimpleHttpClient httpClient) {
+                GenreMapping genreMap, SimpleHttpClient httpClient) {
             configurations.put(checkNotNull(publisher), checkNotNull(config));
             idParsers.put(publisher, checkNotNull(idParser));
             genreMaps.put(publisher, checkNotNull(genreMap));

@@ -25,7 +25,7 @@ public class DeletionUrlTest {
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
     private TvAnytimeGenerator generator = Mockito.mock(TvAnytimeGenerator.class);
     private YouViewPerPublisherFactory configurationFactory = YouViewPerPublisherFactory.builder()
-            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("youviewurl"), new LoveFilmIdParser(), Mockito.mock(GenreMap.class), httpClient)
+            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("youviewurl"), new LoveFilmIdParser(), Mockito.mock(GenreMapping.class), httpClient)
             .build();
     
     private final YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configurationFactory);

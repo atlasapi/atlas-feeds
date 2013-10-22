@@ -343,7 +343,7 @@ public class DefaultGroupInformationGenerator implements GroupInformationGenerat
     }
 
     private List<GenreType> generateGenres(Content content) {
-        GenreMap genreMap = configFactory.getGenreMapping(content.getPublisher());
+        GenreMapping genreMap = configFactory.getGenreMapping(content.getPublisher());
         Set<String> genreHrefs = Sets.newHashSet();
         for (String genreStr : content.getGenres()) {
             for (String youViewGenre : genreMap.getYouViewGenresFor(genreStr)) {

@@ -66,13 +66,13 @@ public class YouViewFeedsWebModule {
                         Publisher.LOVEFILM, 
                         new LoveFilmPublisherConfiguration(loveFilmUrl), 
                         new LoveFilmIdParser(), 
-                        new LoveFilmGenreMap(), 
+                        new LoveFilmGenreMapping(), 
                         httpClient(loveFilmUsername, loveFilmPassword))
                 .withPublisher(
                         Publisher.AMAZON_UNBOX, 
                         new UnboxPublisherConfiguration(unboxUrl), 
                         new UnboxIdParser(), 
-                        new UnboxGenreMap(), 
+                        new UnboxGenreMapping(), 
                         httpClient(unboxUsername, unboxPassword))
                 .build();
     }

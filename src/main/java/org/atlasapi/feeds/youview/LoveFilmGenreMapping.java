@@ -26,18 +26,19 @@ import com.google.common.io.LineProcessor;
 import com.google.common.io.Resources;
 
 
-public class UnboxGenreMap implements GenreMap {
+public class LoveFilmGenreMapping implements GenreMapping {
 
-    private static final String UNBOX_GENRE_FILENAME = "Amazon_Unbox_YouView_GenreMapping.csv";
+    private static final String LOVEFILM_GENRE_FILENAME = "LOVEFiLM_YouView_GenreMapping.csv";
+    private static final String LOVEFILM_GENRES_PREFIX = "http://lovefilm.com/genres/";
     
-    private final Logger log = LoggerFactory.getLogger(UnboxGenreMap.class);
+    private final Logger log = LoggerFactory.getLogger(LoveFilmGenreMapping.class);
     
     private final Multimap<String, String> genreMapping;
     
-    public UnboxGenreMap() {
+    public LoveFilmGenreMapping() {
         this.genreMapping = generateLines();
     }
-    
+
     @Override
     public Collection<String> getYouViewGenresFor(String genre) {
         return genreMapping.get(genre);
@@ -45,12 +46,12 @@ public class UnboxGenreMap implements GenreMap {
 
     private Multimap<String, String> generateLines() {
         try {
-            URL resource = Resources.getResource(getClass(), UNBOX_GENRE_FILENAME);
+            URL resource = Resources.getResource(getClass(), LOVEFILM_GENRE_FILENAME);
             InputSupplier<InputStreamReader> supplier = Resources.newReaderSupplier(resource, Charsets.UTF_8);
 
             return CharStreams.readLines(supplier, new GenreMappingLineProcessor());
         } catch (IOException e) {
-            log.error(String.format("Error reading genre file %s", UNBOX_GENRE_FILENAME), e);
+            log.error(String.format("Error reading genre file %s", LOVEFILM_GENRE_FILENAME), e);
             return null;
         }
     }
@@ -95,29 +96,27 @@ public class UnboxGenreMap implements GenreMap {
             return mapping.build();
         }
         
-        private static final String UNBOX_GENRES_PREFIX = "http://unbox.amazon.co.uk/genres/";
-        
         private static final Predicate<String> IS_SUB_GENRE = new Predicate<String>() {
             @Override
             public boolean apply(String input) {
                 return input.contains(" > ");
             }
         };
-        
-        private static final Function<String, String> TO_ATLAS_GENRE = new Function<String, String>() {
-            @Override
-            public String apply(@Nullable String input) {
-                input = input.toLowerCase();
-                return UNBOX_GENRES_PREFIX + input.replace('/', '-').replace(" ", "");
-            }
-        };
-        
-        private static final Function<String, String> TO_ATLAS_SUB_GENRE = new Function<String, String>() {
-            @Override
-            public String apply(@Nullable String input) {
-                input = input.toLowerCase();
-                return UNBOX_GENRES_PREFIX + input.replace('/', '-').replace(" ", "").replace(">", "/");
-            }
-        };
     }
+    
+    public static final Function<String, String> TO_ATLAS_GENRE = new Function<String, String>() {
+        @Override
+        public String apply(@Nullable String input) {
+            input = input.toLowerCase();
+            return LOVEFILM_GENRES_PREFIX + input.replace('/', '-').replace(" ", "");
+        }
+    };
+    
+    public static final Function<String, String> TO_ATLAS_SUB_GENRE = new Function<String, String>() {
+        @Override
+        public String apply(@Nullable String input) {
+            input = input.toLowerCase();
+            return LOVEFILM_GENRES_PREFIX + input.replace('/', '-').replace(" ", "").replace(">", "/");
+        }
+    };
 }
