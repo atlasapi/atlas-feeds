@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview;
 
-import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getId;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -16,8 +16,10 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
+import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 
@@ -52,14 +54,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.metabroadcast.common.text.Truncator;
 
-public class LoveFilmGroupInformationGenerator implements GroupInformationGenerator {
+public class DefaultGroupInformationGenerator implements GroupInformationGenerator {
 
     private static final String YOUVIEW_CREDIT_ROLE = "urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN";
     private static final String YOUVIEW_IMAGE_FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS:2001:1";
     private static final String YOUVIEW_IMAGE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
     private static final String YOUVIEW_IMAGE_ATTRIBUTE_PRIMARY_ROLE = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary";
-    private static final int IMAGE_HEIGHT = 360;
-    private static final int IMAGE_WIDTH = 640;
     private static final String GROUP_TYPE_PROGRAMCONCEPT = "programConcept";
     private static final String GROUP_TYPE_SERIES = "series";
     private static final String GROUP_TYPE_SHOW = "show";
@@ -67,8 +67,6 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     private static final String LANGUAGE = "en";
     private static final String GENRE_TYPE_MAIN = "main";
     private static final String GENRE_TYPE_OTHER = "other";
-    private static final String LOVEFILM_URL = "http://lovefilm.com/ContentOwning";
-    private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
     private static final String TITLE_TYPE_MAIN = "main";
     private static final String TITLE_TYPE_SECONDARY = "secondary";
     private static final String LOVEFILM_MEDIATYPE_GENRE_VIDEO = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
@@ -96,11 +94,15 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         }
     };
     
-    private final YouViewGenreMapping genreMapping;
-    Truncator truncator = new Truncator().omitTrailingPunctuationWhenTruncated().onlyTruncateAtAWordBoundary().withOmissionMarker("...");
+    private final YouViewPerPublisherFactory configFactory;
     
-    public LoveFilmGroupInformationGenerator(YouViewGenreMapping genreMapping) {
-        this.genreMapping = genreMapping;
+    private Truncator truncator = new Truncator()
+            .omitTrailingPunctuationWhenTruncated()
+            .onlyTruncateAtAWordBoundary()
+            .withOmissionMarker("...");
+    
+    public DefaultGroupInformationGenerator(YouViewPerPublisherFactory configFactory) {
+        this.configFactory = checkNotNull(configFactory);
     }
     
     @Override
@@ -108,7 +110,9 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         GroupInformationType groupInfo = generateWithCommonFields(film, null);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
-        groupInfo.setServiceIDRef(LOVEFILM_URL);
+        
+        PublisherConfiguration config = configFactory.getConfiguration(film.getPublisher());
+        groupInfo.setServiceIDRef(config.getGroupInformationServiceId());
         
         return groupInfo;
     }
@@ -120,8 +124,12 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
 
         if (series.isPresent()) {
+            Publisher publisher = series.get().getPublisher();
+            PublisherConfiguration config = configFactory.getConfiguration(publisher);
+            IdParser idParser = configFactory.getIdParser(publisher);
+            
             MemberOfType memberOf = new MemberOfType();
-            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(series.get()));
+            memberOf.setCrid(idParser.createCrid(config.getCridPrefix(), series.get()));
             if (item instanceof Episode) {
                 Episode episode = (Episode) item;
                 if (episode.getEpisodeNumber() != null) {
@@ -130,8 +138,12 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
             }
             groupInfo.getMemberOf().add(memberOf);
         } else if (brand.isPresent()) {
+            Publisher publisher = brand.get().getPublisher();
+            PublisherConfiguration config = configFactory.getConfiguration(publisher);
+            IdParser idParser = configFactory.getIdParser(publisher);
+            
             MemberOfType memberOf = new MemberOfType();
-            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(brand.get()));
+            memberOf.setCrid(idParser.createCrid(config.getCridPrefix(), brand.get()));
             if (item instanceof Episode) {
                 Episode episode = (Episode) item;
                 if (episode.getEpisodeNumber() != null) {
@@ -152,14 +164,19 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         groupInfo.setOrdered(true);
         
         if (brand.isPresent()) {
+            Publisher publisher = brand.get().getPublisher();
+            PublisherConfiguration config = configFactory.getConfiguration(publisher);
+            IdParser idParser = configFactory.getIdParser(publisher);
+            
             MemberOfType memberOf = new MemberOfType();
-            memberOf.setCrid(LOVEFILM_PRODUCT_CRID_PREFIX + getId(brand.get()));
+            memberOf.setCrid(idParser.createCrid(config.getCridPrefix(), brand.get()));
             if (series.getSeriesNumber() != null) {
                 memberOf.setIndex(Long.valueOf(series.getSeriesNumber()));
             }
             groupInfo.getMemberOf().add(memberOf);
         } else {
-            groupInfo.setServiceIDRef(LOVEFILM_URL);
+            PublisherConfiguration config = configFactory.getConfiguration(series.getPublisher());
+            groupInfo.setServiceIDRef(config.getGroupInformationServiceId());
         }
         
         return groupInfo;
@@ -171,25 +188,25 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
         groupInfo.setOrdered(true);
-        groupInfo.setServiceIDRef(LOVEFILM_URL);
+        PublisherConfiguration config = configFactory.getConfiguration(brand.getPublisher());
+        groupInfo.setServiceIDRef(config.getGroupInformationServiceId());
         
         return groupInfo;
     }
     
-    GroupInformationType generateWithCommonFields(Content content, Item item) {
+    private GroupInformationType generateWithCommonFields(Content content, Item item) {
         GroupInformationType groupInfo = new GroupInformationType();
         
-        groupInfo.setGroupId(createCrid(content));
-        // this needs tweaking depending on type
+        Publisher publisher = content.getPublisher();
+        PublisherConfiguration config = configFactory.getConfiguration(publisher);
+        IdParser idParser = configFactory.getIdParser(publisher);
+        
+        groupInfo.setGroupId(idParser.createCrid(config.getCridPrefix(), content));
         groupInfo.setBasicDescription(generateBasicDescription(content, item));
         
         return groupInfo;
     }
 
-    public static String createCrid(Content content) {
-        return LOVEFILM_PRODUCT_CRID_PREFIX + getId(content);
-    }
-    
     private BaseProgramGroupTypeType generateGroupType(String groupType) {
         ProgramGroupTypeType type = new ProgramGroupTypeType();
         type.setValue(groupType);
@@ -247,17 +264,24 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
         relatedMaterial.setHowRelated(generateHowRelated());
         relatedMaterial.setFormat(generateFormat());
         relatedMaterial.setMediaLocator(generateMediaLocator(content));
-        relatedMaterial.setContentProperties(generateContentProperties());
+        relatedMaterial.setContentProperties(generateContentProperties(content));
         
         return Optional.<RelatedMaterialType>of(relatedMaterial);
     }
 
-    private ContentPropertiesType generateContentProperties() {
+    private ContentPropertiesType generateContentProperties(Content content) {
         ContentPropertiesType contentProperties = new ContentPropertiesType();
         StillImageContentAttributesType attributes = new StillImageContentAttributesType();
+        PublisherConfiguration config = configFactory.getConfiguration(content.getPublisher());
         
-        attributes.setWidth(IMAGE_WIDTH);
-        attributes.setHeight(IMAGE_HEIGHT);
+        if (content.getImages() == null || content.getImages().isEmpty()) {
+            attributes.setWidth(config.getDefaultImageWidth());
+            attributes.setHeight(config.getDefaultImageHeight());
+        } else {
+            Image image = Iterables.getFirst(content.getImages(), null);
+            attributes.setWidth(image.getWidth());
+            attributes.setHeight(image.getHeight());
+        }
         
         ControlledTermType primaryRole = new ControlledTermType();
         primaryRole.setHref(YOUVIEW_IMAGE_ATTRIBUTE_PRIMARY_ROLE);
@@ -319,9 +343,10 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     }
 
     private List<GenreType> generateGenres(Content content) {
+        GenreMap genreMap = configFactory.getGenreMapping(content.getPublisher());
         Set<String> genreHrefs = Sets.newHashSet();
         for (String genreStr : content.getGenres()) {
-            for (String youViewGenre : genreMapping.get(genreStr)) {
+            for (String youViewGenre : genreMap.getYouViewGenresFor(genreStr)) {
                  genreHrefs.add(youViewGenre);               
             }
         }

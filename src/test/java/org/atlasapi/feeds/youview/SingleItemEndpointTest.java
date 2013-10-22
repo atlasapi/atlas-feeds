@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.youview;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.times;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -15,7 +14,7 @@ import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.LoveFilmGroupInformationHierarchyTest.DummyContentResolver;
-import org.atlasapi.feeds.youview.www.YouViewController;
+import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -42,13 +41,13 @@ public class SingleItemEndpointTest {
 
     private HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
-    
-    private YouViewGenreMapping genreMapping = new YouViewGenreMapping(); 
-    private ProgramInformationGenerator progInfoGenerator = new LoveFilmProgramInformationGenerator();
-    private GroupInformationGenerator groupInfoGenerator = new LoveFilmGroupInformationGenerator(genreMapping);
-    private OnDemandLocationGenerator progLocationGenerator = new LoveFilmOnDemandLocationGenerator();
+    private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
+            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("youviewurl"), new LoveFilmIdParser(), new LoveFilmGenreMap(), httpClient)
+            .build();
+    private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
+    private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
+    private OnDemandLocationGenerator progLocationGenerator = new DefaultOnDemandLocationGenerator(configFactory);
     private DummyContentResolver contentResolver = new DummyContentResolver();
-    
     private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
         progInfoGenerator, 
         groupInfoGenerator, 
@@ -56,37 +55,45 @@ public class SingleItemEndpointTest {
         contentResolver,
         false
     );
-    
-    private YouViewUploader uploader = new YouViewUploader("youviewurl", generator, httpClient);
-    private YouViewDeleter deleter = new YouViewDeleter("youviewurl", httpClient);
-
+    YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
     private LastUpdatedContentFinder contentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     
-    private YouViewController controller = new YouViewController(generator, contentFinder, contentResolver, uploader, deleter);
+    private final YouViewUploadController controller = new YouViewUploadController(contentFinder, contentResolver, youViewClient);
     
     @Before
     public void setup() throws HttpException, IOException {
         HttpResponse httpResponse = new HttpResponse("", HttpServletResponse.SC_ACCEPTED, "", ImmutableMap.of("Location", "yv location"));
         Mockito.when(httpClient.delete(Mockito.anyString())).thenReturn(httpResponse);
+        Mockito.when(httpClient.post(Mockito.anyString(), Mockito.any(Payload.class))).thenReturn(httpResponse);
         Mockito.when(response.getOutputStream()).thenReturn(Mockito.mock(ServletOutputStream.class));
     }
     
-    @Test
-    public void testDeleteCalledByDeletionEndpoint() throws HttpException {
+    @Test(expected = IllegalArgumentException.class)
+    public void testDeleteFailsOnBadPublisher() throws HttpException, IOException {
         contentResolver.addContent(createItem("itemUri", "itemASIN"));
 
-        controller.deleteContent(response, "itemUri");
+        controller.deleteContent(response, "lurvefilm", "itemUri");
 
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/itemUri"));
-        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/itemUri"));
+        Mockito.verifyZeroInteractions(httpClient);
+    }
+    
+    @Test
+    public void testDeleteCalledByDeletionEndpoint() throws HttpException, IOException {
+        contentResolver.addContent(createItem("http://lovefilm.com/episodes/item", "itemASIN"));
+
+        controller.deleteContent(response, "lovefilm", "http://lovefilm.com/episodes/item");
+
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/item"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/item_version"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/item"));
     }
     
     @Test
     public void testUploadPerformedByUploadEndpoint() throws IOException, HttpException {
-        Item item = createItem("itemUri", "itemASIN");
+        Item item = createItem("http://lovefilm.com/episodes/item", "itemASIN");
         contentResolver.addContent(item);
 
-        controller.uploadContent(response, "itemUri");
+        controller.uploadContent(response, "lovefilm", "http://lovefilm.com/episodes/item");
 
         ArgumentCaptor<Payload> payloadCaptor = ArgumentCaptor.forClass(Payload.class);
         
