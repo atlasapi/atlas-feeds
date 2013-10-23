@@ -88,7 +88,7 @@ public class LakeviewModule {
     private @Value("${lakeview.feature.addXBoxOneAvailability}")
     boolean addXboxOneAvailability;
 	
-	private static final String SCHEMA_VERSION = "0_4";
+	private static final String SCHEMA_VERSION = "0_6";
 	private static final String FILENAME_PROVIDER_ID = "CA1.Xbox4oD";
 
 	public @Bean
