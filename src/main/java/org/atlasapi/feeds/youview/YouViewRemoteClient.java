@@ -78,6 +78,7 @@ public class YouViewRemoteClient {
      * @throws UnsupportedEncodingException
      * @throws HttpException
      */
+    // TODO consider passing in publisher as param, validating chunk
     public void upload(Iterable<Content> chunk) throws UnsupportedEncodingException, HttpException {
         Content first = Iterables.getFirst(chunk, null);
         if (first == null) {

@@ -64,6 +64,7 @@ public class YouViewPerPublisherFactory {
     
     public static class Builder {
         
+        // TODO use ImmutableMap.builder instead of Maps.newHashMap
         private Map<Publisher, PublisherConfiguration> configurations = Maps.newHashMap();
         private Map<Publisher, IdParser> idParsers = Maps.newHashMap();
         private Map<Publisher, GenreMapping> genreMaps = Maps.newHashMap();
