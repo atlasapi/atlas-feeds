@@ -144,15 +144,19 @@ public class XmlTvFeedOutputter {
         return EMPTY_FIELD;
     }
 
-    private String programmeTitle(XmlTvBroadcastItem broadcastItem, DateTime date) {
-        String dst = "";
-        if (date.getMillis() >= 1382832000000 && date.getMillis() < 1382835600000 ) {
-            dst = "(BST) "; // 27/10/2013 00:00 - 01:00 UTC
-        } else if (date.getMillis() >= 1382835600000 && date.getMillis() <= 1382839200000 ) {
-            dst = "(GMT) "; // 27/10/2013 01:00 - 02:00 UTC
+    private String programmeTitle(XmlTvBroadcastItem broadcastItem, DateTime startTime) {
+        String prefix = "";
+        if (isStandardOffset(startTime.plusHours(1)) && !isStandardOffset(startTime)) {
+            prefix = "(BST) ";
+        } else if (isStandardOffset(startTime) && !isStandardOffset(startTime.minusHours(1))) {
+            prefix = "(GMT) ";
         }
-        return dst + (isEpisode(broadcastItem) && broadcastItem.hasContainer() ? broadcastItem.getContainer().getTitle() : broadcastItem.getItem().getTitle());
+        return prefix + (isEpisode(broadcastItem) && broadcastItem.hasContainer() ? broadcastItem.getContainer().getTitle() : broadcastItem.getItem().getTitle());
     }
+
+	private boolean isStandardOffset(DateTime dateTime) {
+		return DateTimeZones.LONDON.isStandardOffset(dateTime.getMillis());
+	}
 
     private boolean isEpisode(XmlTvBroadcastItem broadcastItem) {
         return broadcastItem.getItem() instanceof Episode;
@@ -173,5 +177,4 @@ public class XmlTvFeedOutputter {
     private String removeNewLines(String input) {
     	return input.replaceAll("(\\r|\\n)+", " ");
     }
-
 }
