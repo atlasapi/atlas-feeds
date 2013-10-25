@@ -3,7 +3,7 @@ package org.atlasapi.query.content.parser;
 import javax.servlet.http.HttpServletRequest;
 
 import org.atlasapi.application.ApplicationSources;
-import org.atlasapi.application.ApplicationSourcesFetcher;
+import org.atlasapi.application.auth.ApplicationSourcesFetcher;
 import org.atlasapi.content.criteria.AtomicQuery;
 import org.atlasapi.content.criteria.ContentQuery;
 

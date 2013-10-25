@@ -152,10 +152,15 @@
 			<version>${atlas.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.atlasapi</groupId>
-			<artifactId>atlas-applications</artifactId>
-			<version>${atlas.version}</version>
-		</dependency>
+            <groupId>com.metabroadcast.common.webapp</groupId>
+            <artifactId>common-webapp</artifactId>
+            <version>${common.version}</version>
+        </dependency>
+		<dependency>
+            <groupId>org.atlasapi</groupId>
+            <artifactId>atlas-persistence</artifactId>
+            <version>${atlas.version}</version>
+        </dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>servlet-api</artifactId>
@@ -380,6 +385,7 @@
 
 	<properties>
 		<atlas.version>${project.version}</atlas.version>
+		<common.version>1.0-SNAPSHOT</common.version>
 		<spring.version>3.0.5.RELEASE</spring.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
