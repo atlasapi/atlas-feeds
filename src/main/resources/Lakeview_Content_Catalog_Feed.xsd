@@ -130,15 +130,15 @@
   <xs:simpleType name="ContextId">
     <xs:restriction base="xs:string">
       <!-- media items -->
-      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/Movie/([a-zA-Z0-9-.?,'/\+&amp;%$#_]*)" />
-      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/TVEpisode/([a-zA-Z0-9-.?,'/\+&amp;%$#_]*)" />
-      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/TVShow/([a-zA-Z0-9-.?,'/\+&amp;%$#_]*)" />
-      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/TVSeries/([a-zA-Z0-9-.?,'/\+&amp;%$#_]*)" />
-      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/TVSeason/([a-zA-Z0-9-.?,'/\+&amp;%$#_]*)" />
-      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/MusicVideo/([a-zA-Z0-9-.?,'/\+&amp;%$#_]*)" />
-      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/Album/([a-zA-Z0-9-.?,'/\+&amp;%$#_]*)" />
-      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/Track/([a-zA-Z0-9-.?,'/\+&amp;%$#_]*)" />
-      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/WebVideo/([a-zA-Z0-9-.?,'/\+&amp;%$#_]*)" />
+      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/Movie/([a-zA-Z0-9\-.?,'/\+&amp;%$#_]*)" />
+      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/TVEpisode/([a-zA-Z0-9\-.?,'/\+&amp;%$#_]*)" />
+      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/TVShow/([a-zA-Z0-9\-.?,'/\+&amp;%$#_]*)" />
+      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/TVSeries/([a-zA-Z0-9\-.?,'/\+&amp;%$#_]*)" />
+      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/TVSeason/([a-zA-Z0-9\-.?,'/\+&amp;%$#_]*)" />
+      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/MusicVideo/([a-zA-Z0-9\-.?,'/\+&amp;%$#_]*)" />
+      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/Album/([a-zA-Z0-9\-.?,'/\+&amp;%$#_]*)" />
+      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/Track/([a-zA-Z0-9\-.?,'/\+&amp;%$#_]*)" />
+      <xs:pattern value="http://[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*/[a-z][a-z][a-z]?-[A-Z][A-Z][A-Z]?/WebVideo/([a-zA-Z0-9\-.?,'/\+&amp;%$#_]*)" />
     </xs:restriction>
   </xs:simpleType>
 
