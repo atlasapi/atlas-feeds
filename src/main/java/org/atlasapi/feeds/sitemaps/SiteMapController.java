@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
+import org.atlasapi.application.auth.InvalidApiKeyException;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.common.Id;
@@ -80,21 +81,26 @@ public class SiteMapController {
             return null;
         }
         
-        ContentQuery query = queryBuilder.build(request);
-        Set<Publisher> includedPublishers = query.getSources().getEnabledReadSources();
-        
-        Iterable<SiteMapRef> sitemapRefs;
-        if (includedPublishers.contains(possiblePublisher.requireValue())) {
-            sitemapRefs = sitemapRefForQuery(query, host, possiblePublisher.requireValue());
-        } else {
-            sitemapRefs = ImmutableList.<SiteMapRef> of();
-        }
+        ContentQuery query;
+        try {
+            query = queryBuilder.build(request);
+            Set<Publisher> includedPublishers = query.getSources().getEnabledReadSources();
+            
+            Iterable<SiteMapRef> sitemapRefs;
+            if (includedPublishers.contains(possiblePublisher.requireValue())) {
+                sitemapRefs = sitemapRefForQuery(query, host, possiblePublisher.requireValue());
+            } else {
+                sitemapRefs = ImmutableList.<SiteMapRef> of();
+            }
 
-        response.setStatus(HttpServletResponse.SC_OK);
-        cacheHeaderWriter.writeHeaders(request, response);
-        
-        indexOutputter.output(sitemapRefs, response.getOutputStream());
-        
+            response.setStatus(HttpServletResponse.SC_OK);
+            cacheHeaderWriter.writeHeaders(request, response);
+            
+            indexOutputter.output(sitemapRefs, response.getOutputStream());
+        } catch (InvalidApiKeyException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentLength(0);
+        }
         return null;
     }
 
@@ -136,22 +142,26 @@ public class SiteMapController {
 
     @RequestMapping("/feeds/sitemaps/sitemap.xml")
     public String siteMapForBrand(HttpServletRequest request, HttpServletResponse response, @RequestParam("brand.uri") String brandUri) throws IOException {
-
-        final ContentQuery query = queryBuilder.build(new SitemapHackHttpRequest(request, brandUri));
-        
-        Iterable<Container> brands = Iterables.filter(resolveUri(URI_SPLITTER.split(brandUri),query), Container.class);
-        
-        Map<ParentRef, Container> parentLookup = Maps.<ParentRef,Container>uniqueIndex(brands, ParentRef.T0_PARENT_REF);
-        Iterable<Item> contents = Iterables.filter(Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
-            @Override
-            public Iterable<Content> apply(Container input) {
-                return resolve(Iterables.transform(input.getChildRefs(), Identifiables.toId()), query);
-            }
-        })),Item.class);
-        
-        response.setStatus(HttpServletResponse.SC_OK);
-        cacheHeaderWriter.writeHeaders(request, response);
-        outputter.output(parentLookup, contents, response.getOutputStream());
+      try {
+            final ContentQuery query = queryBuilder.build(new SitemapHackHttpRequest(request, brandUri));
+            Iterable<Container> brands = Iterables.filter(resolveUri(URI_SPLITTER.split(brandUri),query), Container.class);
+            
+            Map<ParentRef, Container> parentLookup = Maps.<ParentRef,Container>uniqueIndex(brands, ParentRef.T0_PARENT_REF);
+            Iterable<Item> contents = Iterables.filter(Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
+                @Override
+                public Iterable<Content> apply(Container input) {
+                    return resolve(Iterables.transform(input.getChildRefs(), Identifiables.toId()), query);
+                }
+            })),Item.class);
+            
+            response.setStatus(HttpServletResponse.SC_OK);
+            cacheHeaderWriter.writeHeaders(request, response);
+            outputter.output(parentLookup, contents, response.getOutputStream());
+        } catch (InvalidApiKeyException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentLength(0);
+        }
+       
         return null;
     }
 

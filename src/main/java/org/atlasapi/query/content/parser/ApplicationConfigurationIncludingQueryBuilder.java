@@ -4,6 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.atlasapi.application.ApplicationSources;
 import org.atlasapi.application.auth.ApplicationSourcesFetcher;
+import org.atlasapi.application.auth.InvalidApiKeyException;
 import org.atlasapi.content.criteria.AtomicQuery;
 import org.atlasapi.content.criteria.ContentQuery;
 
@@ -21,7 +22,7 @@ public class ApplicationConfigurationIncludingQueryBuilder {
 		this.configFetcher = appFetcher;
 	}
 
-	public ContentQuery build(HttpServletRequest request) {
+	public ContentQuery build(HttpServletRequest request) throws InvalidApiKeyException {
 		ContentQuery query = queryBuilder.build(request);
 		Optional<ApplicationSources> sources = configFetcher.sourcesFor(request);
 		if (sources.isPresent()) {
@@ -30,7 +31,7 @@ public class ApplicationConfigurationIncludingQueryBuilder {
 		return query;
 	}
 	
-	public ContentQuery build(HttpServletRequest request, Iterable<AtomicQuery> operands, Selection selection) {
+	public ContentQuery build(HttpServletRequest request, Iterable<AtomicQuery> operands, Selection selection) throws InvalidApiKeyException {
 		ContentQuery query = new ContentQuery(operands, selection);
 		Optional<ApplicationSources> sources = configFetcher.sourcesFor(request);
 		if (sources.isPresent()) {

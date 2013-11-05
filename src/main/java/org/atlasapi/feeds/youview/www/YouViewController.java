@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.application.ApplicationSources;
 import org.atlasapi.application.auth.ApplicationSourcesFetcher;
+import org.atlasapi.application.auth.InvalidApiKeyException;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.media.content.Content;
 import org.atlasapi.media.entity.Publisher;
@@ -68,6 +69,9 @@ public class YouViewController {
         } catch (IOException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.setContentLength(0);
+        } catch (InvalidApiKeyException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentLength(0);
         }
     }
     
@@ -77,7 +81,7 @@ public class YouViewController {
         return ImmutableList.copyOf(contentFinder.updatedSince(PUBLISHER, start));
     }
     
-    private ApplicationSources appSources(HttpServletRequest request) {
+    private ApplicationSources appSources(HttpServletRequest request) throws InvalidApiKeyException {
         Optional<ApplicationSources> config = sourcesFetcher.sourcesFor(request);
         return config.isPresent() ? config.get() : ApplicationSources.defaults();
     }
