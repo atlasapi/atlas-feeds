@@ -16,12 +16,12 @@ import org.atlasapi.feeds.lakeview.XmlFeedOutputter;
 import org.atlasapi.feeds.lakeview.validation.rules.LakeviewFeedValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult;
 import org.atlasapi.feeds.lakeview.validation.rules.ValidationResult.ValidationResultType;
+import org.atlasapi.generated.lakeview.ElementFeed;
+import org.atlasapi.generated.lakeview.ElementItem;
 import org.atlasapi.generated.lakeview.ElementMovie;
-import org.atlasapi.generated.lakeview.ElementProduct;
 import org.atlasapi.generated.lakeview.ElementTVEpisode;
 import org.atlasapi.generated.lakeview.ElementTVSeason;
 import org.atlasapi.generated.lakeview.ElementTVSeries;
-import org.atlasapi.generated.lakeview.Feed;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
@@ -50,18 +50,17 @@ public class LakeviewFileValidator {
 		Builder<ValidationResult> results = ImmutableList.builder();
 		try {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent(Publisher.C4)), os);
+			feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent(Publisher.C4_PMLSD)), os);
 			InputStream is = new ByteArrayInputStream(os.toByteArray());
 		
 			JAXBContext ctx = JAXBContext
-					.newInstance(new Class[] { Feed.class });
+					.newInstance(new Class[] { ElementFeed.class });
 			Unmarshaller um = ctx.createUnmarshaller();
-			Feed feed = (Feed) um.unmarshal(is);
-			List<ElementProduct> f = feed.getMovieOrTVEpisodeOrTVSeason();
+			ElementFeed feed = (ElementFeed) um.unmarshal(is);
 
 			FeedItemStore itemStore = new FeedItemStore();
 			
-			for (ElementProduct ep : f) {
+			for (ElementItem ep : feed.getMovieOrTVEpisodeOrTVSeason()) {
 				if (ep instanceof ElementTVEpisode) {
 					itemStore.addEpisode((ElementTVEpisode) ep);
 				} else if (ep instanceof ElementTVSeason) {

@@ -16,6 +16,7 @@ import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import com.google.common.base.Throwables;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.time.Clock;
 
@@ -50,12 +51,13 @@ public class LakeviewFileUpdater extends ScheduledTask {
         	OutputStream gzippedStream = new GZIPOutputStream(bos);
         	String filename = filenameProviderID + "." + clock.now().toString(DATE_FORMATTER) + ".full.Lakeview_v" + schemaVersion +".gz";
 	
-			feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent(Publisher.C4)), gzippedStream);
+			feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent(Publisher.C4_PMLSD)), gzippedStream);
 			gzippedStream.close();
 			FileUpload ftpUpload = new FileUpload(filename, bos.toByteArray());
 			uploader.upload(ftpUpload);
 		} catch (Exception e) {
 			log.record(new AdapterLogEntry(Severity.ERROR).withDescription("Problem uploading C4 file to Azure").withCause(e));
+			Throwables.propagate(e);
 		}
 	}
 	 

@@ -1,20 +1,21 @@
 package org.atlasapi.feeds.upload.azure;
 
-import java.net.ConnectException;
-import java.net.URI;
+import java.io.ByteArrayInputStream;
+import java.net.URISyntaxException;
+import java.security.InvalidKeyException;
 
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploader;
 import org.atlasapi.feeds.upload.FileUploaderResult;
-import org.soyatec.windowsazure.blob.BlobStorageClient;
-import org.soyatec.windowsazure.blob.IBlobContainer;
-import org.soyatec.windowsazure.blob.IBlobContents;
-import org.soyatec.windowsazure.blob.IBlobProperties;
-import org.soyatec.windowsazure.blob.internal.BlobContents;
-import org.soyatec.windowsazure.blob.internal.BlobProperties;
-import org.soyatec.windowsazure.blob.internal.RetryPolicies;
-import org.soyatec.windowsazure.blob.io.BlobMemoryStream;
-import org.soyatec.windowsazure.internal.util.TimeSpan;
+
+import com.microsoft.windowsazure.services.blob.client.BlobContainerPermissions;
+import com.microsoft.windowsazure.services.blob.client.BlobContainerPublicAccessType;
+import com.microsoft.windowsazure.services.blob.client.CloudBlobClient;
+import com.microsoft.windowsazure.services.blob.client.CloudBlobContainer;
+import com.microsoft.windowsazure.services.blob.client.CloudBlockBlob;
+import com.microsoft.windowsazure.services.core.storage.CloudStorageAccount;
+import com.microsoft.windowsazure.services.core.storage.RetryLinearRetry;
+import com.microsoft.windowsazure.services.core.storage.StorageException;
 
 public class AzureFileUploader implements FileUploader {
 		
@@ -23,39 +24,48 @@ public class AzureFileUploader implements FileUploader {
 	private String account;
 	private String key;
 	private String container;
-	private String hostname;
 	
-	public AzureFileUploader(String hostname, String account, String key, String container) {
+	public AzureFileUploader(String account, String key, String container) {
 		this.container = container;
-		this.hostname = hostname;
 		this.account = account;
 		this.key = key;
 	}
 	
-	protected synchronized BlobStorageClient getClient() {
-		BlobStorageClient client = BlobStorageClient.create(URI.create(hostname), false, account, key);
-		client.setRetryPolicy(RetryPolicies.retryN(3, TimeSpan.fromSeconds(5)));
-		return client;
+	protected CloudBlobClient getClient() throws InvalidKeyException, URISyntaxException {
+        CloudStorageAccount cloudAccount = CloudStorageAccount.parse(
+                String.format("DefaultEndpointsProtocol=http;AccountName=%s;AccountKey=%s", account, key));
+        CloudBlobClient client = cloudAccount.createCloudBlobClient();
+        client.setRetryPolicyFactory(new RetryLinearRetry(300, 3));
+                
+        return client;
 	}
 
 	@Override
 	public FileUploaderResult upload(FileUpload upload) throws Exception {
 		
-		IBlobProperties properties = new BlobProperties(upload.getFilename());
-		properties.setContentType(CONTENT_TYPE_BINARY);
-		
-		BlobMemoryStream blobStream = new BlobMemoryStream(upload.getFileData());
-		IBlobContents blobContents = new BlobContents(blobStream);
-		
-		IBlobContainer blobContainer = getClient().getBlobContainer(container);
-		
-		if(blobContainer == null) {
-			throw new ConnectException(String.format("Failed to obtain container named %s", container));
-		}
-		
-		if(blobContainer.createBlockBlob(properties, blobContents) == null) {
-			throw new Exception("Failed to create blob");
-		}
-		return FileUploaderResult.success();
+        String contentType = upload.getContentType() != null ? upload.getContentType().toString() : CONTENT_TYPE_BINARY;
+        
+        CloudBlobContainer blobContainer = createOrGetBlobContainer();
+        CloudBlockBlob blockBlobRef = blobContainer.getBlockBlobReference(upload.getFilename());
+            
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(upload.getFileData());      
+        blockBlobRef.getProperties().setContentType(contentType);
+        blockBlobRef.upload(inputStream, upload.getFileData().length);
+        blockBlobRef.uploadProperties();
+        
+        return FileUploaderResult.success();
 	}
+	
+	   private CloudBlobContainer createOrGetBlobContainer() throws StorageException, URISyntaxException, InvalidKeyException {
+	        CloudBlobClient client = getClient();
+	        CloudBlobContainer containerRef = client.getContainerReference(container);
+	        
+	        if(containerRef.createIfNotExist() == true) {
+	            BlobContainerPermissions containerPermissions;
+	            containerPermissions = new BlobContainerPermissions();
+	            containerPermissions.setPublicAccess(BlobContainerPublicAccessType.CONTAINER);
+	            containerRef.uploadPermissions(containerPermissions);
+	        }
+	        return containerRef;
+	    }
 }

@@ -3,8 +3,8 @@ package org.atlasapi.feeds.lakeview.validation;
 import java.util.List;
 import java.util.Map;
 
+import org.atlasapi.generated.lakeview.ElementItem;
 import org.atlasapi.generated.lakeview.ElementMovie;
-import org.atlasapi.generated.lakeview.ElementProduct;
 import org.atlasapi.generated.lakeview.ElementTVEpisode;
 import org.atlasapi.generated.lakeview.ElementTVSeason;
 import org.atlasapi.generated.lakeview.ElementTVSeries;
@@ -51,7 +51,7 @@ public class FeedItemStore {
 		Preconditions.checkNotNull(episode.getItemId());
 
 		if (episodes.put(episode.getItemId(), episode) != null) {
-			addError(episode, "Duplicate episode");
+		    addError(episode, "Duplicate episode");
 		}
 	}
 	
@@ -65,7 +65,7 @@ public class FeedItemStore {
 		
 	}
 
-	private void addError(ElementProduct element, String message) {
+	private void addError(ElementItem element, String message) {
 		errors.add(message + ": " + element.getItemId());
 	}
 

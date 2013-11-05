@@ -54,7 +54,7 @@ public class XmlTvFeedOutputter {
     private List<String> extractFields(XmlTvBroadcastItem broadcastItem) {
         Broadcast broadcast = broadcastItem.getBroadcast();
         return ImmutableList.of(
-                removeNewLines(programmeTitle(broadcastItem)),
+                removeNewLines(programmeTitle(broadcastItem, broadcast.getTransmissionTime())),
                 removeNewLines(subTitle(broadcastItem)),
                 removeNewLines(episode(broadcastItem)),
                 year(broadcastItem),
@@ -144,9 +144,19 @@ public class XmlTvFeedOutputter {
         return EMPTY_FIELD;
     }
 
-    private String programmeTitle(XmlTvBroadcastItem broadcastItem) {
-        return isEpisode(broadcastItem) && broadcastItem.hasContainer() ? broadcastItem.getContainer().getTitle() : broadcastItem.getItem().getTitle();
+    private String programmeTitle(XmlTvBroadcastItem broadcastItem, DateTime startTime) {
+        String prefix = "";
+        if (isStandardOffset(startTime.plusHours(1)) && !isStandardOffset(startTime)) {
+            prefix = "(BST) ";
+        } else if (isStandardOffset(startTime) && !isStandardOffset(startTime.minusHours(1))) {
+            prefix = "(GMT) ";
+        }
+        return prefix + (isEpisode(broadcastItem) && broadcastItem.hasContainer() ? broadcastItem.getContainer().getTitle() : broadcastItem.getItem().getTitle());
     }
+
+	private boolean isStandardOffset(DateTime dateTime) {
+		return DateTimeZones.LONDON.isStandardOffset(dateTime.getMillis());
+	}
 
     private boolean isEpisode(XmlTvBroadcastItem broadcastItem) {
         return broadcastItem.getItem() instanceof Episode;
@@ -163,9 +173,8 @@ public class XmlTvFeedOutputter {
     private String toString(Boolean flag) {
         return Boolean.TRUE.equals(flag) ? "true" : "false";
     }
-    
+
     private String removeNewLines(String input) {
     	return input.replaceAll("(\\r|\\n)+", " ");
     }
-    
 }

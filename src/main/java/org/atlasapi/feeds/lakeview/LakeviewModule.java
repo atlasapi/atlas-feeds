@@ -9,6 +9,18 @@ import org.atlasapi.feeds.lakeview.validation.LakeviewServerHealthProbe;
 import org.atlasapi.feeds.lakeview.validation.rules.CompletenessValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.HeirarchyValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.LakeviewFeedValidationRule;
+import org.atlasapi.feeds.lakeview.validation.rules.UpToDateValidationRule;
+import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.ResultStoringFileUploader;
+import org.atlasapi.feeds.upload.azure.AzureFileUploader;
+import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
+import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
+import org.atlasapi.feeds.xml.XMLValidator;
+import org.atlasapi.feeds.lakeview.validation.LakeviewFileValidator;
+import org.atlasapi.feeds.lakeview.validation.LakeviewServerHealthProbe;
+import org.atlasapi.feeds.lakeview.validation.rules.CompletenessValidationRule;
+import org.atlasapi.feeds.lakeview.validation.rules.HeirarchyValidationRule;
+import org.atlasapi.feeds.lakeview.validation.rules.LakeviewFeedValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.RecentUpdateToBrandValidationRule;
 import org.atlasapi.feeds.lakeview.validation.rules.UpToDateValidationRule;
 import org.atlasapi.feeds.upload.FileUploader;
@@ -63,8 +75,6 @@ public class LakeviewModule {
 
 	private @Value("${lakeview.upload.enabled}")
 	String enabled;
-	private @Value("${lakeview.upload.hostname}")
-	String hostname;
 	private @Value("${lakeview.upload.container}")
 	String container;
 	private @Value("${lakeview.upload.account}")
@@ -75,7 +85,10 @@ public class LakeviewModule {
 	private @Value("${lakeview.feature.genericTitlesEnabled}")
 	boolean genericTitlesEnabled;
 	
-	private static final String SCHEMA_VERSION = "0_4";
+    private @Value("${lakeview.feature.addXBoxOneAvailability}")
+    boolean addXboxOneAvailability;
+	
+	private static final String SCHEMA_VERSION = "0_6";
 	private static final String FILENAME_PROVIDER_ID = "CA1.Xbox4oD";
 
 	public @Bean
@@ -91,7 +104,7 @@ public class LakeviewModule {
 
 	public @Bean
 	LakeviewFeedCompiler lakeviewFeedCompiler() {
-		return new LakeviewFeedCompiler(channelResolver, genericTitlesEnabled);
+		return new LakeviewFeedCompiler(channelResolver, genericTitlesEnabled, addXboxOneAvailability);
 	}
 
 	public @Bean
@@ -122,13 +135,13 @@ public class LakeviewModule {
 	public @Bean
 	FileUploader lakeviewAzureUploader() {
 		return ResultStoringFileUploader.resultStoringFileUploader(lakeviewResultStore(), SERVICE_NAME, REMOTE_ID, 
-				new AzureFileUploader(hostname, account, key, container));
+				new AzureFileUploader(account, key, container));
 
 	}
 	
 	public @Bean
 	AzureLatestFileDownloader azureLatestFileDownloader() {
-		return new AzureLatestFileDownloader(hostname, account, key, container);
+		return new AzureLatestFileDownloader(account, key, container);
 	}
 	
 	public @Bean 
