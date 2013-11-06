@@ -8,6 +8,7 @@ import org.atlasapi.application.Application;
 import org.atlasapi.application.ApplicationCredentials;
 import org.atlasapi.application.auth.ApiKeySourcesFetcher;
 import org.atlasapi.application.auth.ApplicationSourcesFetcher;
+import org.atlasapi.application.auth.InvalidApiKeyException;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.media.common.Id;
 import org.atlasapi.persistence.application.ApplicationStore;
@@ -31,7 +32,7 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 	}
 
 	@Test
-	public void testBuild() {
+	public void testBuild() throws InvalidApiKeyException {
 		final String testApiKey = "testKey";
 		final Application testApp = Application.builder()
 		        .withId(Id.valueOf(5000))
