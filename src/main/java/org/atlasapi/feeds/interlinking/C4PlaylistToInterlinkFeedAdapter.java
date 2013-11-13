@@ -19,12 +19,19 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
 
     private static final Pattern BROADCAST_ID_PATTERN = Pattern.compile("(?:urn:)?(tag:www\\.\\w+4\\.com.*)");
 
-    private final static Pattern CHANNEL_SPECIFIC_ID_PATTERN = Pattern.compile("tag:([^,]+),(\\d{4}):slot/(C4|M4|F4|E4|4M)(\\d+)");
+    private final static Pattern CHANNEL_SPECIFIC_ID_PATTERN = Pattern.compile(
+            "tag:([^,]+),(\\d{4}):slot/(C4|M4|F4|E4|4M|4S)(\\d+)");
 
-    private static Set<String> BROADCAST_SERVICES = ImmutableSet.of("http://www.channel4.com", "http://www.e4.com", "http://www.channel4.com/more4", "http://film4.com");
+    private static Set<String> BROADCAST_SERVICES = ImmutableSet.of(
+            "http://www.channel4.com", 
+            "http://www.e4.com", 
+            "http://www.channel4.com/more4", 
+            "http://film4.com",
+            "http://www.4music.com",
+            "http://www.channel4.com/4seven"
+        );
 
     protected static final Pattern SYNTHESIZED_PATTERN = Pattern.compile("http://www.channel4.com/programmes/synthesized/[^/]+/(\\d+)");
-
 
     @Override
     protected String broadcastId(Broadcast broadcast) {
