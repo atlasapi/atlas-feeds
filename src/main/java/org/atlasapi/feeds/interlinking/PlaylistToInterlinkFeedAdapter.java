@@ -45,6 +45,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 		.put("http://www.e4.com", "E4")
 		.put("http://film4.com", "F4")
 		.put("http://www.4music.com", "4M")
+		.put("http://www.channel4.com/4seven", "4S")
 	.build();
 
 	private final Truncator summaryTruncator = new Truncator()
