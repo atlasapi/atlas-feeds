@@ -121,6 +121,7 @@ public class InterlinkFeedOutputter {
 	    if ("f4".equals(service)) return "film4";
 	    if ("e4".equals(service)) return "e4";
 	    if ("4m".equals(service)) return "4music";
+	    if ("4s".equals(service)) return "4seven";
 	    return service;
 	}
 	
