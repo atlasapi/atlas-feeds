@@ -4,11 +4,11 @@ import static org.junit.Assert.assertEquals;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.atlasapi.application.Application;
-import org.atlasapi.application.ApplicationCredentials;
 import org.atlasapi.application.ApplicationStore;
 import org.atlasapi.application.query.ApplicationConfigurationFetcher;
 import org.atlasapi.application.query.IpCheckingApiKeyConfigurationFetcher;
+import org.atlasapi.application.v3.Application;
+import org.atlasapi.application.v3.ApplicationCredentials;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
