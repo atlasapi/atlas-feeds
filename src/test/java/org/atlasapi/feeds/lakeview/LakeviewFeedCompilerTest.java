@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.lakeview;
 
 import static org.junit.Assert.*;
-
 import nu.xom.Element;
 import nu.xom.Elements;
 
@@ -22,7 +21,7 @@ import com.google.common.collect.ImmutableSet;
 
 public class LakeviewFeedCompilerTest {
 
-    private static final XMLNamespace LAKEVIEW = new XMLNamespace("", "http://schemas.microsoft.com/Lakeview/2011/06/13/ingestion");
+    private static final XMLNamespace LAKEVIEW = new XMLNamespace("", "http://schemas.microsoft.com/Lakeview/2013/07/01/ingestion");
 
 	@Test
 	public void testBrandAtomUri() {
@@ -36,14 +35,6 @@ public class LakeviewFeedCompilerTest {
 		LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, false, true);
 		assertEquals("https://xbox.channel4.com/pmlsd/educating-essex/4od.atom#series-1", 
 				feedCompiler.seriesAtomUri("http://www.channel4.com/programmes/educating-essex/episode-guide/series-1"));
-	}
-
-	@Test
-	public void testEpisodeAtomUri() {
-		LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, false, true);
-		assertEquals("https://xbox.channel4.com/pmlsd/educating-essex/4od.atom#12345", 
-				feedCompiler.episodeAtomUri("http://www.channel4.com/programmes/educating-essex/episode-guide/series-1/episode-1", "12345"));
-	
 	}
 	
 	@Test
@@ -69,7 +60,9 @@ public class LakeviewFeedCompilerTest {
 	private Element getSeriesElement(String seriesTitle, int seriesNumber, boolean genericTitleEnabled) {
         LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, genericTitleEnabled, true);
         Series series = new Series("seriesUri", "seriesCurie", null);
+        series.addAliasUrl("http://www.channel4.com/programmes/brand/episode-guide/series-1");
         Brand parent = new Brand("brandUri", "brandCurie", null);
+        parent.addAliasUrl("http://www.channel4.com/programmes/brand");
         series.setTitle(seriesTitle);
         series.withSeriesNumber(seriesNumber);
         
@@ -102,8 +95,12 @@ public class LakeviewFeedCompilerTest {
         LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, genericTitleEnabled, true);
 	    Episode episode = new Episode("http://www.channel4.com/programmes/hierarchical-uri/episode-guide/series-1/episode-1", "episodeCurie", null);
 	    Brand container = new Brand("brandUri", "brandCurie", null);
+        container.addAliasUrl("http://www.channel4.com/programmes/brand");
 	    episode.setTitle(episodeTitle);
 	    episode.setEpisodeNumber(episodeNumber);
+	    
+	    Series series = new Series("seriesUri", "seriesCurie", null);
+        series.addAliasUrl("http://www.channel4.com/programmes/brand/episode-guide/series-1");
 	    
 	    Version version = new Version();
 	    Encoding encoding = new Encoding();
@@ -119,8 +116,7 @@ public class LakeviewFeedCompilerTest {
 	    episode.setVersions(ImmutableSet.of(version));
 	    episode.setContainer(container);
 	    
-	    return null;
-	    //return feedCompiler.createEpisodeElem(episode, container, new DateTime(), null);
+	    return feedCompiler.createEpisodeElem(episode, container, series, new DateTime(), null);
     }
     
     @Test
