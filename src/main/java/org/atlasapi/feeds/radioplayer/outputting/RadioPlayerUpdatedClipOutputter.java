@@ -8,8 +8,6 @@ import static com.google.common.collect.Iterables.transform;
 
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import nu.xom.Attribute;
 import nu.xom.Element;
@@ -25,7 +23,6 @@ import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
-import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
@@ -36,16 +33,19 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Ordering;
 import com.metabroadcast.common.base.MorePredicates;
+import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.intl.Country;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
     
     private static final String ORIGINATOR = "Metabroadcast";
-    private static final String ONDEMAND_LOCATION = "http://www.bbc.co.uk/radio/player/";
     private static final DateTime MAX_AVAILABLE_TILL = new DateTime(2037, 01, 01, 0, 0, 0, 0, DateTimeZones.UTC);
     
     private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
@@ -133,8 +133,11 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                 }
             }
         }
-        
-        end = Ordering.natural().min(end, MAX_AVAILABLE_TILL);
+        if (end == null) {
+            end = MAX_AVAILABLE_TILL;
+        } else {
+            end = Ordering.natural().min(end, MAX_AVAILABLE_TILL);
+        }
         
         return new Interval(start, end);
     }
@@ -149,7 +152,7 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                 Element programme = createElement("programme", EPGSCHEDULE);
                 programme.addAttribute(new Attribute("shortId", "0"));
                 
-                programme.addAttribute(new Attribute("id", clip.getCanonicalUri().replace("http://", "crid://")));
+                programme.addAttribute(new Attribute("id", createCridFromUri(clip.getCanonicalUri())));
         
                 String title = clipTitle(itemOrContainerTitle(broadcastItem), clip);
                 programme.appendChild(stringElement("mediumName", EPGDATATYPES, MEDIUM_TITLE.truncatePossibleNull(title)));
@@ -157,16 +160,27 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
         
                 programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(clip.getDescription()))));
                 if (!Strings.isNullOrEmpty(clip.getImage())) {
-                    programme.appendChild(mediaDescription(imageDescriptionElem(clip)));
+                    programme.appendChild(mediaDescription(createImageDescriptionElem(clip)));
                 }
         
                 for (Element genreElement : genreElementCreator.genreElementsFor(broadcastItem.getItem())) {
                     programme.appendChild(genreElement);
                 }
                 
-                for (Encoding encoding : version.getManifestedAs()) {
+              //Because outputCountries always contains ALL, international block output is suppressed.
+                Multimap<Country, Location> locationsByCountry = ArrayListMultimap.create();
+                // bucket locations by country
+                for (Encoding encoding : broadcastItem.getVersion().getManifestedAs()) {
                     for (Location location : encoding.getAvailableAt()) {
-                        programme.appendChild(ondemandElement(clip, location));
+                        for (Country country : representedBy(encoding, location)) {
+                            locationsByCountry.put(country, location);
+                        }
+                    }
+                }
+                
+                for (Country country : locationsByCountry.keySet()) {
+                    if (!country.equals(Countries.ALL)) {
+                        programme.appendChild(ondemandElement(broadcastItem, locationsByCountry.get(country), id));
                     }
                 }
                 elements.add(programme);
@@ -204,46 +218,6 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
         Element descriptionElement = createElement("mediaDescription", EPGDATATYPES);
         descriptionElement.appendChild(childElem);
         return descriptionElement;
-    }
-    
-    private Element imageDescriptionElem(Item item) {
-        Element imageElement = createElement("multimedia", EPGDATATYPES);
-        imageElement.addAttribute(new Attribute("mimeValue", "image/jpeg"));
-        imageElement.addAttribute(new Attribute("url", imageLocationFrom(item)));
-        imageElement.addAttribute(new Attribute("width", "86"));
-        imageElement.addAttribute(new Attribute("height", "48"));
-        return imageElement;
-    }
-
-    private String imageLocationFrom(Item item) {
-        Pattern p = Pattern.compile("(.*)_\\d+_\\d+.jpg");
-        Matcher m = p.matcher(item.getImage());
-        if (m.matches()) {
-            return m.group(1) + "_86_48.jpg";
-        }
-        return item.getImage();
-    }
-    
-    private Element ondemandElement(Clip item, Location location) {
-        Element ondemandElement = createElement("ondemand", EPGDATATYPES);
-
-        ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCurie().substring(item.getCurie().indexOf(":") + 1)));
-
-        Policy policy = location.getPolicy();
-        if (policy != null) {
-            DateTime availableTill = Ordering.natural().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
-            DateTime availableFrom = policy.getAvailabilityStart();
-            if (availableTill != null && availableFrom != null) {
-                Element availabilityElem = createElement("availability", RADIOPLAYER);
-                Element availabilityScopeElem = createElement("scope", RADIOPLAYER);
-                availabilityScopeElem.addAttribute(new Attribute("startTime", DATE_TIME_FORMAT.print(availableFrom)));
-                availabilityScopeElem.addAttribute(new Attribute("stopTime", DATE_TIME_FORMAT.print(availableTill)));
-                availabilityElem.appendChild(availabilityScopeElem);
-                ondemandElement.appendChild(availabilityElem);
-            }
-        }
-
-        return ondemandElement;
     }
     
     private static Predicate<Identified> updatedSince(final DateTime since) {

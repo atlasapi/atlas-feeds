@@ -32,20 +32,22 @@ public class RadioPlayerOdUriResolver {
     private final Ordering<Broadcast> byTransmissionTime = MoreOrderings.<Broadcast, DateTime>transformingOrdering(Broadcast.TO_TRANSMISSION_TIME, Ordering.<DateTime>natural());
     private final ContentLister contentLister;
     private final LastUpdatedContentFinder lastUpdatedContentFinder;
+    private final Publisher publisher;
 
-    public RadioPlayerOdUriResolver(ContentLister contentLister, LastUpdatedContentFinder lastUpdatedContentFinder) {
+    public RadioPlayerOdUriResolver(ContentLister contentLister, LastUpdatedContentFinder lastUpdatedContentFinder, Publisher publisher) {
         this.contentLister = contentLister;
         this.lastUpdatedContentFinder = lastUpdatedContentFinder;
+        this.publisher = publisher;
     }
     
     public SetMultimap<RadioPlayerService, String> getServiceToUrisMapForSnapshot() {
         
-        return getServiceToUrisMapForContent(contentLister.listContent(new ContentListingCriteria.Builder().forPublisher(Publisher.BBC).forContent(ContentCategory.ITEMS).build()), Optional.<DateTime>absent());
+        return getServiceToUrisMapForContent(contentLister.listContent(new ContentListingCriteria.Builder().forPublisher(publisher).forContent(ContentCategory.ITEMS).build()), Optional.<DateTime>absent());
     }
     
     public SetMultimap<RadioPlayerService, String> getServiceToUrisMapSince(DateTime since) {
         
-        return getServiceToUrisMapForContent(lastUpdatedContentFinder.updatedSince(Publisher.BBC, since), Optional.of(since));
+        return getServiceToUrisMapForContent(lastUpdatedContentFinder.updatedSince(publisher, since), Optional.of(since));
     }
 
     private SetMultimap<RadioPlayerService, String> getServiceToUrisMapForContent(Iterator<Content> content, Optional<DateTime> since) {

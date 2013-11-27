@@ -123,7 +123,7 @@ public class XmlTvUploadTask extends ScheduledTask {
     }
 
     private FileUploadResult failedUpload(String filename, Exception e) {
-        return FileUploadResult.failedUpload(uploadService.serviceName(), filename).withCause(e).withMessage(e.getMessage());
+        return FileUploadResult.failedUpload(uploadService.serviceName(), filename).withCause(e).copyWithMessage(e.getMessage());
     }
 
     private class XmlTvUploadResult extends ForwardingListenableFuture<FileUploadResult> {

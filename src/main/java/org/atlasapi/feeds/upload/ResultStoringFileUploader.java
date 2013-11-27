@@ -21,15 +21,16 @@ public class ResultStoringFileUploader implements FileUploader {
 	}
 	
 	@Override
-	public void upload(FileUpload upload) throws Exception {
+	public FileUploaderResult upload(FileUpload upload) throws Exception {
 		try {
-			delegate.upload(upload);
+			FileUploaderResult result = delegate.upload(upload);
+			store.store(identifier, FileUploadResult.successfulUpload(remoteId, upload.getFilename()));
+			return result;
 		}
 		catch (Exception e) {
 			store.store(identifier, FileUploadResult.failedUpload(remoteId, upload.getFilename()));
 			throw e;
 		}
-		store.store(identifier, FileUploadResult.successfulUpload(remoteId, upload.getFilename()));
 	}
 
 }

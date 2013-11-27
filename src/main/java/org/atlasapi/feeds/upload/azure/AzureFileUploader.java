@@ -40,7 +40,7 @@ public class AzureFileUploader implements FileUploader {
 	}
 
 	@Override
-	public void upload(FileUpload upload) throws Exception {
+	public FileUploaderResult upload(FileUpload upload) throws Exception {
 		
         String contentType = upload.getContentType() != null ? upload.getContentType().toString() : CONTENT_TYPE_BINARY;
         

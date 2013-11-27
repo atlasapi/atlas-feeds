@@ -1,0 +1,17 @@
+{
+    "id": "241604449",
+    "timestamp": "05-Sep-2013 16:39:45 BST",
+    "protocol": "Http",
+    "type": "PI",
+    "scope": "RpIds:300 ; startTime:2013-08-28T00:00:00Z; stopTime:2013-08-29T00:00:00Z",
+    "downstreamStatuses": [
+        {
+            "downstream": "solr",
+            "status": "processed"
+        },
+        {
+            "downstream": "mongodb",
+            "status": "processed"
+        }
+    ]
+}

@@ -10,6 +10,7 @@ import com.mongodb.DBObject;
 
 public class FileUploadResultTranslator {
     
+    private static final String TRANSACTION_ID_KEY = "transactionId";
     public static final String FILENAME = "filename";
     public static final String SERVICE_KEY = "service";
     public static final String TIME_KEY = "time";
@@ -26,6 +27,7 @@ public class FileUploadResultTranslator {
         TranslatorUtils.fromDateTime(dbo, TIME_KEY, result.uploadTime());
         TranslatorUtils.from(dbo, "message", result.message());
         TranslatorUtils.from(dbo, "connected", result.successfulConnection());
+        TranslatorUtils.from(dbo, TRANSACTION_ID_KEY, result.transactionId());
 
         if (result.exception() != null) {
             TranslatorUtils.from(dbo, "exception", exceptionTranslator.toDBObject(result.exceptionSummary()));
@@ -34,6 +36,7 @@ public class FileUploadResultTranslator {
         if (result.remoteProcessingResult() != null) {
             TranslatorUtils.from(dbo, "remoteCheck", result.remoteProcessingResult().toString());
         }
+        
  
         return dbo;
     }
@@ -44,7 +47,7 @@ public class FileUploadResultTranslator {
                 TranslatorUtils.toString(dbo, SERVICE_KEY), 
                 TranslatorUtils.toString(dbo, FILENAME), 
                 TranslatorUtils.toDateTime(dbo, TIME_KEY), FileUploadResultType.valueOf(TranslatorUtils.toString(dbo,"type"))
-        ).withMessage(TranslatorUtils.toString(dbo, "message")).withConnectionSuccess(TranslatorUtils.toBoolean(dbo, "connected"));
+        ).copyWithMessage(TranslatorUtils.toString(dbo, "message")).withConnectionSuccess(TranslatorUtils.toBoolean(dbo, "connected"));
 
         if (dbo.containsField("exception")) {
             result = result.withExceptionSummary(exceptionTranslator.fromDBObject((DBObject) dbo.get("exception")));
@@ -52,6 +55,10 @@ public class FileUploadResultTranslator {
         
         if (dbo.containsField("remoteCheck")) {
             result = result.withRemoteProcessingResult(FileUploadResultType.valueOf(TranslatorUtils.toString(dbo,"remoteCheck")));
+        }
+        
+        if (dbo.containsField(TRANSACTION_ID_KEY)) {
+            result.withTransactionId(TranslatorUtils.toString(dbo, TRANSACTION_ID_KEY));
         }
 
         return result;

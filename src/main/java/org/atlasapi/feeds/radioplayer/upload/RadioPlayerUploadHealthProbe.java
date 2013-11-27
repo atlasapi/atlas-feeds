@@ -12,6 +12,7 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.LocalDate;
@@ -28,6 +29,7 @@ import com.metabroadcast.common.time.DayRangeGenerator;
 
 public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
+    private static final String TRANSACTION_URL_PREFIX = "https://dev02.radioplayer.co.uk/ingestor/metadata/v1/";
     protected static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
 
     protected static final Predicate<DateTime> PI_STALE = new Predicate<DateTime>() {
@@ -38,12 +40,14 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     };
     
     private final String remoteServiceId;
+    private final Publisher publisher;
     protected final RadioPlayerUploadResultStore store;
     private final RadioPlayerService service;
     protected final DayRangeGenerator rangeGenerator;
 
-    public RadioPlayerUploadHealthProbe(String remoteServiceId, RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
+    public RadioPlayerUploadHealthProbe(String remoteServiceId, Publisher publisher, RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
         this.remoteServiceId = remoteServiceId;
+        this.publisher = publisher;
         this.store = store;
         this.service = service;
         this.rangeGenerator = dayRangeGenerator;
@@ -80,7 +84,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     }
 
     private String linkedFilename(FileType type, LocalDate day) {
-        return String.format("<a style=\"text-decoration:none\" href=\"/feeds/ukradioplayer/%1$s_%2$s_%3$s.xml\">%1$s_%2$s_%3$s.xml</a>", day.toString("yyyyMMdd"), service.getRadioplayerId(), type.name());
+        return String.format("<a style=\"text-decoration:none\" href=\"/feeds/%1$s/ukradioplayer/%2$s_%3$s_%4$s.xml\">%2$s_%3$s_%4$s.xml</a>", publisher.name().toLowerCase(), day.toString("yyyyMMdd"), service.getRadioplayerId(), type.name());
     }
 
     private ProbeResultType entryResultType(FileUploadResult mostRecent, LocalDate day, FileType type) {
@@ -126,7 +130,9 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         builder.append(": ");
         builder.append(result.uploadTime().toString(DATE_TIME));
         builder.append("</td><td>");
-        if (result.message() != null) {
+        if (result.transactionId() != null) {
+            builder.append("Transaction id: " + parseTransactionIdFromTransactionUrl(result.transactionId()));
+        } else if (result.message() != null) {
             builder.append(result.message());
         } else {
             if (FileUploadResultType.SUCCESS == result.type()) {
@@ -139,6 +145,16 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         FileUploadResultType processSuccess = result.remoteProcessingResult() == null ? FileUploadResultType.UNKNOWN : result.remoteProcessingResult();
         builder.append("Processing Result: " + processSuccess.toNiceString());
         builder.append("</td></tr>");
+    }
+    
+    /**
+     * This takes the status url (stored in the transactionId field on FileUploadResult), 
+     * returned by the HTTPS RadioPlayer upload system, and parses it for the transaction Id
+     * @param transactionUrl the url to be parsed for a transaction id
+     * @return the transaction id
+     */
+    private String parseTransactionIdFromTransactionUrl(String transactionUrl) {
+        return transactionUrl.replaceAll(TRANSACTION_URL_PREFIX, "");
     }
 
     private String uploadButton(FileType type, LocalDate day) {

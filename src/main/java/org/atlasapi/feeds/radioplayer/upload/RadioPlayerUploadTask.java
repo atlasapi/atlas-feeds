@@ -12,12 +12,14 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerFeedSpec;
 import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploadService;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.metabroadcast.common.media.MimeType;
 
 public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPlayerUploadResult>> {
     
@@ -25,12 +27,14 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
     protected final AdapterLog log;
     protected final RadioPlayerFeedSpec spec;
     private final FileType type;
+    private final Publisher publisher;
 
-    public RadioPlayerUploadTask(FileType type, Iterable<FileUploadService> remoteTargets, RadioPlayerFeedSpec spec, AdapterLog log) {
+    public RadioPlayerUploadTask(FileType type, Iterable<FileUploadService> remoteTargets, RadioPlayerFeedSpec spec, AdapterLog log, Publisher publisher) {
         this.type = type;
         this.remoteTargets = remoteTargets;
         this.spec = spec;
         this.log = log;
+        this.publisher = publisher;
     }
 
     @Override
@@ -40,7 +44,9 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
         
         try {
             byte[] filebytes = getFileContent();
-            FileUpload upload = new FileUpload(spec.filename(), filebytes);
+            FileUpload upload = new FileUpload.Builder(spec.filename(), filebytes)
+                    .withContentType(MimeType.TEXT_XML)
+                    .build();
             
             log.record(AdapterLogEntry.infoEntry().withDescription("Compiled file for uploading for %s", spec).withSource(getClass()));
             
@@ -61,7 +67,7 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
 
     private byte[] getFileContent() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        RadioPlayerFeedCompiler.valueOf(type).compileFeedFor(spec, out);
+        RadioPlayerFeedCompiler.valueOf(publisher, type).compileFeedFor(spec, out);
         return out.toByteArray();
     }
     
@@ -94,7 +100,7 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
     }
     
     private RadioPlayerUploadResult failure(FileUploadService input, Exception e) {
-        return new RadioPlayerUploadResult(type, spec.getService(), spec.getDay(), failedUpload(input.serviceIdentifier(), spec.filename()).withCause(e).withMessage(e.getMessage()));
+        return new RadioPlayerUploadResult(type, spec.getService(), spec.getDay(), failedUpload(input.serviceIdentifier(), spec.filename()).withCause(e).copyWithMessage(e.getMessage()));
     }
     
     protected abstract void logNotItemsException(NoItemsException e);
