@@ -6,6 +6,7 @@ import java.security.InvalidKeyException;
 
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploader;
+import org.atlasapi.feeds.upload.FileUploaderResult;
 
 import com.microsoft.windowsazure.services.blob.client.BlobContainerPermissions;
 import com.microsoft.windowsazure.services.blob.client.BlobContainerPublicAccessType;
@@ -51,18 +52,20 @@ public class AzureFileUploader implements FileUploader {
         blockBlobRef.getProperties().setContentType(contentType);
         blockBlobRef.upload(inputStream, upload.getFileData().length);
         blockBlobRef.uploadProperties();
+
+        return FileUploaderResult.success();
 	}
 	
-	   private CloudBlobContainer createOrGetBlobContainer() throws StorageException, URISyntaxException, InvalidKeyException {
-	        CloudBlobClient client = getClient();
-	        CloudBlobContainer containerRef = client.getContainerReference(container);
-	        
-	        if(containerRef.createIfNotExist() == true) {
-	            BlobContainerPermissions containerPermissions;
-	            containerPermissions = new BlobContainerPermissions();
-	            containerPermissions.setPublicAccess(BlobContainerPublicAccessType.CONTAINER);
-	            containerRef.uploadPermissions(containerPermissions);
-	        }
-	        return containerRef;
+	private CloudBlobContainer createOrGetBlobContainer() throws StorageException, URISyntaxException, InvalidKeyException {
+	    CloudBlobClient client = getClient();
+	    CloudBlobContainer containerRef = client.getContainerReference(container);
+
+	    if(containerRef.createIfNotExist() == true) {
+	        BlobContainerPermissions containerPermissions;
+	        containerPermissions = new BlobContainerPermissions();
+	        containerPermissions.setPublicAccess(BlobContainerPublicAccessType.CONTAINER);
+	        containerRef.uploadPermissions(containerPermissions);
 	    }
+	    return containerRef;
+	}
 }
