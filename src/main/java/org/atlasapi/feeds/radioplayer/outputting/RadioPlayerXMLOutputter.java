@@ -167,7 +167,7 @@ public abstract class RadioPlayerXMLOutputter {
     }
 
     private void addAvailabilityDetailsToOndemand(Element ondemandElement, Policy policy) {
-        DateTime availableTill = Ordering.natural().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
+        DateTime availableTill = Ordering.natural().nullsLast().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
         DateTime availableFrom = policy.getAvailabilityStart();
         if (availableTill != null && availableFrom != null) {
             Element availabilityElem = createElement("availability", RADIOPLAYER);
