@@ -1,5 +1,8 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
+import java.util.Collection;
+import java.util.Map;
+
 import nu.xom.Attribute;
 import nu.xom.Element;
 
@@ -15,10 +18,15 @@ import org.joda.time.Duration;
 import org.joda.time.LocalDate;
 import org.joda.time.format.ISOPeriodFormat;
 
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
 import com.metabroadcast.common.time.DateTimeZones;
@@ -28,6 +36,24 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
     private static final String ORIGINATOR = "Metabroadcast";
 
     private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
+
+    private static final Function<Location, Optional<DateTime>> locationToAvailabilityStartTime
+        = new Function<Location, Optional<DateTime>>() {
+            @Override
+            public Optional<DateTime> apply(Location input) {
+                if (input.getPolicy() == null) {
+                    return Optional.absent();
+                }
+                return Optional.fromNullable(input.getPolicy().getAvailabilityStart());
+            }
+        };
+
+    private static final Predicate<Optional<?>> optionalPresent = new Predicate<Optional<?>>() {
+        @Override
+        public boolean apply(Optional<?> input) {
+            return input.isPresent();
+        }
+    };
 
     @Override
     public Element createFeed(RadioPlayerFeedSpec spec, Iterable<RadioPlayerBroadcastItem> items) {
@@ -94,13 +120,22 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         
         for (Country country : locationsByCountry.keySet()) {
             if (!country.equals(Countries.ALL)) {
-                programme.appendChild(ondemandElement(broadcastItem, locationsByCountry.get(country), id));
+                Collection<Location> countryLocations = locationsByCountry.get(country);
+                for (Collection<Location> locationPartition : partitionByAvailabilityStart(countryLocations)) {
+                    programme.appendChild(ondemandElement(broadcastItem, locationPartition, id));
+                }
             }
         }
         
         return programme;
     }
     
+    private Iterable<? extends Collection<Location>> partitionByAvailabilityStart(Collection<Location> locations) {
+        Map<Optional<DateTime>,Collection<Location>> availabilityStartIndex
+            = Multimaps.index(locations, locationToAvailabilityStartTime).asMap();
+        return Maps.filterKeys(availabilityStartIndex, optionalPresent).values();
+    }
+
     private String itemTitle(RadioPlayerBroadcastItem broadcastItem) {
         String title = Strings.nullToEmpty(broadcastItem.getItem().getTitle());
         if (broadcastItem.hasContainer()) {
