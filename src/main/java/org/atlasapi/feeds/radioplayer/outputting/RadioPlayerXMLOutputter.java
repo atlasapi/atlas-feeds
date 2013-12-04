@@ -28,6 +28,7 @@ import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.entity.Policy.Network;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
@@ -101,7 +102,7 @@ public abstract class RadioPlayerXMLOutputter {
         return null;
     }
     
-    protected Element ondemandElement(RadioPlayerBroadcastItem broadcastItem,  Collection<Location> locations, RadioPlayerService service) {
+    protected Element ondemandElement(RadioPlayerBroadcastItem broadcastItem,  Interval window, Collection<Location> locations, RadioPlayerService service) {
         
         Item item = broadcastItem.getItem();
         
@@ -134,10 +135,10 @@ public abstract class RadioPlayerXMLOutputter {
             });
             if (!pcPolicy.isPresent()) {
                 // add availability details for first policy in list
-                addAvailabilityDetailsToOndemand(ondemandElement, policies.get(0));
+                addAvailabilityDetailsToOndemand(ondemandElement, window);
                 addAudioStreamElement(ondemandElement, version, service);
             } else {
-                addAvailabilityDetailsToOndemand(ondemandElement, pcPolicy.get());
+                addAvailabilityDetailsToOndemand(ondemandElement, window);
                 Policy ios3G = null;
                 Policy iosWifi = null;
                 for (Policy policy : policies) {
@@ -166,9 +167,9 @@ public abstract class RadioPlayerXMLOutputter {
         return ondemandElement;
     }
 
-    private void addAvailabilityDetailsToOndemand(Element ondemandElement, Policy policy) {
-        DateTime availableTill = Ordering.natural().nullsLast().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
-        DateTime availableFrom = policy.getAvailabilityStart();
+    private void addAvailabilityDetailsToOndemand(Element ondemandElement, Interval window) {
+        DateTime availableTill = window.getEnd();
+        DateTime availableFrom = window.getStart();
         if (availableTill != null && availableFrom != null) {
             Element availabilityElem = createElement("availability", RADIOPLAYER);
             Element availabilityScopeElem = createElement("scope", RADIOPLAYER);
@@ -177,6 +178,10 @@ public abstract class RadioPlayerXMLOutputter {
             availabilityElem.appendChild(availabilityScopeElem);
             ondemandElement.appendChild(availabilityElem);
         }
+    }
+
+    protected DateTime availabilityEndOrMax(Policy policy) {
+        return Ordering.natural().nullsLast().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
     }
     
     private void addAudioStreamElement(Element ondemandElement, Version version, RadioPlayerService service) {
