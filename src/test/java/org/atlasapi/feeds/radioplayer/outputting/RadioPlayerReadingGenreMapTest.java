@@ -48,11 +48,6 @@ public class RadioPlayerReadingGenreMapTest {
 	}
 
 	@Test
-	public void testCSVFullMapCreates() {
-		new RadioPlayerCSVReadingGenreMap(RadioPlayerCSVReadingGenreMap.GENRES_FILE);
-	}
-	
-	@Test
     public void testFullTSVMapCreates() {
 	    new RadioPlayerTSVReadingGenreMap(RadioPlayerTSVReadingGenreMap.GENRES_FILE);
     }
