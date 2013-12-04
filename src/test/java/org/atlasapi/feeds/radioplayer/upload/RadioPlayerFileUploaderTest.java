@@ -229,8 +229,8 @@ public class RadioPlayerFileUploaderTest {
 		Location location = new Location();
 		location.setUri("http://www.bbc.co.uk/iplayer/episode/b00f4d9c");
 		Policy policy = new Policy();
-		policy.setAvailabilityEnd(new DateTime(2010, 8, 28, 23, 40, 19, 0, TIMEZONE));
-		policy.setAvailabilityStart(new DateTime(2010, 9, 4, 23, 02, 00, 0, TIMEZONE));
+		policy.setAvailabilityStart(new DateTime(2010, 8, 28, 23, 40, 19, 0, TIMEZONE));
+		policy.setAvailabilityEnd(new DateTime(2010, 9, 4, 23, 02, 00, 0, TIMEZONE));
 		policy.addAvailableCountry(Countries.GB);
 		location.setPolicy(policy);
 		location.setTransportType(TransportType.LINK);
