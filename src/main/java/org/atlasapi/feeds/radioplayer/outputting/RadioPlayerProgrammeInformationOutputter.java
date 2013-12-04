@@ -1,7 +1,10 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
-import java.util.Collection;
-import java.util.Map;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map.Entry;
 
 import nu.xom.Attribute;
 import nu.xom.Element;
@@ -13,8 +16,10 @@ import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Policy;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.joda.time.Interval;
 import org.joda.time.LocalDate;
 import org.joda.time.format.ISOPeriodFormat;
 
@@ -24,40 +29,51 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
+import com.google.common.collect.Ordering;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
+import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.SystemClock;
 
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {
 
     private static final String ORIGINATOR = "Metabroadcast";
 
     private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
-
-    private static final Function<Location, Optional<DateTime>> locationToAvailabilityStartTime
-        = new Function<Location, Optional<DateTime>>() {
+    
+    private static final Ordering<Interval> orderByStartThenEnd
+        = Ordering.from(new Comparator<Interval>() {
             @Override
-            public Optional<DateTime> apply(Location input) {
-                if (input.getPolicy() == null) {
-                    return Optional.absent();
-                }
-                return Optional.fromNullable(input.getPolicy().getAvailabilityStart());
+            public int compare(Interval left, Interval right) {
+                return ComparisonChain.start()
+                        .compare(left.getStart(), right.getStart())
+                        .compare(left.getEnd(), right.getEnd())
+                        .result();
             }
-        };
+        });
 
-    private static final Predicate<Optional<?>> optionalPresent = new Predicate<Optional<?>>() {
-        @Override
-        public boolean apply(Optional<?> input) {
-            return input.isPresent();
-        }
-    };
+    private final Clock clock;
+    
+    public RadioPlayerProgrammeInformationOutputter() {
+        this(new SystemClock());
+    }
+    
+    public RadioPlayerProgrammeInformationOutputter(Clock clock) {
+        super();
+        this.clock = checkNotNull(clock);
+    }
 
     @Override
     public Element createFeed(RadioPlayerFeedSpec spec, Iterable<RadioPlayerBroadcastItem> items) {
         Preconditions.checkArgument(spec instanceof RadioPlayerPiFeedSpec);
+        
+        DateTime now = clock.now();
         
         RadioPlayerPiFeedSpec piSpec = (RadioPlayerPiFeedSpec) spec;
         
@@ -72,19 +88,19 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         Element schedule = createElement("schedule", EPGSCHEDULE);
         schedule.addAttribute(new Attribute("originator", ORIGINATOR));
         schedule.addAttribute(new Attribute("version", "1"));
-        schedule.addAttribute(new Attribute("creationTime", DATE_TIME_FORMAT.print(new DateTime(DateTimeZones.UTC))));
+        schedule.addAttribute(new Attribute("creationTime", DATE_TIME_FORMAT.print(now)));
 
         schedule.appendChild(scopeElement(piSpec.getDay(), piSpec.getService()));
 
         for (RadioPlayerBroadcastItem item : items) {
-            schedule.appendChild(createProgrammeElement(item, piSpec.getService()));
+            schedule.appendChild(createProgrammeElement(item, piSpec.getService(), now));
         }
 
         epgElem.appendChild(schedule);
         return epgElem;
     }
 
-    private Element createProgrammeElement(RadioPlayerBroadcastItem broadcastItem, RadioPlayerService id) {
+    private Element createProgrammeElement(RadioPlayerBroadcastItem broadcastItem, RadioPlayerService id, DateTime now) {
         Element programme = createElement("programme", EPGSCHEDULE);
         programme.addAttribute(new Attribute("shortId", "0"));
         programme.addAttribute(new Attribute("id", createCridFromUri(broadcastItem.getItem().getCanonicalUri())));
@@ -108,7 +124,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         }
 
         //Because outputCountries always contains ALL, international block output is suppressed.
-        Multimap<Country, Location> locationsByCountry = ArrayListMultimap.create();
+        ListMultimap<Country, Location> locationsByCountry = ArrayListMultimap.create();
         // bucket locations by country
         for (Encoding encoding : broadcastItem.getVersion().getManifestedAs()) {
             for (Location location : encoding.getAvailableAt()) {
@@ -120,9 +136,15 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         
         for (Country country : locationsByCountry.keySet()) {
             if (!country.equals(Countries.ALL)) {
-                Collection<Location> countryLocations = locationsByCountry.get(country);
-                for (Collection<Location> locationPartition : partitionByAvailabilityStart(countryLocations)) {
-                    programme.appendChild(ondemandElement(broadcastItem, locationPartition, id));
+                List<Location> countryLocations = locationsByCountry.get(country);
+                ListMultimap<Interval, Location> availabilityIndex = availabilityIndex(countryLocations);
+                availabilityIndex = mergeOverlappingAvailabilities(availabilityIndex);
+                if (!availabilityIndex.isEmpty()) {
+                    Entry<Interval, List<Location>> windowAndlocations = locationsClosestAfterNow(availabilityIndex, now);
+                    Interval window = windowAndlocations.getKey();
+                    List<Location> location = windowAndlocations.getValue();
+                    Element ode = ondemandElement(broadcastItem, window, location, id);
+                    programme.appendChild(ode);
                 }
             }
         }
@@ -130,10 +152,61 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         return programme;
     }
     
-    private Iterable<? extends Collection<Location>> partitionByAvailabilityStart(Collection<Location> locations) {
-        Map<Optional<DateTime>,Collection<Location>> availabilityStartIndex
-            = Multimaps.index(locations, locationToAvailabilityStartTime).asMap();
-        return Maps.filterKeys(availabilityStartIndex, optionalPresent).values();
+    private Entry<Interval,List<Location>> locationsClosestAfterNow(ListMultimap<Interval, Location> availabilityIndex, DateTime now) {
+        Preconditions.checkArgument(!availabilityIndex.isEmpty());
+        ImmutableList<Interval> windows = orderByStartThenEnd.immutableSortedCopy(availabilityIndex.keySet());
+        Interval window = null;
+        for (Interval current : windows) {
+            window = current;
+            if (window.contains(now) || window.isAfter(now)) {
+                break;
+            }
+        }
+        return Maps.immutableEntry(window, availabilityIndex.get(window));
+    }
+
+    private ListMultimap<Interval, Location> mergeOverlappingAvailabilities(
+            ListMultimap<Interval, Location> unmerged) {
+        ImmutableList<Interval> windows = orderByStartThenEnd.immutableSortedCopy(unmerged.keySet());
+        ImmutableListMultimap.Builder<Interval, Location> merged = ImmutableListMultimap.builder();
+        int i = 0;
+        while(i < windows.size()) {
+            Interval current = windows.get(0);
+            DateTime start = current.getStart();
+            ImmutableList.Builder<Location> overlappingLocations = ImmutableList.builder();
+            overlappingLocations.addAll(unmerged.get(current));
+            int j = i+1;
+            while(j < windows.size()) {
+                Interval next =  windows.get(j);
+                if (next.overlaps(current)) {
+                    overlappingLocations.addAll(unmerged.get(next));
+                    current = next;
+                    j++;
+                } else {
+                    break;
+                }
+            }
+            i = j;
+            DateTime end = current.getEnd();
+            merged.putAll(new Interval(start, end), overlappingLocations.build());
+        }
+        return merged.build();
+    }
+
+    private ListMultimap<Interval, Location> availabilityIndex(List<Location> locations) {
+        ImmutableListMultimap.Builder<Interval, Location> index
+            = ImmutableListMultimap.builder();
+        for (Location location : locations) {
+            Policy policy = location.getPolicy();
+            if (policy != null) {
+                DateTime availabilityStart = policy.getAvailabilityStart();
+                DateTime availabilityEnd = availabilityEndOrMax(policy);
+                if (availabilityStart != null && availabilityEnd  != null) {
+                    index.put(new Interval(availabilityStart, availabilityEnd), location);
+                }
+            }
+        }
+        return index.build();
     }
 
     private String itemTitle(RadioPlayerBroadcastItem broadcastItem) {
