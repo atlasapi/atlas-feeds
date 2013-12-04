@@ -102,7 +102,7 @@ public abstract class RadioPlayerXMLOutputter {
         return null;
     }
     
-    protected Element ondemandElement(RadioPlayerBroadcastItem broadcastItem,  Interval window, Collection<Location> locations, RadioPlayerService service) {
+    protected Element ondemandElement(RadioPlayerBroadcastItem broadcastItem, Interval window, Collection<Location> locations, RadioPlayerService service) {
         
         Item item = broadcastItem.getItem();
         
@@ -135,10 +135,10 @@ public abstract class RadioPlayerXMLOutputter {
             });
             if (!pcPolicy.isPresent()) {
                 // add availability details for first policy in list
-                addAvailabilityDetailsToOndemand(ondemandElement, window);
+                addAvailabilityDetailsToOndemand(ondemandElement, window == null ? window(policies.get(0)) : window);
                 addAudioStreamElement(ondemandElement, version, service);
             } else {
-                addAvailabilityDetailsToOndemand(ondemandElement, window);
+                addAvailabilityDetailsToOndemand(ondemandElement, window == null ? window(pcPolicy.get()) : window);
                 Policy ios3G = null;
                 Policy iosWifi = null;
                 for (Policy policy : policies) {
@@ -165,6 +165,10 @@ public abstract class RadioPlayerXMLOutputter {
             }
         }
         return ondemandElement;
+    }
+
+    private Interval window(Policy policy) {
+        return new Interval(policy.getAvailabilityStart(), availabilityEndOrMax(policy));
     }
 
     private void addAvailabilityDetailsToOndemand(Element ondemandElement, Interval window) {
