@@ -6,6 +6,7 @@ import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -180,7 +181,8 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                 
                 for (Country country : locationsByCountry.keySet()) {
                     if (!country.equals(Countries.ALL)) {
-                        programme.appendChild(ondemandElement(broadcastItem, locationsByCountry.get(country), id));
+                        Collection<Location> countryLocations = locationsByCountry.get(country);
+                        programme.appendChild(ondemandElement(broadcastItem, null, countryLocations, id));
                     }
                 }
                 elements.add(programme);
