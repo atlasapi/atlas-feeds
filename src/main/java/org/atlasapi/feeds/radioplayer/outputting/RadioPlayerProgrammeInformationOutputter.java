@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -29,7 +31,9 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
+import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.SystemClock;
 
 public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutputter {
 
@@ -55,9 +59,22 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         }
     };
 
+    private final Clock clock;
+    
+    public RadioPlayerProgrammeInformationOutputter() {
+        this(new SystemClock());
+    }
+    
+    public RadioPlayerProgrammeInformationOutputter(Clock clock) {
+        super();
+        this.clock = checkNotNull(clock);
+    }
+
     @Override
     public Element createFeed(RadioPlayerFeedSpec spec, Iterable<RadioPlayerBroadcastItem> items) {
         Preconditions.checkArgument(spec instanceof RadioPlayerPiFeedSpec);
+        
+        DateTime now = clock.now();
         
         RadioPlayerPiFeedSpec piSpec = (RadioPlayerPiFeedSpec) spec;
         
@@ -72,7 +89,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         Element schedule = createElement("schedule", EPGSCHEDULE);
         schedule.addAttribute(new Attribute("originator", ORIGINATOR));
         schedule.addAttribute(new Attribute("version", "1"));
-        schedule.addAttribute(new Attribute("creationTime", DATE_TIME_FORMAT.print(new DateTime(DateTimeZones.UTC))));
+        schedule.addAttribute(new Attribute("creationTime", DATE_TIME_FORMAT.print(now)));
 
         schedule.appendChild(scopeElement(piSpec.getDay(), piSpec.getService()));
 
