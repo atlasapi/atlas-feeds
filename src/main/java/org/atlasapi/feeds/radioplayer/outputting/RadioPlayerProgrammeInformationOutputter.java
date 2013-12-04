@@ -46,24 +46,6 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
     private static final String ORIGINATOR = "Metabroadcast";
 
     private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
-
-    private static final Function<Location, Optional<DateTime>> locationToAvailabilityStartTime
-        = new Function<Location, Optional<DateTime>>() {
-            @Override
-            public Optional<DateTime> apply(Location input) {
-                if (input.getPolicy() == null) {
-                    return Optional.absent();
-                }
-                return Optional.fromNullable(input.getPolicy().getAvailabilityStart());
-            }
-        };
-
-    private static final Predicate<Optional<?>> optionalPresent = new Predicate<Optional<?>>() {
-        @Override
-        public boolean apply(Optional<?> input) {
-            return input.isPresent();
-        }
-    };
     
     private static final Ordering<Interval> orderByStartThenEnd
         = Ordering.from(new Comparator<Interval>() {
@@ -155,20 +137,23 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         for (Country country : locationsByCountry.keySet()) {
             if (!country.equals(Countries.ALL)) {
                 List<Location> countryLocations = locationsByCountry.get(country);
-                Entry<Interval, List<Location>> windowAndlocations = locationsClosestAfterNow(countryLocations, now);
-                Interval window = windowAndlocations.getKey();
-                List<Location> location = windowAndlocations.getValue();
-                Element ode = ondemandElement(broadcastItem, window, location, id);
-                programme.appendChild(ode);
+                ListMultimap<Interval, Location> availabilityIndex = availabilityIndex(countryLocations);
+                availabilityIndex = mergeOverlappingAvailabilities(availabilityIndex);
+                if (!availabilityIndex.isEmpty()) {
+                    Entry<Interval, List<Location>> windowAndlocations = locationsClosestAfterNow(availabilityIndex, now);
+                    Interval window = windowAndlocations.getKey();
+                    List<Location> location = windowAndlocations.getValue();
+                    Element ode = ondemandElement(broadcastItem, window, location, id);
+                    programme.appendChild(ode);
+                }
             }
         }
         
         return programme;
     }
     
-    private Entry<Interval,List<Location>> locationsClosestAfterNow(List<Location> locations, DateTime now) {
-        ListMultimap<Interval, Location> availabilityIndex = availabilityIndex(locations);
-        availabilityIndex = mergeOverlappingAvailabilities(availabilityIndex);
+    private Entry<Interval,List<Location>> locationsClosestAfterNow(ListMultimap<Interval, Location> availabilityIndex, DateTime now) {
+        Preconditions.checkArgument(!availabilityIndex.isEmpty());
         ImmutableList<Interval> windows = orderByStartThenEnd.immutableSortedCopy(availabilityIndex.keySet());
         Interval window = null;
         for (Interval current : windows) {
