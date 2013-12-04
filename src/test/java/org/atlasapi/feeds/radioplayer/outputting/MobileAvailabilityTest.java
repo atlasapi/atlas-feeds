@@ -39,7 +39,7 @@ public class MobileAvailabilityTest {
         }
         broadcastItem.getVersion().addManifestedAs(encoding);
         
-        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
+        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter(new RadioPlayerGenreElementCreator());
         Interval window = new Interval(0,0);
         Element ondemandElement = outputter.ondemandElement(broadcastItem, window, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it should be)
@@ -57,7 +57,7 @@ public class MobileAvailabilityTest {
         }
         broadcastItem.getVersion().addManifestedAs(encoding);
         
-        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
+        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter(new RadioPlayerGenreElementCreator());
         Interval window = new Interval(0,0);
         Element ondemandElement = outputter.ondemandElement(broadcastItem, window, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it should be)
@@ -75,7 +75,7 @@ public class MobileAvailabilityTest {
         }
         broadcastItem.getVersion().addManifestedAs(encoding);
         
-        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
+        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter(new RadioPlayerGenreElementCreator());
         Interval window = new Interval(0,0);
         Element ondemandElement = outputter.ondemandElement(broadcastItem, window, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it shouldn't be)
@@ -93,7 +93,7 @@ public class MobileAvailabilityTest {
         }
         broadcastItem.getVersion().addManifestedAs(encoding);
         
-        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
+        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter(new RadioPlayerGenreElementCreator());
         Interval window = new Interval(0,0);
         Element ondemandElement = outputter.ondemandElement(broadcastItem, window, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it shouldn't be)
@@ -111,7 +111,7 @@ public class MobileAvailabilityTest {
         }
         broadcastItem.getVersion().addManifestedAs(encoding);
         
-        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
+        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter(new RadioPlayerGenreElementCreator());
         Interval window = new Interval(0,0);
         Element ondemandElement = outputter.ondemandElement(broadcastItem, window, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it should be)

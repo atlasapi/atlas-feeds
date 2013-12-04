@@ -34,7 +34,7 @@ import com.metabroadcast.common.intl.Countries;
 public class RadioPlayerProgrammeInformationOutputterTest {
 
 	private static final DateTimeZone TIMEZONE = DateTimeZone.forOffsetHours(8);
-	private static RadioPlayerXMLOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
+	private static RadioPlayerXMLOutputter outputter = new RadioPlayerProgrammeInformationOutputter(new RadioPlayerGenreElementCreator());
 	
 	public static Episode buildItem(){
 		Episode testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c",

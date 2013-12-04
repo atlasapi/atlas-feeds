@@ -17,6 +17,7 @@ import java.util.Map;
 import org.atlasapi.application.v3.ApplicationConfiguration;
 import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerBroadcastItem;
+import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerGenreElementCreator;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerProgrammeInformationOutputter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerUpdatedClipOutputter;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter;
@@ -63,10 +64,11 @@ public abstract class RadioPlayerFeedCompiler {
     private static Map<Publisher, Map<FileType, RadioPlayerFeedCompiler>> compilerMap;
     
     // not ideal - this leads to identical OD compilers for each publisher 
-    public static void init(ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, ContentResolver contentResolver, ChannelResolver channelResolver, Iterable<Publisher> publishers) {
+    public static void init(ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, ContentResolver contentResolver, ChannelResolver channelResolver, Iterable<Publisher> publishers, Map<Publisher,RadioPlayerGenreElementCreator> genreElementCreators) {
         ImmutableMap.Builder<Publisher, Map<FileType, RadioPlayerFeedCompiler>> map = ImmutableMap.builder();
         for (Publisher publisher : publishers) {
-            map.put(publisher, createCompilerMapForPublisher(publisher, scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver));
+            RadioPlayerGenreElementCreator genreElementCreator = checkNotNull(genreElementCreators.get(publisher));
+            map.put(publisher, createCompilerMapForPublisher(publisher, scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, genreElementCreator ));
         }
         compilerMap = map.build();
     }
@@ -75,10 +77,10 @@ public abstract class RadioPlayerFeedCompiler {
     
     private static Map<FileType, RadioPlayerFeedCompiler> createCompilerMapForPublisher(Publisher publisher, 
             ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, 
-            ContentResolver contentResolver, ChannelResolver channelResolver) {
+            ContentResolver contentResolver, ChannelResolver channelResolver, RadioPlayerGenreElementCreator genreElementCreator) {
         return ImmutableMap.<FileType, RadioPlayerFeedCompiler>of(
-                PI, new RadioPlayerProgrammeInformationFeedCompiler(scheduleResolver, knownTypeContentResolver, channelResolver, publisher),
-                OD, new RadioPlayerOnDemandFeedCompiler(knownTypeContentResolver, contentResolver)
+                PI, new RadioPlayerProgrammeInformationFeedCompiler(scheduleResolver, knownTypeContentResolver, channelResolver, publisher, genreElementCreator),
+                OD, new RadioPlayerOnDemandFeedCompiler(knownTypeContentResolver, contentResolver, genreElementCreator)
             );
     }
 
@@ -94,8 +96,8 @@ public abstract class RadioPlayerFeedCompiler {
         private final ChannelResolver channelResolver;
         private final Publisher publisher;
 
-        public RadioPlayerProgrammeInformationFeedCompiler(ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, ChannelResolver channelResolver, Publisher publisher) {
-            super(new RadioPlayerProgrammeInformationOutputter(), knownTypeContentResolver);
+        public RadioPlayerProgrammeInformationFeedCompiler(ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, ChannelResolver channelResolver, Publisher publisher, RadioPlayerGenreElementCreator genreElementCreator) {
+            super(new RadioPlayerProgrammeInformationOutputter(genreElementCreator), knownTypeContentResolver);
             this.scheduleResolver = scheduleResolver;
             this.channelResolver = channelResolver;
             this.publisher = publisher;
@@ -115,8 +117,8 @@ public abstract class RadioPlayerFeedCompiler {
         
         private final ContentResolver contentResolver;
 
-        public RadioPlayerOnDemandFeedCompiler(KnownTypeContentResolver knownTypeContentResolver, ContentResolver contentResolver) {
-            super(new RadioPlayerUpdatedClipOutputter(), knownTypeContentResolver);
+        public RadioPlayerOnDemandFeedCompiler(KnownTypeContentResolver knownTypeContentResolver, ContentResolver contentResolver, RadioPlayerGenreElementCreator genreElementCreator) {
+            super(new RadioPlayerUpdatedClipOutputter(genreElementCreator), knownTypeContentResolver);
             this.contentResolver = contentResolver;
         }
         

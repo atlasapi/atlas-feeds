@@ -9,6 +9,7 @@ import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
+import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerGenreElementCreator;
 import org.atlasapi.feeds.radioplayer.upload.CachingRadioPlayerUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpRemoteProcessingChecker;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpUploadServicesSupplier;
@@ -252,7 +253,11 @@ public class RadioPlayerModule {
     
 	@PostConstruct 
 	public void scheduleTasks() {
-	    RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, ImmutableList.of(BBC, NITRO));
+	    Map<Publisher, RadioPlayerGenreElementCreator> genreCreators = ImmutableMap.of(
+            Publisher.BBC, new RadioPlayerGenreElementCreator(),
+            Publisher.BBC_NITRO, new RadioPlayerGenreElementCreator()
+        );
+        RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, ImmutableList.of(BBC, NITRO), genreCreators );
 		if (!ftpRemoteServices().isEmpty() || !httpsRemoteServices().isEmpty()) {
 		    createHealthProbes(ftpRemoteServices(), ftpUploadServices());
 		    createHealthProbes(httpsRemoteServices(), httpsUploadServices());

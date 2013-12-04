@@ -45,7 +45,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 
     private static final String ORIGINATOR = "Metabroadcast";
 
-    private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
+    private final RadioPlayerGenreElementCreator genreElementCreator;
     
     private static final Ordering<Interval> orderByStartThenEnd
         = Ordering.from(new Comparator<Interval>() {
@@ -60,12 +60,13 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
 
     private final Clock clock;
     
-    public RadioPlayerProgrammeInformationOutputter() {
-        this(new SystemClock());
+    public RadioPlayerProgrammeInformationOutputter(RadioPlayerGenreElementCreator genreElementCreator) {
+        this(new SystemClock(), genreElementCreator);
     }
     
-    public RadioPlayerProgrammeInformationOutputter(Clock clock) {
+    public RadioPlayerProgrammeInformationOutputter(Clock clock, RadioPlayerGenreElementCreator genreElementCreator) {
         super();
+        this.genreElementCreator = genreElementCreator;
         this.clock = checkNotNull(clock);
     }
 
