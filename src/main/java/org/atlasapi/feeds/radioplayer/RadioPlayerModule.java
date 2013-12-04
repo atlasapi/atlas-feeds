@@ -10,6 +10,8 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerGenreElementCreator;
+import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerIdGenreMap;
+import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerTSVReadingGenreMap;
 import org.atlasapi.feeds.radioplayer.upload.CachingRadioPlayerUploadResultStore;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpRemoteProcessingChecker;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpUploadServicesSupplier;
@@ -73,6 +75,8 @@ import com.metabroadcast.common.webapp.health.HealthController;
 @Configuration
 public class RadioPlayerModule {
 
+    private static final String NITRO_ID_GENRE_PREFIX = "http://nitro.bbc.co.uk/genres/";
+    
 	private static final String RP_UPLOAD_SERVICE_PREFIX = "rp.upload.";
 	private static final Every UPLOAD_EVERY_FIVE_MINUTES = RepetitionRules.every(Duration.standardMinutes(5));
     private static final Every UPLOAD_EVERY_TEN_MINUTES = RepetitionRules.every(Duration.standardMinutes(10));
@@ -254,8 +258,10 @@ public class RadioPlayerModule {
 	@PostConstruct 
 	public void scheduleTasks() {
 	    Map<Publisher, RadioPlayerGenreElementCreator> genreCreators = ImmutableMap.of(
-            Publisher.BBC, new RadioPlayerGenreElementCreator(),
-            Publisher.BBC_NITRO, new RadioPlayerGenreElementCreator()
+            Publisher.BBC, new RadioPlayerGenreElementCreator(
+                new RadioPlayerTSVReadingGenreMap(RadioPlayerTSVReadingGenreMap.GENRES_FILE)),
+            Publisher.BBC_NITRO, new RadioPlayerGenreElementCreator(
+                new RadioPlayerIdGenreMap(RadioPlayerIdGenreMap.GENRES_FILE, NITRO_ID_GENRE_PREFIX))
         );
         RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, ImmutableList.of(BBC, NITRO), genreCreators );
 		if (!ftpRemoteServices().isEmpty() || !httpsRemoteServices().isEmpty()) {

@@ -31,6 +31,7 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerGenreElementCreator;
+import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerTSVReadingGenreMap;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.feeds.upload.RemoteServiceDetails;
@@ -135,7 +136,9 @@ public class RadioPlayerFileUploaderTest {
 		    oneOf(recorder).record(with(successfulUploadResult()));
 		}});
 		
-		RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, publishers, ImmutableMap.of(Publisher.BBC, new RadioPlayerGenreElementCreator()));
+		RadioPlayerGenreElementCreator genreElementCreator
+            = new RadioPlayerGenreElementCreator(new RadioPlayerTSVReadingGenreMap(RadioPlayerTSVReadingGenreMap.GENRES_FILE));
+        RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, publishers, ImmutableMap.of(Publisher.BBC, genreElementCreator));
 		
         ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
         RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("127.0.0.1")).withPort(9521).withCredentials(new UsernameAndPassword("test","testpassword")).build();

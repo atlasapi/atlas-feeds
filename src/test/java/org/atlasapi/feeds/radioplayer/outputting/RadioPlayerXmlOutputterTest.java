@@ -9,7 +9,9 @@ import org.junit.Test;
 
 public class RadioPlayerXmlOutputterTest {
 
-    private final RadioPlayerXMLOutputter programInfoOutputter = new RadioPlayerProgrammeInformationOutputter(new RadioPlayerGenreElementCreator()); 
+    private final RadioPlayerGenreElementCreator genreElementCreator
+        = new RadioPlayerGenreElementCreator(new RadioPlayerTSVReadingGenreMap(RadioPlayerTSVReadingGenreMap.GENRES_FILE));
+    private final RadioPlayerXMLOutputter programInfoOutputter = new RadioPlayerProgrammeInformationOutputter(genreElementCreator); 
     
     @Test
     public void testConversionOfNitroUriToCrid() {
