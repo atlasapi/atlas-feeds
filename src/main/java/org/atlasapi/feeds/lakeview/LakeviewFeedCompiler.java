@@ -61,7 +61,7 @@ public class LakeviewFeedCompiler {
     private static final String PROVIDER_ID = "0x484707D1";
     private static final String XBOX_ONE_PROVIDER_ID = "25148946";
     private static final Pattern HIERARCHICAL_URI_PATTERN
-        = Pattern.compile("http://www.channel4.com/programmes/[a-z0-9\\-]+(\\/.*)?");
+        = Pattern.compile("http://www.channel4.com/programmes/[a-z0-9\\-]+(\\/episode-guide\\/.*)?");
 
     private static final String ID_PREFIX = "http://channel4.com/en-GB";
     private static final String C4_PROG_BASE = "http://www.channel4.com/programmes/";
