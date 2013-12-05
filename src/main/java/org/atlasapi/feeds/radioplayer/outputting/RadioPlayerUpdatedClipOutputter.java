@@ -49,8 +49,12 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
     private static final String ORIGINATOR = "Metabroadcast";
     private static final DateTime MAX_AVAILABLE_TILL = new DateTime(2037, 01, 01, 0, 0, 0, 0, DateTimeZones.UTC);
     
-    private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
+    private final RadioPlayerGenreElementCreator genreElementCreator;
 
+    public RadioPlayerUpdatedClipOutputter(RadioPlayerGenreElementCreator genreElementCreator) {
+        this.genreElementCreator = genreElementCreator;
+    }
+    
     @Override
     protected Element createFeed(RadioPlayerFeedSpec spec, Iterable<RadioPlayerBroadcastItem> items) {
         

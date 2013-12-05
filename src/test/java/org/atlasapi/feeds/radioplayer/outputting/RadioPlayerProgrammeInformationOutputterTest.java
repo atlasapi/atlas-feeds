@@ -32,9 +32,12 @@ import com.google.common.io.Resources;
 import com.metabroadcast.common.intl.Countries;
 
 public class RadioPlayerProgrammeInformationOutputterTest {
+    
+    private final RadioPlayerGenreElementCreator genreElementCreator
+        = new RadioPlayerGenreElementCreator(new RadioPlayerTSVReadingGenreMap(RadioPlayerTSVReadingGenreMap.GENRES_FILE));
 
 	private static final DateTimeZone TIMEZONE = DateTimeZone.forOffsetHours(8);
-	private static RadioPlayerXMLOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
+	private RadioPlayerXMLOutputter outputter = new RadioPlayerProgrammeInformationOutputter(genreElementCreator);
 	
 	public static Episode buildItem(){
 		Episode testItem = new Episode("http://www.bbc.co.uk/programmes/b00f4d9c",
@@ -125,7 +128,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		assertEquals(expectedFeed("noLocationPIFeedTest.xml"), output(ImmutableList.of(new RadioPlayerBroadcastItem(testItem, version, broadcast))));
 	}
 	
-	private static String output(List<RadioPlayerBroadcastItem> items) throws IOException {
+	private String output(List<RadioPlayerBroadcastItem> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		outputter.output(new RadioPlayerPiFeedSpec(new RadioPlayerService(502, "radio2").withDabServiceId("e1_ce15_c222_0"), new LocalDate(2010, 9, 6)), items, out);
 		return out.toString(Charsets.UTF_8.toString()).substring(550);
