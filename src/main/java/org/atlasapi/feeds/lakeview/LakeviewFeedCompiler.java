@@ -248,16 +248,8 @@ public class LakeviewFeedCompiler {
 
     Element createEpisodeElem(Episode episode, Brand container, Series series, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVEpisode", LAKEVIEW);
-        String assetId = extractAssetId(episode);
-        String applicationSpecificData = episodeAtomUri(findHierarchicalUri(episode), assetId);
-        
-        String providerMediaId;
-        if (series != null) {
-            providerMediaId = findHierarchicalUri(series).replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "/") + "#" + assetId;
-        } else {
-            providerMediaId = brandId(container).replaceAll(SERIES_ID_PREFIX, "") + "#" + assetId;
-        }
-        addIdElements(element, episodeId(episode), providerMediaId);
+        String mediaId = episodeAtomUri(findHierarchicalUri(episode), extractAssetId(episode));
+        addIdElements(element, episodeId(episode), mediaId);
         
         if (genericTitlesEnabled) {
             if (episode.getEpisodeNumber() != null) {
@@ -292,7 +284,7 @@ public class LakeviewFeedCompiler {
         
         instances.appendChild(videoInstance);           
 
-        appendCommonElements(element, episode, originalPublicationDate, lastModified, applicationSpecificData, instances);
+        appendCommonElements(element, episode, originalPublicationDate, lastModified, mediaId, instances);
         
         element.appendChild(stringElement("EpisodeNumber", LAKEVIEW, String.valueOf(episode.getEpisodeNumber())));
         element.appendChild(stringElement("DurationInSeconds", LAKEVIEW, String.valueOf(duration(episode))));
