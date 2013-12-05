@@ -10,7 +10,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import nu.xom.Attribute;
-import nu.xom.Comment;
 import nu.xom.Document;
 import nu.xom.Element;
 
@@ -250,12 +249,8 @@ public class LakeviewFeedCompiler {
 
     Element createEpisodeElem(Episode episode, Brand container, Series series, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVEpisode", LAKEVIEW);
-        
-        Comment comment = new Comment("Atlas ID: " + episode.getCanonicalUri());
-        element.appendChild(comment);
-        
         String assetId = extractAssetId(episode);
-        String applicationSpecificData = episodeAtomUri(brandAtomUri(findHierarchicalUri(container)), assetId);
+        String applicationSpecificData = episodeAtomUri(findHierarchicalUri(episode), assetId);
         
         String providerMediaId;
         if (series != null) {
@@ -483,8 +478,8 @@ public class LakeviewFeedCompiler {
     }
     
     @VisibleForTesting
-    public String episodeAtomUri(String brandAtomUri, String assetId) {
-    	return String.format("%s#%s", brandAtomUri, assetId);
+    public String episodeAtomUri(String episodeUri, String assetId) {
+    	return String.format("%s%s/4od.atom#%s", C4_API_BASE, episodeUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide.*", ""), assetId);
     }
     
     private static String findHierarchicalUri(Identified id) {
