@@ -10,6 +10,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import nu.xom.Attribute;
+import nu.xom.Comment;
 import nu.xom.Document;
 import nu.xom.Element;
 
@@ -248,8 +249,21 @@ public class LakeviewFeedCompiler {
 
     Element createEpisodeElem(Episode episode, Brand container, Series series, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVEpisode", LAKEVIEW);
-        String mediaId = episodeAtomUri(findHierarchicalUri(episode), extractAssetId(episode));
-        addIdElements(element, episodeId(episode), mediaId);
+        
+        Comment comment = new Comment("Atlas ID: " + episode.getCanonicalUri());
+        element.appendChild(comment);
+        
+        String assetId = extractAssetId(episode);
+        String applicationSpecificData = episodeAtomUri(brandAtomUri(findHierarchicalUri(container)), assetId);
+        
+        String providerMediaId;
+        if (series != null) {
+            providerMediaId = findHierarchicalUri(series).replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "/") + "#" + assetId;
+        } else {
+            providerMediaId = brandId(container).replaceAll(SERIES_ID_PREFIX, "") + "#" + assetId;
+        }
+        addIdElements(element, episodeId(episode), providerMediaId);
+        
         
         if (genericTitlesEnabled) {
             if (episode.getEpisodeNumber() != null) {
@@ -282,9 +296,9 @@ public class LakeviewFeedCompiler {
         videoInstance.appendChild(stringElement("PrimaryAudioLanguage", LAKEVIEW, "en-GB"));
         videoInstance.appendChild(stringElement("VideoInstanceType", LAKEVIEW, "Full"));
         
-        instances.appendChild(videoInstance);           
+        instances.appendChild(videoInstance);
 
-        appendCommonElements(element, episode, originalPublicationDate, lastModified, mediaId, instances);
+        appendCommonElements(element, episode, originalPublicationDate, lastModified, applicationSpecificData, instances);
         
         element.appendChild(stringElement("EpisodeNumber", LAKEVIEW, String.valueOf(episode.getEpisodeNumber())));
         element.appendChild(stringElement("DurationInSeconds", LAKEVIEW, String.valueOf(duration(episode))));
@@ -470,7 +484,7 @@ public class LakeviewFeedCompiler {
     
     @VisibleForTesting
     public String episodeAtomUri(String episodeUri, String assetId) {
-    	return String.format("%s%s/4od.atom#%s", C4_API_BASE, episodeUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide.*", ""), assetId);
+    	return String.format("%s#%s", episodeUri.replaceAll("/episode-guide.*", ""), assetId);
     }
     
     private static String findHierarchicalUri(Identified id) {
