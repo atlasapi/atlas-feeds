@@ -66,8 +66,7 @@ public class LakeviewFeedCompiler {
     private static final String C4_PROG_BASE = "http://www.channel4.com/programmes/";
     private static final String C4_API_BASE = "https://xbox.channel4.com/pmlsd/";
     
-    private static final String SERIES_ID_PREFIX = ID_PREFIX + "/TVSeries/";
-    private static final String EPISODE_ID_PREFIX = ID_PREFIX + "/TVEpisode/";
+    private static final String SERIES_ID_PREFIX = ID_PREFIX + "/TVSeries/"; 
     
     private final Clock clock;
 	private ChannelResolver channelResolver;
@@ -258,7 +257,7 @@ public class LakeviewFeedCompiler {
         } else {
             providerMediaId = brandId(container).replaceAll(SERIES_ID_PREFIX, "") + "#" + assetId;
         }
-        addIdElements(element, EPISODE_ID_PREFIX + providerMediaId, providerMediaId);
+        addIdElements(element, episodeId(episode), providerMediaId);
         
         if (genericTitlesEnabled) {
             if (episode.getEpisodeNumber() != null) {
