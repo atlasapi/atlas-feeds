@@ -20,12 +20,12 @@ public class UploadResultStoreBackedRadioPlayerResultStore implements RadioPlaye
     
     @Override
     public void record(RadioPlayerUploadResult result) {
-        backingStore.store(String.format("%s-%s-%s", result.getService().getRadioplayerId(), result.getType().name(), result.getDay().toString("yyyy-MM-dd")), result.getUpload());
+        backingStore.store(keyFor(result.getService(), result.getType(), result.getDay()), result.getUpload());
     }
 
     @Override
     public Iterable<FileUploadResult> resultsFor(FileType fileType, String remoteServiceId, RadioPlayerService service, LocalDate day) {
-        return backingStore.result(remoteServiceId, String.format("%s-%s", service.getRadioplayerId(), fileType.name()));
+        return backingStore.result(remoteServiceId, keyFor(service, fileType, day));
     }
 
     @Override
@@ -34,6 +34,10 @@ public class UploadResultStoreBackedRadioPlayerResultStore implements RadioPlaye
                 backingStore.results(remoteServiceId),
                 FileUploadResult.SUCCESSFUL
         ));
+    }
+    
+    private String keyFor(RadioPlayerService service, FileType type, LocalDate day) {
+        return String.format("%s-%s-%s", service.getRadioplayerId(), type.name(), day.toString("yyyy-MM-dd"));
     }
 
 }
