@@ -172,7 +172,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         ImmutableListMultimap.Builder<Interval, Location> merged = ImmutableListMultimap.builder();
         int i = 0;
         while(i < windows.size()) {
-            Interval current = windows.get(0);
+            Interval current = windows.get(i);
             DateTime start = current.getStart();
             ImmutableList.Builder<Location> overlappingLocations = ImmutableList.builder();
             overlappingLocations.addAll(unmerged.get(current));
