@@ -274,26 +274,27 @@ public abstract class RadioPlayerXMLOutputter {
         return uri.replaceAll("http://[a-z]*\\.bbc\\.co\\.uk", "crid://www\\.bbc\\.co\\.uk");
     }
     
-    protected Element createImageDescriptionElem(Item item) {
+    protected Element createImageDescriptionElem(Item item, String width, String height) {
         Element imageElement = createElement("multimedia", EPGDATATYPES);
         imageElement.addAttribute(new Attribute("mimeValue", "image/jpeg"));
-        imageElement.addAttribute(new Attribute("url", generateImageLocationFrom(item)));
-        imageElement.addAttribute(new Attribute("width", "86"));
-        imageElement.addAttribute(new Attribute("height", "48"));
+        String location = generateImageLocationFrom(item, width, height);
+        imageElement.addAttribute(new Attribute("url", location));
+        imageElement.addAttribute(new Attribute("width", width));
+        imageElement.addAttribute(new Attribute("height", height));
         return imageElement;
     }
 
-    private String generateImageLocationFrom(Item item) {
+    private String generateImageLocationFrom(Item item, String width, String height) {
         Pattern p = Pattern.compile("(.*/)\\d+x\\d+(/.*).jpg");
         Matcher m = p.matcher(item.getImage());
         if (m.matches()) {
-            return m.group(1) + "86x48" + m.group(2) + ".jpg";
+            return String.format("%s%sx%s%s.jpg", m.group(1), width, height, m.group(2));
         }
         
         p = Pattern.compile("(.*)_\\d+_\\d+.jpg");
         m = p.matcher(item.getImage());
         if (m.matches()) {
-            return m.group(1) + "_86_48.jpg";
+            return String.format("%s_%s_%s.jpg", m.group(1), width, height);
         }
         
         

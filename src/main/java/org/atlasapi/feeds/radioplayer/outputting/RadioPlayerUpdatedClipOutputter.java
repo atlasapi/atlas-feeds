@@ -165,7 +165,7 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
         
                 programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(clip.getDescription()))));
                 if (!Strings.isNullOrEmpty(clip.getImage())) {
-                    programme.appendChild(mediaDescription(createImageDescriptionElem(clip)));
+                    programme.appendChild(mediaDescription(createImageDescriptionElem(clip, "86", "48")));
                 }
         
                 for (Element genreElement : genreElementCreator.genreElementsFor(broadcastItem.getItem())) {
