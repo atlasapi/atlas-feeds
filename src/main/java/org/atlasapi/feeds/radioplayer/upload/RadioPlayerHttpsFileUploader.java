@@ -34,7 +34,8 @@ public class RadioPlayerHttpsFileUploader implements FileUploader {
         } else if (response.statusCode() == RETRY_AFTER) {
             return new FileUploaderResult(FileUploadResultType.FAILURE).withMessage(response.header(RETRY_AFTER_HEADER));
         }
-        return FileUploaderResult.failure();
+        return FileUploaderResult.failure()
+            .withMessage(response.statusCode() + ": " + response.statusLine());
     }
 
     private String getFileType(FileUpload file) {

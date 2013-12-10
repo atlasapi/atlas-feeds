@@ -190,6 +190,7 @@ public final class FileUploadResult {
         result.message = message;
         result.exception = exception;
         result.exceptionSummary = exceptionSummary;
+        result.transactionId = transactionId;
         result.successfulConnection = successfulConnection;
         result.remoteProcessingResult = remoteProcessingResult;
         return result;

@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -28,15 +30,18 @@ import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.entity.Policy.Network;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -61,6 +66,59 @@ public abstract class RadioPlayerXMLOutputter {
     protected static final XMLNamespace XSI = new XMLNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
     protected static final XMLNamespace RADIOPLAYER = new XMLNamespace("radioplayer", "http://www.radioplayer.co.uk/schemas/11/rpDataTypes");
     protected static final String SCHEMALOCATION = "http://www.radioplayer.co.uk/schemas/11/epgSchedule http://www.radioplayer.co.uk/schemas/10/epgSchedule_11.xsd";
+    
+    protected static final class ImageDimensions {
+
+        private static final ImageDimensions valueOf(int width, int height) {
+            return new ImageDimensions(String.valueOf(width), String.valueOf(height));
+        }
+        
+        private final String width;
+        private final String height;
+        
+        public ImageDimensions(String width, String height) {
+            this.width = checkNotNull(width);
+            this.height = checkNotNull(height);
+        }
+
+        public String getWidth() {
+            return width;
+        }
+        
+        public String getHeight() {
+            return height;
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(width, height);
+        }
+        
+        @Override
+        public boolean equals(Object that) {
+            if (this == that) {
+                return true;
+            }
+            if (that instanceof ImageDimensions) {
+                ImageDimensions other = (ImageDimensions) that;
+                return width.equals(other.width)
+                    && height.equals(other.height);
+            }
+            return false;
+        }
+        
+        @Override
+        public String toString() {
+            return String.format("%sx%s", width, height);
+        }
+    }
+    
+    protected final ImmutableList<ImageDimensions> imageDimensions
+        = ImmutableList.of(
+            ImageDimensions.valueOf(86, 48),
+            ImageDimensions.valueOf(288, 162),
+            ImageDimensions.valueOf(160, 90)
+        );
     
     protected abstract Element createFeed(RadioPlayerFeedSpec spec, Iterable<RadioPlayerBroadcastItem> items);
 
@@ -101,7 +159,7 @@ public abstract class RadioPlayerXMLOutputter {
         return null;
     }
     
-    protected Element ondemandElement(RadioPlayerBroadcastItem broadcastItem,  Collection<Location> locations, RadioPlayerService service) {
+    protected Element ondemandElement(RadioPlayerBroadcastItem broadcastItem, Interval window, Collection<Location> locations, RadioPlayerService service) {
         
         Item item = broadcastItem.getItem();
         
@@ -134,10 +192,10 @@ public abstract class RadioPlayerXMLOutputter {
             });
             if (!pcPolicy.isPresent()) {
                 // add availability details for first policy in list
-                addAvailabilityDetailsToOndemand(ondemandElement, policies.get(0));
+                addAvailabilityDetailsToOndemand(ondemandElement, window == null ? window(policies.get(0)) : window);
                 addAudioStreamElement(ondemandElement, version, service);
             } else {
-                addAvailabilityDetailsToOndemand(ondemandElement, pcPolicy.get());
+                addAvailabilityDetailsToOndemand(ondemandElement, window == null ? window(pcPolicy.get()) : window);
                 Policy ios3G = null;
                 Policy iosWifi = null;
                 for (Policy policy : policies) {
@@ -166,9 +224,13 @@ public abstract class RadioPlayerXMLOutputter {
         return ondemandElement;
     }
 
-    private void addAvailabilityDetailsToOndemand(Element ondemandElement, Policy policy) {
-        DateTime availableTill = Ordering.natural().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
-        DateTime availableFrom = policy.getAvailabilityStart();
+    private Interval window(Policy policy) {
+        return new Interval(policy.getAvailabilityStart(), availabilityEndOrMax(policy));
+    }
+
+    private void addAvailabilityDetailsToOndemand(Element ondemandElement, Interval window) {
+        DateTime availableTill = window.getEnd();
+        DateTime availableFrom = window.getStart();
         if (availableTill != null && availableFrom != null) {
             Element availabilityElem = createElement("availability", RADIOPLAYER);
             Element availabilityScopeElem = createElement("scope", RADIOPLAYER);
@@ -177,6 +239,10 @@ public abstract class RadioPlayerXMLOutputter {
             availabilityElem.appendChild(availabilityScopeElem);
             ondemandElement.appendChild(availabilityElem);
         }
+    }
+
+    protected DateTime availabilityEndOrMax(Policy policy) {
+        return Ordering.natural().nullsLast().min(policy.getAvailabilityEnd(), MAX_AVAILABLE_TILL);
     }
     
     private void addAudioStreamElement(Element ondemandElement, Version version, RadioPlayerService service) {
@@ -265,26 +331,31 @@ public abstract class RadioPlayerXMLOutputter {
         return uri.replaceAll("http://[a-z]*\\.bbc\\.co\\.uk", "crid://www\\.bbc\\.co\\.uk");
     }
     
-    protected Element createImageDescriptionElem(Item item) {
+    protected Element createImageDescriptionElem(Item item, ImageDimensions dimensions) {
+        return createImageDescriptionElem(item, dimensions.getWidth(), dimensions.getHeight());
+    }
+    
+    protected Element createImageDescriptionElem(Item item, String width, String height) {
         Element imageElement = createElement("multimedia", EPGDATATYPES);
         imageElement.addAttribute(new Attribute("mimeValue", "image/jpeg"));
-        imageElement.addAttribute(new Attribute("url", generateImageLocationFrom(item)));
-        imageElement.addAttribute(new Attribute("width", "86"));
-        imageElement.addAttribute(new Attribute("height", "48"));
+        String location = generateImageLocationFrom(item, width, height);
+        imageElement.addAttribute(new Attribute("url", location));
+        imageElement.addAttribute(new Attribute("width", width));
+        imageElement.addAttribute(new Attribute("height", height));
         return imageElement;
     }
-
-    private String generateImageLocationFrom(Item item) {
+    
+    private String generateImageLocationFrom(Item item, String width, String height) {
         Pattern p = Pattern.compile("(.*/)\\d+x\\d+(/.*).jpg");
         Matcher m = p.matcher(item.getImage());
         if (m.matches()) {
-            return m.group(1) + "86x48" + m.group(2) + ".jpg";
+            return String.format("%s%sx%s%s.jpg", m.group(1), width, height, m.group(2));
         }
         
         p = Pattern.compile("(.*)_\\d+_\\d+.jpg");
         m = p.matcher(item.getImage());
         if (m.matches()) {
-            return m.group(1) + "_86_48.jpg";
+            return String.format("%s_%s_%s.jpg", m.group(1), width, height);
         }
         
         

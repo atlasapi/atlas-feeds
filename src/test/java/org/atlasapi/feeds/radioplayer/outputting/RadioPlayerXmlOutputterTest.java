@@ -9,7 +9,9 @@ import org.junit.Test;
 
 public class RadioPlayerXmlOutputterTest {
 
-    private final RadioPlayerXMLOutputter programInfoOutputter = new RadioPlayerProgrammeInformationOutputter(); 
+    private final RadioPlayerGenreElementCreator genreElementCreator
+        = new RadioPlayerGenreElementCreator(new RadioPlayerTSVReadingGenreMap(RadioPlayerTSVReadingGenreMap.GENRES_FILE));
+    private final RadioPlayerXMLOutputter programInfoOutputter = new RadioPlayerProgrammeInformationOutputter(genreElementCreator); 
     
     @Test
     public void testConversionOfNitroUriToCrid() {
@@ -32,7 +34,7 @@ public class RadioPlayerXmlOutputterTest {
         Item item = new Item();
         item.setImage("http://ichef.bbci.co.uk/programmeimages/episode/b03c4rs8_640_360.jpg");
         
-        Element imageElem = programInfoOutputter.createImageDescriptionElem(item);
+        Element imageElem = programInfoOutputter.createImageDescriptionElem(item, "86", "48");
         
         assertEquals("http://ichef.bbci.co.uk/programmeimages/episode/b03c4rs8_86_48.jpg", imageElem.getAttribute("url").getValue());
         assertEquals("image/jpeg", imageElem.getAttribute("mimeValue").getValue());
@@ -45,7 +47,7 @@ public class RadioPlayerXmlOutputterTest {
         Item item = new Item();
         item.setImage("http://ichef.bbci.co.uk/images/ic/1024x576/legacy/episode/p01fxcbg.jpg");
         
-        Element imageElem = programInfoOutputter.createImageDescriptionElem(item);
+        Element imageElem = programInfoOutputter.createImageDescriptionElem(item, "86", "48");
         
         assertEquals("http://ichef.bbci.co.uk/images/ic/86x48/legacy/episode/p01fxcbg.jpg", imageElem.getAttribute("url").getValue());
         assertEquals("image/jpeg", imageElem.getAttribute("mimeValue").getValue());

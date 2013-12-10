@@ -30,6 +30,8 @@ import org.atlasapi.application.v3.ApplicationConfiguration;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerGenreElementCreator;
+import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerTSVReadingGenreMap;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.feeds.upload.RemoteServiceDetails;
@@ -68,6 +70,7 @@ import org.junit.runner.RunWith;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -133,7 +136,9 @@ public class RadioPlayerFileUploaderTest {
 		    oneOf(recorder).record(with(successfulUploadResult()));
 		}});
 		
-		RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, publishers);
+		RadioPlayerGenreElementCreator genreElementCreator
+            = new RadioPlayerGenreElementCreator(new RadioPlayerTSVReadingGenreMap(RadioPlayerTSVReadingGenreMap.GENRES_FILE));
+        RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, publishers, ImmutableMap.of(Publisher.BBC, genreElementCreator));
 		
         ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
         RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("127.0.0.1")).withPort(9521).withCredentials(new UsernameAndPassword("test","testpassword")).build();
@@ -229,8 +234,8 @@ public class RadioPlayerFileUploaderTest {
 		Location location = new Location();
 		location.setUri("http://www.bbc.co.uk/iplayer/episode/b00f4d9c");
 		Policy policy = new Policy();
-		policy.setAvailabilityEnd(new DateTime(2010, 8, 28, 23, 40, 19, 0, TIMEZONE));
-		policy.setAvailabilityStart(new DateTime(2010, 9, 4, 23, 02, 00, 0, TIMEZONE));
+		policy.setAvailabilityStart(new DateTime(2010, 8, 28, 23, 40, 19, 0, TIMEZONE));
+		policy.setAvailabilityEnd(new DateTime(2010, 9, 4, 23, 02, 00, 0, TIMEZONE));
 		policy.addAvailableCountry(Countries.GB);
 		location.setPolicy(policy);
 		location.setTransportType(TransportType.LINK);

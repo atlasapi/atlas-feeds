@@ -20,7 +20,7 @@ import com.google.common.collect.Sets;
 import com.google.common.io.LineProcessor;
 import com.google.common.io.Resources;
 
-public class RadioPlayerTSVReadingGenreMap {
+public class RadioPlayerTSVReadingGenreMap implements RadioPlayerGenreMap {
 
     public static final String GENRES_FILE = "radioplayergenres.tsv";
     private static final String TSV = "([^\\t]+)\\t?";
@@ -80,6 +80,10 @@ public class RadioPlayerTSVReadingGenreMap {
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.atlasapi.feeds.radioplayer.outputting.RadioPlayerGenreMap#map(java.util.Set)
+     */
+    @Override
     public Set<List<String>> map(Set<String> sourceGenres) {
         Set<List<String>> mappedGenres = Sets.newHashSet();
         

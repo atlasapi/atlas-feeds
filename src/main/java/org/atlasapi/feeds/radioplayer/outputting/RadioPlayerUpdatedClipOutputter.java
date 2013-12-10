@@ -6,6 +6,7 @@ import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import nu.xom.Element;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerOdFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter.ImageDimensions;
 import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Described;
@@ -48,8 +50,12 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
     private static final String ORIGINATOR = "Metabroadcast";
     private static final DateTime MAX_AVAILABLE_TILL = new DateTime(2037, 01, 01, 0, 0, 0, 0, DateTimeZones.UTC);
     
-    private final RadioPlayerGenreElementCreator genreElementCreator = new RadioPlayerGenreElementCreator();
+    private final RadioPlayerGenreElementCreator genreElementCreator;
 
+    public RadioPlayerUpdatedClipOutputter(RadioPlayerGenreElementCreator genreElementCreator) {
+        this.genreElementCreator = genreElementCreator;
+    }
+    
     @Override
     protected Element createFeed(RadioPlayerFeedSpec spec, Iterable<RadioPlayerBroadcastItem> items) {
         
@@ -160,7 +166,10 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
         
                 programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(clip.getDescription()))));
                 if (!Strings.isNullOrEmpty(clip.getImage())) {
-                    programme.appendChild(mediaDescription(createImageDescriptionElem(clip)));
+                    for (ImageDimensions dimensions : imageDimensions) {
+                        Element img = createImageDescriptionElem(clip, dimensions);
+                        programme.appendChild(mediaDescription(img));
+                    }
                 }
         
                 for (Element genreElement : genreElementCreator.genreElementsFor(broadcastItem.getItem())) {
@@ -180,7 +189,8 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                 
                 for (Country country : locationsByCountry.keySet()) {
                     if (!country.equals(Countries.ALL)) {
-                        programme.appendChild(ondemandElement(broadcastItem, locationsByCountry.get(country), id));
+                        Collection<Location> countryLocations = locationsByCountry.get(country);
+                        programme.appendChild(ondemandElement(broadcastItem, null, countryLocations, id));
                     }
                 }
                 elements.add(programme);

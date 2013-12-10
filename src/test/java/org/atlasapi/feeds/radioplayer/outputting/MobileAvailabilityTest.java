@@ -18,6 +18,7 @@ import org.atlasapi.media.entity.Policy.Network;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
+import org.joda.time.Interval;
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
@@ -25,7 +26,9 @@ import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
 
 public class MobileAvailabilityTest {
-    Clock clock = new TimeMachine();
+    private final RadioPlayerGenreElementCreator genreElementCreator
+        = new RadioPlayerGenreElementCreator(new RadioPlayerTSVReadingGenreMap(RadioPlayerTSVReadingGenreMap.GENRES_FILE));
+    private final Clock clock = new TimeMachine();
     
     @Test
     public void testMobileAvailabilityNoPlatform() {
@@ -38,8 +41,9 @@ public class MobileAvailabilityTest {
         }
         broadcastItem.getVersion().addManifestedAs(encoding);
         
-        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
-        Element ondemandElement = outputter.ondemandElement(broadcastItem, locations, new RadioPlayerService(342, "radio2"));
+        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter(genreElementCreator);
+        Interval window = new Interval(0,0);
+        Element ondemandElement = outputter.ondemandElement(broadcastItem, window, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it should be)
         assertTrue(hasAudioStreamGroup(ondemandElement));
     }
@@ -55,8 +59,9 @@ public class MobileAvailabilityTest {
         }
         broadcastItem.getVersion().addManifestedAs(encoding);
         
-        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
-        Element ondemandElement = outputter.ondemandElement(broadcastItem, locations, new RadioPlayerService(342, "radio2"));
+        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter(genreElementCreator);
+        Interval window = new Interval(0,0);
+        Element ondemandElement = outputter.ondemandElement(broadcastItem, window, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it should be)
         assertTrue(hasAudioStreamGroup(ondemandElement));
     }
@@ -72,8 +77,9 @@ public class MobileAvailabilityTest {
         }
         broadcastItem.getVersion().addManifestedAs(encoding);
         
-        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
-        Element ondemandElement = outputter.ondemandElement(broadcastItem, locations, new RadioPlayerService(342, "radio2"));
+        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter(genreElementCreator);
+        Interval window = new Interval(0,0);
+        Element ondemandElement = outputter.ondemandElement(broadcastItem, window, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it shouldn't be)
         assertFalse(hasAudioStreamGroup(ondemandElement));
     }
@@ -89,8 +95,9 @@ public class MobileAvailabilityTest {
         }
         broadcastItem.getVersion().addManifestedAs(encoding);
         
-        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
-        Element ondemandElement = outputter.ondemandElement(broadcastItem, locations, new RadioPlayerService(342, "radio2"));
+        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter(genreElementCreator);
+        Interval window = new Interval(0,0);
+        Element ondemandElement = outputter.ondemandElement(broadcastItem, window, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it shouldn't be)
         assertFalse(hasAudioStreamGroup(ondemandElement));
     }
@@ -106,8 +113,9 @@ public class MobileAvailabilityTest {
         }
         broadcastItem.getVersion().addManifestedAs(encoding);
         
-        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter();
-        Element ondemandElement = outputter.ondemandElement(broadcastItem, locations, new RadioPlayerService(342, "radio2"));
+        RadioPlayerProgrammeInformationOutputter outputter = new RadioPlayerProgrammeInformationOutputter(genreElementCreator);
+        Interval window = new Interval(0,0);
+        Element ondemandElement = outputter.ondemandElement(broadcastItem, window, locations, new RadioPlayerService(342, "radio2"));
         // test whether audiostreamgroup is available (it should be)
         assertTrue(hasAudioStreamGroup(ondemandElement));
     }
