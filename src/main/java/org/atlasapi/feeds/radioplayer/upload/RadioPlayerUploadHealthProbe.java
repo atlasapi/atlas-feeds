@@ -131,6 +131,9 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         builder.append("</td><td>");
         if (result.transactionId() != null) {
             builder.append("Transaction status url: " + result.transactionId());
+            if (result.message() != null) {
+                builder.append(" " + result.message());
+            }
         } else if (result.message() != null) {
             builder.append(result.message());
         } else {
