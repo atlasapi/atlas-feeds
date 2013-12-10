@@ -388,7 +388,7 @@ public class LakeviewFeedCompiler {
                     if(location.getTransportType().equals(TransportType.LINK)
                     		&& location.getPolicy() != null 
                     		&& Platform.XBOX.equals(location.getPolicy().getPlatform())) {
-                        Pattern pattern = Pattern.compile(".*asset/(\\d+)$");
+                        Pattern pattern = Pattern.compile(".*asset/(\\d+).*");
                         Matcher matcher = pattern.matcher(location.getUri());
                         if(matcher.matches()) {
                             return matcher.group(1);                            
