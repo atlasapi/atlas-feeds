@@ -13,9 +13,11 @@ import com.metabroadcast.common.http.SimpleHttpClient;
 
 public class RadioPlayerHttpsFileUploader implements FileUploader {
     
+    // If RadioPlayer want the file to be retried, they send a 503, with a header of 'Retry-After' and a 
+    // retry time in seconds.
     private static final int RETRY_AFTER = 503;
     private static final int ACCEPTED = 202;
-    private static final String RETRY_AFTER_HEADER = "RetryAfter";
+    private static final String RETRY_AFTER_HEADER = "Retry-After";
     private static final String LOCATION_HEADER = "Location";
     private final SimpleHttpClient httpClient;
     private final String baseUrl;
@@ -32,7 +34,7 @@ public class RadioPlayerHttpsFileUploader implements FileUploader {
         if (response.statusCode() == ACCEPTED) {
             return new FileUploaderResult(FileUploadResultType.SUCCESS).withTransactionId(response.header(LOCATION_HEADER));
         } else if (response.statusCode() == RETRY_AFTER) {
-            return new FileUploaderResult(FileUploadResultType.FAILURE).withMessage(response.header(RETRY_AFTER_HEADER));
+            return new FileUploaderResult(FileUploadResultType.FAILURE).withMessage("Retry after: " + response.header(RETRY_AFTER_HEADER) + " seconds");
         }
         return FileUploaderResult.failure()
             .withMessage(response.statusCode() + ": " + response.statusLine());
