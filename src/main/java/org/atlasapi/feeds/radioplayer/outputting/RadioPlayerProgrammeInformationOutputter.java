@@ -15,6 +15,7 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Encoding;
+import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.joda.time.DateTime;
@@ -117,7 +118,10 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
         desc = desc == null ? broadcastItem.getItem().getDescription() : desc;
         programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(desc))));
         if (!Strings.isNullOrEmpty(broadcastItem.getItem().getImage())) {
-            programme.appendChild(mediaDescription(createImageDescriptionElem(broadcastItem.getItem())));
+            for (ImageDimensions dimensions : imageDimensions) {
+                Element img = createImageDescriptionElem(broadcastItem.getItem(), dimensions);
+                programme.appendChild(mediaDescription(img));
+            }
         }
 
         for (Element genreElement : genreElementCreator.genreElementsFor(broadcastItem.getItem())) {

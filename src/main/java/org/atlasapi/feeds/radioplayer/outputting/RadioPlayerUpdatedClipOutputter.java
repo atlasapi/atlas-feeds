@@ -16,6 +16,7 @@ import nu.xom.Element;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerOdFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter.ImageDimensions;
 import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Described;
@@ -165,7 +166,10 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
         
                 programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(clip.getDescription()))));
                 if (!Strings.isNullOrEmpty(clip.getImage())) {
-                    programme.appendChild(mediaDescription(createImageDescriptionElem(clip)));
+                    for (ImageDimensions dimensions : imageDimensions) {
+                        Element img = createImageDescriptionElem(clip, dimensions);
+                        programme.appendChild(mediaDescription(img));
+                    }
                 }
         
                 for (Element genreElement : genreElementCreator.genreElementsFor(broadcastItem.getItem())) {
