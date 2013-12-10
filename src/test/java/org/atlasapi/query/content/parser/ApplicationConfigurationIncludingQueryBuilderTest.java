@@ -8,7 +8,7 @@ import org.atlasapi.application.query.ApplicationConfigurationFetcher;
 import org.atlasapi.application.query.IpCheckingApiKeyConfigurationFetcher;
 import org.atlasapi.application.v3.Application;
 import org.atlasapi.application.v3.ApplicationCredentials;
-import org.atlasapi.application.ApplicationStore;
+import org.atlasapi.application.v3.ApplicationStore;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
