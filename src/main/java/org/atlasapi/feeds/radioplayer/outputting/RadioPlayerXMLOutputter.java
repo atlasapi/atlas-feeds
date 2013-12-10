@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -34,10 +36,12 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -62,6 +66,59 @@ public abstract class RadioPlayerXMLOutputter {
     protected static final XMLNamespace XSI = new XMLNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
     protected static final XMLNamespace RADIOPLAYER = new XMLNamespace("radioplayer", "http://www.radioplayer.co.uk/schemas/11/rpDataTypes");
     protected static final String SCHEMALOCATION = "http://www.radioplayer.co.uk/schemas/11/epgSchedule http://www.radioplayer.co.uk/schemas/10/epgSchedule_11.xsd";
+    
+    protected static final class ImageDimensions {
+
+        private static final ImageDimensions valueOf(int width, int height) {
+            return new ImageDimensions(String.valueOf(width), String.valueOf(height));
+        }
+        
+        private final String width;
+        private final String height;
+        
+        public ImageDimensions(String width, String height) {
+            this.width = checkNotNull(width);
+            this.height = checkNotNull(height);
+        }
+
+        public String getWidth() {
+            return width;
+        }
+        
+        public String getHeight() {
+            return height;
+        }
+        
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(width, height);
+        }
+        
+        @Override
+        public boolean equals(Object that) {
+            if (this == that) {
+                return true;
+            }
+            if (that instanceof ImageDimensions) {
+                ImageDimensions other = (ImageDimensions) that;
+                return width.equals(other.width)
+                    && height.equals(other.height);
+            }
+            return false;
+        }
+        
+        @Override
+        public String toString() {
+            return String.format("%sx%s", width, height);
+        }
+    }
+    
+    protected final ImmutableList<ImageDimensions> imageDimensions
+        = ImmutableList.of(
+            ImageDimensions.valueOf(86, 48),
+            ImageDimensions.valueOf(288, 162),
+            ImageDimensions.valueOf(160, 90)
+        );
     
     protected abstract Element createFeed(RadioPlayerFeedSpec spec, Iterable<RadioPlayerBroadcastItem> items);
 
@@ -274,6 +331,11 @@ public abstract class RadioPlayerXMLOutputter {
         return uri.replaceAll("http://[a-z]*\\.bbc\\.co\\.uk", "crid://www\\.bbc\\.co\\.uk");
     }
     
+
+    protected Element createImageDescriptionElem(Item item, ImageDimensions dimensions) {
+        return createImageDescriptionElem(item, dimensions.getWidth(), dimensions.getHeight());
+    }
+    
     protected Element createImageDescriptionElem(Item item, String width, String height) {
         Element imageElement = createElement("multimedia", EPGDATATYPES);
         imageElement.addAttribute(new Attribute("mimeValue", "image/jpeg"));
@@ -283,7 +345,7 @@ public abstract class RadioPlayerXMLOutputter {
         imageElement.addAttribute(new Attribute("height", height));
         return imageElement;
     }
-
+    
     private String generateImageLocationFrom(Item item, String width, String height) {
         Pattern p = Pattern.compile("(.*/)\\d+x\\d+(/.*).jpg");
         Matcher m = p.matcher(item.getImage());
