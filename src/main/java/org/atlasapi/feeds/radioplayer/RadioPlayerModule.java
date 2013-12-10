@@ -194,9 +194,22 @@ public class RadioPlayerModule {
     }
     
     public @Bean RadioPlayerUploadController radioPlayerUploadController() {
-        return new RadioPlayerUploadController(radioPlayerFtpUploadTaskBuilder(), dayRangeGenerator, Configurer.get("rp.health.password", "").get());
+        return new RadioPlayerUploadController(taskBuilderMap(), dayRangeGenerator, Configurer.get("rp.health.password", "").get());
     }
     
+    private Map<String, RadioPlayerUploadTaskBuilder> taskBuilderMap() {
+        ImmutableMap.Builder<String, RadioPlayerUploadTaskBuilder> map = ImmutableMap.<String, RadioPlayerUploadTaskBuilder>builder();
+        if (Boolean.parseBoolean(s3FtpUpload) || Boolean.parseBoolean(ftpUpload)) {
+            for (Entry<String, RemoteServiceDetails> ftpService : radioPlayerUploadServiceDetails().entrySet()) {
+                map.put(ftpService.getKey(), radioPlayerFtpUploadTaskBuilder());
+            }
+        }
+        if (Boolean.parseBoolean(s3HttpsUpload) || Boolean.parseBoolean(httpsUpload)) {
+            map.put(httpsServiceId, radioPlayerHttpsUploadTaskBuilder());
+        }
+        return map.build();
+    }
+
     @Bean RadioPlayerUploadResultStore uploadResultRecorder() {
         return new CachingRadioPlayerUploadResultStore(
                 Sets.union(Sets.union(ftpRemoteServices().keySet(), s3RemoteServices()), httpsRemoteServices().keySet()), 

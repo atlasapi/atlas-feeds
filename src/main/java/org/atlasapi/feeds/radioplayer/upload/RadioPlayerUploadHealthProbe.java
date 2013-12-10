@@ -147,7 +147,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     }
     
     private String uploadButton(FileType type, LocalDate day) {
-        String postTarget = String.format("/feeds/ukradioplayer/upload/%s/%s", type.name(), service.getRadioplayerId());
+        String postTarget = String.format("/feeds/ukradioplayer/upload/%s/%s/%s", remoteServiceId, type.name(), service.getRadioplayerId());
         if(day != null) {
             postTarget += day.toString("/yyyyMMdd");
         }
