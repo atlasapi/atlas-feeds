@@ -80,6 +80,7 @@ public class RadioPlayerModule {
 	private static final String RP_UPLOAD_SERVICE_PREFIX = "rp.upload.";
 	private static final Every UPLOAD_EVERY_FIVE_MINUTES = RepetitionRules.every(Duration.standardMinutes(5));
     private static final Every UPLOAD_EVERY_TEN_MINUTES = RepetitionRules.every(Duration.standardMinutes(10));
+    private static final Every UPLOAD_EVERY_THIRTY_MINUTES = RepetitionRules.every(Duration.standardMinutes(30));
 	private static final Every UPLOAD_EVERY_TWO_HOURS = RepetitionRules.every(Duration.standardHours(2));
 	
 	private static final Publisher BBC = Publisher.BBC;
@@ -305,7 +306,7 @@ public class RadioPlayerModule {
                         UPLOAD_EVERY_TWO_HOURS);
                 scheduler.schedule(
                         radioPlayerHttpsUploadTaskBuilder().newScheduledPiTask(httpsUploadServices(), new DayRangeGenerator()).withName("Radioplayer HTTPS PI Today Upload"), 
-                        UPLOAD_EVERY_TEN_MINUTES);
+                        UPLOAD_EVERY_THIRTY_MINUTES);
                 scheduler.schedule(
                         new RadioPlayerHttpsRemoteProcessingChecker(radioPlayerHttpClient(), httpsServiceId, uploadResultRecorder(), log).withName("Radioplayer HTTPS Remote Processing Checker"),
                         UPLOAD_EVERY_FIVE_MINUTES.withOffset(Duration.standardMinutes(5)));
@@ -315,7 +316,7 @@ public class RadioPlayerModule {
                         NEVER);
                 scheduler.schedule(
                         radioPlayerHttpsUploadTaskBuilder().newScheduledOdTask(httpsUploadServices(), false).withName("Radioplayer HTTPS OD Today Upload"),
-                        UPLOAD_EVERY_TEN_MINUTES);
+                        UPLOAD_EVERY_THIRTY_MINUTES);
             } 
 		    if (!Boolean.parseBoolean(ftpUpload) 
 		            && !Boolean.parseBoolean(httpsUpload) 
