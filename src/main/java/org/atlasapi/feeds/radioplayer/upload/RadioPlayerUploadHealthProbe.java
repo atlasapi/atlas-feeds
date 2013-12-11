@@ -6,18 +6,15 @@ import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCES
 import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
 import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 import static org.atlasapi.feeds.upload.FileUploadResult.DATE_ORDERING;
-import static org.joda.time.Duration.standardHours;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.media.entity.Publisher;
-import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.LocalDate;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
@@ -29,20 +26,17 @@ import com.metabroadcast.common.time.DayRangeGenerator;
 
 public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
-    protected static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
+    private static final Duration PI_NOT_TODAY_STALENESS = Duration.standardHours(4);
+    private static final Duration PI_TODAY_STALENESS = Duration.standardMinutes(60);
 
-    protected static final Predicate<DateTime> PI_STALE = new Predicate<DateTime>() {
-        @Override
-        public boolean apply(DateTime input) {
-            return false;
-        }
-    };
+    protected static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
+    
+    protected final RadioPlayerUploadResultStore store;
+    protected final DayRangeGenerator rangeGenerator;
     
     private final String remoteServiceId;
     private final Publisher publisher;
-    protected final RadioPlayerUploadResultStore store;
     private final RadioPlayerService service;
-    protected final DayRangeGenerator rangeGenerator;
 
     public RadioPlayerUploadHealthProbe(String remoteServiceId, Publisher publisher, RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
         this.remoteServiceId = remoteServiceId;
@@ -92,7 +86,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         }
         switch (mostRecent.type()) {
         case SUCCESS:
-            if (FileType.PI == type && (isToday(day) && olderThan(mostRecent, Duration.standardMinutes(20)) || olderThan(mostRecent, standardHours(4)))) {
+            if (FileType.PI == type && (isToday(day) && olderThan(mostRecent, PI_TODAY_STALENESS) || olderThan(mostRecent, PI_NOT_TODAY_STALENESS))) {
                 return FAILURE;
             }
             return SUCCESS;
