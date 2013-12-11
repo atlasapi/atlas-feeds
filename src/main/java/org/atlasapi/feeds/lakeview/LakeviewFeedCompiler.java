@@ -61,14 +61,13 @@ public class LakeviewFeedCompiler {
     private static final String PROVIDER_ID = "0x484707D1";
     private static final String XBOX_ONE_PROVIDER_ID = "25148946";
     private static final Pattern HIERARCHICAL_URI_PATTERN
-        = Pattern.compile("http://www.channel4.com/programmes/[a-z0-9\\-]+(\\/.*)?");
+        = Pattern.compile("http://www.channel4.com/programmes/[a-z0-9\\-]+(\\/episode-guide\\/.*)?");
 
     private static final String ID_PREFIX = "http://channel4.com/en-GB";
     private static final String C4_PROG_BASE = "http://www.channel4.com/programmes/";
     private static final String C4_API_BASE = "https://xbox.channel4.com/pmlsd/";
     
-    private static final String SERIES_ID_PREFIX = ID_PREFIX + "/TVSeries/";
-    private static final String EPISODE_ID_PREFIX = ID_PREFIX + "/TVEpisode/";
+    private static final String SERIES_ID_PREFIX = ID_PREFIX + "/TVSeries/"; 
     
     private final Clock clock;
 	private ChannelResolver channelResolver;
@@ -263,7 +262,8 @@ public class LakeviewFeedCompiler {
         } else {
             providerMediaId = brandId(container).replaceAll(SERIES_ID_PREFIX, "") + "#" + assetId;
         }
-        addIdElements(element, EPISODE_ID_PREFIX + providerMediaId, providerMediaId);
+        addIdElements(element, episodeId(episode), providerMediaId);
+        
         
         if (genericTitlesEnabled) {
             if (episode.getEpisodeNumber() != null) {
@@ -296,7 +296,7 @@ public class LakeviewFeedCompiler {
         videoInstance.appendChild(stringElement("PrimaryAudioLanguage", LAKEVIEW, "en-GB"));
         videoInstance.appendChild(stringElement("VideoInstanceType", LAKEVIEW, "Full"));
         
-        instances.appendChild(videoInstance);           
+        instances.appendChild(videoInstance);
 
         appendCommonElements(element, episode, originalPublicationDate, lastModified, applicationSpecificData, instances);
         
@@ -461,7 +461,7 @@ public class LakeviewFeedCompiler {
 
     private String seriesId(Series series) {
         // TVSeason
-        return idFrom("TVSeason", findHierarchicalUri(series).replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "/"));
+        return idFrom("TVSeason", findHierarchicalUri(series).replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "-"));
     }
 
     private String episodeId(Episode episode) {
@@ -483,8 +483,8 @@ public class LakeviewFeedCompiler {
     }
     
     @VisibleForTesting
-    public String episodeAtomUri(String brandAtomUri, String assetId) {
-    	return String.format("%s#%s", brandAtomUri, assetId);
+    public String episodeAtomUri(String episodeUri, String assetId) {
+    	return String.format("%s#%s", episodeUri.replaceAll("/episode-guide.*", ""), assetId);
     }
     
     private static String findHierarchicalUri(Identified id) {
