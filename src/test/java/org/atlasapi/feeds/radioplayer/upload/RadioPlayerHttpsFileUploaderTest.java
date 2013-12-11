@@ -52,21 +52,4 @@ public class RadioPlayerHttpsFileUploaderTest {
         assertFalse(result.getTransactionId().isPresent());
 //        assertFalse(result.getMessage().isPresent());
     }
-
-    @Test
-    public void testTimedOutUploadReturnsFailureWithTimeToRetry() throws Exception {
-        
-        byte[] fileData = new byte[0];
-        FileUpload file = new FileUpload("20130905_352_PI.xml", fileData);
-        String retryAfter = "1000";
-        HttpResponse response = new HttpResponse("retry after", 503, "statusLine", ImmutableMap.of("RetryAfter", retryAfter ));
-        Mockito.when(httpClient.post(radioPlayerUrl + "/pi/", new BytesPayload(fileData))).thenReturn(response);
-        
-        FileUploaderResult result = uploader.upload(file);
-        
-        assertEquals(FileUploadResultType.FAILURE, result.getStatus());
-
-        assertFalse(result.getTransactionId().isPresent());
-        assertEquals(retryAfter, result.getMessage().get());
-    }
 }
