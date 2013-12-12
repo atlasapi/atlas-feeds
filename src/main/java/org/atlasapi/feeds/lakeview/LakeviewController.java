@@ -24,7 +24,7 @@ public class LakeviewController {
     @RequestMapping("/feeds/lakeview/c4.xml")
     public void producateOutput(HttpServletResponse response) throws IOException {
         
-        feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent(Publisher.C4_PMLSD)), response.getOutputStream());
+        feedOutputter.outputTo(feedCompiler.compile(contentFetcher.fetchContent(Publisher.C4_PMLSD_P06)), response.getOutputStream());
         
     }
     
