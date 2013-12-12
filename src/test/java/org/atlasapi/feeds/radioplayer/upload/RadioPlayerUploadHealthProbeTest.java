@@ -84,7 +84,7 @@ public class RadioPlayerUploadHealthProbeTest {
     @Test
     public void testSuccessTimesOut() {
      
-        recorder.record(successfulResult(new DateTime(DateTimeZones.UTC).minusMinutes(25)));
+        recorder.record(successfulResult(new DateTime(DateTimeZones.UTC).minusMinutes(65)));
         
         ProbeResult result = probe.probe();
         
