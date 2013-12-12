@@ -190,7 +190,7 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                 for (Country country : locationsByCountry.keySet()) {
                     if (!country.equals(Countries.ALL)) {
                         Collection<Location> countryLocations = locationsByCountry.get(country);
-                        programme.appendChild(ondemandElement(broadcastItem, null, countryLocations, id));
+                        programme.appendChild(ondemandElement(clip, version, null, countryLocations, id));
                     }
                 }
                 elements.add(programme);

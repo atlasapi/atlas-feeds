@@ -148,7 +148,7 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
                     Entry<Interval, List<Location>> windowAndlocations = locationsClosestAfterNow(availabilityIndex, now);
                     Interval window = windowAndlocations.getKey();
                     List<Location> location = windowAndlocations.getValue();
-                    Element ode = ondemandElement(broadcastItem, window, location, id);
+                    Element ode = ondemandElement(broadcastItem.getItem(), broadcastItem.getVersion(), window, location, id);
                     programme.appendChild(ode);
                 }
             }

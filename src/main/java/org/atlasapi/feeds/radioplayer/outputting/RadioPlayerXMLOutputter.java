@@ -159,17 +159,12 @@ public abstract class RadioPlayerXMLOutputter {
         return null;
     }
     
-    protected Element ondemandElement(RadioPlayerBroadcastItem broadcastItem, Interval window, Collection<Location> locations, RadioPlayerService service) {
-        
-        Item item = broadcastItem.getItem();
+    protected Element ondemandElement(Item item, Version version, Interval window, Collection<Location> locations, RadioPlayerService service) {
         
         Element ondemandElement = createElement("ondemand", EPGDATATYPES);
 
         ondemandElement.appendChild(stringElement("player", RADIOPLAYER, ONDEMAND_LOCATION + item.getCanonicalUri().substring(item.getCanonicalUri().lastIndexOf("/") + 1)));
 
-
-        Version version = broadcastItem.getVersion();
-        
         // get the list of non-null policies from the provided list of locations
         List<Policy> policies = Lists.newArrayList(Iterables.filter(
                 Iterables.transform(locations, new Function<Location, Policy>() {
