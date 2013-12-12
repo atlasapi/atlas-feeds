@@ -179,7 +179,7 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
               //Because outputCountries always contains ALL, international block output is suppressed.
                 Multimap<Country, Location> locationsByCountry = ArrayListMultimap.create();
                 // bucket locations by country
-                for (Encoding encoding : broadcastItem.getVersion().getManifestedAs()) {
+                for (Encoding encoding : version.getManifestedAs()) {
                     for (Location location : encoding.getAvailableAt()) {
                         for (Country country : representedBy(encoding, location)) {
                             locationsByCountry.put(country, location);
