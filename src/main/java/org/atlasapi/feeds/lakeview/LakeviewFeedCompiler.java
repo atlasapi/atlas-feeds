@@ -61,9 +61,18 @@ public class LakeviewFeedCompiler {
     private static final String PROVIDER_ID = "0x484707D1";
     private static final String XBOX_ONE_PROVIDER_ID = "25148946";
     private static final Pattern HIERARCHICAL_URI_PATTERN
-        = Pattern.compile("http://www.channel4.com/programmes/[a-z0-9\\-]+(\\/episode-guide\\/.*)?");
+        = Pattern.compile("http://www.channel4.com/programmes/[a-z0-9\\-]+(\\/.*)?");
+    private static final Pattern BRAND_NAME_TAG_PATTERN
+        = Pattern.compile("tag:.*\\/programmes\\/(.*)$");
+    private static final Pattern SEASON_NAME_TAG_PATTERN
+        = Pattern.compile("tag:.*\\/programmes\\/(.*)\\/episode-guide\\/(.*)");
+    
+    private static final Pattern TAG_PATTERN_PREFIX
+        = Pattern.compile("tag:.*\\/programmes\\/(.*)");
 
     private static final String ID_PREFIX = "http://channel4.com/en-GB";
+    private static final String EPISODE_ID_PREFIX = ID_PREFIX + "/TVEpisode/";
+    
     private static final String C4_PROG_BASE = "http://www.channel4.com/programmes/";
     private static final String C4_API_BASE = "https://xbox.channel4.com/pmlsd/";
     
@@ -96,10 +105,14 @@ public class LakeviewFeedCompiler {
 
         for (LakeviewContentGroup contentGroup : contents) {
 
-            List<Element> groupElements = elementsForGroup(lastModified, contentGroup);
-            
-            for (Element element : groupElements) {
-                feed.appendChild(element);
+            try {
+                List<Element> groupElements = elementsForGroup(lastModified, contentGroup);
+                
+                for (Element element : groupElements) {
+                    feed.appendChild(element);
+                }
+            } catch (Exception e) {
+                System.out.println(e);
             }
             
         }
@@ -186,12 +199,10 @@ public class LakeviewFeedCompiler {
 
     private Element createBrandElem(Brand brand, DateTime originalPublicationDate, DateTime brandEndDate, String lastModified, LakeviewContentGroup contentGroup, int addedSeasons) {
         Element element = createElement("TVSeries", LAKEVIEW);
-        String providerMediaId = brandAtomUri(findHierarchicalUri(brand));
-        String brandId = brandId(brand);
-        addIdElements(element, brandId, brandId.replaceAll(SERIES_ID_PREFIX, ""));
+        addIdElements(element, brandId(brand), providerMediaId(brand));
         element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle()));
         
-        appendCommonElements(element, brand, originalPublicationDate, lastModified, providerMediaId, null);
+        appendCommonElements(element, brand, originalPublicationDate, lastModified, brandAtomUri(findTagAlias(brand)), null);
         if (addedSeasons > 0) {
             element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(addedSeasons)));
         }
@@ -220,9 +231,9 @@ public class LakeviewFeedCompiler {
 
     Element createSeriesElem(Series series, Brand parent, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVSeason", LAKEVIEW);
-        String applicationSpecificData = seriesAtomUri(findHierarchicalUri(series));
+        String applicationSpecificData = seriesAtomUri(findTagAlias(series));
         String seriesId = seriesId(series);
-        String providerMediaId = findHierarchicalUri(series).replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "/");
+        String providerMediaId = providerMediaId(series);
         addIdElements(element, seriesId, providerMediaId);
         
         if (genericTitlesEnabled) {
@@ -247,6 +258,17 @@ public class LakeviewFeedCompiler {
         return element;
     }
 
+    private String providerMediaId(Brand brand) {
+        return brandId(brand).replaceAll(SERIES_ID_PREFIX, "");
+    }
+    private String providerMediaId(Series series) {
+        Matcher matcher = SEASON_NAME_TAG_PATTERN.matcher(findTagAlias(series));
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Could not parse tag for season providerMediaId");
+        }
+        return matcher.group(1) + '/' + matcher.group(2);
+    }
+
     Element createEpisodeElem(Episode episode, Brand container, Series series, DateTime originalPublicationDate, String lastModified) {
         Element element = createElement("TVEpisode", LAKEVIEW);
         
@@ -254,15 +276,15 @@ public class LakeviewFeedCompiler {
         element.appendChild(comment);
         
         String assetId = extractAssetId(episode);
-        String applicationSpecificData = episodeAtomUri(brandAtomUri(findHierarchicalUri(container)), assetId);
+        String applicationSpecificData = episodeAtomUri(brandAtomUri(findTagAlias(container)), assetId);
         
         String providerMediaId;
         if (series != null) {
-            providerMediaId = findHierarchicalUri(series).replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "/") + "#" + assetId;
+            providerMediaId = providerMediaId(series) + "#" + assetId;
         } else {
-            providerMediaId = brandId(container).replaceAll(SERIES_ID_PREFIX, "") + "#" + assetId;
+            providerMediaId = providerMediaId(container) + "#" + assetId;
         }
-        addIdElements(element, episodeId(episode), providerMediaId);
+        addIdElements(element, EPISODE_ID_PREFIX + providerMediaId, providerMediaId);
         
         
         if (genericTitlesEnabled) {
@@ -448,38 +470,50 @@ public class LakeviewFeedCompiler {
     }
 
     private String webUriRoot(Content content) {
-        if (content instanceof Episode) {
-            return findHierarchicalUri((Episode)content);
+        Matcher matcher = TAG_PATTERN_PREFIX.matcher(findTagAlias(content));
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Could not parse tag for brand name");
         }
-        return content.getCanonicalUri();
+        return C4_PROG_BASE + matcher.group(1);
     }
     
     private String brandId(Brand brand) {
         // TVSeries
-        return idFrom("TVSeries", findHierarchicalUri(brand).replaceAll(C4_PROG_BASE, ""));
+        Matcher matcher = BRAND_NAME_TAG_PATTERN.matcher(findTagAlias(brand));
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Could not parse tag for brand name");
+        }
+        return idFrom("TVSeries", matcher.group(1));
     }
 
     private String seriesId(Series series) {
         // TVSeason
-        return idFrom("TVSeason", findHierarchicalUri(series).replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/", "-"));
+        Matcher matcher = SEASON_NAME_TAG_PATTERN.matcher(findTagAlias(series));
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Could not parse tag for season name");
+        }
+        return idFrom("TVSeason", matcher.group(1) + '-' + matcher.group(2));
     }
 
-    private String episodeId(Episode episode) {
-        // TVEpisode
-        String episodeUri = findHierarchicalUri(episode);
-        return idFrom("TVEpisode", episodeUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide/(series-\\d+)/(episode-\\d+)", "-$1-$2"));
-    }
-    
     private String idFrom(String type, String id) {
         return String.format("%s/%s/%s", ID_PREFIX, type, id);
     }
     
-    public String brandAtomUri(String brandUri) {
-    	return String.format("%s%s/4od.atom", C4_API_BASE, brandUri.replaceAll(C4_PROG_BASE, ""));
+    public String brandAtomUri(String brandTag) {
+        Matcher matcher = BRAND_NAME_TAG_PATTERN.matcher(brandTag);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Could not parse tag for brand name");
+        }
+        return String.format("%s%s/4od.atom", C4_API_BASE, matcher.group(1));
     }
     
-    public String seriesAtomUri(String seriesUri) {
-    	return String.format("%s%s/4od.atom#%s", C4_API_BASE, seriesUri.replaceAll(C4_PROG_BASE, "").replaceAll("/episode-guide.*", ""), seriesUri.replaceAll(C4_PROG_BASE + ".*/episode-guide/", ""));
+    public String seriesAtomUri(String seriesTag) {
+        Matcher matcher = SEASON_NAME_TAG_PATTERN.matcher(seriesTag);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Could not parse tag for season name");
+        }
+        
+        return String.format("%s%s/4od.atom#%s", C4_API_BASE, matcher.group(1), matcher.group(2));
     }
     
     @VisibleForTesting
@@ -487,16 +521,13 @@ public class LakeviewFeedCompiler {
     	return String.format("%s#%s", episodeUri.replaceAll("/episode-guide.*", ""), assetId);
     }
     
-    private static String findHierarchicalUri(Identified id) {
-        if (isHierarchicalUri(id.getCanonicalUri())) {
-            return id.getCanonicalUri();
-        }
+    private static String findTagAlias(Identified id) {
         for (String alias : id.getAliasUrls()) {
-            if (isHierarchicalUri(alias)) {
+            if (alias.startsWith("tag:")) {
                 return alias;
             }
         }
-        throw new IllegalStateException(id + " : no hierarchical uri");
+        throw new IllegalStateException(id + " : no tag alias");
     }
 
     private static boolean isHierarchicalUri(String uri) {
