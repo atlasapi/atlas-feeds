@@ -41,7 +41,7 @@ public class RadioPlayerHttpsFileUploader implements FileUploader {
                 break;
             }
             int retry = Integer.parseInt(retryAfterHeader);
-            Thread.sleep(retry);
+            Thread.sleep(retry * 1000);
             response = postFileData(upload);
             retries++;
             if (retries % RETRY_LOG_INTERVAL == 0) {
