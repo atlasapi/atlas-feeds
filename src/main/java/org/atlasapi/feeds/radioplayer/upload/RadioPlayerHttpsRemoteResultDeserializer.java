@@ -17,7 +17,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 
 
-public class RadioPlayerFileUploadResultTypeDeserializer implements JsonDeserializer<FileUploadResultType> {
+public class RadioPlayerHttpsRemoteResultDeserializer implements JsonDeserializer<RadioPlayerHttpsRemoteResult> {
 
     private static final Map<String, FileUploadResultType> RESULT_TYPE_MAPPING = ImmutableMap.<String, FileUploadResultType>builder()
             .put("accepted", FileUploadResultType.UNKNOWN)
@@ -28,10 +28,10 @@ public class RadioPlayerFileUploadResultTypeDeserializer implements JsonDeserial
             .build();
     
     @Override
-    public FileUploadResultType deserialize(JsonElement json, Type type,
+    public RadioPlayerHttpsRemoteResult deserialize(JsonElement json, Type type,
             JsonDeserializationContext context) throws JsonParseException {
         JsonObject jsonObj = json.getAsJsonObject();
-        return convertToResultType(jsonObj);
+        return new RadioPlayerHttpsRemoteResult(convertToResultType(jsonObj), jsonObj.toString());
     }
 
     private FileUploadResultType convertToResultType(JsonObject jsonObj) {
@@ -59,7 +59,7 @@ public class RadioPlayerFileUploadResultTypeDeserializer implements JsonDeserial
         }))) {
             return FileUploadResultType.UNKNOWN;
         }
-        
+
         return FileUploadResultType.SUCCESS;
     }
 

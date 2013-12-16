@@ -88,6 +88,7 @@ public class RadioPlayerModule {
 
 	private @Value("${rp.ftp.enabled}") String ftpUpload;
 	private @Value("${rp.ftp.services}") String ftpUploadServices;
+	private @Value("${rp.ftp.manualUpload.enabled}") String ftpManualUpload;
 	
 	private @Value("${rp.s3.serviceId}") String s3ServiceId;
 	private @Value("${rp.s3.bucket}") String s3Bucket;
@@ -95,12 +96,14 @@ public class RadioPlayerModule {
 	private @Value("${s3.secret}") String s3Secret;
 	private @Value("${rp.s3.ftp.enabled}") String s3FtpUpload;
 	private @Value("${rp.s3.https.enabled}") String s3HttpsUpload;
+	
 	private @Value("${rp.https.serviceId}") String httpsServiceId;
 	private @Value("${rp.https.enabled}") String httpsUpload;
 	private @Value("${rp.https.services}") String httpsUploadServices;
 	private @Value("${rp.https.baseUrl}") String httpsUrl;
 	private @Value("${rp.https.username}") String httpsUsername;
 	private @Value("${rp.https.password}") String httpsPassword;
+	private @Value("${rp.https.manualUpload.enabled}") String httpsManualUpload;
 	
     private @Autowired KnownTypeContentResolver knownTypeContentResolver;
 	private @Autowired SimpleScheduler scheduler;
@@ -200,12 +203,12 @@ public class RadioPlayerModule {
     
     private Map<String, RadioPlayerUploadTaskBuilder> taskBuilderMap() {
         ImmutableMap.Builder<String, RadioPlayerUploadTaskBuilder> map = ImmutableMap.<String, RadioPlayerUploadTaskBuilder>builder();
-        if (Boolean.parseBoolean(s3FtpUpload) || Boolean.parseBoolean(ftpUpload)) {
+        if (Boolean.parseBoolean(ftpManualUpload)) {
             for (Entry<String, RemoteServiceDetails> ftpService : radioPlayerUploadServiceDetails().entrySet()) {
                 map.put(ftpService.getKey(), radioPlayerFtpUploadTaskBuilder());
             }
         }
-        if (Boolean.parseBoolean(s3HttpsUpload) || Boolean.parseBoolean(httpsUpload)) {
+        if (Boolean.parseBoolean(httpsManualUpload)) {
             map.put(httpsServiceId, radioPlayerHttpsUploadTaskBuilder());
         }
         return map.build();

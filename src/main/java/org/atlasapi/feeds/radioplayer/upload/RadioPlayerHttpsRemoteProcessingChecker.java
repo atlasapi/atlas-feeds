@@ -33,7 +33,7 @@ public class RadioPlayerHttpsRemoteProcessingChecker extends ScheduledTask {
     private final RadioPlayerUploadResultStore resultStore;
     private final AdapterLog log;
     private final Gson gson = new GsonBuilder()
-            .registerTypeAdapter(FileUploadResultType.class, new RadioPlayerFileUploadResultTypeDeserializer())
+            .registerTypeAdapter(RadioPlayerHttpsRemoteResult.class, new RadioPlayerHttpsRemoteResultDeserializer())
             .create();
 
     public RadioPlayerHttpsRemoteProcessingChecker(SimpleHttpClient httpClient, String service, RadioPlayerUploadResultStore resultStore, AdapterLog log) {
@@ -58,30 +58,34 @@ public class RadioPlayerHttpsRemoteProcessingChecker extends ScheduledTask {
         List<FileUploadResult> unknowns = unknownsFrom(allResults);
         
         for (FileUploadResult unknown : unknowns) {
-            FileUploadResultType newResult = performRemoteCheck(unknown);
+            RadioPlayerHttpsRemoteResult remoteResult = performRemoteCheck(unknown);
             
             RadioPlayerFilenameMatcher matcher = RadioPlayerFilenameMatcher.on(unknown.filename().trim().replace(".xml", ""));
             for (FileUploadResult result : getCurrentResults(matcher)) {
-                resultStore.record(radioPlayerResult(matcher, result.withRemoteProcessingResult(newResult)));
+                FileUploadResult newResult = result.withRemoteProcessingResult(remoteResult.getResultType());
+                if (FileUploadResultType.FAILURE.equals(remoteResult.getResultType())) {
+                    newResult = newResult.withMessage("RadioPlayer response: " + remoteResult.getMessage());
+                }
+                resultStore.record(radioPlayerResult(matcher, newResult));
             }
         }
     }
 
-    private FileUploadResultType performRemoteCheck(FileUploadResult fileResult) throws HttpException, Exception {
+    private RadioPlayerHttpsRemoteResult performRemoteCheck(FileUploadResult fileResult) throws HttpException, Exception {
         String transactionId = fileResult.transactionId();
         if (transactionId == null) {
-            return FileUploadResultType.FAILURE;
+            return new RadioPlayerHttpsRemoteResult(FileUploadResultType.FAILURE, "No transaction Id");
         }
         
-        return httpClient.get(SimpleHttpRequest.httpRequestFrom(transactionId, new HttpResponseTransformer<FileUploadResultType>() {
+        return httpClient.get(SimpleHttpRequest.httpRequestFrom(transactionId, new HttpResponseTransformer<RadioPlayerHttpsRemoteResult>() {
 
             @Override
-            public FileUploadResultType transform(HttpResponsePrologue prologue, InputStream body)
+            public RadioPlayerHttpsRemoteResult transform(HttpResponsePrologue prologue, InputStream body)
                     throws HttpException, Exception {
                 if (prologue.statusCode() == HttpStatusCode.NOT_FOUND.code()) {
-                    return FileUploadResultType.FAILURE;
+                    return new RadioPlayerHttpsRemoteResult(FileUploadResultType.FAILURE, "404 - Transaction Id not found in RadioPlayer system.");
                 }
-                return gson.fromJson(new InputStreamReader(body, Charsets.UTF_8), FileUploadResultType.class);
+                return gson.fromJson(new InputStreamReader(body, Charsets.UTF_8), RadioPlayerHttpsRemoteResult.class);
             }
         }));
         
