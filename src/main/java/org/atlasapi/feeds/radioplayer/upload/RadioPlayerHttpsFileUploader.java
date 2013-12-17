@@ -22,6 +22,7 @@ public class RadioPlayerHttpsFileUploader implements FileUploader {
     private static final String RETRY_AFTER_HEADER = "Retry-After";
     private static final String LOCATION_HEADER = "Location";
     private static final int RETRY_LOG_INTERVAL = 5;
+    private static final int DEFAULT_RETRY_TIME = 30;
     private final SimpleHttpClient httpClient;
     private final String baseUrl;
 
@@ -37,10 +38,12 @@ public class RadioPlayerHttpsFileUploader implements FileUploader {
         int retries = 0;
         while (response.statusCode() == RETRY_AFTER) {
             String retryAfterHeader = response.header(RETRY_AFTER_HEADER);
-            if (retryAfterHeader == null) {
-                break;
+            int retry;
+            if (retryAfterHeader != null) {
+                retry = Integer.parseInt(retryAfterHeader);
+            } else {
+                retry = DEFAULT_RETRY_TIME;
             }
-            int retry = Integer.parseInt(retryAfterHeader);
             Thread.sleep(retry * 1000);
             response = postFileData(upload);
             retries++;
