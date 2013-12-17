@@ -27,14 +27,14 @@ public class LakeviewFeedCompilerTest {
 	public void testBrandAtomUri() {
 		LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, false, true);
 		assertEquals("https://xbox.channel4.com/pmlsd/educating-essex/4od.atom", 
-				feedCompiler.brandAtomUri("http://www.channel4.com/programmes/educating-essex"));
+				feedCompiler.brandAtomUri("tag:pmlsc.channel4.com,2009:/programmes/educating-essex"));
 	}
 	
 	@Test
 	public void testSeriesAtomUri() {
 		LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, false, true);
 		assertEquals("https://xbox.channel4.com/pmlsd/educating-essex/4od.atom#series-1", 
-				feedCompiler.seriesAtomUri("http://www.channel4.com/programmes/educating-essex/episode-guide/series-1"));
+				feedCompiler.seriesAtomUri("tag:pmlsc.channel4.com,2009:/programmes/educating-essex/episode-guide/series-1"));
 	}
 	
 	@Test
@@ -60,9 +60,9 @@ public class LakeviewFeedCompilerTest {
 	private Element getSeriesElement(String seriesTitle, int seriesNumber, boolean genericTitleEnabled) {
         LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, genericTitleEnabled, true);
         Series series = new Series("seriesUri", "seriesCurie", null);
-        series.addAliasUrl("http://www.channel4.com/programmes/brand/episode-guide/series-1");
+        series.addAliasUrl("tag:pmlsc.channel4.com,2009:/programmes/brand/episode-guide/series-1");
         Brand parent = new Brand("brandUri", "brandCurie", null);
-        parent.addAliasUrl("http://www.channel4.com/programmes/brand");
+        parent.addAliasUrl("tag:pmlsc.channel4.com,2009:/programmes/brand");
         series.setTitle(seriesTitle);
         series.withSeriesNumber(seriesNumber);
         
@@ -94,13 +94,14 @@ public class LakeviewFeedCompilerTest {
     private Element getEpisodeElement(String episodeTitle, int episodeNumber, boolean genericTitleEnabled) {
         LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, genericTitleEnabled, true);
 	    Episode episode = new Episode("http://www.channel4.com/programmes/hierarchical-uri/episode-guide/series-1/episode-1", "episodeCurie", null);
+	    episode.addAliasUrl("tag:pmlsc.channel4.com,2009:/programmes/hierarchical-uri/episode-guide/series-1/episode-1");
 	    Brand container = new Brand("brandUri", "brandCurie", null);
-        container.addAliasUrl("http://www.channel4.com/programmes/brand");
+        container.addAliasUrl("tag:pmlsc.channel4.com,2009:/programmes/brand");
 	    episode.setTitle(episodeTitle);
 	    episode.setEpisodeNumber(episodeNumber);
 	    
 	    Series series = new Series("seriesUri", "seriesCurie", null);
-        series.addAliasUrl("http://www.channel4.com/programmes/brand/episode-guide/series-1");
+        series.addAliasUrl("tag:pmlsc.channel4.com,2009:/programmes/brand/episode-guide/series-1");
 	    
 	    Version version = new Version();
 	    Encoding encoding = new Encoding();
