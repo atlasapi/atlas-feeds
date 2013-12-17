@@ -66,6 +66,9 @@ public class LakeviewFeedCompiler {
         = Pattern.compile("tag:.*\\/programmes\\/(.*)$");
     private static final Pattern SEASON_NAME_TAG_PATTERN
         = Pattern.compile("tag:.*\\/programmes\\/(.*)\\/episode-guide\\/(.*)");
+    private static final Pattern EPISODE_NAME_TAG_PATTERN
+        = Pattern.compile("tag:.*\\/programmes\\/(.*)\\/episode-guide\\/(series-\\d+)\\/(episode-\\d+)");
+
     
     private static final Pattern TAG_PATTERN_PREFIX
         = Pattern.compile("tag:.*\\/programmes\\/(.*)");
@@ -284,7 +287,7 @@ public class LakeviewFeedCompiler {
         } else {
             providerMediaId = providerMediaId(container) + "#" + assetId;
         }
-        addIdElements(element, EPISODE_ID_PREFIX + providerMediaId, providerMediaId);
+        addIdElements(element, episodeId(episode), providerMediaId);
         
         
         if (genericTitlesEnabled) {
@@ -493,6 +496,14 @@ public class LakeviewFeedCompiler {
             throw new IllegalArgumentException("Could not parse tag for season name");
         }
         return idFrom("TVSeason", matcher.group(1) + '-' + matcher.group(2));
+    }
+    
+    private String episodeId(Episode episode) {
+        Matcher matcher = EPISODE_NAME_TAG_PATTERN.matcher(findTagAlias(episode));
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Could not parse tag for season name");
+        }
+        return idFrom("TVEpisode", matcher.group(1) + '-' + matcher.group(2) + "-" + matcher.group(3));
     }
 
     private String idFrom(String type, String id) {
