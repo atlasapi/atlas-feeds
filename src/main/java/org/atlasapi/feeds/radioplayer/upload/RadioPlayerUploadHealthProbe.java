@@ -99,7 +99,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         if (mostRecentSuccess != null) {
             if (!isStale(mostRecentSuccess)) {
                 if (FileUploadResultType.SUCCESS.equals(mostRecent.remoteProcessingResult())) {
-                    return mostRecentUploadEntryResultType(mostRecent, day, type);
+                    return probeResultTypeFrom(mostRecent, day, type);
                 }
                 return INFO;
             }
@@ -111,22 +111,22 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         if (FileUploadResultType.FAILURE.equals(mostRecent.remoteProcessingResult())) {
             return FAILURE;
         }
-        return mostRecentUploadEntryResultType(mostRecent, day, type);
+        return probeResultTypeFrom(mostRecent, day, type);
     }
 
     private boolean isStale(FileUploadResult mostRecent) {
         return olderThan(mostRecent, FAILURE_WINDOW);
     }
 
-    private ProbeResultType mostRecentUploadEntryResultType(FileUploadResult mostRecent, LocalDate day, FileType type) {
-        switch (mostRecent.type()) {
+    private ProbeResultType probeResultTypeFrom(FileUploadResult result, LocalDate day, FileType type) {
+        switch (result.type()) {
         case SUCCESS:
-            if (FileType.PI == type && (isToday(day) && olderThan(mostRecent, PI_TODAY_STALENESS) || olderThan(mostRecent, PI_NOT_TODAY_STALENESS))) {
+            if (FileType.PI == type && (isToday(day) && olderThan(result, PI_TODAY_STALENESS) || olderThan(result, PI_NOT_TODAY_STALENESS))) {
                 return FAILURE;
             }
             return SUCCESS;
         case FAILURE:
-            if (day.isAfter(mostRecent.uploadTime().toLocalDate().plusDays(1)) || RadioPlayerServices.untracked.contains(service)) {
+            if (day.isAfter(result.uploadTime().toLocalDate().plusDays(1)) || RadioPlayerServices.untracked.contains(service)) {
                 return INFO;
             } else {
                 return FAILURE;
