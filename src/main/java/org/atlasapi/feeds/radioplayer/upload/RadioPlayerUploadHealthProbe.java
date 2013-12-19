@@ -97,6 +97,9 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
     private ProbeResultType entryResultType(FileUploadResult mostRecentSuccess, FileUploadResult mostRecent, LocalDate day, FileType type) {
         if (mostRecentSuccess != null) {
+            if (FileUploadResultType.SUCCESS.equals(mostRecent.remoteProcessingResult()) && FileType.OD == type) {
+                return SUCCESS;
+            }
             if (!isStale(mostRecentSuccess)) {
                 if (FileUploadResultType.SUCCESS.equals(mostRecent.remoteProcessingResult())) {
                     return probeResultTypeFrom(mostRecent, day, type);
