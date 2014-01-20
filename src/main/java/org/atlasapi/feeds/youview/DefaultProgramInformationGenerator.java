@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview;
 
-import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getAsin;
-import static org.atlasapi.feeds.youview.LoveFilmOutputUtils.getId;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
 
 import java.util.List;
 import java.util.Map;
@@ -13,6 +13,7 @@ import javax.xml.datatype.Duration;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 
 import tva.metadata._2010.BasicContentDescriptionType;
@@ -30,18 +31,14 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
 
-public class LoveFilmProgramInformationGenerator implements ProgramInformationGenerator {
+public class DefaultProgramInformationGenerator implements ProgramInformationGenerator {
 
-    private static final String VERSION_SUFFIX = "_version";
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
-    private static final String LOVEFILM_PRODUCT_CRID_PREFIX = "crid://lovefilm.com/product/";
-    private static final String LOVEFILM_CRID_PREFIX = LOVEFILM_PRODUCT_CRID_PREFIX;
-    private static final String LOVEFILM_DEEP_LINKING_ID = "deep_linking_id.lovefilm.com";
     
     private static final Predicate<Certificate> FILTER_CERT_FOR_GB = new Predicate<Certificate>() {
         @Override
@@ -61,6 +58,7 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
         }
     };
     
+    // TODO are there other settings than this? E, NR, TBA etc
     private static final Map<String, String> YOUVIEW_CERTIFICATE_MAPPING = ImmutableMap.<String, String>builder()
             .put("U", "http://bbfc.org.uk/BBFCRatingCS/2002#U")
             .put("PG", "http://bbfc.org.uk/BBFCRatingCS/2002#PG")
@@ -71,23 +69,30 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
     
     private DatatypeFactory datatypeFactory;
 
+    private final YouViewPerPublisherFactory configFactory;
+
     /**
      * NB DatatypeFactory is required for creation of javax Durations
      * This DatatypeFactory class may not be threadsafe
      */
-    public LoveFilmProgramInformationGenerator() {
+    public DefaultProgramInformationGenerator(YouViewPerPublisherFactory configFactory) {
+        this.configFactory = checkNotNull(configFactory);
         try {
             this.datatypeFactory = DatatypeFactory.newInstance();
         } catch (DatatypeConfigurationException e) {
             Throwables.propagate(e);
         }
     }
-
+    
     @Override
     public ProgramInformationType generate(Item item) {
+        Publisher publisher = item.getPublisher();
+        PublisherConfiguration config = configFactory.getConfiguration(publisher);
+        IdParser idParser = configFactory.getIdParser(publisher);
+        
         ProgramInformationType progInfo = new ProgramInformationType();
-
-        progInfo.setProgramId(createCrid(item) + VERSION_SUFFIX);
+        
+        progInfo.setProgramId(idParser.createVersionCrid(config.getCridPrefix(), item));
         progInfo.setBasicDescription(generateBasicDescription(item));
         progInfo.setDerivedFrom(generateDerivedFrom(item));
         progInfo.getOtherIdentifier().add(generateOtherId(item));
@@ -95,13 +100,10 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
         return progInfo;
     }
 
-    public static String createCrid(Item item) {
-        return LOVEFILM_PRODUCT_CRID_PREFIX + getId(item);
-    }
-
     private UniqueIDType generateOtherId(Item item) {
+        PublisherConfiguration config = configFactory.getConfiguration(item.getPublisher());
         UniqueIDType id = new UniqueIDType();
-        id.setAuthority(LOVEFILM_DEEP_LINKING_ID);
+        id.setAuthority(config.getDeepLinkingAuthorityId());
         id.setValue(getAsin(item));
         return id;
     }
@@ -109,18 +111,13 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
     private BasicContentDescriptionType generateBasicDescription(Item item) {
         ExtendedContentDescriptionType basicDescription = new ExtendedContentDescriptionType();
 
-        // ParentalGuidance
         basicDescription.setParentalGuidance(generateParentalGuidance(item));
-        // ProductionDate
         Optional<TVATimeType> prodDate = generateProductionDate(item);
         if (prodDate.isPresent()) {
             basicDescription.setProductionDate(prodDate.get());
         }
-        // ProductionLocation
         basicDescription.getProductionLocation().addAll(generateProductLocations(item));
-        // Duration
         basicDescription.setDuration(generateDuration(item));
-        // tva2:TargetingInformation
         basicDescription.getTargetingInformationOrTargetingInformationRef().add(new TargetingInformationType());
 
         return basicDescription;
@@ -170,8 +167,12 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
     }
 
     private DerivedFromType generateDerivedFrom(Item item) {
+        Publisher publisher = item.getPublisher();
+        PublisherConfiguration config = configFactory.getConfiguration(publisher);
+        IdParser idParser = configFactory.getIdParser(publisher);
+        
         DerivedFromType derivedFrom = new DerivedFromType();
-        derivedFrom.setCrid(LOVEFILM_CRID_PREFIX + getId(item));
+        derivedFrom.setCrid(idParser.createCrid(config.getCridPrefix(), item));
         return derivedFrom;
     }
 }

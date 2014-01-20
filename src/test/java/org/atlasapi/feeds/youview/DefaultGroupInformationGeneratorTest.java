@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -15,6 +16,7 @@ import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
+import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
@@ -23,6 +25,7 @@ import org.atlasapi.media.entity.Specialization;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import tva.metadata._2010.BaseMemberOfType;
 import tva.metadata._2010.BasicContentDescriptionType;
@@ -33,6 +36,7 @@ import tva.metadata._2010.GroupInformationType;
 import tva.metadata._2010.ProgramGroupTypeType;
 import tva.metadata._2010.SynopsisLengthType;
 import tva.metadata._2010.SynopsisType;
+import tva.metadata.extended._2010.ContentPropertiesType;
 import tva.metadata.extended._2010.ExtendedRelatedMaterialType;
 import tva.metadata.extended._2010.StillImageContentAttributesType;
 import tva.mpeg7._2008.ExtendedLanguageType;
@@ -47,9 +51,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.intl.Countries;
 
-public class LoveFilmGroupInformationGeneratorTest {
+public class DefaultGroupInformationGeneratorTest {
     
     private static final Function<GenreType, String> TO_HREF = new Function<GenreType, String>() {
         @Override
@@ -58,11 +63,15 @@ public class LoveFilmGroupInformationGeneratorTest {
         }
     };
     
-    private final SynopsisTypeEquivalence SYNOPSIS_EQUIVALENCE = new SynopsisTypeEquivalence();
-    private final NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
+    private SynopsisTypeEquivalence SYNOPSIS_EQUIVALENCE = new SynopsisTypeEquivalence();
+    private NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
     
-    private final YouViewGenreMapping genreMapping = new YouViewGenreMapping(); 
-    private final GroupInformationGenerator generator = new LoveFilmGroupInformationGenerator(genreMapping);
+    private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
+            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("base uri"), new LoveFilmIdParser(), new LoveFilmGenreMapping(), Mockito.mock(SimpleHttpClient.class))
+            .withPublisher(Publisher.AMAZON_UNBOX, new UnboxPublisherConfiguration("base uri"), new UnboxIdParser(), new UnboxGenreMapping(), Mockito.mock(SimpleHttpClient.class))
+            .build(); 
+
+    private final GroupInformationGenerator generator = new DefaultGroupInformationGenerator(configFactory);
     
     @Test
     public void testRelatedMaterialNotGeneratedIfNullOrEmptyImageString() {
@@ -479,6 +488,60 @@ public class LoveFilmGroupInformationGeneratorTest {
             assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
         }
     }
+    
+    @Test
+    public void testImageDimensionsDefaultIfNoneProvided() { 
+        Film film = createFilm();
+        Image image = new Image("someImageUri");
+        image.setHeight(246);
+        image.setWidth(572);
+        film.setImages(ImmutableSet.of(image));
+        
+        GroupInformationType groupInfo = generator.generate(film);
+        
+        ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(groupInfo.getBasicDescription().getRelatedMaterial());
+        ContentPropertiesType contentProperties = relatedMaterial.getContentProperties();
+        StillImageContentAttributesType attributes = (StillImageContentAttributesType) Iterables.getOnlyElement(contentProperties.getContentAttributes());
+        assertThat(attributes.getHeight(), is(equalTo(246)));
+        assertThat(attributes.getWidth(), is(equalTo(572)));
+        
+        film.setImages(ImmutableSet.<Image>of());
+        
+        groupInfo = generator.generate(film);
+        
+        relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(groupInfo.getBasicDescription().getRelatedMaterial());
+        contentProperties = relatedMaterial.getContentProperties();
+        attributes = (StillImageContentAttributesType) Iterables.getOnlyElement(contentProperties.getContentAttributes());
+        assertThat(attributes.getHeight(), is(equalTo(360)));
+        assertThat(attributes.getWidth(), is(equalTo(640)));
+    }
+    
+    @Test
+    public void testUnboxDefaultImageDimensions() { 
+        Film film = createFilm();
+        film.setPublisher(Publisher.AMAZON_UNBOX);
+        film.setImages(ImmutableSet.<Image>of());
+        
+        GroupInformationType groupInfo = generator.generate(film);
+        
+        ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(groupInfo.getBasicDescription().getRelatedMaterial());
+        ContentPropertiesType contentProperties = relatedMaterial.getContentProperties();
+        StillImageContentAttributesType attributes = (StillImageContentAttributesType) Iterables.getOnlyElement(contentProperties.getContentAttributes());
+        assertThat(attributes.getHeight(), is(equalTo(320)));
+        assertThat(attributes.getWidth(), is(equalTo(240)));
+    }
+    
+    @Test
+    public void testUnboxConstants() {
+        Film film = createFilm();
+        film.setPublisher(Publisher.AMAZON_UNBOX);
+        film.setCanonicalUri("http://unbox.amazon.co.uk/movies/123456");
+        
+        GroupInformationType groupInfo = generator.generate(film);
+        assertEquals("crid://unbox.amazon.co.uk/product/123456", groupInfo.getGroupId());
+        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
+    }
+    
     
     private Brand createBrand() {
         Brand brand = new Brand();

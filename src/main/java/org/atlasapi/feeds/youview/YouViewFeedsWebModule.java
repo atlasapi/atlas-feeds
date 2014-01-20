@@ -4,7 +4,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
-import org.atlasapi.feeds.youview.www.YouViewController;
+import org.atlasapi.feeds.youview.www.YouViewFeedController;
+import org.atlasapi.feeds.youview.www.YouViewUploadController;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,44 +22,62 @@ import com.metabroadcast.common.security.UsernameAndPassword;
 @Configuration
 public class YouViewFeedsWebModule {
     
-    private @Value("${youview.upload.validation}") String validation;
-    private @Value("${youview.upload.url}") String url;
-    private @Value("${youview.upload.username}") String username;
-    private @Value("${youview.upload.password}") String password;
+    private @Value("${youview.upload.validation}") String performValidation;
+    private @Value("${youview.upload.lovefilm.url}") String loveFilmUrl;
+    private @Value("${youview.upload.lovefilm.username}") String loveFilmUsername;
+    private @Value("${youview.upload.lovefilm.password}") String loveFilmPassword;
+    private @Value("${youview.upload.unbox.url}") String unboxUrl;
+    private @Value("${youview.upload.unbox.username}") String unboxUsername;
+    private @Value("${youview.upload.unbox.password}") String unboxPassword;
     
     private @Autowired DatabasedMongo mongo;
-    private @Autowired LastUpdatedContentFinder executor;
+    private @Autowired LastUpdatedContentFinder contentFinder;
     private @Autowired ContentResolver contentResolver;
     
-    public @Bean YouViewController feedController() {
-        return new YouViewController(feedGenerator(), executor, contentResolver, uploader(), deleter());
+    @Bean
+    public YouViewUploadController uploadController() {
+        return new YouViewUploadController(contentFinder, contentResolver, loveFilmClient());
     }
     
-    public @Bean TvAnytimeGenerator feedGenerator() {
+    @Bean
+    public YouViewFeedController feedController() {
+        return new YouViewFeedController(feedGenerator(), contentFinder, contentResolver);
+    }
+    
+    @Bean 
+    public TvAnytimeGenerator feedGenerator() {
         return new DefaultTvAnytimeGenerator(
-            new LoveFilmProgramInformationGenerator(), 
-            new LoveFilmGroupInformationGenerator(genreMapping()), 
-            new LoveFilmOnDemandLocationGenerator(), 
+            new DefaultProgramInformationGenerator(configFactory()), 
+            new DefaultGroupInformationGenerator(configFactory()), 
+            new DefaultOnDemandLocationGenerator(configFactory()), 
             contentResolver,
-            Boolean.parseBoolean(validation)
+            Boolean.parseBoolean(performValidation)
         );
     }
-
-    public @Bean YouViewGenreMapping genreMapping() {
-        return new YouViewGenreMapping();
-    }
-
+    
     @Bean
-    public YouViewUploader uploader() {
-        return new YouViewUploader(url, feedGenerator(), httpClient());
-    }
-
-    @Bean
-    public YouViewDeleter deleter() {
-        return new YouViewDeleter(url, httpClient());
+    public YouViewRemoteClient loveFilmClient() {
+        return new YouViewRemoteClient(feedGenerator(), configFactory());
     }
     
-    private SimpleHttpClient httpClient() {
+    private YouViewPerPublisherFactory configFactory() {
+        return YouViewPerPublisherFactory.builder()
+                .withPublisher(
+                        Publisher.LOVEFILM, 
+                        new LoveFilmPublisherConfiguration(loveFilmUrl), 
+                        new LoveFilmIdParser(), 
+                        new LoveFilmGenreMapping(), 
+                        httpClient(loveFilmUsername, loveFilmPassword))
+                .withPublisher(
+                        Publisher.AMAZON_UNBOX, 
+                        new UnboxPublisherConfiguration(unboxUrl), 
+                        new UnboxIdParser(), 
+                        new UnboxGenreMapping(), 
+                        httpClient(unboxUsername, unboxPassword))
+                .build();
+    }
+    
+    private SimpleHttpClient httpClient(String username, String password) {
         return new SimpleHttpClientBuilder()
             .withHeader("Content-Type", "text/xml")
             .withSocketTimeout(1, TimeUnit.MINUTES)

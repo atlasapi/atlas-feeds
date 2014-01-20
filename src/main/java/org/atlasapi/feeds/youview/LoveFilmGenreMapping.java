@@ -1,19 +1,19 @@
 package org.atlasapi.feeds.youview;
 
-import static org.atlasapi.feeds.utils.lovefilm.LoveFilmGenreConverter.IS_SUB_GENRE;
-import static org.atlasapi.feeds.utils.lovefilm.LoveFilmGenreConverter.TO_ATLAS_GENRE;
-import static org.atlasapi.feeds.utils.lovefilm.LoveFilmGenreConverter.TO_ATLAS_SUB_GENRE;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
@@ -25,30 +25,33 @@ import com.google.common.io.InputSupplier;
 import com.google.common.io.LineProcessor;
 import com.google.common.io.Resources;
 
-public class YouViewGenreMapping {
-    
-    private static final String GENRE_FILE = "LOVEFiLM_YouView_GenreMapping.csv";
 
-    private final Logger log = LoggerFactory.getLogger(YouViewGenreMapping.class);
-    
-    private final Multimap<String, String> mapping;
+public class LoveFilmGenreMapping implements GenreMapping {
 
-    public YouViewGenreMapping() {
-        this.mapping = generateLines();
+    private static final String LOVEFILM_GENRE_FILENAME = "LOVEFiLM_YouView_GenreMapping.csv";
+    private static final String LOVEFILM_GENRES_PREFIX = "http://lovefilm.com/genres/";
+    
+    private final Logger log = LoggerFactory.getLogger(LoveFilmGenreMapping.class);
+    
+    private final Multimap<String, String> genreMapping;
+    
+    public LoveFilmGenreMapping() {
+        this.genreMapping = generateLines();
     }
 
-    public Collection<String> get(String key) {
-        return mapping.get(key);
+    @Override
+    public Collection<String> getYouViewGenresFor(String genre) {
+        return genreMapping.get(genre);
     }
 
     private Multimap<String, String> generateLines() {
         try {
-            URL resource = Resources.getResource(getClass(), GENRE_FILE);
+            URL resource = Resources.getResource(getClass(), LOVEFILM_GENRE_FILENAME);
             InputSupplier<InputStreamReader> supplier = Resources.newReaderSupplier(resource, Charsets.UTF_8);
 
             return CharStreams.readLines(supplier, new GenreMappingLineProcessor());
         } catch (IOException e) {
-            log.error(String.format("Error reading genre file %s", GENRE_FILE), e);
+            log.error(String.format("Error reading genre file %s", LOVEFILM_GENRE_FILENAME), e);
             return null;
         }
     }
@@ -92,5 +95,28 @@ public class YouViewGenreMapping {
         public Multimap<String, String> getResult() {
             return mapping.build();
         }
+        
+        private static final Predicate<String> IS_SUB_GENRE = new Predicate<String>() {
+            @Override
+            public boolean apply(String input) {
+                return input.contains(" > ");
+            }
+        };
     }
+    
+    public static final Function<String, String> TO_ATLAS_GENRE = new Function<String, String>() {
+        @Override
+        public String apply(@Nullable String input) {
+            input = input.toLowerCase();
+            return LOVEFILM_GENRES_PREFIX + input.replace('/', '-').replace(" ", "");
+        }
+    };
+    
+    public static final Function<String, String> TO_ATLAS_SUB_GENRE = new Function<String, String>() {
+        @Override
+        public String apply(@Nullable String input) {
+            input = input.toLowerCase();
+            return LOVEFILM_GENRES_PREFIX + input.replace('/', '-').replace(" ", "").replace(">", "/");
+        }
+    };
 }
