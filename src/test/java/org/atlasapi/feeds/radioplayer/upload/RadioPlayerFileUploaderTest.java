@@ -132,7 +132,7 @@ public class RadioPlayerFileUploaderTest {
 		context.checking(new Expectations(){{
 			allowing(channelResolver).fromUri("http://www.bbc.co.uk/services/radio1/england");
 			will(returnValue(Maybe.just(channel)));
-		    oneOf(scheduleResolver).schedule(with(any(DateTime.class)), with(any(DateTime.class)), with(channels), with(publishers), with(Optional.<ApplicationConfiguration>absent())); will(returnValue(schedule));
+		    oneOf(scheduleResolver).unmergedSchedule(with(any(DateTime.class)), with(any(DateTime.class)), with(channels), with(publishers)); will(returnValue(schedule));
 		    oneOf(recorder).record(with(successfulUploadResult()));
 		}});
 		
