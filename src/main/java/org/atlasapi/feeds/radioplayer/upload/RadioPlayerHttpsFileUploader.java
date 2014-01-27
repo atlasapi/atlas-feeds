@@ -5,8 +5,10 @@ import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.feeds.upload.FileUploader;
 import org.atlasapi.feeds.upload.FileUploaderResult;
+import org.mortbay.log.Log;
 
 import com.metabroadcast.common.http.BytesPayload;
+import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
 
@@ -19,6 +21,8 @@ public class RadioPlayerHttpsFileUploader implements FileUploader {
     private static final int ACCEPTED = 202;
     private static final String RETRY_AFTER_HEADER = "Retry-After";
     private static final String LOCATION_HEADER = "Location";
+    private static final int RETRY_LOG_INTERVAL = 5;
+    private static final int DEFAULT_RETRY_TIME = 30;
     private final SimpleHttpClient httpClient;
     private final String baseUrl;
 
@@ -29,15 +33,35 @@ public class RadioPlayerHttpsFileUploader implements FileUploader {
 
     @Override
     public FileUploaderResult upload(FileUpload upload) throws Exception {
-        String queryUrl = baseUrl + "/" + getFileType(upload) + "/";
-        HttpResponse response = httpClient.post(queryUrl, new BytesPayload(upload.getFileData()));
+        
+        HttpResponse response = postFileData(upload);
+        int retries = 0;
+        while (response.statusCode() == RETRY_AFTER) {
+            String retryAfterHeader = response.header(RETRY_AFTER_HEADER);
+            int retry;
+            if (retryAfterHeader != null) {
+                retry = Integer.parseInt(retryAfterHeader);
+            } else {
+                retry = DEFAULT_RETRY_TIME;
+            }
+            Thread.sleep(retry * 1000);
+            response = postFileData(upload);
+            retries++;
+            if (retries % RETRY_LOG_INTERVAL == 0) {
+                Log.info(String.format("Retried upload %s times for file %s", retries, upload.getFilename()));
+            }
+        }
         if (response.statusCode() == ACCEPTED) {
-            return new FileUploaderResult(FileUploadResultType.SUCCESS).withTransactionId(response.header(LOCATION_HEADER));
-        } else if (response.statusCode() == RETRY_AFTER) {
-            return new FileUploaderResult(FileUploadResultType.FAILURE).withMessage("Retry after: " + response.header(RETRY_AFTER_HEADER) + " seconds");
+            FileUploaderResult result = new FileUploaderResult(FileUploadResultType.SUCCESS).withTransactionId(response.header(LOCATION_HEADER));
+            return (retries > 0) ? result.withMessage(String.format("Uploaded after %d Retries", retries)) : result;
         }
         return FileUploaderResult.failure()
             .withMessage(response.statusCode() + ": " + response.statusLine());
+    }
+
+    private HttpResponse postFileData(FileUpload upload) throws HttpException {
+        String queryUrl = baseUrl + "/" + getFileType(upload) + "/";
+        return httpClient.post(queryUrl, new BytesPayload(upload.getFileData()));
     }
 
     private String getFileType(FileUpload file) {

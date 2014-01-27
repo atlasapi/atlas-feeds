@@ -203,7 +203,7 @@ public final class FileUploadResult {
         }
         if (that instanceof FileUploadResult) {
             FileUploadResult other = (FileUploadResult) that;
-            return Objects.equal(dateTime, other.dateTime) && Objects.equal(filename, filename) && Objects.equal(success, other.success);
+            return Objects.equal(dateTime, other.dateTime) && Objects.equal(filename, other.filename) && Objects.equal(success, other.success);
         }
         return false;
     }

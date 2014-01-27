@@ -6,14 +6,14 @@ import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCES
 import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
 import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 import static org.atlasapi.feeds.upload.FileUploadResult.DATE_ORDERING;
-import static org.joda.time.Duration.standardHours;
+
+import java.util.List;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.media.entity.Publisher;
-import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.joda.time.LocalDate;
 
@@ -29,21 +29,25 @@ import com.metabroadcast.common.time.DayRangeGenerator;
 
 public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
-    private static final String TRANSACTION_URL_PREFIX = "https://dev02.radioplayer.co.uk/ingestor/metadata/v1/";
-    protected static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
-
-    protected static final Predicate<DateTime> PI_STALE = new Predicate<DateTime>() {
+    private static final Predicate<FileUploadResult> IS_REMOTE_SUCCESS = new Predicate<FileUploadResult>() {
         @Override
-        public boolean apply(DateTime input) {
-            return false;
+        public boolean apply(FileUploadResult input) {
+            return FileUploadResultType.SUCCESS.equals(input.type()) 
+                    && FileUploadResultType.SUCCESS.equals(input.remoteProcessingResult());
         }
     };
+    private static final Duration FAILURE_WINDOW = Duration.standardHours(4).plus(Duration.standardMinutes(25));
+    private static final Duration PI_NOT_TODAY_STALENESS = Duration.standardHours(4);
+    private static final Duration PI_TODAY_STALENESS = Duration.standardMinutes(60);
+
+    protected static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
+    
+    protected final RadioPlayerUploadResultStore store;
+    protected final DayRangeGenerator rangeGenerator;
     
     private final String remoteServiceId;
     private final Publisher publisher;
-    protected final RadioPlayerUploadResultStore store;
     private final RadioPlayerService service;
-    protected final DayRangeGenerator rangeGenerator;
 
     public RadioPlayerUploadHealthProbe(String remoteServiceId, Publisher publisher, RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
         this.remoteServiceId = remoteServiceId;
@@ -75,30 +79,57 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         if (Iterables.isEmpty(results)) {
             return new ProbeResultEntry(INFO, filename, "No Data");
         }
-        
-        return new ProbeResultEntry(entryResultType(mostRecentResult(results), day, type), filename, buildEntryValue(results));
+        List<? extends FileUploadResult> dateOrderedResults = orderByDate(results);
+        return new ProbeResultEntry(entryResultType(mostRecentSuccess(dateOrderedResults), dateOrderedResults.get(0), day, type), filename, buildEntryValue(results));
     }
 
-    private FileUploadResult mostRecentResult(Iterable<? extends FileUploadResult> results) {
-        return DATE_ORDERING.reverse().immutableSortedCopy(results).get(0);
+    private FileUploadResult mostRecentSuccess(List<? extends FileUploadResult> results) {
+        return Iterables.get(Iterables.filter(results, IS_REMOTE_SUCCESS), 0, null);
+    }
+
+    private List<? extends FileUploadResult> orderByDate(Iterable<? extends FileUploadResult> results) {
+        return DATE_ORDERING.reverse().immutableSortedCopy(results);
     }
 
     private String linkedFilename(FileType type, LocalDate day) {
         return String.format("<a style=\"text-decoration:none\" href=\"/feeds/%1$s/ukradioplayer/%2$s_%3$s_%4$s.xml\">%2$s_%3$s_%4$s.xml</a>", publisher.name().toLowerCase(), day.toString("yyyyMMdd"), service.getRadioplayerId(), type.name());
     }
 
-    private ProbeResultType entryResultType(FileUploadResult mostRecent, LocalDate day, FileType type) {
+    private ProbeResultType entryResultType(FileUploadResult mostRecentSuccess, FileUploadResult mostRecent, LocalDate day, FileType type) {
+        if (mostRecentSuccess != null) {
+            if (FileUploadResultType.SUCCESS.equals(mostRecent.remoteProcessingResult()) && FileType.OD == type) {
+                return SUCCESS;
+            }
+            if (!isStale(mostRecentSuccess)) {
+                if (FileUploadResultType.SUCCESS.equals(mostRecent.remoteProcessingResult())) {
+                    return probeResultTypeFrom(mostRecent, day, type);
+                }
+                return INFO;
+            }
+            return FAILURE;
+        } 
+        if (!isStale(mostRecent)) {
+            return INFO;
+        } 
         if (FileUploadResultType.FAILURE.equals(mostRecent.remoteProcessingResult())) {
             return FAILURE;
         }
-        switch (mostRecent.type()) {
+        return probeResultTypeFrom(mostRecent, day, type);
+    }
+
+    private boolean isStale(FileUploadResult mostRecent) {
+        return olderThan(mostRecent, FAILURE_WINDOW);
+    }
+
+    private ProbeResultType probeResultTypeFrom(FileUploadResult result, LocalDate day, FileType type) {
+        switch (result.type()) {
         case SUCCESS:
-            if (FileType.PI == type && (isToday(day) && olderThan(mostRecent, Duration.standardMinutes(20)) || olderThan(mostRecent, standardHours(4)))) {
+            if (FileType.PI == type && (isToday(day) && olderThan(result, PI_TODAY_STALENESS) || olderThan(result, PI_NOT_TODAY_STALENESS))) {
                 return FAILURE;
             }
             return SUCCESS;
         case FAILURE:
-            if (day.isAfter(mostRecent.uploadTime().toLocalDate().plusDays(1)) || RadioPlayerServices.untracked.contains(service)) {
+            if (day.isAfter(result.uploadTime().toLocalDate().plusDays(1)) || RadioPlayerServices.untracked.contains(service)) {
                 return INFO;
             } else {
                 return FAILURE;
@@ -132,6 +163,9 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
         builder.append("</td><td>");
         if (result.transactionId() != null) {
             builder.append("Transaction status url: " + result.transactionId());
+            if (result.message() != null) {
+                builder.append(" " + result.message());
+            }
         } else if (result.message() != null) {
             builder.append(result.message());
         } else {
