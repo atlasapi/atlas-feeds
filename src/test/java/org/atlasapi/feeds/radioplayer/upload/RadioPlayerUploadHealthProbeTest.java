@@ -84,7 +84,7 @@ public class RadioPlayerUploadHealthProbeTest {
     @Test
     public void testSuccessTimesOut() {
      
-        recorder.record(successfulResult(new DateTime(DateTimeZones.UTC).minusMinutes(65)));
+        recorder.record(successfulResult(new DateTime(DateTimeZones.UTC).minusMinutes(1065)));
         
         ProbeResult result = probe.probe();
         
@@ -120,6 +120,7 @@ public class RadioPlayerUploadHealthProbeTest {
     }
 
     public RadioPlayerUploadResult result(DateTime successDate, FileUploadResultType type) {
-        return new RadioPlayerUploadResult(PI, SERVICE, successDate.toLocalDate(), new FileUploadResult(REMOTE_SERVICE_ID, String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type));
+        return new RadioPlayerUploadResult(PI, SERVICE, successDate.toLocalDate(), 
+                new FileUploadResult(REMOTE_SERVICE_ID, String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type).withRemoteProcessingResult(SUCCESS).withTransactionId("123"));
     }
 }
