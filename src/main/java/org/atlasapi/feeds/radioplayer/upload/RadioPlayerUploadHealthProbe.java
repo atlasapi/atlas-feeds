@@ -23,7 +23,7 @@ import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultEntry;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultType;
-import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.DayRange;
 import com.metabroadcast.common.time.DayRangeGenerator;
 
@@ -48,8 +48,10 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     private final String remoteServiceId;
     private final Publisher publisher;
     private final RadioPlayerService service;
+    private final Clock clock;
 
-    public RadioPlayerUploadHealthProbe(String remoteServiceId, Publisher publisher, RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
+    public RadioPlayerUploadHealthProbe(Clock clock, String remoteServiceId, Publisher publisher, RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
+        this.clock = clock;
         this.remoteServiceId = remoteServiceId;
         this.publisher = publisher;
         this.store = store;
@@ -61,7 +63,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     public ProbeResult probe() {
         ProbeResult result = new ProbeResult(service.getName());
         
-        DayRange dayRange = rangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
+        DayRange dayRange = rangeGenerator.generate(clock.now().toLocalDate());
         
         for (LocalDate day : dayRange) {
             result.addEntry(entryFor(day, PI, store.resultsFor(PI, remoteServiceId, service, day)));
@@ -140,11 +142,11 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     }
 
     private boolean olderThan(FileUploadResult mostRecent, Duration todayStaleness) {
-        return mostRecent.uploadTime().plus(todayStaleness).isBeforeNow();
+        return mostRecent.uploadTime().plus(todayStaleness).isBefore(clock.now());
     }
 
     private boolean isToday(LocalDate day) {
-        return day.isEqual(new LocalDate(DateTimeZones.UTC));
+        return day.isEqual(clock.now().toLocalDate());
     }
 
     protected String buildEntryValue(Iterable<? extends FileUploadResult> results) {
