@@ -25,6 +25,7 @@ import com.metabroadcast.common.persistence.MongoTestHelper;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.time.DateTimeZones;
 import com.metabroadcast.common.time.DayRangeGenerator;
+import com.metabroadcast.common.time.TimeMachine;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
 
@@ -38,7 +39,8 @@ public class RadioPlayerUploadHealthProbeTest {
     //TODO: remove mongo and mock RadioPlayerUploadResultStore
     private final static DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     private final RadioPlayerUploadResultStore recorder = new UploadResultStoreBackedRadioPlayerResultStore(new MongoFileUploadResultStore(mongo));
-    private final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(REMOTE_SERVICE_ID, PUBLISHER, recorder, SERVICE, new DayRangeGenerator().withLookAhead(0).withLookBack(0));
+    private final TimeMachine clock = new TimeMachine(new DateTime(DateTimeZones.UTC));
+    private final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(clock, REMOTE_SERVICE_ID, PUBLISHER, recorder, SERVICE, new DayRangeGenerator().withLookAhead(0).withLookBack(0));
     
     @BeforeClass
     public static void setup() {
@@ -83,8 +85,11 @@ public class RadioPlayerUploadHealthProbeTest {
 
     @Test
     public void testSuccessTimesOut() {
+        
+        DateTime midday = new DateTime(2014,01,28,12,00,00,000, DateTimeZones.UTC);
+        clock.jumpTo(midday.plusHours(4).plusMinutes(1));
      
-        recorder.record(successfulResult(new DateTime(DateTimeZones.UTC).minusMinutes(1065)));
+        recorder.record(successfulResult(midday));
         
         ProbeResult result = probe.probe();
         
@@ -96,7 +101,7 @@ public class RadioPlayerUploadHealthProbeTest {
     @Test
     public void testFutureFailureIsInfo() {
         
-        RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(REMOTE_SERVICE_ID, PUBLISHER, recorder, SERVICE, new DayRangeGenerator().withLookAhead(4).withLookBack(0));
+        RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(clock, REMOTE_SERVICE_ID, PUBLISHER, recorder, SERVICE, new DayRangeGenerator().withLookAhead(4).withLookBack(0));
 
         
         DateTime futureDay = new DateTime(DateTimeZones.UTC).plusDays(4);
