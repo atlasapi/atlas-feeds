@@ -4,8 +4,11 @@ import static org.junit.Assert.assertEquals;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.atlasapi.application.query.ApiKeyNotFoundException;
 import org.atlasapi.application.query.ApplicationConfigurationFetcher;
+import org.atlasapi.application.query.InvalidIpForApiKeyException;
 import org.atlasapi.application.query.IpCheckingApiKeyConfigurationFetcher;
+import org.atlasapi.application.query.RevokedApiKeyException;
 import org.atlasapi.application.v3.Application;
 import org.atlasapi.application.v3.ApplicationCredentials;
 import org.atlasapi.application.v3.ApplicationStore;
@@ -30,7 +33,7 @@ public class ApplicationConfigurationIncludingQueryBuilderTest {
 	}
 
 	@Test
-	public void testBuild() {
+	public void testBuild() throws ApiKeyNotFoundException, RevokedApiKeyException, InvalidIpForApiKeyException {
 		final String testApiKey = "testKey";
 		final Application testApp = Application.application("testSlug").withCredentials(new ApplicationCredentials(testApiKey)).build();
 		

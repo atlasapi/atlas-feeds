@@ -19,6 +19,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
+import org.atlasapi.application.query.ApiKeyNotFoundException;
+import org.atlasapi.application.query.InvalidIpForApiKeyException;
+import org.atlasapi.application.query.RevokedApiKeyException;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.ChildRef;
@@ -79,7 +82,20 @@ public class SiteMapController {
             return null;
         }
         
-        ContentQuery query = queryBuilder.build(request);
+        ContentQuery query;
+        try {
+            query = queryBuilder.build(request);
+        } catch (ApiKeyNotFoundException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        } catch (RevokedApiKeyException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        } catch (InvalidIpForApiKeyException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        }
+       
         Set<Publisher> includedPublishers = query.getConfiguration().getEnabledSources();
         
         Iterable<SiteMapRef> sitemapRefs;
@@ -131,23 +147,32 @@ public class SiteMapController {
 
     @RequestMapping("/feeds/sitemaps/sitemap.xml")
     public String siteMapForBrand(HttpServletRequest request, HttpServletResponse response, @RequestParam("brand.uri") String brandUri) throws IOException {
-
-        final ContentQuery query = queryBuilder.build(new SitemapHackHttpRequest(request, brandUri));
+        try {
+            final ContentQuery query = queryBuilder.build(new SitemapHackHttpRequest(request, brandUri));
+            Iterable<Container> brands = Iterables.filter(resolve(URI_SPLITTER.split(brandUri),query), Container.class);
         
-        Iterable<Container> brands = Iterables.filter(resolve(URI_SPLITTER.split(brandUri),query), Container.class);
+            Map<ParentRef, Container> parentLookup = Maps.<ParentRef,Container>uniqueIndex(brands, ParentRef.T0_PARENT_REF);
+            Iterable<Item> contents = Iterables.filter(Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
+                @Override
+                public Iterable<Content> apply(Container input) {
+                    return resolve(Iterables.transform(input.getChildRefs(), ChildRef.TO_URI), query);
+                }
+            })),Item.class);
         
-        Map<ParentRef, Container> parentLookup = Maps.<ParentRef,Container>uniqueIndex(brands, ParentRef.T0_PARENT_REF);
-        Iterable<Item> contents = Iterables.filter(Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
-            @Override
-            public Iterable<Content> apply(Container input) {
-                return resolve(Iterables.transform(input.getChildRefs(), ChildRef.TO_URI), query);
-            }
-        })),Item.class);
-        
-        response.setStatus(HttpServletResponse.SC_OK);
-        cacheHeaderWriter.writeHeaders(request, response);
-        outputter.output(parentLookup, contents, response.getOutputStream());
-        return null;
+            response.setStatus(HttpServletResponse.SC_OK);
+            cacheHeaderWriter.writeHeaders(request, response);
+            outputter.output(parentLookup, contents, response.getOutputStream());
+            return null;
+        } catch (ApiKeyNotFoundException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        } catch (RevokedApiKeyException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        } catch (InvalidIpForApiKeyException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        }
     }
 
     private static final Splitter URI_SPLITTER = Splitter.on(",").omitEmptyStrings().trimResults();
