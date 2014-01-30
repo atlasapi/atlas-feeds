@@ -69,7 +69,9 @@ import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.RepetitionRules.Every;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
 import com.metabroadcast.common.security.UsernameAndPassword;
+import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.DayRangeGenerator;
+import com.metabroadcast.common.time.SystemClock;
 import com.metabroadcast.common.webapp.health.HealthController;
 
 @Configuration
@@ -356,11 +358,12 @@ public class RadioPlayerModule {
     }
 
     private void createHealthProbes(Map<String, Publisher> remoteIds, Iterable<RadioPlayerService> radioPlayerServices) {
+        final Clock clock = new SystemClock();
         for (final Entry<String, Publisher> remoteId : remoteIds.entrySet()) {
             Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>() {
                 @Override
                 public HealthProbe apply(RadioPlayerService service) {
-                    return new RadioPlayerUploadHealthProbe(remoteId.getKey(), remoteId.getValue(), uploadResultRecorder(), service, dayRangeGenerator);
+                    return new RadioPlayerUploadHealthProbe(clock, remoteId.getKey(), remoteId.getValue(), uploadResultRecorder(), service, dayRangeGenerator);
                 }
             };
             
