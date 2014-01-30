@@ -109,10 +109,4 @@ public class RadioPlayerServices {
         nationalNetworks = Sets.filter(services, MorePredicates.transformingPredicate(TO_ID, Predicates.or(Range.closedOpen(340, 350),Predicates.equalTo(358))));
 	}
 	
-	public static void main(String[] args) {
-        for (RadioPlayerService s : RadioPlayerServices.services) {
-            System.out.print(s.getRadioplayerId() + " ");
-        }
-    }
-
 }
