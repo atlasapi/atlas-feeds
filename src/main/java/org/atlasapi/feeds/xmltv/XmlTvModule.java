@@ -4,6 +4,8 @@ import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.upload.s3.S3FileUploader;
+import org.atlasapi.feeds.utils.DescriptionWatermarker;
+import org.atlasapi.feeds.utils.WatermarkModule;
 import org.atlasapi.feeds.xmltv.upload.XmlTvUploadHealthProbe;
 import org.atlasapi.feeds.xmltv.upload.XmlTvUploadService;
 import org.atlasapi.feeds.xmltv.upload.XmlTvUploadTask;
@@ -17,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import com.google.common.collect.ImmutableSet;
 import com.metabroadcast.common.health.HealthProbe;
@@ -27,6 +30,7 @@ import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.webapp.health.HealthController;
 
 @Configuration
+@Import( { WatermarkModule.class } )
 public class XmlTvModule {
     
     private static final String SERVICE_NAME = "xmltv";
@@ -38,6 +42,7 @@ public class XmlTvModule {
     @Autowired DatabasedMongo mongo;
     @Autowired HealthController health;
     @Autowired AdapterLog log;
+    @Autowired DescriptionWatermarker descriptionWatermarker;
     
     private @Value("${xmltv.upload.enabled}") String uploadEnabled;
     private @Value("${xmltv.upload.bucket}") String s3bucket;
@@ -53,7 +58,7 @@ public class XmlTvModule {
     }
     
     public @Bean XmlTvFeedCompiler xmltvFeedCompiler() {
-        return new XmlTvFeedCompiler(scheduleResolver, contentResolver, Publisher.PA);
+        return new XmlTvFeedCompiler(scheduleResolver, contentResolver, Publisher.PA, descriptionWatermarker);
     }
     
     @PostConstruct
