@@ -58,7 +58,7 @@ public class XmlTvModule {
     }
     
     public @Bean XmlTvFeedCompiler xmltvFeedCompiler() {
-        return new XmlTvFeedCompiler(scheduleResolver, contentResolver, Publisher.PA);
+        return new XmlTvFeedCompiler(scheduleResolver, contentResolver, Publisher.PA, descriptionWatermarker);
     }
     
     @PostConstruct
