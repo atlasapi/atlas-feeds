@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.xmltv;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.concat;
 
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.atlasapi.feeds.utils.DescriptionWatermarker;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Container;
@@ -45,11 +47,12 @@ public class XmlTvFeedCompiler {
     private final KnownTypeContentResolver contentResolver;
     private final XmlTvFeedOutputter outputter;
 
-    public XmlTvFeedCompiler(ScheduleResolver scheduleResolver, KnownTypeContentResolver contentResolver, Publisher publisher) {
-        this.scheduleResolver = scheduleResolver;
-        this.contentResolver = contentResolver;
-        this.publisher = publisher;
-        this.outputter = new XmlTvFeedOutputter();
+    public XmlTvFeedCompiler(ScheduleResolver scheduleResolver, KnownTypeContentResolver contentResolver, 
+            Publisher publisher, DescriptionWatermarker descriptionWatermarker) {
+        this.scheduleResolver = checkNotNull(scheduleResolver);
+        this.contentResolver = checkNotNull(contentResolver);
+        this.publisher = checkNotNull(publisher);
+        this.outputter = new XmlTvFeedOutputter(descriptionWatermarker);
     }
     
     public void compileChannelFeed(Range<LocalDate> days, Channel channel, OutputStream writeTo) throws IOException {

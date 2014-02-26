@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.xmltv;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -7,6 +9,7 @@ import java.io.Writer;
 import java.util.List;
 import java.util.Set;
 
+import org.atlasapi.feeds.utils.DescriptionWatermarker;
 import org.atlasapi.media.entity.Actor;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.CrewMember;
@@ -22,6 +25,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.time.DateTimeZones;
@@ -31,8 +35,11 @@ public class XmlTvFeedOutputter {
     private final String EMPTY_FIELD = "";
     private final Joiner fieldJoiner;
     private final XmlTvFeedGenreMap genreMap = new XmlTvFeedGenreMap();
+    private final DescriptionWatermarker watermarker = new DescriptionWatermarker(ImmutableSet.of("http://www.bbc.co.uk/services/bbctwo/england"));
+    private final DescriptionWatermarker descriptionWatermarker;
 
-    public XmlTvFeedOutputter() {
+    public XmlTvFeedOutputter(DescriptionWatermarker descriptionWatermarker) {
+        this.descriptionWatermarker = checkNotNull(descriptionWatermarker);
         this.fieldJoiner = Joiner.on("~");
     }
 
@@ -71,17 +78,13 @@ public class XmlTvFeedOutputter {
                 EMPTY_FIELD,//placeholder for film star rating
                 EMPTY_FIELD,//placeholder for film certificate
                 genre(broadcastItem.getItem().getGenres()),
-                removeNewLines(description(broadcastItem)),
+                removeNewLines(watermarker.watermark(broadcastItem.getBroadcast(), broadcastItem.getItem().getDescription())),
                 String.valueOf(false),// RT Choice
                 date(broadcast.getTransmissionTime()),
                 time(broadcast.getTransmissionTime()),
                 time(broadcast.getTransmissionEndTime()),
                 String.valueOf(broadcast.getBroadcastDuration() / 60)
         );
-    }
-
-    private String description(XmlTvBroadcastItem broadcastItem) {
-        return broadcastItem.getItem().getDescription() != null ? broadcastItem.getItem().getDescription() : EMPTY_FIELD;
     }
 
     private String performers(XmlTvBroadcastItem broadcastItem) {
