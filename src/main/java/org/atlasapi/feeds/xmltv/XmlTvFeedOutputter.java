@@ -78,13 +78,19 @@ public class XmlTvFeedOutputter {
                 EMPTY_FIELD,//placeholder for film star rating
                 EMPTY_FIELD,//placeholder for film certificate
                 genre(broadcastItem.getItem().getGenres()),
-                removeNewLines(watermarker.watermark(broadcastItem.getBroadcast(), broadcastItem.getItem().getDescription())),
+                removeNewLines(description(broadcastItem)),
                 String.valueOf(false),// RT Choice
                 date(broadcast.getTransmissionTime()),
                 time(broadcast.getTransmissionTime()),
                 time(broadcast.getTransmissionEndTime()),
                 String.valueOf(broadcast.getBroadcastDuration() / 60)
         );
+    }
+    
+    private String description(XmlTvBroadcastItem broadcastItem) {
+        String description = watermarker.watermark(broadcastItem.getBroadcast(), 
+                                                   broadcastItem.getItem().getDescription());
+        return description != null ? description : EMPTY_FIELD;
     }
 
     private String performers(XmlTvBroadcastItem broadcastItem) {

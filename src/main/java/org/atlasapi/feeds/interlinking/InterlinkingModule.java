@@ -15,7 +15,7 @@ public class InterlinkingModule {
 	private @Autowired LastUpdatedContentFinder executor;
 
 	public @Bean InterlinkController feedController() {
-		return new InterlinkController(executor, ImmutableMap.<Publisher, PlaylistToInterlinkFeed>of(Publisher.C4, new C4PlaylistToInterlinkFeedAdapter()));
+		return new InterlinkController(executor, ImmutableMap.<Publisher, PlaylistToInterlinkFeed>of(Publisher.C4_PMLSD, new C4PlaylistToInterlinkFeedAdapter()));
 	}
 	
 }

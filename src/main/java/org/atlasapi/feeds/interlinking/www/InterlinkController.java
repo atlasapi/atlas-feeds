@@ -26,6 +26,8 @@ import com.metabroadcast.common.time.DateTimeZones;
 @Controller
 public class InterlinkController {
     
+    private static final Publisher C4_PUBLISHER = Publisher.C4_PMLSD;
+    
     public final static String FEED_ID = "http://interlinking.channel4.com/feeds/bbc-interlinking/";
     private final InterlinkFeedOutputter outputter = new InterlinkFeedOutputter();
     private final PlaylistToInterlinkFeed adapter;
@@ -46,8 +48,8 @@ public class InterlinkController {
 
         // NB We don't include the 'to' datetime in the query to
         // avoid newer brand updates masking older item updates 
-        Iterator<Content> content = executor.updatedSince(Publisher.C4, from);
-		outputter.output(adapter.fromContent(FEED_ID+date, Publisher.C4, from, to, content), response.getOutputStream(), false, from);
+        Iterator<Content> content = executor.updatedSince(C4_PUBLISHER, from);
+		outputter.output(adapter.fromContent(FEED_ID+date, C4_PUBLISHER, from, to, content), response.getOutputStream(), false, from);
     }
     
     @RequestMapping("/feeds/bbc-interlinking/bootstrap")
@@ -58,7 +60,7 @@ public class InterlinkController {
     	DateTime from = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.LONDON);
     	DateTime to = new DateTime(DateTimeZones.LONDON);
 
-    	Iterator<Content> content = executor.updatedSince(Publisher.C4, from);
-    	outputter.output(adapter.fromContent(FEED_ID + "bootstrap", Publisher.C4, from, to, content), response.getOutputStream(), true, from);
+    	Iterator<Content> content = executor.updatedSince(C4_PUBLISHER, from);
+    	outputter.output(adapter.fromContent(FEED_ID + "bootstrap", C4_PUBLISHER, from, to, content), response.getOutputStream(), true, from);
     }
 }
