@@ -19,6 +19,7 @@ import org.joda.time.DateTime;
 
 public class InterlinkingDeltaUpdater {
 
+    private static final Publisher C4_PUBLISHER = Publisher.C4_PMLSD;
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
     private final LastUpdatedContentFinder contentFinder;
@@ -36,8 +37,8 @@ public class InterlinkingDeltaUpdater {
     }
     
     public InterlinkingDelta updateFeed(InterlinkingDelta delta, DateTime from, DateTime to) {
-        Iterator<Content> newContent = contentFinder.updatedSince(Publisher.C4, from);
-        InterlinkFeed interlinkFeed = adapter.fromContent(InterlinkController.FEED_ID + getDateString(from), Publisher.C4, from, to, newContent);
+        Iterator<Content> newContent = contentFinder.updatedSince(C4_PUBLISHER, from);
+        InterlinkFeed interlinkFeed = adapter.fromContent(InterlinkController.FEED_ID + getDateString(from), C4_PUBLISHER, from, to, newContent);
 
         Document document;
         if (delta.exists()) {
