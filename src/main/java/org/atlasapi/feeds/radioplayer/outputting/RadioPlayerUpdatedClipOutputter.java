@@ -10,6 +10,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import nu.xom.Attribute;
 import nu.xom.Element;
 
@@ -126,7 +128,7 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                 for (Encoding encoding : manifestedAs) {
                     Set<Location> availableAt = encoding.getAvailableAt();
                     for (Location location : availableAt) {
-                        DateTime availableFrom = location.getPolicy().getAvailabilityStart();
+                        DateTime availableFrom = location.getPolicy().getActualAvailabilityStart();
                         if (start == null || start.isAfter(availableFrom)) {
                             start = availableFrom;
                         }
@@ -246,7 +248,29 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
         }
     };
     
-    private static final Predicate<Clip> AUDIO_AND_AVAILABLE = Predicates.and(Clip.IS_AVAILABLE, AUDIO_MEDIA_TYPE);
+    private static final Predicate<Clip> IS_ACTUALLY_AVAILABLE = new Predicate<Clip>() {
+
+        @Override
+        public boolean apply(Clip input) {
+            for (Version version : input.getVersions()) {
+                for (Encoding encoding : version.getManifestedAs()) {
+                    for (Location location : encoding.getAvailableAt()) {
+                        if (location.getPolicy().getActualAvailabilityStart() != null
+                            && location.getPolicy().getActualAvailabilityStart().isBeforeNow()
+                            && (location.getPolicy().getAvailabilityEnd() == null || location.getPolicy()
+                                    .getAvailabilityEnd()
+                                    .isAfterNow())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+    };
+    
+    private static final Predicate<Clip> AUDIO_AND_AVAILABLE = Predicates.and(IS_ACTUALLY_AVAILABLE, AUDIO_MEDIA_TYPE);
     
     private static final Function<RadioPlayerBroadcastItem, List<Clip>> TO_CLIPS = Functions.compose(Item.TO_CLIPS, RadioPlayerBroadcastItem.TO_ITEM);
 }

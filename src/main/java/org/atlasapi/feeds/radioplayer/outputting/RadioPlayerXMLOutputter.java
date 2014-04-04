@@ -220,7 +220,8 @@ public abstract class RadioPlayerXMLOutputter {
     }
 
     private Interval window(Policy policy) {
-        return new Interval(policy.getAvailabilityStart(), availabilityEndOrMax(policy));
+        DateTime availabilityStart = policy.getActualAvailabilityStart() != null ? policy.getActualAvailabilityStart() : policy.getAvailabilityStart();
+        return new Interval(availabilityStart, availabilityEndOrMax(policy));
     }
 
     private void addAvailabilityDetailsToOndemand(Element ondemandElement, Interval window) {
