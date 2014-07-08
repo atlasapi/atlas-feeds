@@ -7,6 +7,7 @@ import static org.junit.Assert.assertThat;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.feeds.radioplayer.health.RadioPlayerUploadServiceHealthProbe;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
@@ -29,7 +30,7 @@ public class RadioPlayerServerHealthProbeTest {
     
     //TODO: remove mongo and mock RadioPlayerUploadResultStore
     public final static DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
-    public final RadioPlayerServerHealthProbe probe = new RadioPlayerServerHealthProbe("remote", new MongoFileUploadResultStore(mongo));
+    public final RadioPlayerUploadServiceHealthProbe probe = new RadioPlayerUploadServiceHealthProbe("remote", new MongoFileUploadResultStore(mongo));
     private RadioPlayerUploadResultStore recorder = new UploadResultStoreBackedRadioPlayerResultStore(new MongoFileUploadResultStore(mongo));
     
     @BeforeClass

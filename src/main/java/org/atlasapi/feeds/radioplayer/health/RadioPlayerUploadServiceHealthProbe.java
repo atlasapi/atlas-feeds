@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.radioplayer.upload;
+package org.atlasapi.feeds.radioplayer.health;
 
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.FAILURE;
 import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
@@ -12,12 +12,12 @@ import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultEntry;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultType;
 
-public class RadioPlayerServerHealthProbe implements HealthProbe {
+public class RadioPlayerUploadServiceHealthProbe implements HealthProbe {
 
     private final String serviceIdentifier;
     private final FileUploadResultStore resultStore;
 
-    public RadioPlayerServerHealthProbe(String serviceIdentifier, FileUploadResultStore resultStore) {
+    public RadioPlayerUploadServiceHealthProbe(String serviceIdentifier, FileUploadResultStore resultStore) {
         this.serviceIdentifier = serviceIdentifier;
         this.resultStore = resultStore;
     }

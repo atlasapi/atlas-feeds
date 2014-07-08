@@ -9,6 +9,8 @@ import static org.hamcrest.Matchers.is;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.feeds.radioplayer.health.RadioPlayerUploadHealthProbe;
+import org.atlasapi.feeds.radioplayer.health.StateChecker;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
@@ -40,7 +42,8 @@ public class RadioPlayerUploadHealthProbeTest {
     private final static DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     private final RadioPlayerUploadResultStore recorder = new UploadResultStoreBackedRadioPlayerResultStore(new MongoFileUploadResultStore(mongo));
     private final TimeMachine clock = new TimeMachine(new DateTime(DateTimeZones.UTC));
-    private final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(clock, REMOTE_SERVICE_ID, PUBLISHER, recorder, SERVICE, new DayRangeGenerator().withLookAhead(0).withLookBack(0));
+    private final StateChecker stateChecker = new StateChecker(clock);
+    private final RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(clock, REMOTE_SERVICE_ID, recorder, SERVICE, new DayRangeGenerator().withLookAhead(0).withLookBack(0), stateChecker);
     
     @BeforeClass
     public static void setup() {
@@ -101,7 +104,7 @@ public class RadioPlayerUploadHealthProbeTest {
     @Test
     public void testFutureFailureIsInfo() {
         
-        RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(clock, REMOTE_SERVICE_ID, PUBLISHER, recorder, SERVICE, new DayRangeGenerator().withLookAhead(4).withLookBack(0));
+        RadioPlayerUploadHealthProbe probe = new RadioPlayerUploadHealthProbe(clock, REMOTE_SERVICE_ID, recorder, SERVICE, new DayRangeGenerator().withLookAhead(4).withLookBack(0), stateChecker);
 
         
         DateTime futureDay = new DateTime(DateTimeZones.UTC).plusDays(4);

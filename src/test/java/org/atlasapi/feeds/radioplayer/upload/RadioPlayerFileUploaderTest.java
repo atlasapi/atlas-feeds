@@ -26,7 +26,6 @@ import org.apache.ftpserver.ftplet.UserManager;
 import org.apache.ftpserver.listener.ListenerFactory;
 import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
-import org.atlasapi.application.v3.ApplicationConfiguration;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
@@ -68,11 +67,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.net.HostSpecifier;
@@ -138,7 +134,7 @@ public class RadioPlayerFileUploaderTest {
 		
 		RadioPlayerGenreElementCreator genreElementCreator
             = new RadioPlayerGenreElementCreator(new RadioPlayerTSVReadingGenreMap(RadioPlayerTSVReadingGenreMap.GENRES_FILE));
-        RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, publishers, ImmutableMap.of(Publisher.BBC, genreElementCreator));
+        RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, Publisher.BBC, genreElementCreator);
 		
         ImmutableList<RadioPlayerService> services = ImmutableList.of(service);
         RemoteServiceDetails credentials = RemoteServiceDetails.forServer(HostSpecifier.from("127.0.0.1")).withPort(9521).withCredentials(new UsernameAndPassword("test","testpassword")).build();
@@ -148,7 +144,7 @@ public class RadioPlayerFileUploaderTest {
             will(returnValue(ImmutableList.of(fileUploader)));
         }});
 		
-		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(supplier, new RadioPlayerRecordingExecutor(recorder, MoreExecutors.sameThreadExecutor()), services, new DayRangeGenerator(), new SystemOutAdapterLog(), Iterables.getOnlyElement(publishers));
+		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(supplier, new RadioPlayerRecordingExecutor(recorder, MoreExecutors.sameThreadExecutor()), services, new DayRangeGenerator(), new SystemOutAdapterLog());
 
 		Executor executor = MoreExecutors.sameThreadExecutor();
 		executor.execute(uploader);

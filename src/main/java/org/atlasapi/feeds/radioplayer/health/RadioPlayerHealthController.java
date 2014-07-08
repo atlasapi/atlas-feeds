@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.radioplayer;
+package org.atlasapi.feeds.radioplayer.health;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -8,6 +8,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,7 +57,7 @@ public class RadioPlayerHealthController {
         return Iterables.concat(ImmutableList.of("ukrp-connect-"+serviceId), Iterables.transform(RadioPlayerServices.services, new Function<RadioPlayerService, String>() {
             @Override
             public String apply(RadioPlayerService service) {
-                return String.format("ukrp-%s-%s", serviceId, service.getName());
+                return String.format("ukrp-summary-%s-%s", serviceId, service.getName());
             }
         }));
     }
@@ -70,6 +72,7 @@ public class RadioPlayerHealthController {
         boolean allowed = checker.check(request);
         if (allowed) {
             if(slugs.containsKey(sid)) {
+                
                 return main.showHealthPageForSlugs(response, slugs.get(sid), false);
             } else {
                 response.sendError(HttpStatusCode.NOT_FOUND.code());

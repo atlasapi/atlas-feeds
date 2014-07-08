@@ -9,6 +9,11 @@ import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
+import org.atlasapi.feeds.radioplayer.health.RadioPlayerHealthController;
+import org.atlasapi.feeds.radioplayer.health.RadioPlayerUploadHealthProbe;
+import org.atlasapi.feeds.radioplayer.health.RadioPlayerUploadServiceHealthProbe;
+import org.atlasapi.feeds.radioplayer.health.RadioPlayerUploadSummaryHealthProbe;
+import org.atlasapi.feeds.radioplayer.health.StateChecker;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerGenreElementCreator;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerIdGenreMap;
 import org.atlasapi.feeds.radioplayer.upload.CachingRadioPlayerUploadResultStore;
@@ -16,9 +21,7 @@ import org.atlasapi.feeds.radioplayer.upload.RadioPlayerHttpsRemoteProcessingChe
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerHttpsUploadServicesSupplier;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadResultStore;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadServicesSupplier;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskBuilder;
 import org.atlasapi.feeds.radioplayer.upload.UploadResultStoreBackedRadioPlayerResultStore;
@@ -65,7 +68,6 @@ import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.RepetitionRules.Every;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
 import com.metabroadcast.common.security.UsernameAndPassword;
-import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.DayRangeGenerator;
 import com.metabroadcast.common.time.SystemClock;
 import com.metabroadcast.common.webapp.health.HealthController;
@@ -287,17 +289,26 @@ public class RadioPlayerModule {
 
     private void createHealthProbes(Set<String> remoteIds, Iterable<RadioPlayerService> radioPlayerServices) {
         final SystemClock clock = new SystemClock();
+        final StateChecker stateChecker = new StateChecker(clock);
         for (final String remoteId : remoteIds) {
             Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>() {
                 @Override
                 public HealthProbe apply(RadioPlayerService service) {
-                    return new RadioPlayerUploadHealthProbe(clock, remoteId, uploadResultRecorder(), service, dayRangeGenerator);
+                    return new RadioPlayerUploadHealthProbe(clock, remoteId, uploadResultRecorder(), service, dayRangeGenerator, stateChecker);
+                }
+            };
+            
+            Function<RadioPlayerService, HealthProbe> createSummaryProbe = new Function<RadioPlayerService, HealthProbe>() {
+                @Override
+                public HealthProbe apply(RadioPlayerService service) {
+                    return new RadioPlayerUploadSummaryHealthProbe(remoteId, service, uploadResultRecorder(), clock, dayRangeGenerator, stateChecker);
                 }
             };
 
             health.addProbes(Iterables.concat(
                     Iterables.transform(radioPlayerServices, createProbe),
-                    ImmutableList.of(new RadioPlayerServerHealthProbe(remoteId, fileUploadResultStore()))
+                    Iterables.transform(radioPlayerServices, createSummaryProbe),
+                    ImmutableList.of(new RadioPlayerUploadServiceHealthProbe(remoteId, fileUploadResultStore()))
             ));
         }
     }
