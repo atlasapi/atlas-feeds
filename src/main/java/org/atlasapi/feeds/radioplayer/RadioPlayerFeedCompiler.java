@@ -55,20 +55,15 @@ public abstract class RadioPlayerFeedCompiler {
     protected final KnownTypeContentResolver knownTypeContentResolver;
 
     public RadioPlayerFeedCompiler(RadioPlayerXMLOutputter outputter, KnownTypeContentResolver contentResolver) {
-        this.outputter = outputter;
-        this.knownTypeContentResolver = contentResolver;
+        this.outputter = checkNotNull(outputter);
+        this.knownTypeContentResolver = checkNotNull(contentResolver);
     }
     
-    private static Map<Publisher, Map<FileType, RadioPlayerFeedCompiler>> compilerMap;
+    private static Map<FileType, RadioPlayerFeedCompiler> compilerMap;
     
     // not ideal - this leads to identical OD compilers for each publisher 
-    public static void init(ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, ContentResolver contentResolver, ChannelResolver channelResolver, Iterable<Publisher> publishers, Map<Publisher,RadioPlayerGenreElementCreator> genreElementCreators) {
-        ImmutableMap.Builder<Publisher, Map<FileType, RadioPlayerFeedCompiler>> map = ImmutableMap.builder();
-        for (Publisher publisher : publishers) {
-            RadioPlayerGenreElementCreator genreElementCreator = checkNotNull(genreElementCreators.get(publisher));
-            map.put(publisher, createCompilerMapForPublisher(publisher, scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, genreElementCreator ));
-        }
-        compilerMap = map.build();
+    public static void init(ScheduleResolver scheduleResolver, KnownTypeContentResolver knownTypeContentResolver, ContentResolver contentResolver, ChannelResolver channelResolver, Publisher publisher, RadioPlayerGenreElementCreator genreElementCreator) {
+        compilerMap = createCompilerMapForPublisher(publisher, scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, genreElementCreator);
     }
     
     
@@ -84,9 +79,9 @@ public abstract class RadioPlayerFeedCompiler {
 
 
 
-    public static RadioPlayerFeedCompiler valueOf(Publisher publisher, FileType type) {
+    public static RadioPlayerFeedCompiler valueOf(FileType type) {
         checkState(compilerMap != null, "Compiler map not initialised");
-        return checkNotNull(compilerMap.get(publisher).get(type), "No compiler for publisher " + publisher + " and type " + type);
+        return checkNotNull(compilerMap.get(type), "No compiler for type " + type);
     }
 	
     private static class RadioPlayerProgrammeInformationFeedCompiler extends RadioPlayerFeedCompiler {

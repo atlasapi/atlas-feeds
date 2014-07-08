@@ -12,7 +12,6 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerFeedSpec;
 import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
 import org.atlasapi.feeds.upload.FileUpload;
 import org.atlasapi.feeds.upload.FileUploadService;
-import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 
@@ -27,14 +26,12 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
     protected final AdapterLog log;
     protected final RadioPlayerFeedSpec spec;
     private final FileType type;
-    private final Publisher publisher;
 
-    public RadioPlayerUploadTask(FileType type, Iterable<FileUploadService> remoteTargets, RadioPlayerFeedSpec spec, AdapterLog log, Publisher publisher) {
+    public RadioPlayerUploadTask(FileType type, Iterable<FileUploadService> remoteTargets, RadioPlayerFeedSpec spec, AdapterLog log) {
         this.type = type;
         this.remoteTargets = remoteTargets;
         this.spec = spec;
         this.log = log;
-        this.publisher = publisher;
     }
 
     @Override
@@ -67,7 +64,7 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
 
     private byte[] getFileContent() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        RadioPlayerFeedCompiler.valueOf(publisher, type).compileFeedFor(spec, out);
+        RadioPlayerFeedCompiler.valueOf(type).compileFeedFor(spec, out);
         return out.toByteArray();
     }
     

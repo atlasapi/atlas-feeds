@@ -46,14 +46,12 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     protected final DayRangeGenerator rangeGenerator;
     
     private final String remoteServiceId;
-    private final Publisher publisher;
     private final RadioPlayerService service;
     private final Clock clock;
 
-    public RadioPlayerUploadHealthProbe(Clock clock, String remoteServiceId, Publisher publisher, RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
+    public RadioPlayerUploadHealthProbe(Clock clock, String remoteServiceId, RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator) {
         this.clock = clock;
         this.remoteServiceId = remoteServiceId;
-        this.publisher = publisher;
         this.store = store;
         this.service = service;
         this.rangeGenerator = dayRangeGenerator;
@@ -94,7 +92,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     }
 
     private String linkedFilename(FileType type, LocalDate day) {
-        return String.format("<a style=\"text-decoration:none\" href=\"/feeds/%1$s/ukradioplayer/%2$s_%3$s_%4$s.xml\">%2$s_%3$s_%4$s.xml</a>", publisher.name().toLowerCase(), day.toString("yyyyMMdd"), service.getRadioplayerId(), type.name());
+        return String.format("<a style=\"text-decoration:none\" href=\"/feeds/ukradioplayer/%2$s_%3$s_%4$s.xml\">%2$s_%3$s_%4$s.xml</a>", day.toString("yyyyMMdd"), service.getRadioplayerId(), type.name());
     }
 
     private ProbeResultType entryResultType(FileUploadResult mostRecentSuccess, FileUploadResult mostRecent, LocalDate day, FileType type) {

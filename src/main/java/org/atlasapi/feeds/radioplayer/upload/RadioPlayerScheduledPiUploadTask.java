@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -18,20 +17,18 @@ public class RadioPlayerScheduledPiUploadTask extends ScheduledTask {
     private final RadioPlayerUploadServicesSupplier uploadersSupplier;
     private final DayRangeGenerator dayRangeGenerator;
     private final AdapterLog log;
-    private final Publisher publisher;
 
-    public RadioPlayerScheduledPiUploadTask(RadioPlayerUploadServicesSupplier uploadServicesSupplier, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator, AdapterLog log, Publisher publisher) {
+    public RadioPlayerScheduledPiUploadTask(RadioPlayerUploadServicesSupplier uploadServicesSupplier, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator, AdapterLog log) {
         this.uploadersSupplier = uploadServicesSupplier;
         this.executor = executor;
         this.services = services;
         this.dayRangeGenerator = dayRangeGenerator;
         this.log = log;
-        this.publisher = publisher;
     }
 
     @Override
     public void runTask() {
-        new RadioPlayerPiBatchUploadTask(uploadersSupplier.get(new DateTime(DateTimeZone.UTC), FileType.PI), executor, services, dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC)), log, publisher).run();
+        new RadioPlayerPiBatchUploadTask(uploadersSupplier.get(new DateTime(DateTimeZone.UTC), FileType.PI), executor, services, dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC)), log).run();
         
     }
 

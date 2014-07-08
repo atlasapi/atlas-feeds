@@ -11,17 +11,14 @@ import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerGenreElementCreator;
 import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerIdGenreMap;
-import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerTSVReadingGenreMap;
 import org.atlasapi.feeds.radioplayer.upload.CachingRadioPlayerUploadResultStore;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpRemoteProcessingChecker;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFtpUploadServicesSupplier;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerHttpsRemoteProcessingChecker;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerHttpsUploadServicesSupplier;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerRecordingExecutor;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadController;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadResultStore;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerServerHealthProbe;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadServicesSupplier;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadTaskBuilder;
 import org.atlasapi.feeds.radioplayer.upload.UploadResultStoreBackedRadioPlayerResultStore;
@@ -52,7 +49,6 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
@@ -81,22 +77,15 @@ public class RadioPlayerModule {
     
 	private static final String RP_UPLOAD_SERVICE_PREFIX = "rp.upload.";
 	private static final Every UPLOAD_EVERY_FIVE_MINUTES = RepetitionRules.every(Duration.standardMinutes(5));
-    private static final Every UPLOAD_EVERY_TEN_MINUTES = RepetitionRules.every(Duration.standardMinutes(10));
     private static final Every UPLOAD_EVERY_THIRTY_MINUTES = RepetitionRules.every(Duration.standardMinutes(30));
 	private static final Every UPLOAD_EVERY_TWO_HOURS = RepetitionRules.every(Duration.standardHours(2));
 	
-	private static final Publisher BBC = Publisher.BBC;
 	private static final Publisher NITRO = Publisher.BBC_NITRO;
 
-	private @Value("${rp.ftp.enabled}") String ftpUpload;
-	private @Value("${rp.ftp.services}") String ftpUploadServices;
-	private @Value("${rp.ftp.manualUpload.enabled}") String ftpManualUpload;
-	
 	private @Value("${rp.s3.serviceId}") String s3ServiceId;
 	private @Value("${rp.s3.bucket}") String s3Bucket;
 	private @Value("${s3.access}") String s3AccessKey;
 	private @Value("${s3.secret}") String s3Secret;
-	private @Value("${rp.s3.ftp.enabled}") String s3FtpUpload;
 	private @Value("${rp.s3.https.enabled}") String s3HttpsUpload;
 	
 	private @Value("${rp.https.serviceId}") String httpsServiceId;
@@ -125,7 +114,7 @@ public class RadioPlayerModule {
 
 	// this publisher will need to change if the output controller is to display files generated from a different publisher's content.
 	public @Bean RadioPlayerController radioPlayerController() {
-		return new RadioPlayerController(lastUpdatedContentFinder, contentLister, ImmutableSet.of(BBC, NITRO));
+		return new RadioPlayerController(lastUpdatedContentFinder, contentLister, NITRO);
 	}
 	
 	public @Bean Map<String,RemoteServiceDetails> radioPlayerUploadServiceDetails() {
@@ -153,19 +142,6 @@ public class RadioPlayerModule {
         } catch (Exception e) {
             throw Throwables.propagate(e);
         }
-    }
-
-    public @Bean RadioPlayerUploadServicesSupplier radioPlayerFtpUploadServices() {
-        return new RadioPlayerFtpUploadServicesSupplier(
-                Boolean.parseBoolean(s3FtpUpload),
-                Boolean.parseBoolean(ftpUpload),
-                s3ServiceId, 
-                s3Bucket, 
-                radioPlayerS3Credentials(), 
-                log, 
-                radioPlayerValidator(), 
-                radioPlayerUploadServiceDetails()
-        );
     }
 
     public @Bean RadioPlayerUploadServicesSupplier radioPlayerHttpsUploadServices() {
@@ -196,7 +172,7 @@ public class RadioPlayerModule {
     }
 	   
     public @Bean RadioPlayerHealthController radioPlayerHealthController() {
-        return new RadioPlayerHealthController(health, Sets.union(ftpRemoteServices().keySet(), httpsRemoteServices().keySet()), Configurer.get("rp.health.password", "").get());
+        return new RadioPlayerHealthController(health, httpsRemoteServices(), Configurer.get("rp.health.password", "").get());
     }
     
     public @Bean RadioPlayerUploadController radioPlayerUploadController() {
@@ -205,11 +181,6 @@ public class RadioPlayerModule {
     
     private Map<String, RadioPlayerUploadTaskBuilder> taskBuilderMap() {
         ImmutableMap.Builder<String, RadioPlayerUploadTaskBuilder> map = ImmutableMap.<String, RadioPlayerUploadTaskBuilder>builder();
-        if (Boolean.parseBoolean(ftpManualUpload)) {
-            for (Entry<String, RemoteServiceDetails> ftpService : radioPlayerUploadServiceDetails().entrySet()) {
-                map.put(ftpService.getKey(), radioPlayerFtpUploadTaskBuilder());
-            }
-        }
         if (Boolean.parseBoolean(httpsManualUpload)) {
             map.put(httpsServiceId, radioPlayerHttpsUploadTaskBuilder());
         }
@@ -218,7 +189,7 @@ public class RadioPlayerModule {
 
     @Bean RadioPlayerUploadResultStore uploadResultRecorder() {
         return new CachingRadioPlayerUploadResultStore(
-                Sets.union(Sets.union(ftpRemoteServices().keySet(), s3RemoteServices()), httpsRemoteServices().keySet()), 
+                Sets.union(s3RemoteServices(), httpsRemoteServices()), 
                 new UploadResultStoreBackedRadioPlayerResultStore(fileUploadResultStore())
         );
     }
@@ -241,10 +212,6 @@ public class RadioPlayerModule {
         }
     }
     
-    @Bean RadioPlayerUploadTaskBuilder radioPlayerFtpUploadTaskBuilder() {
-        return new RadioPlayerUploadTaskBuilder(radioPlayerFtpUploadServices(), radioPlayerUploadTaskRunner(), lastUpdatedContentFinder, contentLister, BBC).withLog(log);
-    }
-    
     @Bean RadioPlayerUploadTaskBuilder radioPlayerHttpsUploadTaskBuilder() {
         return new RadioPlayerUploadTaskBuilder(radioPlayerHttpsUploadServices(), radioPlayerUploadTaskRunner(), lastUpdatedContentFinder, contentLister, NITRO).withLog(log);
     }
@@ -253,20 +220,12 @@ public class RadioPlayerModule {
         return new RadioPlayerRecordingExecutor(uploadResultRecorder());
     }
     
-    @Bean Map<String, Publisher> ftpRemoteServices() {
-        Builder<String, Publisher> serviceMapping = ImmutableMap.builder();
-        for (String remote : radioPlayerUploadServiceDetails().keySet()) {
-            serviceMapping.put(remote, BBC);
-        }
-        return serviceMapping.build();
-    }
-    
-    @Bean Map<String, Publisher> httpsRemoteServices() {
-        return ImmutableMap.of(httpsServiceId, NITRO);
+    @Bean Set<String> httpsRemoteServices() {
+        return ImmutableSet.of(httpsServiceId);
     }
     
     @Bean Set<String> s3RemoteServices() {
-        if (Boolean.parseBoolean(s3FtpUpload) || Boolean.parseBoolean(s3HttpsUpload)) {
+        if (Boolean.parseBoolean(s3HttpsUpload)) {
             return ImmutableSet.of(s3ServiceId);
         }
         return ImmutableSet.of();
@@ -274,38 +233,13 @@ public class RadioPlayerModule {
     
 	@PostConstruct 
 	public void scheduleTasks() {
-	    Map<Publisher, RadioPlayerGenreElementCreator> genreCreators = ImmutableMap.of(
-            Publisher.BBC, new RadioPlayerGenreElementCreator(
-                new RadioPlayerTSVReadingGenreMap(RadioPlayerTSVReadingGenreMap.GENRES_FILE)),
-            Publisher.BBC_NITRO, new RadioPlayerGenreElementCreator(
-                new RadioPlayerIdGenreMap(RadioPlayerIdGenreMap.GENRES_FILE, NITRO_ID_GENRE_PREFIX))
-        );
-        RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, ImmutableList.of(BBC, NITRO), genreCreators );
-		if (!ftpRemoteServices().isEmpty() || !httpsRemoteServices().isEmpty()) {
-		    createHealthProbes(ftpRemoteServices(), ftpUploadServices());
+	    RadioPlayerGenreElementCreator genreCreator = new RadioPlayerGenreElementCreator(
+                new RadioPlayerIdGenreMap(RadioPlayerIdGenreMap.GENRES_FILE, NITRO_ID_GENRE_PREFIX));
+        RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, NITRO, genreCreator);
+		if (!httpsRemoteServices().isEmpty()) {
 		    createHealthProbes(httpsRemoteServices(), httpsUploadServices());
 	
-		    if (Boolean.parseBoolean(s3FtpUpload) || Boolean.parseBoolean(ftpUpload)) {
-				
-	            scheduler.schedule(
-	                    radioPlayerFtpUploadTaskBuilder().newScheduledPiTask(ftpUploadServices(), dayRangeGenerator).withName("Radioplayer PI Full Upload"), 
-	                    UPLOAD_EVERY_TWO_HOURS);
-	            scheduler.schedule(
-	                    radioPlayerFtpUploadTaskBuilder().newScheduledPiTask(ftpUploadServices(), new DayRangeGenerator()).withName("Radioplayer PI Today Upload"), 
-	                    UPLOAD_EVERY_TEN_MINUTES);
-	            scheduler.schedule(
-	                    new RadioPlayerFtpRemoteProcessingChecker(radioPlayerUploadServiceDetails(), uploadResultRecorder(), log).withName("Radioplayer Remote Processing Checker"),
-	                    UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(5)));
-	            
-	            scheduler.schedule(
-	                    radioPlayerFtpUploadTaskBuilder().newScheduledOdTask(ftpUploadServices(), true).withName("Radioplayer OD Full Upload"), 
-	                    NEVER);
-	            scheduler.schedule(
-	                    radioPlayerFtpUploadTaskBuilder().newScheduledOdTask(ftpUploadServices(), false).withName("Radioplayer OD Today Upload"),
-	                    UPLOAD_EVERY_TEN_MINUTES);
-			} 
 		    if (Boolean.parseBoolean(s3HttpsUpload) || Boolean.parseBoolean(httpsUpload)) {
-                
                 scheduler.schedule(
                         radioPlayerHttpsUploadTaskBuilder().newScheduledPiTask(httpsUploadServices(), dayRangeGenerator).withName("Radioplayer HTTPS PI Full Upload"), 
                         UPLOAD_EVERY_TWO_HOURS);
@@ -323,10 +257,8 @@ public class RadioPlayerModule {
                         radioPlayerHttpsUploadTaskBuilder().newScheduledOdTask(httpsUploadServices(), false).withName("Radioplayer HTTPS OD Today Upload"),
                         UPLOAD_EVERY_THIRTY_MINUTES);
             } 
-		    if (!Boolean.parseBoolean(ftpUpload) 
-		            && !Boolean.parseBoolean(httpsUpload) 
-		            && !Boolean.parseBoolean(s3FtpUpload) 
-		            && !Boolean.parseBoolean(s3FtpUpload)) {
+		    if (!Boolean.parseBoolean(httpsUpload) 
+		            && !Boolean.parseBoolean(s3HttpsUpload)) {
 				log.record(
 				        new AdapterLogEntry(Severity.INFO)
 				                .withSource(getClass())
@@ -335,10 +267,6 @@ public class RadioPlayerModule {
 			}
 		}
 	}
-
-    @Bean Iterable<RadioPlayerService> ftpUploadServices() {
-        return generateUploadServices(ftpUploadServices);
-    }
 
     @Bean Iterable<RadioPlayerService> httpsUploadServices() {
         return generateUploadServices(httpsUploadServices);
@@ -357,21 +285,20 @@ public class RadioPlayerModule {
         }
     }
 
-    private void createHealthProbes(Map<String, Publisher> remoteIds, Iterable<RadioPlayerService> radioPlayerServices) {
-        final Clock clock = new SystemClock();
-        for (final Entry<String, Publisher> remoteId : remoteIds.entrySet()) {
+    private void createHealthProbes(Set<String> remoteIds, Iterable<RadioPlayerService> radioPlayerServices) {
+        final SystemClock clock = new SystemClock();
+        for (final String remoteId : remoteIds) {
             Function<RadioPlayerService, HealthProbe> createProbe = new Function<RadioPlayerService, HealthProbe>() {
                 @Override
                 public HealthProbe apply(RadioPlayerService service) {
-                    return new RadioPlayerUploadHealthProbe(clock, remoteId.getKey(), remoteId.getValue(), uploadResultRecorder(), service, dayRangeGenerator);
+                    return new RadioPlayerUploadHealthProbe(clock, remoteId, uploadResultRecorder(), service, dayRangeGenerator);
                 }
             };
-            
+
             health.addProbes(Iterables.concat(
                     Iterables.transform(radioPlayerServices, createProbe),
-                    ImmutableList.of(new RadioPlayerServerHealthProbe(remoteId.getKey(), fileUploadResultStore()))
+                    ImmutableList.of(new RadioPlayerServerHealthProbe(remoteId, fileUploadResultStore()))
             ));
         }
     }
-    
 }
