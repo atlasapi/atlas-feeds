@@ -1,121 +1,140 @@
 package org.atlasapi.feeds.radioplayer.health;
 
-import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.radioplayer.health.FileHistoryOutputter.buildRemoteCheckInfo;
+import static org.atlasapi.feeds.radioplayer.health.FileHistoryOutputter.buildUploadInfo;
+import static org.atlasapi.feeds.radioplayer.health.FileHistoryOutputter.createJsToggleCode;
+import static org.atlasapi.feeds.radioplayer.health.RadioPlayerServiceSummaryHealthProbe.calculateHeaderResult;
 import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
 import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 
 import java.util.List;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.feeds.radioplayer.upload.FileType;
-import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadResultStore;
-import org.atlasapi.feeds.upload.FileUploadResult;
-import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+import org.atlasapi.feeds.radioplayer.upload.FileHistory;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFile;
+import org.atlasapi.feeds.radioplayer.upload.persistence.FileHistoryStore;
+import org.atlasapi.feeds.radioplayer.upload.queue.UploadAttempt;
+import org.atlasapi.feeds.radioplayer.upload.queue.UploadService;
 import org.joda.time.LocalDate;
 
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultEntry;
+import com.metabroadcast.common.health.ProbeResult.ProbeResultType;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.DayRange;
 import com.metabroadcast.common.time.DayRangeGenerator;
 
 public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
-    protected static final String DATE_TIME = "dd/MM/yy HH:mm:ss";
+    private static final Function<ProbeResultEntry, ProbeResultType> TO_RESULT_TYPE = new Function<ProbeResultEntry, ProbeResultType>() {
+        @Override
+        public ProbeResultType apply(ProbeResultEntry input) {
+            return input.getType();
+        }
+    };
     
-    protected final RadioPlayerUploadResultStore store;
-    protected final DayRangeGenerator rangeGenerator;
-    
-    private final String remoteServiceId;
-    private final RadioPlayerService service;
     private final Clock clock;
-    private final StateChecker stateChecker;
+    private final UploadService uploadService;
+    private final FileHistoryStore fileStore;
+    private final RadioPlayerService service;
+    private final DayRangeGenerator rangeGenerator;
+    private final ResultTypeCalculator resultTypeCalculator;
 
-    public RadioPlayerUploadHealthProbe(Clock clock, String remoteServiceId, RadioPlayerUploadResultStore store, RadioPlayerService service, DayRangeGenerator dayRangeGenerator, StateChecker stateChecker) {
-        this.clock = clock;
-        this.remoteServiceId = remoteServiceId;
-        this.store = store;
-        this.service = service;
-        this.rangeGenerator = dayRangeGenerator;
-        this.stateChecker = stateChecker;
+    public RadioPlayerUploadHealthProbe(Clock clock, UploadService uploadService, FileHistoryStore fileStore, RadioPlayerService service, 
+            DayRangeGenerator dayRangeGenerator, ResultTypeCalculator resultTypeCalculator) {
+        this.clock = checkNotNull(clock);
+        this.uploadService = checkNotNull(uploadService);
+        this.fileStore = checkNotNull(fileStore);
+        this.service = checkNotNull(service);
+        this.rangeGenerator = checkNotNull(dayRangeGenerator);
+        this.resultTypeCalculator = checkNotNull(resultTypeCalculator);
     }
 
     @Override
     public ProbeResult probe() {
-        ProbeResult result = new ProbeResult(service.getName());
         
         DayRange dayRange = rangeGenerator.generate(clock.now().toLocalDate());
         
+        ImmutableList.Builder<ProbeResultEntry> entries = ImmutableList.<ProbeResultEntry>builder();
         for (LocalDate day : dayRange) {
-            result.addEntry(entryFor(day, PI, store.resultsFor(PI, remoteServiceId, service, day)));
-            result.addEntry(entryFor(day, OD, store.resultsFor(OD, remoteServiceId, service, day)));
+            entries.add(entryFor(new RadioPlayerFile(uploadService, service, PI, day)));
+            entries.add(entryFor(new RadioPlayerFile(uploadService, service, OD, day)));
         }
 
-        result.addEntry(uploadAllPi());
+        return buildProbeResult(entries.build());
+    }
 
+    private ProbeResult buildProbeResult(List<ProbeResultEntry> entries) {
+        ProbeResult result = new ProbeResult(service.getName());
+        result.addEntry(generateTableHeaderEntry(calculateHeaderResult(Iterables.transform(entries, TO_RESULT_TYPE))));
+        for (ProbeResultEntry entry : entries) {
+            result.addEntry(entry);
+        }
         return result;
     }
 
-    private ProbeResultEntry entryFor(LocalDate day, FileType type, Iterable<? extends FileUploadResult> results) {
-        String filename = linkedFilename(type, day) + uploadButton(type, day);
-        
-        if (Iterables.isEmpty(results)) {
-            return new ProbeResultEntry(INFO, filename, "No Data");
-        }
-        List<? extends FileUploadResult> dateOrderedResults = stateChecker.orderByDate(results);
-        return new ProbeResultEntry(stateChecker.entryResultType(stateChecker.mostRecentSuccess(dateOrderedResults), dateOrderedResults.get(0), day, type, service), filename, buildEntryValue(results));
-    }
-
-    private String linkedFilename(FileType type, LocalDate day) {
-        return String.format("<a style=\"text-decoration:none\" href=\"/feeds/ukradioplayer/%1$s_%2$s_%3$s.xml\">%1$s_%2$s_%3$s.xml</a>", day.toString("yyyyMMdd"), service.getRadioplayerId(), type.name());
-    }
-
-    protected String buildEntryValue(Iterable<? extends FileUploadResult> results) {
-        StringBuilder builder = new StringBuilder("<table>");
-        for (FileUploadResult result : Iterables.limit(results,2)) {
-            appendResult(builder, result);
-        }
-        return builder.append("</table>").toString();
-    }
-
-    private void appendResult(StringBuilder builder, FileUploadResult result) {
-        builder.append("<tr><td>Last ");
-        builder.append(result.type().toNiceString());
-        builder.append(": ");
-        builder.append(result.uploadTime().toString(DATE_TIME));
-        builder.append("</td><td>");
-        if (result.transactionId() != null) {
-            builder.append("Transaction status url: " + result.transactionId());
-            if (result.message() != null) {
-                builder.append(" " + result.message());
-            }
-        } else if (result.message() != null) {
-            builder.append(result.message());
-        } else {
-            if (FileUploadResultType.SUCCESS == result.type()) {
-                builder.append("File uploaded successfully");
-            } else if (result.exceptionSummary() != null && result.exceptionSummary().message() != null) {
-                builder.append(result.exceptionSummary().message());
-            }
-        }
-        builder.append("</td><td>");
-        FileUploadResultType processSuccess = result.remoteProcessingResult() == null ? FileUploadResultType.UNKNOWN : result.remoteProcessingResult();
-        builder.append("Processing Result: " + processSuccess.toNiceString());
-        builder.append("</td></tr>");
+    private ProbeResultEntry generateTableHeaderEntry(ProbeResultType serviceResult) {
+        return new ProbeResultEntry(serviceResult, "Details" + createJsToggleCode(), columnsFrom(ImmutableList.of("Upload", "Remote Check")));
     }
     
-    private String uploadButton(FileType type, LocalDate day) {
-        String postTarget = String.format("/feeds/ukradioplayer/upload/%s/%s/%s", remoteServiceId, type.name(), service.getRadioplayerId());
-        if(day != null) {
-            postTarget += day.toString("/yyyyMMdd");
+    static String columnsFrom(List<String> columns) {
+        StringBuilder columnStr = new StringBuilder();
+        columnStr.append(columns.get(0));
+        for (String column : Iterables.skip(columns, 1)) {
+            columnStr.append("<td>");
+            columnStr.append(column);
+            columnStr.append("</td>");
         }
-        return "<form style=\"text-align:center\" action=\""+postTarget+"\" method=\"post\"><input type=\"submit\" value=\"Update\"/></form>";
+        return columnStr.toString();
     }
 
-    private ProbeResultEntry uploadAllPi() {
-        return new ProbeResultEntry(INFO, "Update All PI files", uploadButton(PI, null));
+    private ProbeResultEntry entryFor(RadioPlayerFile file) {
+        
+        Optional<FileHistory> fileRecord = fileStore.fetch(file);
+        
+        FileHistory fileHistory;
+        if (!fileRecord.isPresent()) {
+            fileHistory = createAndStoreNewFile(file);
+        } else {
+            fileHistory = fileRecord.get();
+        }
+        
+        if (fileHistory.uploadAttempts().isEmpty()) {
+            return new ProbeResultEntry(
+                    ProbeResultType.FAILURE, 
+                    FileHistoryOutputter.printFileDetails(fileHistory.file()), 
+                    columnsFrom(ImmutableList.of(
+                            "No Uploads Made", 
+                            "N/A"
+                    ))
+            );
+        } else {
+            ProbeResultType resultType = resultTypeCalculator.calculateResultType(fileHistory);
+            UploadAttempt latestAttempt = fileHistory.getLatestUpload();
+            return new ProbeResultEntry(
+                    resultType, 
+                    FileHistoryOutputter.printFileDetails(fileHistory.file()), 
+                    columnsFrom(ImmutableList.of(
+                            buildUploadInfo(latestAttempt), 
+                            buildRemoteCheckInfo(latestAttempt)
+                    ))
+            );
+        }
+    }
+
+    /**
+     * creates a new FileHistory object for the appropriate file, and stores it
+     */
+    private FileHistory createAndStoreNewFile(RadioPlayerFile file) {
+        FileHistory fileHistory = new FileHistory(file);
+        fileStore.store(fileHistory);
+        return fileHistory;
     }
 
     @Override
@@ -125,7 +144,7 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
     @Override
     public String slug() {
-        return String.format("ukrp-%s-%s", remoteServiceId, service.getName());
+        return String.format("ukrp-%s-%s", uploadService.name().toLowerCase(), service.getName());
     }
 
 }

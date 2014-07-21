@@ -81,7 +81,9 @@ public abstract class RadioPlayerFeedCompiler {
 
     public static RadioPlayerFeedCompiler valueOf(FileType type) {
         checkState(compilerMap != null, "Compiler map not initialised");
-        return checkNotNull(compilerMap.get(type), "No compiler for type " + type);
+        RadioPlayerFeedCompiler compiler = compilerMap.get(type);
+        checkArgument(compiler != null, "No compiler for type " + type);
+        return compiler;
     }
 	
     private static class RadioPlayerProgrammeInformationFeedCompiler extends RadioPlayerFeedCompiler {

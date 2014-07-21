@@ -5,36 +5,25 @@ import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
 import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.radioplayer.upload.FileType;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerOdUriResolver;
-import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.persistence.content.listing.ContentLister;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 
 @Controller
 public class RadioPlayerController {
     
-    private static final Joiner JOIN_ON_COMMA = Joiner.on(',');
-    
     private final RadioPlayerOdUriResolver odUriResolver;
 
-    public RadioPlayerController(final LastUpdatedContentFinder lastUpdatedContentFinder, final ContentLister contentLister, Publisher publisher) {
-        this.odUriResolver = new RadioPlayerOdUriResolver(contentLister, lastUpdatedContentFinder, checkNotNull(publisher));
+    public RadioPlayerController(RadioPlayerOdUriResolver odUriResolver) {
+        this.odUriResolver = checkNotNull(odUriResolver);
     }
     
     @RequestMapping("feeds/ukradioplayer/{filename}.xml")
