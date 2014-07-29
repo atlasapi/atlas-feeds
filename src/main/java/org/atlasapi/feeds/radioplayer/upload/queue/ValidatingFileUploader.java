@@ -33,4 +33,7 @@ public class ValidatingFileUploader implements FileUploader {
         }
     }
 
+    public FileUploader delegate() {
+        return delegate;
+    }
 }
