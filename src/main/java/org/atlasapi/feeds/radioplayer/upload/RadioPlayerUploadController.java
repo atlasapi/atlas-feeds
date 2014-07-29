@@ -7,13 +7,15 @@ import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
 import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 
 import java.io.IOException;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.feeds.radioplayer.upload.queue.InteractionManager;
+import org.atlasapi.feeds.radioplayer.upload.queue.UploadService;
+import org.atlasapi.feeds.radioplayer.upload.queue.UploadTask;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -22,7 +24,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.metabroadcast.common.media.MimeType;
@@ -36,22 +37,22 @@ public class RadioPlayerUploadController {
 
     private static final DateTimeFormatter DATE_PATTERN = DateTimeFormat.forPattern("yyyyMMdd");
     private HttpBasicAuthChecker checker;
-    private final Map<String, RadioPlayerUploadTaskBuilder> radioPlayerUploadTaskMap;
     private final DayRangeGenerator dayRangeGenerator;
+    private final InteractionManager stateUpdater;
 
-    public RadioPlayerUploadController(Map<String, RadioPlayerUploadTaskBuilder> radioPlayerUploadTaskMap, DayRangeGenerator dayRangeGenerator, String password) {
-        this.radioPlayerUploadTaskMap = checkNotNull(radioPlayerUploadTaskMap);
+    public RadioPlayerUploadController(DayRangeGenerator dayRangeGenerator, String password, InteractionManager stateUpdater) {
         this.dayRangeGenerator = checkNotNull(dayRangeGenerator);
         if (!Strings.isNullOrEmpty(password)) {
             this.checker = new HttpBasicAuthChecker(ImmutableList.of(new UsernameAndPassword("bbc", password)));
         } else {
             this.checker = null;
         }
+        this.stateUpdater = checkNotNull(stateUpdater);
     }
 
     @RequestMapping(value = "feeds/ukradioplayer/upload/{uploadService}/{type}/{id}/{day}", method = RequestMethod.POST)
     public String uploadDay(HttpServletRequest request, HttpServletResponse response,
-            @PathVariable("uploadService") String uploadService,
+            @PathVariable("uploadService") String uploadServiceName,
             @PathVariable("type") String type, 
             @PathVariable("id") String serviceId, 
             @PathVariable("day") String day) throws IOException {
@@ -61,9 +62,9 @@ public class RadioPlayerUploadController {
             return null;
         }
         
-        RadioPlayerUploadTaskBuilder taskBuilder = radioPlayerUploadTaskMap.get(uploadService);
-        if (taskBuilder == null) {
-            response.sendError(NOT_FOUND.code(), "Unknown upload service " + uploadService);
+        UploadService uploadService = UploadService.fromString(uploadServiceName);
+        if (uploadService == null) {
+            response.sendError(NOT_FOUND.code(), "Unknown upload service " + uploadServiceName);
             return null;
         }
         
@@ -73,12 +74,7 @@ public class RadioPlayerUploadController {
             return null;
         }
         
-        FileType fileType = null;
-        for (FileType typeOption : FileType.values()) {
-            if (typeOption.name().equals(type)) {
-                fileType = typeOption;
-            }
-        }
+        FileType fileType = FileType.fromString(type);
         if (fileType == null) {
             response.sendError(NOT_FOUND.code(), "Unknown file type " + type);
             return null;
@@ -92,12 +88,16 @@ public class RadioPlayerUploadController {
             response.sendError(BAD_REQUEST.code(), "Bad Date Format");
             return null;
         }
-
+        
         if (fileType.equals(PI)) {
             Iterable<LocalDate> days = day != null ? ImmutableList.of(DATE_PATTERN.parseDateTime(day).toLocalDate()) : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
-            taskBuilder.newBatchPiTask(ImmutableList.of(service), days).run();
+            for (LocalDate aDay : days) {
+                UploadTask task = new UploadTask(new RadioPlayerFile(uploadService, service, fileType, aDay));
+                stateUpdater.enqueueUploadTask(task);
+            }
         } else if (fileType.equals(OD)) {
-            taskBuilder.newBatchOdTask(ImmutableList.of(service), DATE_PATTERN.parseDateTime(day).toLocalDate()).run();
+            UploadTask task = new UploadTask(new RadioPlayerFile(uploadService, service, fileType, DATE_PATTERN.parseDateTime(day).toLocalDate()));
+            stateUpdater.enqueueUploadTask(task);
         }
 
         return "redirect:/feeds/ukradioplayer/health/" + uploadService;

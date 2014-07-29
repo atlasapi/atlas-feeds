@@ -199,8 +199,9 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
             = ImmutableListMultimap.builder();
         for (Location location : locations) {
             Policy policy = location.getPolicy();
-            if (policy != null) {
-                DateTime availabilityStart = policy.getAvailabilityStart();
+            if (policy != null
+                    && policy.getActualAvailabilityStart() != null) {
+                DateTime availabilityStart = policy.getActualAvailabilityStart();
                 DateTime availabilityEnd = availabilityEndOrMax(policy);
                 if (availabilityStart != null && availabilityEnd  != null) {
                     index.put(new Interval(availabilityStart, availabilityEnd), location);

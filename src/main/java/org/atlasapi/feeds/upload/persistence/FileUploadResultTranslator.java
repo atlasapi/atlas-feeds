@@ -1,6 +1,5 @@
 package org.atlasapi.feeds.upload.persistence;
 
-import org.atlasapi.feeds.radioplayer.upload.ExceptionSummaryTranslator;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 
