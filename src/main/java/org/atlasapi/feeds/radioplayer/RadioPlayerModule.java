@@ -104,6 +104,7 @@ public class RadioPlayerModule {
 	private @Value("${rp.https.baseUrl}") String httpsUrl;
 	private @Value("${rp.https.username}") String httpsUsername;
 	private @Value("${rp.https.password}") String httpsPassword;
+	private @Value("${rp.https.maxRetries}") int maxHttpsRetries;
 	
     private @Autowired KnownTypeContentResolver knownTypeContentResolver;
 	private @Autowired SimpleScheduler scheduler;
@@ -159,7 +160,7 @@ public class RadioPlayerModule {
         return new UploadServicesSupplier(
                 ImmutableList.of(
                     new S3FileUploaderProvider(s3Service(), s3Bucket, clock),
-                    new HttpsFileUploaderProvider(radioPlayerHttpClient(), httpsUrl, clock)
+                    new HttpsFileUploaderProvider(radioPlayerHttpClient(), httpsUrl, clock, maxHttpsRetries)
                 ), 
                 radioPlayerValidator()
         );

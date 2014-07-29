@@ -2,6 +2,8 @@ package org.atlasapi.feeds.radioplayer.upload.https;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Map;
+
 import org.atlasapi.feeds.radioplayer.RadioPlayerFilenameMatcher;
 import org.atlasapi.feeds.radioplayer.upload.queue.FileUploadException;
 import org.atlasapi.feeds.radioplayer.upload.queue.FileUploader;
@@ -11,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.metabroadcast.common.http.BytesPayload;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.HttpResponse;
@@ -22,6 +24,7 @@ import com.metabroadcast.common.time.Clock;
 public class HttpsFileUploader implements FileUploader {
 
     public static final String STATUS_LINE_KEY = "statusLine";
+    public static final String ERROR_MESSAGE_KEY = "errorMessage";
     public static final String RESPONSE_CODE_KEY = "responseCode";
     public static final String RETRIES_KEY = "retries";
     public static final String TRANSACTION_ID_KEY = "transactionId";
@@ -38,11 +41,13 @@ public class HttpsFileUploader implements FileUploader {
     private final SimpleHttpClient httpClient;
     private final String baseUrl;
     private final Clock clock;
+    private final int maxRetries;
 
-    public HttpsFileUploader(SimpleHttpClient httpClient, String baseUrl, Clock clock) {
+    public HttpsFileUploader(SimpleHttpClient httpClient, String baseUrl, Clock clock, int maxRetries) {
         this.httpClient = checkNotNull(httpClient);
         this.baseUrl = checkNotNull(baseUrl);
         this.clock = checkNotNull(clock);
+        this.maxRetries = maxRetries;
     }
 
     @Override
@@ -52,7 +57,7 @@ public class HttpsFileUploader implements FileUploader {
         try {
             response = postFileData(upload);
             int retries = 0;
-            while (response.statusCode() == RETRY_AFTER) {
+            while (response.statusCode() == RETRY_AFTER && retries <= maxRetries) {
                 String retryAfterHeader = response.header(RETRY_AFTER_HEADER);
                 int retry;
                 if (retryAfterHeader != null) {
@@ -67,13 +72,26 @@ public class HttpsFileUploader implements FileUploader {
                     log.info(String.format("Retried upload %s times for file %s", retries, upload.getFilename()));
                 }
             }
+            
+            Map<String, String> details = Maps.newHashMap();
+            details.put(RETRIES_KEY, String.valueOf(retries));
+            
             if (response.statusCode() == ACCEPTED) {
-                return UploadAttempt.successfulUpload(clock.now(), ImmutableMap.of(TRANSACTION_ID_KEY, response.header(LOCATION_HEADER), RETRIES_KEY, String.valueOf(retries)));
+                details.put(TRANSACTION_ID_KEY, response.header(LOCATION_HEADER));
+                return UploadAttempt.successfulUpload(clock.now(), details);
             }
+            
             if (response.statusCode() == RETRY_AFTER) {
-                return UploadAttempt.failedUpload(clock.now(), ImmutableMap.of(RESPONSE_CODE_KEY, String.valueOf(response.statusCode()), RETRIES_KEY, String.valueOf(retries)));
+                details.put(ERROR_MESSAGE_KEY, "Max Retries exceeded");
+                details.put(RESPONSE_CODE_KEY, String.valueOf(response.statusCode()));
+                return UploadAttempt.failedUpload(clock.now(), details);
             }
-            return UploadAttempt.failedUpload(clock.now(), ImmutableMap.of(RESPONSE_CODE_KEY, String.valueOf(response.statusCode()), STATUS_LINE_KEY, response.statusLine()));
+            
+            details.put(RESPONSE_CODE_KEY, String.valueOf(response.statusCode()));
+            details.put(STATUS_LINE_KEY, response.statusLine());
+            
+            return UploadAttempt.failedUpload(clock.now(), details);
+            
         } catch (HttpException e) {
             throw new FileUploadException(String.format("Error when POSTing data to RadioPlayer for %", upload), e);
         } catch (InterruptedException e) {

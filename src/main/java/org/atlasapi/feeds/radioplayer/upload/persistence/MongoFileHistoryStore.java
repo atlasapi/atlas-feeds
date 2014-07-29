@@ -26,8 +26,8 @@ public class MongoFileHistoryStore implements FileHistoryStore {
     }
 
     @Override
-    public void store(FileHistory file) {
-        collection.save(translator.toDBObject(file));
+    public void store(FileHistory history) {
+        collection.save(translator.toDBObject(history));
     }
 
     @Override
@@ -40,16 +40,28 @@ public class MongoFileHistoryStore implements FileHistoryStore {
     }
     
     @Override
-    public UploadAttempt addUploadAttempt(RadioPlayerFile file, UploadAttempt attempt) {
+    public synchronized UploadAttempt addUploadAttempt(RadioPlayerFile file, UploadAttempt attempt) {
         Optional<FileHistory> fetched = fetch(file);
         if (!fetched.isPresent()) {
-            throw new RuntimeException("Attempting to add upload attempt to non-existing file record");
+            throw new RuntimeException("Attempting to add upload attempt to non-existent file record " + file.toString());
         }
         UploadAttempt withId = attempt.copyWithId(generator.generateRaw());
         fetched.get().addUploadAttempt(withId);
         store(fetched.get());
 
         return withId;
+    }
+
+    @Override
+    public synchronized void successfulUpload(RadioPlayerFile file) {
+        Optional<FileHistory> fetched = fetch(file);
+        if (!fetched.isPresent()) {
+            throw new RuntimeException("Attempting to change queuing flags on non-existent file record " + file.toString());
+        }
+        fetched.get().setEnqueuedForUpload(false);
+        fetched.get().setEnqueuedForRemoteCheck(true);
+        
+        store(fetched.get());
     }
 
 }

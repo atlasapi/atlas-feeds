@@ -53,8 +53,10 @@ public class FileHistoryTranslatorTest {
     }
 
     private Iterable<UploadAttempt> createUploadAttempts() {
+        UploadAttempt attempt = UploadAttempt.successfulUpload(DateTime.now(DateTimeZone.UTC), ImmutableMap.of("key", "value"));
+        attempt = attempt.copyWithId(12345l);
         return ImmutableList.of(
-                UploadAttempt.successfulUpload(DateTime.now(DateTimeZone.UTC), ImmutableMap.of("key", "value"))
+                attempt
                 );
     }
     // This is required because when written/read from Mongo, the embedded Map in the DBObject

@@ -59,11 +59,9 @@ public class QueueBasedInteractionManager implements InteractionManager {
         // there's a double write here, but we need the upload attempt id
         switch (result.uploadResult()) {
         case SUCCESS:
-            history.setEnqueuedForUpload(false);
-            history.setEnqueuedForRemoteCheck(true);
-            // need to add the uploadattempt id somewhere!
             remoteCheckQueue.push(new RemoteCheckTask(task.file(), createParameterMap(withId)));
             uploadQueue.remove(task);
+            fileStore.successfulUpload(history.file());
             break;
         case FAILURE:
         case UNKNOWN:
@@ -71,7 +69,6 @@ public class QueueBasedInteractionManager implements InteractionManager {
             uploadQueue.push(task);
             break;
         }
-        fileStore.store(history);
     }
 
     private UploadAttempt addUploadAttempt(FileHistory history, UploadAttempt result) {
