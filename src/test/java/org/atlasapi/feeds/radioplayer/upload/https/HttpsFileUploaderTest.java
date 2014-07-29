@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.radioplayer.upload.https;
 
+import static org.atlasapi.feeds.radioplayer.upload.https.HttpsFileUploader.ERROR_MESSAGE_KEY;
 import static org.atlasapi.feeds.radioplayer.upload.https.HttpsFileUploader.RESPONSE_CODE_KEY;
 import static org.atlasapi.feeds.radioplayer.upload.https.HttpsFileUploader.RETRIES_KEY;
 import static org.atlasapi.feeds.radioplayer.upload.https.HttpsFileUploader.STATUS_LINE_KEY;
@@ -32,7 +33,7 @@ public class HttpsFileUploaderTest {
     private Clock clock = new TimeMachine(DateTime.now());
     private String baseUrl = "upload";
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
-    private final HttpsFileUploader fileUploader = new HttpsFileUploader(httpClient, baseUrl, clock);
+    private final HttpsFileUploader fileUploader = new HttpsFileUploader(httpClient, baseUrl, clock, 10);
 
     @Test
     public void testReturnsSuccessUpon202Response() throws Exception {
@@ -103,16 +104,17 @@ public class HttpsFileUploaderTest {
         FileUpload file = new FileUpload("20140707_300_PI.xml", new byte[0]);
         String retryAfter = "1";
         String transactionId = "1234567890";
-        Mockito.when(httpClient.post("upload/pi/", new BytesPayload(file.getFileData()))).then(getRetryResponse(Optional.of(retryAfter), 11, transactionId));
+        Mockito.when(httpClient.post("upload/pi/", new BytesPayload(file.getFileData()))).then(getRetryResponse(Optional.of(retryAfter), 15, transactionId));
         
         UploadAttempt result = fileUploader.upload(file);
         
-        Mockito.verify(httpClient, times(11)).post("upload/pi/", new BytesPayload(file.getFileData()));
+        Mockito.verify(httpClient, times(12)).post("upload/pi/", new BytesPayload(file.getFileData()));
         
         assertEquals(FileUploadResultType.FAILURE, result.uploadResult());
         assertEquals(clock.now(), result.uploadTime());
         assertEquals("503", result.uploadDetails().get(RESPONSE_CODE_KEY));
-        assertEquals("10", result.uploadDetails().get(RETRIES_KEY));
+        assertEquals("11", result.uploadDetails().get(RETRIES_KEY));
+        assertEquals("Max Retries exceeded", result.uploadDetails().get(ERROR_MESSAGE_KEY));
     }
 
     @Test
@@ -126,7 +128,7 @@ public class HttpsFileUploaderTest {
         assertEquals(FileUploadResultType.FAILURE, result.uploadResult());
         assertEquals(clock.now(), result.uploadTime());
         assertEquals("404", result.uploadDetails().get(RESPONSE_CODE_KEY));
-        assertEquals("message", result.uploadDetails().get(STATUS_LINE_KEY));
+        assertEquals(message, result.uploadDetails().get(STATUS_LINE_KEY));
         assertEquals("0", result.uploadDetails().get(RETRIES_KEY));
     }
 

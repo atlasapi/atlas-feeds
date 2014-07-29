@@ -61,6 +61,7 @@ public class RadioPlayerProgrammeInformationOutputterTest {
 		location.setUri("http://www.bbc.co.uk/iplayer/episode/b00f4d9c");
 		Policy policy = new Policy();
 		policy.setAvailabilityStart(new DateTime(2010, 8, 28, 23, 40, 19, 0, TIMEZONE));
+		policy.setActualAvailabilityStart(new DateTime(2010, 8, 28, 23, 40, 19, 0, TIMEZONE));
 		policy.setAvailabilityEnd(new DateTime(2010, 9,  4, 23, 02, 00, 0, TIMEZONE));
 		policy.addAvailableCountry(Countries.GB);
 		location.setPolicy(policy);

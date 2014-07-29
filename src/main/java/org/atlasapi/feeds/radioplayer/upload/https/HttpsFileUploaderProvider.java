@@ -18,16 +18,18 @@ public class HttpsFileUploaderProvider implements FileUploaderProvider {
     private final SimpleHttpClient httpClient;
     private final String baseUrl;
     private final Clock clock;
+    private final int maxRetries;
 
-    public HttpsFileUploaderProvider(SimpleHttpClient httpClient, String baseUrl, Clock clock) {
+    public HttpsFileUploaderProvider(SimpleHttpClient httpClient, String baseUrl, Clock clock, int maxRetries) {
         this.httpClient = checkNotNull(httpClient);
         this.baseUrl = checkNotNull(baseUrl);
         this.clock = checkNotNull(clock);
+        this.maxRetries = maxRetries;
     }
     
     @Override
     public FileUploader get(DateTime uploadTime, FileType type) {
-        return new HttpsFileUploader(httpClient, baseUrl, clock);
+        return new HttpsFileUploader(httpClient, baseUrl, clock, maxRetries);
     }
 
     @Override

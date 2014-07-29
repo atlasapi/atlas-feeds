@@ -23,10 +23,12 @@ public class UploadAttemptTranslatorTest {
     
     @Test
     public void testTranslationOfFullyPopulatedAttempt() {
-        UploadAttempt attempt = createAttempt();
+        Long id = 1234l;
+        UploadAttempt attempt = createAttempt(id);
         
         UploadAttempt translated = translateViaMongo(attempt);
         
+        assertEquals(attempt.id(), translated.id());
         assertEquals(attempt.uploadTime(), translated.uploadTime());
         assertEquals(attempt.uploadResult(), translated.uploadResult());
         assertEquals(attempt.uploadDetails(), translated.uploadDetails());
@@ -36,29 +38,31 @@ public class UploadAttemptTranslatorTest {
 
     @Test
     public void testTranslationOfPartiallyPopulatedAttempt() {
-        UploadAttempt attempt = createUnknownAttempt();
+        long id = 1234l;
+        UploadAttempt attempt = createUnknownAttempt(id);
         
         UploadAttempt translated = translateViaMongo(attempt);
         
         assertNull(translated.uploadTime());
+        assertEquals(attempt.id(), translated.id());
         assertEquals(attempt.uploadResult(), translated.uploadResult());
         assertEquals(attempt.uploadDetails(), translated.uploadDetails());
         assertNull(translated.remoteCheckResult());
         assertNull(translated.remoteCheckMessage());
     }
 
-    private UploadAttempt createUnknownAttempt() {
-        return UploadAttempt.enqueuedAttempt();
+    private UploadAttempt createUnknownAttempt(Long id) {
+        return UploadAttempt.enqueuedAttempt().copyWithId(id);
     }
 
-    private UploadAttempt createAttempt() {
+    private UploadAttempt createAttempt(Long id) {
         return new UploadAttempt(
                 DateTime.now(DateTimeZone.UTC), 
                 FileUploadResultType.SUCCESS, 
                 ImmutableMap.of("key", "value", "anotherKey", "a different value"), 
                 FileUploadResultType.SUCCESS, 
                 "success!"
-        );
+        ).copyWithId(id);
     }
     
     // This is required because when written/read from Mongo, the embedded Map in the DBObject

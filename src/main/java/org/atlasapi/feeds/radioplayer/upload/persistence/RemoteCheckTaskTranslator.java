@@ -25,7 +25,7 @@ public class RemoteCheckTaskTranslator implements MongoTranslator<RemoteCheckTas
         DBObject dbo = new BasicDBObject();
         
         TranslatorUtils.from(dbo, MongoConstants.ID, task.file().toKey());
-        TranslatorUtils.from(dbo, FILE_KEY, task.file());
+        TranslatorUtils.from(dbo, FILE_KEY, fileTranslator.toDBObject(task.file()));
         TranslatorUtils.fromDateTime(dbo, TIMESTAMP_KEY, task.timestamp());
         TranslatorUtils.from(dbo, UPLOAD_DETAILS_KEY, task.uploadDetails());
         

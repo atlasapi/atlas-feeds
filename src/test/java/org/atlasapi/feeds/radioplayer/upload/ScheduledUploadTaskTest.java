@@ -28,7 +28,7 @@ public class ScheduledUploadTaskTest {
     
     @Test
     public void testGeneratesCorrectTaskSet() {
-        task.runTask();
+        task.run();
         
         for (UploadService uploadService : uploadServices) {
             for (RadioPlayerService service : services) {

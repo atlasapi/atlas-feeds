@@ -134,6 +134,8 @@ public class QueueBasedInteractionManagerTest {
         
         FileHistory history = createFileRecord(file, true, false);
         Mockito.when(fileStore.fetch(file)).thenReturn(Optional.of(history));
+        result = result.copyWithId(1234l);
+        Mockito.when(fileStore.addUploadAttempt(file, result)).thenReturn(result);
         
         manager.recordUploadResult(task, result);
         
@@ -146,12 +148,7 @@ public class QueueBasedInteractionManagerTest {
         updatedFile.setEnqueuedForUpload(false);
         updatedFile.setEnqueuedForRemoteCheck(true);
         
-        ArgumentCaptor<FileHistory> storedFile = ArgumentCaptor.forClass(FileHistory.class);
-        
-        Mockito.verify(fileStore).store(storedFile.capture());
-        
-        assertEquals(updatedFile, storedFile.getValue());
-        assertEquals(updatedFile.uploadAttempts(), storedFile.getValue().uploadAttempts());
+        Mockito.verify(fileStore).successfulUpload(file);
     }
     
     @Test
@@ -167,15 +164,6 @@ public class QueueBasedInteractionManagerTest {
         
         Mockito.verify(uploadQueue).push(task);
         Mockito.verifyZeroInteractions(remoteCheckQueue);
-        
-        FileHistory updatedFile = FileHistory.copyWithAttempts(history, ImmutableList.of(result));
-        
-        ArgumentCaptor<FileHistory> storedFile = ArgumentCaptor.forClass(FileHistory.class);
-        
-        Mockito.verify(fileStore).store(storedFile.capture());
-        
-        assertEquals(updatedFile, storedFile.getValue());
-        assertEquals(updatedFile.uploadAttempts(), storedFile.getValue().uploadAttempts());
     }
     
     @Test
@@ -187,20 +175,13 @@ public class QueueBasedInteractionManagerTest {
         
         FileHistory history = createFileRecord(file, true, false);
         Mockito.when(fileStore.fetch(file)).thenReturn(Optional.of(history));
+        long attemptId = 1234l;
+        Mockito.when(fileStore.addUploadAttempt(file, result)).thenReturn(result.copyWithId(attemptId));
         
         manager.recordUploadResult(task, result);
         
         Mockito.verify(uploadQueue).push(task);
         Mockito.verifyZeroInteractions(remoteCheckQueue);
-        
-        FileHistory updatedFile = FileHistory.copyWithAttempts(history, ImmutableList.of(result));
-        
-        ArgumentCaptor<FileHistory> storedFile = ArgumentCaptor.forClass(FileHistory.class);
-        
-        Mockito.verify(fileStore).store(storedFile.capture());
-        
-        assertEquals(updatedFile, storedFile.getValue());
-        assertEquals(updatedFile.uploadAttempts(), storedFile.getValue().uploadAttempts());
     }
 
     // recordRemoteCheckResult
@@ -331,6 +312,7 @@ public class QueueBasedInteractionManagerTest {
         return new RemoteCheckTask(task.file(), ImmutableMap.<String, String>builder()
                 .putAll(result.uploadDetails())
                 .put(UPLOAD_TIME_KEY, String.valueOf(result.uploadTime().getMillis()))
+                .put(ATTEMPT_ID_KEY, String.valueOf(result.id()))
                 .build());
     }
     
