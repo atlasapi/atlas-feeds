@@ -19,7 +19,7 @@ public class RemoteCheckQueueWorkerTest {
     private TaskQueue<RemoteCheckTask> remoteCheckQueue = Mockito.mock(TaskQueue.class);
     private final RemoteCheckService remoteChecker = Mockito.mock(RemoteCheckService.class);
     private RemoteCheckerSupplier checkerSupplier = Mockito.mock(RemoteCheckerSupplier.class);
-    private InteractionManager stateUpdater = Mockito.mock(InteractionManager.class);
+    private UploadManager stateUpdater = Mockito.mock(UploadManager.class);
     private final QueueWorker<RemoteCheckTask> queueWorker = new RemoteCheckQueueWorker(remoteCheckQueue, checkerSupplier, stateUpdater); 
 
     // test successful check

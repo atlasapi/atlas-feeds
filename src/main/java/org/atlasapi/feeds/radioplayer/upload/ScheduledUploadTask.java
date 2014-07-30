@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Set;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.feeds.radioplayer.upload.queue.InteractionManager;
+import org.atlasapi.feeds.radioplayer.upload.queue.UploadManager;
 import org.atlasapi.feeds.radioplayer.upload.queue.UploadService;
 import org.atlasapi.feeds.radioplayer.upload.queue.UploadTask;
 import org.joda.time.LocalDate;
@@ -25,10 +25,10 @@ public abstract class ScheduledUploadTask extends ScheduledTask {
     private final Set<UploadService> uploadServices;
     private final DayRangeGenerator dayRangeGenerator;
     private final Set<RadioPlayerService> services;
-    private final InteractionManager stateUpdater;
+    private final UploadManager stateUpdater;
     
     public ScheduledUploadTask(Iterable<UploadService> uploadServices, DayRangeGenerator dayRangeGenerator, 
-            Iterable<RadioPlayerService> services, InteractionManager stateUpdater) {
+            Iterable<RadioPlayerService> services, UploadManager stateUpdater) {
         this.uploadServices = ImmutableSet.copyOf(uploadServices);
         this.dayRangeGenerator = checkNotNull(dayRangeGenerator);
         this.services = ImmutableSet.copyOf(services);

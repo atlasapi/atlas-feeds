@@ -31,7 +31,7 @@ public class UploadQueueWorkerTest {
     private UploadServicesSupplier uploaderSupplier = Mockito.mock(UploadServicesSupplier.class);
     private Clock clock = new TimeMachine(DateTime.now());
     private FileCreator fileCreator = Mockito.mock(FileCreator.class);
-    private InteractionManager stateUpdater = Mockito.mock(InteractionManager.class);
+    private UploadManager stateUpdater = Mockito.mock(UploadManager.class);
     private final UploadQueueWorker queueWorker = new UploadQueueWorker(uploadQueue, uploaderSupplier, clock, fileCreator, stateUpdater);
     
     @Test

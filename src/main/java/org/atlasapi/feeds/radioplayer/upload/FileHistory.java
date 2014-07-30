@@ -15,6 +15,7 @@ import com.google.common.collect.Ordering;
 import com.metabroadcast.common.collect.MoreSets;
 
 
+// TODO builder + IMMUTABILITY
 public class FileHistory {
     
     private final RadioPlayerFile file;
@@ -49,9 +50,11 @@ public class FileHistory {
         this.uploadAttempts = MoreSets.add(uploadAttempts, attempt);
     }
     
+    // TODO Iterables.tryFind
     public Optional<UploadAttempt> getAttempt(final Long attemptId) {
-        return Optional.fromNullable(Iterables.getOnlyElement(
-                Iterables.filter(
+        return Optional.fromNullable(
+                Iterables.getOnlyElement(
+                    Iterables.filter(
                         uploadAttempts, 
                         new Predicate<UploadAttempt>() {
                             @Override
@@ -59,8 +62,8 @@ public class FileHistory {
                                 return attemptId.equals(input.id());
                             }
                         }
-                ), 
-                null
+                    ), 
+                    null
         ));
     }
     

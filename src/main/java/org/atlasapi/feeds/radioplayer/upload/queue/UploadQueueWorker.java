@@ -21,11 +21,11 @@ public class UploadQueueWorker extends QueueWorker<UploadTask> {
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final UploadServicesSupplier uploaderSupplier;
     private final Clock clock;
-    private final InteractionManager stateUpdater;
+    private final UploadManager stateUpdater;
     private final FileCreator fileCreator;
     
     public UploadQueueWorker(TaskQueue<UploadTask> uploadQueue, UploadServicesSupplier uploaderSupplier, 
-            Clock clock, FileCreator fileCreator, InteractionManager stateUpdater) {
+            Clock clock, FileCreator fileCreator, UploadManager stateUpdater) {
         super(uploadQueue);
         this.uploaderSupplier = checkNotNull(uploaderSupplier);
         this.clock = checkNotNull(clock);

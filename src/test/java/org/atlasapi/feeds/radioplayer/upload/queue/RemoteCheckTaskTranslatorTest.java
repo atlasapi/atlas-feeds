@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.radioplayer.upload.queue;
 
-import static org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedInteractionManager.UPLOAD_TIME_KEY;
+import static org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedUploadManager.UPLOAD_TIME_KEY;
 import static org.junit.Assert.assertEquals;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;

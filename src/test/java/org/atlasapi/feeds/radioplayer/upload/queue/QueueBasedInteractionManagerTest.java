@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.radioplayer.upload.queue;
 
-import static org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedInteractionManager.ATTEMPT_ID_KEY;
-import static org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedInteractionManager.UPLOAD_TIME_KEY;
+import static org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedUploadManager.ATTEMPT_ID_KEY;
+import static org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedUploadManager.UPLOAD_TIME_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -39,7 +39,7 @@ public class QueueBasedInteractionManagerTest {
     @SuppressWarnings("unchecked")
     private TaskQueue<RemoteCheckTask> remoteCheckQueue = Mockito.mock(TaskQueue.class);
     private FileHistoryStore fileStore = Mockito.mock(FileHistoryStore.class);
-    private final InteractionManager manager = new QueueBasedInteractionManager(uploadQueue, remoteCheckQueue, fileStore);
+    private final UploadManager manager = new QueueBasedUploadManager(uploadQueue, remoteCheckQueue, fileStore);
 
     @Test
     public void testEnqueueOnAlreadyEnqueuedTaskDoesNothing() {

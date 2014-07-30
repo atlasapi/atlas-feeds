@@ -12,7 +12,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 
 
-public class QueueBasedInteractionManager implements InteractionManager {
+public class QueueBasedUploadManager implements UploadManager {
     
     static final String ATTEMPT_ID_KEY = "attemptId";
     static final String UPLOAD_TIME_KEY = "uploadTime";
@@ -21,7 +21,7 @@ public class QueueBasedInteractionManager implements InteractionManager {
     private final TaskQueue<RemoteCheckTask> remoteCheckQueue;
     private final FileHistoryStore fileStore;
     
-    public QueueBasedInteractionManager(TaskQueue<UploadTask> uploadQueue, 
+    public QueueBasedUploadManager(TaskQueue<UploadTask> uploadQueue, 
             TaskQueue<RemoteCheckTask> remoteCheckQueue, FileHistoryStore fileStore) {
         this.uploadQueue = checkNotNull(uploadQueue);
         this.remoteCheckQueue = checkNotNull(remoteCheckQueue);
@@ -30,6 +30,7 @@ public class QueueBasedInteractionManager implements InteractionManager {
 
     @Override
     public synchronized void enqueueUploadTask(UploadTask task) {
+        // TODO see if this logic can be pushed down to the history store
         Optional<FileHistory> fetched = fileForTask(task);
         FileHistory file;
         if (fetched.isPresent()) {
@@ -50,7 +51,6 @@ public class QueueBasedInteractionManager implements InteractionManager {
     public synchronized void recordUploadResult(UploadTask task, UploadAttempt result) throws InvalidStateException {
         Optional<FileHistory> fetched = fileForTask(task);
         if (!fetched.isPresent()) {
-            log.error("No file record found for task {}", task);
             throw new InvalidStateException("No file record found for task " +  task.toString());
         }
         FileHistory history = fetched.get();
@@ -87,7 +87,6 @@ public class QueueBasedInteractionManager implements InteractionManager {
     public synchronized void recordRemoteCheckResult(RemoteCheckTask task, RemoteCheckResult result) throws InvalidStateException {
         Optional<FileHistory> fetched = fileForTask(task);
         if (!fetched.isPresent()) {
-            log.error("No file record found for task {}", task);
             throw new InvalidStateException("No file record found for task " +  task.toString());
         }
         FileHistory file = fetched.get();
@@ -119,7 +118,6 @@ public class QueueBasedInteractionManager implements InteractionManager {
         Long attemptId = Long.valueOf(task.uploadDetails().get(ATTEMPT_ID_KEY));
         Optional<UploadAttempt> attempt = file.getAttempt(attemptId);
         if (!attempt.isPresent()) {
-            log.error("attempted update of upload record without id {}, {}", attemptId, file);
             throw new InvalidStateException("attempted update of upload record without id " + String.valueOf(attemptId) + " " + file.toString());
         }
         UploadAttempt updatedAttempt = updateAttempt(attempt.get(), result);

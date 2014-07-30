@@ -25,8 +25,8 @@ import org.atlasapi.feeds.radioplayer.upload.persistence.RemoteCheckTaskTranslat
 import org.atlasapi.feeds.radioplayer.upload.persistence.TaskQueue;
 import org.atlasapi.feeds.radioplayer.upload.persistence.UploadTaskTranslator;
 import org.atlasapi.feeds.radioplayer.upload.queue.FileCreator;
-import org.atlasapi.feeds.radioplayer.upload.queue.InteractionManager;
-import org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedInteractionManager;
+import org.atlasapi.feeds.radioplayer.upload.queue.UploadManager;
+import org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedUploadManager;
 import org.atlasapi.feeds.radioplayer.upload.queue.RemoteCheckQueueWorker;
 import org.atlasapi.feeds.radioplayer.upload.queue.RemoteCheckTask;
 import org.atlasapi.feeds.radioplayer.upload.queue.RemoteCheckerSupplier;
@@ -196,8 +196,8 @@ public class RadioPlayerModule {
         ));
     }
 
-    @Bean public InteractionManager stateUpdater() {
-       return new QueueBasedInteractionManager(uploadQueue(), remoteCheckQueue(), fileHistoryStore());
+    @Bean public UploadManager stateUpdater() {
+       return new QueueBasedUploadManager(uploadQueue(), remoteCheckQueue(), fileHistoryStore());
     }
     
     @Bean public FileHistoryStore fileHistoryStore() {

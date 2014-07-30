@@ -52,6 +52,7 @@ public class MongoFileHistoryStore implements FileHistoryStore {
         return withId;
     }
 
+    // TODO kill these flags. WITH FIRE
     @Override
     public synchronized void successfulUpload(RadioPlayerFile file) {
         Optional<FileHistory> fetched = fetch(file);

@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.radioplayer.upload.queue;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedInteractionManager.UPLOAD_TIME_KEY;
+import static org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedUploadManager.UPLOAD_TIME_KEY;
 
 import org.atlasapi.feeds.radioplayer.upload.persistence.TaskQueue;
 import org.joda.time.DateTime;
@@ -15,10 +15,10 @@ public class RemoteCheckQueueWorker extends QueueWorker<RemoteCheckTask> {
     
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final RemoteCheckerSupplier remoteCheckers;
-    private final InteractionManager stateUpdater;
+    private final UploadManager stateUpdater;
     
     public RemoteCheckQueueWorker(TaskQueue<RemoteCheckTask> remoteCheckQueue, 
-            RemoteCheckerSupplier remoteCheckers, InteractionManager stateUpdater) {
+            RemoteCheckerSupplier remoteCheckers, UploadManager stateUpdater) {
         super(remoteCheckQueue);
         this.remoteCheckers = checkNotNull(remoteCheckers);
         this.stateUpdater = checkNotNull(stateUpdater);
