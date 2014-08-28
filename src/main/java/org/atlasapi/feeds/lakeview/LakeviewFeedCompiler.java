@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.lakeview;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.lakeview.LakeviewContentFetcher.EPISODE_NUMBER_ORDERING;
 
 import java.util.Comparator;
@@ -38,6 +39,7 @@ import com.google.common.base.Functions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -85,12 +87,14 @@ public class LakeviewFeedCompiler {
 	private ChannelResolver channelResolver;
 	private boolean genericTitlesEnabled;
 	private final boolean addXboxOneAvailability;
+    private final SortTitleGenerator sortTitleGenerator;
 
     public LakeviewFeedCompiler(ChannelResolver channelResolver, Clock clock, boolean genericTitlesEnabled, boolean addXboxOneAvailability) {
-        this.clock = clock;
-        this.channelResolver = channelResolver;
+        this.clock = checkNotNull(clock);
+        this.channelResolver = checkNotNull(channelResolver);
         this.genericTitlesEnabled = genericTitlesEnabled;
         this.addXboxOneAvailability = addXboxOneAvailability;
+        this.sortTitleGenerator = new SortTitleGenerator(ImmutableSet.of("The", "A", "An"));
     }
 
     public LakeviewFeedCompiler(ChannelResolver channelResolver, boolean genericTitlesEnabled, 
@@ -107,17 +111,11 @@ public class LakeviewFeedCompiler {
         String lastModified = DATETIME_FORMAT.print(clock.now());
 
         for (LakeviewContentGroup contentGroup : contents) {
-
-            try {
-                List<Element> groupElements = elementsForGroup(lastModified, contentGroup);
-                
-                for (Element element : groupElements) {
-                    feed.appendChild(element);
-                }
-            } catch (Exception e) {
-                System.out.println(e);
-            }
+            List<Element> groupElements = elementsForGroup(lastModified, contentGroup);
             
+            for (Element element : groupElements) {
+                feed.appendChild(element);
+            }
         }
 
         return new Document(feed);
@@ -200,15 +198,20 @@ public class LakeviewFeedCompiler {
         return seriesPublicationDate == null || publicationDate.isBefore(seriesPublicationDate) ? publicationDate : seriesPublicationDate;
     }
 
-    private Element createBrandElem(Brand brand, DateTime originalPublicationDate, DateTime brandEndDate, String lastModified, LakeviewContentGroup contentGroup, int addedSeasons) {
+    private Element createBrandElem(Brand brand, DateTime originalPublicationDate, DateTime brandEndDate, 
+            String lastModified, LakeviewContentGroup contentGroup, int addedSeasons) {
+        
         Element element = createElement("TVSeries", LAKEVIEW);
         addIdElements(element, brandId(brand), providerMediaId(brand));
-        element.appendChild(stringElement("Title", LAKEVIEW, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle()));
+        addTitleElements(element, Strings.isNullOrEmpty(brand.getTitle()) ? "EMPTY BRAND TITLE" : brand.getTitle());
         
-        appendCommonElements(element, brand, originalPublicationDate, lastModified, brandAtomUri(findTagAlias(brand)), null);
+        appendCommonElements(element, brand, originalPublicationDate, lastModified, 
+                brandAtomUri(findTagAlias(brand)), brand.getGenres(), null);
         if (addedSeasons > 0) {
             element.appendChild(stringElement("TotalNumberOfSeasons", LAKEVIEW, String.valueOf(addedSeasons)));
         }
+        
+        element.appendChild(stringElement("TotalNumberOfEpisodes", LAKEVIEW, String.valueOf(countEpisodes(contentGroup))));
         
         if (brand.getPresentationChannel() != null && channelResolver.fromKey(brand.getPresentationChannel()).hasValue()) {
             element.appendChild(stringElement("Network", LAKEVIEW, channelResolver.fromKey(brand.getPresentationChannel()).requireValue().getTitle()));
@@ -228,6 +231,14 @@ public class LakeviewFeedCompiler {
         return element;
     }
 
+    private int countEpisodes(LakeviewContentGroup contentGroup) {
+        int totalEpisodes = 0;
+        for (Series series : contentGroup.series()) {
+            totalEpisodes += series.getChildRefs().size();
+        }
+        return totalEpisodes;
+    }
+
     private String extractNetwork(List<Broadcast> broadcasts) {
         return channelResolver.fromUri(TRANSMISSION_ORDERING.min(broadcasts).getBroadcastOn()).requireValue().getTitle();
     }
@@ -241,24 +252,32 @@ public class LakeviewFeedCompiler {
         
         if (genericTitlesEnabled) {
             if (series.getSeriesNumber() != null) {
-                element.appendChild(stringElement("Title", LAKEVIEW, String.format("Series %d", series.getSeriesNumber())));
+                addTitleElements(element, String.format("Series %d", series.getSeriesNumber()));
             } else if (!Strings.isNullOrEmpty(series.getTitle())) {
-                element.appendChild(stringElement("Title", LAKEVIEW, series.getTitle()));
+                addTitleElements(element, String.format("Series %d", series.getTitle()));
             } else {
-                element.appendChild(stringElement("Title", LAKEVIEW, parent.getTitle()));
+                addTitleElements(element, parent.getTitle());
             }
         } else if (Strings.isNullOrEmpty(series.getTitle()) || series.getTitle().matches("(?i)series \\d+")) {
-            element.appendChild(stringElement("Title", LAKEVIEW, String.format("%s Series %s", parent.getTitle(), series.getSeriesNumber())));
+            addTitleElements(element, String.format("%s Series %s", parent.getTitle(), series.getSeriesNumber()));
         } else {
-            element.appendChild(stringElement("Title", LAKEVIEW, series.getTitle()));
+            addTitleElements(element, series.getTitle());
         }
         
-        appendCommonElements(element, series, originalPublicationDate, lastModified, applicationSpecificData, null);
+        Set<String> genres = Iterables.isEmpty(series.getGenres()) ? parent.getGenres() : series.getGenres();
+        appendCommonElements(element, series, originalPublicationDate, lastModified,
+                applicationSpecificData,
+                genres, null);
         
         element.appendChild(stringElement("SeasonNumber", LAKEVIEW, String.valueOf(series.getSeriesNumber())));
         element.appendChild(stringElement("SeriesId", LAKEVIEW, brandId(parent)));
         
         return element;
+    }
+
+    private void addTitleElements(Element element, String title) {
+        element.appendChild(stringElement("Title", LAKEVIEW, title));
+        element.appendChild(stringElement("SortTitle", LAKEVIEW, sortTitleGenerator.createSortTitle(title)));
     }
 
     private String providerMediaId(Brand brand) {
@@ -292,16 +311,16 @@ public class LakeviewFeedCompiler {
         
         if (genericTitlesEnabled) {
             if (episode.getEpisodeNumber() != null) {
-                element.appendChild(stringElement("Title", LAKEVIEW, String.format("Episode %d", episode.getEpisodeNumber())));
+                addTitleElements(element, String.format("Episode %d", episode.getEpisodeNumber()));
             } else if (!Strings.isNullOrEmpty(episode.getTitle())) {
-                element.appendChild(stringElement("Title", LAKEVIEW, episode.getTitle()));
+                addTitleElements(element, episode.getTitle());
             } else {
-                element.appendChild(stringElement("Title", LAKEVIEW, container.getTitle()));
+                addTitleElements(element, container.getTitle());
             }
         } else if (Strings.isNullOrEmpty(episode.getTitle()) || episode.getTitle().matches("(?i)(series \\d+)? episode \\d+")) {
-            element.appendChild(stringElement("Title", LAKEVIEW, String.format("%s Series %s Episode %s", container.getTitle(), episode.getSeriesNumber(), episode.getEpisodeNumber())));
+            addTitleElements(element, String.format("%s Series %s Episode %s", container.getTitle(), episode.getSeriesNumber(), episode.getEpisodeNumber()));
         } else {
-            element.appendChild(stringElement("Title", LAKEVIEW, episode.getTitle()));
+            addTitleElements(element, episode.getTitle());
         }
 
         Element instances = createElement("Instances", LAKEVIEW);
@@ -323,7 +342,8 @@ public class LakeviewFeedCompiler {
         
         instances.appendChild(videoInstance);
 
-        appendCommonElements(element, episode, originalPublicationDate, lastModified, applicationSpecificData, instances);
+        appendCommonElements(element, episode, originalPublicationDate, lastModified, 
+                applicationSpecificData, episode.getGenres(), instances);
         
         element.appendChild(stringElement("EpisodeNumber", LAKEVIEW, String.valueOf(episode.getEpisodeNumber())));
         element.appendChild(stringElement("DurationInSeconds", LAKEVIEW, String.valueOf(duration(episode))));
@@ -425,7 +445,8 @@ public class LakeviewFeedCompiler {
         return "NONE";
     }
 
-    private void appendCommonElements(Element element, Content content, DateTime originalPublicationDate, String lastModified, String applicationSpecificData,
+    private void appendCommonElements(Element element, Content content, DateTime originalPublicationDate, 
+            String lastModified, String applicationSpecificData, Iterable<String> genres,
     		Element instances) {
         
         if(!Strings.isNullOrEmpty(content.getDescription())) {
@@ -450,14 +471,14 @@ public class LakeviewFeedCompiler {
             element.appendChild(imagesElement);
         }
         
-        if(!content.getGenres().isEmpty()) {
-            Element genres = createElement("Genres", LAKEVIEW);
+        if(!Iterables.isEmpty(genres)) {
+            Element genresElem = createElement("Genres", LAKEVIEW);
             for (String genre : content.getGenres()) {
                 if(genre.startsWith("http://www.channel4.com")) {
-                    genres.appendChild(stringElement("Genre", LAKEVIEW, C4GenreTitles.title(genre)));
+                    genresElem.appendChild(stringElement("Genre", LAKEVIEW, C4GenreTitles.title(genre)));
                 }
             }
-            element.appendChild(genres);
+            element.appendChild(genresElem);
         }
         
         Element pc = createElement("ParentalControl", LAKEVIEW);
