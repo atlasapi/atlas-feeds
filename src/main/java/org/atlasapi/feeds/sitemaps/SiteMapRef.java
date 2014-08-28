@@ -17,7 +17,14 @@ public class SiteMapRef {
     };
     
     public static final SiteMapRef sitemapRefFrom(Content brand, String host) {
-        return new SiteMapRef(String.format("http://%s/feeds/sitemaps/sitemap.xml?brand.uri=%s", host, brand.getCurie()), brand.getLastUpdated());
+        return new SiteMapRef(String.format("http://%s/feeds/sitemaps/sitemap.xml?brand.uri=%s", host, uriFor(brand)), brand.getLastUpdated());
+    }
+    
+    private static final String uriFor(Content content) {
+        if (content.getCurie() != null) {
+            return content.getCurie();
+        }
+        return content.getCanonicalUri();
     }
     
 	private final String url;
