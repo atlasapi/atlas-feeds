@@ -7,17 +7,17 @@ import com.google.common.base.Function;
 
 public class SiteMapRef {
 
-    public static final Function<Content, SiteMapRef> transformerForHost(final String host) {
+    public static final Function<Content, SiteMapRef> transformerForBaseUri(final String baseUri) {
         return new Function<Content, SiteMapRef>() {
             @Override
             public SiteMapRef apply(Content brand) {
-                return SiteMapRef.sitemapRefFrom(brand, host);
+                return SiteMapRef.sitemapRefFrom(brand, baseUri);
             }
         };
     };
     
-    public static final SiteMapRef sitemapRefFrom(Content brand, String host) {
-        return new SiteMapRef(String.format("http://%s/feeds/sitemaps/sitemap.xml?brand.uri=%s", host, uriFor(brand)), brand.getLastUpdated());
+    public static final SiteMapRef sitemapRefFrom(Content brand, String baseUri) {
+        return new SiteMapRef(String.format("%s/sitemap.xml?brand.uri=%s", baseUri, uriFor(brand)), brand.getLastUpdated());
     }
     
     private static final String uriFor(Content content) {
