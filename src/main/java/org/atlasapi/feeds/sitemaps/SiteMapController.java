@@ -202,6 +202,7 @@ public class SiteMapController {
             params = Maps.newHashMap(request.getParameterMap());
             params.put("uri", new String[] { brandUri });
             params.remove("brand.uri");
+            params.remove("baseUri");
         }
 
         public String getParameter(String name) {
