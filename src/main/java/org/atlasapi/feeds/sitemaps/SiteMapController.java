@@ -4,7 +4,7 @@ import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static com.metabroadcast.common.http.HttpStatusCode.BAD_REQUEST;
-import static org.atlasapi.feeds.sitemaps.SiteMapRef.transformerForHost;
+import static org.atlasapi.feeds.sitemaps.SiteMapRef.transformerForBaseUri;
 import static org.atlasapi.persistence.content.ContentCategory.CHILD_ITEM;
 import static org.atlasapi.persistence.content.listing.ContentListingCriteria.defaultCriteria;
 
@@ -55,6 +55,7 @@ import com.metabroadcast.common.webapp.http.CacheHeaderWriter;
 public class SiteMapController {
 
     private static final String HOST_PARAM = "host";
+    private static final String BASE_URI_PARAM = "baseUri";
     private static final String PUBLISHER_PARAM = "publisher";
 
     private final ContentLister lister;
@@ -74,11 +75,19 @@ public class SiteMapController {
     }
 
     @RequestMapping("/feeds/sitemaps/index.xml")
-    public String siteMapFofPublisher(@RequestParam(value = PUBLISHER_PARAM) final String publisher, @RequestParam(value = HOST_PARAM, required = false) final String host, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public String siteMapFofPublisher(@RequestParam(value = PUBLISHER_PARAM) final String publisher, 
+            @RequestParam(value = HOST_PARAM, required = false) final String hostParam, 
+            @RequestParam(value = BASE_URI_PARAM, required = false) final String baseUriParam, 
+            HttpServletRequest request, HttpServletResponse response) throws IOException {
         
         Maybe<Publisher> possiblePublisher = Publisher.fromKey(publisher);
         if(possiblePublisher.isNothing()) {
             response.sendError(BAD_REQUEST.code(), "Unknown publisher " + publisher);
+            return null;
+        }
+        
+        if (hostParam != null && baseUriParam != null) {
+            response.sendError(BAD_REQUEST.code(), "Cannot specify both host and base URI");
             return null;
         }
         
@@ -99,8 +108,10 @@ public class SiteMapController {
         Set<Publisher> includedPublishers = query.getConfiguration().getEnabledSources();
         
         Iterable<SiteMapRef> sitemapRefs;
+        String baseUri = baseUriParam == null ? baseUriForHost(hostParam) : baseUriParam;
+        
         if (includedPublishers.contains(possiblePublisher.requireValue())) {
-            sitemapRefs = sitemapRefForQuery(query, host, possiblePublisher.requireValue());
+            sitemapRefs = sitemapRefForQuery(query, baseUri, possiblePublisher.requireValue());
         } else {
             sitemapRefs = ImmutableList.<SiteMapRef> of();
         }
@@ -113,7 +124,7 @@ public class SiteMapController {
         return null;
     }
 
-    public Iterable<SiteMapRef> sitemapRefForQuery(ContentQuery query, final String host, Publisher publisher) {
+    public Iterable<SiteMapRef> sitemapRefForQuery(ContentQuery query, final String baseUri, Publisher publisher) {
         final ImmutableSet.Builder<String> brands = ImmutableSet.builder();
         
         Iterator<Item> items = Iterators.filter(lister.listContent(defaultCriteria().forPublisher(publisher).forContent(CHILD_ITEM).build()), Item.class);
@@ -124,7 +135,7 @@ public class SiteMapController {
             }
         }
 
-        Iterable<SiteMapRef> sitemapRefs = transform(resolve(brands.build(), query), transformerForHost(hostOrDefault(host)));
+        Iterable<SiteMapRef> sitemapRefs = transform(resolve(brands.build(), query), transformerForBaseUri(baseUri));
         return sitemapRefs;
     }
 
@@ -146,7 +157,8 @@ public class SiteMapController {
     }
 
     @RequestMapping("/feeds/sitemaps/sitemap.xml")
-    public String siteMapForBrand(HttpServletRequest request, HttpServletResponse response, @RequestParam("brand.uri") String brandUri) throws IOException {
+    public String siteMapForBrand(HttpServletRequest request, HttpServletResponse response, 
+            @RequestParam("brand.uri") String brandUri) throws IOException {
         try {
             final ContentQuery query = queryBuilder.build(new SitemapHackHttpRequest(request, brandUri));
             Iterable<Container> brands = Iterables.filter(resolve(URI_SPLITTER.split(brandUri),query), Container.class);
@@ -177,8 +189,8 @@ public class SiteMapController {
 
     private static final Splitter URI_SPLITTER = Splitter.on(",").omitEmptyStrings().trimResults();
 
-    private String hostOrDefault(String host) {
-        return host == null ? defaultHost : host;
+    private String baseUriForHost(String host) {
+        return String.format("http://%s/feeds/sitemaps", host == null ? defaultHost : host);
     }
     
     private static class SitemapHackHttpRequest extends HttpServletRequestWrapper {
