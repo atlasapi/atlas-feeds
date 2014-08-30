@@ -41,6 +41,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -93,7 +94,7 @@ public class SiteMapController {
         
         ContentQuery query;
         try {
-            query = queryBuilder.build(request);
+            query = queryBuilder.build(new SitemapHackHttpRequest(request));
         } catch (ApiKeyNotFoundException e) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return null;
@@ -200,9 +201,15 @@ public class SiteMapController {
         public SitemapHackHttpRequest(HttpServletRequest request, String brandUri) {
             super(request);
             params = Maps.newHashMap(request.getParameterMap());
-            params.put("uri", new String[] { brandUri });
+            if (brandUri != null) {
+                params.put("uri", new String[] { brandUri });
+            }
             params.remove("brand.uri");
             params.remove("baseUri");
+        }
+        
+        public SitemapHackHttpRequest(HttpServletRequest request) {
+            this(request, null);
         }
 
         public String getParameter(String name) {
