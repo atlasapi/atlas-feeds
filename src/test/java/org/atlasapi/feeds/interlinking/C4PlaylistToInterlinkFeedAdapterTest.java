@@ -2,19 +2,26 @@ package org.atlasapi.feeds.interlinking;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.persistence.content.ContentResolver;
 import org.joda.time.DateTime;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import com.metabroadcast.common.time.DateTimeZones;
 
+@RunWith( MockitoJUnitRunner.class )
 public class C4PlaylistToInterlinkFeedAdapterTest {
 
+    private final ContentResolver contentResolver = mock(ContentResolver.class);
+    
     @Test
     public void testBroadcastId() {
         
-        C4PlaylistToInterlinkFeedAdapter adapter = new C4PlaylistToInterlinkFeedAdapter();
+        C4PlaylistToInterlinkFeedAdapter adapter = new C4PlaylistToInterlinkFeedAdapter(contentResolver);
         
         DateTime start = new DateTime(DateTimeZones.UTC);
         DateTime end = new DateTime(DateTimeZones.UTC);
