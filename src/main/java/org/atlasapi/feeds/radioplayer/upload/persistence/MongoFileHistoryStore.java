@@ -52,15 +52,13 @@ public class MongoFileHistoryStore implements FileHistoryStore {
         return withId;
     }
 
-    // TODO kill these flags. WITH FIRE
     @Override
     public synchronized void successfulUpload(RadioPlayerFile file) {
         Optional<FileHistory> fetched = fetch(file);
         if (!fetched.isPresent()) {
             throw new RuntimeException("Attempting to change queuing flags on non-existent file record " + file.toString());
         }
-        fetched.get().setEnqueuedForUpload(false);
-        fetched.get().setEnqueuedForRemoteCheck(true);
+        // TODO do we not write an upload attempt here?
         
         store(fetched.get());
     }

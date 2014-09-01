@@ -3,10 +3,9 @@ package org.atlasapi.feeds.radioplayer.upload.queue;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.atlasapi.feeds.radioplayer.upload.FileHistory;
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFile;
 import org.atlasapi.feeds.radioplayer.upload.persistence.FileHistoryStore;
 import org.atlasapi.feeds.radioplayer.upload.persistence.TaskQueue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
@@ -16,7 +15,6 @@ public class QueueBasedUploadManager implements UploadManager {
     
     static final String ATTEMPT_ID_KEY = "attemptId";
     static final String UPLOAD_TIME_KEY = "uploadTime";
-    private final Logger log = LoggerFactory.getLogger(getClass());
     private final TaskQueue<UploadTask> uploadQueue;
     private final TaskQueue<RemoteCheckTask> remoteCheckQueue;
     private final FileHistoryStore fileStore;
@@ -28,23 +26,19 @@ public class QueueBasedUploadManager implements UploadManager {
         this.fileStore = checkNotNull(fileStore);
     }
 
+
+    // have skipped marking a temp file on the filehistory record for now
     @Override
     public synchronized void enqueueUploadTask(UploadTask task) {
-        // TODO see if this logic can be pushed down to the history store
-        Optional<FileHistory> fetched = fileForTask(task);
-        FileHistory file;
-        if (fetched.isPresent()) {
-            file = fetched.get();
-            if (file.isEnqueuedForUpload() || file.isEnqueuedForRemoteCheck()) {
-                return;
-            }
-        } else {
-            file = new FileHistory(task.file());
+        if (isEnqueued(task.file())) {
+            return;
         }
-
+        
         uploadQueue.push(task);
-        file.setEnqueuedForUpload(true);
-        fileStore.store(file);
+    }
+
+    private boolean isEnqueued(RadioPlayerFile file) {
+        return uploadQueue.contains(file) || remoteCheckQueue.contains(file); 
     }
 
     @Override
@@ -53,15 +47,12 @@ public class QueueBasedUploadManager implements UploadManager {
         if (!fetched.isPresent()) {
             throw new InvalidStateException("No file record found for task " +  task.toString());
         }
-        FileHistory history = fetched.get();
-        
-        UploadAttempt withId = addUploadAttempt(history, result);
-        // there's a double write here, but we need the upload attempt id
+        UploadAttempt withId = addUploadAttempt(fetched.get(), result);
+
         switch (result.uploadResult()) {
         case SUCCESS:
-            remoteCheckQueue.push(new RemoteCheckTask(task.file(), createParameterMap(withId)));
+            remoteCheckQueue.push(new RemoteCheckTask(task.file(), createParamMapFromUpload(withId)));
             uploadQueue.remove(task);
-            fileStore.successfulUpload(history.file());
             break;
         case FAILURE:
         case UNKNOWN:
@@ -75,7 +66,7 @@ public class QueueBasedUploadManager implements UploadManager {
         return fileStore.addUploadAttempt(history.file(), result);
     }
 
-    private ImmutableMap<String, String> createParameterMap(UploadAttempt result) {
+    private ImmutableMap<String, String> createParamMapFromUpload(UploadAttempt result) {
         return ImmutableMap.<String, String>builder()
                 .putAll(result.uploadDetails())
                 .put(UPLOAD_TIME_KEY, String.valueOf(result.uploadTime().getMillis()))
@@ -90,27 +81,21 @@ public class QueueBasedUploadManager implements UploadManager {
             throw new InvalidStateException("No file record found for task " +  task.toString());
         }
         FileHistory file = fetched.get();
+        updateUploadAttempt(file, task, result);
+        fileStore.store(file);
         
-        boolean isFailure = false;
         switch (result.result()) {
         case SUCCESS:
             remoteCheckQueue.remove(task);
-            file.setEnqueuedForRemoteCheck(false);
             break;
         case FAILURE:
             remoteCheckQueue.remove(task);
-            file.setEnqueuedForRemoteCheck(false);
-            isFailure = true;
+            enqueueUploadTask(new UploadTask(file.file()));
             break;
         case UNKNOWN:
         default:
             remoteCheckQueue.push(task);
             break;
-        }
-        updateUploadAttempt(file, task, result);
-        fileStore.store(file);
-        if (isFailure) {
-            enqueueUploadTask(new UploadTask(file.file()));
         }
     }
 

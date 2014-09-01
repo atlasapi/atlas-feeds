@@ -31,7 +31,7 @@ import com.metabroadcast.common.time.TimeMachine;
 import com.mongodb.MongoException;
 
 
-public class QueueBasedInteractionManagerTest {
+public class QueueBasedUploadManagerTest {
     
     private Clock clock = new TimeMachine(DateTime.now(DateTimeZone.UTC));
     @SuppressWarnings("unchecked")
