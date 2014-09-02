@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.radioplayer.upload.queue;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedInteractionManager.UPLOAD_TIME_KEY;
+import static org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedUploadManager.UPLOAD_TIME_KEY;
 
 import org.atlasapi.feeds.radioplayer.upload.persistence.TaskQueue;
 import org.joda.time.DateTime;
@@ -15,10 +15,10 @@ public class RemoteCheckQueueWorker extends QueueWorker<RemoteCheckTask> {
     
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final RemoteCheckerSupplier remoteCheckers;
-    private final InteractionManager stateUpdater;
+    private final UploadManager stateUpdater;
     
     public RemoteCheckQueueWorker(TaskQueue<RemoteCheckTask> remoteCheckQueue, 
-            RemoteCheckerSupplier remoteCheckers, InteractionManager stateUpdater) {
+            RemoteCheckerSupplier remoteCheckers, UploadManager stateUpdater) {
         super(remoteCheckQueue);
         this.remoteCheckers = checkNotNull(remoteCheckers);
         this.stateUpdater = checkNotNull(stateUpdater);
@@ -30,12 +30,13 @@ public class RemoteCheckQueueWorker extends QueueWorker<RemoteCheckTask> {
             RemoteCheckResult result = checkRemote(task);
             recordResult(task, result);
         } catch (InvalidStateException e) {
-            log.error("tried to process remote check for file without file record. remote check task: {}", task);
+            log.error("error recording remote check result for task: {}", task);
         }
     }
 
     private RemoteCheckResult checkRemote(final RemoteCheckTask task) {
-        Optional<RemoteCheckService> checker = remoteCheckers.get(task.uploadService(), new DateTime(Long.valueOf(task.uploadDetails().get(UPLOAD_TIME_KEY))), task.type());
+        DateTime uploadTime = parseUploadTime(task.getParameter(UPLOAD_TIME_KEY).get());
+        Optional<RemoteCheckService> checker = remoteCheckers.get(task.uploadService(), uploadTime, task.type());
         if (checker.isPresent()) {
             try {
                 return checker.get().check(task);
@@ -47,6 +48,10 @@ public class RemoteCheckQueueWorker extends QueueWorker<RemoteCheckTask> {
             log.error("No checker found for remote service {}", task.uploadService());
             return RemoteCheckResult.failure(String.format("No uploader found for remote service %s", task.uploadService()));
         }
+    }
+
+    private DateTime parseUploadTime(final String uploadTime) {
+        return new DateTime(Long.valueOf(uploadTime));
     }
 
     private void recordResult(RemoteCheckTask task, RemoteCheckResult result) throws InvalidStateException {

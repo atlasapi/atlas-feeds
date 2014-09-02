@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
-import org.atlasapi.feeds.radioplayer.upload.queue.InteractionManager;
+import org.atlasapi.feeds.radioplayer.upload.queue.UploadManager;
 import org.atlasapi.feeds.radioplayer.upload.queue.UploadService;
 import org.atlasapi.feeds.radioplayer.upload.queue.UploadTask;
 import org.joda.time.LocalDate;
@@ -38,9 +38,9 @@ public class RadioPlayerUploadController {
     private static final DateTimeFormatter DATE_PATTERN = DateTimeFormat.forPattern("yyyyMMdd");
     private HttpBasicAuthChecker checker;
     private final DayRangeGenerator dayRangeGenerator;
-    private final InteractionManager stateUpdater;
+    private final UploadManager stateUpdater;
 
-    public RadioPlayerUploadController(DayRangeGenerator dayRangeGenerator, String password, InteractionManager stateUpdater) {
+    public RadioPlayerUploadController(DayRangeGenerator dayRangeGenerator, String password, UploadManager stateUpdater) {
         this.dayRangeGenerator = checkNotNull(dayRangeGenerator);
         if (!Strings.isNullOrEmpty(password)) {
             this.checker = new HttpBasicAuthChecker(ImmutableList.of(new UsernameAndPassword("bbc", password)));

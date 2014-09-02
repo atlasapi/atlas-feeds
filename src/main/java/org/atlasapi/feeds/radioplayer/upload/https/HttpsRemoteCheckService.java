@@ -13,6 +13,7 @@ import org.atlasapi.feeds.radioplayer.upload.queue.UploadService;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.metabroadcast.common.http.HttpException;
@@ -36,13 +37,13 @@ public class HttpsRemoteCheckService implements RemoteCheckService {
 
     @Override
     public RemoteCheckResult check(final RemoteCheckTask task) throws RemoteCheckException {
-        String transactionId = task.uploadDetails().get(HttpsFileUploader.TRANSACTION_ID_KEY);
-        if (transactionId == null) {
+        Optional<String> transactionId = task.getParameter(HttpsFileUploader.TRANSACTION_ID_KEY);
+        if (!transactionId.isPresent()) {
             return RemoteCheckResult.failure(String.format("no transaction id for task %s", task.toString()));
         }
         
         try {
-            return httpClient.get(SimpleHttpRequest.httpRequestFrom(transactionId, new HttpResponseTransformer<RemoteCheckResult>() {
+            return httpClient.get(SimpleHttpRequest.httpRequestFrom(transactionId.get(), new HttpResponseTransformer<RemoteCheckResult>() {
                 @Override
                 public RemoteCheckResult transform(HttpResponsePrologue prologue, InputStream body)
                         throws HttpException, Exception {

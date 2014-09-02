@@ -15,26 +15,19 @@ import com.google.common.collect.Ordering;
 import com.metabroadcast.common.collect.MoreSets;
 
 
+// TODO builder + IMMUTABILITY
 public class FileHistory {
     
     private final RadioPlayerFile file;
     private ImmutableSet<UploadAttempt> uploadAttempts;
     
-    private boolean isQueuedForUpload = false;
-    private boolean isQueuedForRemoteCheck = false;
-    
     public FileHistory(RadioPlayerFile file) {
-        this(file, ImmutableSet.<UploadAttempt>of(), false, false);
+        this(file, ImmutableSet.<UploadAttempt>of());
     }
+
     public FileHistory(RadioPlayerFile file, Iterable<UploadAttempt> uploadAttempts) {
-        this(file, uploadAttempts, false, false);
-    }
-    
-    public FileHistory(RadioPlayerFile file, Iterable<UploadAttempt> uploadAttempts, boolean isQueuedForUpload, boolean isQueuedForRemoteCheck) {
         this.file = checkNotNull(file);
         this.uploadAttempts = ImmutableSet.copyOf(uploadAttempts);
-        this.isQueuedForUpload = isQueuedForUpload;
-        this.isQueuedForRemoteCheck = isQueuedForRemoteCheck;
     }
     
     public RadioPlayerFile file() {
@@ -50,40 +43,18 @@ public class FileHistory {
     }
     
     public Optional<UploadAttempt> getAttempt(final Long attemptId) {
-        return Optional.fromNullable(Iterables.getOnlyElement(
-                Iterables.filter(
-                        uploadAttempts, 
-                        new Predicate<UploadAttempt>() {
-                            @Override
-                            public boolean apply(UploadAttempt input) {
-                                return attemptId.equals(input.id());
-                            }
-                        }
-                ), 
-                null
-        ));
+        return Iterables.tryFind(uploadAttempts, new Predicate<UploadAttempt>() {
+            @Override
+            public boolean apply(UploadAttempt input) {
+                return attemptId.equals(input.id());
+            }
+        });
     }
     
     public UploadAttempt getLatestUpload() {
         return Ordering.<UploadAttempt>natural().max(uploadAttempts);
     }
     
-    public boolean isEnqueuedForUpload() {
-        return isQueuedForUpload;
-    }
-    
-    public void setEnqueuedForUpload(boolean enqueued) {
-        this.isQueuedForUpload = enqueued;
-    }
-
-    public boolean isEnqueuedForRemoteCheck() {
-        return isQueuedForRemoteCheck;
-    }
-    
-    public void setEnqueuedForRemoteCheck(boolean enqueued) {
-        this.isQueuedForRemoteCheck = enqueued;
-    }
-
     /**
      * Copies a FileHistory object, setting the uploadAttempts to 
      * the set of UploadAttempts passed in
@@ -94,12 +65,7 @@ public class FileHistory {
      */
     public static FileHistory copyWithAttempts(FileHistory file,
             Iterable<UploadAttempt> uploadAttempts) {
-        FileHistory newFile = new FileHistory(file.file, uploadAttempts);
-        
-        newFile.setEnqueuedForUpload(file.isEnqueuedForUpload());
-        newFile.setEnqueuedForRemoteCheck(file.isEnqueuedForRemoteCheck());
-        
-        return newFile;
+        return new FileHistory(file.file, uploadAttempts);
     }
     
     @Override

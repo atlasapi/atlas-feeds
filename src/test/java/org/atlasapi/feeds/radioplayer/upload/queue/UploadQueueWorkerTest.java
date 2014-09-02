@@ -5,6 +5,7 @@ import static org.atlasapi.feeds.radioplayer.upload.queue.UploadQueueWorker.ERRO
 import static org.atlasapi.feeds.radioplayer.upload.s3.S3FileUploader.FILENAME_KEY;
 import static org.atlasapi.feeds.radioplayer.upload.s3.S3FileUploader.HASHCODE_KEY;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
@@ -30,8 +31,8 @@ public class UploadQueueWorkerTest {
     private final FileUploader uploader = Mockito.mock(FileUploader.class);
     private UploadServicesSupplier uploaderSupplier = Mockito.mock(UploadServicesSupplier.class);
     private Clock clock = new TimeMachine(DateTime.now());
-    private FileCreator fileCreator = Mockito.mock(FileCreator.class);
-    private InteractionManager stateUpdater = Mockito.mock(InteractionManager.class);
+    private UploadCreator fileCreator = Mockito.mock(UploadCreator.class);
+    private UploadManager stateUpdater = Mockito.mock(UploadManager.class);
     private final UploadQueueWorker queueWorker = new UploadQueueWorker(uploadQueue, uploaderSupplier, clock, fileCreator, stateUpdater);
     
     @Test
@@ -39,7 +40,7 @@ public class UploadQueueWorkerTest {
         UploadTask task = createUploadTask(UploadService.S3);
         
         FileUpload upload = new FileUpload("someupload", new byte[0]);
-        Mockito.when(fileCreator.createFile(task.service(), task.type(), task.date())).thenReturn(upload);
+        Mockito.when(fileCreator.createUpload(task.service(), task.type(), task.date())).thenReturn(upload);
         
         Mockito.when(uploaderSupplier.get(Mockito.any(UploadService.class), Mockito.any(DateTime.class), Mockito.any(FileType.class))).thenReturn(Optional.of(uploader));
         
@@ -56,7 +57,7 @@ public class UploadQueueWorkerTest {
         UploadTask task = createUploadTask(UploadService.S3);
         
         FileUpload upload = new FileUpload("someupload", new byte[0]);
-        Mockito.when(fileCreator.createFile(task.service(), task.type(), task.date())).thenReturn(upload);
+        Mockito.when(fileCreator.createUpload(task.service(), task.type(), task.date())).thenReturn(upload);
         
         Mockito.when(uploaderSupplier.get(Mockito.any(UploadService.class), Mockito.any(DateTime.class), Mockito.any(FileType.class))).thenReturn(Optional.of(uploader));
         
@@ -73,7 +74,7 @@ public class UploadQueueWorkerTest {
         
         assertEquals(FileUploadResultType.FAILURE, result.getValue().uploadResult());
         assertEquals(clock.now(), result.getValue().uploadTime());
-        assertEquals(String.valueOf(uploadException), result.getValue().uploadDetails().get(ERROR_KEY));
+        assertTrue(result.getValue().uploadDetails().get(ERROR_KEY).contains(String.valueOf(uploadException)));
     }
     
     @Test
@@ -81,7 +82,7 @@ public class UploadQueueWorkerTest {
         UploadTask task = createUploadTask(UploadService.S3);
         
         IOException fileException = new IOException("file creation failed");
-        Mockito.when(fileCreator.createFile(task.service(), task.type(), task.date())).thenThrow(fileException);
+        Mockito.when(fileCreator.createUpload(task.service(), task.type(), task.date())).thenThrow(fileException);
         
         queueWorker.processTask(task);
 
@@ -93,7 +94,7 @@ public class UploadQueueWorkerTest {
         
         assertEquals(FileUploadResultType.FAILURE, result.getValue().uploadResult());
         assertEquals(clock.now(), result.getValue().uploadTime());
-        assertEquals(String.valueOf(fileException), result.getValue().uploadDetails().get(ERROR_KEY));
+        assertTrue(result.getValue().uploadDetails().get(ERROR_KEY).contains(String.valueOf(fileException)));
     }
     
     @Test
@@ -101,7 +102,7 @@ public class UploadQueueWorkerTest {
         UploadTask task = createUploadTask(UploadService.S3);
         
         FileUpload upload = new FileUpload("someupload", new byte[0]);
-        Mockito.when(fileCreator.createFile(task.service(), task.type(), task.date())).thenReturn(upload);
+        Mockito.when(fileCreator.createUpload(task.service(), task.type(), task.date())).thenReturn(upload);
         
         Mockito.when(uploaderSupplier.get(Mockito.any(UploadService.class), Mockito.any(DateTime.class), Mockito.any(FileType.class))).thenReturn(Optional.<FileUploader>absent());
         

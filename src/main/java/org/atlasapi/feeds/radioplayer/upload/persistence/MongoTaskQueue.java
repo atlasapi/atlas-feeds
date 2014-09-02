@@ -3,6 +3,7 @@ package org.atlasapi.feeds.radioplayer.upload.persistence;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.radioplayer.upload.persistence.UploadTaskTranslator.TIMESTAMP_KEY;
 
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFile;
 import org.atlasapi.feeds.radioplayer.upload.queue.MongoTranslator;
 import org.atlasapi.feeds.radioplayer.upload.queue.QueueTask;
 
@@ -53,8 +54,18 @@ public class MongoTaskQueue<T extends QueueTask> implements TaskQueue<T> {
 
     @Override
     public boolean remove(T task) {
-        DBObject dbo = collection.findAndRemove(new MongoQueryBuilder().idEquals(task.file().toKey()).build());
+        DBObject dbo = collection.findAndRemove(idQueryFrom(task.file()));
         return dbo != null;
+    }
+
+    @Override
+    public boolean contains(RadioPlayerFile file) {
+        DBObject task = collection.findOne(idQueryFrom(file));
+        return task != null;
+    }
+
+    private DBObject idQueryFrom(RadioPlayerFile file) {
+        return new MongoQueryBuilder().idEquals(file.toKey()).build();
     }
 
 }

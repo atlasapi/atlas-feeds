@@ -134,39 +134,46 @@ public class RadioPlayerHealthController {
     }
     
     @RequestMapping("feeds/ukradioplayer/health/{uploadService}/services/{service}/files/{type}/{date}")
-    public String radioPlayerFileHealth(HttpServletRequest request, HttpServletResponse response, 
+    public void radioPlayerFileHealth(HttpServletRequest request, HttpServletResponse response, 
             @PathVariable("uploadService") String uploadServiceStr, @PathVariable("service") String rpServiceId,
             @PathVariable("type") String typeStr, @PathVariable("date") String dateStr) throws IOException {
         if (checker == null) {
             response.setContentType(MimeType.TEXT_PLAIN.toString());
             response.getOutputStream().print("No password set up, health page cannot be viewed");
-            return null;
+            return;
         }
         boolean allowed = checker.check(request);
-        if (allowed) {
-            RadioPlayerFile file = new RadioPlayerFile(
-                    UploadService.fromString(uploadServiceStr), 
-                    RadioPlayerServices.all.get(rpServiceId), 
-                    FileType.fromString(typeStr), 
-                    DATE_PATTERN.parseLocalDate(dateStr)
-            );
-            Optional<FileHistory> fetched = fileStore.fetch(file);
-            
-            if(fetched.isPresent()) {
-                FileHistory fileHistory = fetched.get();
-                boolean success = getLastResultStatus(fileHistory);
-                
-                if (request.getRequestURI().endsWith(".json")) {
-                    FileHistoryOutputter.printJsonResponse(response, fileHistory);
-                } else {
-                    FileHistoryOutputter.printHtmlResponse(response, fileHistory, success);
-                }
-            } else {
-                response.sendError(HttpStatusCode.NOT_FOUND.code());
-            }
+        if (!allowed) {
+            HttpBasicAuthChecker.requestAuth(response, "Heath Page");
+            return;
         }
-        HttpBasicAuthChecker.requestAuth(response, "Heath Page");
-        return null;
+            
+        RadioPlayerFile file = parseUploadDetails(uploadServiceStr, rpServiceId, typeStr, dateStr);
+        
+        Optional<FileHistory> fetched = fileStore.fetch(file);
+        if(!fetched.isPresent()) {
+            response.sendError(HttpStatusCode.NOT_FOUND.code());
+            return;
+        }
+        
+        FileHistory fileHistory = fetched.get();
+        boolean success = getLastResultStatus(fileHistory);
+        
+        if (request.getRequestURI().endsWith(".json")) {
+            FileHistoryOutputter.printJsonResponse(response, fileHistory);
+        } else {
+            FileHistoryOutputter.printHtmlResponse(response, fileHistory, success);
+        }
+    }
+
+    private RadioPlayerFile parseUploadDetails(String uploadServiceStr, String rpServiceId, String typeStr,
+            String dateStr) {
+        return new RadioPlayerFile(
+                UploadService.fromString(uploadServiceStr), 
+                RadioPlayerServices.all.get(rpServiceId), 
+                FileType.fromString(typeStr), 
+                DATE_PATTERN.parseLocalDate(dateStr)
+        );
     }
 
     private boolean getLastResultStatus(FileHistory fileHistory) {
@@ -177,7 +184,7 @@ public class RadioPlayerHealthController {
         if (latest == null || FileUploadResultType.FAILURE.equals(latest.uploadResult())) {
             return false;
         }
-        return false;
+        return true;
     }
 
     private String createSlugKey(UploadService uploadService, String rpServiceId) {

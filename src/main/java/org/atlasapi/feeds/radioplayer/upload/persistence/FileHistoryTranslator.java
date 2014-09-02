@@ -20,8 +20,6 @@ public class FileHistoryTranslator implements MongoTranslator<FileHistory> {
     
     private static final String FILE_KEY = "file";
     private static final String UPLOAD_ATTEMPTS_KEY = "uploadAttempts";
-    private static final String IS_ENQUEUED_FOR_UPLOAD_KEY = "isEnqueuedForUpload";
-    private static final String IS_ENQUEUED_FOR_REMOTE_CHECK_KEY = "isEnqueuedForRemoteCheck";
     
     private final MongoTranslator<RadioPlayerFile> fileTranslator = new RadioPlayerFileTranslator();
     private final MongoTranslator<UploadAttempt> attemptTranslator = new UploadAttemptTranslator(); 
@@ -31,8 +29,6 @@ public class FileHistoryTranslator implements MongoTranslator<FileHistory> {
         
         TranslatorUtils.from(dbo, MongoConstants.ID, file.file().toKey());
         TranslatorUtils.from(dbo, FILE_KEY, fileTranslator.toDBObject(file.file()));
-        TranslatorUtils.from(dbo, IS_ENQUEUED_FOR_UPLOAD_KEY, file.isEnqueuedForUpload());
-        TranslatorUtils.from(dbo, IS_ENQUEUED_FOR_REMOTE_CHECK_KEY, file.isEnqueuedForRemoteCheck());
         TranslatorUtils.from(dbo, UPLOAD_ATTEMPTS_KEY, attemptsToDBObject(file));
         
         return dbo;
@@ -45,9 +41,7 @@ public class FileHistoryTranslator implements MongoTranslator<FileHistory> {
         
         return new FileHistory(
                 fileTranslator.fromDBObject(TranslatorUtils.toDBObject(dbo, FILE_KEY)),
-                attemptsFromDBObject(TranslatorUtils.toDBObjectList(dbo, UPLOAD_ATTEMPTS_KEY)),
-                TranslatorUtils.toBoolean(dbo, IS_ENQUEUED_FOR_UPLOAD_KEY),
-                TranslatorUtils.toBoolean(dbo, IS_ENQUEUED_FOR_REMOTE_CHECK_KEY)
+                attemptsFromDBObject(TranslatorUtils.toDBObjectList(dbo, UPLOAD_ATTEMPTS_KEY))
         );
     }
 

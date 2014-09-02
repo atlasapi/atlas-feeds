@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.radioplayer.upload.queue;
 
 
-public interface InteractionManager {
+public interface UploadManager {
     
     void enqueueUploadTask(UploadTask task);
     

@@ -6,6 +6,7 @@ import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFile;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 
 
@@ -25,6 +26,10 @@ public final class RemoteCheckTask extends QueueTask {
     
     public Map<String, String> uploadDetails() {
         return uploadDetails;
+    }
+    
+    public Optional<String> getParameter(String key) {
+        return Optional.fromNullable(uploadDetails.get(key));
     }
     
     @Override
