@@ -2,11 +2,9 @@ package org.atlasapi.feeds.radioplayer.upload.queue;
 
 import static org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedUploadManager.ATTEMPT_ID_KEY;
 import static org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedUploadManager.UPLOAD_TIME_KEY;
+import static org.atlasapi.feeds.radioplayer.upload.queue.UploadAttempt.failedRemoteCheck;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-
-import java.util.List;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.radioplayer.upload.FileHistory;
@@ -42,48 +40,40 @@ public class QueueBasedUploadManagerTest {
     private final UploadManager manager = new QueueBasedUploadManager(uploadQueue, remoteCheckQueue, fileStore);
 
     @Test
-    public void testEnqueueOnAlreadyEnqueuedTaskDoesNothing() {
+    public void testEnqueueOnAlreadyUploadEnqueuedTaskDoesNothing() {
         RadioPlayerFile file = new RadioPlayerFile(UploadService.S3, Iterables.getFirst(RadioPlayerServices.services, null), FileType.PI, new LocalDate());
         UploadTask task = new UploadTask(file);
         
-        FileHistory history = createFileRecord(file, true, false);
-        Mockito.when(fileStore.fetch(file)).thenReturn(Optional.of(history));
+        Mockito.when(uploadQueue.contains(file)).thenReturn(true);
         
         manager.enqueueUploadTask(task);
         
-        Mockito.verifyZeroInteractions(uploadQueue);
-        Mockito.verify(fileStore, never()).store(Mockito.any(FileHistory.class));
+        Mockito.verify(uploadQueue, never()).push(task);
+    }
+
+    @Test
+    public void testEnqueueOnAlreadyRemoteCheckEnqueuedTaskDoesNothing() {
+        RadioPlayerFile file = new RadioPlayerFile(UploadService.S3, Iterables.getFirst(RadioPlayerServices.services, null), FileType.PI, new LocalDate());
+        UploadTask task = new UploadTask(file);
         
-        history = createFileRecord(file, false, true);
-        Mockito.when(fileStore.fetch(file)).thenReturn(Optional.of(history));
+        Mockito.when(remoteCheckQueue.contains(file)).thenReturn(true);
         
         manager.enqueueUploadTask(task);
         
-        Mockito.verifyZeroInteractions(uploadQueue);
-        Mockito.verify(fileStore, never()).store(Mockito.any(FileHistory.class));
+        Mockito.verify(uploadQueue, never()).push(task);
     }
     
     @Test
-    public void testRetrievesExistingRecordUpdatesAndUploadsToQueue() {
+    public void testUploadsToQueueIfNotAlreadyEnqueued() {
         RadioPlayerFile file = new RadioPlayerFile(UploadService.S3, Iterables.getFirst(RadioPlayerServices.services, null), FileType.PI, new LocalDate());
         UploadTask task = new UploadTask(file);
-        
-        FileHistory history = createFileRecord(file, false, false);
-        Mockito.when(fileStore.fetch(file)).thenReturn(Optional.of(history));
+        FileHistory fileHistory = new FileHistory(file);
+        Mockito.when(uploadQueue.contains(file)).thenReturn(false);
+        Mockito.when(fileStore.fetch(file)).thenReturn(Optional.of(fileHistory));
         
         manager.enqueueUploadTask(task);
         
-        Mockito.verify(fileStore).fetch(file);
-        
-        ArgumentCaptor<FileHistory> storedFile = ArgumentCaptor.forClass(FileHistory.class);
-        
-        Mockito.verify(fileStore).store(storedFile.capture());
         Mockito.verify(uploadQueue).push(task);
-        
-        FileHistory createdFile = FileHistory.copyWithAttempts(history, ImmutableList.<UploadAttempt>of());
-        createdFile.setEnqueuedForUpload(true);
-        
-        assertEquals(createdFile, storedFile.getValue());
     }
     
     @Test
@@ -94,19 +84,16 @@ public class QueueBasedUploadManagerTest {
         
         manager.enqueueUploadTask(task);
         
-        FileHistory createdHistory = createFileRecord(file, true, false);
-        
         ArgumentCaptor<FileHistory> storedHistory = ArgumentCaptor.forClass(FileHistory.class);
         
         Mockito.verify(fileStore).store(storedHistory.capture());
         Mockito.verify(uploadQueue).push(task);
         
-        assertEquals(createdHistory, storedHistory.getValue());
+        assertEquals(new FileHistory(file), storedHistory.getValue());
     }
     
     @Test(expected = MongoException.class)
     public void testExceptionsPropagatedUp() {
-        
         RadioPlayerFile file = new RadioPlayerFile(UploadService.S3, Iterables.getFirst(RadioPlayerServices.services, null), FileType.PI, new LocalDate());
         UploadTask task = new UploadTask(file);
         MongoException something = new MongoException("Mongo no likey");
@@ -131,24 +118,18 @@ public class QueueBasedUploadManagerTest {
         RadioPlayerFile file = new RadioPlayerFile(UploadService.S3, Iterables.getFirst(RadioPlayerServices.services, null), FileType.PI, new LocalDate());
         UploadTask task = new UploadTask(file);
         UploadAttempt result = UploadAttempt.successfulUpload(clock.now(), ImmutableMap.<String,String>of());
+        UploadAttempt resultWithId = result.copyWithId(1234l);
+        RemoteCheckTask remoteCheckTask = createRemoteCheckTask(task, resultWithId);
         
-        FileHistory history = createFileRecord(file, true, false);
+        FileHistory history = new FileHistory(file);
         Mockito.when(fileStore.fetch(file)).thenReturn(Optional.of(history));
-        result = result.copyWithId(1234l);
-        Mockito.when(fileStore.addUploadAttempt(file, result)).thenReturn(result);
+        Mockito.when(fileStore.addUploadAttempt(file, result)).thenReturn(resultWithId);
         
         manager.recordUploadResult(task, result);
         
+        Mockito.verify(fileStore).addUploadAttempt(file, result);
         Mockito.verify(uploadQueue).remove(task);
-        
-        RemoteCheckTask remoteCheckTask = createRemoteCheckTask(task, result);
         Mockito.verify(remoteCheckQueue).push(remoteCheckTask);
-        
-        FileHistory updatedFile = FileHistory.copyWithAttempts(history, ImmutableList.of(result));
-        updatedFile.setEnqueuedForUpload(false);
-        updatedFile.setEnqueuedForRemoteCheck(true);
-        
-        Mockito.verify(fileStore).successfulUpload(file);
     }
     
     @Test
@@ -157,11 +138,11 @@ public class QueueBasedUploadManagerTest {
         UploadTask task = new UploadTask(file);
         UploadAttempt result = UploadAttempt.failedUpload(clock.now(), ImmutableMap.<String,String>of());
         
-        FileHistory history = createFileRecord(file, true, false);
-        Mockito.when(fileStore.fetch(file)).thenReturn(Optional.of(history));
+        Mockito.when(fileStore.fetch(file)).thenReturn(Optional.of(new FileHistory(file)));
         
         manager.recordUploadResult(task, result);
         
+        Mockito.verify(fileStore).addUploadAttempt(file, result);
         Mockito.verify(uploadQueue).push(task);
         Mockito.verifyZeroInteractions(remoteCheckQueue);
     }
@@ -173,19 +154,15 @@ public class QueueBasedUploadManagerTest {
         // unlikely, given that you have to manually construct it using the UNKNOWN result type
         UploadAttempt result = new UploadAttempt(clock.now(), FileUploadResultType.UNKNOWN, ImmutableMap.<String,String>of(), null, null);
         
-        FileHistory history = createFileRecord(file, true, false);
-        Mockito.when(fileStore.fetch(file)).thenReturn(Optional.of(history));
-        long attemptId = 1234l;
-        Mockito.when(fileStore.addUploadAttempt(file, result)).thenReturn(result.copyWithId(attemptId));
+        Mockito.when(fileStore.fetch(file)).thenReturn(Optional.of(new FileHistory(file)));
         
         manager.recordUploadResult(task, result);
         
+        Mockito.verify(fileStore).addUploadAttempt(file, result);
         Mockito.verify(uploadQueue).push(task);
         Mockito.verifyZeroInteractions(remoteCheckQueue);
     }
 
-    // recordRemoteCheckResult
-    // test successful remote check updates flags, attempt record, and dequeues
     @Test
     public void testSuccessfulRemoteCheckUpdatesQueuesAndRecord() throws InvalidStateException {
         long id = 12345667l;
@@ -193,7 +170,7 @@ public class QueueBasedUploadManagerTest {
         RemoteCheckTask task = new RemoteCheckTask(file, ImmutableMap.of(ATTEMPT_ID_KEY, String.valueOf(id)));
         RemoteCheckResult result = RemoteCheckResult.success("Successed");
         
-        FileHistory history = createFileRecord(file, false, true);
+        FileHistory history = new FileHistory(file);
         UploadAttempt upload = UploadAttempt.successfulUpload(clock.now(), ImmutableMap.<String, String>of());
         upload = upload.copyWithId(id);
         history.addUploadAttempt(upload);
@@ -202,14 +179,11 @@ public class QueueBasedUploadManagerTest {
         
         manager.recordRemoteCheckResult(task, result);
         
-        Mockito.verify(remoteCheckQueue).remove(task);
         
-        FileHistory updatedFile = FileHistory.copyWithAttempts(history, ImmutableList.of(updateAttempt(upload, result)));
-        updatedFile.setEnqueuedForRemoteCheck(false);
-        
+        FileHistory updatedFile = FileHistory.copyWithAttempts(history, ImmutableList.of(UploadAttempt.successfulRemoteCheck(upload)));
         ArgumentCaptor<FileHistory> storedFile = ArgumentCaptor.forClass(FileHistory.class);
-        
         Mockito.verify(fileStore).store(storedFile.capture());
+        Mockito.verify(remoteCheckQueue).remove(task);
         
         assertEquals(updatedFile, storedFile.getValue());
         assertEquals(updatedFile.uploadAttempts(), storedFile.getValue().uploadAttempts());
@@ -233,7 +207,7 @@ public class QueueBasedUploadManagerTest {
         RemoteCheckTask task = new RemoteCheckTask(file, ImmutableMap.of(ATTEMPT_ID_KEY, String.valueOf(id)));
         RemoteCheckResult result = RemoteCheckResult.failure("Doh!");
         
-        FileHistory history = createFileRecord(file, false, true);
+        FileHistory history = new FileHistory(file);
         UploadAttempt upload = UploadAttempt.successfulUpload(clock.now(), ImmutableMap.<String, String>of());
         upload = upload.copyWithId(id);
         history.addUploadAttempt(upload);
@@ -244,27 +218,20 @@ public class QueueBasedUploadManagerTest {
         
         Mockito.verify(remoteCheckQueue).remove(task);
         
-        FileHistory updatedFile = FileHistory.copyWithAttempts(history, ImmutableList.of(updateAttempt(upload, result)));
-        updatedFile.setEnqueuedForRemoteCheck(false);
+        FileHistory updatedFile = FileHistory.copyWithAttempts(history, ImmutableList.of(failedRemoteCheck(upload, result.message())));
         
         ArgumentCaptor<FileHistory> storedFile = ArgumentCaptor.forClass(FileHistory.class);
         
-        Mockito.verify(fileStore, times(2)).store(storedFile.capture());
+        Mockito.verify(fileStore).store(storedFile.capture());
         
-        List<FileHistory> captures = storedFile.getAllValues();
-        assertEquals(updatedFile, captures.get(0));
-        assertEquals(updatedFile.uploadAttempts(), captures.get(0).uploadAttempts());
-        
+        FileHistory captured = storedFile.getValue();
+        assertEquals(updatedFile, captured);
+        assertEquals(updatedFile.uploadAttempts(), captured.uploadAttempts());
         
         Mockito.when(fileStore.fetch(file)).thenReturn(Optional.of(updatedFile));
         
         UploadTask uploadTask = new UploadTask(file);
         Mockito.verify(uploadQueue).push(uploadTask);
-        
-        FileHistory afterUploadFile = FileHistory.copyWithAttempts(updatedFile, updatedFile.uploadAttempts());
-        afterUploadFile.setEnqueuedForUpload(true);
-        
-        assertEquals(afterUploadFile, captures.get(1));
     }
 
     @Test
@@ -274,7 +241,7 @@ public class QueueBasedUploadManagerTest {
         RemoteCheckTask task = new RemoteCheckTask(file, ImmutableMap.of(ATTEMPT_ID_KEY, String.valueOf(id)));
         RemoteCheckResult result = RemoteCheckResult.unknown("Erm...");
         
-        FileHistory history = createFileRecord(file, false, true);
+        FileHistory history = new FileHistory(file);
         UploadAttempt upload = UploadAttempt.successfulUpload(clock.now(), ImmutableMap.<String, String>of());
         upload = upload.copyWithId(id);
         history.addUploadAttempt(upload);
@@ -285,7 +252,9 @@ public class QueueBasedUploadManagerTest {
         
         Mockito.verify(remoteCheckQueue).push(task);
         
-        FileHistory updatedFile = FileHistory.copyWithAttempts(history, ImmutableList.of(updateAttempt(upload, result)));
+        FileHistory updatedFile = FileHistory.copyWithAttempts(history, ImmutableList.of(
+                new UploadAttempt(upload.id(), upload.uploadTime(), upload.uploadResult(), upload.uploadDetails(), result.result(), result.message())
+        ));
         
         ArgumentCaptor<FileHistory> storedFile = ArgumentCaptor.forClass(FileHistory.class);
         
@@ -295,19 +264,6 @@ public class QueueBasedUploadManagerTest {
         assertEquals(updatedFile.uploadAttempts(), storedFile.getValue().uploadAttempts());
     }
     
-    private UploadAttempt updateAttempt(UploadAttempt upload, RemoteCheckResult result) {
-        switch(result.result()) {
-        case FAILURE:
-            return UploadAttempt.failedRemoteCheck(upload, result.message());
-        case SUCCESS:
-            return UploadAttempt.successfulRemoteCheck(upload);
-        case UNKNOWN:
-        default:
-            return new UploadAttempt(upload.id(), upload.uploadTime(), upload.uploadResult(), upload.uploadDetails(), 
-                    result.result(), result.message());
-        }
-    }
-    
     private RemoteCheckTask createRemoteCheckTask(UploadTask task, UploadAttempt result) {
         return new RemoteCheckTask(task.file(), ImmutableMap.<String, String>builder()
                 .putAll(result.uploadDetails())
@@ -315,12 +271,4 @@ public class QueueBasedUploadManagerTest {
                 .put(ATTEMPT_ID_KEY, String.valueOf(result.id()))
                 .build());
     }
-    
-    private FileHistory createFileRecord(RadioPlayerFile file, boolean enqueuedForUpload, boolean enqueuedForRemoteCheck) {
-        FileHistory history = new FileHistory(file);
-        history.setEnqueuedForUpload(enqueuedForUpload);
-        history.setEnqueuedForRemoteCheck(enqueuedForRemoteCheck);
-        return history;
-    }
-
 }

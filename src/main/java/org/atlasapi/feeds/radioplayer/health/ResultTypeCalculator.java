@@ -52,7 +52,6 @@ public class ResultTypeCalculator {
         return Iterables.getOnlyElement(Ordering.natural().greatestOf(Iterables.filter(uploadAttempts, IS_SUCCESS), 1), null);
     }
 
-    // TODO check this again
     private boolean isStale(RadioPlayerFile file, UploadAttempt lastSuccess) {
         if (lastSuccess == null) {
             return true;
@@ -67,8 +66,7 @@ public class ResultTypeCalculator {
                     return true;
                 }
             }
-        }
-        if (FileType.OD.equals(file.type())) {
+        } else if (FileType.OD.equals(file.type())) {
             if (isToday(file.date())) {
                 if (olderThan(lastSuccess.uploadTime(), OD_TODAY_STALENESS)) {
                     return true;

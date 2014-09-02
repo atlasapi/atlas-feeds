@@ -24,12 +24,12 @@ import org.atlasapi.feeds.radioplayer.upload.persistence.MongoTaskQueue;
 import org.atlasapi.feeds.radioplayer.upload.persistence.RemoteCheckTaskTranslator;
 import org.atlasapi.feeds.radioplayer.upload.persistence.TaskQueue;
 import org.atlasapi.feeds.radioplayer.upload.persistence.UploadTaskTranslator;
-import org.atlasapi.feeds.radioplayer.upload.queue.FileCreator;
-import org.atlasapi.feeds.radioplayer.upload.queue.UploadManager;
 import org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedUploadManager;
 import org.atlasapi.feeds.radioplayer.upload.queue.RemoteCheckQueueWorker;
 import org.atlasapi.feeds.radioplayer.upload.queue.RemoteCheckTask;
 import org.atlasapi.feeds.radioplayer.upload.queue.RemoteCheckerSupplier;
+import org.atlasapi.feeds.radioplayer.upload.queue.UploadCreator;
+import org.atlasapi.feeds.radioplayer.upload.queue.UploadManager;
 import org.atlasapi.feeds.radioplayer.upload.queue.UploadQueueWorker;
 import org.atlasapi.feeds.radioplayer.upload.queue.UploadService;
 import org.atlasapi.feeds.radioplayer.upload.queue.UploadServicesSupplier;
@@ -45,9 +45,6 @@ import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.ids.MongoSequentialIdGenerator;
-import org.atlasapi.persistence.logging.AdapterLog;
-import org.atlasapi.persistence.logging.AdapterLogEntry;
-import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
 import org.jets3t.service.S3Service;
 import org.jets3t.service.S3ServiceException;
 import org.jets3t.service.impl.rest.httpclient.RestS3Service;
@@ -68,6 +65,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Resources;
+import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.SimpleHttpClientBuilder;
@@ -91,9 +89,8 @@ public class RadioPlayerModule {
     
     private static final Every UPLOAD_EVERY_THIRTY_MINUTES = RepetitionRules.every(Duration.standardMinutes(30));
 	private static final Every UPLOAD_EVERY_TWO_HOURS = RepetitionRules.every(Duration.standardHours(2));
-	
-	private static final Publisher NITRO = Publisher.BBC_NITRO;
 
+	private @Value("${rp.sourcePublisher}") String publisher;
 	private @Value("${rp.s3.bucket}") String s3Bucket;
 	private @Value("${s3.access}") String s3AccessKey;
 	private @Value("${s3.secret}") String s3Secret;
@@ -108,7 +105,6 @@ public class RadioPlayerModule {
 	
     private @Autowired KnownTypeContentResolver knownTypeContentResolver;
 	private @Autowired SimpleScheduler scheduler;
-	private @Autowired AdapterLog log;
 	private @Autowired DatabasedMongo mongo;
 	private @Autowired HealthController health;
 	private @Autowired ScheduleResolver scheduleResolver;
@@ -123,7 +119,12 @@ public class RadioPlayerModule {
 	private final Clock clock = new SystemClock(DateTimeZone.UTC);
 	
 	private static DayRangeGenerator dayRangeGenerator = new DayRangeGenerator().withLookAhead(7).withLookBack(7);
-
+	
+	private Publisher publisher() {
+	    Maybe<Publisher> resolved = Publisher.fromKey(publisher);
+	    return resolved.requireValue();
+	}
+	
 	public @Bean RadioPlayerController radioPlayerController() {
 		return new RadioPlayerController(odUriResolver());
 	}
@@ -153,7 +154,7 @@ public class RadioPlayerModule {
     }
     
     @Bean public UploadQueueWorker uploadQueueWorker() {
-        return new UploadQueueWorker(uploadQueue(), uploaderSupplier(), clock, fileCreator(), stateUpdater());
+        return new UploadQueueWorker(uploadQueue(), uploaderSupplier(), clock, uploadCreator(), stateUpdater());
     }
     
     private UploadServicesSupplier uploaderSupplier() {
@@ -204,12 +205,12 @@ public class RadioPlayerModule {
         return new MongoFileHistoryStore(mongo, idGenerator());
     }
 
-    @Bean public FileCreator fileCreator() {
-        return new FileCreator(odUriResolver());
+    @Bean public UploadCreator uploadCreator() {
+        return new UploadCreator(odUriResolver());
     }
     
     @Bean public RadioPlayerOdUriResolver odUriResolver() {
-        return new RadioPlayerOdUriResolver(contentLister, lastUpdatedContentFinder, NITRO);
+        return new RadioPlayerOdUriResolver(contentLister, lastUpdatedContentFinder, publisher());
     }
     
     @Bean public Clock clock() {
@@ -245,7 +246,7 @@ public class RadioPlayerModule {
 	public void scheduleTasks() {
 	    RadioPlayerGenreElementCreator genreCreator = new RadioPlayerGenreElementCreator(
                 new RadioPlayerIdGenreMap(RadioPlayerIdGenreMap.GENRES_FILE, NITRO_ID_GENRE_PREFIX));
-        RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, NITRO, genreCreator);
+        RadioPlayerFeedCompiler.init(scheduleResolver, knownTypeContentResolver, contentResolver, channelResolver, publisher(), genreCreator);
         
 		if (!uploadServices().isEmpty()) {
 		    createHealthProbes(uploadServices(), httpsUploadServices());
@@ -265,14 +266,6 @@ public class RadioPlayerModule {
                         new ScheduledODUploadTask(uploadServices(), new DayRangeGenerator(), httpsUploadServices(), stateUpdater()).withName("Radioplayer HTTPS/S3 OD Today Upload"),
                         UPLOAD_EVERY_THIRTY_MINUTES);
             } 
-		    if (!Boolean.parseBoolean(httpsUpload) 
-		            && !Boolean.parseBoolean(s3HttpsUpload)) {
-				log.record(
-				        new AdapterLogEntry(Severity.INFO)
-				                .withSource(getClass())
-				                .withDescription("Not installing Radioplayer uploader")
-                );
-			}
 		}
 	}
 

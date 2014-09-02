@@ -22,14 +22,14 @@ public class UploadQueueWorker extends QueueWorker<UploadTask> {
     private final UploadServicesSupplier uploaderSupplier;
     private final Clock clock;
     private final UploadManager stateUpdater;
-    private final FileCreator fileCreator;
+    private final UploadCreator uploadCreator;
     
     public UploadQueueWorker(TaskQueue<UploadTask> uploadQueue, UploadServicesSupplier uploaderSupplier, 
-            Clock clock, FileCreator fileCreator, UploadManager stateUpdater) {
+            Clock clock, UploadCreator uploadCreator, UploadManager stateUpdater) {
         super(uploadQueue);
         this.uploaderSupplier = checkNotNull(uploaderSupplier);
         this.clock = checkNotNull(clock);
-        this.fileCreator = checkNotNull(fileCreator);
+        this.uploadCreator = checkNotNull(uploadCreator);
         this.stateUpdater = checkNotNull(stateUpdater);
     }
 
@@ -47,27 +47,37 @@ public class UploadQueueWorker extends QueueWorker<UploadTask> {
     // the time at which the task was enqueued.
     private UploadAttempt upload(UploadTask task) {
         try {
-            final FileUpload file = fileCreator.createFile(task.service(), task.type(), task.date());
+            final FileUpload upload = uploadCreator.createUpload(task.service(), task.type(), task.date());
             Optional<FileUploader> uploader = uploaderSupplier.get(task.uploadService(), clock.now(), task.type());
-            if (uploader.isPresent()) {
-                try {
-                    return uploader.get().upload(file);
-                } catch (Exception e) {
-                    log.error(String.format("Error on upload for remote service %s, task %s: {}", task.uploadService(), task), e);
-                    return UploadAttempt.failedUpload(clock.now(), ImmutableMap.of(ERROR_KEY, String.valueOf(e)));
-                }
-            } else {
-                log.error("No uploader found for remote service {}", task.uploadService());
-                return UploadAttempt.failedUpload(clock.now(), ImmutableMap.of(ERROR_KEY, String.format("No uploader found for remote service %s", task.uploadService())));
+            if (!uploader.isPresent()) {
+                return logAndReturnFailure(String.format("No uploader found for remote service %s", task.uploadService()), Optional.<Exception>absent());
             }
-
+            return performUpload(task, upload, uploader.get());
         } catch (IOException e) {
-            log.error("Error on file creation: {}", e);
-            return UploadAttempt.failedUpload(clock.now(), ImmutableMap.of(ERROR_KEY, String.valueOf(e)));
+            return logAndReturnFailure("Error on file creation: {}", Optional.of(e));
+        }
+    }
+
+    private UploadAttempt performUpload(UploadTask task, final FileUpload upload,
+            FileUploader uploader) {
+        try {
+            return uploader.upload(upload);
+        } catch (Exception e) {
+            return logAndReturnFailure(String.format("Error on upload for remote service %s, task %s", task.uploadService(), task), Optional.of(e));
         }
     }
 
     private void recordResult(UploadTask task, UploadAttempt result) throws InvalidStateException {
         stateUpdater.recordUploadResult(task, result);
+    }
+    
+    private UploadAttempt logAndReturnFailure(String message, Optional<? extends Exception> ex) {
+        if (ex.isPresent()) {
+            log.error(message, ex.get());
+            return UploadAttempt.failedUpload(clock.now(), ImmutableMap.of(ERROR_KEY, message + ": " + ex.get().toString()));
+        } else {
+            log.error(message);
+            return UploadAttempt.failedUpload(clock.now(), ImmutableMap.of(ERROR_KEY, message));
+        }
     }
 }

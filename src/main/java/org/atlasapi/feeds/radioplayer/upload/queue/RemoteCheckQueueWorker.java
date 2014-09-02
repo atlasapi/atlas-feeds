@@ -30,12 +30,13 @@ public class RemoteCheckQueueWorker extends QueueWorker<RemoteCheckTask> {
             RemoteCheckResult result = checkRemote(task);
             recordResult(task, result);
         } catch (InvalidStateException e) {
-            log.error("tried to process remote check for file without file record. remote check task: {}", task);
+            log.error("error recording remote check result for task: {}", task);
         }
     }
 
     private RemoteCheckResult checkRemote(final RemoteCheckTask task) {
-        Optional<RemoteCheckService> checker = remoteCheckers.get(task.uploadService(), new DateTime(Long.valueOf(task.uploadDetails().get(UPLOAD_TIME_KEY))), task.type());
+        DateTime uploadTime = parseUploadTime(task.getParameter(UPLOAD_TIME_KEY).get());
+        Optional<RemoteCheckService> checker = remoteCheckers.get(task.uploadService(), uploadTime, task.type());
         if (checker.isPresent()) {
             try {
                 return checker.get().check(task);
@@ -47,6 +48,10 @@ public class RemoteCheckQueueWorker extends QueueWorker<RemoteCheckTask> {
             log.error("No checker found for remote service {}", task.uploadService());
             return RemoteCheckResult.failure(String.format("No uploader found for remote service %s", task.uploadService()));
         }
+    }
+
+    private DateTime parseUploadTime(final String uploadTime) {
+        return new DateTime(Long.valueOf(uploadTime));
     }
 
     private void recordResult(RemoteCheckTask task, RemoteCheckResult result) throws InvalidStateException {

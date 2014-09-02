@@ -20,15 +20,15 @@ import com.google.common.base.Optional;
 import com.metabroadcast.common.media.MimeType;
 
 
-public class FileCreator {
+public class UploadCreator {
     
     private final RadioPlayerOdUriResolver odUriResolver;
     
-    public FileCreator(RadioPlayerOdUriResolver odUriResolver) {
+    public UploadCreator(RadioPlayerOdUriResolver odUriResolver) {
         this.odUriResolver = checkNotNull(odUriResolver);
     }
 
-    public FileUpload createFile(RadioPlayerService service, FileType type, LocalDate date) throws IOException {
+    public FileUpload createUpload(RadioPlayerService service, FileType type, LocalDate date) throws IOException {
         RadioPlayerFeedSpec spec;
         switch (type) {
         case PI:

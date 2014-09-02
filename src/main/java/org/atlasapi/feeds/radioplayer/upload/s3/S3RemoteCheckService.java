@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 
 
 public class S3RemoteCheckService implements RemoteCheckService {
@@ -36,13 +37,15 @@ public class S3RemoteCheckService implements RemoteCheckService {
     public RemoteCheckResult check(RemoteCheckTask task) throws RemoteCheckException {
         try {
             // TODO what does this do when object doesn't exist?
-            S3Object object = s3Service.getObject(s3Bucket, createObjectName(s3Folder, task.uploadDetails().get(FILENAME_KEY)));
-            String recordedHash = task.uploadDetails().get(HASHCODE_KEY);
-            if (object.getMd5HashAsHex().equals(recordedHash)) {
-                return RemoteCheckResult.success("Object exists in S3 and has correct hash");
-            } else {
-                return RemoteCheckResult.failure(String.format("Object is present, but hash %s does not match recorded hash %s", object.getMd5HashAsHex(), recordedHash));
+            S3Object object = s3Service.getObject(s3Bucket, createObjectName(s3Folder, task.getParameter(FILENAME_KEY).get()));
+            Optional<String> recordedHash = task.getParameter(HASHCODE_KEY);
+            if (!recordedHash.isPresent()) {
+                return RemoteCheckResult.failure(String.format("No recorded hash, so cannot check against uploaded object"));
             }
+            if (object.getMd5HashAsHex().equals(recordedHash.get())) {
+                return RemoteCheckResult.success("Object exists in S3 and has correct hash");
+            } 
+            return RemoteCheckResult.failure(String.format("Object is present, but hash %s does not match recorded hash %s", object.getMd5HashAsHex(), recordedHash.get()));
         } catch (S3ServiceException e) {
             log.error("Error checking S3 for task {}: {}", task, e);
             return RemoteCheckResult.failure(String.format("Error checking S3 for task", e));
