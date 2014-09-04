@@ -1,31 +1,52 @@
 package org.atlasapi.feeds.lakeview;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import nu.xom.Document;
 import nu.xom.Element;
 import nu.xom.Elements;
 
 import org.atlasapi.feeds.xml.XMLNamespace;
 import org.atlasapi.media.TransportType;
+import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Policy;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
+import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.metabroadcast.common.base.Maybe;
 
 public class LakeviewFeedCompilerTest {
 
+    private static final String CHANNEL_KEY = "channel-key";
+    private static final Channel CHANNEL = new Channel(Publisher.METABROADCAST, "Channel", 
+                                                       CHANNEL_KEY, true, MediaType.VIDEO, "http://example.org");
+    
     private static final XMLNamespace LAKEVIEW = new XMLNamespace("", "http://schemas.microsoft.com/Lakeview/2013/07/01/ingestion");
-
+    private ChannelResolver channelResolver = mock(ChannelResolver.class);
+    
+    private final LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(channelResolver, false, true);
+    
+    @Before
+    public void setUp() {
+        when(channelResolver.fromKey(CHANNEL_KEY)).thenReturn(Maybe.just(CHANNEL));
+    }
+    
 	@Test
 	public void testBrandAtomUri() {
-		LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, false, true);
 		assertEquals("https://xbox.channel4.com/pmlsd/educating-essex/4od.atom", 
 				feedCompiler.brandAtomUri("tag:pmlsc.channel4.com,2009:/programmes/educating-essex"));
 	}
@@ -73,7 +94,7 @@ public class LakeviewFeedCompilerTest {
 	public void testNonGenericEpisodeTitleGenerated() {
 	    String episodeTitle="The One That Was Funny";
 	    
-        Element element = getEpisodeElement(episodeTitle, 3012, false);
+        Element element = createEpisodeElement(episodeTitle, 3012, false);
         Elements titles = element.getChildElements("Title", LAKEVIEW.getUri());
         
         assertEquals("Should have exactly one title", 1, titles.size());
@@ -84,40 +105,56 @@ public class LakeviewFeedCompilerTest {
 	public void testGenericEpisodeTitleGenerated() {
 	    String episodeTitle="The One That Was Funny";
 
-	    Element element = getEpisodeElement(episodeTitle, 3012, true);
+	    Element element = createEpisodeElement(episodeTitle, 3012, true);
 	    Elements titles = element.getChildElements("Title", LAKEVIEW.getUri());
 
 	    assertEquals("Should have exactly one title", 1, titles.size());
 	    assertEquals("Title should be generic", "Episode 3012", titles.get(0).getValue());
 	}
-
-    private Element getEpisodeElement(String episodeTitle, int episodeNumber, boolean genericTitleEnabled) {
-        LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, genericTitleEnabled, true);
-	    Episode episode = new Episode("http://www.channel4.com/programmes/hierarchical-uri/episode-guide/series-1/episode-1", "episodeCurie", null);
-	    episode.addAliasUrl("tag:pmlsc.channel4.com,2009:/programmes/hierarchical-uri/episode-guide/series-1/episode-1");
-	    Brand container = new Brand("brandUri", "brandCurie", null);
-        container.addAliasUrl("tag:pmlsc.channel4.com,2009:/programmes/brand");
-	    episode.setTitle(episodeTitle);
-	    episode.setEpisodeNumber(episodeNumber);
-	    
+	
+	private Brand createBrand() {
+        Brand brand = new Brand("brandUri", "brandCurie", null);
+        brand.setPresentationChannel(CHANNEL);
+        brand.addAliasUrl("tag:pmlsc.channel4.com,2009:/programmes/brand");
+        return brand;
+	}
+	
+	private Series createSeries(Brand brand) {
 	    Series series = new Series("seriesUri", "seriesCurie", null);
         series.addAliasUrl("tag:pmlsc.channel4.com,2009:/programmes/brand/episode-guide/series-1");
-	    
-	    Version version = new Version();
-	    Encoding encoding = new Encoding();
-	    Location location = new Location();
-	    location.setPolicy(new Policy()
-	                .withPlatform(Platform.XBOX)
-	                .withAvailabilityStart(new DateTime())
-	                .withAvailabilityEnd(new DateTime()));
-	    location.setTransportType(TransportType.APPLICATION);
-	    
-	    encoding.setAvailableAt(ImmutableSet.of(location));
-	    version.setManifestedAs(ImmutableSet.of(encoding));
-	    episode.setVersions(ImmutableSet.of(version));
-	    episode.setContainer(container);
-	    
-	    return feedCompiler.createEpisodeElem(episode, container, series, new DateTime(), null);
+        series.setParent(brand);
+        return series;
+	}
+
+	private Episode createEpisode(String episodeTitle, int episodeNumber, boolean genericTitleEnabled, Brand brand, Series series) {
+	    Episode episode = new Episode(String.format("http://www.channel4.com/programmes/hierarchical-uri/episode-guide/series-1/episode-%d", episodeNumber), "episodeCurie", null);
+        episode.addAliasUrl(String.format("tag:pmlsc.channel4.com,2009:/programmes/hierarchical-uri/episode-guide/series-1/episode-%d", episodeNumber));
+
+        episode.setTitle(episodeTitle);
+        episode.setEpisodeNumber(episodeNumber);
+        episode.setContainer(brand);
+        
+        Version version = new Version();
+        Encoding encoding = new Encoding();
+        Location location = new Location();
+        location.setPolicy(new Policy()
+                    .withPlatform(Platform.XBOX)
+                    .withAvailabilityStart(new DateTime())
+                    .withAvailabilityEnd(new DateTime()));
+        location.setTransportType(TransportType.APPLICATION);
+        
+        encoding.setAvailableAt(ImmutableSet.of(location));
+        version.setManifestedAs(ImmutableSet.of(encoding));
+        episode.setVersions(ImmutableSet.of(version));
+
+        return episode;
+	}
+	
+    private Element createEpisodeElement(String episodeTitle, int episodeNumber, boolean genericTitleEnabled) {
+        Brand brand = createBrand();
+        Series series = createSeries(brand);
+        Episode episode = createEpisode(episodeTitle, episodeNumber, genericTitleEnabled, brand, series);
+	    return feedCompiler.createEpisodeElem(episode, brand, series, new DateTime(), null);
     }
     
     @Test
@@ -157,6 +194,50 @@ public class LakeviewFeedCompilerTest {
 //        assertEquals("https://xbox.channel4.com/pmlsd/hollyoaks/4od.atom#3567007",
 //            elem.getFirstChildElement("ApplicationSpecificData", LAKEVIEW.getUri()).getValue());
         
+    }
+    
+    @Test
+    public void testUsesBrandGenreOnSeries() {
+        Brand brand = createBrand();
+        Series series = createSeries(brand);
+        createEpisode("Title", 23, false, brand, series);
+        //TODO shouldn't this be categories?
+        series.setGenres(ImmutableSet.of("http://www.channel4.com/programmes/tags/comedy"));
+        
+        LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, true, true);
+        Element seriesElem = feedCompiler.createSeriesElem(series, brand, new DateTime(), null);
+        
+        Elements genresElem = seriesElem.getChildElements("Genres", LAKEVIEW.getUri());
+        assertEquals(genresElem.get(0).getChildElements("Genre", LAKEVIEW.getUri()).get(0).getValue(), "Comedy");
+    }
+    
+    @Test
+    public void testCreatesTotalNumberOfEpisodesElement() {
+        
+        Brand brand = createBrand();
+        Series series = createSeries(brand);
+        Episode episode1 = createEpisode("Episode 1", 1, false, brand, series);
+        Episode episode2 = createEpisode("Episode 2", 2, false, brand, series);
+        
+        series.setChildRefs(ImmutableSet.of(episode1.childRef(), episode2.childRef()));
+        
+        LakeviewContentGroup contentGroup = new LakeviewContentGroup(brand, ImmutableList.of(series), 
+                ImmutableList.of(episode1, episode2));
+        
+        Document doc = feedCompiler.compile(ImmutableList.of(contentGroup));
+        Element seriesElem = doc.getRootElement()
+                                .getChildElements("TVSeries", LAKEVIEW.getUri()).get(0);
+        
+        assertEquals(seriesElem.getChildElements("TotalNumberOfEpisodes", LAKEVIEW.getUri())
+                               .get(0).getValue(), "2");
+        
+    }
+    
+    @Test
+    public void testCreatesSortTitleElement() {
+        Element episodeElem = createEpisodeElement("A Hard Day's Night", 1, true);
+        assertEquals(episodeElem.getChildElements("SortTitle", LAKEVIEW.getUri()).get(0).getValue(), 
+                     "Hard Day's Night, A");
     }
     
 }
