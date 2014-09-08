@@ -35,12 +35,8 @@ public class UploadQueueWorker extends QueueWorker<UploadTask> {
 
     @Override
     public void processTask(UploadTask task) {
-        try {
-            UploadAttempt result = upload(task);
-            recordResult(task, result);
-        } catch (InvalidStateException e) {
-            log.error("tried to process upload task for file without file record. upload task: {}", task);
-        }
+        UploadAttempt result = upload(task);
+        recordResult(task, result);
     }
 
     // N.B. this code assumes that any upload-specific timestamps are related to UPLOAD time, rather than
@@ -67,8 +63,12 @@ public class UploadQueueWorker extends QueueWorker<UploadTask> {
         }
     }
 
-    private void recordResult(UploadTask task, UploadAttempt result) throws InvalidStateException {
-        stateUpdater.recordUploadResult(task, result);
+    private void recordResult(UploadTask task, UploadAttempt result) {
+        try {
+            stateUpdater.recordUploadResult(task, result);
+        } catch (InvalidStateException e) {
+            log.error("unable to update state for task {}", task, e);
+        }
     }
     
     private UploadAttempt logAndReturnFailure(String message, Optional<? extends Exception> ex) {
