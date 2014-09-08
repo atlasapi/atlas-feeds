@@ -3,6 +3,8 @@ package org.atlasapi.feeds.radioplayer;
 import static com.metabroadcast.common.scheduling.RepetitionRules.NEVER;
 
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.annotation.PostConstruct;
 
@@ -25,6 +27,8 @@ import org.atlasapi.feeds.radioplayer.upload.persistence.RemoteCheckTaskTranslat
 import org.atlasapi.feeds.radioplayer.upload.persistence.TaskQueue;
 import org.atlasapi.feeds.radioplayer.upload.persistence.UploadTaskTranslator;
 import org.atlasapi.feeds.radioplayer.upload.queue.QueueBasedUploadManager;
+import org.atlasapi.feeds.radioplayer.upload.queue.QueueTask;
+import org.atlasapi.feeds.radioplayer.upload.queue.QueueWorker;
 import org.atlasapi.feeds.radioplayer.upload.queue.RemoteCheckQueueWorker;
 import org.atlasapi.feeds.radioplayer.upload.queue.RemoteCheckTask;
 import org.atlasapi.feeds.radioplayer.upload.queue.RemoteCheckerSupplier;
@@ -116,6 +120,7 @@ public class RadioPlayerModule {
 	@Autowired
 	private ContentLister contentLister;
 	
+	private final ExecutorService workerExecutor = Executors.newFixedThreadPool(2);
 	private final Clock clock = new SystemClock(DateTimeZone.UTC);
 	
 	private static DayRangeGenerator dayRangeGenerator = new DayRangeGenerator().withLookAhead(7).withLookBack(7);
@@ -253,21 +258,32 @@ public class RadioPlayerModule {
 	
 		    if (Boolean.parseBoolean(s3HttpsUpload) || Boolean.parseBoolean(httpsUpload)) {
                 scheduler.schedule(
-                        new ScheduledPiUploadTask(uploadServices(), dayRangeGenerator, httpsUploadServices(), stateUpdater()).withName("Radioplayer HTTPS/S3 PI Full Upload"), 
+                        new ScheduledPiUploadTask(uploadServices(), dayRangeGenerator, httpsUploadServices(), stateUpdater(), fileHistoryStore()).withName("Radioplayer HTTPS/S3 PI Full Upload"), 
                         UPLOAD_EVERY_TWO_HOURS);
                 scheduler.schedule(
-                        new ScheduledPiUploadTask(uploadServices(), new DayRangeGenerator(), httpsUploadServices(), stateUpdater()).withName("Radioplayer HTTPS/S3 PI Today Upload"), 
+                        new ScheduledPiUploadTask(uploadServices(), new DayRangeGenerator(), httpsUploadServices(), stateUpdater(), fileHistoryStore()).withName("Radioplayer HTTPS/S3 PI Today Upload"), 
                         UPLOAD_EVERY_THIRTY_MINUTES);
                 
                 scheduler.schedule(
-                        new ScheduledODUploadTask(uploadServices(), dayRangeGenerator, httpsUploadServices(), stateUpdater()).withName("Radioplayer HTTPS/S3 OD Full Upload"), 
+                        new ScheduledODUploadTask(uploadServices(), dayRangeGenerator, httpsUploadServices(), stateUpdater(), fileHistoryStore()).withName("Radioplayer HTTPS/S3 OD Full Upload"), 
                         NEVER);
                 scheduler.schedule(
-                        new ScheduledODUploadTask(uploadServices(), new DayRangeGenerator(), httpsUploadServices(), stateUpdater()).withName("Radioplayer HTTPS/S3 OD Today Upload"),
+                        new ScheduledODUploadTask(uploadServices(), new DayRangeGenerator(), httpsUploadServices(), stateUpdater(), fileHistoryStore()).withName("Radioplayer HTTPS/S3 OD Today Upload"),
                         UPLOAD_EVERY_THIRTY_MINUTES);
             } 
+		    for (QueueWorker<? extends QueueTask> worker : workers()) {
+		        workerExecutor.execute(worker);
+		    }
+		    
 		}
 	}
+
+    private ImmutableList<QueueWorker<? extends QueueTask>> workers() {
+        return ImmutableList.of(
+                uploadQueueWorker(),
+                remoteCheckQueueWorker()
+        );
+    }
 
     @Bean Iterable<RadioPlayerService> httpsUploadServices() {
         return generateUploadServices(httpsUploadServices);
