@@ -180,7 +180,7 @@ public class QueueBasedUploadManagerTest {
         manager.recordRemoteCheckResult(task, result);
         
         
-        FileHistory updatedFile = FileHistory.copyWithAttempts(history, ImmutableList.of(UploadAttempt.successfulRemoteCheck(upload)));
+        FileHistory updatedFile = FileHistory.copyWithAttempts(history, ImmutableList.of(UploadAttempt.successfulRemoteCheck(upload, result.message())));
         ArgumentCaptor<FileHistory> storedFile = ArgumentCaptor.forClass(FileHistory.class);
         Mockito.verify(fileStore).store(storedFile.capture());
         Mockito.verify(remoteCheckQueue).remove(task);
