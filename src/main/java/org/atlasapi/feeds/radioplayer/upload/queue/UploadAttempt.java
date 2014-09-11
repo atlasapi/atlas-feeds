@@ -37,9 +37,9 @@ public class UploadAttempt implements Comparable<UploadAttempt> {
         return new UploadAttempt(uploadTime, FileUploadResultType.FAILURE, uploadDetails, null, null);
     }
     
-    public static UploadAttempt successfulRemoteCheck(UploadAttempt attempt) {
+    public static UploadAttempt successfulRemoteCheck(UploadAttempt attempt, String remoteCheckMessage) {
         return new UploadAttempt(attempt.id(), attempt.uploadTime(), attempt.uploadResult(), attempt.uploadDetails(), 
-                FileUploadResultType.SUCCESS, "successfully processed");
+                FileUploadResultType.SUCCESS, remoteCheckMessage);
     }
     
     public static UploadAttempt failedRemoteCheck(UploadAttempt attempt, String remoteCheckMessage) {
