@@ -98,7 +98,7 @@ public class ResultTypeCalculator {
         if (FileUploadResultType.FAILURE.equals(latest.remoteCheckResult())) {
             return ProbeResultType.FAILURE;
         } else if (FileUploadResultType.SUCCESS.equals(latest.remoteCheckResult())) {
-            return calculateFromRemoteResult(latest);
+            return ProbeResultType.SUCCESS;
         } else {
             return ProbeResultType.INFO;
         }

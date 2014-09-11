@@ -138,7 +138,7 @@ public class FileHistoryOutputter {
         
         remoteCheckInfo.append("<table>");
         remoteCheckInfo.append(toTableRow("Status:", status));
-        remoteCheckInfo.append(toTableRow("Detail:", message));
+        remoteCheckInfo.append(toTableRow("Remote System Response:", message));
         remoteCheckInfo.append("</table>");
         
         return remoteCheckInfo.toString();

@@ -36,6 +36,7 @@ import com.metabroadcast.common.time.DayRangeGenerator;
 public class RadioPlayerUploadController {
 
     private static final DateTimeFormatter DATE_PATTERN = DateTimeFormat.forPattern("yyyyMMdd");
+    private static final String HEALTH_PAGE_URL = "redirect:/feeds/ukradioplayer/health/%s/services/%d";
     private HttpBasicAuthChecker checker;
     private final DayRangeGenerator dayRangeGenerator;
     private final UploadManager stateUpdater;
@@ -100,7 +101,7 @@ public class RadioPlayerUploadController {
             stateUpdater.enqueueUploadTask(task);
         }
 
-        return "redirect:/feeds/ukradioplayer/health/" + uploadService;
+        return String.format(HEALTH_PAGE_URL, uploadService.name().toLowerCase(), service.getRadioplayerId());
     }
 
     @RequestMapping("feeds/ukradioplayer/upload/{uploadService}/{type}/{id}")
