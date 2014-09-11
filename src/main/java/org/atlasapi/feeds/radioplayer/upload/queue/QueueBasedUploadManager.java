@@ -62,6 +62,8 @@ public class QueueBasedUploadManager implements UploadManager {
             uploadQueue.remove(task);
             break;
         case FAILURE:
+            uploadQueue.remove(task);
+            break;
         case UNKNOWN:
         default:
             retryUpload(task);
@@ -136,7 +138,7 @@ public class QueueBasedUploadManager implements UploadManager {
         case FAILURE:
             return UploadAttempt.failedRemoteCheck(upload, result.message());
         case SUCCESS:
-            return UploadAttempt.successfulRemoteCheck(upload);
+            return UploadAttempt.successfulRemoteCheck(upload, result.message());
         case UNKNOWN:
             return UploadAttempt.unknownRemoteCheck(upload, result.message());
         default:

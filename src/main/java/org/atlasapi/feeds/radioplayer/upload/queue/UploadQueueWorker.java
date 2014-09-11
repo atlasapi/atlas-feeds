@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 
+import org.atlasapi.feeds.radioplayer.outputting.NoItemsException;
 import org.atlasapi.feeds.radioplayer.upload.persistence.TaskQueue;
 import org.atlasapi.feeds.upload.FileUpload;
 import org.slf4j.Logger;
@@ -49,8 +50,10 @@ public class UploadQueueWorker extends QueueWorker<UploadTask> {
                 return logAndReturnFailure(String.format("No uploader found for remote service %s", task.uploadService()), Optional.<Exception>absent());
             }
             return performUpload(task, upload, uploader.get());
-        } catch (IOException e) {
-            return logAndReturnFailure("Error on file creation: {}", Optional.of(e));
+        } catch (NoItemsException e) {
+            return logAndReturnFailure("No items for " + task.file(), Optional.<Exception>absent());
+        } catch (Exception e) {
+            return logAndReturnFailure("Error on upload", Optional.of(e));
         }
     }
 
