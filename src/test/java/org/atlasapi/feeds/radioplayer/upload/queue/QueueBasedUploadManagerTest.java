@@ -143,7 +143,7 @@ public class QueueBasedUploadManagerTest {
         manager.recordUploadResult(task, result);
         
         Mockito.verify(fileStore).addUploadAttempt(file, result);
-        Mockito.verify(uploadQueue).push(task);
+        Mockito.verify(uploadQueue).remove(task);
         Mockito.verifyZeroInteractions(remoteCheckQueue);
     }
     
