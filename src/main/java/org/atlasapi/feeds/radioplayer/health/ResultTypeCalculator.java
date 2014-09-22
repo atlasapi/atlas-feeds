@@ -5,6 +5,7 @@ import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCES
 
 import java.util.Set;
 
+import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.radioplayer.upload.FileHistory;
 import org.atlasapi.feeds.radioplayer.upload.FileType;
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerFile;
@@ -42,12 +43,19 @@ public class ResultTypeCalculator {
     public ProbeResultType calculateResultType(FileHistory history) {
         UploadAttempt latestAttempt = history.getLatestUpload();
         UploadAttempt lastSuccess = getLastSuccess(history.uploadAttempts());
+        if (isIgnoredService(history.file())) {
+            return ProbeResultType.INFO;
+        }
         if (isStale(history.file(), lastSuccess)) {
             return calculateResultType(latestAttempt);
         }
         return SUCCESS;
     }
     
+    private boolean isIgnoredService(RadioPlayerFile file) {
+        return RadioPlayerServices.untracked.contains(file.service());
+    }
+
     private UploadAttempt getLastSuccess(Set<UploadAttempt> uploadAttempts) {
         return Iterables.getOnlyElement(Ordering.natural().greatestOf(Iterables.filter(uploadAttempts, IS_SUCCESS), 1), null);
     }
