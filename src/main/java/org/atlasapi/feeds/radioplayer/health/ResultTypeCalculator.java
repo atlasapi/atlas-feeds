@@ -46,6 +46,10 @@ public class ResultTypeCalculator {
         if (isIgnoredService(history.file())) {
             return ProbeResultType.INFO;
         }
+        
+        // Stale flag is not enough to determine success/failure
+        // TODO revisit this logic, it misses cases such as ignored services succeeding,
+        // and past OD uploads never having suceeded (there may not be items for past OD files)
         if (isStale(history.file(), lastSuccess)) {
             return calculateResultType(latestAttempt);
         }
