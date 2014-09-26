@@ -205,12 +205,11 @@ public class LakeviewFeedCompilerTest {
         Brand brand = createBrand();
         Series series = createSeries(brand);
         createEpisode("Title", 23, false, brand, series);
-        //TODO shouldn't this be categories?
-        brand.setGenres(ImmutableSet.of("http://www.channel4.com/programmes/tags/comedy"));
+        brand.setGenres(ImmutableSet.of("http://www.channel4.com/programmes/categories/comedy"));
         Element seriesElem = feedCompiler.createSeriesElem(series, brand, new DateTime(), null);
         
         Elements genresElem = seriesElem.getChildElements("Genres", LAKEVIEW.getUri());
-        assertEquals(genresElem.get(0).getChildElements("Genre", LAKEVIEW.getUri()).get(0).getValue(), "Comedy");
+        assertEquals("Comedy", genresElem.get(0).getChildElements("Genre", LAKEVIEW.getUri()).get(0).getValue());
     }
     
     @Test
