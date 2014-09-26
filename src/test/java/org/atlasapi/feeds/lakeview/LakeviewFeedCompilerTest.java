@@ -39,6 +39,7 @@ public class LakeviewFeedCompilerTest {
     private ChannelResolver channelResolver = mock(ChannelResolver.class);
     
     private final LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(channelResolver, false, true);
+    private final LakeviewFeedCompiler genericTitlesFeedCompiler = new LakeviewFeedCompiler(channelResolver, true, true);
     
     @Before
     public void setUp() {
@@ -159,7 +160,11 @@ public class LakeviewFeedCompilerTest {
         Brand brand = createBrand();
         Series series = createSeries(brand);
         Episode episode = createEpisode(episodeTitle, episodeNumber, genericTitleEnabled, brand, series);
-	    return feedCompiler.createEpisodeElem(episode, brand, series, new DateTime(), null);
+        if (genericTitleEnabled) {
+            return genericTitlesFeedCompiler.createEpisodeElem(episode, brand, series, new DateTime(), null);
+        } else {
+            return feedCompiler.createEpisodeElem(episode, brand, series, new DateTime(), null);
+        }
     }
     
     @Test
@@ -236,7 +241,7 @@ public class LakeviewFeedCompilerTest {
     
     @Test
     public void testCreatesSortTitleElement() {
-        Element episodeElem = createEpisodeElement("A Hard Day's Night", 1, true);
+        Element episodeElem = createEpisodeElement("A Hard Day's Night", 1, false);
         assertEquals(episodeElem.getChildElements("SortTitle", LAKEVIEW.getUri()).get(0).getValue(), 
                      "Hard Day's Night, A");
     }
