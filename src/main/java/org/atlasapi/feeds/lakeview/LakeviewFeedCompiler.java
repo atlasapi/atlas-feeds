@@ -32,6 +32,9 @@ import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -50,6 +53,8 @@ import com.metabroadcast.common.time.SystemClock;
 
 public class LakeviewFeedCompiler {
 
+    private static final Logger log = LoggerFactory.getLogger(LakeviewFeedCompiler.class);
+    
     private static final Ordering<Broadcast> TRANSMISSION_ORDERING = Ordering.from(new Comparator<Broadcast>() {
                 @Override
                 public int compare(Broadcast o1, Broadcast o2) {
@@ -110,8 +115,9 @@ public class LakeviewFeedCompiler {
         //This is specified. Don't use lastUpdated....
         String lastModified = DATETIME_FORMAT.print(clock.now());
 
+        Set<String> seenItems = Sets.newHashSet();
         for (LakeviewContentGroup contentGroup : contents) {
-            List<Element> groupElements = elementsForGroup(lastModified, contentGroup);
+            List<Element> groupElements = elementsForGroup(lastModified, contentGroup, seenItems);
             
             for (Element element : groupElements) {
                 feed.appendChild(element);
@@ -121,21 +127,27 @@ public class LakeviewFeedCompiler {
         return new Document(feed);
     }
 
-    private List<Element> elementsForGroup(String lastModified, LakeviewContentGroup contentGroup) {
+    private List<Element> elementsForGroup(String lastModified, LakeviewContentGroup contentGroup, Set<String> seenItems) {
         DateTime brandPublicationDate = null;
         DateTime brandEndDate = null;
         int addedSeasons = 0;
         
         List<Element> elements = Lists.newLinkedList();
-        Set<String> seenItems = Sets.newHashSet();
         
         if (contentGroup.isFlattened()) {
             for (Episode episode : contentGroup.episodes()) {
                 DateTime publicationDate = orginalPublicationDate(episode);
                 if(publicationDate != null) {
-                    elements.add(createEpisodeElem(episode, contentGroup.brand(), null, publicationDate, lastModified));
-                    brandPublicationDate = publicationDate.isBefore(brandPublicationDate) ? publicationDate : brandPublicationDate;
-                    brandEndDate = latestOf(publicationDate, brandEndDate);
+                    Element episodeElem = createEpisodeElem(episode, contentGroup.brand(), null, publicationDate, lastModified);
+                    String itemId = itemId(episodeElem);
+                    if (!seenItems.contains(itemId)) {
+                        elements.add(episodeElem);
+                        brandPublicationDate = publicationDate.isBefore(brandPublicationDate) ? publicationDate : brandPublicationDate;
+                        brandEndDate = latestOf(publicationDate, brandEndDate);
+                        seenItems.add(itemId);
+                    } else {
+                        log.warn("Not including duplicate of " + itemId);
+                    }
                 }
             }
         } else {
@@ -158,6 +170,8 @@ public class LakeviewFeedCompiler {
                             seenItems.add(itemId);
                             seriesPublicationDate = earliestOf(publicationDate, seriesPublicationDate);
                             brandEndDate = latestOf(publicationDate, brandEndDate);
+                        } else {
+                            log.warn("Not including duplicate of " + itemId);
                         }
                     }
                 }
@@ -474,7 +488,7 @@ public class LakeviewFeedCompiler {
         
         if(!Iterables.isEmpty(genres)) {
             Element genresElem = createElement("Genres", LAKEVIEW);
-            for (String genre : content.getGenres()) {
+            for (String genre : genres) {
                 if(genre.startsWith("http://www.channel4.com")) {
                     genresElem.appendChild(stringElement("Genre", LAKEVIEW, C4GenreTitles.title(genre)));
                 }

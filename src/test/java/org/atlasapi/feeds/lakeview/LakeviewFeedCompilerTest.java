@@ -39,6 +39,7 @@ public class LakeviewFeedCompilerTest {
     private ChannelResolver channelResolver = mock(ChannelResolver.class);
     
     private final LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(channelResolver, false, true);
+    private final LakeviewFeedCompiler genericTitlesFeedCompiler = new LakeviewFeedCompiler(channelResolver, true, true);
     
     @Before
     public void setUp() {
@@ -53,7 +54,6 @@ public class LakeviewFeedCompilerTest {
 	
 	@Test
 	public void testSeriesAtomUri() {
-		LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, false, true);
 		assertEquals("https://xbox.channel4.com/pmlsd/educating-essex/4od.atom#series-1", 
 				feedCompiler.seriesAtomUri("tag:pmlsc.channel4.com,2009:/programmes/educating-essex/episode-guide/series-1"));
 	}
@@ -70,8 +70,9 @@ public class LakeviewFeedCompilerTest {
 
 	@Test
 	public void testGenericSeriesTitleGenerated() {
+	    LakeviewFeedCompiler compiler = new LakeviewFeedCompiler(channelResolver, true, true);
 	    String seriesTitle = "Lord of the Wrongs";
-	    Element element = getSeriesElement(seriesTitle, 12, true);
+	    Element element = getSeriesElement(seriesTitle, 12, true, compiler);
 	    Elements titles = element.getChildElements("Title", LAKEVIEW.getUri());
 
 	    assertEquals("Should have exactly one title", 1, titles.size());
@@ -79,7 +80,12 @@ public class LakeviewFeedCompilerTest {
 	}
 
 	private Element getSeriesElement(String seriesTitle, int seriesNumber, boolean genericTitleEnabled) {
-        LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, genericTitleEnabled, true);
+	    return getSeriesElement(seriesTitle, seriesNumber, genericTitleEnabled, feedCompiler);
+	}
+	
+	private Element getSeriesElement(String seriesTitle, int seriesNumber, boolean genericTitleEnabled,
+	        LakeviewFeedCompiler feedCompiler) {
+        
         Series series = new Series("seriesUri", "seriesCurie", null);
         series.addAliasUrl("tag:pmlsc.channel4.com,2009:/programmes/brand/episode-guide/series-1");
         Brand parent = new Brand("brandUri", "brandCurie", null);
@@ -154,13 +160,16 @@ public class LakeviewFeedCompilerTest {
         Brand brand = createBrand();
         Series series = createSeries(brand);
         Episode episode = createEpisode(episodeTitle, episodeNumber, genericTitleEnabled, brand, series);
-	    return feedCompiler.createEpisodeElem(episode, brand, series, new DateTime(), null);
+        if (genericTitleEnabled) {
+            return genericTitlesFeedCompiler.createEpisodeElem(episode, brand, series, new DateTime(), null);
+        } else {
+            return feedCompiler.createEpisodeElem(episode, brand, series, new DateTime(), null);
+        }
     }
     
     @Test
     public void testGeneratesCorrectIdsForProgrammeIdUri() {
         
-        LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, true, true);
         Episode episode = new Episode();
         episode.setCanonicalUri("http://www.channel4.com/programmes/55103/175");
         episode.addAliasUrl("http://www.channel4.com/programmes/hollyoaks/episode-guide/series-22/episode-175");
@@ -201,14 +210,11 @@ public class LakeviewFeedCompilerTest {
         Brand brand = createBrand();
         Series series = createSeries(brand);
         createEpisode("Title", 23, false, brand, series);
-        //TODO shouldn't this be categories?
-        series.setGenres(ImmutableSet.of("http://www.channel4.com/programmes/tags/comedy"));
-        
-        LakeviewFeedCompiler feedCompiler = new LakeviewFeedCompiler(null, true, true);
+        brand.setGenres(ImmutableSet.of("http://www.channel4.com/programmes/categories/comedy"));
         Element seriesElem = feedCompiler.createSeriesElem(series, brand, new DateTime(), null);
         
         Elements genresElem = seriesElem.getChildElements("Genres", LAKEVIEW.getUri());
-        assertEquals(genresElem.get(0).getChildElements("Genre", LAKEVIEW.getUri()).get(0).getValue(), "Comedy");
+        assertEquals("Comedy", genresElem.get(0).getChildElements("Genre", LAKEVIEW.getUri()).get(0).getValue());
     }
     
     @Test
@@ -235,7 +241,7 @@ public class LakeviewFeedCompilerTest {
     
     @Test
     public void testCreatesSortTitleElement() {
-        Element episodeElem = createEpisodeElement("A Hard Day's Night", 1, true);
+        Element episodeElem = createEpisodeElement("A Hard Day's Night", 1, false);
         assertEquals(episodeElem.getChildElements("SortTitle", LAKEVIEW.getUri()).get(0).getValue(), 
                      "Hard Day's Night, A");
     }
