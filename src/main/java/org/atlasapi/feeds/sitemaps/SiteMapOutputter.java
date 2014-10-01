@@ -88,7 +88,7 @@ public class SiteMapOutputter {
     private Element createFeed(Iterable<Content> contents, Map<ParentRef, Container> parentLookup) {
         Element feed = new Element("urlset", SITEMAP.getUri());
         VIDEO.addDeclarationTo(feed);
-        for (Content content : contents) {
+        for (Content content : Iterables.concat(contents, parentLookup.values())) {
             if (content instanceof Item) {
                 Item item = (Item) content;
                 entryForItem(feed, item, itemTitle(item, parentLookup));
