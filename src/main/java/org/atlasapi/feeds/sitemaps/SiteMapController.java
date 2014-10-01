@@ -24,6 +24,7 @@ import org.atlasapi.application.query.InvalidIpForApiKeyException;
 import org.atlasapi.application.query.RevokedApiKeyException;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.media.TransportType;
+import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
@@ -32,6 +33,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.SeriesRef;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
@@ -169,12 +171,12 @@ public class SiteMapController {
             Iterable<Container> brands = Iterables.filter(resolve(URI_SPLITTER.split(brandUri),query), Container.class);
         
             Map<ParentRef, Container> parentLookup = Maps.<ParentRef,Container>uniqueIndex(brands, ParentRef.T0_PARENT_REF);
-            Iterable<Item> contents = Iterables.filter(Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
+            Iterable<Content> contents = Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
                 @Override
                 public Iterable<Content> apply(Container input) {
-                    return resolve(Iterables.transform(input.getChildRefs(), ChildRef.TO_URI), query);
+                    return resolve(childItemsFor((Brand)input), query);
                 }
-            })),Item.class);
+            }));
         
             response.setStatus(HttpServletResponse.SC_OK);
             cacheHeaderWriter.writeHeaders(request, response);
@@ -190,6 +192,13 @@ public class SiteMapController {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }
+    }
+
+    protected Iterable<String> childItemsFor(Brand brand) {
+        return Iterables.concat(
+                Iterables.transform(brand.getChildRefs(), ChildRef.TO_URI),
+                Iterables.transform(brand.getSeriesRefs(), SeriesRef.TO_URI)
+               );
     }
 
     private static final Splitter URI_SPLITTER = Splitter.on(",").omitEmptyStrings().trimResults();
