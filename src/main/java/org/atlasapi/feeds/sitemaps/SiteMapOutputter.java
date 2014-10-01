@@ -16,6 +16,7 @@ import nu.xom.Element;
 import nu.xom.Serializer;
 
 import org.atlasapi.feeds.xml.XMLNamespace;
+import org.atlasapi.media.TransportSubType;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Clip;
@@ -101,7 +102,7 @@ public class SiteMapOutputter {
     }
 
     private void entryForItem(Element feed, Item item, String title) {
-        Location location = locationFrom(item);
+        Location location = locationFrom(item, Optional.<TransportSubType>absent());
         if (location != null && item.getThumbnail() != null) {
             
             SiteMapUriGenerator uriGenerator = publisherSpecificUriGenerators
@@ -115,7 +116,7 @@ public class SiteMapOutputter {
     }
     
     private void entryForClip(Element feed, Content content, Clip clip, String title) {
-        Location location = locationFrom(clip);
+        Location location = locationFrom(clip, Optional.of(TransportSubType.BRIGHTCOVE));
         if (location != null && content.getThumbnail() != null) {
             SiteMapUriGenerator uriGenerator = publisherSpecificUriGenerators
                     .get(content.getPublisher())
@@ -222,11 +223,12 @@ public class SiteMapOutputter {
         return null;
     }
 
-    private Location locationFrom(Item item) {
+    private Location locationFrom(Item item, Optional<TransportSubType> subType) {
         for (Version version : item.nativeVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if (isPcOrNullPlatformLinkLocation(location)) {
+                    if (isPcOrNullPlatformLinkLocation(location)
+                            && (!subType.isPresent() || subType.get().equals(location.getTransportSubType()))) {
                         return location;
                     }
                 }
