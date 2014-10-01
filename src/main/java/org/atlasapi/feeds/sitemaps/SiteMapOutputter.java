@@ -102,7 +102,9 @@ public class SiteMapOutputter {
     }
 
     private void entryForItem(Element feed, Item item, String title) {
-        Location location = locationFrom(item, Optional.<TransportSubType>absent());
+        Location location = locationFrom(item, Optional.of(TransportType.LINK), 
+                Optional.<TransportSubType>absent());
+        
         if (location != null && item.getThumbnail() != null) {
             
             SiteMapUriGenerator uriGenerator = publisherSpecificUriGenerators
@@ -116,7 +118,9 @@ public class SiteMapOutputter {
     }
     
     private void entryForClip(Element feed, Content content, Clip clip, String title) {
-        Location location = locationFrom(clip, Optional.of(TransportSubType.BRIGHTCOVE));
+        Location location = locationFrom(clip, Optional.of(TransportType.EMBED), 
+                Optional.of(TransportSubType.BRIGHTCOVE));
+        
         if (location != null && content.getThumbnail() != null) {
             SiteMapUriGenerator uriGenerator = publisherSpecificUriGenerators
                     .get(content.getPublisher())
@@ -223,12 +227,12 @@ public class SiteMapOutputter {
         return null;
     }
 
-    private Location locationFrom(Item item, Optional<TransportSubType> subType) {
+    private Location locationFrom(Item item, Optional<TransportType> transportType, 
+            Optional<TransportSubType> transportSubType) {
         for (Version version : item.nativeVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if (isPcOrNullPlatformLinkLocation(location)
-                            && (!subType.isPresent() || subType.get().equals(location.getTransportSubType()))) {
+                    if (isPcOrNullPlatformLinkLocation(location, transportType, transportSubType)) {
                         return location;
                     }
                 }
@@ -237,13 +241,18 @@ public class SiteMapOutputter {
         return null;
     }
 
-    private boolean isPcOrNullPlatformLinkLocation(Location location) {
-        boolean isLinkLocation = TransportType.LINK.equals(location.getTransportType());
+    private boolean isPcOrNullPlatformLinkLocation(Location location, 
+            Optional<TransportType> transportType, Optional<TransportSubType> transportSubType) {
+        boolean isCorrectType = (!transportType.isPresent() 
+                                    || transportType.get().equals(location.getTransportType()))
+                                &&
+                                (!transportSubType.isPresent()
+                                    || transportSubType.get().equals(location.getTransportSubType()));
         Policy policy = location.getPolicy();
         if (policy == null) {
-            return isLinkLocation;
+            return isCorrectType;
         }
-        return isLinkLocation && (policy.getPlatform() == null || Platform.PC.equals(policy.getPlatform()));
+        return isCorrectType && (policy.getPlatform() == null || Platform.PC.equals(policy.getPlatform()));
     }
 
     private void write(OutputStream out, Element feed) throws UnsupportedEncodingException, IOException {
