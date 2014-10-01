@@ -26,9 +26,9 @@ public class C4SiteMapUriGenerator implements SiteMapUriGenerator {
     private static final String FLASH_URI_FORMAT
         = "http://www.channel4.com/static/programmes-bips-flash/%s/4odplayer_bips.swf?preSelectAsset=%s";
     
-    private String brightcovePublisherId;
-    private String brightcovePlayerId;
-    private C4FlashPlayerVersionSupplier flashPlayerVersionSupplier;
+    private final String brightcovePublisherId;
+    private final String brightcovePlayerId;
+    private final C4FlashPlayerVersionSupplier flashPlayerVersionSupplier;
 
     public C4SiteMapUriGenerator(String brightcovePublisherId, String brightcovePlayerId, 
             C4FlashPlayerVersionSupplier flashPlayerVersionSupplier) {
@@ -79,7 +79,7 @@ public class C4SiteMapUriGenerator implements SiteMapUriGenerator {
     }
     
     private String clipUriFromTitle(String title) {
-        return title.replaceAll("[^A-Za-z0-9- ]", "").toLowerCase().replaceAll("\\ ", "-");
+        return title.replaceAll("[^A-Za-z0-9 ]", "").toLowerCase().replaceAll("\\ ", "-");
     }
 
     /**
