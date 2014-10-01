@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.sitemaps;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
@@ -24,6 +26,7 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Policy.Platform;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
@@ -31,8 +34,10 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
+import com.metabroadcast.common.collect.ImmutableOptionalMap;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
 import com.metabroadcast.common.text.Truncator;
@@ -47,7 +52,17 @@ public class SiteMapOutputter {
 
     private static final Truncator descTruncator = new Truncator().onlyTruncateAtAWordBoundary().withMaxLength(2048);
     private static final Truncator titleTruncator = new Truncator().onlyTruncateAtAWordBoundary().withMaxLength(100);
+    
+    private final Map<Publisher, Optional<SiteMapUriGenerator>> publisherSpecificUriGenerators;
+    private final SiteMapUriGenerator defaultPublisherSpecificSitemapUriGenerator;
 
+    public SiteMapOutputter(Map<Publisher, SiteMapUriGenerator> publisherSpecificUriGenerators, 
+            SiteMapUriGenerator defaultPublisherSpecificSitemapUriGenerator) {
+        
+        this.defaultPublisherSpecificSitemapUriGenerator = checkNotNull(defaultPublisherSpecificSitemapUriGenerator);
+        this.publisherSpecificUriGenerators = ImmutableOptionalMap.fromMap(publisherSpecificUriGenerators);
+    }
+    
     public void output(Map<ParentRef, Container> parentLookup, Iterable<Item> feed, OutputStream out) throws IOException {
         Element feedElem = createFeed(feed, parentLookup);
         write(out, feedElem);
@@ -74,7 +89,7 @@ public class SiteMapOutputter {
         for (Item item : items) {
             entryForItem(feed, item, itemTitle(item, parentLookup));
             for (Clip clip : item.getClips()) {
-                entryForItem(feed, clip, clipTitle(clip, item, parentLookup));
+                entryForClip(feed, item, clip, clipTitle(clip, item, parentLookup));
             }
         }
         return feed;
@@ -83,28 +98,60 @@ public class SiteMapOutputter {
     private void entryForItem(Element feed, Item item, String title) {
         Location location = locationFrom(item);
         if (location != null && item.getThumbnail() != null) {
-            feed.appendChild(urlEntry(item, location, title));
+            
+            SiteMapUriGenerator uriGenerator = publisherSpecificUriGenerators
+                    .get(item.getPublisher())
+                    .or(defaultPublisherSpecificSitemapUriGenerator);
+            feed.appendChild(urlEntry(
+                    uriGenerator.playerPageUriForContent(item, location),
+                    uriGenerator.videoUriForContent(item, location),
+                    item, location, title));
+        }
+    }
+    
+    private void entryForClip(Element feed, Item item, Clip clip, String title) {
+        Location location = locationFrom(item);
+        if (location != null && item.getThumbnail() != null) {
+            SiteMapUriGenerator uriGenerator = publisherSpecificUriGenerators
+                    .get(item.getPublisher())
+                    .or(defaultPublisherSpecificSitemapUriGenerator);
+            
+            feed.appendChild(urlEntry(
+                    uriGenerator.playerPageUriForClip(item, clip, location),
+                    uriGenerator.videoUriForClip(clip, location),
+                    item, location, title));
         }
     }
 
-    private Element urlEntry(Item item, Location location, String title) {
+    private Element urlEntry(Optional<String> playerPageUri, Optional<String> videoUri, Item item, Location location, String title) {
         Element urlElement = createElement("url", SITEMAP);
-        urlElement.appendChild(stringElement("loc", SITEMAP, location.getUri()));
+        
+        if (playerPageUri.isPresent()) {
+            urlElement.appendChild(stringElement("loc", SITEMAP, playerPageUri.get()));
+        }
+                
         if (item.getLastUpdated() != null) {
             urlElement.appendChild(stringElement("lastmod", SITEMAP, DATE_TIME_FORMAT.print(item.getLastUpdated())));
         }
         if (location.getAvailable()) {
-            urlElement.appendChild(videoElem(item, location, title));
+            urlElement.appendChild(videoElem(videoUri, item, location, title));
         }
         return urlElement;
     }
+    
 
-    private Element videoElem(Item item, Location location, String title) {
+    private Element videoElem(Optional<String> videoUri, Item item, Location location, String title) {
         Element videoElem = createElement("video", VIDEO);
         videoElem.appendChild(stringElement("thumbnail_loc", VIDEO, item.getThumbnail()));
         videoElem.appendChild(stringElement("title", VIDEO, title));
         videoElem.appendChild(stringElement("description", VIDEO, descTruncator.truncatePossibleNull(item.getDescription())));
-
+        
+        if (videoUri.isPresent()) {
+            Element playerLocation = stringElement("player_loc", VIDEO, videoUri.get());
+            playerLocation.addAttribute(new Attribute("allow_embed", "no"));
+            videoElem.appendChild(playerLocation);
+        }
+        
         Integer duration = getDuration(item);
         if (duration != null) {
             videoElem.appendChild(stringElement("duration", VIDEO, String.valueOf(duration)));

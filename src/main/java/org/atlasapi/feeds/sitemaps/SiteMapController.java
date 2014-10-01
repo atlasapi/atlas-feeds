@@ -41,7 +41,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -64,15 +63,20 @@ public class SiteMapController {
     private final ApplicationConfigurationIncludingQueryBuilder queryBuilder;
     private final KnownTypeQueryExecutor queryExecutor;
 
-    private final SiteMapOutputter outputter = new SiteMapOutputter();
+    private final SiteMapOutputter outputter;
     private final SiteMapIndexOutputter indexOutputter = new SiteMapIndexOutputter();
     private final CacheHeaderWriter cacheHeaderWriter = CacheHeaderWriter.neverCache();
     
-    public SiteMapController(KnownTypeQueryExecutor queryExecutor, ApplicationConfigurationIncludingQueryBuilder queryBuilder, ContentLister contentLister, String defaultHost) {
+    public SiteMapController(KnownTypeQueryExecutor queryExecutor, 
+            ApplicationConfigurationIncludingQueryBuilder queryBuilder, 
+            ContentLister contentLister, 
+            Map<Publisher, SiteMapUriGenerator> siteMapUriGenerators,
+            String defaultHost) {
         this.queryExecutor = queryExecutor;
         this.queryBuilder = queryBuilder;
         this.lister = contentLister;
         this.defaultHost = defaultHost;
+        this.outputter = new SiteMapOutputter(siteMapUriGenerators, new DefaultSiteMapUriGenerator());
     }
 
     @RequestMapping("/feeds/sitemaps/index.xml")
@@ -127,10 +131,10 @@ public class SiteMapController {
 
     public Iterable<SiteMapRef> sitemapRefForQuery(ContentQuery query, final String baseUri, Publisher publisher) {
         final ImmutableSet.Builder<String> brands = ImmutableSet.builder();
-        
         Iterator<Item> items = Iterators.filter(lister.listContent(defaultCriteria().forPublisher(publisher).forContent(CHILD_ITEM).build()), Item.class);
         while (items.hasNext()) {
             Item item = items.next();
+            //TODO check for clips
             if(item.getThumbnail() != null && hasLinkLocation(item)) {
                 brands.add(item.getContainer().getUri());
             }

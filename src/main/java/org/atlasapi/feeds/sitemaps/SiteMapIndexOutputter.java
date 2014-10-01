@@ -27,15 +27,20 @@ public class SiteMapIndexOutputter {
 	private Element createFeed(Iterable<SiteMapRef> refs) {
 		Element feed = new Element("sitemapindex", SITEMAP.getUri());
 		for (SiteMapRef ref : refs) {
-			Element siteMapRefElem = createElement("sitemap", SITEMAP);
-			siteMapRefElem.appendChild(stringElement("loc", SITEMAP, ref.getUrl()));
-			if (ref.getLastModified() != null) {
-				siteMapRefElem.appendChild(stringElement("lastmod", SITEMAP, DATE_TIME_FORMAT.print(ref.getLastModified())));
-			}
+			Element siteMapRefElem = sitemapElementFrom(ref);
 			feed.appendChild(siteMapRefElem);
 		}
 		return feed;
 	}
+
+    private Element sitemapElementFrom(SiteMapRef ref) {
+        Element siteMapRefElem = createElement("sitemap", SITEMAP);
+        siteMapRefElem.appendChild(stringElement("loc", SITEMAP, ref.getUrl()));
+        if (ref.getLastModified() != null) {
+        	siteMapRefElem.appendChild(stringElement("lastmod", SITEMAP, DATE_TIME_FORMAT.print(ref.getLastModified())));
+        }
+        return siteMapRefElem;
+    }
 
 	private void write(OutputStream out, Element feed) throws UnsupportedEncodingException, IOException {
 		Serializer serializer = new Serializer(out, Charsets.UTF_8.toString());
