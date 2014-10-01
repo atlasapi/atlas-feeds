@@ -20,6 +20,7 @@ import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Container;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
@@ -27,6 +28,7 @@ import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
@@ -63,7 +65,7 @@ public class SiteMapOutputter {
         this.publisherSpecificUriGenerators = ImmutableOptionalMap.fromMap(publisherSpecificUriGenerators);
     }
     
-    public void output(Map<ParentRef, Container> parentLookup, Iterable<Item> feed, OutputStream out) throws IOException {
+    public void output(Map<ParentRef, Container> parentLookup, Iterable<Content> feed, OutputStream out) throws IOException {
         Element feedElem = createFeed(feed, parentLookup);
         write(out, feedElem);
     }
@@ -83,13 +85,16 @@ public class SiteMapOutputter {
         return feed;
     }
 
-    private Element createFeed(Iterable<Item> items, Map<ParentRef, Container> parentLookup) {
+    private Element createFeed(Iterable<Content> contents, Map<ParentRef, Container> parentLookup) {
         Element feed = new Element("urlset", SITEMAP.getUri());
         VIDEO.addDeclarationTo(feed);
-        for (Item item : items) {
-            entryForItem(feed, item, itemTitle(item, parentLookup));
-            for (Clip clip : item.getClips()) {
-                entryForClip(feed, item, clip, clipTitle(clip, item, parentLookup));
+        for (Content content : contents) {
+            if (content instanceof Item) {
+                Item item = (Item) content;
+                entryForItem(feed, item, itemTitle(item, parentLookup));
+            }
+            for (Clip clip : content.getClips()) {
+                entryForClip(feed, content, clip, clipTitle(clip, content, parentLookup));
             }
         }
         return feed;
@@ -109,17 +114,17 @@ public class SiteMapOutputter {
         }
     }
     
-    private void entryForClip(Element feed, Item item, Clip clip, String title) {
-        Location location = locationFrom(item);
-        if (location != null && item.getThumbnail() != null) {
+    private void entryForClip(Element feed, Content content, Clip clip, String title) {
+        Location location = locationFrom(clip);
+        if (location != null && content.getThumbnail() != null) {
             SiteMapUriGenerator uriGenerator = publisherSpecificUriGenerators
-                    .get(item.getPublisher())
+                    .get(content.getPublisher())
                     .or(defaultPublisherSpecificSitemapUriGenerator);
             
             feed.appendChild(urlEntry(
-                    uriGenerator.playerPageUriForClip(item, clip, location),
+                    uriGenerator.playerPageUriForClip(content, clip, location),
                     uriGenerator.videoUriForClip(clip, location),
-                    item, location, title));
+                    clip, location, title));
         }
     }
 
@@ -188,11 +193,21 @@ public class SiteMapOutputter {
         return titleTruncator.truncate(title);
     }
     
-    private String clipTitle(Clip clip, Item item, Map<ParentRef, Container> parentLookup) {
+    private String clipTitle(Clip clip, Content content, Map<ParentRef, Container> parentLookup) {
         String title = Strings.nullToEmpty(clip.getTitle());
-        Container parent = parentLookup.get(item.getContainer());
-        if (parent != null && !Strings.isNullOrEmpty(parent.getTitle())) {
-            String brandTitle = parent.getTitle();
+        
+        Container topLevelContainer = null;
+        if (content instanceof Brand) {
+            topLevelContainer = (Brand) content;
+        } else if (content instanceof Series) {
+            topLevelContainer = parentLookup.get(((Series)content).getParent());
+        } else if (content instanceof Item) {
+            topLevelContainer = parentLookup.get(((Item)content).getContainer());
+        }
+        
+        if (topLevelContainer != null 
+                && !Strings.isNullOrEmpty(topLevelContainer.getTitle())) {
+            String brandTitle = topLevelContainer.getTitle();
             if (!brandTitle.equals(title)) {
                 title = brandTitle + " : " + title;
             }
