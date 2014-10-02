@@ -14,6 +14,7 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Series;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Supplier;
 
 
 public class C4SiteMapUriGenerator implements SiteMapUriGenerator {
@@ -28,10 +29,10 @@ public class C4SiteMapUriGenerator implements SiteMapUriGenerator {
     
     private final String brightcovePublisherId;
     private final String brightcovePlayerId;
-    private final C4FlashPlayerVersionSupplier flashPlayerVersionSupplier;
+    private final Supplier<String> flashPlayerVersionSupplier;
 
     public C4SiteMapUriGenerator(String brightcovePublisherId, String brightcovePlayerId, 
-            C4FlashPlayerVersionSupplier flashPlayerVersionSupplier) {
+            Supplier<String> flashPlayerVersionSupplier) {
         this.flashPlayerVersionSupplier = checkNotNull(flashPlayerVersionSupplier);
         this.brightcovePlayerId = checkNotNull(brightcovePlayerId);
         this.brightcovePublisherId = checkNotNull(brightcovePublisherId);

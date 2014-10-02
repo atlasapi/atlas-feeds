@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.sitemaps;
+package org.atlasapi.feeds.sitemaps.channel4;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -12,7 +12,7 @@ import org.atlasapi.media.entity.Location;
 import org.junit.Test;
 
 
-public class C4SitemapOutputterTest {
+public class C4SiteMapUriGeneratorTest {
 
     private static final String BRIGHTCOVE_PUBLISHER_ID = "12345";
     private static final String BRIGHTCOVE_PLAYER_ID = "33333";
