@@ -44,7 +44,7 @@ import com.metabroadcast.common.intl.Countries;
 
 public class SiteMapOutputterTest extends TestCase {
 
-	private final SiteMapOutputter outputter = new SiteMapOutputter(ImmutableMap.<Publisher, SiteMapUriGenerator>of(), new DefaultSiteMapUriGenerator());
+	private final SiteMapOutputter outputter = new SiteMapOutputter(ImmutableMap.<Publisher, SiteMapUriGenerator>of(), new DefaultSiteMapUriGenerator(), null);
 	
 	
 	public void testOutputtingASitemap() throws Exception {
