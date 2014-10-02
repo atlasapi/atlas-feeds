@@ -1,9 +1,8 @@
-package org.atlasapi.feeds.sitemaps;
+package org.atlasapi.feeds.sitemaps.channel4;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-import org.atlasapi.feeds.sitemaps.channel4.C4FlashPlayerVersionSupplier;
 import org.atlasapi.feeds.sitemaps.channel4.C4SiteMapUriGenerator;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Clip;
@@ -11,15 +10,17 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.junit.Test;
 
+import com.google.common.base.Supplier;
 
-public class C4SitemapOutputterTest {
+
+public class C4SiteMapUriGeneratorTest {
 
     private static final String BRIGHTCOVE_PUBLISHER_ID = "12345";
     private static final String BRIGHTCOVE_PLAYER_ID = "33333";
     private static final String FLASH_PLAYER_VERSION = "1.23";
     
     private final C4SiteMapUriGenerator c4SitemapOutputter 
-        = new C4SiteMapUriGenerator(BRIGHTCOVE_PUBLISHER_ID, BRIGHTCOVE_PLAYER_ID, new C4FlashPlayerVersionSupplier() {
+        = new C4SiteMapUriGenerator(BRIGHTCOVE_PUBLISHER_ID, BRIGHTCOVE_PLAYER_ID, new Supplier<String>() {
             
             @Override
             public String get() {
