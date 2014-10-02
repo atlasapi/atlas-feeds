@@ -59,9 +59,12 @@ public class SiteMapOutputter {
     private final Map<Publisher, Optional<SiteMapUriGenerator>> publisherSpecificUriGenerators;
     private final SiteMapUriGenerator defaultPublisherSpecificSitemapUriGenerator;
 
+    private final Long serviceId;
+
     public SiteMapOutputter(Map<Publisher, SiteMapUriGenerator> publisherSpecificUriGenerators, 
-            SiteMapUriGenerator defaultPublisherSpecificSitemapUriGenerator) {
+            SiteMapUriGenerator defaultPublisherSpecificSitemapUriGenerator, Long serviceId) {
         
+        this.serviceId = serviceId;
         this.defaultPublisherSpecificSitemapUriGenerator = checkNotNull(defaultPublisherSpecificSitemapUriGenerator);
         this.publisherSpecificUriGenerators = ImmutableOptionalMap.fromMap(publisherSpecificUriGenerators);
     }
@@ -252,7 +255,9 @@ public class SiteMapOutputter {
         if (policy == null) {
             return isCorrectType;
         }
-        return isCorrectType && (policy.getPlatform() == null || Platform.PC.equals(policy.getPlatform()));
+        return isCorrectType 
+                && (policy.getPlatform() == null || Platform.PC.equals(policy.getPlatform()))
+                && (serviceId == null || serviceId.equals(location.getPolicy().getService()));
     }
 
     private void write(OutputStream out, Element feed) throws UnsupportedEncodingException, IOException {

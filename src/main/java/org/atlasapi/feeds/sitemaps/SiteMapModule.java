@@ -29,13 +29,17 @@ public class SiteMapModule {
 	private @Value("${sitemaps.c4.brightcove.publisherId}") String c4BrightcovePublisherId;
 	private @Value("${sitemaps.c4.brightcove.playerId}")    String c4BrightcovePlayerId;
 	private @Value("${sitemaps.c4.flashplayerversion}")     String c4FlashPlayerVersion;
+	private @Value("${service.web.id}")                     Long webServiceId;
 
     public @Bean ApplicationConfigurationIncludingQueryBuilder sitemapQueryBuilder() {
-        return new ApplicationConfigurationIncludingQueryBuilder(new QueryStringBackedQueryBuilder().withIgnoreParams("format", "host"), configFetcher);
+        return new ApplicationConfigurationIncludingQueryBuilder(
+                new QueryStringBackedQueryBuilder().withIgnoreParams("format", "host"), 
+                configFetcher);
     }
 	
 	public @Bean SiteMapController siteMapController() {
-		return new SiteMapController(queryExecutor, sitemapQueryBuilder(), contentLister, siteMapUriGenerators(), localHostName);
+		return new SiteMapController(queryExecutor, sitemapQueryBuilder(), 
+		        contentLister, siteMapUriGenerators(), localHostName, webServiceId);
 	}
 	
 	private Map<Publisher, SiteMapUriGenerator> siteMapUriGenerators() {
