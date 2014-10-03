@@ -20,6 +20,7 @@ import nu.xom.Builder;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Container;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
@@ -43,7 +44,7 @@ import com.metabroadcast.common.intl.Countries;
 
 public class SiteMapOutputterTest extends TestCase {
 
-	private final SiteMapOutputter outputter = new SiteMapOutputter();
+	private final SiteMapOutputter outputter = new SiteMapOutputter(ImmutableMap.<Publisher, SiteMapUriGenerator>of(), new DefaultSiteMapUriGenerator(), null);
 	
 	
 	public void testOutputtingASitemap() throws Exception {
@@ -70,7 +71,7 @@ public class SiteMapOutputterTest extends TestCase {
 		version.addManifestedAs(encoding);
 		glee.addVersion(version);
 		
-		assertThat(output(ImmutableList.of(glee)), is(expectedFeed("sitemap-a.xml")));
+		assertThat(output(ImmutableList.<Content>of(glee)), is(expectedFeed("sitemap-a.xml")));
 	}
 	
 	public void testThatTheTestDataValidates() throws Exception {
@@ -109,7 +110,7 @@ public class SiteMapOutputterTest extends TestCase {
 		builder.build(new StringReader(expectedFeed("sitemap-a.xml")));
 	}
 	
-	private String output(List<Item> items) throws IOException {
+	private String output(List<Content> items) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		outputter.output(ImmutableMap.<ParentRef, Container>of(), items, out);
 		return out.toString(Charsets.UTF_8.toString());

@@ -4,8 +4,10 @@ import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static com.metabroadcast.common.http.HttpStatusCode.BAD_REQUEST;
-import static org.atlasapi.feeds.sitemaps.SiteMapRef.transformerForHost;
+import static org.atlasapi.feeds.sitemaps.SiteMapRef.transformerForBaseUri;
 import static org.atlasapi.persistence.content.ContentCategory.CHILD_ITEM;
+import static org.atlasapi.persistence.content.ContentCategory.CONTAINER;
+import static org.atlasapi.persistence.content.ContentCategory.PROGRAMME_GROUP;
 import static org.atlasapi.persistence.content.listing.ContentListingCriteria.defaultCriteria;
 
 import java.io.IOException;
@@ -24,6 +26,7 @@ import org.atlasapi.application.query.InvalidIpForApiKeyException;
 import org.atlasapi.application.query.RevokedApiKeyException;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.media.TransportType;
+import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
@@ -32,10 +35,15 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Series;
+import org.atlasapi.media.entity.SeriesRef;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.query.content.parser.ApplicationConfigurationIncludingQueryBuilder;
+import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -54,7 +62,10 @@ import com.metabroadcast.common.webapp.http.CacheHeaderWriter;
 @Controller
 public class SiteMapController {
 
+    private static Logger log = LoggerFactory.getLogger(SiteMapController.class);
+    
     private static final String HOST_PARAM = "host";
+    private static final String BASE_URI_PARAM = "baseUri";
     private static final String PUBLISHER_PARAM = "publisher";
 
     private final ContentLister lister;
@@ -62,19 +73,27 @@ public class SiteMapController {
     private final ApplicationConfigurationIncludingQueryBuilder queryBuilder;
     private final KnownTypeQueryExecutor queryExecutor;
 
-    private final SiteMapOutputter outputter = new SiteMapOutputter();
+    private final SiteMapOutputter outputter;
     private final SiteMapIndexOutputter indexOutputter = new SiteMapIndexOutputter();
     private final CacheHeaderWriter cacheHeaderWriter = CacheHeaderWriter.neverCache();
     
-    public SiteMapController(KnownTypeQueryExecutor queryExecutor, ApplicationConfigurationIncludingQueryBuilder queryBuilder, ContentLister contentLister, String defaultHost) {
+    public SiteMapController(KnownTypeQueryExecutor queryExecutor, 
+            ApplicationConfigurationIncludingQueryBuilder queryBuilder, 
+            ContentLister contentLister, 
+            Map<Publisher, SiteMapUriGenerator> siteMapUriGenerators,
+            String defaultHost, Long serviceId) {
         this.queryExecutor = queryExecutor;
         this.queryBuilder = queryBuilder;
         this.lister = contentLister;
         this.defaultHost = defaultHost;
+        this.outputter = new SiteMapOutputter(siteMapUriGenerators, new DefaultSiteMapUriGenerator(), serviceId);
     }
 
     @RequestMapping("/feeds/sitemaps/index.xml")
-    public String siteMapFofPublisher(@RequestParam(value = PUBLISHER_PARAM) final String publisher, @RequestParam(value = HOST_PARAM, required = false) final String host, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public String siteMapFofPublisher(@RequestParam(value = PUBLISHER_PARAM) final String publisher, 
+            @RequestParam(value = HOST_PARAM, required = false) final String hostParam, 
+            @RequestParam(value = BASE_URI_PARAM, required = false) final String baseUriParam, 
+            HttpServletRequest request, HttpServletResponse response) throws IOException {
         
         Maybe<Publisher> possiblePublisher = Publisher.fromKey(publisher);
         if(possiblePublisher.isNothing()) {
@@ -82,9 +101,14 @@ public class SiteMapController {
             return null;
         }
         
+        if (hostParam != null && baseUriParam != null) {
+            response.sendError(BAD_REQUEST.code(), "Cannot specify both host and base URI");
+            return null;
+        }
+        
         ContentQuery query;
         try {
-            query = queryBuilder.build(request);
+            query = queryBuilder.build(new SitemapHackHttpRequest(request));
         } catch (ApiKeyNotFoundException e) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return null;
@@ -99,8 +123,10 @@ public class SiteMapController {
         Set<Publisher> includedPublishers = query.getConfiguration().getEnabledSources();
         
         Iterable<SiteMapRef> sitemapRefs;
+        String baseUri = baseUriParam == null ? baseUriForHost(hostParam) : baseUriParam;
+        
         if (includedPublishers.contains(possiblePublisher.requireValue())) {
-            sitemapRefs = sitemapRefForQuery(query, host, possiblePublisher.requireValue());
+            sitemapRefs = sitemapRefForQuery(query, baseUri, possiblePublisher.requireValue());
         } else {
             sitemapRefs = ImmutableList.<SiteMapRef> of();
         }
@@ -113,18 +139,39 @@ public class SiteMapController {
         return null;
     }
 
-    public Iterable<SiteMapRef> sitemapRefForQuery(ContentQuery query, final String host, Publisher publisher) {
+    public Iterable<SiteMapRef> sitemapRefForQuery(ContentQuery query, final String baseUri, Publisher publisher) {
         final ImmutableSet.Builder<String> brands = ImmutableSet.builder();
-        
-        Iterator<Item> items = Iterators.filter(lister.listContent(defaultCriteria().forPublisher(publisher).forContent(CHILD_ITEM).build()), Item.class);
-        while (items.hasNext()) {
-            Item item = items.next();
-            if(item.getThumbnail() != null && hasLinkLocation(item)) {
-                brands.add(item.getContainer().getUri());
+        Iterator<Content> contents = Iterators.filter(
+                lister.listContent(
+                        defaultCriteria()
+                        .forPublisher(publisher)
+                        .forContent(CHILD_ITEM, CONTAINER, PROGRAMME_GROUP)
+                        .build()), 
+                Content.class);
+        while (contents.hasNext()) {
+            Content content = contents.next();
+            if (content instanceof Item) {
+                Item item = (Item) content;
+                if((item.getThumbnail() != null && hasLinkLocation(item))
+                        || !item.getClips().isEmpty()) {
+                    brands.add(item.getContainer().getUri());
+                }
+            } else if (content instanceof Series) {
+                Series series = (Series) content;
+                if (!series.getClips().isEmpty()) {
+                    brands.add(series.getParent().getUri());
+                }
+            } else if (content instanceof Brand) {
+                Brand brand = (Brand) content;
+                if (!brand.getClips().isEmpty()) {
+                    brands.add(brand.getCanonicalUri());
+                }
+            } else {
+                log.warn("Ignoring content of unsupported type: " + content.getClass().getCanonicalName());
             }
         }
 
-        Iterable<SiteMapRef> sitemapRefs = transform(resolve(brands.build(), query), transformerForHost(hostOrDefault(host)));
+        Iterable<SiteMapRef> sitemapRefs = transform(resolve(brands.build(), query), transformerForBaseUri(baseUri));
         return sitemapRefs;
     }
 
@@ -146,18 +193,19 @@ public class SiteMapController {
     }
 
     @RequestMapping("/feeds/sitemaps/sitemap.xml")
-    public String siteMapForBrand(HttpServletRequest request, HttpServletResponse response, @RequestParam("brand.uri") String brandUri) throws IOException {
+    public String siteMapForBrand(HttpServletRequest request, HttpServletResponse response, 
+            @RequestParam("brand.uri") String brandUri) throws IOException {
         try {
             final ContentQuery query = queryBuilder.build(new SitemapHackHttpRequest(request, brandUri));
             Iterable<Container> brands = Iterables.filter(resolve(URI_SPLITTER.split(brandUri),query), Container.class);
         
             Map<ParentRef, Container> parentLookup = Maps.<ParentRef,Container>uniqueIndex(brands, ParentRef.T0_PARENT_REF);
-            Iterable<Item> contents = Iterables.filter(Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
+            Iterable<Content> contents = Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
                 @Override
                 public Iterable<Content> apply(Container input) {
-                    return resolve(Iterables.transform(input.getChildRefs(), ChildRef.TO_URI), query);
+                    return resolve(childItemsFor((Brand)input), query);
                 }
-            })),Item.class);
+            }));
         
             response.setStatus(HttpServletResponse.SC_OK);
             cacheHeaderWriter.writeHeaders(request, response);
@@ -175,10 +223,17 @@ public class SiteMapController {
         }
     }
 
+    protected Iterable<String> childItemsFor(Brand brand) {
+        return Iterables.concat(
+                Iterables.transform(brand.getChildRefs(), ChildRef.TO_URI),
+                Iterables.transform(brand.getSeriesRefs(), SeriesRef.TO_URI)
+               );
+    }
+
     private static final Splitter URI_SPLITTER = Splitter.on(",").omitEmptyStrings().trimResults();
 
-    private String hostOrDefault(String host) {
-        return host == null ? defaultHost : host;
+    private String baseUriForHost(String host) {
+        return String.format("http://%s/feeds/sitemaps", host == null ? defaultHost : host);
     }
     
     private static class SitemapHackHttpRequest extends HttpServletRequestWrapper {
@@ -188,8 +243,15 @@ public class SiteMapController {
         public SitemapHackHttpRequest(HttpServletRequest request, String brandUri) {
             super(request);
             params = Maps.newHashMap(request.getParameterMap());
-            params.put("uri", new String[] { brandUri });
+            if (brandUri != null) {
+                params.put("uri", new String[] { brandUri });
+            }
             params.remove("brand.uri");
+            params.remove("baseUri");
+        }
+        
+        public SitemapHackHttpRequest(HttpServletRequest request) {
+            this(request, null);
         }
 
         public String getParameter(String name) {
