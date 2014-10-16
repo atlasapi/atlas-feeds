@@ -184,7 +184,7 @@ public class SiteMapOutputter {
                 restrictionElem.appendChild(spaceDelimted);
                 videoElem.appendChild(restrictionElem);
             }
-
+            videoElem.appendChild(stringElement("platform", VIDEO, "web"));
         }
         return videoElem;
     }
