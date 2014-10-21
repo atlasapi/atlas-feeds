@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview.ids;
 
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;

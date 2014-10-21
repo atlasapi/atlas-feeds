@@ -1,10 +1,8 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview.ids;
 
 
-public interface PublisherConfiguration {
+public interface PublisherIdUtility {
 
-    int getDefaultImageHeight();
-    int getDefaultImageWidth();
     String getGroupInformationServiceId();
     String getOnDemandServiceId();
     String getDeepLinkingAuthorityId();

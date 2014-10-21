@@ -1,9 +1,16 @@
 package org.atlasapi.feeds.youview;
 
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.youview.genres.GenreMappings;
+import org.atlasapi.feeds.youview.ids.IdParsers;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
+import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.www.YouViewFeedController;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Publisher;
@@ -14,21 +21,26 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.SimpleHttpClientBuilder;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.security.UsernameAndPassword;
 
 @Configuration
 public class YouViewFeedsWebModule {
     
+    private static final String CONFIG_PREFIX = "youview.upload.";
+
+    private static final Map<String, Publisher> PUBLISHER_MAPPING = ImmutableMap.of(
+            "lovefilm", Publisher.LOVEFILM,
+            "unbox", Publisher.AMAZON_UNBOX,
+            "nitro", Publisher.BBC_NITRO
+    ); 
+    
     private @Value("${youview.upload.validation}") String performValidation;
-    private @Value("${youview.upload.lovefilm.url}") String loveFilmUrl;
-    private @Value("${youview.upload.lovefilm.username}") String loveFilmUsername;
-    private @Value("${youview.upload.lovefilm.password}") String loveFilmPassword;
-    private @Value("${youview.upload.unbox.url}") String unboxUrl;
-    private @Value("${youview.upload.unbox.username}") String unboxUsername;
-    private @Value("${youview.upload.unbox.password}") String unboxPassword;
     
     private @Autowired DatabasedMongo mongo;
     private @Autowired LastUpdatedContentFinder contentFinder;
@@ -36,7 +48,7 @@ public class YouViewFeedsWebModule {
     
     @Bean
     public YouViewUploadController uploadController() {
-        return new YouViewUploadController(contentFinder, contentResolver, loveFilmClient());
+        return new YouViewUploadController(contentFinder, contentResolver, youViewUploadClient());
     }
     
     @Bean
@@ -56,27 +68,53 @@ public class YouViewFeedsWebModule {
     }
     
     @Bean
-    public YouViewRemoteClient loveFilmClient() {
+    public YouViewRemoteClient youViewUploadClient() {
         return new YouViewRemoteClient(feedGenerator(), configFactory());
     }
     
     private YouViewPerPublisherFactory configFactory() {
-        return YouViewPerPublisherFactory.builder()
-                .withPublisher(
-                        Publisher.LOVEFILM, 
-                        new LoveFilmPublisherConfiguration(loveFilmUrl), 
-                        new LoveFilmIdParser(), 
-                        new LoveFilmGenreMapping(), 
-                        httpClient(loveFilmUsername, loveFilmPassword))
-                .withPublisher(
-                        Publisher.AMAZON_UNBOX, 
-                        new UnboxPublisherConfiguration(unboxUrl), 
-                        new UnboxIdParser(), 
-                        new UnboxGenreMapping(), 
-                        httpClient(unboxUsername, unboxPassword))
-                .build();
+        YouViewPerPublisherFactory.Builder factory = YouViewPerPublisherFactory.builder();
+        for (UploadPublisherConfiguration config : parseConfig()) {
+            factory = factory.withPublisher(
+                    config.publisher(), 
+                    PublisherIdUtilities.idUtilFor(config.publisher(), config.url()), 
+                    ImageConfigurations.imageConfigFor(config.publisher()),
+                    IdParsers.parserFor(config.publisher()), 
+                    GenreMappings.mappingFor(config.publisher()), 
+                    httpClient(config.credentials().username(), config.credentials().password())
+            );
+        }
+        return factory.build();
     }
     
+    @Bean
+    public Set<UploadPublisherConfiguration> parseConfig() {
+        ImmutableSet.Builder<UploadPublisherConfiguration> config = ImmutableSet.builder();
+        for (Entry<String, Publisher> publisher : PUBLISHER_MAPPING.entrySet()) {
+            String publisherPrefix = CONFIG_PREFIX + publisher.getKey();
+            boolean isEnabled = Boolean.parseBoolean(Configurer.get(publisherPrefix + ".enabled").get());
+            if (isEnabled) {
+                config.add(new UploadPublisherConfiguration(publisher.getValue(), parseUrl(publisherPrefix), parseCredentials(publisherPrefix), parseChunkSize(publisherPrefix)));
+            }
+        }
+        return config.build();
+    }
+
+    private String parseUrl(String publisherPrefix) {
+        return Configurer.get(publisherPrefix + ".url").get();
+    }
+    
+    private UsernameAndPassword parseCredentials(String publisherPrefix) {
+        return new UsernameAndPassword(
+                Configurer.get(publisherPrefix + ".username").get(), 
+                Configurer.get(publisherPrefix + ".password").get()
+        );
+    }
+    
+    private int parseChunkSize(String publisherPrefix) {
+        return Configurer.get(publisherPrefix + ".chunkSize").toInt();
+    }
+
     private SimpleHttpClient httpClient(String username, String password) {
         return new SimpleHttpClientBuilder()
             .withHeader("Content-Type", "text/xml")

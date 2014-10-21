@@ -11,6 +11,10 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
+import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.ids.IdParser;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtility;
+import org.atlasapi.feeds.youview.images.ImageConfiguration;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.CrewMember;
@@ -111,7 +115,7 @@ public class DefaultGroupInformationGenerator implements GroupInformationGenerat
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         
-        PublisherConfiguration config = configFactory.getConfiguration(film.getPublisher());
+        PublisherIdUtility config = configFactory.getIdUtil(film.getPublisher());
         groupInfo.setServiceIDRef(config.getGroupInformationServiceId());
         
         return groupInfo;
@@ -125,7 +129,7 @@ public class DefaultGroupInformationGenerator implements GroupInformationGenerat
 
         if (series.isPresent()) {
             Publisher publisher = series.get().getPublisher();
-            PublisherConfiguration config = configFactory.getConfiguration(publisher);
+            PublisherIdUtility config = configFactory.getIdUtil(publisher);
             IdParser idParser = configFactory.getIdParser(publisher);
             
             MemberOfType memberOf = new MemberOfType();
@@ -139,7 +143,7 @@ public class DefaultGroupInformationGenerator implements GroupInformationGenerat
             groupInfo.getMemberOf().add(memberOf);
         } else if (brand.isPresent()) {
             Publisher publisher = brand.get().getPublisher();
-            PublisherConfiguration config = configFactory.getConfiguration(publisher);
+            PublisherIdUtility config = configFactory.getIdUtil(publisher);
             IdParser idParser = configFactory.getIdParser(publisher);
             
             MemberOfType memberOf = new MemberOfType();
@@ -165,7 +169,7 @@ public class DefaultGroupInformationGenerator implements GroupInformationGenerat
         
         if (brand.isPresent()) {
             Publisher publisher = brand.get().getPublisher();
-            PublisherConfiguration config = configFactory.getConfiguration(publisher);
+            PublisherIdUtility config = configFactory.getIdUtil(publisher);
             IdParser idParser = configFactory.getIdParser(publisher);
             
             MemberOfType memberOf = new MemberOfType();
@@ -175,7 +179,7 @@ public class DefaultGroupInformationGenerator implements GroupInformationGenerat
             }
             groupInfo.getMemberOf().add(memberOf);
         } else {
-            PublisherConfiguration config = configFactory.getConfiguration(series.getPublisher());
+            PublisherIdUtility config = configFactory.getIdUtil(series.getPublisher());
             groupInfo.setServiceIDRef(config.getGroupInformationServiceId());
         }
         
@@ -188,7 +192,7 @@ public class DefaultGroupInformationGenerator implements GroupInformationGenerat
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
         groupInfo.setOrdered(true);
-        PublisherConfiguration config = configFactory.getConfiguration(brand.getPublisher());
+        PublisherIdUtility config = configFactory.getIdUtil(brand.getPublisher());
         groupInfo.setServiceIDRef(config.getGroupInformationServiceId());
         
         return groupInfo;
@@ -198,7 +202,7 @@ public class DefaultGroupInformationGenerator implements GroupInformationGenerat
         GroupInformationType groupInfo = new GroupInformationType();
         
         Publisher publisher = content.getPublisher();
-        PublisherConfiguration config = configFactory.getConfiguration(publisher);
+        PublisherIdUtility config = configFactory.getIdUtil(publisher);
         IdParser idParser = configFactory.getIdParser(publisher);
         
         groupInfo.setGroupId(idParser.createCrid(config.getCridPrefix(), content));
@@ -272,11 +276,11 @@ public class DefaultGroupInformationGenerator implements GroupInformationGenerat
     private ContentPropertiesType generateContentProperties(Content content) {
         ContentPropertiesType contentProperties = new ContentPropertiesType();
         StillImageContentAttributesType attributes = new StillImageContentAttributesType();
-        PublisherConfiguration config = configFactory.getConfiguration(content.getPublisher());
+        ImageConfiguration imageConfig = configFactory.getImageConfig(content.getPublisher());
         
         if (content.getImages() == null || content.getImages().isEmpty()) {
-            attributes.setWidth(config.getDefaultImageWidth());
-            attributes.setHeight(config.getDefaultImageHeight());
+            attributes.setWidth(imageConfig.defaultImageWidth());
+            attributes.setHeight(imageConfig.defaultImageHeight());
         } else {
             Image image = Iterables.getFirst(content.getImages(), null);
             attributes.setWidth(image.getWidth());
