@@ -12,6 +12,8 @@ import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
+import org.atlasapi.feeds.youview.ids.IdParser;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtility;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Policy;
@@ -63,7 +65,7 @@ public class DefaultOnDemandLocationGenerator implements OnDemandLocationGenerat
     @Override
     public Optional<OnDemandProgramType> generate(Item item) {
         Publisher publisher = item.getPublisher();
-        PublisherConfiguration config = configFactory.getConfiguration(publisher);
+        PublisherIdUtility config = configFactory.getIdUtil(publisher);
         IdParser idParser = configFactory.getIdParser(publisher);
         
         Version version = Iterables.getOnlyElement(item.getVersions());
@@ -94,7 +96,7 @@ public class DefaultOnDemandLocationGenerator implements OnDemandLocationGenerat
 
     private CRIDRefType generateProgram(Item item) {
         Publisher publisher = item.getPublisher();
-        PublisherConfiguration config = configFactory.getConfiguration(publisher);
+        PublisherIdUtility config = configFactory.getIdUtil(publisher);
         IdParser idParser = configFactory.getIdParser(publisher);
                 
         CRIDRefType program = new CRIDRefType();
@@ -153,7 +155,7 @@ public class DefaultOnDemandLocationGenerator implements OnDemandLocationGenerat
     }
 
     private UniqueIDType generateOtherId(Item item) {
-        PublisherConfiguration config = configFactory.getConfiguration(item.getPublisher());
+        PublisherIdUtility config = configFactory.getIdUtil(item.getPublisher());
         UniqueIDType id = new UniqueIDType();
         id.setAuthority(config.getDeepLinkingAuthorityId());
         id.setValue(getAsin(item));

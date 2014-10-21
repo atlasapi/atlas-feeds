@@ -3,6 +3,10 @@ package org.atlasapi.feeds.youview;
 import static org.junit.Assert.assertEquals;
 
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.youview.genres.GenreMappings;
+import org.atlasapi.feeds.youview.ids.IdParsers;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
+import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Film;
@@ -25,8 +29,20 @@ import com.metabroadcast.common.intl.Countries;
 public class DefaultProgramInformationGeneratorTest {
     
     private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
-            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("base uri"), new LoveFilmIdParser(), new LoveFilmGenreMapping(), Mockito.mock(SimpleHttpClient.class))
-            .withPublisher(Publisher.AMAZON_UNBOX, new UnboxPublisherConfiguration("base uri"), new UnboxIdParser(), new UnboxGenreMapping(), Mockito.mock(SimpleHttpClient.class))
+            .withPublisher(
+                    Publisher.LOVEFILM, 
+                    PublisherIdUtilities.idUtilFor(Publisher.LOVEFILM, "base uri"),
+                    ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
+                    IdParsers.parserFor(Publisher.LOVEFILM), 
+                    GenreMappings.mappingFor(Publisher.LOVEFILM), 
+                    Mockito.mock(SimpleHttpClient.class))
+            .withPublisher(
+                    Publisher.AMAZON_UNBOX, 
+                    PublisherIdUtilities.idUtilFor(Publisher.AMAZON_UNBOX, "base uri"),
+                    ImageConfigurations.imageConfigFor(Publisher.AMAZON_UNBOX),
+                    IdParsers.parserFor(Publisher.AMAZON_UNBOX), 
+                    GenreMappings.mappingFor(Publisher.AMAZON_UNBOX), 
+                    Mockito.mock(SimpleHttpClient.class))
             .build();
     private final ProgramInformationGenerator generator = new DefaultProgramInformationGenerator(configFactory);
 
@@ -42,7 +58,7 @@ public class DefaultProgramInformationGeneratorTest {
         assertEquals("http://bbfc.org.uk/BBFCRatingCS/2002#PG", basicDescription.getParentalGuidance().getParentalRating().getHref());
         assertEquals("1963", basicDescription.getProductionDate().getTimePoint());
         // compare strings, as javax.xml.datatype.Duration is horrible to instantiate
-        assertEquals("PT1H30M0.000S", basicDescription.getDuration().toString());
+        assertEquals("P0Y0M0DT1H30M0.000S", basicDescription.getDuration().toString());
         assertEquals("gb", Iterables.getOnlyElement(basicDescription.getProductionLocation()));
     }
     

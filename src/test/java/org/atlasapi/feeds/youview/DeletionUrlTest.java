@@ -3,6 +3,10 @@ package org.atlasapi.feeds.youview;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.ids.IdParsers;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
+import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
@@ -25,7 +29,13 @@ public class DeletionUrlTest {
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
     private TvAnytimeGenerator generator = Mockito.mock(TvAnytimeGenerator.class);
     private YouViewPerPublisherFactory configurationFactory = YouViewPerPublisherFactory.builder()
-            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("youviewurl"), new LoveFilmIdParser(), Mockito.mock(GenreMapping.class), httpClient)
+            .withPublisher(
+                    Publisher.LOVEFILM, 
+                    PublisherIdUtilities.idUtilFor(Publisher.LOVEFILM, "youviewurl"), 
+                    ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
+                    IdParsers.parserFor(Publisher.LOVEFILM), 
+                    Mockito.mock(GenreMapping.class), 
+                    httpClient)
             .build();
     
     private final YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configurationFactory);

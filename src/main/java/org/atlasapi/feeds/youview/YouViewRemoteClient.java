@@ -9,6 +9,8 @@ import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.youview.ids.IdParser;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtility;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -87,7 +89,7 @@ public class YouViewRemoteClient {
         }
         Publisher publisher = first.getPublisher();
         SimpleHttpClient httpClient = configurationFactory.getHttpClient(publisher);
-        PublisherConfiguration config = configurationFactory.getConfiguration(publisher);
+        PublisherIdUtility config = configurationFactory.getIdUtil(publisher);
         
         String queryUrl = config.getYouViewBaseUrl() + UPLOAD_URL_SUFFIX;
         log.trace(String.format("Posting YouView output xml to %s", queryUrl));
@@ -123,7 +125,7 @@ public class YouViewRemoteClient {
     private boolean sendDelete(Item item) {
         Publisher publisher = item.getPublisher();
         IdParser idParser = configurationFactory.getIdParser(publisher);
-        PublisherConfiguration config = configurationFactory.getConfiguration(publisher);
+        PublisherIdUtility config = configurationFactory.getIdUtil(publisher);
         SimpleHttpClient httpClient = configurationFactory.getHttpClient(publisher);
         
         return sendDelete(httpClient, config.getYouViewBaseUrl(), idParser.createCrid(config.getCridPrefix(), item))
@@ -135,7 +137,7 @@ public class YouViewRemoteClient {
     private boolean sendDelete(Series series) {
         Publisher publisher = series.getPublisher();
         IdParser idParser = configurationFactory.getIdParser(publisher);
-        PublisherConfiguration config = configurationFactory.getConfiguration(publisher);
+        PublisherIdUtility config = configurationFactory.getIdUtil(publisher);
         SimpleHttpClient httpClient = configurationFactory.getHttpClient(publisher);
         
         return sendDelete(httpClient, config.getYouViewBaseUrl(), idParser.createCrid(config.getCridPrefix(), series));
@@ -144,7 +146,7 @@ public class YouViewRemoteClient {
     private boolean sendDelete(Brand brand) {
         Publisher publisher = brand.getPublisher();
         IdParser idParser = configurationFactory.getIdParser(publisher);
-        PublisherConfiguration config = configurationFactory.getConfiguration(publisher);
+        PublisherIdUtility config = configurationFactory.getIdUtil(publisher);
         SimpleHttpClient httpClient = configurationFactory.getHttpClient(publisher);
         
         return sendDelete(httpClient, config.getYouViewBaseUrl(), idParser.createCrid(config.getCridPrefix(), brand));

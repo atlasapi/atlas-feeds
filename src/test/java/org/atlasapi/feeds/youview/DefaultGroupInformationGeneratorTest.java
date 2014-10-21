@@ -10,6 +10,10 @@ import java.util.Collections;
 import java.util.List;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
+import org.atlasapi.feeds.youview.genres.GenreMappings;
+import org.atlasapi.feeds.youview.ids.IdParsers;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
+import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -67,8 +71,20 @@ public class DefaultGroupInformationGeneratorTest {
     private NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
     
     private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
-            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("base uri"), new LoveFilmIdParser(), new LoveFilmGenreMapping(), Mockito.mock(SimpleHttpClient.class))
-            .withPublisher(Publisher.AMAZON_UNBOX, new UnboxPublisherConfiguration("base uri"), new UnboxIdParser(), new UnboxGenreMapping(), Mockito.mock(SimpleHttpClient.class))
+            .withPublisher(
+                    Publisher.LOVEFILM, 
+                    PublisherIdUtilities.idUtilFor(Publisher.LOVEFILM, "base uri"),
+                    ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
+                    IdParsers.parserFor(Publisher.LOVEFILM), 
+                    GenreMappings.mappingFor(Publisher.LOVEFILM), 
+                    Mockito.mock(SimpleHttpClient.class))
+            .withPublisher(
+                    Publisher.AMAZON_UNBOX, 
+                    PublisherIdUtilities.idUtilFor(Publisher.AMAZON_UNBOX, "base uri"),
+                    ImageConfigurations.imageConfigFor(Publisher.AMAZON_UNBOX),
+                    IdParsers.parserFor(Publisher.AMAZON_UNBOX), 
+                    GenreMappings.mappingFor(Publisher.AMAZON_UNBOX), 
+                    Mockito.mock(SimpleHttpClient.class))
             .build(); 
 
     private final GroupInformationGenerator generator = new DefaultGroupInformationGenerator(configFactory);

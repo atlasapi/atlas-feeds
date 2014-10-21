@@ -11,6 +11,8 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.youview.ids.IdParser;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtility;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
@@ -87,7 +89,7 @@ public class DefaultProgramInformationGenerator implements ProgramInformationGen
     @Override
     public ProgramInformationType generate(Item item) {
         Publisher publisher = item.getPublisher();
-        PublisherConfiguration config = configFactory.getConfiguration(publisher);
+        PublisherIdUtility config = configFactory.getIdUtil(publisher);
         IdParser idParser = configFactory.getIdParser(publisher);
         
         ProgramInformationType progInfo = new ProgramInformationType();
@@ -101,7 +103,7 @@ public class DefaultProgramInformationGenerator implements ProgramInformationGen
     }
 
     private UniqueIDType generateOtherId(Item item) {
-        PublisherConfiguration config = configFactory.getConfiguration(item.getPublisher());
+        PublisherIdUtility config = configFactory.getIdUtil(item.getPublisher());
         UniqueIDType id = new UniqueIDType();
         id.setAuthority(config.getDeepLinkingAuthorityId());
         id.setValue(getAsin(item));
@@ -168,7 +170,7 @@ public class DefaultProgramInformationGenerator implements ProgramInformationGen
 
     private DerivedFromType generateDerivedFrom(Item item) {
         Publisher publisher = item.getPublisher();
-        PublisherConfiguration config = configFactory.getConfiguration(publisher);
+        PublisherIdUtility config = configFactory.getIdUtil(publisher);
         IdParser idParser = configFactory.getIdParser(publisher);
         
         DerivedFromType derivedFrom = new DerivedFromType();

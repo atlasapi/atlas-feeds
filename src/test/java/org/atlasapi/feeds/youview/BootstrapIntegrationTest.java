@@ -18,6 +18,10 @@ import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.LoveFilmGroupInformationHierarchyTest.DummyContentResolver;
+import org.atlasapi.feeds.youview.genres.GenreMappings;
+import org.atlasapi.feeds.youview.ids.IdParsers;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
+import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
@@ -61,7 +65,13 @@ public class BootstrapIntegrationTest {
     
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
     private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
-            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("youviewurl"), new LoveFilmIdParser(), new LoveFilmGenreMapping(), httpClient)
+            .withPublisher(
+                    Publisher.LOVEFILM, 
+                    PublisherIdUtilities.idUtilFor(Publisher.LOVEFILM, "youviewurl"),
+                    ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
+                    IdParsers.parserFor(Publisher.LOVEFILM), 
+                    GenreMappings.mappingFor(Publisher.LOVEFILM), 
+                    httpClient)
             .build();
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);

@@ -5,6 +5,10 @@ import static org.junit.Assert.assertTrue;
 
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.youview.genres.GenreMappings;
+import org.atlasapi.feeds.youview.ids.IdParsers;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
+import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.media.entity.Content;
@@ -28,7 +32,13 @@ public class YouViewLastUpdatedStoreTest {
     private LastUpdatedContentFinder lastUpdatedContentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
     private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
-            .withPublisher(Publisher.LOVEFILM, new LoveFilmPublisherConfiguration("baseUri"), new LoveFilmIdParser(), new LoveFilmGenreMapping(), httpClient)
+            .withPublisher(
+                    Publisher.LOVEFILM, 
+                    PublisherIdUtilities.idUtilFor(Publisher.LOVEFILM, "baseUri"),
+                    ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
+                    IdParsers.parserFor(Publisher.LOVEFILM), 
+                    GenreMappings.mappingFor(Publisher.LOVEFILM), 
+                    httpClient)
             .build();
     TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
             new DefaultProgramInformationGenerator(configFactory), 
