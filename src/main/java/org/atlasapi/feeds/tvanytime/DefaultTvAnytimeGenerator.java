@@ -80,17 +80,17 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
 
     private final ProgramInformationGenerator progInfoGenerator;
     private final GroupInformationGenerator groupInfoGenerator;
-    private final OnDemandLocationGenerator progLocationGenerator;
+    private final OnDemandLocationGenerator onDemandGenerator;
     private final ContentResolver contentResolver;
     private final Logger log = LoggerFactory.getLogger(DefaultTvAnytimeGenerator.class);
     private final boolean performValidation;
     private final ObjectFactory factory = new ObjectFactory();
 
     public DefaultTvAnytimeGenerator(ProgramInformationGenerator progInfoGenerator, GroupInformationGenerator groupInfoGenerator, 
-            OnDemandLocationGenerator progLocationGenerator, ContentResolver contentResolver, boolean performValidation) {
+            OnDemandLocationGenerator onDemandGenerator, ContentResolver contentResolver, boolean performValidation) {
         this.progInfoGenerator = progInfoGenerator;
         this.groupInfoGenerator = groupInfoGenerator;
-        this.progLocationGenerator = progLocationGenerator;
+        this.onDemandGenerator = onDemandGenerator;
         this.contentResolver = contentResolver;
         this.performValidation = performValidation;
     }
@@ -150,7 +150,7 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
                     }
                     Item item = (Item) content;
                     progInfoTable.getProgramInformation().add(progInfoGenerator.generate(item));
-                    Optional<OnDemandProgramType> onDemand = progLocationGenerator.generate(item);
+                    Optional<OnDemandProgramType> onDemand = onDemandGenerator.generate(item);
                     if (onDemand.isPresent()) {
                         progLocTable.getOnDemandProgram().add(onDemand.get());
                     }
