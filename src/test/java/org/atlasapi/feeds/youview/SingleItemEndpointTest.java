@@ -18,6 +18,7 @@ import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
+import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Content;
@@ -65,7 +66,7 @@ public class SingleItemEndpointTest {
         contentResolver,
         false
     );
-    YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
+    YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory, Mockito.mock(TransactionStore.class));
     private LastUpdatedContentFinder contentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     
     private final YouViewUploadController controller = new YouViewUploadController(contentFinder, contentResolver, youViewClient);

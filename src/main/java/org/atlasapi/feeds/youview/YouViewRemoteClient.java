@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.ids.IdParser;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtility;
+import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -66,10 +67,13 @@ public class YouViewRemoteClient {
     
     private final TvAnytimeGenerator generator;
     private final YouViewPerPublisherFactory configurationFactory;
+    private final TransactionStore transactionStore;
     
-    public YouViewRemoteClient(TvAnytimeGenerator generator, YouViewPerPublisherFactory configurationFactory) {
+    public YouViewRemoteClient(TvAnytimeGenerator generator, YouViewPerPublisherFactory configurationFactory,
+            TransactionStore transactionStore) {
         this.configurationFactory = checkNotNull(configurationFactory);
         this.generator = checkNotNull(generator);
+        this.transactionStore = checkNotNull(transactionStore);
     }
     
     /**
@@ -99,7 +103,9 @@ public class YouViewRemoteClient {
         HttpResponse response = httpClient.post(queryUrl, new StringPayload(baos.toString(Charsets.UTF_8.name())));
 
         if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
-            log.info("Upload successful. Transaction url: " + response.header("Location"));
+            String transactionUrl = response.header("Location");
+            log.info("Upload successful. Transaction url: " + transactionUrl);
+            transactionStore.save(transactionUrl, chunk);
         } else {
             throw new RuntimeException(String.format("An Http status code of %s was returned when POSTing to YouView. Error message:\n%s", response.statusCode(), response.body()));
         }

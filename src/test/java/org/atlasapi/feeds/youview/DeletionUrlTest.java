@@ -7,6 +7,7 @@ import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
+import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
@@ -38,7 +39,7 @@ public class DeletionUrlTest {
                     httpClient)
             .build();
     
-    private final YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configurationFactory);
+    private final YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configurationFactory, Mockito.mock(TransactionStore.class));
     
     public DeletionUrlTest() throws HttpException {
         response = new HttpResponse("", HttpServletResponse.SC_ACCEPTED, "", ImmutableMap.of("Location", "yv location"));

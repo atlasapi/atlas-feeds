@@ -11,6 +11,8 @@ import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
+import org.atlasapi.feeds.youview.transactions.MongoTransactionStore;
+import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.feeds.youview.www.YouViewFeedController;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Publisher;
@@ -69,7 +71,7 @@ public class YouViewFeedsWebModule {
     
     @Bean
     public YouViewRemoteClient youViewUploadClient() {
-        return new YouViewRemoteClient(feedGenerator(), configFactory());
+        return new YouViewRemoteClient(feedGenerator(), configFactory(), transactionStore());
     }
     
     private YouViewPerPublisherFactory configFactory() {
@@ -85,6 +87,11 @@ public class YouViewFeedsWebModule {
             );
         }
         return factory.build();
+    }
+    
+    @Bean
+    public TransactionStore transactionStore() {
+        return new MongoTransactionStore(mongo);
     }
     
     @Bean

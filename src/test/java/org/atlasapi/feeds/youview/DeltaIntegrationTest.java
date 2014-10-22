@@ -24,6 +24,7 @@ import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -85,7 +86,7 @@ public class DeltaIntegrationTest {
             false
             );
 
-    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory, Mockito.mock(TransactionStore.class));
     private HttpResponse response;
     private DummyContentFinder contentFinder = new DummyContentFinder();
     private YouViewLastUpdatedStore store = new DummyLastUpdatedStore();

@@ -276,7 +276,6 @@ public class DefaultGroupInformationGenerator implements GroupInformationGenerat
     private ContentPropertiesType generateContentProperties(Content content) {
         ContentPropertiesType contentProperties = new ContentPropertiesType();
         StillImageContentAttributesType attributes = new StillImageContentAttributesType();
-//        PublisherIdUtility config = configFactory.getIdUtil(content.getPublisher());
         ImageConfiguration imageConfig = configFactory.getImageConfig(content.getPublisher());
         
         if (content.getImages() == null || content.getImages().isEmpty()) {

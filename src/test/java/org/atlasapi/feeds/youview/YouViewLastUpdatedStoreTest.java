@@ -11,6 +11,7 @@ import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
@@ -46,7 +47,7 @@ public class YouViewLastUpdatedStoreTest {
             new DefaultOnDemandLocationGenerator(configFactory), 
             Mockito.mock(ContentResolver.class), 
             false);
-    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory, Mockito.mock(TransactionStore.class));
     private DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     private final YouViewLastUpdatedStore store = new MongoYouViewLastUpdatedStore(mongo);
     
