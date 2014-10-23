@@ -99,12 +99,22 @@ public class YouViewFeedsWebModule {
         ImmutableSet.Builder<UploadPublisherConfiguration> config = ImmutableSet.builder();
         for (Entry<String, Publisher> publisher : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisher.getKey();
-            boolean isEnabled = Boolean.parseBoolean(Configurer.get(publisherPrefix + ".enabled").get());
+            boolean isEnabled = isEnabled(publisherPrefix);
             if (isEnabled) {
-                config.add(new UploadPublisherConfiguration(publisher.getValue(), parseUrl(publisherPrefix), parseCredentials(publisherPrefix), parseChunkSize(publisherPrefix)));
+                config.add(new UploadPublisherConfiguration(
+                        publisher.getValue(), 
+                        parseUrl(publisherPrefix), 
+                        parseCredentials(publisherPrefix), 
+                        parseChunkSize(publisherPrefix))
+                );
             }
         }
         return config.build();
+    }
+
+    private boolean isEnabled(String publisherPrefix) {
+        return Boolean.parseBoolean(Configurer.get(publisherPrefix + ".endpoints.enabled").get())
+                || Boolean.parseBoolean(Configurer.get(publisherPrefix + ".upload.enabled").get());
     }
 
     private String parseUrl(String publisherPrefix) {
