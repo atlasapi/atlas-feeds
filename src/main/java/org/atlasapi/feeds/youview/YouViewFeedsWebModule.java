@@ -71,7 +71,7 @@ public class YouViewFeedsWebModule {
     
     @Bean
     public YouViewRemoteClient youViewUploadClient() {
-        return new YouViewRemoteClient(feedGenerator(), configFactory(), transactionStore());
+        return new YouViewRemoteClient(feedGenerator(), configFactory());
     }
     
     private YouViewPerPublisherFactory configFactory() {
@@ -83,15 +83,15 @@ public class YouViewFeedsWebModule {
                     ImageConfigurations.imageConfigFor(config.publisher()),
                     IdParsers.parserFor(config.publisher()), 
                     GenreMappings.mappingFor(config.publisher()), 
-                    httpClient(config.credentials().username(), config.credentials().password())
+                    httpClient(config.credentials().username(), config.credentials().password()),
+                    transactionStore(config.publisher())
             );
         }
         return factory.build();
     }
     
-    @Bean
-    public TransactionStore transactionStore() {
-        return new MongoTransactionStore(mongo);
+    private TransactionStore transactionStore(Publisher publisher) {
+        return new MongoTransactionStore(mongo, publisher);
     }
     
     @Bean

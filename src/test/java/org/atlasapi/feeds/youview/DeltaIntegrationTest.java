@@ -71,7 +71,8 @@ public class DeltaIntegrationTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    httpClient)
+                    httpClient,
+                    Mockito.mock(TransactionStore.class))
             .build();
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
@@ -86,7 +87,7 @@ public class DeltaIntegrationTest {
             false
             );
 
-    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory, Mockito.mock(TransactionStore.class));
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
     private HttpResponse response;
     private DummyContentFinder contentFinder = new DummyContentFinder();
     private YouViewLastUpdatedStore store = new DummyLastUpdatedStore();

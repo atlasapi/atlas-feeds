@@ -36,10 +36,11 @@ public class DeletionUrlTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     Mockito.mock(GenreMapping.class), 
-                    httpClient)
+                    httpClient,
+                    Mockito.mock(TransactionStore.class))
             .build();
     
-    private final YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configurationFactory, Mockito.mock(TransactionStore.class));
+    private final YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configurationFactory);
     
     public DeletionUrlTest() throws HttpException {
         response = new HttpResponse("", HttpServletResponse.SC_ACCEPTED, "", ImmutableMap.of("Location", "yv location"));

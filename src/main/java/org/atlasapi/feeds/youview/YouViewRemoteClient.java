@@ -66,14 +66,11 @@ public class YouViewRemoteClient {
     private final Logger log = LoggerFactory.getLogger(YouViewRemoteClient.class);
     
     private final TvAnytimeGenerator generator;
-    private final YouViewPerPublisherFactory configurationFactory;
-    private final TransactionStore transactionStore;
+    private final YouViewPerPublisherFactory publisherConfig;
     
-    public YouViewRemoteClient(TvAnytimeGenerator generator, YouViewPerPublisherFactory configurationFactory,
-            TransactionStore transactionStore) {
-        this.configurationFactory = checkNotNull(configurationFactory);
+    public YouViewRemoteClient(TvAnytimeGenerator generator, YouViewPerPublisherFactory configurationFactory) {
+        this.publisherConfig = checkNotNull(configurationFactory);
         this.generator = checkNotNull(generator);
-        this.transactionStore = checkNotNull(transactionStore);
     }
     
     /**
@@ -92,8 +89,9 @@ public class YouViewRemoteClient {
             return;
         }
         Publisher publisher = first.getPublisher();
-        SimpleHttpClient httpClient = configurationFactory.getHttpClient(publisher);
-        PublisherIdUtility config = configurationFactory.getIdUtil(publisher);
+        SimpleHttpClient httpClient = publisherConfig.getHttpClient(publisher);
+        PublisherIdUtility config = publisherConfig.getIdUtil(publisher);
+        TransactionStore transactionStore = publisherConfig.getTransactionStore(publisher);
         
         String queryUrl = config.getYouViewBaseUrl() + UPLOAD_URL_SUFFIX;
         log.trace(String.format("Posting YouView output xml to %s", queryUrl));
@@ -130,9 +128,9 @@ public class YouViewRemoteClient {
     // TODO does this need two deletes for the item crid? surely it only needs deletes for crid, version-crid and imi?
     private boolean sendDelete(Item item) {
         Publisher publisher = item.getPublisher();
-        IdParser idParser = configurationFactory.getIdParser(publisher);
-        PublisherIdUtility config = configurationFactory.getIdUtil(publisher);
-        SimpleHttpClient httpClient = configurationFactory.getHttpClient(publisher);
+        IdParser idParser = publisherConfig.getIdParser(publisher);
+        PublisherIdUtility config = publisherConfig.getIdUtil(publisher);
+        SimpleHttpClient httpClient = publisherConfig.getHttpClient(publisher);
         
         return sendDelete(httpClient, config.getYouViewBaseUrl(), idParser.createCrid(config.getCridPrefix(), item))
 //                && sendDelete(httpClient, config.getYouViewBaseUrl(), idParser.createCrid(config.getCridPrefix(), item))
@@ -142,18 +140,18 @@ public class YouViewRemoteClient {
     
     private boolean sendDelete(Series series) {
         Publisher publisher = series.getPublisher();
-        IdParser idParser = configurationFactory.getIdParser(publisher);
-        PublisherIdUtility config = configurationFactory.getIdUtil(publisher);
-        SimpleHttpClient httpClient = configurationFactory.getHttpClient(publisher);
+        IdParser idParser = publisherConfig.getIdParser(publisher);
+        PublisherIdUtility config = publisherConfig.getIdUtil(publisher);
+        SimpleHttpClient httpClient = publisherConfig.getHttpClient(publisher);
         
         return sendDelete(httpClient, config.getYouViewBaseUrl(), idParser.createCrid(config.getCridPrefix(), series));
     }
     
     private boolean sendDelete(Brand brand) {
         Publisher publisher = brand.getPublisher();
-        IdParser idParser = configurationFactory.getIdParser(publisher);
-        PublisherIdUtility config = configurationFactory.getIdUtil(publisher);
-        SimpleHttpClient httpClient = configurationFactory.getHttpClient(publisher);
+        IdParser idParser = publisherConfig.getIdParser(publisher);
+        PublisherIdUtility config = publisherConfig.getIdUtil(publisher);
+        SimpleHttpClient httpClient = publisherConfig.getHttpClient(publisher);
         
         return sendDelete(httpClient, config.getYouViewBaseUrl(), idParser.createCrid(config.getCridPrefix(), brand));
     }

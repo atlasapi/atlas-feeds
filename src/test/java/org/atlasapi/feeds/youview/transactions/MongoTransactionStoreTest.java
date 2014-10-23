@@ -3,7 +3,6 @@ package org.atlasapi.feeds.youview.transactions;
 import static org.junit.Assert.assertEquals;
 
 import org.atlasapi.media.entity.Content;
-import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Publisher;
 import org.junit.Test;
@@ -25,7 +24,7 @@ public class MongoTransactionStoreTest {
     };
 
     private DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
-    private final TransactionStore store = new MongoTransactionStore(mongo);
+    private final TransactionStore store = new MongoTransactionStore(mongo, Publisher.LOVEFILM);
 
     @Test
     public void testSavingTransactionUrlAndContentSavesTransactionWithContentUrls() {

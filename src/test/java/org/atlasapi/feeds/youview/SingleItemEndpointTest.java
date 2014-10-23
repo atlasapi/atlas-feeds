@@ -53,7 +53,8 @@ public class SingleItemEndpointTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    httpClient)
+                    httpClient,
+                    Mockito.mock(TransactionStore.class))
             .build();
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
@@ -66,7 +67,7 @@ public class SingleItemEndpointTest {
         contentResolver,
         false
     );
-    YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory, Mockito.mock(TransactionStore.class));
+    YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
     private LastUpdatedContentFinder contentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     
     private final YouViewUploadController controller = new YouViewUploadController(contentFinder, contentResolver, youViewClient);

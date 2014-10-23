@@ -39,7 +39,8 @@ public class YouViewLastUpdatedStoreTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    httpClient)
+                    httpClient,
+                    Mockito.mock(TransactionStore.class))
             .build();
     TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
             new DefaultProgramInformationGenerator(configFactory), 
@@ -47,7 +48,7 @@ public class YouViewLastUpdatedStoreTest {
             new DefaultOnDemandLocationGenerator(configFactory), 
             Mockito.mock(ContentResolver.class), 
             false);
-    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory, Mockito.mock(TransactionStore.class));
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
     private DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     private final YouViewLastUpdatedStore store = new MongoYouViewLastUpdatedStore(mongo);
     

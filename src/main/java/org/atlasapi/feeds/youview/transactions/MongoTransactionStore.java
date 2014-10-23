@@ -6,6 +6,7 @@ import static org.atlasapi.feeds.youview.transactions.TransactionTranslator.from
 import static org.atlasapi.feeds.youview.transactions.TransactionTranslator.toDBObject;
 
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Publisher;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -32,8 +33,8 @@ public class MongoTransactionStore implements TransactionStore {
     
     private final DBCollection collection;
     
-    public MongoTransactionStore(DatabasedMongo mongo) {
-        this.collection = checkNotNull(mongo).collection(COLLECTION_NAME);
+    public MongoTransactionStore(DatabasedMongo mongo, Publisher publisher) {
+        this.collection = checkNotNull(mongo).collection(COLLECTION_NAME + publisher.name());
     }
 
     @Override
