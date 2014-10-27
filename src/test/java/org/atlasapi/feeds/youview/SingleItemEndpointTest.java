@@ -12,6 +12,7 @@ import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.LoveFilmGroupInformationHierarchyTest.DummyContentResolver;
 import org.atlasapi.feeds.youview.genres.GenreMappings;
@@ -60,13 +61,15 @@ public class SingleItemEndpointTest {
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
     private OnDemandLocationGenerator progLocationGenerator = new DefaultOnDemandLocationGenerator(configFactory);
     private DummyContentResolver contentResolver = new DummyContentResolver();
-    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
-        progInfoGenerator, 
-        groupInfoGenerator, 
-        progLocationGenerator, 
-        contentResolver,
-        false
+    private ContentHierarchyExtractor hierarchy = new ContentResolvingContentHierarchyExtractor(contentResolver);
+    private TVAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
+            progInfoGenerator, 
+            groupInfoGenerator, 
+            progLocationGenerator, 
+            hierarchy,
+            new UriBasedContentPermit()
     );
+    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
     YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
     private LastUpdatedContentFinder contentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     

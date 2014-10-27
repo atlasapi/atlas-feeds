@@ -15,6 +15,7 @@ import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.BootstrapIntegrationTest.DummyContentFinder;
 import org.atlasapi.feeds.youview.BootstrapIntegrationTest.DummyLastUpdatedStore;
@@ -78,15 +79,15 @@ public class DeltaIntegrationTest {
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
     private OnDemandLocationGenerator progLocationGenerator = new DefaultOnDemandLocationGenerator(configFactory);
     private DummyContentResolver contentResolver = new DummyContentResolver();
-    
-    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
+    private ContentHierarchyExtractor hierarchy = new ContentResolvingContentHierarchyExtractor(contentResolver);
+    private TVAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
             progInfoGenerator, 
             groupInfoGenerator, 
             progLocationGenerator, 
-            contentResolver,
-            false
-            );
-
+            hierarchy,
+            new UriBasedContentPermit()
+    );
+    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
     private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
     private HttpResponse response;
     private DummyContentFinder contentFinder = new DummyContentFinder();

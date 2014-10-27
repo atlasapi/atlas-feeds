@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
@@ -61,14 +62,25 @@ public class YouViewFeedsWebModule {
     @Bean 
     public TvAnytimeGenerator feedGenerator() {
         return new DefaultTvAnytimeGenerator(
-            new DefaultProgramInformationGenerator(configFactory()), 
-            new DefaultGroupInformationGenerator(configFactory()), 
-            new DefaultOnDemandLocationGenerator(configFactory()), 
-            contentResolver,
+            elementCreator(),
             Boolean.parseBoolean(performValidation)
         );
     }
     
+    private TVAnytimeElementCreator elementCreator() {
+        return new DefaultTvAnytimeElementCreator(
+                new DefaultProgramInformationGenerator(configFactory()), 
+                new DefaultGroupInformationGenerator(configFactory()), 
+                new DefaultOnDemandLocationGenerator(configFactory()), 
+                contentHierarchy(), 
+                new UriBasedContentPermit()
+        );
+    }
+    
+    private ContentHierarchyExtractor contentHierarchy() {
+        return new ContentResolvingContentHierarchyExtractor(contentResolver);
+    }
+
     @Bean
     public YouViewRemoteClient youViewUploadClient() {
         return new YouViewRemoteClient(feedGenerator(), configFactory());

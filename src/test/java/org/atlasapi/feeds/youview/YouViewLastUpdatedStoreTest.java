@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
@@ -14,7 +15,6 @@ import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -42,12 +42,14 @@ public class YouViewLastUpdatedStoreTest {
                     httpClient,
                     Mockito.mock(TransactionStore.class))
             .build();
-    TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
+    private TVAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
             new DefaultProgramInformationGenerator(configFactory), 
             new DefaultGroupInformationGenerator(configFactory), 
             new DefaultOnDemandLocationGenerator(configFactory), 
-            Mockito.mock(ContentResolver.class), 
-            false);
+            Mockito.mock(ContentHierarchyExtractor.class),
+            new UriBasedContentPermit()
+    );
+    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
     private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
     private DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     private final YouViewLastUpdatedStore store = new MongoYouViewLastUpdatedStore(mongo);

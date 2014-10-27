@@ -19,6 +19,7 @@ import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
@@ -86,14 +87,16 @@ public class LoveFilmGroupInformationHierarchyTest {
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
     private OnDemandLocationGenerator progLocationGenerator = new DefaultOnDemandLocationGenerator(configFactory);
     private DummyContentResolver contentResolver = new DummyContentResolver();
-    
-    private final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
-        progInfoGenerator, 
-        groupInfoGenerator, 
-        progLocationGenerator, 
-        contentResolver,
-        false
+    private ContentHierarchyExtractor hierarchy = new ContentResolvingContentHierarchyExtractor(contentResolver);
+    private TVAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
+            progInfoGenerator, 
+            groupInfoGenerator, 
+            progLocationGenerator, 
+            hierarchy,
+            new UriBasedContentPermit()
     );
+    
+    private final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
     
     @Test
     public void testSkipsAsinIfNoItem() throws JAXBException {
