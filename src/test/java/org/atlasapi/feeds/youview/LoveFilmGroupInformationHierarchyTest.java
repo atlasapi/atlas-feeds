@@ -15,6 +15,7 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
@@ -86,12 +87,15 @@ public class LoveFilmGroupInformationHierarchyTest {
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
     private OnDemandLocationGenerator progLocationGenerator = new DefaultOnDemandLocationGenerator(configFactory);
+    // should be ok given that LF has no broadcast data
+    private BroadcastEventGenerator broadcastGenerator = Mockito.mock(BroadcastEventGenerator.class);
     private DummyContentResolver contentResolver = new DummyContentResolver();
     private ContentHierarchyExtractor hierarchy = new ContentResolvingContentHierarchyExtractor(contentResolver);
     private TVAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
             progInfoGenerator, 
             groupInfoGenerator, 
             progLocationGenerator, 
+            broadcastGenerator,
             hierarchy,
             new UriBasedContentPermit()
     );

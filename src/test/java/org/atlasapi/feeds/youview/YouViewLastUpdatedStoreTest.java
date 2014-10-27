@@ -42,13 +42,7 @@ public class YouViewLastUpdatedStoreTest {
                     httpClient,
                     Mockito.mock(TransactionStore.class))
             .build();
-    private TVAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
-            new DefaultProgramInformationGenerator(configFactory), 
-            new DefaultGroupInformationGenerator(configFactory), 
-            new DefaultOnDemandLocationGenerator(configFactory), 
-            Mockito.mock(ContentHierarchyExtractor.class),
-            new UriBasedContentPermit()
-    );
+    private TVAnytimeElementCreator elementCreator = Mockito.mock(TVAnytimeElementCreator.class);
     private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
     private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
     private DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();

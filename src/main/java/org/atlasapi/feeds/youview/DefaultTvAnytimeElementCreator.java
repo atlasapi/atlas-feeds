@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
@@ -12,6 +13,7 @@ import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Series;
 
+import tva.metadata._2010.BroadcastEventType;
 import tva.metadata._2010.GroupInformationType;
 import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.ProgramInformationType;
@@ -25,15 +27,19 @@ public class DefaultTvAnytimeElementCreator implements TVAnytimeElementCreator {
     private final ProgramInformationGenerator progInfoGenerator;
     private final GroupInformationGenerator groupInfoGenerator;
     private final OnDemandLocationGenerator onDemandGenerator;
+    private final BroadcastEventGenerator broadcastGenerator;
     private final ContentHierarchyExtractor hierarchy;
     private final ContentPermit permit;
     
+    // TODO this constructor is verging towards silliness
     public DefaultTvAnytimeElementCreator(ProgramInformationGenerator progInfoGenerator, 
             GroupInformationGenerator groupInfoGenerator, OnDemandLocationGenerator onDemandGenerator,
-            ContentHierarchyExtractor hierarchy, ContentPermit permit) {
+            BroadcastEventGenerator broadcastGenerator, ContentHierarchyExtractor hierarchy, 
+            ContentPermit permit) {
         this.progInfoGenerator = checkNotNull(progInfoGenerator);
         this.groupInfoGenerator = checkNotNull(groupInfoGenerator);
         this.onDemandGenerator = checkNotNull(onDemandGenerator);
+        this.broadcastGenerator = checkNotNull(broadcastGenerator);
         this.hierarchy = checkNotNull(hierarchy);
         this.permit = checkNotNull(permit);
     }
@@ -96,10 +102,18 @@ public class DefaultTvAnytimeElementCreator implements TVAnytimeElementCreator {
 
     // TODO this will need changing to allow generation of more than one ondemand for a given Item
     @Override
-    public Iterable<OnDemandProgramType> createOnDemandElementFor(Content content) {
+    public Iterable<OnDemandProgramType> createOnDemandElementsFor(Content content) {
         if (!(content instanceof Item)) {
             return ImmutableSet.of();
         }
         return onDemandGenerator.generate((Item) content).asSet();
+    }
+
+    @Override
+    public Iterable<BroadcastEventType> createBroadcastEventElementsFor(Content content) {
+        if (!(content instanceof Item)) {
+            return ImmutableSet.of();
+        }
+        return broadcastGenerator.generate((Item) content);
     }
 }

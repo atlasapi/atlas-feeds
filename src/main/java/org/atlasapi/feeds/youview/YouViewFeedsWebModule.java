@@ -5,8 +5,11 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementFactory;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
@@ -16,6 +19,7 @@ import org.atlasapi.feeds.youview.transactions.MongoTransactionStore;
 import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.feeds.youview.www.YouViewFeedController;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
@@ -48,41 +52,52 @@ public class YouViewFeedsWebModule {
     private @Autowired DatabasedMongo mongo;
     private @Autowired LastUpdatedContentFinder contentFinder;
     private @Autowired ContentResolver contentResolver;
+    private @Autowired ChannelResolver channelResolver;
     
+    // screw javax and exceptions from constructors
     @Bean
-    public YouViewUploadController uploadController() {
+    public YouViewUploadController uploadController() throws DatatypeConfigurationException {
         return new YouViewUploadController(contentFinder, contentResolver, youViewUploadClient());
     }
     
     @Bean
-    public YouViewFeedController feedController() {
+    public YouViewFeedController feedController() throws DatatypeConfigurationException {
         return new YouViewFeedController(feedGenerator(), contentFinder, contentResolver);
     }
     
     @Bean 
-    public TvAnytimeGenerator feedGenerator() {
+    public TvAnytimeGenerator feedGenerator() throws DatatypeConfigurationException {
         return new DefaultTvAnytimeGenerator(
             elementCreator(),
             Boolean.parseBoolean(performValidation)
         );
     }
     
-    private TVAnytimeElementCreator elementCreator() {
+    private TVAnytimeElementCreator elementCreator() throws DatatypeConfigurationException {
         return new DefaultTvAnytimeElementCreator(
                 new DefaultProgramInformationGenerator(configFactory()), 
                 new DefaultGroupInformationGenerator(configFactory()), 
                 new DefaultOnDemandLocationGenerator(configFactory()), 
+                new DefaultBroadcastEventGenerator(elementFactory(), broadcastIdGenerator(), channelResolver),
                 contentHierarchy(), 
                 new UriBasedContentPermit()
         );
     }
+
+    private TVAnytimeElementFactory elementFactory() throws DatatypeConfigurationException {
+        return new TVAnytimeElementFactory();
+    }
     
+    private BroadcastIdGenerator broadcastIdGenerator() {
+        return new UUIDBasedBroadcastIdGenerator();
+    }
+
     private ContentHierarchyExtractor contentHierarchy() {
         return new ContentResolvingContentHierarchyExtractor(contentResolver);
     }
 
     @Bean
-    public YouViewRemoteClient youViewUploadClient() {
+    public YouViewRemoteClient youViewUploadClient() throws DatatypeConfigurationException {
         return new YouViewRemoteClient(feedGenerator(), configFactory());
     }
     

@@ -11,6 +11,7 @@ import nu.xom.ParsingException;
 import nu.xom.ValidityException;
 
 import org.apache.commons.io.IOUtils;
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
@@ -78,12 +79,14 @@ public class DeltaIntegrationTest {
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
     private OnDemandLocationGenerator progLocationGenerator = new DefaultOnDemandLocationGenerator(configFactory);
+    private BroadcastEventGenerator broadcastGenerator = Mockito.mock(BroadcastEventGenerator.class);
     private DummyContentResolver contentResolver = new DummyContentResolver();
     private ContentHierarchyExtractor hierarchy = new ContentResolvingContentHierarchyExtractor(contentResolver);
     private TVAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
             progInfoGenerator, 
             groupInfoGenerator, 
             progLocationGenerator, 
+            broadcastGenerator,
             hierarchy,
             new UriBasedContentPermit()
     );

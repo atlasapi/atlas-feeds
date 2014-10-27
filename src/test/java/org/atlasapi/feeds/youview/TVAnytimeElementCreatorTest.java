@@ -7,6 +7,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
@@ -19,6 +20,7 @@ import org.atlasapi.media.entity.Series;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import tva.metadata._2010.BroadcastEventType;
 import tva.metadata._2010.GroupInformationType;
 import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.ProgramInformationType;
@@ -32,6 +34,7 @@ public class TVAnytimeElementCreatorTest {
     private ProgramInformationGenerator progInfoGenerator = Mockito.mock(ProgramInformationGenerator.class);
     private GroupInformationGenerator groupInfoGenerator = Mockito.mock(GroupInformationGenerator.class);
     private OnDemandLocationGenerator onDemandGenerator = Mockito.mock(OnDemandLocationGenerator.class);
+    private BroadcastEventGenerator broadcastGenerator = Mockito.mock(BroadcastEventGenerator.class);
     private ContentHierarchyExtractor contentHierarchy = Mockito.mock(ContentHierarchyExtractor.class);
     private ContentPermit permit = new AlwaysPermittedContentPermit();
     
@@ -39,6 +42,7 @@ public class TVAnytimeElementCreatorTest {
             progInfoGenerator, 
             groupInfoGenerator, 
             onDemandGenerator,
+            broadcastGenerator, 
             contentHierarchy, 
             permit);
 
@@ -46,7 +50,7 @@ public class TVAnytimeElementCreatorTest {
     public void testNoOnDemandElementCreatedForNonItemContent() {
         Brand brand = createBrand("brandUri");
         
-        Iterable<OnDemandProgramType> onDemandElements = elementCreator.createOnDemandElementFor(brand);
+        Iterable<OnDemandProgramType> onDemandElements = elementCreator.createOnDemandElementsFor(brand);
         
         Mockito.verifyZeroInteractions(onDemandGenerator);
         assertThat(ImmutableSet.copyOf(onDemandElements), is(empty()));
@@ -59,10 +63,33 @@ public class TVAnytimeElementCreatorTest {
         OnDemandProgramType onDemand = Mockito.mock(OnDemandProgramType.class);
         Mockito.when(onDemandGenerator.generate(item)).thenReturn(Optional.of(onDemand));
         
-        Iterable<OnDemandProgramType> onDemandElements = elementCreator.createOnDemandElementFor(item);
+        Iterable<OnDemandProgramType> onDemandElements = elementCreator.createOnDemandElementsFor(item);
         
         Mockito.verify(onDemandGenerator).generate(item);
         assertThat(ImmutableSet.copyOf(onDemandElements), is(equalTo(ImmutableSet.of(onDemand))));
+    }
+    
+    @Test
+    public void testNoBroadcastEventElementCreatedForNonItemContent() {
+        Brand brand = createBrand("brandUri");
+        
+        Iterable<BroadcastEventType> broadcastEvents = elementCreator.createBroadcastEventElementsFor(brand);
+        
+        Mockito.verifyZeroInteractions(broadcastGenerator);
+        assertThat(ImmutableSet.copyOf(broadcastEvents), is(empty()));
+    }
+
+    @Test
+    public void testBroadcastEventElementCreatedForItem() {
+        Item item = createItem("itemUri");
+        
+        BroadcastEventType broadcastEvent = Mockito.mock(BroadcastEventType.class);
+        Mockito.when(broadcastGenerator.generate(item)).thenReturn(ImmutableSet.of(broadcastEvent));
+        
+        Iterable<BroadcastEventType> onDemandElements = elementCreator.createBroadcastEventElementsFor(item);
+        
+        Mockito.verify(broadcastGenerator).generate(item);
+        assertThat(ImmutableSet.copyOf(onDemandElements), is(equalTo(ImmutableSet.of(broadcastEvent))));
     }
 
     @Test

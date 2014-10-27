@@ -24,6 +24,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import tva.metadata._2010.BroadcastEventType;
 import tva.metadata._2010.GroupInformationTableType;
 import tva.metadata._2010.GroupInformationType;
 import tva.metadata._2010.ObjectFactory;
@@ -135,11 +136,14 @@ public class DefaultTvAnytimeGenerator implements TvAnytimeGenerator {
                 for (GroupInformationType groupInfo : elementCreator.createGroupInformationElementsFor(content)) {
                     groupInfoTable.getGroupInformation().add(groupInfo);
                 }
-                for (OnDemandProgramType onDemand : elementCreator.createOnDemandElementFor(content)) {
+                for (OnDemandProgramType onDemand : elementCreator.createOnDemandElementsFor(content)) {
                     progLocTable.getOnDemandProgram().add(onDemand);
                 }
                 for (ProgramInformationType progInfo : elementCreator.createProgramInformationElementFor(content).asSet()) {
                     progInfoTable.getProgramInformation().add(progInfo);
+                }
+                for (BroadcastEventType broadcast : elementCreator.createBroadcastEventElementsFor(content)) {
+                    progLocTable.getBroadcastEvent().add(broadcast);
                 }
             } catch (Exception e) {
                 log.error("Exception occurred while processing " + content.getCanonicalUri() + " " + e.getMessage(), e);
