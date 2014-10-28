@@ -1,11 +1,12 @@
 package org.atlasapi.feeds.youview;
 
-import static org.mockito.Mockito.times;
-
-import java.util.List;
-
 import javax.servlet.http.HttpServletResponse;
 
+import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.ids.IdParsers;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
+import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
@@ -16,52 +17,58 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.url.UrlEncoding;
 
-public class DeletionOrderTest {
+public class DeletionUrlTest {
     
     private HttpResponse response;
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
+    private TvAnytimeGenerator generator = Mockito.mock(TvAnytimeGenerator.class);
+    private YouViewPerPublisherFactory configurationFactory = YouViewPerPublisherFactory.builder()
+            .withPublisher(
+                    Publisher.LOVEFILM, 
+                    PublisherIdUtilities.idUtilFor(Publisher.LOVEFILM, "youviewurl"), 
+                    ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
+                    IdParsers.parserFor(Publisher.LOVEFILM), 
+                    Mockito.mock(GenreMapping.class), 
+                    httpClient)
+            .build();
     
-    private final YouViewDeleter deleter = new YouViewDeleter("youviewurl", httpClient);
+    private final YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configurationFactory);
     
-    public DeletionOrderTest() throws HttpException {
+    public DeletionUrlTest() throws HttpException {
         response = new HttpResponse("", HttpServletResponse.SC_ACCEPTED, "", ImmutableMap.of("Location", "yv location"));
         Mockito.when(httpClient.delete(Mockito.anyString())).thenReturn(response); 
     }
     
     @Test
     public void testItemDeletion() throws HttpException {
-        List<Content> deletes = ImmutableList.<Content>of(createItem("http://lovefilm.com/episodes/1234", "episode1234"), createItem("http://lovefilm.com/episodes/5678", "episode5678")); 
-        // monitor http calls
-        deleter.sendDeletes(deletes);
+        Item item = createItem("http://lovefilm.com/episodes/1234", "episode1234"); 
+        youViewClient.sendDeleteFor(item);
 
-        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/1234"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/1234"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/1234_version"));
         Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/1234"));
-        
-        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/5678"));
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/5678"));
     }
     
     @Test
-    public void testOrderedContentDeletion() throws HttpException {
-        List<Content> deletes = ImmutableList.<Content>of(createBrand("http://lovefilm.com/shows/1234", "brand1234"), createSeries("http://lovefilm.com/seasons/2345", "series2345"), createItem("http://lovefilm.com/episodes/3456", "episode3456"));
-        // do all possible permutations of this iterable 
-        // monitor http calls
-        deleter.sendDeletes(deletes);
+    public void testSeriesDeletion() throws HttpException {
+        Series series = createSeries("http://lovefilm.com/seasons/1234", "series1234"); 
+        youViewClient.sendDeleteFor(series);
 
-        // Brand
         Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/1234"));
-        // Series
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/2345"));
-        // Item
-        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/3456"));
-        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/3456"));
+    }
+    
+    @Test
+    public void testBrandDeletion() throws HttpException {
+        Brand brand = createBrand("http://lovefilm.com/shows/1234", "brand1234"); 
+        youViewClient.sendDeleteFor(brand);
+
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/1234"));
     }
 
     private Brand createBrand(String uri, String asin) {
