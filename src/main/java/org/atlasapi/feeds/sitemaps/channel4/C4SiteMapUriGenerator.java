@@ -80,7 +80,7 @@ public class C4SiteMapUriGenerator implements SiteMapUriGenerator {
     }
     
     private String clipUriFromTitle(String title) {
-        return title.replaceAll("[^A-Za-z0-9 ]", "").toLowerCase().replaceAll("\\ ", "-");
+        return title.replaceAll("[^A-Za-z0-9- ]", "").toLowerCase().replaceAll("\\ ", "-");
     }
 
     /**

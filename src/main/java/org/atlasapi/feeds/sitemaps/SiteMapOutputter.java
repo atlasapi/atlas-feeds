@@ -124,7 +124,7 @@ public class SiteMapOutputter {
         Location location = locationFrom(clip, Optional.of(TransportType.EMBED), 
                 Optional.of(TransportSubType.BRIGHTCOVE));
         
-        if (location != null && content.getThumbnail() != null) {
+        if (location != null && clip.getThumbnail() != null) {
             SiteMapUriGenerator uriGenerator = publisherSpecificUriGenerators
                     .get(content.getPublisher())
                     .or(defaultPublisherSpecificSitemapUriGenerator);
@@ -184,7 +184,9 @@ public class SiteMapOutputter {
                 restrictionElem.appendChild(spaceDelimted);
                 videoElem.appendChild(restrictionElem);
             }
-            videoElem.appendChild(stringElement("platform", VIDEO, "web"));
+            Element platform = stringElement("platform", VIDEO, "web");
+            platform.addAttribute(new Attribute("relationship", "allow"));
+            videoElem.appendChild(platform);
         }
         return videoElem;
     }
