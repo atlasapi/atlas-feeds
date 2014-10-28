@@ -7,15 +7,21 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
+import com.google.common.base.Throwables;
+
 import tva.metadata._2010.FlagType;
 
 
 public class TVAnytimeElementFactory {
     
-    private final DatatypeFactory datatypeFactory;
+    private DatatypeFactory datatypeFactory;
 
-    public TVAnytimeElementFactory() throws DatatypeConfigurationException {
-        this.datatypeFactory = DatatypeFactory.newInstance();
+    public TVAnytimeElementFactory() {
+        try {
+            this.datatypeFactory = DatatypeFactory.newInstance();
+        } catch (DatatypeConfigurationException e) {
+            Throwables.propagate(e);
+        }
     }
     
     public FlagType flag(boolean value) {

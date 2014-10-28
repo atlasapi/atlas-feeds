@@ -61,7 +61,7 @@ public class TVAnytimeElementCreatorTest {
         Item item = createItem("itemUri");
         
         OnDemandProgramType onDemand = Mockito.mock(OnDemandProgramType.class);
-        Mockito.when(onDemandGenerator.generate(item)).thenReturn(Optional.of(onDemand));
+        Mockito.when(onDemandGenerator.generate(item)).thenReturn(ImmutableSet.of(onDemand));
         
         Iterable<OnDemandProgramType> onDemandElements = elementCreator.createOnDemandElementsFor(item);
         

@@ -100,13 +100,12 @@ public class DefaultTvAnytimeElementCreator implements TVAnytimeElementCreator {
         return Optional.of(progInfoGenerator.generate((Item) content));
     }
 
-    // TODO this will need changing to allow generation of more than one ondemand for a given Item
     @Override
     public Iterable<OnDemandProgramType> createOnDemandElementsFor(Content content) {
         if (!(content instanceof Item)) {
             return ImmutableSet.of();
         }
-        return onDemandGenerator.generate((Item) content).asSet();
+        return onDemandGenerator.generate((Item) content);
     }
 
     @Override
