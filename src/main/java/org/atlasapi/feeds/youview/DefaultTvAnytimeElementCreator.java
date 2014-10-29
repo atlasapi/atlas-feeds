@@ -60,16 +60,16 @@ public class DefaultTvAnytimeElementCreator implements TVAnytimeElementCreator {
         }
 
         if (content instanceof Brand) {
-            return ImmutableSet.of(groupInfoGenerator.generate((Brand) content, hierarchy.firstItemFrom((Brand) content)));
+            return ImmutableSet.of(groupInfoGenerator.generate((Brand) content, hierarchy.lastItemFrom((Brand) content)));
         }
 
         if (content instanceof Series) {
             ImmutableSet.Builder<GroupInformationType> groupInfoElems = ImmutableSet.builder();
             Series series = (Series) content;
             Optional<Brand> brand = hierarchy.brandFor(series);
-            groupInfoElems.add(groupInfoGenerator.generate(series, brand, hierarchy.firstItemFrom(series)));
+            groupInfoElems.add(groupInfoGenerator.generate(series, brand, hierarchy.lastItemFrom(series)));
             if (brand.isPresent() && permit.isPermitted(brand.get())) {
-                groupInfoElems.add(groupInfoGenerator.generate(brand.get(), hierarchy.firstItemFrom(brand.get())));
+                groupInfoElems.add(groupInfoGenerator.generate(brand.get(), hierarchy.lastItemFrom(brand.get())));
             }
             return groupInfoElems.build();
         }
@@ -82,10 +82,10 @@ public class DefaultTvAnytimeElementCreator implements TVAnytimeElementCreator {
 
             groupInfoElems.add(groupInfoGenerator.generate(item, series, brand));
             if (series.isPresent() && permit.isPermitted(series.get())) {
-                groupInfoElems.add(groupInfoGenerator.generate(series.get(), brand, hierarchy.firstItemFrom(series.get())));
+                groupInfoElems.add(groupInfoGenerator.generate(series.get(), brand, hierarchy.lastItemFrom(series.get())));
             }
             if (brand.isPresent() && permit.isPermitted(brand.get())) {
-                groupInfoElems.add(groupInfoGenerator.generate(brand.get(), hierarchy.firstItemFrom(brand.get())));
+                groupInfoElems.add(groupInfoGenerator.generate(brand.get(), hierarchy.lastItemFrom(brand.get())));
             }
             return groupInfoElems.build();
         }

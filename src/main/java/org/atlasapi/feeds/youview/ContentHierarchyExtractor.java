@@ -12,6 +12,6 @@ public interface ContentHierarchyExtractor {
     Optional<Brand> brandFor(Item item);
     Optional<Series> seriesFor(Item item);
     Optional<Brand> brandFor(Series series);
-    Item firstItemFrom(Series series);
-    Item firstItemFrom(Brand brand);
+    Item lastItemFrom(Series series);
+    Item lastItemFrom(Brand brand);
 }

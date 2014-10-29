@@ -42,7 +42,13 @@ public class DefaultBroadcastEventGenerator implements BroadcastEventGenerator {
             return BBC_SID_NAMESPACE.equals(input.getNamespace());
         }
     };
-    
+    private final Function<Broadcast, BroadcastEventType> toBroadcastEvent = 
+            new Function<Broadcast, BroadcastEventType>() {
+                @Override
+                public BroadcastEventType apply(Broadcast input) {
+                    return toBroadcastEventType(input);
+                }
+            };
     private final TVAnytimeElementFactory elementFactory;
     private final BroadcastIdGenerator idGenerator;
     private final ChannelResolver channelResolver;
@@ -61,7 +67,7 @@ public class DefaultBroadcastEventGenerator implements BroadcastEventGenerator {
                 .transform(toBroadcastEventType());
     }
     
-    private Function<Version, Iterable<Broadcast>> toBroadcasts() {
+    private static Function<Version, Iterable<Broadcast>> toBroadcasts() {
         return new Function<Version, Iterable<Broadcast>>() {
             @Override
             public Iterable<Broadcast> apply(Version input) {
@@ -71,12 +77,7 @@ public class DefaultBroadcastEventGenerator implements BroadcastEventGenerator {
     }
 
     private Function<Broadcast, BroadcastEventType> toBroadcastEventType() {
-        return new Function<Broadcast, BroadcastEventType>() {
-            @Override
-            public BroadcastEventType apply(Broadcast input) {
-                return toBroadcastEventType(input);
-            }
-        };
+        return toBroadcastEvent;
     }
 
     private BroadcastEventType toBroadcastEventType(Broadcast broadcast) {

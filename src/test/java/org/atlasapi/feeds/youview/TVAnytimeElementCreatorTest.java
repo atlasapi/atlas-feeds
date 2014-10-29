@@ -134,7 +134,7 @@ public class TVAnytimeElementCreatorTest {
         Item childItem = createItem("childItem");
         
         GroupInformationType groupInfo = Mockito.mock(GroupInformationType.class);
-        Mockito.when(contentHierarchy.firstItemFrom(brand)).thenReturn(childItem);
+        Mockito.when(contentHierarchy.lastItemFrom(brand)).thenReturn(childItem);
         
         Mockito.when(groupInfoGenerator.generate(brand, childItem)).thenReturn(groupInfo);
 
@@ -150,7 +150,7 @@ public class TVAnytimeElementCreatorTest {
         Item childItem = createItem("childItem");
         
         Optional<Brand> brand = Optional.<Brand>absent();
-        Mockito.when(contentHierarchy.firstItemFrom(series)).thenReturn(childItem);
+        Mockito.when(contentHierarchy.lastItemFrom(series)).thenReturn(childItem);
         Mockito.when(contentHierarchy.brandFor(series)).thenReturn(brand);
         
         GroupInformationType groupInfo = Mockito.mock(GroupInformationType.class);
@@ -168,9 +168,9 @@ public class TVAnytimeElementCreatorTest {
         Series series = createSeries("seriesUri");
         Item childItem = createItem("childItem");
         
-        Mockito.when(contentHierarchy.firstItemFrom(series)).thenReturn(childItem);
+        Mockito.when(contentHierarchy.lastItemFrom(series)).thenReturn(childItem);
         Mockito.when(contentHierarchy.brandFor(series)).thenReturn(Optional.of(brand));
-        Mockito.when(contentHierarchy.firstItemFrom(brand)).thenReturn(childItem);
+        Mockito.when(contentHierarchy.lastItemFrom(brand)).thenReturn(childItem);
         
         GroupInformationType seriesGroupInfo = Mockito.mock(GroupInformationType.class);
         GroupInformationType brandGroupInfo = Mockito.mock(GroupInformationType.class);
@@ -211,7 +211,7 @@ public class TVAnytimeElementCreatorTest {
         
         Mockito.when(contentHierarchy.brandFor(childItem)).thenReturn(brand);
         Mockito.when(contentHierarchy.seriesFor(childItem)).thenReturn(Optional.of(series));
-        Mockito.when(contentHierarchy.firstItemFrom(series)).thenReturn(childItem);
+        Mockito.when(contentHierarchy.lastItemFrom(series)).thenReturn(childItem);
         
         GroupInformationType itemGroupInfo = Mockito.mock(GroupInformationType.class);
         GroupInformationType seriesGroupInfo = Mockito.mock(GroupInformationType.class);
@@ -234,7 +234,7 @@ public class TVAnytimeElementCreatorTest {
         
         Mockito.when(contentHierarchy.brandFor(childItem)).thenReturn(Optional.of(brand));
         Mockito.when(contentHierarchy.seriesFor(childItem)).thenReturn(series);
-        Mockito.when(contentHierarchy.firstItemFrom(brand)).thenReturn(childItem);
+        Mockito.when(contentHierarchy.lastItemFrom(brand)).thenReturn(childItem);
         
         GroupInformationType itemGroupInfo = Mockito.mock(GroupInformationType.class);
         GroupInformationType brandGroupInfo = Mockito.mock(GroupInformationType.class);
@@ -257,8 +257,8 @@ public class TVAnytimeElementCreatorTest {
         
         Mockito.when(contentHierarchy.brandFor(childItem)).thenReturn(Optional.of(brand));
         Mockito.when(contentHierarchy.seriesFor(childItem)).thenReturn(Optional.of(series));
-        Mockito.when(contentHierarchy.firstItemFrom(brand)).thenReturn(childItem);
-        Mockito.when(contentHierarchy.firstItemFrom(series)).thenReturn(childItem);
+        Mockito.when(contentHierarchy.lastItemFrom(brand)).thenReturn(childItem);
+        Mockito.when(contentHierarchy.lastItemFrom(series)).thenReturn(childItem);
         
         GroupInformationType itemGroupInfo = Mockito.mock(GroupInformationType.class);
         GroupInformationType seriesGroupInfo = Mockito.mock(GroupInformationType.class);

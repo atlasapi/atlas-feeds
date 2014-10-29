@@ -31,7 +31,7 @@ public class ContentHierarchyExtractorTest {
         
         mockContentResolutionFor(item);
         
-        Item resolved = hierarchy.firstItemFrom(series);
+        Item resolved = hierarchy.lastItemFrom(series);
         
         assertEquals(item, resolved);
     }
@@ -43,7 +43,7 @@ public class ContentHierarchyExtractorTest {
         
         mockContentResolutionFor(item);
         
-        Item resolved = hierarchy.firstItemFrom(brand);
+        Item resolved = hierarchy.lastItemFrom(brand);
         
         assertEquals(item, resolved);
     }

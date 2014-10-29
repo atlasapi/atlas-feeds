@@ -79,14 +79,14 @@ public class ContentResolvingContentHierarchyExtractor implements ContentHierarc
     }
 
     @Override
-    public Item firstItemFrom(Series series) {
+    public Item lastItemFrom(Series series) {
         ChildRef last = Iterables.getLast(series.getChildRefs());
         ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(last.getUri()));
         return (Item) resolved.asResolvedMap().get(last.getUri());
     }
 
     @Override
-    public Item firstItemFrom(Brand brand) {
+    public Item lastItemFrom(Brand brand) {
         ChildRef last = Iterables.getLast(brand.getChildRefs());
         ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(last.getUri()));
         return (Item) resolved.asResolvedMap().get(last.getUri()); 
