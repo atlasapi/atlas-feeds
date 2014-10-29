@@ -15,15 +15,18 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
+import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -78,20 +81,26 @@ public class LoveFilmGroupInformationHierarchyTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    Mockito.mock(SimpleHttpClient.class))
+                    Mockito.mock(SimpleHttpClient.class),
+                    Mockito.mock(TransactionStore.class))
             .build();
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
     private OnDemandLocationGenerator progLocationGenerator = new DefaultOnDemandLocationGenerator(configFactory);
+    // should be ok given that LF has no broadcast data
+    private BroadcastEventGenerator broadcastGenerator = Mockito.mock(BroadcastEventGenerator.class);
     private DummyContentResolver contentResolver = new DummyContentResolver();
-    
-    private final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
-        progInfoGenerator, 
-        groupInfoGenerator, 
-        progLocationGenerator, 
-        contentResolver,
-        false
+    private ContentHierarchyExtractor hierarchy = new ContentResolvingContentHierarchyExtractor(contentResolver);
+    private TVAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
+            progInfoGenerator, 
+            groupInfoGenerator, 
+            progLocationGenerator, 
+            broadcastGenerator,
+            hierarchy,
+            new UriBasedContentPermit()
     );
+    
+    private final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
     
     @Test
     public void testSkipsAsinIfNoItem() throws JAXBException {

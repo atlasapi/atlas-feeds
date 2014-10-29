@@ -11,10 +11,12 @@ import nu.xom.ParsingException;
 import nu.xom.ValidityException;
 
 import org.apache.commons.io.IOUtils;
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.BootstrapIntegrationTest.DummyContentFinder;
 import org.atlasapi.feeds.youview.BootstrapIntegrationTest.DummyLastUpdatedStore;
@@ -24,6 +26,7 @@ import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -70,21 +73,24 @@ public class DeltaIntegrationTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    httpClient)
+                    httpClient,
+                    Mockito.mock(TransactionStore.class))
             .build();
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
     private OnDemandLocationGenerator progLocationGenerator = new DefaultOnDemandLocationGenerator(configFactory);
+    private BroadcastEventGenerator broadcastGenerator = Mockito.mock(BroadcastEventGenerator.class);
     private DummyContentResolver contentResolver = new DummyContentResolver();
-    
-    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
+    private ContentHierarchyExtractor hierarchy = new ContentResolvingContentHierarchyExtractor(contentResolver);
+    private TVAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
             progInfoGenerator, 
             groupInfoGenerator, 
             progLocationGenerator, 
-            contentResolver,
-            false
-            );
-
+            broadcastGenerator,
+            hierarchy,
+            new UriBasedContentPermit()
+    );
+    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
     private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
     private HttpResponse response;
     private DummyContentFinder contentFinder = new DummyContentFinder();

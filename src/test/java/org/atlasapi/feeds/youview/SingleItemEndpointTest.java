@@ -9,15 +9,14 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
-import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
-import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
-import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.LoveFilmGroupInformationHierarchyTest.DummyContentResolver;
 import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
+import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Content;
@@ -52,20 +51,14 @@ public class SingleItemEndpointTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    httpClient)
+                    httpClient,
+                    Mockito.mock(TransactionStore.class))
             .build();
-    private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
-    private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
-    private OnDemandLocationGenerator progLocationGenerator = new DefaultOnDemandLocationGenerator(configFactory);
     private DummyContentResolver contentResolver = new DummyContentResolver();
-    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
-        progInfoGenerator, 
-        groupInfoGenerator, 
-        progLocationGenerator, 
-        contentResolver,
-        false
-    );
-    YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
+    private ContentPermit contentPermit = Mockito.mock(ContentPermit.class);
+    private TVAnytimeElementCreator elementCreator = Mockito.mock(TVAnytimeElementCreator.class);
+    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
     private LastUpdatedContentFinder contentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     
     private final YouViewUploadController controller = new YouViewUploadController(contentFinder, contentResolver, youViewClient);
@@ -76,6 +69,7 @@ public class SingleItemEndpointTest {
         Mockito.when(httpClient.delete(Mockito.anyString())).thenReturn(httpResponse);
         Mockito.when(httpClient.post(Mockito.anyString(), Mockito.any(Payload.class))).thenReturn(httpResponse);
         Mockito.when(response.getOutputStream()).thenReturn(Mockito.mock(ServletOutputStream.class));
+        Mockito.when(elementCreator.permit()).thenReturn(contentPermit);
     }
     
     @Test(expected = IllegalArgumentException.class)

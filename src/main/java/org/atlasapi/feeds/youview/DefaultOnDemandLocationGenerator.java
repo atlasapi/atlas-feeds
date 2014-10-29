@@ -33,8 +33,9 @@ import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
-import com.google.common.base.Optional;
+import com.google.common.base.Function;
 import com.google.common.base.Throwables;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
@@ -63,28 +64,47 @@ public class DefaultOnDemandLocationGenerator implements OnDemandLocationGenerat
     }
     
     @Override
-    public Optional<OnDemandProgramType> generate(Item item) {
+    public Iterable<OnDemandProgramType> generate(Item item) {
+        return FluentIterable.from(item.getVersions())
+                .transformAndConcat(toOnDemandProgramType(item));
+    }
+    
+    private Function<Version, Iterable<OnDemandProgramType>> toOnDemandProgramType(final Item item) {
+        return new Function<Version, Iterable<OnDemandProgramType>>() {
+            @Override
+            public Iterable<OnDemandProgramType> apply(Version input) {
+                return toOnDemandProgramTypes(item, input, input.getManifestedAs());
+            }
+        };
+    }
+    
+    private Iterable<OnDemandProgramType> toOnDemandProgramTypes(final Item item, final Version version, 
+            Iterable<Encoding> encodings) {
+        return Iterables.transform(encodings, new Function<Encoding, OnDemandProgramType>() {
+            @Override
+            public OnDemandProgramType apply(Encoding input) {
+                return toOnDemandProgramType(item, version, input);
+            }
+        });
+    }
+
+    private OnDemandProgramType toOnDemandProgramType(Item item, Version version, Encoding encoding) {
         Publisher publisher = item.getPublisher();
         PublisherIdUtility config = configFactory.getIdUtil(publisher);
         IdParser idParser = configFactory.getIdParser(publisher);
-        
-        Version version = Iterables.getOnlyElement(item.getVersions());
-        if (version.getManifestedAs().isEmpty()) {
-            return Optional.absent();
-        }
         
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
         
         onDemand.setServiceIDRef(config.getOnDemandServiceId());
         onDemand.setProgram(generateProgram(item));
         onDemand.setInstanceMetadataId(idParser.createImi(config.getImiPrefix(), item));
-        onDemand.setInstanceDescription(generateInstanceDescription(item));
-        onDemand.setPublishedDuration(generatePublishedDuration(item));
-        onDemand.setStartOfAvailability(generateAvailabilityStart(item));
-        onDemand.setEndOfAvailability(generateAvailabilityEnd(item));
+        onDemand.setInstanceDescription(generateInstanceDescription(item, encoding));
+        onDemand.setPublishedDuration(generatePublishedDuration(version));
+        onDemand.setStartOfAvailability(generateAvailabilityStart(encoding));
+        onDemand.setEndOfAvailability(generateAvailabilityEnd(encoding));
         onDemand.setFree(generateFree());
 
-        return Optional.<OnDemandProgramType>fromNullable(onDemand);
+        return onDemand;
     }
     
     // hardcoded
@@ -104,21 +124,18 @@ public class DefaultOnDemandLocationGenerator implements OnDemandLocationGenerat
         return program;
     }
 
-    private InstanceDescriptionType generateInstanceDescription(Item item) {
+    private InstanceDescriptionType generateInstanceDescription(Item item, Encoding encoding) {
         InstanceDescriptionType instanceDescription = new InstanceDescriptionType();
         
         instanceDescription.getGenre().addAll(generateGenres());
-        instanceDescription.setAVAttributes(generateAvAttributes(item));
+        instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(generateOtherId(item));
         
         return instanceDescription;
     }
 
-    private AVAttributesType generateAvAttributes(Item item) {
+    private AVAttributesType generateAvAttributes(Encoding encoding) {
         AVAttributesType attributes = new AVAttributesType();
-
-        Version version = Iterables.getOnlyElement(item.getVersions());
-        Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
 
         attributes.getAudioAttributes().add(generateAudioAttributes());
         attributes.setVideoAttributes(generateVideoAttributes(encoding));
@@ -174,8 +191,7 @@ public class DefaultOnDemandLocationGenerator implements OnDemandLocationGenerat
         return ImmutableList.of(mediaAvailable, subRequired);
     }
 
-    private Duration generatePublishedDuration(Item item) {
-        Version version = Iterables.getOnlyElement(item.getVersions());
+    private Duration generatePublishedDuration(Version version) {
         Integer durationInSecs = version.getDuration();
         if (durationInSecs != null) {
             return datatypeFactory.newDurationDayTime(durationInSecs * 1000);
@@ -183,16 +199,12 @@ public class DefaultOnDemandLocationGenerator implements OnDemandLocationGenerat
         return null;
     }
 
-    private XMLGregorianCalendar generateAvailabilityStart(Item item) {
-        Version version = Iterables.getOnlyElement(item.getVersions());
-        Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
+    private XMLGregorianCalendar generateAvailabilityStart(Encoding encoding) {
         Policy policy = Iterables.getOnlyElement(encoding.getAvailableAt()).getPolicy();
         return datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityStart().toGregorianCalendar());
     }
 
-    private XMLGregorianCalendar generateAvailabilityEnd(Item item) {
-        Version version = Iterables.getOnlyElement(item.getVersions());
-        Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
+    private XMLGregorianCalendar generateAvailabilityEnd(Encoding encoding) {
         Policy policy = Iterables.getOnlyElement(encoding.getAvailableAt()).getPolicy();
         return datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityEnd().toGregorianCalendar());
     }

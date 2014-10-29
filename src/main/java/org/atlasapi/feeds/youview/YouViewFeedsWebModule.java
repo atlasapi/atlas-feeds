@@ -6,13 +6,18 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementFactory;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
+import org.atlasapi.feeds.youview.transactions.MongoTransactionStore;
+import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.feeds.youview.www.YouViewFeedController;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
@@ -45,6 +50,7 @@ public class YouViewFeedsWebModule {
     private @Autowired DatabasedMongo mongo;
     private @Autowired LastUpdatedContentFinder contentFinder;
     private @Autowired ContentResolver contentResolver;
+    private @Autowired ChannelResolver channelResolver;
     
     @Bean
     public YouViewUploadController uploadController() {
@@ -59,14 +65,34 @@ public class YouViewFeedsWebModule {
     @Bean 
     public TvAnytimeGenerator feedGenerator() {
         return new DefaultTvAnytimeGenerator(
-            new DefaultProgramInformationGenerator(configFactory()), 
-            new DefaultGroupInformationGenerator(configFactory()), 
-            new DefaultOnDemandLocationGenerator(configFactory()), 
-            contentResolver,
+            elementCreator(),
             Boolean.parseBoolean(performValidation)
         );
     }
     
+    private TVAnytimeElementCreator elementCreator() {
+        return new DefaultTvAnytimeElementCreator(
+                new DefaultProgramInformationGenerator(configFactory()), 
+                new DefaultGroupInformationGenerator(configFactory()), 
+                new DefaultOnDemandLocationGenerator(configFactory()), 
+                new DefaultBroadcastEventGenerator(elementFactory(), broadcastIdGenerator(), channelResolver),
+                contentHierarchy(), 
+                new UriBasedContentPermit()
+        );
+    }
+
+    private TVAnytimeElementFactory elementFactory() {
+        return new TVAnytimeElementFactory();
+    }
+    
+    private BroadcastIdGenerator broadcastIdGenerator() {
+        return new UUIDBasedBroadcastIdGenerator();
+    }
+
+    private ContentHierarchyExtractor contentHierarchy() {
+        return new ContentResolvingContentHierarchyExtractor(contentResolver);
+    }
+
     @Bean
     public YouViewRemoteClient youViewUploadClient() {
         return new YouViewRemoteClient(feedGenerator(), configFactory());
@@ -81,10 +107,15 @@ public class YouViewFeedsWebModule {
                     ImageConfigurations.imageConfigFor(config.publisher()),
                     IdParsers.parserFor(config.publisher()), 
                     GenreMappings.mappingFor(config.publisher()), 
-                    httpClient(config.credentials().username(), config.credentials().password())
+                    httpClient(config.credentials().username(), config.credentials().password()),
+                    transactionStore(config.publisher())
             );
         }
         return factory.build();
+    }
+    
+    private TransactionStore transactionStore(Publisher publisher) {
+        return new MongoTransactionStore(mongo, publisher);
     }
     
     @Bean
@@ -92,12 +123,22 @@ public class YouViewFeedsWebModule {
         ImmutableSet.Builder<UploadPublisherConfiguration> config = ImmutableSet.builder();
         for (Entry<String, Publisher> publisher : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisher.getKey();
-            boolean isEnabled = Boolean.parseBoolean(Configurer.get(publisherPrefix + ".enabled").get());
+            boolean isEnabled = isEnabled(publisherPrefix);
             if (isEnabled) {
-                config.add(new UploadPublisherConfiguration(publisher.getValue(), parseUrl(publisherPrefix), parseCredentials(publisherPrefix), parseChunkSize(publisherPrefix)));
+                config.add(new UploadPublisherConfiguration(
+                        publisher.getValue(), 
+                        parseUrl(publisherPrefix), 
+                        parseCredentials(publisherPrefix), 
+                        parseChunkSize(publisherPrefix))
+                );
             }
         }
         return config.build();
+    }
+
+    private boolean isEnabled(String publisherPrefix) {
+        return Boolean.parseBoolean(Configurer.get(publisherPrefix + ".endpoints.enabled").get())
+                || Boolean.parseBoolean(Configurer.get(publisherPrefix + ".upload.enabled").get());
     }
 
     private String parseUrl(String publisherPrefix) {

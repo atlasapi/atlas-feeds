@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.ids.IdParser;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtility;
+import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -65,10 +66,10 @@ public class YouViewRemoteClient {
     private final Logger log = LoggerFactory.getLogger(YouViewRemoteClient.class);
     
     private final TvAnytimeGenerator generator;
-    private final YouViewPerPublisherFactory configurationFactory;
+    private final YouViewPerPublisherFactory publisherConfig;
     
     public YouViewRemoteClient(TvAnytimeGenerator generator, YouViewPerPublisherFactory configurationFactory) {
-        this.configurationFactory = checkNotNull(configurationFactory);
+        this.publisherConfig = checkNotNull(configurationFactory);
         this.generator = checkNotNull(generator);
     }
     
@@ -88,8 +89,9 @@ public class YouViewRemoteClient {
             return;
         }
         Publisher publisher = first.getPublisher();
-        SimpleHttpClient httpClient = configurationFactory.getHttpClient(publisher);
-        PublisherIdUtility config = configurationFactory.getIdUtil(publisher);
+        SimpleHttpClient httpClient = publisherConfig.getHttpClient(publisher);
+        PublisherIdUtility config = publisherConfig.getIdUtil(publisher);
+        TransactionStore transactionStore = publisherConfig.getTransactionStore(publisher);
         
         String queryUrl = config.getYouViewBaseUrl() + UPLOAD_URL_SUFFIX;
         log.trace(String.format("Posting YouView output xml to %s", queryUrl));
@@ -99,7 +101,9 @@ public class YouViewRemoteClient {
         HttpResponse response = httpClient.post(queryUrl, new StringPayload(baos.toString(Charsets.UTF_8.name())));
 
         if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
-            log.info("Upload successful. Transaction url: " + response.header("Location"));
+            String transactionUrl = response.header("Location");
+            log.info("Upload successful. Transaction url: " + transactionUrl);
+            transactionStore.save(transactionUrl, chunk);
         } else {
             throw new RuntimeException(String.format("An Http status code of %s was returned when POSTing to YouView. Error message:\n%s", response.statusCode(), response.body()));
         }
@@ -124,9 +128,9 @@ public class YouViewRemoteClient {
     // TODO does this need two deletes for the item crid? surely it only needs deletes for crid, version-crid and imi?
     private boolean sendDelete(Item item) {
         Publisher publisher = item.getPublisher();
-        IdParser idParser = configurationFactory.getIdParser(publisher);
-        PublisherIdUtility config = configurationFactory.getIdUtil(publisher);
-        SimpleHttpClient httpClient = configurationFactory.getHttpClient(publisher);
+        IdParser idParser = publisherConfig.getIdParser(publisher);
+        PublisherIdUtility config = publisherConfig.getIdUtil(publisher);
+        SimpleHttpClient httpClient = publisherConfig.getHttpClient(publisher);
         
         return sendDelete(httpClient, config.getYouViewBaseUrl(), idParser.createCrid(config.getCridPrefix(), item))
 //                && sendDelete(httpClient, config.getYouViewBaseUrl(), idParser.createCrid(config.getCridPrefix(), item))
@@ -136,18 +140,18 @@ public class YouViewRemoteClient {
     
     private boolean sendDelete(Series series) {
         Publisher publisher = series.getPublisher();
-        IdParser idParser = configurationFactory.getIdParser(publisher);
-        PublisherIdUtility config = configurationFactory.getIdUtil(publisher);
-        SimpleHttpClient httpClient = configurationFactory.getHttpClient(publisher);
+        IdParser idParser = publisherConfig.getIdParser(publisher);
+        PublisherIdUtility config = publisherConfig.getIdUtil(publisher);
+        SimpleHttpClient httpClient = publisherConfig.getHttpClient(publisher);
         
         return sendDelete(httpClient, config.getYouViewBaseUrl(), idParser.createCrid(config.getCridPrefix(), series));
     }
     
     private boolean sendDelete(Brand brand) {
         Publisher publisher = brand.getPublisher();
-        IdParser idParser = configurationFactory.getIdParser(publisher);
-        PublisherIdUtility config = configurationFactory.getIdUtil(publisher);
-        SimpleHttpClient httpClient = configurationFactory.getHttpClient(publisher);
+        IdParser idParser = publisherConfig.getIdParser(publisher);
+        PublisherIdUtility config = publisherConfig.getIdUtil(publisher);
+        SimpleHttpClient httpClient = publisherConfig.getHttpClient(publisher);
         
         return sendDelete(httpClient, config.getYouViewBaseUrl(), idParser.createCrid(config.getCridPrefix(), brand));
     }

@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
 import java.util.Set;
@@ -11,6 +12,7 @@ import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
+import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Encoding;
@@ -29,12 +31,10 @@ import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.InstanceDescriptionType;
-import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -66,14 +66,16 @@ public class DefaultOnDemandLocationGeneratorTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    Mockito.mock(SimpleHttpClient.class))
+                    Mockito.mock(SimpleHttpClient.class),
+                    Mockito.mock(TransactionStore.class))
             .withPublisher(
                     Publisher.AMAZON_UNBOX, 
                     PublisherIdUtilities.idUtilFor(Publisher.AMAZON_UNBOX, "base uri"),
                     ImageConfigurations.imageConfigFor(Publisher.AMAZON_UNBOX),
                     IdParsers.parserFor(Publisher.AMAZON_UNBOX), 
                     GenreMappings.mappingFor(Publisher.AMAZON_UNBOX), 
-                    Mockito.mock(SimpleHttpClient.class))
+                    Mockito.mock(SimpleHttpClient.class),
+                    Mockito.mock(TransactionStore.class))
             .build();
     private final OnDemandLocationGenerator generator = new DefaultOnDemandLocationGenerator(configFactory);
 
@@ -84,13 +86,12 @@ public class DefaultOnDemandLocationGeneratorTest {
         Set<Version> versions = Sets.newHashSet(new Version());
         film.setVersions(versions);
         
-        Optional<OnDemandProgramType> onDemand = generator.generate(film);
-        assertFalse(onDemand.isPresent());
+        assertTrue("No element should be created when no encoding present", Iterables.isEmpty(generator.generate(film)));
     }
     
     @Test
     public void testNonPublisherSpecificFields() {
-        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(createLoveFilmFilm()).get();
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) Iterables.getOnlyElement(generator.generate(createLoveFilmFilm()));
 
         assertEquals("P0DT1H30M0.000S", onDemand.getPublishedDuration().toString());
         assertEquals("2012-07-03T00:00:00.000Z", onDemand.getStartOfAvailability().toString());
@@ -130,7 +131,7 @@ public class DefaultOnDemandLocationGeneratorTest {
     
     @Test
     public void testLoveFilmSpecificFields() {
-        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(createLoveFilmFilm()).get();
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) Iterables.getOnlyElement(generator.generate(createLoveFilmFilm()));
         
         assertEquals("http://lovefilm.com/OnDemand", onDemand.getServiceIDRef());
         assertEquals("crid://lovefilm.com/product/177221_version", onDemand.getProgram().getCrid());
@@ -143,7 +144,7 @@ public class DefaultOnDemandLocationGeneratorTest {
     
     @Test
     public void testUnboxSpecificFields() {
-        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(createUnboxFilm()).get();
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) Iterables.getOnlyElement(generator.generate(createUnboxFilm()));
         
         assertEquals("http://unbox.amazon.co.uk/OnDemand", onDemand.getServiceIDRef());
         assertEquals("crid://unbox.amazon.co.uk/product/177221_version", onDemand.getProgram().getCrid());
