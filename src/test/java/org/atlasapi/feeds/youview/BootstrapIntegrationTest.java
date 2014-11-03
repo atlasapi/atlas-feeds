@@ -25,7 +25,7 @@ import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
-import org.atlasapi.feeds.youview.transactions.TransactionStore;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -63,6 +63,7 @@ import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.StringPayload;
 import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.time.TimeMachine;
 
 // TODO this needs a refactor. Too much going on here by half
 public class BootstrapIntegrationTest {
@@ -75,8 +76,7 @@ public class BootstrapIntegrationTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM),
-                    httpClient,
-                    Mockito.mock(TransactionStore.class))
+                    httpClient)
             .build();
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
@@ -93,7 +93,7 @@ public class BootstrapIntegrationTest {
             new UriBasedContentPermit()
     );
     private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
-    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory, Mockito.mock(TransactionStore.class), new TimeMachine());
     private DummyContentFinder contentFinder = new DummyContentFinder();
     private YouViewLastUpdatedStore store = new DummyLastUpdatedStore();
     

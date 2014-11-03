@@ -13,10 +13,8 @@ import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
-import org.atlasapi.feeds.youview.transactions.MongoTransactionStore;
-import org.atlasapi.feeds.youview.transactions.TransactionStore;
-import org.atlasapi.feeds.youview.www.YouViewFeedController;
-import org.atlasapi.feeds.youview.www.YouViewUploadController;
+import org.atlasapi.feeds.youview.transactions.persistence.MongoTransactionStore;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
@@ -33,9 +31,10 @@ import com.metabroadcast.common.http.SimpleHttpClientBuilder;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.security.UsernameAndPassword;
+import com.metabroadcast.common.time.SystemClock;
 
 @Configuration
-public class YouViewFeedsWebModule {
+public final class TVAnytimeFeedsModule {
     
     private static final String CONFIG_PREFIX = "youview.upload.";
 
@@ -52,15 +51,12 @@ public class YouViewFeedsWebModule {
     private @Autowired ContentResolver contentResolver;
     private @Autowired ChannelResolver channelResolver;
     
-    @Bean
-    public YouViewUploadController uploadController() {
-        return new YouViewUploadController(contentFinder, contentResolver, youViewUploadClient());
-    }
-    
-    @Bean
-    public YouViewFeedController feedController() {
-        return new YouViewFeedController(feedGenerator(), contentFinder, contentResolver);
-    }
+    // TODO this should not be enabled if no feeds are enabled, and should only work for those 
+    // publishers whose feeds are enabled
+//    @Bean
+//    public YouViewUploadController uploadController() {
+//        return new YouViewUploadController(contentFinder, contentResolver, youViewUploadClient());
+//    }
     
     @Bean 
     public TvAnytimeGenerator feedGenerator() {
@@ -95,7 +91,7 @@ public class YouViewFeedsWebModule {
 
     @Bean
     public YouViewRemoteClient youViewUploadClient() {
-        return new YouViewRemoteClient(feedGenerator(), configFactory());
+        return new YouViewRemoteClient(feedGenerator(), configFactory(), transactionStore(), new SystemClock());
     }
     
     private YouViewPerPublisherFactory configFactory() {
@@ -107,15 +103,15 @@ public class YouViewFeedsWebModule {
                     ImageConfigurations.imageConfigFor(config.publisher()),
                     IdParsers.parserFor(config.publisher()), 
                     GenreMappings.mappingFor(config.publisher()), 
-                    httpClient(config.credentials().username(), config.credentials().password()),
-                    transactionStore(config.publisher())
+                    httpClient(config.credentials().username(), config.credentials().password())
             );
         }
         return factory.build();
     }
     
-    private TransactionStore transactionStore(Publisher publisher) {
-        return new MongoTransactionStore(mongo, publisher);
+    @Bean
+    public TransactionStore transactionStore() {
+        return new MongoTransactionStore(mongo);
     }
     
     @Bean
@@ -137,8 +133,7 @@ public class YouViewFeedsWebModule {
     }
 
     private boolean isEnabled(String publisherPrefix) {
-        return Boolean.parseBoolean(Configurer.get(publisherPrefix + ".endpoints.enabled").get())
-                || Boolean.parseBoolean(Configurer.get(publisherPrefix + ".upload.enabled").get());
+        return Boolean.parseBoolean(Configurer.get(publisherPrefix + ".upload.enabled").get());
     }
 
     private String parseUrl(String publisherPrefix) {

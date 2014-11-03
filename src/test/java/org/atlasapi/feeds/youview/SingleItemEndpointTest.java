@@ -16,7 +16,7 @@ import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
-import org.atlasapi.feeds.youview.transactions.TransactionStore;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Content;
@@ -37,6 +37,7 @@ import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.Payload;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.StringPayload;
+import com.metabroadcast.common.time.TimeMachine;
 import com.metabroadcast.common.url.UrlEncoding;
 
 
@@ -51,14 +52,13 @@ public class SingleItemEndpointTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    httpClient,
-                    Mockito.mock(TransactionStore.class))
+                    httpClient)
             .build();
     private DummyContentResolver contentResolver = new DummyContentResolver();
     private ContentPermit contentPermit = Mockito.mock(ContentPermit.class);
     private TVAnytimeElementCreator elementCreator = Mockito.mock(TVAnytimeElementCreator.class);
     private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
-    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory, Mockito.mock(TransactionStore.class), new TimeMachine());
     private LastUpdatedContentFinder contentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     
     private final YouViewUploadController controller = new YouViewUploadController(contentFinder, contentResolver, youViewClient);

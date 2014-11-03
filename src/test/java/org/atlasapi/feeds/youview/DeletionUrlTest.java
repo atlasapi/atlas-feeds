@@ -7,7 +7,7 @@ import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
-import org.atlasapi.feeds.youview.transactions.TransactionStore;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
+import com.metabroadcast.common.time.TimeMachine;
 import com.metabroadcast.common.url.UrlEncoding;
 
 public class DeletionUrlTest {
@@ -36,11 +37,10 @@ public class DeletionUrlTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     Mockito.mock(GenreMapping.class), 
-                    httpClient,
-                    Mockito.mock(TransactionStore.class))
+                    httpClient)
             .build();
     
-    private final YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configurationFactory);
+    private final YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configurationFactory, Mockito.mock(TransactionStore.class), new TimeMachine());
     
     public DeletionUrlTest() throws HttpException {
         response = new HttpResponse("", HttpServletResponse.SC_ACCEPTED, "", ImmutableMap.of("Location", "yv location"));

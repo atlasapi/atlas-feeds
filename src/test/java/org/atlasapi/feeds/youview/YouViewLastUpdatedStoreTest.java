@@ -12,7 +12,7 @@ import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
-import org.atlasapi.feeds.youview.transactions.TransactionStore;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
@@ -26,6 +26,7 @@ import com.metabroadcast.common.http.Payload;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.persistence.MongoTestHelper;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.metabroadcast.common.time.TimeMachine;
 
 
 public class YouViewLastUpdatedStoreTest {
@@ -39,12 +40,11 @@ public class YouViewLastUpdatedStoreTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    httpClient,
-                    Mockito.mock(TransactionStore.class))
+                    httpClient)
             .build();
     private TVAnytimeElementCreator elementCreator = Mockito.mock(TVAnytimeElementCreator.class);
     private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
-    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory, Mockito.mock(TransactionStore.class), new TimeMachine());
     private DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     private final YouViewLastUpdatedStore store = new MongoYouViewLastUpdatedStore(mongo);
     

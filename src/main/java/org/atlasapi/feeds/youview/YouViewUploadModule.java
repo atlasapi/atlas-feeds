@@ -23,7 +23,7 @@ import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
 
 @Configuration
-@Import(YouViewFeedsWebModule.class)
+@Import(TVAnytimeFeedsModule.class)
 public class YouViewUploadModule {
     
     private final static RepetitionRule DELTA_UPLOAD = RepetitionRules.every(Duration.standardHours(12)).withOffset(Duration.standardHours(10));

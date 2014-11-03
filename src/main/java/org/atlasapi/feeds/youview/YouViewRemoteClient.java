@@ -5,28 +5,34 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.ids.IdParser;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtility;
-import org.atlasapi.feeds.youview.transactions.TransactionStore;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
+import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.StringPayload;
+import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.url.QueryStringParameters;
 
 
@@ -67,10 +73,15 @@ public class YouViewRemoteClient {
     
     private final TvAnytimeGenerator generator;
     private final YouViewPerPublisherFactory publisherConfig;
+    private final TransactionStore transactionStore;
+    private final Clock clock;
     
-    public YouViewRemoteClient(TvAnytimeGenerator generator, YouViewPerPublisherFactory configurationFactory) {
+    public YouViewRemoteClient(TvAnytimeGenerator generator, YouViewPerPublisherFactory configurationFactory, 
+            TransactionStore transactionStore, Clock clock) {
         this.publisherConfig = checkNotNull(configurationFactory);
         this.generator = checkNotNull(generator);
+        this.transactionStore = checkNotNull(transactionStore);
+        this.clock = checkNotNull(clock);
     }
     
     /**
@@ -91,7 +102,6 @@ public class YouViewRemoteClient {
         Publisher publisher = first.getPublisher();
         SimpleHttpClient httpClient = publisherConfig.getHttpClient(publisher);
         PublisherIdUtility config = publisherConfig.getIdUtil(publisher);
-        TransactionStore transactionStore = publisherConfig.getTransactionStore(publisher);
         
         String queryUrl = config.getYouViewBaseUrl() + UPLOAD_URL_SUFFIX;
         log.trace(String.format("Posting YouView output xml to %s", queryUrl));
@@ -103,12 +113,25 @@ public class YouViewRemoteClient {
         if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
             String transactionUrl = response.header("Location");
             log.info("Upload successful. Transaction url: " + transactionUrl);
-            transactionStore.save(transactionUrl, chunk);
+            // TODO store transactions
+//            DateTime uploadTimestamp = clock.now();
+//            Map<Content, Duration> contentLatencies = calculateLatencies(chunk, uploadTimestamp);
+//            transactionStore.save(transactionUrl, publisher, contentLatencies);
         } else {
             throw new RuntimeException(String.format("An Http status code of %s was returned when POSTing to YouView. Error message:\n%s", response.statusCode(), response.body()));
         }
     }
     
+    private Map<Content, Duration> calculateLatencies(Iterable<Content> content,
+            final DateTime uploadTimestamp) {
+        return Maps.toMap(content, new Function<Content, Duration>() {
+            @Override
+            public Duration apply(Content input) {
+                return new Duration(input.getLastUpdated(), uploadTimestamp);
+            }
+        });
+    }
+
     public static List<Content> orderContentForDeletion(Iterable<Content> toBeDeleted) {
         return HIERARCHICAL_ORDER.immutableSortedCopy(toBeDeleted);
     }
