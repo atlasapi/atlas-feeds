@@ -34,7 +34,7 @@ import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.time.SystemClock;
 
 @Configuration
-public final class TVAnytimeFeedsModule {
+public class TVAnytimeFeedsModule {
     
     private static final String CONFIG_PREFIX = "youview.upload.";
 
