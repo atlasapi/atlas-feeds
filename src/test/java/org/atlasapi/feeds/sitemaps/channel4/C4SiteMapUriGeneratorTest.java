@@ -56,6 +56,20 @@ public class C4SiteMapUriGeneratorTest {
     }
     
     @Test
+    public void testPlayerPageUriForClipWithDashes() {
+        Brand brand = new Brand();
+        brand.setCanonicalUri("http://pmlsc.channel4.com/pmlsd/a-brand");
+        Item item = new Item();
+        item.setContainer(brand);
+        Clip clip = new Clip();
+        Location location = new Location();
+        clip.setTitle("S1-Ep3: Characters");
+        
+        assertThat(c4SitemapOutputter.playerPageUriForClip(item, clip, location).get(), 
+                is("http://www.channel4.com/programmes/a-brand/videos/all/s1-ep3-characters"));
+    }
+    
+    @Test
     public void testPlayerPageUriForContent() {
         Item item = new Item();
         

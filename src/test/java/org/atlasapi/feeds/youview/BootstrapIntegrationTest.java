@@ -6,18 +6,26 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import nu.xom.ParsingException;
 import nu.xom.ValidityException;
 
 import org.apache.commons.io.IOUtils;
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.LoveFilmGroupInformationHierarchyTest.DummyContentResolver;
+import org.atlasapi.feeds.youview.genres.GenreMappings;
+import org.atlasapi.feeds.youview.ids.IdParsers;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
+import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -49,35 +57,47 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.StringPayload;
 import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.time.TimeMachine;
 
+// TODO this needs a refactor. Too much going on here by half
 public class BootstrapIntegrationTest {
     
-    private static final YouViewGenreMapping genreMapping = new YouViewGenreMapping(); 
-    private static final ProgramInformationGenerator progInfoGenerator = new LoveFilmProgramInformationGenerator();
-    private static final GroupInformationGenerator groupInfoGenerator = new LoveFilmGroupInformationGenerator(genreMapping);
-    private static final OnDemandLocationGenerator progLocationGenerator = new LoveFilmOnDemandLocationGenerator();
-    private static DummyContentResolver contentResolver = new DummyContentResolver();
-    
-    private static final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
-        progInfoGenerator, 
-        groupInfoGenerator, 
-        progLocationGenerator, 
-        contentResolver,
-        false
-    );
-
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
-    private final YouViewUploader uploader = new YouViewUploader("youviewurl", generator, httpClient);
-    private final YouViewDeleter deleter = new YouViewDeleter("youviewurl", httpClient);
+    private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
+            .withPublisher(
+                    Publisher.LOVEFILM, 
+                    PublisherIdUtilities.idUtilFor(Publisher.LOVEFILM, "youviewurl"),
+                    ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
+                    IdParsers.parserFor(Publisher.LOVEFILM), 
+                    GenreMappings.mappingFor(Publisher.LOVEFILM),
+                    httpClient)
+            .build();
+    private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
+    private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
+    private OnDemandLocationGenerator progLocationGenerator = new DefaultOnDemandLocationGenerator(configFactory);
+    private BroadcastEventGenerator broadcastGenerator = Mockito.mock(BroadcastEventGenerator.class);
+    private DummyContentResolver contentResolver = new DummyContentResolver();
+    private ContentHierarchyExtractor hierarchy = new ContentResolvingContentHierarchyExtractor(contentResolver);
+    private TVAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
+            progInfoGenerator, 
+            groupInfoGenerator, 
+            progLocationGenerator, 
+            broadcastGenerator,
+            hierarchy,
+            new UriBasedContentPermit()
+    );
+    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory, Mockito.mock(TransactionStore.class), new TimeMachine());
     private DummyContentFinder contentFinder = new DummyContentFinder();
     private YouViewLastUpdatedStore store = new DummyLastUpdatedStore();
     
-    private final YouViewUploadTask bootStrapUploader = new YouViewUploadTask(uploader, deleter, 5, contentFinder, store, true);
+    private final YouViewUploadTask bootStrapUploader = new YouViewUploadTask(youViewClient, 5, contentFinder, store, Publisher.LOVEFILM, true);
 
     @Test
     public void testBootstrapOutput() throws ValidityException, HttpException, ParsingException, IOException {
@@ -239,16 +259,16 @@ public class BootstrapIntegrationTest {
     
     public static class DummyLastUpdatedStore implements YouViewLastUpdatedStore {
         
-        DateTime lastUpdated = null;
+        Map<Publisher, DateTime> lastUpdatedMap = Maps.newHashMap();
 
         @Override
-        public Optional<DateTime> getLastUpdated() {
-            return Optional.fromNullable(lastUpdated);
+        public Optional<DateTime> getLastUpdated(Publisher publisher) {
+            return Optional.fromNullable(lastUpdatedMap.get(publisher));
         }
 
         @Override
-        public void setLastUpdated(DateTime lastUpdated) {
-            this.lastUpdated = lastUpdated;
+        public void setLastUpdated(DateTime lastUpdated, Publisher publisher) {
+            this.lastUpdatedMap.put(publisher, lastUpdated);
         }
         
     }

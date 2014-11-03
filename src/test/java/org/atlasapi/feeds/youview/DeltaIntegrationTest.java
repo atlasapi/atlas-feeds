@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview;
 
-import static org.mockito.Mockito.times;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -13,15 +11,22 @@ import nu.xom.ParsingException;
 import nu.xom.ValidityException;
 
 import org.apache.commons.io.IOUtils;
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.BootstrapIntegrationTest.DummyContentFinder;
 import org.atlasapi.feeds.youview.BootstrapIntegrationTest.DummyLastUpdatedStore;
 import org.atlasapi.feeds.youview.LoveFilmGroupInformationHierarchyTest.DummyContentResolver;
+import org.atlasapi.feeds.youview.genres.GenreMappings;
+import org.atlasapi.feeds.youview.ids.IdParsers;
+import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
+import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -47,40 +52,51 @@ import org.mockito.Mockito;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.StringPayload;
 import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.time.TimeMachine;
 import com.metabroadcast.common.url.UrlEncoding;
 
 public class DeltaIntegrationTest {
     
-    private YouViewGenreMapping genreMapping = new YouViewGenreMapping(); 
-    private ProgramInformationGenerator progInfoGenerator = new LoveFilmProgramInformationGenerator();
-    private GroupInformationGenerator groupInfoGenerator = new LoveFilmGroupInformationGenerator(genreMapping);
-    private OnDemandLocationGenerator progLocationGenerator = new LoveFilmOnDemandLocationGenerator();
-    private DummyContentResolver contentResolver = new DummyContentResolver();
-    
-    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(
-        progInfoGenerator, 
-        groupInfoGenerator, 
-        progLocationGenerator, 
-        contentResolver,
-        false
-    );
-
-    private HttpResponse response;
+    private static final Publisher PUBLISHER = Publisher.LOVEFILM;
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
-    private YouViewUploader uploader = new YouViewUploader("youviewurl", generator, httpClient);
-    private YouViewDeleter deleter = new YouViewDeleter("youviewurl", httpClient);
+    private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
+            .withPublisher(
+                    PUBLISHER, 
+                    PublisherIdUtilities.idUtilFor(Publisher.LOVEFILM, "youviewurl"), 
+                    ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
+                    IdParsers.parserFor(Publisher.LOVEFILM), 
+                    GenreMappings.mappingFor(Publisher.LOVEFILM), 
+                    httpClient)
+            .build();
+    private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
+    private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
+    private OnDemandLocationGenerator progLocationGenerator = new DefaultOnDemandLocationGenerator(configFactory);
+    private BroadcastEventGenerator broadcastGenerator = Mockito.mock(BroadcastEventGenerator.class);
+    private DummyContentResolver contentResolver = new DummyContentResolver();
+    private ContentHierarchyExtractor hierarchy = new ContentResolvingContentHierarchyExtractor(contentResolver);
+    private TVAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
+            progInfoGenerator, 
+            groupInfoGenerator, 
+            progLocationGenerator, 
+            broadcastGenerator,
+            hierarchy,
+            new UriBasedContentPermit()
+    );
+    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory, Mockito.mock(TransactionStore.class), new TimeMachine());
+    private HttpResponse response;
     private DummyContentFinder contentFinder = new DummyContentFinder();
     private YouViewLastUpdatedStore store = new DummyLastUpdatedStore();
     
-    private final YouViewUploadTask deltaUploader = new YouViewUploadTask(uploader, deleter, 5, contentFinder, store, false);
+    private final YouViewUploadTask deltaUploader = new YouViewUploadTask(youViewClient, 5, contentFinder, store, PUBLISHER, false);
     
     public DeltaIntegrationTest() throws HttpException {
         response = new HttpResponse("", HttpServletResponse.SC_ACCEPTED, "", ImmutableMap.of("Location", "yv location"));
@@ -89,7 +105,7 @@ public class DeltaIntegrationTest {
 
     @Test
     public void testDeltaOutput() throws ValidityException, HttpException, ParsingException, IOException {
-        store.setLastUpdated(new DateTime().minusDays(1));
+        store.setLastUpdated(new DateTime().minusDays(1), PUBLISHER);
         
         Film film = createFilm("http://lovefilm.com/films/film1");
         film.setLastUpdated(new DateTime());
@@ -158,7 +174,8 @@ public class DeltaIntegrationTest {
         Mockito.verify(httpClient).post(Mockito.eq("youviewurl/transaction"), Mockito.eq(new StringPayload(fromXmlFile("youview-delta.xml"))));
         
         Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("imi:lovefilm.com/episode1"));
-        Mockito.verify(httpClient, times(2)).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/episode1"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/episode1"));
+        Mockito.verify(httpClient).delete("youviewurl/fragment?id=" + UrlEncoding.encode("crid://lovefilm.com/product/episode1_version"));
     }
 
     private String fromXmlFile(String fileName) throws ValidityException, ParsingException, IOException {
@@ -212,7 +229,7 @@ public class DeltaIntegrationTest {
         content.setTitle("Dr. Strangelove");
         content.setDescription("The film is set at the height of the tensions between Russia and the United States");
         content.setGenres(ImmutableList.of("http://lovefilm.com/genres/comedy"));
-        content.setPublisher(Publisher.LOVEFILM);
+        content.setPublisher(PUBLISHER);
         content.setCertificates(ImmutableList.of(new Certificate("PG", Countries.GB)));
         content.setYear(1963);
         content.setLanguages(ImmutableList.of("en"));
