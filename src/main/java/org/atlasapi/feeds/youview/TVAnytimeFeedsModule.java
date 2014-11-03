@@ -66,7 +66,7 @@ public class TVAnytimeFeedsModule {
     @Bean
     public FeedStatisticsResolver feedStatsResolver() {
         FeedStatistics mockedStats = new FeedStatistics(Publisher.BBC_NITRO, 123, Duration.standardMinutes(37), DateTime.now().minusMonths(1));
-        return new MockDataFeedStatisticsResolver(mockedStats );
+        return new MockDataFeedStatisticsResolver(mockedStats);
     }
     
     @Bean 
