@@ -1,10 +1,12 @@
 package org.atlasapi.feeds.tvanytime;
 
-import java.io.OutputStream;
+import javax.xml.bind.JAXBElement;
 
 import org.atlasapi.media.entity.Content;
 
+import tva.metadata._2010.TVAMainType;
+
 public interface TvAnytimeGenerator {
 
-    void generateXml(Iterable<Content> contents, OutputStream outStream);
+    JAXBElement<TVAMainType> generateTVAnytimeFrom(Iterable<Content> contents);
 }

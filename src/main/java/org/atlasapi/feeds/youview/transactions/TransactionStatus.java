@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.FragmentReportType;
@@ -43,5 +44,34 @@ public final class TransactionStatus {
     
     public Optional<List<FragmentReportType>> fragmentReports() {
         return fragmentReports;
+    }
+    
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(TransactionStatus.class)
+                .add("status", status)
+                .add("message", message)
+                .add("fragmentReports", fragmentReports)
+                .toString();
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(status, message, fragmentReports);
+    }
+    
+    @Override
+    public boolean equals(Object that) {
+        if (this == that) {
+            return true;
+        }
+        if (that instanceof TransactionStatus) {
+            TransactionStatus other = (TransactionStatus) that;
+            return status.equals(other.status)
+                    && message.equals(other.message)
+                    && fragmentReports.equals(other.fragmentReports);
+        }
+        
+        return false;
     }
 }

@@ -56,13 +56,6 @@ public class TVAnytimeFeedsModule {
     private @Autowired ContentResolver contentResolver;
     private @Autowired ChannelResolver channelResolver;
     
-    // TODO this should not be enabled if no feeds are enabled, and should only work for those 
-    // publishers whose feeds are enabled
-//    @Bean
-//    public YouViewUploadController uploadController() {
-//        return new YouViewUploadController(contentFinder, contentResolver, youViewUploadClient());
-//    }
-    
     @Bean
     public FeedStatisticsResolver feedStatsResolver() {
         FeedStatistics mockedStats = new FeedStatistics(Publisher.BBC_NITRO, 123, Duration.standardMinutes(37), DateTime.now().minusMonths(1));
@@ -71,10 +64,7 @@ public class TVAnytimeFeedsModule {
     
     @Bean 
     public TvAnytimeGenerator feedGenerator() {
-        return new DefaultTvAnytimeGenerator(
-            elementCreator(),
-            Boolean.parseBoolean(performValidation)
-        );
+        return new DefaultTvAnytimeGenerator(elementCreator());
     }
     
     private TVAnytimeElementCreator elementCreator() {
@@ -102,7 +92,13 @@ public class TVAnytimeFeedsModule {
 
     @Bean
     public YouViewRemoteClient youViewUploadClient() {
-        return new YouViewRemoteClient(feedGenerator(), configFactory(), transactionStore(), new SystemClock());
+        return new YouViewRemoteClient(
+                feedGenerator(), 
+                configFactory(), 
+                transactionStore(), 
+                new SystemClock(), 
+                Boolean.parseBoolean(performValidation)
+        );
     }
     
     private YouViewPerPublisherFactory configFactory() {

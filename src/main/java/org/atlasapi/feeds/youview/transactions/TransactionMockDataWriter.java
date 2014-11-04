@@ -9,7 +9,6 @@ import java.util.Set;
 import org.atlasapi.feeds.youview.transactions.persistence.MongoTransactionStore;
 import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
 import org.atlasapi.media.entity.Publisher;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +21,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
-import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
 import com.mongodb.Mongo;
@@ -91,8 +89,9 @@ public class TransactionMockDataWriter {
     }
 
     public static void main(String[] args) {
-        String mongoHostStr = Configurer.get("mongo.host").get();
-        String dbName = Configurer.get("mongo.dbName").get();
+        // hardcoded, as atlas-feeds doesn't have props files
+        String mongoHostStr = "127.0.0.1";
+        String dbName = "atlas";
         DatabasedMongo mongo = new DatabasedMongo(configureMongo(mongoHostStr), dbName);
         
         TransactionStore mongoStore = new MongoTransactionStore(mongo);

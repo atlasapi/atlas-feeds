@@ -90,8 +90,14 @@ public class DeltaIntegrationTest {
             hierarchy,
             new UriBasedContentPermit()
     );
-    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
-    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory, Mockito.mock(TransactionStore.class), new TimeMachine());
+    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator);
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(
+            generator, 
+            configFactory, 
+            Mockito.mock(TransactionStore.class), 
+            new TimeMachine(),
+            false
+    );
     private HttpResponse response;
     private DummyContentFinder contentFinder = new DummyContentFinder();
     private YouViewLastUpdatedStore store = new DummyLastUpdatedStore();

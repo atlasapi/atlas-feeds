@@ -40,7 +40,13 @@ public class DeletionUrlTest {
                     httpClient)
             .build();
     
-    private final YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configurationFactory, Mockito.mock(TransactionStore.class), new TimeMachine());
+    private final YouViewRemoteClient youViewClient = new YouViewRemoteClient(
+            generator, 
+            configurationFactory, 
+            Mockito.mock(TransactionStore.class), 
+            new TimeMachine(), 
+            false
+    );
     
     public DeletionUrlTest() throws HttpException {
         response = new HttpResponse("", HttpServletResponse.SC_ACCEPTED, "", ImmutableMap.of("Location", "yv location"));

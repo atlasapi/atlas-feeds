@@ -1,7 +1,7 @@
-package org.atlasapi.feeds.youview.transactions;
+package org.atlasapi.feeds.youview.transactions.persistence;
 
-import static org.atlasapi.feeds.youview.transactions.FragmentReportTranslator.STRING_TO_TEXTUALTYPE;
-import static org.atlasapi.feeds.youview.transactions.FragmentReportTranslator.TEXTUALTYPE_TO_STRING;
+import static org.atlasapi.feeds.youview.transactions.persistence.FragmentReportTranslator.STRING_TO_TEXTUALTYPE;
+import static org.atlasapi.feeds.youview.transactions.persistence.FragmentReportTranslator.TEXTUALTYPE_TO_STRING;
 
 import com.google.common.base.Function;
 import com.metabroadcast.common.persistence.translator.TranslatorUtils;
