@@ -7,6 +7,7 @@ import javax.annotation.PostConstruct;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
@@ -37,6 +38,7 @@ public class YouViewUploadModule {
     private @Autowired TvAnytimeGenerator generator;
     private @Autowired YouViewRemoteClient youViewClient;
     private @Autowired Set<UploadPublisherConfiguration> uploadConfig;
+    private @Autowired YouViewRemoteClient youViewRemoteClient;
 
     @PostConstruct
     public void startScheduledTasks() {
@@ -44,6 +46,12 @@ public class YouViewUploadModule {
             scheduler.schedule(scheduleTask(config.publisher(), config.chunkSize(), true, "Bootstrap"), BOOTSTRAP_UPLOAD);
             scheduler.schedule(scheduleTask(config.publisher(), config.chunkSize(), false, "Delta"), DELTA_UPLOAD);
         }
+    }
+    
+    // TODO this should only work for those publishers whose feeds are enabled
+    @Bean
+    public YouViewUploadController uploadController() {
+        return new YouViewUploadController(contentFinder, contentResolver, youViewRemoteClient);
     }
 
     private ScheduledTask scheduleTask(Publisher publisher, int chunkSize, boolean isBootstrap, String taskKey) {

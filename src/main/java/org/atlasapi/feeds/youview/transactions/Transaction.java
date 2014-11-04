@@ -71,7 +71,8 @@ public class Transaction {
         
         if (that instanceof Transaction) {
             Transaction other = (Transaction) that;
-            return id.equals(other.id);
+            return id.equals(other.id)
+                    && publisher.equals(other.publisher);
         }
         
         return false;

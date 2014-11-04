@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview.transactions.persistence;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.transactions.persistence.TransactionStatusTranslator.STATUS_KEY;
+import static org.atlasapi.feeds.youview.transactions.persistence.TransactionTranslator.STATUS_KEY;
 import static org.atlasapi.feeds.youview.transactions.persistence.TransactionTranslator.CONTENT_KEY;
 import static org.atlasapi.feeds.youview.transactions.persistence.TransactionTranslator.PUBLISHER_KEY;
 import static org.atlasapi.feeds.youview.transactions.persistence.TransactionTranslator.UPLOAD_TIME_KEY;
@@ -70,7 +70,7 @@ public class MongoTransactionStore implements TransactionStore {
         mongoQuery.fieldEquals(PUBLISHER_KEY, query.publisher().key());
         
         if (query.contentUri().isPresent()) {
-            mongoQuery.fieldEquals(CONTENT_KEY, query.transactionStatus().get().name());
+            mongoQuery.fieldEquals(CONTENT_KEY, query.contentUri().get());
         }
         if (query.transactionId().isPresent()) {
             mongoQuery.idEquals(idFrom(query.transactionId().get(), query.publisher()));

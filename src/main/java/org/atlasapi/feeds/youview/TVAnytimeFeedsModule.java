@@ -56,13 +56,6 @@ public class TVAnytimeFeedsModule {
     private @Autowired ContentResolver contentResolver;
     private @Autowired ChannelResolver channelResolver;
     
-    // TODO this should not be enabled if no feeds are enabled, and should only work for those 
-    // publishers whose feeds are enabled
-//    @Bean
-//    public YouViewUploadController uploadController() {
-//        return new YouViewUploadController(contentFinder, contentResolver, youViewUploadClient());
-//    }
-    
     @Bean
     public FeedStatisticsResolver feedStatsResolver() {
         FeedStatistics mockedStats = new FeedStatistics(Publisher.BBC_NITRO, 123, Duration.standardMinutes(37), DateTime.now().minusMonths(1));

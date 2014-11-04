@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview.transactions;
+package org.atlasapi.feeds.youview.transactions.persistence;
 
 import tva.mpeg7._2008.TextualType;
 

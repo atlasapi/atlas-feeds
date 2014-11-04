@@ -1,6 +1,5 @@
 package org.atlasapi.feeds.youview.transactions.persistence;
 
-import org.atlasapi.feeds.youview.transactions.FragmentReportTranslator;
 import org.atlasapi.feeds.youview.transactions.TransactionStatus;
 
 import com.google.common.base.Optional;
@@ -13,7 +12,7 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionSt
 
 public class TransactionStatusTranslator {
 
-    static final String STATUS_KEY = "type";
+    private static final String STATUS_KEY = "status";
     private static final String MESSAGE_KEY = "message";
     private static final String FRAGMENT_REPORTS_KEY = "fragmentReports";
     
