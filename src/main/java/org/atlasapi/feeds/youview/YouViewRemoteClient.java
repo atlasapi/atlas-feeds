@@ -3,11 +3,22 @@ package org.atlasapi.feeds.youview;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.XMLConstants;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.util.JAXBSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.ids.IdParser;
@@ -22,9 +33,15 @@ import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+
+import tva.metadata._2010.TVAMainType;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
@@ -64,6 +81,33 @@ public class YouViewRemoteClient {
             }
         }
     };
+    
+    private final class JaxbErrorHandler implements ErrorHandler {
+        
+        private boolean hasErrors = false;
+        
+        @Override
+        public void warning(SAXParseException e) throws SAXException {
+            log.error("XML Validation warning: " + e.getMessage(), e);
+            hasErrors = true;
+        }
+
+        @Override
+        public void fatalError(SAXParseException e) throws SAXException {
+            log.error("XML Validation fatal error: " + e.getMessage(), e);
+            hasErrors = true;
+        }
+
+        @Override
+        public void error(SAXParseException e) throws SAXException {
+            log.error("XML Validation error: " + e.getMessage(), e);
+            hasErrors = true;
+        }
+        
+        public boolean hasErrors() {
+            return hasErrors;
+        }
+    }
 
     private static final String UPLOAD_URL_SUFFIX = "/transaction";
     private static final String DELETION_URL_SUFFIX = "/fragment";
@@ -75,13 +119,15 @@ public class YouViewRemoteClient {
     private final YouViewPerPublisherFactory publisherConfig;
     private final TransactionStore transactionStore;
     private final Clock clock;
+    private final boolean performValidation;
     
     public YouViewRemoteClient(TvAnytimeGenerator generator, YouViewPerPublisherFactory configurationFactory, 
-            TransactionStore transactionStore, Clock clock) {
+            TransactionStore transactionStore, Clock clock, boolean performValidation) {
         this.publisherConfig = checkNotNull(configurationFactory);
         this.generator = checkNotNull(generator);
         this.transactionStore = checkNotNull(transactionStore);
         this.clock = checkNotNull(clock);
+        this.performValidation = performValidation;
     }
     
     /**
@@ -93,6 +139,9 @@ public class YouViewRemoteClient {
      * @throws HttpException
      */
     // TODO consider passing in publisher as param, validating chunk
+    // TODO refactor this, there's too much going on here.
+    // TODO JAXBContext/Marshaller is instantiated here as well as in generator - can they be passed around as context/
+    // refactored out?
     public void upload(Iterable<Content> chunk) throws UnsupportedEncodingException, HttpException {
         Content first = Iterables.getFirst(chunk, null);
         if (first == null) {
@@ -106,19 +155,55 @@ public class YouViewRemoteClient {
         String queryUrl = config.getYouViewBaseUrl() + UPLOAD_URL_SUFFIX;
         log.trace(String.format("Posting YouView output xml to %s", queryUrl));
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        generator.generateXml(chunk, baos);
-        HttpResponse response = httpClient.post(queryUrl, new StringPayload(baos.toString(Charsets.UTF_8.name())));
+        try {
+            JAXBContext context = JAXBContext.newInstance("tva.metadata._2010");
+            Marshaller marshaller = context.createMarshaller();
 
-        if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
-            String transactionUrl = response.header("Location");
-            log.info("Upload successful. Transaction url: " + transactionUrl);
-            // TODO store transactions
-//            DateTime uploadTimestamp = clock.now();
-//            Map<Content, Duration> contentLatencies = calculateLatencies(chunk, uploadTimestamp);
-//            transactionStore.save(transactionUrl, publisher, contentLatencies);
-        } else {
-            throw new RuntimeException(String.format("An Http status code of %s was returned when POSTing to YouView. Error message:\n%s", response.statusCode(), response.body()));
+            JAXBElement<TVAMainType> tvaElem = generator.generateTVAnytimeFrom(chunk);
+
+            if (performValidation) {
+                validateXml(context, marshaller, tvaElem);
+            }
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            marshaller.marshal(tvaElem, baos);
+
+            HttpResponse response = httpClient.post(queryUrl, new StringPayload(baos.toString(Charsets.UTF_8.name())));
+
+            if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
+                String transactionUrl = response.header("Location");
+                log.info("Upload successful. Transaction url: " + transactionUrl);
+                // TODO store transactions
+                //            DateTime uploadTimestamp = clock.now();
+                //            Map<Content, Duration> contentLatencies = calculateLatencies(chunk, uploadTimestamp);
+                //            transactionStore.save(transactionUrl, publisher, contentLatencies);
+            } else {
+                throw new RuntimeException(String.format("An Http status code of %s was returned when POSTing to YouView. Error message:\n%s", response.statusCode(), response.body()));
+            }
+        } catch (JAXBException | SAXException | IOException e) {
+            throw Throwables.propagate(e);
+        }
+    }
+    
+    // TODO move validation step to somewhere logical.
+    private void validateXml(JAXBContext context, Marshaller marshaller,
+            JAXBElement<TVAMainType> rootElem) throws JAXBException, SAXException, IOException {
+        JAXBSource source = new JAXBSource(context, rootElem);
+
+        SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI); 
+        Schema schema = sf.newSchema(new File("../atlas-feeds/src/main/resources/tvanytime/youview/youview_metadata_2011-07-06.xsd")); 
+
+        Validator validator = schema.newValidator();
+        JaxbErrorHandler errorHandler = new JaxbErrorHandler();
+        validator.setErrorHandler(errorHandler);
+
+        validator.validate(source);
+        
+        if (errorHandler.hasErrors()) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            marshaller.marshal(rootElem, os);
+            log.trace("Invalid xml was: {}", os.toString());
+            throw new RuntimeException("XML Validation against schema failed");
         }
     }
     

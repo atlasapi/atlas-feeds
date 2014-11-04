@@ -34,7 +34,13 @@ public class YouViewRemoteClientTest {
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
     private PublisherIdUtility lovefilmIdUtil = PublisherIdUtilities.idUtilFor(PUBLISHER, "baseUri");
     private HttpResponse response = createResponseWithTransaction(TRANSACTION_URL);
-    private final YouViewRemoteClient client = new YouViewRemoteClient(generator, publisherFactory, transactionStore, new TimeMachine());
+    private final YouViewRemoteClient client = new YouViewRemoteClient(
+            generator, 
+            publisherFactory, 
+            transactionStore, 
+            new TimeMachine(), 
+            false
+    );
     
     @Before
     public void setup() throws HttpException {

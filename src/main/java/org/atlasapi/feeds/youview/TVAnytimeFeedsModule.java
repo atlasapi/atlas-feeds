@@ -64,10 +64,7 @@ public class TVAnytimeFeedsModule {
     
     @Bean 
     public TvAnytimeGenerator feedGenerator() {
-        return new DefaultTvAnytimeGenerator(
-            elementCreator(),
-            Boolean.parseBoolean(performValidation)
-        );
+        return new DefaultTvAnytimeGenerator(elementCreator());
     }
     
     private TVAnytimeElementCreator elementCreator() {
@@ -95,7 +92,13 @@ public class TVAnytimeFeedsModule {
 
     @Bean
     public YouViewRemoteClient youViewUploadClient() {
-        return new YouViewRemoteClient(feedGenerator(), configFactory(), transactionStore(), new SystemClock());
+        return new YouViewRemoteClient(
+                feedGenerator(), 
+                configFactory(), 
+                transactionStore(), 
+                new SystemClock(), 
+                Boolean.parseBoolean(performValidation)
+        );
     }
     
     private YouViewPerPublisherFactory configFactory() {
