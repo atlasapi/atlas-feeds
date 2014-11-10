@@ -6,6 +6,7 @@ import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtility;
 import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
+import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Publisher;
@@ -37,7 +38,6 @@ public class YouViewRemoteClientTest {
     private final YouViewRemoteClient client = new YouViewRemoteClient(
             generator, 
             publisherFactory, 
-            transactionStore, 
             new TimeMachine(), 
             false
     );

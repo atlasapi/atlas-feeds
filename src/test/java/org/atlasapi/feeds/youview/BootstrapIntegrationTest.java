@@ -26,6 +26,7 @@ import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
+import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -96,14 +97,13 @@ public class BootstrapIntegrationTest {
     private YouViewRemoteClient youViewClient = new YouViewRemoteClient(
             generator, 
             configFactory, 
-            Mockito.mock(TransactionStore.class),
             new TimeMachine(), 
             false
     );
     private DummyContentFinder contentFinder = new DummyContentFinder();
     private YouViewLastUpdatedStore store = new DummyLastUpdatedStore();
     
-    private final YouViewUploadTask bootStrapUploader = new YouViewUploadTask(youViewClient, 5, contentFinder, store, Publisher.LOVEFILM, true);
+    private final YouViewUploadTask bootStrapUploader = new YouViewUploadTask(youViewClient, 5, contentFinder, store, Publisher.LOVEFILM, true, Mockito.mock(TransactionStore.class));
 
     @Test
     public void testBootstrapOutput() throws ValidityException, HttpException, ParsingException, IOException {

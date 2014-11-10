@@ -34,6 +34,7 @@ import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -129,7 +130,10 @@ public class DefaultOnDemandLocationGenerator implements OnDemandLocationGenerat
         
         instanceDescription.getGenre().addAll(generateGenres());
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
-        instanceDescription.getOtherIdentifier().add(generateOtherId(item));
+        Optional<UniqueIDType> otherId = generateOtherId(item);
+        if (otherId.isPresent()) {
+            instanceDescription.getOtherIdentifier().add(otherId.get());
+        }
         
         return instanceDescription;
     }
@@ -139,7 +143,10 @@ public class DefaultOnDemandLocationGenerator implements OnDemandLocationGenerat
 
         attributes.getAudioAttributes().add(generateAudioAttributes());
         attributes.setVideoAttributes(generateVideoAttributes(encoding));
-        attributes.setBitRate(generateBitRate(encoding));
+        Optional<BitRateType> bitRate = generateBitRate(encoding);
+        if (bitRate.isPresent()) {
+            attributes.setBitRate(bitRate.get());
+        }
         
         return attributes;
     }
@@ -157,26 +164,36 @@ public class DefaultOnDemandLocationGenerator implements OnDemandLocationGenerat
 
         attributes.setHorizontalSize(encoding.getVideoHorizontalSize());
         attributes.setVerticalSize(encoding.getVideoVerticalSize());
-        AspectRatioType aspectRatio = new AspectRatioType();
-        aspectRatio.setValue(encoding.getVideoAspectRatio());
-        attributes.getAspectRatio().add(aspectRatio);
+        if (encoding.getVideoAspectRatio() != null) {
+            AspectRatioType aspectRatio = new AspectRatioType();
+            aspectRatio.setValue(encoding.getVideoAspectRatio());
+            attributes.getAspectRatio().add(aspectRatio);
+        }
 
         return attributes;
     }
 
-    private BitRateType generateBitRate(Encoding encoding) {
-        BitRateType bitRate = new BitRateType();
-        bitRate.setVariable(false);
-        bitRate.setValue(BigInteger.valueOf(encoding.getBitRate()));
-        return bitRate;
+    private Optional<BitRateType> generateBitRate(Encoding encoding) {
+        Integer bitRate = encoding.getBitRate();
+        if (bitRate == null) {
+            return Optional.absent();
+        }
+        BitRateType bitRateType = new BitRateType();
+        bitRateType.setVariable(false);
+        bitRateType.setValue(BigInteger.valueOf(bitRate));
+        return Optional.of(bitRateType);
     }
 
-    private UniqueIDType generateOtherId(Item item) {
+    private Optional<UniqueIDType> generateOtherId(Item item) {
         PublisherIdUtility config = configFactory.getIdUtil(item.getPublisher());
+        Optional<String> otherId = config.getOtherIdentifier(item);
+        if (!otherId.isPresent()) {
+            return Optional.absent();
+        }
         UniqueIDType id = new UniqueIDType();
         id.setAuthority(config.getDeepLinkingAuthorityId());
-        id.setValue(getAsin(item));
-        return id;
+        id.setValue(otherId.get());
+        return Optional.of(id);
     }
 
     private List<GenreType> generateGenres() {
@@ -200,12 +217,14 @@ public class DefaultOnDemandLocationGenerator implements OnDemandLocationGenerat
     }
 
     private XMLGregorianCalendar generateAvailabilityStart(Encoding encoding) {
-        Policy policy = Iterables.getOnlyElement(encoding.getAvailableAt()).getPolicy();
+        // TODO massive hack
+        Policy policy = Iterables.getFirst(encoding.getAvailableAt(), null).getPolicy();
         return datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityStart().toGregorianCalendar());
     }
 
     private XMLGregorianCalendar generateAvailabilityEnd(Encoding encoding) {
-        Policy policy = Iterables.getOnlyElement(encoding.getAvailableAt()).getPolicy();
+        // TODO massive hack
+        Policy policy = Iterables.getFirst(encoding.getAvailableAt(), null).getPolicy();
         return datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityEnd().toGregorianCalendar());
     }
 }

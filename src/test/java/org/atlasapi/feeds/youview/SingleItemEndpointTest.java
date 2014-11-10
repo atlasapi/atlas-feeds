@@ -17,9 +17,9 @@ import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
+import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Alias;
-import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
@@ -31,7 +31,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.HttpResponse;
@@ -62,13 +61,12 @@ public class SingleItemEndpointTest {
     private YouViewRemoteClient youViewClient = new YouViewRemoteClient(
             generator, 
             configFactory, 
-            Mockito.mock(TransactionStore.class), 
             new TimeMachine(), 
             false
     );
     private LastUpdatedContentFinder contentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     
-    private final YouViewUploadController controller = new YouViewUploadController(contentFinder, contentResolver, youViewClient);
+    private final YouViewUploadController controller = new YouViewUploadController(contentFinder, contentResolver, youViewClient, Mockito.mock(TransactionStore.class));
     
     @Before
     public void setup() throws HttpException, IOException {
