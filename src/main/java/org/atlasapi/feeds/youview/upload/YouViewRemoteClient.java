@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview.upload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.XMLConstants;
@@ -21,16 +20,16 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.youview.YouViewPerPublisherFactory;
 import org.atlasapi.feeds.youview.ids.IdParser;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtility;
-import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
+import org.atlasapi.feeds.youview.transactions.Transaction;
+import org.atlasapi.feeds.youview.transactions.TransactionStatus;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ErrorHandler;
@@ -41,16 +40,18 @@ import tva.metadata._2010.TVAMainType;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
+import com.metabroadcast.common.http.SimpleHttpRequest;
 import com.metabroadcast.common.http.StringPayload;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.url.QueryStringParameters;
+import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
 
 
 public class YouViewRemoteClient {
@@ -108,6 +109,13 @@ public class YouViewRemoteClient {
             return hasErrors;
         }
     }
+    
+    private static final Function<Content, String> TO_URL = new Function<Content, String>() {
+        @Override
+        public String apply(Content input) {
+            return input.getCanonicalUri();
+        }
+    };
 
     private static final String UPLOAD_URL_SUFFIX = "/transaction";
     private static final String DELETION_URL_SUFFIX = "/fragment";
@@ -117,15 +125,13 @@ public class YouViewRemoteClient {
     
     private final TvAnytimeGenerator generator;
     private final YouViewPerPublisherFactory publisherConfig;
-    private final TransactionStore transactionStore;
     private final Clock clock;
     private final boolean performValidation;
     
     public YouViewRemoteClient(TvAnytimeGenerator generator, YouViewPerPublisherFactory configurationFactory, 
-            TransactionStore transactionStore, Clock clock, boolean performValidation) {
+            Clock clock, boolean performValidation) {
         this.publisherConfig = checkNotNull(configurationFactory);
         this.generator = checkNotNull(generator);
-        this.transactionStore = checkNotNull(transactionStore);
         this.clock = checkNotNull(clock);
         this.performValidation = performValidation;
     }
@@ -142,11 +148,11 @@ public class YouViewRemoteClient {
     // TODO refactor this, there's too much going on here.
     // TODO JAXBContext/Marshaller is instantiated here as well as in generator - can they be passed around as context/
     // refactored out?
-    public void upload(Iterable<Content> chunk) throws UnsupportedEncodingException, HttpException {
+    public Optional<Transaction> upload(Iterable<Content> chunk) throws UnsupportedEncodingException, HttpException {
         Content first = Iterables.getFirst(chunk, null);
         if (first == null) {
             log.error("Chunk contained no content");
-            return;
+            return Optional.absent();
         }
         Publisher publisher = first.getPublisher();
         SimpleHttpClient httpClient = publisherConfig.getHttpClient(publisher);
@@ -173,10 +179,7 @@ public class YouViewRemoteClient {
             if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
                 String transactionUrl = response.header("Location");
                 log.info("Upload successful. Transaction url: " + transactionUrl);
-                // TODO store transactions
-                //            DateTime uploadTimestamp = clock.now();
-                //            Map<Content, Duration> contentLatencies = calculateLatencies(chunk, uploadTimestamp);
-                //            transactionStore.save(transactionUrl, publisher, contentLatencies);
+                return Optional.of(createTransactionFrom(transactionUrl, publisher, chunk));
             } else {
                 throw new RuntimeException(String.format("An Http status code of %s was returned when POSTing to YouView. Error message:\n%s", response.statusCode(), response.body()));
             }
@@ -185,6 +188,11 @@ public class YouViewRemoteClient {
         }
     }
     
+    private Transaction createTransactionFrom(String transactionUrl, Publisher publisher, Iterable<Content> uploadedContent) {
+        TransactionStatus status = new TransactionStatus(TransactionStateType.ACCEPTED, "Successfully uploaded to YouView");
+        return new Transaction(transactionUrl, publisher, clock.now(), Iterables.transform(uploadedContent, TO_URL), status);
+    }
+
     // TODO move validation step to somewhere logical.
     private void validateXml(JAXBContext context, Marshaller marshaller,
             JAXBElement<TVAMainType> rootElem) throws JAXBException, SAXException, IOException {
@@ -207,16 +215,6 @@ public class YouViewRemoteClient {
         }
     }
     
-    private Map<Content, Duration> calculateLatencies(Iterable<Content> content,
-            final DateTime uploadTimestamp) {
-        return Maps.toMap(content, new Function<Content, Duration>() {
-            @Override
-            public Duration apply(Content input) {
-                return new Duration(input.getLastUpdated(), uploadTimestamp);
-            }
-        });
-    }
-
     public static List<Content> orderContentForDeletion(Iterable<Content> toBeDeleted) {
         return HIERARCHICAL_ORDER.immutableSortedCopy(toBeDeleted);
     }
@@ -233,6 +231,7 @@ public class YouViewRemoteClient {
         }
     }
     
+    // TODO this needs to return transactions
     // TODO does this need two deletes for the item crid? surely it only needs deletes for crid, version-crid and imi?
     private boolean sendDelete(Item item) {
         Publisher publisher = item.getPublisher();
@@ -281,6 +280,15 @@ public class YouViewRemoteClient {
         } catch (HttpException e) {
             log.error(e.getMessage(), e);
             return false;
+        }
+    }
+    
+    public TransactionStatus checkRemoteStatusOf(Transaction transaction) {
+        SimpleHttpClient httpClient = publisherConfig.getHttpClient(transaction.publisher());
+        try {
+            return httpClient.get(new SimpleHttpRequest<>(transaction.id(), new StatusReportTransformer()));
+        } catch (Exception e) {
+            throw new RemoteCheckException("error polling status for " + transaction.id(), e);
         }
     }
 }

@@ -19,7 +19,7 @@ public class Transaction {
     private final Set<String> content;
     private final TransactionStatus status;
     
-    public Transaction(String id, Publisher publisher, DateTime uploadTime, Set<String> content, TransactionStatus status) {
+    public Transaction(String id, Publisher publisher, DateTime uploadTime, Iterable<String> content, TransactionStatus status) {
         this.id = checkNotNull(id);
         this.publisher = checkNotNull(publisher);
         this.uploadTime = checkNotNull(uploadTime);

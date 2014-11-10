@@ -25,6 +25,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.WriteResult;
+import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
 
 
 public class MongoTransactionStore implements TransactionStore {
@@ -90,6 +91,20 @@ public class MongoTransactionStore implements TransactionStore {
 
     private DBCursor getOrderedCursor(DBObject query) {
         return collection.find(query).sort(new MongoSortBuilder().descending(UPLOAD_TIME_KEY).build());
+    }
+
+    @Override
+    public Iterable<Transaction> allTransactions(TransactionStateType state, Publisher publisher) {
+        MongoQueryBuilder mongoQuery = new MongoQueryBuilder();
+        
+        mongoQuery.fieldEquals(PUBLISHER_KEY, publisher.key());
+        mongoQuery.fieldEquals(STATUS_KEY + "." + STATUS_KEY, state.name());
+        
+        DBCursor cursor = getOrderedCursor(mongoQuery.build());
+        
+        return FluentIterable.from(cursor)
+                .transform(TransactionTranslator.fromDBObjects())
+                .filter(Predicates.notNull());
     }
     
 }

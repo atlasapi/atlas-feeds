@@ -95,7 +95,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     private final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator);
     
     @Test
-    public void testSkipsAsinIfNoItem() throws JAXBException {
+    public void testSkipsItemIfNoAsin() throws JAXBException {
         Film film = createFilm("FilmUri");
         film.setImage("Film Image");
         

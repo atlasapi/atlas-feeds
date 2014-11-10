@@ -1,12 +1,15 @@
     package org.atlasapi.feeds.youview;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.YouViewRemoteClient.orderContentForDeletion;
+import static org.atlasapi.feeds.youview.upload.YouViewRemoteClient.orderContentForDeletion;
 
 import java.util.Iterator;
 import java.util.List;
 
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.transactions.Transaction;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
+import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
@@ -44,14 +47,17 @@ public class YouViewUploadTask extends ScheduledTask {
     private final Logger log = LoggerFactory.getLogger(YouViewUploadTask.class);
     private final Publisher publisher;
     private final YouViewRemoteClient remoteClient;
+    private final TransactionStore transactionStore;
     
-    public YouViewUploadTask(YouViewRemoteClient remoteClient, int chunkSize, LastUpdatedContentFinder contentFinder, YouViewLastUpdatedStore store, Publisher publisher, boolean isBootstrap) {
+    public YouViewUploadTask(YouViewRemoteClient remoteClient, int chunkSize, LastUpdatedContentFinder contentFinder, 
+            YouViewLastUpdatedStore store, Publisher publisher, boolean isBootstrap, TransactionStore transactionStore) {
         this.remoteClient = checkNotNull(remoteClient);
         this.chunkSize = checkNotNull(chunkSize);
         this.contentFinder = checkNotNull(contentFinder);
         this.store = checkNotNull(store);
         this.publisher = checkNotNull(publisher);
         this.isBootstrap = checkNotNull(isBootstrap);
+        this.transactionStore = checkNotNull(transactionStore);
     }
     
     @Override
@@ -154,7 +160,10 @@ public class YouViewUploadTask extends ScheduledTask {
             @Override
             public boolean process(Iterable<Content> chunk) {
                 try {
-                    remoteClient.upload(chunk);
+                    Optional<Transaction> transaction = remoteClient.upload(chunk);
+                    if (transaction.isPresent()) {
+                        transactionStore.save(transaction.get());
+                    }
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch (Exception e) {
                     log.error("error on chunk upload: " + e);

@@ -7,7 +7,9 @@ import java.util.Collection;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.feeds.youview.YouViewRemoteClient;
+import org.atlasapi.feeds.youview.transactions.Transaction;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
+import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Publisher;
@@ -39,11 +41,14 @@ public class YouViewUploadController {
     private final LastUpdatedContentFinder contentFinder;
     private final ContentResolver contentResolver;
     private final YouViewRemoteClient remoteClient;
+    private final TransactionStore txnStore;
     
-    public YouViewUploadController(LastUpdatedContentFinder contentFinder, ContentResolver contentResolver, YouViewRemoteClient remoteClient) {
+    public YouViewUploadController(LastUpdatedContentFinder contentFinder, ContentResolver contentResolver, 
+            YouViewRemoteClient remoteClient, TransactionStore txnStore) {
         this.contentFinder = checkNotNull(contentFinder);
         this.contentResolver = checkNotNull(contentResolver);
         this.remoteClient = checkNotNull(remoteClient);
+        this.txnStore = checkNotNull(txnStore);
     }
         
     /**
@@ -68,7 +73,10 @@ public class YouViewUploadController {
         Optional<String> possibleUri = Optional.fromNullable(uri);
         Iterable<Content> content = getContent(publisher, Optional.<String>absent(), possibleUri);
 
-        remoteClient.upload(content);
+        Optional<Transaction> txn = remoteClient.upload(content);
+        if (txn.isPresent()) {
+            txnStore.save(txn.get());
+        }
 
         response.setStatus(HttpServletResponse.SC_OK);
         String message = "Upload for " + uri + " sent sucessfully";

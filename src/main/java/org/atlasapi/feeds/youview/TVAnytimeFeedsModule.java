@@ -2,7 +2,6 @@ package org.atlasapi.feeds.youview;
 
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
@@ -18,6 +17,7 @@ import org.atlasapi.feeds.youview.statistics.FeedStatisticsResolver;
 import org.atlasapi.feeds.youview.statistics.MockDataFeedStatisticsResolver;
 import org.atlasapi.feeds.youview.transactions.persistence.MongoTransactionStore;
 import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
+import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
@@ -95,7 +95,6 @@ public class TVAnytimeFeedsModule {
         return new YouViewRemoteClient(
                 feedGenerator(), 
                 configFactory(), 
-                transactionStore(), 
                 new SystemClock(), 
                 Boolean.parseBoolean(performValidation)
         );
@@ -103,7 +102,7 @@ public class TVAnytimeFeedsModule {
     
     private YouViewPerPublisherFactory configFactory() {
         YouViewPerPublisherFactory.Builder factory = YouViewPerPublisherFactory.builder();
-        for (UploadPublisherConfiguration config : parseConfig()) {
+        for (UploadPublisherConfiguration config : parseConfig().getConfigs()) {
             factory = factory.withPublisher(
                     config.publisher(), 
                     PublisherIdUtilities.idUtilFor(config.publisher(), config.url()), 
@@ -122,7 +121,7 @@ public class TVAnytimeFeedsModule {
     }
     
     @Bean
-    public Set<UploadPublisherConfiguration> parseConfig() {
+    public UploadPublisherConfigurations parseConfig() {
         ImmutableSet.Builder<UploadPublisherConfiguration> config = ImmutableSet.builder();
         for (Entry<String, Publisher> publisher : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisher.getKey();
@@ -136,7 +135,7 @@ public class TVAnytimeFeedsModule {
                 );
             }
         }
-        return config.build();
+        return new UploadPublisherConfigurations(config.build());
     }
 
     private boolean isEnabled(String publisherPrefix) {

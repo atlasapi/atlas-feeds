@@ -7,7 +7,7 @@ import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
-import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
+import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
@@ -43,7 +43,6 @@ public class DeletionUrlTest {
     private final YouViewRemoteClient youViewClient = new YouViewRemoteClient(
             generator, 
             configurationFactory, 
-            Mockito.mock(TransactionStore.class), 
             new TimeMachine(), 
             false
     );

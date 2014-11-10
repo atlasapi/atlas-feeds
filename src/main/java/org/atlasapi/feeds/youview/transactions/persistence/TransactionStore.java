@@ -6,6 +6,7 @@ import org.atlasapi.feeds.youview.transactions.TransactionStatus;
 import org.atlasapi.media.entity.Publisher;
 
 import com.google.common.base.Optional;
+import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
 
 
 public interface TransactionStore {
@@ -24,4 +25,6 @@ public interface TransactionStore {
     Optional<Transaction> transactionFor(String transactionId, Publisher publisher);
     
     Iterable<Transaction> allTransactions(TransactionQuery query);
+    
+    Iterable<Transaction> allTransactions(TransactionStateType state, Publisher publisher);
 }
