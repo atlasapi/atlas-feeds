@@ -59,6 +59,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.metabroadcast.common.base.Maybe;
+import com.metabroadcast.common.time.SystemClock;
 import com.metabroadcast.common.webapp.http.CacheHeaderWriter;
 
 @Controller
@@ -88,7 +89,7 @@ public class SiteMapController {
         this.queryBuilder = queryBuilder;
         this.lister = contentLister;
         this.defaultHost = defaultHost;
-        this.outputter = new SiteMapOutputter(siteMapUriGenerators, new DefaultSiteMapUriGenerator(), serviceId);
+        this.outputter = new SiteMapOutputter(siteMapUriGenerators, new DefaultSiteMapUriGenerator(), serviceId, new SystemClock());
     }
 
     @RequestMapping("/feeds/sitemaps/index.xml")
