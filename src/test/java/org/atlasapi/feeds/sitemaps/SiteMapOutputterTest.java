@@ -30,6 +30,7 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeConstants;
 import org.joda.time.DateTimeZone;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -41,14 +42,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.time.Clock;
+import com.metabroadcast.common.time.TimeMachine;
 
 public class SiteMapOutputterTest extends TestCase {
 
-	private final SiteMapOutputter outputter = new SiteMapOutputter(ImmutableMap.<Publisher, SiteMapUriGenerator>of(), new DefaultSiteMapUriGenerator(), null);
+    private final TimeMachine clock = new TimeMachine();
+	private final SiteMapOutputter outputter = new SiteMapOutputter(ImmutableMap.<Publisher, SiteMapUriGenerator>of(), new DefaultSiteMapUriGenerator(), null, clock);
 	
 	
 	public void testOutputtingASitemap() throws Exception {
 		
+	    clock.jumpTo(new DateTime(2007, DateTimeConstants.JANUARY, 1, 1, 0, 0, 0));
 		Item glee = new Episode("http://www.channel4.com/programmes/grand-designs/1", "c4:grand-designs_1", Publisher.C4);
 		glee.setThumbnail("granddesignsThumbnail");
 		glee.setTitle("Grand Designs");
