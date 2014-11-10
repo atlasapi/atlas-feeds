@@ -56,6 +56,8 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionSt
 
 public class YouViewRemoteClient {
     
+    private static final String TRANSACTION_URL_STEM = "/transaction/";
+
     private static final Ordering<Content> HIERARCHICAL_ORDER = new Ordering<Content>() {
         @Override
         public int compare(Content left, Content right) {
@@ -189,8 +191,13 @@ public class YouViewRemoteClient {
     }
     
     private Transaction createTransactionFrom(String transactionUrl, Publisher publisher, Iterable<Content> uploadedContent) {
+        String id = parseIdFrom(publisherConfig.getIdUtil(publisher), transactionUrl);
         TransactionStatus status = new TransactionStatus(TransactionStateType.ACCEPTED, "Successfully uploaded to YouView");
-        return new Transaction(transactionUrl, publisher, clock.now(), Iterables.transform(uploadedContent, TO_URL), status);
+        return new Transaction(id, publisher, clock.now(), Iterables.transform(uploadedContent, TO_URL), status);
+    }
+
+    private String parseIdFrom(PublisherIdUtility idUtil, String transactionUrl) {
+        return transactionUrl.replace(idUtil.getYouViewBaseUrl() + TRANSACTION_URL_STEM, "");
     }
 
     // TODO move validation step to somewhere logical.
@@ -285,10 +292,15 @@ public class YouViewRemoteClient {
     
     public TransactionStatus checkRemoteStatusOf(Transaction transaction) {
         SimpleHttpClient httpClient = publisherConfig.getHttpClient(transaction.publisher());
+        PublisherIdUtility idUtil = publisherConfig.getIdUtil(transaction.publisher());
         try {
-            return httpClient.get(new SimpleHttpRequest<>(transaction.id(), new StatusReportTransformer()));
+            return httpClient.get(new SimpleHttpRequest<>(buildTransactionUrl(idUtil, transaction.id()), new StatusReportTransformer()));
         } catch (Exception e) {
             throw new RemoteCheckException("error polling status for " + transaction.id(), e);
         }
+    }
+
+    private String buildTransactionUrl(PublisherIdUtility idUtil, String id) {
+        return idUtil.getYouViewBaseUrl() + TRANSACTION_URL_STEM + id;
     }
 }
