@@ -28,8 +28,10 @@ import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.ChildRef;
+import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Described;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
@@ -152,8 +154,10 @@ public class SiteMapController {
             Content content = contents.next();
             if (content instanceof Item) {
                 Item item = (Item) content;
-                if((item.getThumbnail() != null && hasLinkLocation(item))
-                        || !item.getClips().isEmpty()) {
+                if((item.getThumbnail() != null 
+                        && outputter.hasRequiredAttributesForOutput(item)
+                        && ( outputter.itemLocation(item).isPresent()
+                                || hasValidClip(item)))) {
                     brands.add(item.getContainer().getUri());
                 }
             } else if (content instanceof Series) {
@@ -163,7 +167,7 @@ public class SiteMapController {
                 }
             } else if (content instanceof Brand) {
                 Brand brand = (Brand) content;
-                if (!brand.getClips().isEmpty()) {
+                if (hasValidClip(brand)) {
                     brands.add(brand.getCanonicalUri());
                 }
             } else {
@@ -175,19 +179,15 @@ public class SiteMapController {
         return sitemapRefs;
     }
 
-    private boolean hasLinkLocation(Item item) {
-        for (Version version : item.getVersions()) {
-            for (Encoding encoding : version.getManifestedAs()) {
-                for (Location location : encoding.getAvailableAt()) {
-                    if(TransportType.LINK.equals(location.getTransportType())){
-                        return true;
-                    }
-                }
+    private boolean hasValidClip(Content content) {
+        for (Clip clip : content.getClips()) {
+            if (outputter.clipLocation(clip).isPresent()) {
+                return true;
             }
         }
         return false;
     }
-    
+
     private Iterable<Content> resolve(Iterable<String> brands, ContentQuery query) {
         return filter(concat(queryExecutor.executeUriQuery(brands, query).values()), Content.class);
     }
