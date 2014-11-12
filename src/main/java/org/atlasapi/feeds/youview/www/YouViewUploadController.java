@@ -71,12 +71,15 @@ public class YouViewUploadController {
         }
 
         Optional<String> possibleUri = Optional.fromNullable(uri);
+        if (!possibleUri.isPresent()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "required parameter 'uri' not specified");
+            response.setContentLength(0);
+            return;
+        }
         Iterable<Content> content = getContent(publisher, Optional.<String>absent(), possibleUri);
 
-        Optional<Transaction> txn = remoteClient.upload(content);
-        if (txn.isPresent()) {
-            txnStore.save(txn.get());
-        }
+        Transaction txn = remoteClient.upload(Iterables.getOnlyElement(content));
+        txnStore.save(txn);
 
         response.setStatus(HttpServletResponse.SC_OK);
         String message = "Upload for " + uri + " sent sucessfully";
@@ -110,6 +113,7 @@ public class YouViewUploadController {
         response.getOutputStream().write(message.getBytes(Charsets.UTF_8));
     }
     
+    // TODO since param is not needed for any use case - remove
     private Iterable<Content> getContent(Publisher publisher, Optional<String> since, Optional<String> possibleUri) {
         if (possibleUri.isPresent()) {
             ResolvedContent resolvedContent = contentResolver.findByCanonicalUris(ImmutableList.of(possibleUri.get()));

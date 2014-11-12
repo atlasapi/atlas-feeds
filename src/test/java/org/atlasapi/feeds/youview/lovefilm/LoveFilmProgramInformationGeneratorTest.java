@@ -1,44 +1,41 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview.lovefilm;
 
 import static org.junit.Assert.assertEquals;
-
-import java.util.Set;
 
 import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
-import org.atlasapi.feeds.youview.nitro.NitroProgramInformationGenerator;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.media.entity.Restriction;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
 import org.junit.Test;
 
 import tva.metadata._2010.ProgramInformationType;
 import tva.metadata.extended._2010.ExtendedContentDescriptionType;
+import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.intl.Countries;
 
-
-public class DefaultProgramInformationGeneratorTest {
+public class LoveFilmProgramInformationGeneratorTest {
     
-    private IdGenerator idGenerator = new NitroIdGenerator();
+    private IdGenerator idGenerator = new LoveFilmIdGenerator();
     private TvAnytimeElementFactory elementFactory = new TvAnytimeElementFactory();
-    private final ProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator, elementFactory);
+    
+    private final ProgramInformationGenerator generator = new LoveFilmProgramInformationGenerator(idGenerator, elementFactory);
 
     @Test
     public void testPublisherIndependentFields() {
-        Version version = createVersion(Duration.standardMinutes(90), true);
-        Film film = createNitroFilm(ImmutableSet.of(version));
-        
-        ProgramInformationType progInfo = Iterables.getOnlyElement(generator.generate(film));
+        ProgramInformationType progInfo = Iterables.getOnlyElement(generator.generate(createLoveFilmFilm()));
 
+        UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
+        assertEquals("filmAsin", otherId.getValue());
+        
         ExtendedContentDescriptionType basicDescription = (ExtendedContentDescriptionType) progInfo.getBasicDescription();
         
         assertEquals("http://bbfc.org.uk/BBFCRatingCS/2002#PG", basicDescription.getParentalGuidance().getParentalRating().getHref());
@@ -47,42 +44,31 @@ public class DefaultProgramInformationGeneratorTest {
         assertEquals("P0DT1H30M0.000S", basicDescription.getDuration().toString());
         assertEquals("gb", Iterables.getOnlyElement(basicDescription.getProductionLocation()));
     }
-
+    
     @Test
-    public void testNitroSpecificFields() {
-        Version version = createVersion(Duration.standardMinutes(90), false);
+    public void testLoveFilmSpecificFields() {
+        ProgramInformationType progInfo = Iterables.getOnlyElement(generator.generate(createLoveFilmFilm()));
         
-        Film film = createNitroFilm(ImmutableSet.of(version));
-        ProgramInformationType progInfo = Iterables.getOnlyElement(generator.generate(film));
-        
-        assertEquals(idGenerator.generateVersionCrid(film, version), progInfo.getProgramId());
-        assertEquals(idGenerator.generateContentCrid(film), progInfo.getDerivedFrom().getCrid());
+        assertEquals("crid://lovefilm.com/product/177221_version", progInfo.getProgramId());
+        UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
+        assertEquals("deep_linking_id.lovefilm.com", otherId.getAuthority());
+        assertEquals("crid://lovefilm.com/product/177221", progInfo.getDerivedFrom().getCrid());
     }
-    
-    // TODO test multiple versions created if multiple ids are created for a set of versions on an item
-    
 
-    private Film createNitroFilm(Set<Version> versions) {
+    private Film createLoveFilmFilm() {
         Film film = new Film();
         
-        film.setCanonicalUri("http://nitro.bbc.co.uk/programmes/b01qyvnk");
+        film.setCanonicalUri("http://lovefilm.com/films/177221");
         film.setCurie("lf:f-177221");
-        film.setPublisher(Publisher.BBC_NITRO);
+        film.setPublisher(Publisher.LOVEFILM);
         film.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));
         film.setCertificates(ImmutableList.of(new Certificate("PG", Countries.GB)));
         film.setYear(1963);
-        film.setVersions(versions);
+        film.addAlias(new Alias("gb:amazon:asin", "filmAsin"));
         
-        return film;
-    }
-    
-    private Version createVersion(Duration duration, boolean isRestricted) {
         Version version = new Version();
-        
-        version.setDuration(duration);
-        Restriction restriction = new Restriction();
-        restriction.setRestricted(isRestricted);
-        version.setRestriction(restriction);
-        return version;
+        version.setDuration(Duration.standardMinutes(90));
+        film.setVersions(ImmutableSet.of(version));
+        return film;
     }
 }

@@ -8,5 +8,5 @@ import tva.metadata._2010.TVAMainType;
 
 public interface TvAnytimeGenerator {
 
-    JAXBElement<TVAMainType> generateTVAnytimeFrom(Iterable<Content> contents);
+    JAXBElement<TVAMainType> generateTVAnytimeFrom(Content content);
 }

@@ -22,10 +22,10 @@ public class TVAnytimeElementFactoryTest {
     
     private DateTime time = new DateTime(2012, 1, 1, 0, 0, 0, 0).withZone(DateTimeZone.UTC);
     private Clock clock = new TimeMachine(time);
-    private final TVAnytimeElementFactory elementFactory;
+    private final TvAnytimeElementFactory elementFactory;
     
     public TVAnytimeElementFactoryTest() throws DatatypeConfigurationException {
-        this.elementFactory = new TVAnytimeElementFactory();
+        this.elementFactory = new TvAnytimeElementFactory();
     }
 
     @Test

@@ -20,7 +20,7 @@ import com.google.common.io.Resources;
 
 public abstract class GenreMappings implements GenreMapping {
 
-    private final Logger log = LoggerFactory.getLogger(NitroGenreMapping.class);
+    private final Logger log = LoggerFactory.getLogger(GenreMappings.class);
     
     private final Multimap<String, String> genreMapping;
     
@@ -31,9 +31,6 @@ public abstract class GenreMappings implements GenreMapping {
         }
         if (Publisher.AMAZON_UNBOX.equals(publisher)) {
             return new UnboxGenreMapping();
-        }
-        if (Publisher.BBC_NITRO.equals(publisher)) {
-            return new NitroGenreMapping();
         }
         throw new InvalidPublisherException(publisher);
     }
@@ -112,22 +109,6 @@ public abstract class GenreMappings implements GenreMapping {
         @Override
         public String genrePrefix() {
             return UNBOX_GENRE_PREFIX;
-        }
-    }
-    
-    public static final class NitroGenreMapping extends GenreMappings {
-
-        private static final String NITRO_GENRE_FILENAME = "Bbc_Nitro_YouView_GenreMapping.csv";
-        private static final String NITRO_GENRE_PREFIX = "http://nitro.bbc.co.uk/genres/";
-        
-        @Override
-        public String genreFileName() {
-            return NITRO_GENRE_FILENAME;
-        }
-        
-        @Override
-        public String genrePrefix() {
-            return NITRO_GENRE_PREFIX;
         }
     }
 }
