@@ -36,6 +36,7 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
     // TODO all this certificate code will likely change
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
     
+    // TODO fix all certificate code
     private static final Predicate<Certificate> FILTER_CERT_FOR_GB = new Predicate<Certificate>() {
         @Override
         public boolean apply(Certificate input) {

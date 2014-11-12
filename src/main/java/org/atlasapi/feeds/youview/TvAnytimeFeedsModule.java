@@ -9,7 +9,6 @@ import org.atlasapi.feeds.tvanytime.TvAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
-import org.atlasapi.feeds.youview.nitro.NitroTvAnytimeElementCreator;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroGenreMapping;
 import org.atlasapi.feeds.youview.nitro.NitroGroupInformationGenerator;
@@ -17,6 +16,7 @@ import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroProgramInformationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroServiceMapping;
+import org.atlasapi.feeds.youview.nitro.NitroTvAnytimeElementCreator;
 import org.atlasapi.feeds.youview.services.ServiceMapping;
 import org.atlasapi.feeds.youview.statistics.FeedStatistics;
 import org.atlasapi.feeds.youview.statistics.FeedStatisticsResolver;
@@ -76,7 +76,7 @@ public class TvAnytimeFeedsModule {
         );
     }
 
-    // TODO implement this
+    // TODO pull out other service mappings, create delegating genremapping
     private GenreMapping genreMappingFor(Publisher publisher) {
         if (Publisher.BBC_NITRO.equals(publisher)) {
             return new NitroGenreMapping();
@@ -84,10 +84,10 @@ public class TvAnytimeFeedsModule {
         return null;
     }
 
-    // TODO implement this
+    // TODO implement other service mappings, create delegating servicemapping
     private ServiceMapping serviceMappingFor(Publisher publisher) {
         if (Publisher.BBC_NITRO.equals(publisher)) {
-            return new NitroServiceMapping();
+            return new NitroServiceMapping("nitro_service_mapping.csv");
         }
         return null;
     }
@@ -101,21 +101,6 @@ public class TvAnytimeFeedsModule {
         return new ContentResolvingContentHierarchyExtractor(contentResolver);
     }
 
-//    private YouViewPerPublisherFactory configFactory() {
-//        YouViewPerPublisherFactory.Builder factory = YouViewPerPublisherFactory.builder();
-//        for (UploadPublisherConfiguration config : parseConfig().getConfigs()) {
-//            factory = factory.withPublisher(
-//                    config.publisher(), 
-//                    PublisherIdUtilities.idUtilFor(config.publisher(), config.url()), 
-//                    ImageConfigurations.imageConfigFor(config.publisher()),
-//                    IdParsers.parserFor(config.publisher()), 
-//                    GenreMappings.mappingFor(config.publisher()), 
-//                    httpClient(config.credentials().username(), config.credentials().password())
-//            );
-//        }
-//        return factory.build();
-//    }
-    
     @Bean
     public TransactionStore transactionStore() {
         return new MongoTransactionStore(mongo);

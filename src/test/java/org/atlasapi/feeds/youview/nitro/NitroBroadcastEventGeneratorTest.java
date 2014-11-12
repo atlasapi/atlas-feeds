@@ -13,7 +13,6 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.youview.nitro.NitroBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.services.ServiceMapping;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
@@ -63,7 +62,7 @@ public class NitroBroadcastEventGeneratorTest {
         Alias alias = new Alias("bbc:service:id", BBC_SERVICE_ID);
         when(channel.getAliases()).thenReturn(ImmutableSet.of(alias));
         
-        when(serviceMapping.youviewServiceIdFor(BBC_SERVICE_ID)).thenReturn(YOUVIEW_SERVICE_ID);
+        when(serviceMapping.youviewServiceIdFor(BBC_SERVICE_ID)).thenReturn(ImmutableSet.of(YOUVIEW_SERVICE_ID));
         
         when(idGenerator.generateBroadcastImi(any(Broadcast.class))).thenReturn(BROADCAST_IMI);
         when(idGenerator.generateVersionCrid(any(Item.class), any(Version.class))).thenReturn(VERSION_CRID);
