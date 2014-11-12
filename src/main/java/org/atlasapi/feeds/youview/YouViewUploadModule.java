@@ -5,6 +5,7 @@ import javax.annotation.PostConstruct;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
 import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
@@ -41,6 +42,7 @@ public class YouViewUploadModule {
     private @Autowired UploadPublisherConfigurations uploadConfig;
     private @Autowired YouViewRemoteClient youViewRemoteClient;
     private @Autowired TransactionStore transactionStore;
+    private @Autowired FeedStatisticsStore feedStatsStore;
 
     @PostConstruct
     public void startScheduledTasks() {
@@ -66,7 +68,7 @@ public class YouViewUploadModule {
     }
 
     private YouViewUploadTask uploadTask(Publisher publisher, int chunkSize, boolean isBootstrap) {
-        return new YouViewUploadTask(youViewClient, chunkSize, contentFinder, store(), publisher, isBootstrap, transactionStore);
+        return new YouViewUploadTask(youViewClient, chunkSize, contentFinder, store(), publisher, isBootstrap, transactionStore, feedStatsStore);
     }
 
     public @Bean YouViewLastUpdatedStore store() {

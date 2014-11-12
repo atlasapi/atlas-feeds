@@ -12,9 +12,9 @@ import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
-import org.atlasapi.feeds.youview.statistics.FeedStatistics;
 import org.atlasapi.feeds.youview.statistics.FeedStatisticsResolver;
-import org.atlasapi.feeds.youview.statistics.MockDataFeedStatisticsResolver;
+import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
+import org.atlasapi.feeds.youview.statistics.MongoFeedStatisticsStore;
 import org.atlasapi.feeds.youview.transactions.persistence.MongoTransactionStore;
 import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
 import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
@@ -22,8 +22,6 @@ import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
-import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -58,8 +56,12 @@ public class TVAnytimeFeedsModule {
     
     @Bean
     public FeedStatisticsResolver feedStatsResolver() {
-        FeedStatistics mockedStats = new FeedStatistics(Publisher.BBC_NITRO, 123, Duration.standardMinutes(37), DateTime.now().minusMonths(1));
-        return new MockDataFeedStatisticsResolver(mockedStats);
+        return feedStatsStore();
+    }
+    
+    @Bean 
+    public FeedStatisticsStore feedStatsStore() {
+        return new MongoFeedStatisticsStore(mongo, new SystemClock());
     }
     
     @Bean 

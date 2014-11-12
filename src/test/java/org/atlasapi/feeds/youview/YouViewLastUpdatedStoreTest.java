@@ -12,6 +12,7 @@ import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
 import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.media.entity.Content;
@@ -56,7 +57,7 @@ public class YouViewLastUpdatedStoreTest {
     
     @Test(expected = RuntimeException.class)
     public void testDeltaWontRunIfNoLastUpdatedRecord() throws HttpException {
-        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, false, Mockito.mock(TransactionStore.class));
+        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, false, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
         task.run();
         Mockito.verifyZeroInteractions(lastUpdatedContentFinder.updatedSince(Publisher.LOVEFILM, Mockito.any(DateTime.class)));
         Mockito.verifyZeroInteractions(httpClient.post(Mockito.anyString(), Mockito.any(Payload.class)));
@@ -67,7 +68,7 @@ public class YouViewLastUpdatedStoreTest {
     public void testDeltaWontRunIfNoLastUpdatedRecordForThatPublisher() throws HttpException {
         store.setLastUpdated(DateTime.now().minusDays(2), Publisher.AMAZON_UNBOX);
         
-        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, false, Mockito.mock(TransactionStore.class));
+        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, false, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
         task.run();
         Mockito.verifyZeroInteractions(lastUpdatedContentFinder.updatedSince(Publisher.LOVEFILM, Mockito.any(DateTime.class)));
         Mockito.verifyZeroInteractions(httpClient.post(Mockito.anyString(), Mockito.any(Payload.class)));
@@ -80,7 +81,7 @@ public class YouViewLastUpdatedStoreTest {
         assertFalse(store.getLastUpdated(Publisher.LOVEFILM).isPresent());
         assertFalse(store.getLastUpdated(Publisher.AMAZON_UNBOX).isPresent());
         
-        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, true, Mockito.mock(TransactionStore.class));
+        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, true, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
         task.run();
         Mockito.when(lastUpdatedContentFinder.updatedSince(Publisher.LOVEFILM, Mockito.any(DateTime.class))).thenReturn(ImmutableList.<Content>of().iterator());
       
