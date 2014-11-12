@@ -26,7 +26,12 @@ public class TransactionStatusTranslator {
         TranslatorUtils.from(dbo, STATUS_KEY, status.status().name());
         TranslatorUtils.from(dbo, MESSAGE_KEY, status.message());
         if (status.fragmentReports().isPresent()) {
-            TranslatorUtils.fromIterable(dbo, FRAGMENT_REPORTS_KEY, status.fragmentReports().get(), FragmentReportTranslator.toDBObject());
+            TranslatorUtils.fromIterable(
+                    dbo, 
+                    FRAGMENT_REPORTS_KEY, 
+                    status.fragmentReports().get(), 
+                    FragmentReportTranslator.toDBObject()
+            );
         }
         
         return dbo;
@@ -35,11 +40,12 @@ public class TransactionStatusTranslator {
     public static TransactionStatus fromDBObject(DBObject dbo) {
         TransactionStateType status = TransactionStateType.valueOf(TranslatorUtils.toString(dbo, STATUS_KEY));
         String message = TranslatorUtils.toString(dbo, MESSAGE_KEY);
-        Optional<Iterable<FragmentReportType>> fragmentReports = TranslatorUtils.toIterable(dbo, FRAGMENT_REPORTS_KEY, FragmentReportTranslator.fromDBObject());
-        if (fragmentReports.isPresent()) {
-            return new TransactionStatus(status, message, fragmentReports.get());
-        } else {
-            return new TransactionStatus(status, message);
-        }
+        Optional<Iterable<FragmentReportType>> fragmentReports = TranslatorUtils.toIterable(
+                dbo, 
+                FRAGMENT_REPORTS_KEY, 
+                FragmentReportTranslator.fromDBObject()
+        );
+        
+        return new TransactionStatus(status, message, fragmentReports.orNull());
     }
 }

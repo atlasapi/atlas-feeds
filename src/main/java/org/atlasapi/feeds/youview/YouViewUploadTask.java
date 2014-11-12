@@ -141,7 +141,7 @@ public class YouViewUploadTask extends ScheduledTask {
         DateTime lastUpdated = new DateTime();
         Iterator<Content> allContent = getContentSinceDate(Optional.<DateTime>absent());
         
-        // TODO THIS IS SO HORRIFIC IT'S NOT EVEN TRUE
+        // TODO This is bad, remove at first opportunity
         int queueSize = Iterators.size(allContent);
         Duration updateLatency = Duration.millis(0l);
         statsStore.save(createFeedStatistics(queueSize, updateLatency));

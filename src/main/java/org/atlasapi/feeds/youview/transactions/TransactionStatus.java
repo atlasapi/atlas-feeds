@@ -25,10 +25,16 @@ public final class TransactionStatus {
             Iterable<FragmentReportType> fragmentReports) {
         this.status = checkNotNull(status);
         this.message = checkNotNull(message);
+        this.fragmentReports = fromNullable(fragmentReports);
+    }
+
+    private static Optional<List<FragmentReportType>> fromNullable(
+            Iterable<FragmentReportType> fragmentReports) {
+        
         if (fragmentReports == null) {
-            this.fragmentReports = Optional.absent();
+            return Optional.absent();
         } else {
-            this.fragmentReports = Optional.<List<FragmentReportType>>of(
+            return Optional.<List<FragmentReportType>>of(
                     ImmutableList.copyOf(fragmentReports)
             );
         }

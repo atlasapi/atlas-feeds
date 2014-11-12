@@ -22,7 +22,7 @@ public class TransactionQuery {
         return new Builder(selection, publisher);
     }
     
-    public TransactionQuery(Selection selection, Publisher publisher, Optional<String> contentUri, 
+    private TransactionQuery(Selection selection, Publisher publisher, Optional<String> contentUri, 
             Optional<String> transactionId, Optional<TransactionStateType> transactionStatus) {
         this.selection = checkNotNull(selection);
         this.publisher = checkNotNull(publisher);
