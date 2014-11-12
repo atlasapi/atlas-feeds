@@ -143,7 +143,7 @@ public class YouViewUploadTask extends ScheduledTask {
         
         // TODO THIS IS SO HORRIFIC IT'S NOT EVEN TRUE
         int queueSize = Iterators.size(allContent);
-        Duration updateLatency = null;
+        Duration updateLatency = Duration.millis(0l);
         statsStore.save(createFeedStatistics(queueSize, updateLatency));
         
         YouViewUploadProcessor<UpdateProgress> processor = uploadProcessor();
