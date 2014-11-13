@@ -1,12 +1,10 @@
-package org.atlasapi.feeds.youview.lovefilm;
+package org.atlasapi.feeds.youview.nitro;
 
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
@@ -14,16 +12,12 @@ import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.youview.NameComponentTypeEquivalence;
 import org.atlasapi.feeds.youview.SynopsisTypeEquivalence;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
-import org.atlasapi.feeds.youview.genres.GenreMappings;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmGroupInformationGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
-import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
@@ -35,31 +29,26 @@ import org.junit.Test;
 
 import tva.metadata._2010.BaseMemberOfType;
 import tva.metadata._2010.BasicContentDescriptionType;
-import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.CreditsItemType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.GroupInformationType;
 import tva.metadata._2010.ProgramGroupTypeType;
 import tva.metadata._2010.SynopsisLengthType;
 import tva.metadata._2010.SynopsisType;
-import tva.metadata.extended._2010.ContentPropertiesType;
 import tva.metadata.extended._2010.ExtendedRelatedMaterialType;
-import tva.metadata.extended._2010.StillImageContentAttributesType;
 import tva.mpeg7._2008.ExtendedLanguageType;
 import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 
-import com.google.common.base.Equivalence;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.metabroadcast.common.intl.Countries;
 
-public class LoveFilmGroupInformationGeneratorTest {
+public class NitroGroupInformationGeneratorTest {
     
     private static final Function<GenreType, String> TO_HREF = new Function<GenreType, String>() {
         @Override
@@ -70,10 +59,10 @@ public class LoveFilmGroupInformationGeneratorTest {
     
     private SynopsisTypeEquivalence SYNOPSIS_EQUIVALENCE = new SynopsisTypeEquivalence();
     private NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
-    private IdGenerator idGenerator = new LoveFilmIdGenerator();
-    private GenreMapping genreMapping = GenreMappings.mappingFor(Publisher.LOVEFILM); 
+    private IdGenerator idGenerator = new NitroIdGenerator();
+    private GenreMapping genreMapping = new NitroGenreMapping(); 
     
-    private final GroupInformationGenerator generator = new LoveFilmGroupInformationGenerator(idGenerator, genreMapping);
+    private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping);
     
     @Test
     public void testRelatedMaterialNotGeneratedIfNullOrEmptyImageString() {
@@ -86,114 +75,36 @@ public class LoveFilmGroupInformationGeneratorTest {
         
         assertTrue(desc.getRelatedMaterial().isEmpty());
     }
-
     
-    @Test
-    public void testServiceIdRefCreatedForTopLevelSeries() {
-        Series series = createSeries();
-        series.setParentRef(null);
-        
-        Episode child = createEpisode();
-        child.setParentRef(ParentRef.parentRefFrom(series));
-        child.setSeriesRef(null);
-        child.setSeriesNumber(null);
-        
-        GroupInformationType groupInfo = generator.generate(series, Optional.<Brand>absent(), child);
-        
-        assertEquals("http://lovefilm.com/ContentOwning", groupInfo.getServiceIDRef());
-    }
-    
-    /**
-     * This tests both the conversion from lovefilm genre uris to the youview
-     * genres, as well as de-duplication of the resulting genre collection
-     */
-    @Test
-    public void testFilmGenreGeneration() {
-        
-        Film film = createFilm();
-        film.setGenres(ImmutableSet.of(
-            "http://lovefilm.com/genres/comedy",
-            "http://lovefilm.com/genres/comedy/family",
-            "http://lovefilm.com/genres/comedy/general"
-            ));
-        
-        GroupInformationType groupInfo = generator.generate(film);
-        
-        BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        
-        List<String> genreHrefs = Lists.newArrayList(Iterables.transform(desc.getGenre(), TO_HREF));
-        
-        List<String> expectedGenres = Lists.newArrayList(
-            "urn:tva:metadata:cs:OriginationCS:2005:5.7",
-            "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3",
-            "urn:tva:metadata:cs:ContentCS:2010:3.5.7",
-            "urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9"
-            );
-        
-        Collections.sort(expectedGenres);
-        Collections.sort(genreHrefs);
-        
-        assertEquals(expectedGenres, genreHrefs);
-    }
-    
-    @Test
-    public void testTVGenreGeneration() {
-        
-        Episode episode = createEpisode();
-        episode.setGenres(ImmutableSet.of(
-            "http://lovefilm.com/genres/comedy",
-            "http://lovefilm.com/genres/comedy/family"
-            ));
-        
-        GroupInformationType groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
-        
-        BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        
-        List<String> genreHrefs = Lists.newArrayList(Iterables.transform(desc.getGenre(), TO_HREF));
-        
-        List<String> expectedGenres = Lists.newArrayList(
-            "urn:tva:metadata:cs:OriginationCS:2005:5.8",
-            "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3",
-            "urn:tva:metadata:cs:ContentCS:2010:3.5.7",
-            "urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9"
-            );
-        
-        Collections.sort(expectedGenres);
-        Collections.sort(genreHrefs);
-        
-        assertEquals(expectedGenres, genreHrefs);
-    }
+    // TODO test genre output
     
     @Test
     public void testSynopsisGeneration() {
+        String fullDescription = "full description";
+        String shortDescription = "short description";
+        String mediumDescription = "medium description";
+        String longDescription = "long description";
+        
         Film film = createFilm();
-        film.setDescription(
-            "Some lengthy episode description, that manages to go well over the medium description cut-off and " +
-            "thus shows the differences between short, medium and long descriptions, particularly regarding the " +
-            "appending or not of ellipses."
-            );
+        film.setDescription(fullDescription);
+        film.setShortDescription(shortDescription);
+        film.setMediumDescription(mediumDescription);
+        film.setLongDescription(longDescription);
         
         GroupInformationType groupInfo = generator.generate(film);
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
         
         SynopsisType shortDesc = new SynopsisType();
         shortDesc.setLength(SynopsisLengthType.SHORT);
-        shortDesc.setValue("Some lengthy episode description, that manages to go well over the medium description...");
+        shortDesc.setValue(shortDescription);
         
         SynopsisType mediumDesc = new SynopsisType();
         mediumDesc.setLength(SynopsisLengthType.MEDIUM);
-        mediumDesc.setValue(
-            "Some lengthy episode description, that manages to go well over the medium description cut-off" +
-            " and thus shows the differences between short, medium and long descriptions, particularly regarding the appending..."
-            );
+        mediumDesc.setValue(mediumDescription);
         
         SynopsisType longDesc = new SynopsisType();
         longDesc.setLength(SynopsisLengthType.LONG);
-        longDesc.setValue(
-            "Some lengthy episode description, that manages to go well over the medium description cut-off and " +
-            "thus shows the differences between short, medium and long descriptions, particularly regarding the appending or " +
-            "not of ellipses."
-            );
+        longDesc.setValue(longDescription);
         
         assertTrue(SYNOPSIS_EQUIVALENCE.pairwise().equivalent(
             ImmutableSet.of(shortDesc, mediumDesc, longDesc), 
@@ -201,34 +112,8 @@ public class LoveFilmGroupInformationGeneratorTest {
             ));
     }
     
-    @Test
-    public void testImageGeneration() {
-        Film film = createFilm();
-        film.setImage("http://www.lovefilm.com/lovefilm/images/products/heroshots/1/177221-large.jpg");
-        
-        GroupInformationType groupInfo = generator.generate(film);
-        
-        BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
-
-        assertEquals("urn:tva:metadata:cs:HowRelatedCS:2010:19", relatedMaterial.getHowRelated().getHref());
-        assertEquals("urn:mpeg:mpeg7:cs:FileFormatCS:2001:1", relatedMaterial.getFormat().getHref());
-
-        assertEquals(
-            "http://www.lovefilm.com/lovefilm/images/products/heroshots/1/177221-large.jpg", 
-            relatedMaterial.getMediaLocator().getMediaUri()
-        );
-
-        StillImageContentAttributesType imageProperties = (StillImageContentAttributesType)
-                Iterables.getOnlyElement(relatedMaterial.getContentProperties().getContentAttributes());
-        
-        assertEquals(Integer.valueOf(640), imageProperties.getWidth());
-        assertEquals(Integer.valueOf(360), imageProperties.getHeight());
-        
-        ControlledTermType usage = Iterables.getOnlyElement(imageProperties.getIntendedUse());
-        
-        assertEquals("http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary", usage.getHref());
-    }
+   // TODO test image generation
+    // TODO test default image dimensions
     
     @Test
     public void testPersonGeneration() {
@@ -275,8 +160,8 @@ public class LoveFilmGroupInformationGeneratorTest {
     public void testFilmGroupInformationGeneration() {
         GroupInformationType groupInfo = generator.generate(createFilm());
 
-        assertEquals("crid://lovefilm.com/product/177221", groupInfo.getGroupId());
-        assertEquals("http://lovefilm.com/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b020tm1g", groupInfo.getGroupId());
+//        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
         
@@ -295,10 +180,10 @@ public class LoveFilmGroupInformationGeneratorTest {
     public void testEpisodeGroupInformationGeneration() {
         GroupInformationType groupInfo = generator.generate(createEpisode(), Optional.of(createSeries()), Optional.of(createBrand()));
 
-        assertEquals("crid://lovefilm.com/product/180014", groupInfo.getGroupId());
+        assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b03dfd6d", groupInfo.getGroupId());
         
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://lovefilm.com/product/179534", memberOf.getCrid());
+        assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b020tm1g", memberOf.getCrid());
         assertEquals(Long.valueOf(5), memberOf.getIndex());
         
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -322,11 +207,11 @@ public class LoveFilmGroupInformationGeneratorTest {
         
         GroupInformationType groupInfo = generator.generate(createSeries(), Optional.of(createBrand()), episode);
 
-        assertEquals("crid://lovefilm.com/product/179534", groupInfo.getGroupId());
+        assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b020tm1g", groupInfo.getGroupId());
         assertTrue(groupInfo.isOrdered());
         
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://lovefilm.com/product/184930", memberOf.getCrid());
+        assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b007n2qs", memberOf.getCrid());
         assertEquals(Long.valueOf(2), memberOf.getIndex());
         
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -357,8 +242,8 @@ public class LoveFilmGroupInformationGeneratorTest {
         
         GroupInformationType groupInfo = generator.generate(createBrand(), episode);
 
-        assertEquals("crid://lovefilm.com/product/184930", groupInfo.getGroupId());
-        assertEquals("http://lovefilm.com/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b007n2qs", groupInfo.getGroupId());
+//        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
         assertTrue(groupInfo.isOrdered());
                 
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -490,38 +375,11 @@ public class LoveFilmGroupInformationGeneratorTest {
             assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
         }
     }
-    
-    @Test
-    public void testImageDimensionsDefaultIfNoneProvided() { 
-        Film film = createFilm();
-        Image image = new Image("someImageUri");
-        image.setHeight(246);
-        image.setWidth(572);
-        film.setImages(ImmutableSet.of(image));
-        
-        GroupInformationType groupInfo = generator.generate(film);
-        
-        ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(groupInfo.getBasicDescription().getRelatedMaterial());
-        ContentPropertiesType contentProperties = relatedMaterial.getContentProperties();
-        StillImageContentAttributesType attributes = (StillImageContentAttributesType) Iterables.getOnlyElement(contentProperties.getContentAttributes());
-        assertThat(attributes.getHeight(), is(equalTo(246)));
-        assertThat(attributes.getWidth(), is(equalTo(572)));
-        
-        film.setImages(ImmutableSet.<Image>of());
-        
-        groupInfo = generator.generate(film);
-        
-        relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(groupInfo.getBasicDescription().getRelatedMaterial());
-        contentProperties = relatedMaterial.getContentProperties();
-        attributes = (StillImageContentAttributesType) Iterables.getOnlyElement(contentProperties.getContentAttributes());
-        assertThat(attributes.getHeight(), is(equalTo(360)));
-        assertThat(attributes.getWidth(), is(equalTo(640)));
-    }
-    
+
     private Brand createBrand() {
         Brand brand = new Brand();
         
-        brand.setCanonicalUri("http://lovefilm.com/episodes/184930");
+        brand.setCanonicalUri("http://nitro.bbc.co.uk/programmes/b007n2qs");
         brand.setCurie("lf:e-184930");
         brand.setTitle("Northern Lights");
         brand.setDescription("Some brand description");
@@ -546,7 +404,7 @@ public class LoveFilmGroupInformationGeneratorTest {
     private Series createSeries() {
         Series series = new Series();
         
-        series.setCanonicalUri("http://lovefilm.com/episodes/179534");
+        series.setCanonicalUri("http://nitro.bbc.co.uk/programmes/b020tm1g");
         series.setCurie("lf:e-179534");
         series.setTitle("Series 2");
         series.setDescription("Some series description");
@@ -565,7 +423,7 @@ public class LoveFilmGroupInformationGeneratorTest {
         mark.withName("Mark Benton");
         series.setPeople(ImmutableList.of(robson, mark));
         
-        ParentRef brandRef = new ParentRef("http://lovefilm.com/series/184930");
+        ParentRef brandRef = new ParentRef("http://nitro.bbc.co.uk/programmes/b007n2qs");
         series.setParentRef(brandRef);
         series.withSeriesNumber(2);
         
@@ -575,7 +433,7 @@ public class LoveFilmGroupInformationGeneratorTest {
     private Episode createEpisode() {
         Episode episode = new Episode();
         
-        episode.setCanonicalUri("http://lovefilm.com/episodes/180014");
+        episode.setCanonicalUri("http://nitro.bbc.co.uk/programmes/b03dfd6d");
         episode.setCurie("lf:e-180014");
         episode.setTitle("Episode 1");
         episode.setDescription("some episode description");
@@ -593,7 +451,7 @@ public class LoveFilmGroupInformationGeneratorTest {
         version.setDuration(Duration.standardMinutes(45));
         episode.addVersion(version);
         
-        ParentRef seriesRef = new ParentRef("http://lovefilm.com/series/179534");
+        ParentRef seriesRef = new ParentRef("http://nitro.bbc.co.uk/programmes/b020tm1g");
         episode.setSeriesRef(seriesRef);
         
         episode.setEpisodeNumber(5);
@@ -605,7 +463,7 @@ public class LoveFilmGroupInformationGeneratorTest {
     private Film createFilm() {
         Film film = new Film();
         
-        film.setCanonicalUri("http://lovefilm.com/films/177221");
+        film.setCanonicalUri("http://nitro.bbc.co.uk/programmes/b020tm1g");
         film.setCurie("lf:f-177221");
         film.setTitle("Dr. Strangelove");
         film.setDescription("Some film description");

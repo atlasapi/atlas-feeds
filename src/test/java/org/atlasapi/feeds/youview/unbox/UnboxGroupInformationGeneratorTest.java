@@ -11,10 +11,10 @@ import java.util.List;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.IdGenerator;
+import org.atlasapi.feeds.youview.NameComponentTypeEquivalence;
+import org.atlasapi.feeds.youview.SynopsisTypeEquivalence;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.genres.GenreMappings;
-import org.atlasapi.feeds.youview.unbox.UnboxGroupInformationGenerator;
-import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -48,7 +48,6 @@ import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 
-import com.google.common.base.Equivalence;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -649,32 +648,5 @@ public class UnboxGroupInformationGeneratorTest {
         film.addVersion(version);
         
         return film;
-    }
-    
-    private class SynopsisTypeEquivalence extends Equivalence<SynopsisType> {
-
-        @Override
-        protected boolean doEquivalent(SynopsisType a, SynopsisType b) {
-            return a.getValue().equals(b.getValue())
-                && a.getLength().equals(b.getLength());
-        }
-
-        @Override
-        protected int doHash(SynopsisType t) {
-            return 0;
-        }
-    }
-    
-    private class NameComponentTypeEquivalence extends Equivalence<NameComponentType> {
-
-        @Override
-        protected boolean doEquivalent(NameComponentType a, NameComponentType b) {
-            return a.getValue().equals(b.getValue());
-        }
-
-        @Override
-        protected int doHash(NameComponentType t) {
-            return 0;
-        }
     }
 }

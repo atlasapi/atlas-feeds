@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
@@ -77,12 +76,12 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         .put(Specialization.TV, "urn:tva:metadata:cs:OriginationCS:2005:5.8")
         .build();
     
-    private static final Map<SynopsisLengthType, Integer> YOUVIEW_SYNOPSIS_LENGTH = ImmutableMap.<SynopsisLengthType, Integer>builder()
-        .put(SynopsisLengthType.SHORT, 90)
-        .put(SynopsisLengthType.MEDIUM, 210)
-        .put(SynopsisLengthType.LONG, 1200)
-        .build();
-    
+//    private static final Map<SynopsisLengthType, Integer> YOUVIEW_SYNOPSIS_LENGTH = ImmutableMap.<SynopsisLengthType, Integer>builder()
+//        .put(SynopsisLengthType.SHORT, 90)
+//        .put(SynopsisLengthType.MEDIUM, 210)
+//        .put(SynopsisLengthType.LONG, 1200)
+//        .build();
+//    
     private static final List<String> TITLE_PREFIXES = ImmutableList.of("The ", "the ", "A ", "a ", "An ", "an ");
     
     private static final Function<String, GenreType> TO_GENRE = new Function<String, GenreType>() {
@@ -360,23 +359,29 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
 
     private List<SynopsisType> generateSynopses(Content content) {
         List<SynopsisType> synopses = Lists.newArrayList();
-        for (Entry<SynopsisLengthType, Integer> entry : YOUVIEW_SYNOPSIS_LENGTH.entrySet()) {
-            SynopsisType synopsis = new SynopsisType();
-            synopsis.setLength(entry.getKey());
-            String description = content.getDescription();
-            if (description != null) {
-                truncator = truncator.withMaxLength(entry.getValue());
-                synopsis.setValue(truncator.truncate(description));
-                synopses.add(synopsis);
-            }
-        }
+
+        synopses.add(createSynopsis(SynopsisLengthType.SHORT, content.getShortDescription()));
+        synopses.add(createSynopsis(SynopsisLengthType.MEDIUM, content.getMediumDescription()));
+        synopses.add(createSynopsis(SynopsisLengthType.LONG, content.getLongDescription()));
+        
         return synopses;
+    }
+
+    private SynopsisType createSynopsis(SynopsisLengthType length, String description) {
+        SynopsisType synopsis = new SynopsisType();
+        
+        synopsis.setLength(length);
+        synopsis.setValue(description);
+        
+        return synopsis;
     }
 
     private TitleType generateTitle(String titleType, String contentTitle) {
         TitleType title = new TitleType();
+        
         title.getType().add(titleType);
         title.setValue(contentTitle);
+        
         return title;
     }
 }
