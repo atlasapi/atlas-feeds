@@ -82,6 +82,8 @@ public class NitroBroadcastEventGeneratorTest {
         assertEquals("pcrid.dmol.co.uk", generated.getInstanceDescription().getOtherIdentifier().get(0).getAuthority());
         assertEquals("crid://fp.bbc.co.uk/SILG5", generated.getInstanceDescription().getOtherIdentifier().get(0).getValue());
         assertEquals("2012-01-01T00:00:00.000Z", generated.getPublishedStartTime().toString());
+        assertEquals("p123456", generated.getInstanceDescription().getOtherIdentifier().get(1).getValue());
+        assertEquals("bpid.bbc.co.uk", generated.getInstanceDescription().getOtherIdentifier().get(1).getAuthority());
         // TODO is there a better way to compare generated durations?
         assertEquals("P0DT0H30M0.000S", generated.getPublishedDuration().toString());
         assertTrue("Free should be hardcoded to true", generated.getFree().isValue());
@@ -98,6 +100,7 @@ public class NitroBroadcastEventGeneratorTest {
     private Broadcast createBroadcast() {
         Broadcast broadcast = new Broadcast("http://www.bbc.co.uk/services/bbcone/south_west", clock.now(), clock.now().plusMinutes(30));
         broadcast.setCanonicalUri("I'm a broadcast");
+        broadcast.withId("bbc:p123456");
         return broadcast;
     }
 

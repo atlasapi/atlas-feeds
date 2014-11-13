@@ -34,6 +34,7 @@ import com.metabroadcast.common.base.Maybe;
 public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
 
     private static final String BROADCAST_AUTHORITY = "pcrid.dmol.co.uk";
+    private static final String BROADCAST_PID_AUTHORITY = "bpid.bbc.co.uk";
     private static final String BROADCAST_CRID = "crid://fp.bbc.co.uk/SILG5";
     private static final String SERVICE_ID_PREFIX = "http://bbc.co.uk/services/";
     private static final String PROGRAM_URL = "dvb://233A..A020;A876";
@@ -95,6 +96,7 @@ public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
         broadcastEvent.setPublishedDuration(durationFrom(broadcast));
         broadcastEvent.setFree(elementFactory.flag(true));
         
+        
         return broadcastEvent;
     }
 
@@ -133,6 +135,11 @@ public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
         
         description.getOtherIdentifier().add(otherId);
         
+        UniqueIDType broadcastPidId = new UniqueIDType();
+        broadcastPidId.setAuthority(BROADCAST_PID_AUTHORITY);
+        broadcastPidId.setValue(broadcast.getSourceId().replace("bbc:", ""));
+        
+        description.getOtherIdentifier().add(broadcastPidId);
         return description;
     }
     
