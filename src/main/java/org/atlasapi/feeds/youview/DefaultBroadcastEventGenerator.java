@@ -30,6 +30,7 @@ import com.metabroadcast.common.base.Maybe;
 public class DefaultBroadcastEventGenerator implements BroadcastEventGenerator {
 
     private static final String BROADCAST_AUTHORITY = "pcrid.dmol.co.uk";
+    private static final String BROADCAST_PID_AUTHORITY = "bpid.bbc.co.uk";
     private static final String BROADCAST_CRID = "crid://fp.bbc.co.uk/SILG5";
     private static final String SERVICE_ID_REF_PREFIX = "http://bbc.co.uk/services/";
     private static final String PROGRAM_CRID_PREFIX = "crid://bbc.co.uk/iplayer/nitro/youview/";
@@ -132,6 +133,10 @@ public class DefaultBroadcastEventGenerator implements BroadcastEventGenerator {
         otherId.setValue(BROADCAST_CRID);
         
         description.getOtherIdentifier().add(otherId);
+        
+        UniqueIDType broadcastPidId = new UniqueIDType();
+        broadcastPidId.setAuthority(BROADCAST_PID_AUTHORITY);
+        broadcastPidId.setValue(broadcast.getSourceId().replace("bbc:", ""));
         
         return description;
     }
