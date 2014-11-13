@@ -137,6 +137,7 @@ public class DefaultBroadcastEventGenerator implements BroadcastEventGenerator {
         UniqueIDType broadcastPidId = new UniqueIDType();
         broadcastPidId.setAuthority(BROADCAST_PID_AUTHORITY);
         broadcastPidId.setValue(broadcast.getSourceId().replace("bbc:", ""));
+        description.getOtherIdentifier().add(broadcastPidId);
         
         return description;
     }
