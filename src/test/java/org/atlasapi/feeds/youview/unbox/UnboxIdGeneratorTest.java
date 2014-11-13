@@ -7,6 +7,7 @@ import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
@@ -39,7 +40,7 @@ public class UnboxIdGeneratorTest {
 
     @Test
     public void testOnDemandImiGeneration() {
-        String onDemandImi = generator.generateOnDemandImi(createItemWithUri("http://unbox.amazon.co.uk/films/123456"), createVersion(), createEncoding());
+        String onDemandImi = generator.generateOnDemandImi(createItemWithUri("http://unbox.amazon.co.uk/films/123456"), createVersion(), createEncoding(), createLocation());
         
         assertEquals("imi:unbox.amazon.co.uk/123456", onDemandImi);
     }
@@ -58,6 +59,10 @@ public class UnboxIdGeneratorTest {
 
     private Encoding createEncoding() {
         return new Encoding();
+    }
+    
+    private Location createLocation() {
+        return new Location();
     }
 
 }

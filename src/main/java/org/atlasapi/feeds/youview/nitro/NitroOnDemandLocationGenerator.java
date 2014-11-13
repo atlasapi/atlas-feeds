@@ -99,7 +99,7 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
         // TODO is this a single service?
         onDemand.setServiceIDRef(YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(item, version));
-        onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(item, version, encoding));
+        onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(item, version, encoding, location));
         onDemand.setInstanceDescription(generateInstanceDescription(item, encoding));
         onDemand.setPublishedDuration(generatePublishedDuration(version));
         onDemand.setStartOfAvailability(generateAvailabilityStart(location));

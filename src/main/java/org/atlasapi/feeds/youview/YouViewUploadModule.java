@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
@@ -60,6 +61,7 @@ public class YouViewUploadModule {
     private @Autowired TvAnytimeGenerator generator;
     private @Autowired HttpYouViewRemoteClient youViewClient;
     private @Autowired TransactionStore transactionStore;
+    private @Autowired BbcServiceIdResolver bbcServiceIdResolver;
     
     private @Value("${youview.upload.validation}") String performValidation;
 
@@ -112,7 +114,7 @@ public class YouViewUploadModule {
                         parseUrl(publisherPrefix),
                         // TODO this is suboptimal - this should use the same generator as the tvanytimefeedsmodule
                         // this is also hardcoded to the nitro generator
-                        new NitroIdGenerator(),
+                        new NitroIdGenerator(bbcServiceIdResolver),
                         new SystemClock(), 
                         Boolean.parseBoolean(performValidation)
                 );

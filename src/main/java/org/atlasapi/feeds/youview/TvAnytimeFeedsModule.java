@@ -9,6 +9,8 @@ import org.atlasapi.feeds.tvanytime.TvAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
+import org.atlasapi.feeds.youview.nitro.ChannelResolvingBbcServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroGenreMapping;
 import org.atlasapi.feeds.youview.nitro.NitroGroupInformationGenerator;
@@ -62,7 +64,7 @@ public class TvAnytimeFeedsModule {
     }
     
     private TvAnytimeElementCreator nitroElementCreator() {
-        IdGenerator nitroIdGenerator = new NitroIdGenerator();
+        IdGenerator nitroIdGenerator = new NitroIdGenerator(bbcServiceIdResolver());
         GenreMapping genreMapping = genreMappingFor(Publisher.BBC_NITRO);
         ServiceMapping serviceMapping = serviceMappingFor(Publisher.BBC_NITRO);
         
@@ -70,10 +72,15 @@ public class TvAnytimeFeedsModule {
                 new NitroProgramInformationGenerator(nitroIdGenerator, elementFactory()), 
                 new NitroGroupInformationGenerator(nitroIdGenerator, genreMapping), 
                 new NitroOnDemandLocationGenerator(nitroIdGenerator, elementFactory()), 
-                new NitroBroadcastEventGenerator(nitroIdGenerator, elementFactory(), serviceMapping, channelResolver),
+                new NitroBroadcastEventGenerator(nitroIdGenerator, elementFactory(), serviceMapping, bbcServiceIdResolver()),
                 contentHierarchy(), 
                 new UriBasedContentPermit()
         );
+    }
+    
+    @Bean
+    public BbcServiceIdResolver bbcServiceIdResolver() {
+        return new ChannelResolvingBbcServiceIdResolver(channelResolver);
     }
 
     // TODO pull out other service mappings, create delegating genremapping

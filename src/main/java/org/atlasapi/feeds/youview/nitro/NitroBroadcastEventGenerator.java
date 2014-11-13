@@ -7,12 +7,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.youview.NoChannelFoundException;
-import org.atlasapi.feeds.youview.NoSuchChannelAliasException;
 import org.atlasapi.feeds.youview.services.ServiceMapping;
-import org.atlasapi.media.channel.Channel;
-import org.atlasapi.media.channel.ChannelResolver;
-import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
@@ -24,10 +19,7 @@ import tva.metadata._2010.InstanceDescriptionType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.Iterables;
-import com.metabroadcast.common.base.Maybe;
 
 // TODO this is BBC specific, publisher specific code should be extracted to PublisherConfigFactory
 // TODO should the channel alias lookup be extracted?
@@ -38,24 +30,18 @@ public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
     private static final String BROADCAST_CRID = "crid://fp.bbc.co.uk/SILG5";
     private static final String SERVICE_ID_PREFIX = "http://bbc.co.uk/services/";
     private static final String PROGRAM_URL = "dvb://233A..A020;A876";
-    private static final String BBC_SID_NAMESPACE = "bbc:service:id";
-    private static final Predicate<Alias> BBC_SID_ALIAS = new Predicate<Alias>() {
-        @Override
-        public boolean apply(Alias input) {
-            return BBC_SID_NAMESPACE.equals(input.getNamespace());
-        }
-    };
+
     private final IdGenerator idGenerator;
     private final TvAnytimeElementFactory elementFactory;
     private final ServiceMapping serviceMapping;
-    private final ChannelResolver channelResolver;
+    private final BbcServiceIdResolver serviceIdResolver;
 
     public NitroBroadcastEventGenerator(IdGenerator idGenerator, TvAnytimeElementFactory elementFactory,
-            ServiceMapping serviceMapping, ChannelResolver channelResolver) {
+            ServiceMapping serviceMapping, BbcServiceIdResolver serviceIdResolver) {
         this.idGenerator = checkNotNull(idGenerator);
         this.elementFactory = checkNotNull(elementFactory);
         this.serviceMapping = checkNotNull(serviceMapping);
-        this.channelResolver = checkNotNull(channelResolver);
+        this.serviceIdResolver = checkNotNull(serviceIdResolver);
     }
     
     @Override
@@ -101,22 +87,8 @@ public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
     }
 
     private String serviceIdRef(Broadcast broadcast) {
-        return SERVICE_ID_PREFIX + serviceMapping.youviewServiceIdFor(resolveServiceId(broadcast.getBroadcastOn()));
-    }
-
-    // TODO this channel resolution needs to be extracted elsewhere
-    private String resolveServiceId(String channelUri) {
-        Maybe<Channel> resolved = channelResolver.fromUri(channelUri);
-        if (resolved.isNothing()) {
-            throw new NoChannelFoundException(channelUri);
-        }
-        Channel channel = resolved.requireValue();
-        Iterable<Alias> bbcSIdAliases = Iterables.filter(channel.getAliases(), BBC_SID_ALIAS);
-        if (Iterables.isEmpty(bbcSIdAliases)) {
-            throw new NoSuchChannelAliasException(BBC_SID_NAMESPACE);
-        }
-        Alias sidAlias = Iterables.getOnlyElement(bbcSIdAliases);
-        return sidAlias.getValue();
+        // TODO this will yield multiple mappings...
+        return SERVICE_ID_PREFIX + serviceMapping.youviewServiceIdFor(serviceIdResolver.resolveSId(broadcast));
     }
 
     private CRIDRefType createProgram(Item item, Version version) {

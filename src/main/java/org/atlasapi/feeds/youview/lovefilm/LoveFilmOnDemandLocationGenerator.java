@@ -15,6 +15,7 @@ import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
 
@@ -83,20 +84,35 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
     
     private Iterable<OnDemandProgramType> toOnDemandProgramTypes(final Item item, final Version version, 
             Iterable<Encoding> encodings) {
-        return Iterables.transform(encodings, new Function<Encoding, OnDemandProgramType>() {
+        return FluentIterable.from(encodings)
+                .transformAndConcat(toOnDemandProgramTypes(item, version));
+    }
+    
+    private Function<Encoding, Iterable<OnDemandProgramType>> toOnDemandProgramTypes(final Item item, final Version version) {
+        return new Function<Encoding, Iterable<OnDemandProgramType>>() {
             @Override
-            public OnDemandProgramType apply(Encoding input) {
-                return toOnDemandProgramType(item, version, input);
+            public Iterable<OnDemandProgramType> apply(Encoding input) {
+                return toOnDemandProgramTypes(item, version, input, input.getAvailableAt());
+            }
+        };
+    }
+    
+    private Iterable<OnDemandProgramType> toOnDemandProgramTypes(final Item item, final Version version, 
+            final Encoding encoding, Iterable<Location> locations) {
+        return Iterables.transform(locations, new Function<Location, OnDemandProgramType>() {
+            @Override
+            public OnDemandProgramType apply(Location input) {
+                return toOnDemandProgramType(item, version, encoding, input);
             }
         });
     }
 
-    private OnDemandProgramType toOnDemandProgramType(Item item, Version version, Encoding encoding) {
+    private OnDemandProgramType toOnDemandProgramType(Item item, Version version, Encoding encoding, Location location) {
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
         
         onDemand.setServiceIDRef(LOVEFILM_ONDEMAND_SERVICE_ID);
         onDemand.setProgram(generateProgram(item, version));
-        onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(item, version, encoding));
+        onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(item, version, encoding, location));
         onDemand.setInstanceDescription(generateInstanceDescription(item, encoding));
         onDemand.setPublishedDuration(generatePublishedDuration(version));
         onDemand.setStartOfAvailability(generateAvailabilityStart(encoding));

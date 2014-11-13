@@ -5,6 +5,7 @@ import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
 
 
@@ -26,7 +27,7 @@ public class LoveFilmIdGenerator implements IdGenerator {
     }
     
     @Override
-    public String generateOnDemandImi(Item item, Version version, Encoding encoding) {
+    public String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location) {
         return LOVEFILM_IMI_PREFIX + idFrom(item);
     }
     

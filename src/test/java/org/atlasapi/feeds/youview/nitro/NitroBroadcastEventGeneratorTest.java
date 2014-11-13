@@ -3,7 +3,6 @@ package org.atlasapi.feeds.youview.nitro;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.util.Set;
@@ -15,7 +14,6 @@ import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.youview.services.ServiceMapping;
 import org.atlasapi.media.channel.Channel;
-import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
@@ -31,7 +29,6 @@ import tva.metadata._2010.BroadcastEventType;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
 
@@ -46,19 +43,19 @@ public class NitroBroadcastEventGeneratorTest {
     private DateTime time = new DateTime(2012, 1, 1, 0, 0, 0, 0).withZone(DateTimeZone.UTC);
     private Clock clock = new TimeMachine(time);
     private IdGenerator idGenerator = Mockito.mock(IdGenerator.class);
-    private ChannelResolver channelResolver = Mockito.mock(ChannelResolver.class);
     private ServiceMapping serviceMapping = Mockito.mock(ServiceMapping.class);
+    private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
+    
     private final BroadcastEventGenerator generator;
     
     public NitroBroadcastEventGeneratorTest() throws DatatypeConfigurationException {
-        this.generator = new NitroBroadcastEventGenerator(idGenerator, new TvAnytimeElementFactory(), serviceMapping, channelResolver);
+        this.generator = new NitroBroadcastEventGenerator(idGenerator, new TvAnytimeElementFactory(), serviceMapping, bbcServiceIdResolver);
     }
     
-    @SuppressWarnings("deprecation") // the delights of working with classes that use Maybe
     @Before
     public void setup() {
         Channel channel = Mockito.mock(Channel.class);
-        when(channelResolver.fromUri(anyString())).thenReturn(Maybe.just(channel));
+        when(bbcServiceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(BBC_SERVICE_ID);
         Alias alias = new Alias("bbc:service:id", BBC_SERVICE_ID);
         when(channel.getAliases()).thenReturn(ImmutableSet.of(alias));
         

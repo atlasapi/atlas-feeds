@@ -26,11 +26,11 @@ import org.atlasapi.media.entity.Specialization;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import tva.metadata._2010.BaseMemberOfType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.CreditsItemType;
-import tva.metadata._2010.GenreType;
 import tva.metadata._2010.GroupInformationType;
 import tva.metadata._2010.ProgramGroupTypeType;
 import tva.metadata._2010.SynopsisLengthType;
@@ -50,16 +50,10 @@ import com.metabroadcast.common.intl.Countries;
 
 public class NitroGroupInformationGeneratorTest {
     
-    private static final Function<GenreType, String> TO_HREF = new Function<GenreType, String>() {
-        @Override
-        public String apply(GenreType input) {
-            return input.getHref();
-        }
-    };
-    
     private SynopsisTypeEquivalence SYNOPSIS_EQUIVALENCE = new SynopsisTypeEquivalence();
     private NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
-    private IdGenerator idGenerator = new NitroIdGenerator();
+    private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
+    private IdGenerator idGenerator = new NitroIdGenerator(bbcServiceIdResolver);
     private GenreMapping genreMapping = new NitroGenreMapping(); 
     
     private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping);

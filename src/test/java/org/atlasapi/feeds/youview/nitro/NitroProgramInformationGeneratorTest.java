@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview.nitro;
 
 import static org.junit.Assert.assertEquals;
 
@@ -7,6 +7,7 @@ import java.util.Set;
 import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
+import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroProgramInformationGenerator;
 import org.atlasapi.media.entity.Certificate;
@@ -16,6 +17,7 @@ import org.atlasapi.media.entity.Restriction;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import tva.metadata._2010.ProgramInformationType;
 import tva.metadata.extended._2010.ExtendedContentDescriptionType;
@@ -26,9 +28,9 @@ import com.google.common.collect.Iterables;
 import com.metabroadcast.common.intl.Countries;
 
 
-public class DefaultProgramInformationGeneratorTest {
+public class NitroProgramInformationGeneratorTest {
     
-    private IdGenerator idGenerator = new NitroIdGenerator();
+    private IdGenerator idGenerator = new NitroIdGenerator(Mockito.mock(BbcServiceIdResolver.class));
     private TvAnytimeElementFactory elementFactory = new TvAnytimeElementFactory();
     private final ProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator, elementFactory);
 
