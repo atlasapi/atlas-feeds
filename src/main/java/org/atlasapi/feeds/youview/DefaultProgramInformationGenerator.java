@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -40,6 +42,8 @@ import com.metabroadcast.common.intl.Country;
 public class DefaultProgramInformationGenerator implements ProgramInformationGenerator {
 
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
+    private static final String BBC_VERSION_PID_AUTHORITY = "vpid.bbc.co.uk";
+    private static final Pattern BBC_VERSION_PID_URI_PATTERN = Pattern.compile("http://nitro.bbc.co.uk/programmes/(.*)");
     
     private static final Predicate<Certificate> FILTER_CERT_FOR_GB = new Predicate<Certificate>() {
         @Override
@@ -97,11 +101,31 @@ public class DefaultProgramInformationGenerator implements ProgramInformationGen
         progInfo.setBasicDescription(generateBasicDescription(item));
         progInfo.setDerivedFrom(generateDerivedFrom(item));
         
+        
         Optional<UniqueIDType> otherId = generateOtherId(item);
         if (otherId.isPresent()) {
             progInfo.getOtherIdentifier().add(otherId.get());
         }
+        Optional<UniqueIDType> bbcVersionPid = versionPidOtherId(item);
+        if (bbcVersionPid.isPresent()) {
+            progInfo.getOtherIdentifier().add(bbcVersionPid.get());
+        }
         return progInfo;
+    }
+    
+    private Optional<UniqueIDType> versionPidOtherId(Item item) {
+        Version version = Iterables.getFirst(item.getVersions(), null);
+        if (version == null) {
+            return Optional.absent();
+        }
+        Matcher matcher = BBC_VERSION_PID_URI_PATTERN.matcher(version.getCanonicalUri());
+        if (!matcher.find()) {
+            return Optional.absent();
+        }
+        UniqueIDType id = new UniqueIDType();
+        id.setAuthority(BBC_VERSION_PID_AUTHORITY);
+        id.setValue(matcher.group());
+        return Optional.of(id);
     }
 
     private Optional<UniqueIDType> generateOtherId(Item item) {
