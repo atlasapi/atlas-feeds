@@ -25,12 +25,13 @@ import tva.metadata.extended._2010.ExtendedContentDescriptionType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.hash.HashFunction;
 import com.metabroadcast.common.intl.Countries;
 
 
 public class NitroProgramInformationGeneratorTest {
     
-    private IdGenerator idGenerator = new NitroIdGenerator(Mockito.mock(BbcServiceIdResolver.class));
+    private IdGenerator idGenerator = new NitroIdGenerator(Mockito.mock(BbcServiceIdResolver.class), Mockito.mock(HashFunction.class));
     private TvAnytimeElementFactory elementFactory = new TvAnytimeElementFactory();
     private final ProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator, elementFactory);
 

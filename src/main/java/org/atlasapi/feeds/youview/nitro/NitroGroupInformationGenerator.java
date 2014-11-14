@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
@@ -47,12 +46,11 @@ import tva.mpeg7._2008.TitleType;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.metabroadcast.common.text.Truncator;
 
 public class NitroGroupInformationGenerator implements GroupInformationGenerator {
 
@@ -69,19 +67,13 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private static final String GENRE_TYPE_OTHER = "other";
     private static final String TITLE_TYPE_MAIN = "main";
     private static final String TITLE_TYPE_SECONDARY = "secondary";
-    private static final String LOVEFILM_MEDIATYPE_GENRE_VIDEO = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
+    private static final String NITRO_MEDIATYPE_GENRE_VIDEO = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
     
     private static final Map<Specialization, String> YOUVIEW_SPECIALIZATION_GENRE_MAPPING = ImmutableMap.<Specialization, String>builder()
         .put(Specialization.FILM, "urn:tva:metadata:cs:OriginationCS:2005:5.7")
         .put(Specialization.TV, "urn:tva:metadata:cs:OriginationCS:2005:5.8")
         .build();
     
-//    private static final Map<SynopsisLengthType, Integer> YOUVIEW_SYNOPSIS_LENGTH = ImmutableMap.<SynopsisLengthType, Integer>builder()
-//        .put(SynopsisLengthType.SHORT, 90)
-//        .put(SynopsisLengthType.MEDIUM, 210)
-//        .put(SynopsisLengthType.LONG, 1200)
-//        .build();
-//    
     private static final List<String> TITLE_PREFIXES = ImmutableList.of("The ", "the ", "A ", "a ", "An ", "an ");
     
     private static final Function<String, GenreType> TO_GENRE = new Function<String, GenreType>() {
@@ -96,11 +88,6 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
 
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
-    
-    private Truncator truncator = new Truncator()
-            .omitTrailingPunctuationWhenTruncated()
-            .onlyTruncateAtAWordBoundary()
-            .withOmissionMarker("...");
     
     public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping) {
         this.idGenerator = checkNotNull(idGenerator);
@@ -329,14 +316,9 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     }
 
     private List<GenreType> generateGenres(Content content) {
-        Set<String> genreHrefs = Sets.newHashSet();
-        for (String genreStr : content.getGenres()) {
-            for (String youViewGenre : genreMapping.getYouViewGenresFor(genreStr)) {
-                 genreHrefs.add(youViewGenre);               
-            }
-        }
-        
-        return ImmutableList.copyOf(Iterables.transform(genreHrefs, TO_GENRE));
+        return FluentIterable.from(genreMapping.youViewGenresFor(content))
+                .transform(TO_GENRE)
+                .toList();
     }
 
     private GenreType generateGenreFromSpecialization(Content content) {
@@ -350,7 +332,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
        GenreType genre = new GenreType();
        genre.setType(GENRE_TYPE_OTHER);
        if (content.getMediaType().equals(MediaType.VIDEO)) {
-           genre.setHref(LOVEFILM_MEDIATYPE_GENRE_VIDEO);
+           genre.setHref(NITRO_MEDIATYPE_GENRE_VIDEO);
        } else {
            throw new RuntimeException("invalid media type " + content.getMediaType() + " on item " + content.getCanonicalUri());
        }

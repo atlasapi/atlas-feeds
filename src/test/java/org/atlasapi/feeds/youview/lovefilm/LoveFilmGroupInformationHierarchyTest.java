@@ -20,7 +20,7 @@ import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.ContentResolvingContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.UriBasedContentPermit;
-import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.genres.OldGenreMapping;
 import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmGroupInformationGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
@@ -76,7 +76,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     private IdGenerator idGenerator = new LoveFilmIdGenerator();
     private TvAnytimeElementFactory elementFactory = new TvAnytimeElementFactory();
     private ProgramInformationGenerator progInfoGenerator = new LoveFilmProgramInformationGenerator(idGenerator, elementFactory);
-    private GenreMapping genreMapping = GenreMappings.mappingFor(Publisher.LOVEFILM);
+    private OldGenreMapping genreMapping = GenreMappings.mappingFor(Publisher.LOVEFILM);
     private GroupInformationGenerator groupInfoGenerator = new LoveFilmGroupInformationGenerator(idGenerator, genreMapping);
     private OnDemandLocationGenerator progLocationGenerator = new LoveFilmOnDemandLocationGenerator(idGenerator);
     private DummyContentResolver contentResolver = new DummyContentResolver();

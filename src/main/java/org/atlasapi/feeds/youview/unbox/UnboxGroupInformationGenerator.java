@@ -12,7 +12,7 @@ import javax.xml.namespace.QName;
 
 import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
-import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.genres.OldGenreMapping;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.CrewMember;
@@ -106,9 +106,9 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
             .withOmissionMarker("...");
 
     private final IdGenerator idGenerator;
-    private final GenreMapping genreMapping;
+    private final OldGenreMapping genreMapping;
     
-    public UnboxGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping) {
+    public UnboxGroupInformationGenerator(IdGenerator idGenerator, OldGenreMapping genreMapping) {
         this.idGenerator = checkNotNull(idGenerator);
         this.genreMapping = checkNotNull(genreMapping);
     }

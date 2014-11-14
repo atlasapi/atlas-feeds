@@ -19,6 +19,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import com.google.common.base.Charsets;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
 
@@ -29,7 +32,8 @@ public class NitroIdGeneratorTest {
     private static final String SERVICE_ID = "serviceId";
     private Clock clock = new TimeMachine();
     private BbcServiceIdResolver serviceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
-    private final NitroIdGenerator idGenerator = new NitroIdGenerator(serviceIdResolver);
+    private HashFunction hashingFunction = Hashing.md5();
+    private final NitroIdGenerator idGenerator = new NitroIdGenerator(serviceIdResolver, hashingFunction);
     
     @Before
     public void setup() {
@@ -44,9 +48,9 @@ public class NitroIdGeneratorTest {
         
         String versionCrid = idGenerator.generateVersionCrid(createItemWithPid(pid), createVersion("b98765", duration, isRestricted));
         
-        String expected = "crid://nitro.bbc.co.uk/iplayer/youview/" + pid + ":" + duration.getStandardSeconds() + ":" + isRestricted;
+        String expectedId = pid + ":" + duration.getStandardSeconds() + ":" + isRestricted;
         
-        assertEquals(expected, versionCrid);
+        assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/" + hashingFunction.hashString(expectedId, Charsets.UTF_8), versionCrid);
     }
 
     @Test
@@ -76,8 +80,7 @@ public class NitroIdGeneratorTest {
                 createLocation(availabilityStart, availabilityEnd, actualAvailabilityStart)
         );
         
-        String expected = "imi:www.nitro.bbc.co.uk/" 
-                    + availabilityStart + ":"
+        String expectedId = availabilityStart + ":"
                     + availabilityEnd + ":"
                     + "" + ":"
                     + actualAvailabilityStart + ":"
@@ -87,7 +90,7 @@ public class NitroIdGeneratorTest {
                     + aspectRatio + ":"
                     + "true";
         
-        assertEquals(expected, onDemandImi);
+        assertEquals("imi:www.nitro.bbc.co.uk/" + hashingFunction.hashString(expectedId, Charsets.UTF_8), onDemandImi);
     }
 
     @Test
@@ -95,7 +98,8 @@ public class NitroIdGeneratorTest {
         String pid = "b012345";
         String contentCrid = idGenerator.generateBroadcastImi(createBroadcastWithPid(pid));
 
-        assertEquals("imi:www.nitro.bbc.co.uk/" + pid + ":" + SERVICE_ID, contentCrid);
+        String expectedId = pid + ":" + SERVICE_ID;
+        assertEquals("imi:www.nitro.bbc.co.uk/" + hashingFunction.hashString(expectedId, Charsets.UTF_8), contentCrid);
     }
 
     private Item createItemWithPid(String pid) {

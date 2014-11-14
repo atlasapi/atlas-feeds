@@ -18,14 +18,14 @@ import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
 
 
-public abstract class GenreMappings implements GenreMapping {
+public abstract class GenreMappings implements OldGenreMapping {
 
     private final Logger log = LoggerFactory.getLogger(GenreMappings.class);
     
     private final Multimap<String, String> genreMapping;
     
     // TODO this is a little hokey
-    public static GenreMapping mappingFor(Publisher publisher) {
+    public static OldGenreMapping mappingFor(Publisher publisher) {
         if (Publisher.LOVEFILM.equals(publisher)) {
             return new LoveFilmGenreMapping();
         }

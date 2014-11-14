@@ -27,6 +27,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.SimpleHttpClientBuilder;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
@@ -114,7 +116,7 @@ public class YouViewUploadModule {
                         parseUrl(publisherPrefix),
                         // TODO this is suboptimal - this should use the same generator as the tvanytimefeedsmodule
                         // this is also hardcoded to the nitro generator
-                        new NitroIdGenerator(bbcServiceIdResolver),
+                        new NitroIdGenerator(bbcServiceIdResolver, hashFunction()),
                         new SystemClock(), 
                         Boolean.parseBoolean(performValidation)
                 );
@@ -123,6 +125,11 @@ public class YouViewUploadModule {
         }
         
         return new PublisherDelegatingYouViewRemoteClient(clients.build());
+    }
+    
+    // TODO refactor so this isn't implemented in two places
+    private HashFunction hashFunction() {
+        return Hashing.sha512();
     }
     
     private boolean isEnabled(String publisherPrefix) {

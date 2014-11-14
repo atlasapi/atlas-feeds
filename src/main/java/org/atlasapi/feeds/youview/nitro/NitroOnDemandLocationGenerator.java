@@ -109,10 +109,9 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
         return onDemand;
     }
     
-    // hardcoded
     private FlagType generateFree() {
         FlagType free = new FlagType();
-        free.setValue(false);
+        free.setValue(true);
         return free;
     }
 

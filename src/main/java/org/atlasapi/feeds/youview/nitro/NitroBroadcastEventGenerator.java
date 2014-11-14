@@ -20,9 +20,8 @@ import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Iterables;
 
-// TODO this is BBC specific, publisher specific code should be extracted to PublisherConfigFactory
-// TODO should the channel alias lookup be extracted?
 public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
 
     private static final String BROADCAST_AUTHORITY = "pcrid.dmol.co.uk";
@@ -66,7 +65,8 @@ public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
                     public BroadcastEventType apply(Broadcast input) {
                         return toBroadcastEventType(item, version, input);
                     }
-                });
+                }
+        );
     }
 
     private BroadcastEventType toBroadcastEventType(Item item, Version version, Broadcast broadcast) {
@@ -88,7 +88,8 @@ public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
 
     private String serviceIdRef(Broadcast broadcast) {
         // TODO this will yield multiple mappings...
-        return SERVICE_ID_PREFIX + serviceMapping.youviewServiceIdFor(serviceIdResolver.resolveSId(broadcast));
+        // TODO fix this
+        return SERVICE_ID_PREFIX + Iterables.getFirst(serviceMapping.youviewServiceIdFor(serviceIdResolver.resolveSId(broadcast)), null);
     }
 
     private CRIDRefType createProgram(Item item, Version version) {

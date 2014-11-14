@@ -36,6 +36,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 
 @Configuration
@@ -64,7 +66,7 @@ public class TvAnytimeFeedsModule {
     }
     
     private TvAnytimeElementCreator nitroElementCreator() {
-        IdGenerator nitroIdGenerator = new NitroIdGenerator(bbcServiceIdResolver());
+        IdGenerator nitroIdGenerator = new NitroIdGenerator(bbcServiceIdResolver(), hashFunction());
         GenreMapping genreMapping = genreMappingFor(Publisher.BBC_NITRO);
         ServiceMapping serviceMapping = serviceMappingFor(Publisher.BBC_NITRO);
         
@@ -78,6 +80,10 @@ public class TvAnytimeFeedsModule {
         );
     }
     
+    private HashFunction hashFunction() {
+        return Hashing.sha512();
+    }
+
     @Bean
     public BbcServiceIdResolver bbcServiceIdResolver() {
         return new ChannelResolvingBbcServiceIdResolver(channelResolver);
@@ -86,7 +92,7 @@ public class TvAnytimeFeedsModule {
     // TODO pull out other service mappings, create delegating genremapping
     private GenreMapping genreMappingFor(Publisher publisher) {
         if (Publisher.BBC_NITRO.equals(publisher)) {
-            return new NitroGenreMapping();
+            return new NitroGenreMapping("nitro_genre_mapping.csv");
         }
         return null;
     }

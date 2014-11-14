@@ -31,6 +31,7 @@ import org.mockito.Mockito;
 import tva.metadata._2010.BaseMemberOfType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.CreditsItemType;
+import tva.metadata._2010.GenreType;
 import tva.metadata._2010.GroupInformationType;
 import tva.metadata._2010.ProgramGroupTypeType;
 import tva.metadata._2010.SynopsisLengthType;
@@ -46,15 +47,23 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.hash.Hashing;
 import com.metabroadcast.common.intl.Countries;
 
 public class NitroGroupInformationGeneratorTest {
     
+    private static final Function<GenreType, String> TO_HREF = new Function<GenreType, String>() {
+        @Override
+        public String apply(GenreType input) {
+            return input.getHref();
+        }
+    };
+    
     private SynopsisTypeEquivalence SYNOPSIS_EQUIVALENCE = new SynopsisTypeEquivalence();
     private NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
     private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
-    private IdGenerator idGenerator = new NitroIdGenerator(bbcServiceIdResolver);
-    private GenreMapping genreMapping = new NitroGenreMapping(); 
+    private IdGenerator idGenerator = new NitroIdGenerator(bbcServiceIdResolver, Hashing.md5());
+    private GenreMapping genreMapping = new NitroGenreMapping("nitro_genre_mapping.csv");
     
     private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping);
     
@@ -70,7 +79,25 @@ public class NitroGroupInformationGeneratorTest {
         assertTrue(desc.getRelatedMaterial().isEmpty());
     }
     
-    // TODO test genre output
+    @Test
+    public void testGenresOutput() {
+        Film film = createFilm();
+        film.setGenres(ImmutableSet.of("http://nitro.bbc.co.uk/genres/100003"));
+        
+        GroupInformationType groupInfo = generator.generate(film);
+        
+        ImmutableSet<String> outputGenreHrefs = ImmutableSet.copyOf(Iterables.transform(
+                groupInfo.getBasicDescription().getGenre(), 
+                TO_HREF
+        ));
+        ImmutableSet<String> expected = ImmutableSet.of(
+                "urn:tva:metadata:cs:ContentCS:2010:3.4", // from genre mapping 
+                "urn:tva:metadata:cs:OriginationCS:2005:5.7", // content type == film
+                "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3"  // mediatype == video 
+        );
+        
+        assertEquals(expected, outputGenreHrefs);
+    }
     
     @Test
     public void testSynopsisGeneration() {
@@ -378,7 +405,7 @@ public class NitroGroupInformationGeneratorTest {
         brand.setTitle("Northern Lights");
         brand.setDescription("Some brand description");
         brand.setImage("http://www.lovefilm.com/lovefilm/images/products/heroshots/0/184930-large.jpg");
-        brand.setPublisher(Publisher.LOVEFILM);
+        brand.setPublisher(Publisher.BBC_NITRO);
         brand.setCertificates(ImmutableList.of(new Certificate("15", Countries.GB)));
         brand.setYear(2006);
         brand.setLanguages(ImmutableList.of("en"));
@@ -403,7 +430,7 @@ public class NitroGroupInformationGeneratorTest {
         series.setTitle("Series 2");
         series.setDescription("Some series description");
         series.setImage("http://www.lovefilm.com/lovefilm/images/products/heroshots/0/179534-large.jpg");
-        series.setPublisher(Publisher.LOVEFILM);
+        series.setPublisher(Publisher.BBC_NITRO);
         series.setCertificates(ImmutableList.of(new Certificate("15", Countries.GB)));
         series.setYear(2006);
         series.setLanguages(ImmutableList.of("en"));
@@ -432,7 +459,7 @@ public class NitroGroupInformationGeneratorTest {
         episode.setTitle("Episode 1");
         episode.setDescription("some episode description");
         episode.setImage("some episode image");
-        episode.setPublisher(Publisher.LOVEFILM);
+        episode.setPublisher(Publisher.BBC_NITRO);
         episode.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));
         episode.setCertificates(ImmutableList.of(new Certificate("15", Countries.GB)));
         episode.setYear(2006);
@@ -462,7 +489,7 @@ public class NitroGroupInformationGeneratorTest {
         film.setTitle("Dr. Strangelove");
         film.setDescription("Some film description");
         film.setImage("image");
-        film.setPublisher(Publisher.LOVEFILM);
+        film.setPublisher(Publisher.BBC_NITRO);
         film.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));
         film.setCertificates(ImmutableList.of(new Certificate("PG", Countries.GB)));
         film.setYear(1963);

@@ -11,7 +11,9 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.hash.HashFunction;
 
 
 public final class NitroIdGenerator implements IdGenerator {
@@ -23,14 +25,16 @@ public final class NitroIdGenerator implements IdGenerator {
     private static final String IMI_PREFIX = "imi:www.nitro.bbc.co.uk/";
     
     private final BbcServiceIdResolver serviceIdResolver;
+    private final HashFunction hasher;
 
-    public NitroIdGenerator(BbcServiceIdResolver serviceIdResolver) {
+    public NitroIdGenerator(BbcServiceIdResolver serviceIdResolver, HashFunction hasher) {
         this.serviceIdResolver = checkNotNull(serviceIdResolver);
+        this.hasher = checkNotNull(hasher);
     }
 
     @Override
     public final String generateVersionCrid(Item item, Version version) {
-        return CRID_PREFIX + generateVersionIdFor(item, version);
+        return CRID_PREFIX + hasher.hashString(generateVersionIdFor(item, version), Charsets.UTF_8);
     }
     
     @Override
@@ -40,12 +44,12 @@ public final class NitroIdGenerator implements IdGenerator {
     
     @Override
     public String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location) {
-        return IMI_PREFIX + generateOnDemandIdFor(item, version, encoding, location);
+        return IMI_PREFIX + hasher.hashString(generateOnDemandIdFor(item, version, encoding, location), Charsets.UTF_8);
     }
     
     @Override
     public String generateBroadcastImi(Broadcast broadcast) {
-        return IMI_PREFIX + generateBroadcastIdFor(broadcast);
+        return IMI_PREFIX + hasher.hashString(generateBroadcastIdFor(broadcast), Charsets.UTF_8);
     }
     
     private String generateOnDemandIdFor(Item item, Version version, Encoding encoding, Location location) {
