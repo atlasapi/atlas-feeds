@@ -12,6 +12,8 @@ import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import tva.metadata._2010.BroadcastEventType;
 import tva.metadata._2010.CRIDRefType;
@@ -20,6 +22,7 @@ import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
 public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
@@ -30,6 +33,7 @@ public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
     private static final String SERVICE_ID_PREFIX = "http://bbc.co.uk/services/";
     private static final String PROGRAM_URL = "dvb://233A..A020;A876";
 
+    private final Logger log = LoggerFactory.getLogger(NitroBroadcastEventGenerator.class);
     private final IdGenerator idGenerator;
     private final TvAnytimeElementFactory elementFactory;
     private final ServiceMapping serviceMapping;
@@ -60,19 +64,34 @@ public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
     
     private Iterable<BroadcastEventType> toBroadcastEventTypes(final Item item, final Version version) {
         return FluentIterable.from(version.getBroadcasts())
-                .transform(new Function<Broadcast, BroadcastEventType>() {
+                .transformAndConcat(new Function<Broadcast, Iterable<BroadcastEventType>>() {
                     @Override
-                    public BroadcastEventType apply(Broadcast input) {
-                        return toBroadcastEventType(item, version, input);
+                    public Iterable<BroadcastEventType> apply(Broadcast input) {
+                        return toBroadcastEventTypes(item, version, input);
                     }
                 }
         );
     }
+    
+    private Iterable<BroadcastEventType> toBroadcastEventTypes(final Item item, final Version version, final Broadcast broadcast) {
+        Iterable<String> youViewServiceIds = serviceMapping.youviewServiceIdFor(serviceIdResolver.resolveSId(broadcast));
+        if (Iterables.isEmpty(youViewServiceIds)) {
+            log.warn("broadcast {} on {} has no mapped YouView service IDs", broadcast.getCanonicalUri(), broadcast.getBroadcastOn());
+            return ImmutableList.of();
+        }
+        return Iterables.transform(youViewServiceIds, new Function<String, BroadcastEventType>() {
+            @Override
+            public BroadcastEventType apply(String input) {
+                return toBroadcastEventType(item, version, broadcast, input);
+            }
+        });
+    }
+    
 
-    private BroadcastEventType toBroadcastEventType(Item item, Version version, Broadcast broadcast) {
+    private BroadcastEventType toBroadcastEventType(Item item, Version version, Broadcast broadcast, String youViewServiceId) {
         BroadcastEventType broadcastEvent = new BroadcastEventType();
         
-        broadcastEvent.setServiceIDRef(serviceIdRef(broadcast));
+        broadcastEvent.setServiceIDRef(serviceIdRefFrom(youViewServiceId));
         broadcastEvent.setProgram(createProgram(item, version));
         // TODO need to update nitro - ingest id from broadcast - type = "terrestrial_event_locator"
         broadcastEvent.setProgramURL(PROGRAM_URL);
@@ -86,10 +105,8 @@ public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
         return broadcastEvent;
     }
 
-    private String serviceIdRef(Broadcast broadcast) {
-        // TODO this will yield multiple mappings...
-        // TODO fix this
-        return SERVICE_ID_PREFIX + Iterables.getFirst(serviceMapping.youviewServiceIdFor(serviceIdResolver.resolveSId(broadcast)), null);
+    private String serviceIdRefFrom(String youViewServiceId) {
+        return SERVICE_ID_PREFIX + youViewServiceId;
     }
 
     private CRIDRefType createProgram(Item item, Version version) {

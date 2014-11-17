@@ -81,7 +81,7 @@ public class TvAnytimeFeedsModule {
     }
     
     private HashFunction hashFunction() {
-        return Hashing.sha512();
+        return Hashing.md5();
     }
 
     @Bean

@@ -61,7 +61,6 @@ public class YouViewUploadModule {
     private @Autowired ContentResolver contentResolver;
     private @Autowired SimpleScheduler scheduler;
     private @Autowired TvAnytimeGenerator generator;
-    private @Autowired HttpYouViewRemoteClient youViewClient;
     private @Autowired TransactionStore transactionStore;
     private @Autowired BbcServiceIdResolver bbcServiceIdResolver;
     
@@ -82,7 +81,7 @@ public class YouViewUploadModule {
     }
     
     private ScheduledTask remoteCheckTask(Publisher publisher) {
-        return new YouViewRemoteCheckTask(transactionStore, publisher, youViewClient);
+        return new YouViewRemoteCheckTask(transactionStore, publisher, youViewUploadClient());
     }
 
     // TODO this should only work for those publishers whose feeds are enabled
@@ -129,7 +128,7 @@ public class YouViewUploadModule {
     
     // TODO refactor so this isn't implemented in two places
     private HashFunction hashFunction() {
-        return Hashing.sha512();
+        return Hashing.md5();
     }
     
     private boolean isEnabled(String publisherPrefix) {

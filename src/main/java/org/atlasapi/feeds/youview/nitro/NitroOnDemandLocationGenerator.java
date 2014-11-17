@@ -18,7 +18,6 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
 
 import tva.metadata._2010.AVAttributesType;
-import tva.metadata._2010.AspectRatioType;
 import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.BitRateType;
 import tva.metadata._2010.CRIDRefType;
@@ -27,7 +26,6 @@ import tva.metadata._2010.FlagType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.OnDemandProgramType;
-import tva.metadata._2010.VideoAttributesType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -40,7 +38,6 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
 
     private static final String YOUVIEW_SERVICE = "http://bbc.co.uk/services/youview";
     private static final String YOUVIEW_MIX_TYPE = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
-    private static final String YOUVIEW_GENRE_SUBSCRIPTION_REQUIRED = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#subscription";
     private static final String YOUVIEW_GENRE_MEDIA_AVAILABLE = "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available";
     private static final String GENRE_TYPE_OTHER = "other";
 
@@ -134,7 +131,6 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
         AVAttributesType attributes = new AVAttributesType();
 
         attributes.getAudioAttributes().add(generateAudioAttributes());
-        attributes.setVideoAttributes(generateVideoAttributes(encoding));
         Optional<BitRateType> bitRate = generateBitRate(encoding);
         if (bitRate.isPresent()) {
             attributes.setBitRate(bitRate.get());
@@ -148,20 +144,6 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
         ControlledTermType mixType = new ControlledTermType();
         mixType.setHref(YOUVIEW_MIX_TYPE);
         attributes.setMixType(mixType);
-        return attributes;
-    }
-
-    private VideoAttributesType generateVideoAttributes(Encoding encoding) {
-        VideoAttributesType attributes = new VideoAttributesType();
-
-        attributes.setHorizontalSize(encoding.getVideoHorizontalSize());
-        attributes.setVerticalSize(encoding.getVideoVerticalSize());
-        if (encoding.getVideoAspectRatio() != null) {
-            AspectRatioType aspectRatio = new AspectRatioType();
-            aspectRatio.setValue(encoding.getVideoAspectRatio());
-            attributes.getAspectRatio().add(aspectRatio);
-        }
-
         return attributes;
     }
 
@@ -181,11 +163,7 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
         mediaAvailable.setType(GENRE_TYPE_OTHER);
         mediaAvailable.setHref(YOUVIEW_GENRE_MEDIA_AVAILABLE);
         
-        GenreType subRequired = new GenreType();
-        subRequired.setType(GENRE_TYPE_OTHER);
-        subRequired.setHref(YOUVIEW_GENRE_SUBSCRIPTION_REQUIRED);
-        
-        return ImmutableList.of(mediaAvailable, subRequired);
+        return ImmutableList.of(mediaAvailable);
     }
 
     private Duration generatePublishedDuration(Version version) {

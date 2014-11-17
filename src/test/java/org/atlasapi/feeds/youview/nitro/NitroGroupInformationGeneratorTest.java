@@ -52,6 +52,8 @@ import com.metabroadcast.common.intl.Countries;
 
 public class NitroGroupInformationGeneratorTest {
     
+    private static final String MASTER_BRAND = "master_brand";
+
     private static final Function<GenreType, String> TO_HREF = new Function<GenreType, String>() {
         @Override
         public String apply(GenreType input) {
@@ -97,6 +99,18 @@ public class NitroGroupInformationGeneratorTest {
         );
         
         assertEquals(expected, outputGenreHrefs);
+    }
+    
+    @Test
+    public void testMasterbrandOutputAsServiceIDRef() {
+        Film film = createFilm();
+        film.setPresentationChannel(MASTER_BRAND);
+        
+        GroupInformationType groupInfo = generator.generate(film);
+
+        String serviceIDRef = groupInfo.getServiceIDRef();
+        
+        assertEquals("http://bbc.co.uk/masterbrands/" + MASTER_BRAND, serviceIDRef);
     }
     
     @Test

@@ -59,14 +59,15 @@ public class NitroBroadcastEventGeneratorTest {
         Alias alias = new Alias("bbc:service:id", BBC_SERVICE_ID);
         when(channel.getAliases()).thenReturn(ImmutableSet.of(alias));
         
-        when(serviceMapping.youviewServiceIdFor(BBC_SERVICE_ID)).thenReturn(ImmutableSet.of(YOUVIEW_SERVICE_ID));
-        
         when(idGenerator.generateBroadcastImi(any(Broadcast.class))).thenReturn(BROADCAST_IMI);
         when(idGenerator.generateVersionCrid(any(Item.class), any(Version.class))).thenReturn(VERSION_CRID);
     }
 
     @Test
     public void testGenerationOfBroadcastEventFromSingleBroadcast() {
+        
+        when(serviceMapping.youviewServiceIdFor(BBC_SERVICE_ID)).thenReturn(ImmutableSet.of(YOUVIEW_SERVICE_ID));
+        
         Broadcast broadcast = createBroadcast();
         Item item = createItemWithBroadcasts(ImmutableSet.of(broadcast));
         
@@ -84,6 +85,33 @@ public class NitroBroadcastEventGeneratorTest {
         // TODO is there a better way to compare generated durations?
         assertEquals("P0DT0H30M0.000S", generated.getPublishedDuration().toString());
         assertTrue("Free should be hardcoded to true", generated.getFree().isValue());
+    }
+    
+    @Test
+    public void testNoBroadcastEventsGeneratedWhenNoYVServiceIDsInMapping() {
+        
+        when(serviceMapping.youviewServiceIdFor(BBC_SERVICE_ID)).thenReturn(ImmutableSet.<String>of());
+        
+        Broadcast broadcast = createBroadcast();
+        Item item = createItemWithBroadcasts(ImmutableSet.of(broadcast));
+        
+        Iterable<BroadcastEventType> generated = generator.generate(item);
+        
+        assertTrue("No BroadcastEvents should be generated if no service IDs are mapped", Iterables.isEmpty(generated));
+    }
+    
+    @Test
+    public void testMultipleBroadcastEventsGeneratedWhenMultipleYVServiceIDsInMapping() {
+        
+        ImmutableSet<String> youViewServiceIDs = ImmutableSet.of(YOUVIEW_SERVICE_ID + "_1", YOUVIEW_SERVICE_ID + "_2");
+        when(serviceMapping.youviewServiceIdFor(BBC_SERVICE_ID)).thenReturn(youViewServiceIDs);
+        
+        Broadcast broadcast = createBroadcast();
+        Item item = createItemWithBroadcasts(ImmutableSet.of(broadcast));
+        
+        Iterable<BroadcastEventType> generated = generator.generate(item);
+        
+        assertEquals(Iterables.size(youViewServiceIDs), Iterables.size(generated));
     }
 
     private Item createItemWithBroadcasts(Set<Broadcast> broadcasts) {

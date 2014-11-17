@@ -54,6 +54,7 @@ import com.google.common.collect.Lists;
 
 public class NitroGroupInformationGenerator implements GroupInformationGenerator {
 
+    private static final String MASTERBRAND_PREFIX = "http://bbc.co.uk/masterbrands/";
     private static final String YOUVIEW_CREDIT_ROLE = "urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN";
     private static final String YOUVIEW_IMAGE_FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS:2001:1";
     private static final String YOUVIEW_IMAGE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
@@ -99,9 +100,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         GroupInformationType groupInfo = generateWithCommonFields(film, null);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
-        
-        // TODO from masterbrand?
-//        groupInfo.setServiceIDRef(config.getGroupInformationServiceId());
+        groupInfo.setServiceIDRef(MASTERBRAND_PREFIX + film.getPresentationChannel());
         
         return groupInfo;
     }
@@ -152,8 +151,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             }
             groupInfo.getMemberOf().add(memberOf);
         } else {
-            //TODO from masterbrand
-//            groupInfo.setServiceIDRef(config.getGroupInformationServiceId());
+            groupInfo.setServiceIDRef(MASTERBRAND_PREFIX + series.getPresentationChannel());
         }
         
         return groupInfo;
@@ -165,8 +163,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
         groupInfo.setOrdered(true);
-        // TODO from masterbrand
-//        groupInfo.setServiceIDRef(config.getGroupInformationServiceId());
+        groupInfo.setServiceIDRef(MASTERBRAND_PREFIX + brand.getPresentationChannel());
         
         return groupInfo;
     }
