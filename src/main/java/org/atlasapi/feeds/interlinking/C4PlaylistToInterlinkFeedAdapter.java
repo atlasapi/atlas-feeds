@@ -6,6 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
@@ -21,7 +22,8 @@ import com.metabroadcast.common.base.Maybe;
 
 public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAdapter {
 
-    private static final String ALIAS_TAG_PREFIX = "tag:pmlsc.channel4.com,2009:/programmes/";
+    private static final String CANONICAL_URI_PREFIX = "http://pmlsc.channel4.com/pmlsd/";
+    private static final String WWW_CHANNEL4_PROGRAMMES_PREFIX = "http://www.channel4.com/programmes/";
     private static final String C4_TAG_PREFIX = "tag:www.channel4.com,2009:/programmes/";
 
     private static final Pattern BROADCAST_ID_PATTERN = Pattern.compile("(?:urn:)?(tag:www\\.\\w+4\\.com.*)");
@@ -38,7 +40,8 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
             "http://www.channel4.com/4seven"
         );
 
-    protected static final Pattern SYNTHESIZED_PATTERN = Pattern.compile("http://www.channel4.com/programmes/synthesized/[^/]+/(\\d+)");
+    protected static final Pattern EPISODE_LINK_ALIAS_PATTERN = Pattern.compile("http:\\/\\/pmlsc.channel4.com\\/pmlsd\\/(.*\\/episode-guide\\/(series-\\d+)\\/(episode-\\d+))");
+    protected static final Pattern BRAND_SERIES_LINK_ALIAS_PATTERN = Pattern.compile("http:\\/\\/pmlsc.channel4.com\\/pmlsd\\/(.*\\/episode-guide\\/(series-\\d+)\\/(episode-\\d+))");
     private final LoadingCache<ParentRef, String> parentRefToTagUriCache;
 
     public C4PlaylistToInterlinkFeedAdapter(final ContentResolver contentResolver) {
@@ -117,21 +120,31 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
     }
 
     private String extractTagUri(Identified identified) {
-        for (String alias : identified.getAliasUrls()) {
-            if (alias.startsWith(ALIAS_TAG_PREFIX)) {
-                return alias.replace(ALIAS_TAG_PREFIX, C4_TAG_PREFIX);
-            }
-        }
-        throw new IllegalArgumentException("Cannot find tag URI alias for " 
-                    + identified.getCanonicalUri());
+        return identified.getCanonicalUri().replace(CANONICAL_URI_PREFIX, C4_TAG_PREFIX);
     }
 
     @Override
-    protected String linkFrom(String canonicalUri) {
-        Matcher matcher = SYNTHESIZED_PATTERN.matcher(canonicalUri);
-        if (matcher.matches()) {
-            return "http://www.channel4.com/tv-listings#" + matcher.group(1);
+    protected String linkFrom(Identified identified) {
+        
+        Pattern aliasPattern = null;
+        if (identified instanceof Episode) {
+            aliasPattern = EPISODE_LINK_ALIAS_PATTERN;
+        } else {
+                aliasPattern = BRAND_SERIES_LINK_ALIAS_PATTERN;
         }
-        return canonicalUri;
+        for (String alias : identified.getAliasUrls()) {
+            Matcher matcher = aliasPattern.matcher(alias);
+            if (matcher.matches()) {
+                return WWW_CHANNEL4_PROGRAMMES_PREFIX + matcher.group(1);
+            }
+        }
+        if (identified instanceof Episode) {
+            return brandUriFromBrandCanonicalUri(((Episode)identified).getContainer().getUri());
+        }
+        throw new RuntimeException("Failed to extract link URI for " + identified);
+    }
+
+    private String brandUriFromBrandCanonicalUri(String uri) {
+        return uri.replace(CANONICAL_URI_PREFIX, WWW_CHANNEL4_PROGRAMMES_PREFIX);
     }
 }

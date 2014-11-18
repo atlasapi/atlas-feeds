@@ -146,7 +146,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 		String parentId = parentFromItem(item);
 		
 		Location availableLocation = firstAvailableLocation(item);
-		String link = availableLocation == null ? linkFrom(item.getCanonicalUri()) : availableLocation.getUri();
+		String link = availableLocation == null ? linkFrom(item) : availableLocation.getUri();
 		
         InterlinkEpisode episode = new InterlinkEpisode(episodeId, operationFor(item, from, to), itemIndexFrom(item), link, parentId)
             .withTitle(extractItemTitle(item))
@@ -187,8 +187,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 	    return null;
     }
 
-    protected String linkFrom(String canonicalUri) {
-	    return canonicalUri;
+    protected String linkFrom(Identified identified) {
+	    return identified.getCanonicalUri();
     }
 
     private String extractItemTitle(Item item) {
