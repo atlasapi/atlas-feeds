@@ -340,7 +340,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
                     if (TransportType.LINK.equals(location.getTransportType()) && available(location) 
-                        && (location.getPolicy() == null || location.getPolicy().getPlatform() == null)) {
+                        && (location.getPolicy() == null || location.getPolicy().getPlatform() == null)
+                        && (location.getUri().startsWith("http"))) {
                         return location;
                     }
                 }
@@ -360,7 +361,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
                     if (TransportType.LINK.equals(location.getTransportType()) && qualifies(from, to, location)
-                    		&& (location.getPolicy() == null || location.getPolicy().getPlatform() == null)) {
+                    		&& (location.getPolicy() == null || location.getPolicy().getPlatform() == null)
+                    		&& (location.getUri().startsWith("http"))) {
                         return fromLocation(location, parentId, version.getDuration());
                     }
                 }
