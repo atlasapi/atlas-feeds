@@ -150,7 +150,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
         if (identified instanceof Episode) {
             return brandUriFromBrandCanonicalUri(((Episode)identified).getContainer().getUri());
         }
-        return WWW_CHANNEL4_PROGRAMMES_PREFIX;
+        throw new RuntimeException("Failed to extract link URI for " + identified);
     }
 
     private String brandUriFromBrandCanonicalUri(String uri) {
