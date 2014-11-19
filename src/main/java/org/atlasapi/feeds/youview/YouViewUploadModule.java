@@ -41,7 +41,7 @@ import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.time.SystemClock;
 
 @Configuration
-@Import(TvAnytimeFeedsModule.class)
+@Import(TVAnytimeFeedsModule.class)
 public class YouViewUploadModule {
     
     private static final String CONFIG_PREFIX = "youview.upload.";

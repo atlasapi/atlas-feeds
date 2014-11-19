@@ -41,7 +41,7 @@ import com.google.common.hash.Hashing;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 
 @Configuration
-public class TvAnytimeFeedsModule {
+public class TVAnytimeFeedsModule {
     
     private @Autowired DatabasedMongo mongo;
     private @Autowired LastUpdatedContentFinder contentFinder;
