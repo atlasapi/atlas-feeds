@@ -5,11 +5,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 
 import com.google.common.base.Predicate;
@@ -22,6 +24,8 @@ import com.metabroadcast.common.base.Maybe;
 
 public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAdapter {
 
+    private static final String CHANNEL4_PARTNER = "channel4";
+    private static final String CHANNEL4_SUPPLIER = "channel4";
     private static final String CANONICAL_URI_PREFIX = "http://pmlsc.channel4.com/pmlsd/";
     private static final String WWW_CHANNEL4_PROGRAMMES_PREFIX = "http://www.channel4.com/programmes/";
     private static final String C4_TAG_PREFIX = "tag:www.channel4.com,2009:/programmes/";
@@ -99,7 +103,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
     private static final Pattern LOCATION_ID = Pattern.compile(".*(/programmes/.*/4od#\\d+)$");
     
     @Override
-    protected  String idFrom(Identified description) {
+    protected String idFrom(Identified description) {
         if (description instanceof Location) {
         	Location location = (Location) description;
         	Matcher idMatcher = LOCATION_ID.matcher(location.getUri());
@@ -118,6 +122,11 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
             throw Throwables.propagate(e);
         }
     }
+    
+    @Override
+    protected InterlinkFeedAuthor feedAuthor(Publisher publisher) {
+        return new InterlinkFeedAuthor(CHANNEL4_PARTNER, CHANNEL4_SUPPLIER);
+    }
 
     private String extractTagUri(Identified identified) {
         return identified.getCanonicalUri().replace(CANONICAL_URI_PREFIX, C4_TAG_PREFIX);
@@ -130,7 +139,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
         if (identified instanceof Episode) {
             aliasPattern = EPISODE_LINK_ALIAS_PATTERN;
         } else {
-                aliasPattern = BRAND_SERIES_LINK_ALIAS_PATTERN;
+            aliasPattern = BRAND_SERIES_LINK_ALIAS_PATTERN;
         }
         for (String alias : identified.getAliasUrls()) {
             Matcher matcher = aliasPattern.matcher(alias);

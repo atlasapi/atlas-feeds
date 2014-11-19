@@ -104,8 +104,12 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     
     private InterlinkFeed feed(String id, Publisher publisher) {
         InterlinkFeed feed = new InterlinkFeed(id);
-        feed.withAuthor(new InterlinkFeedAuthor(toPublisherName(publisher), toPublisherName(publisher)));
+        feed.withAuthor(feedAuthor(publisher));
         return feed;
+    }
+    
+    protected InterlinkFeedAuthor feedAuthor(Publisher publisher) {
+        return new InterlinkFeedAuthor(toPublisherName(publisher), toPublisherName(publisher));
     }
 
 	private String toPublisherName(Publisher publisher) {
