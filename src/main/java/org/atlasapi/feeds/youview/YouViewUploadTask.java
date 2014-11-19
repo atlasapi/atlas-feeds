@@ -1,7 +1,7 @@
     package org.atlasapi.feeds.youview;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.upload.YouViewRemoteClient.orderContentForDeletion;
+import static org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient.orderContentForDeletion;
 
 import java.util.Iterator;
 import java.util.List;
@@ -20,12 +20,8 @@ import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.metabroadcast.common.scheduling.ScheduledTask;
@@ -36,7 +32,6 @@ public class YouViewUploadTask extends ScheduledTask {
 
     private static final String DELTA_STATUS_PATTERN = "Updates: processed %d of %d, %d failures. Deletes: processed %d of %d total, %d failures.";
     private static final DateTime START_OF_TIME = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.UTC);
-    private static final Publisher PUBLISHER = Publisher.LOVEFILM;
     private static final Predicate<Content> IS_ACTIVELY_PUBLISHED = new Predicate<Content>() {
         @Override
         public boolean apply(Content input) {
@@ -44,22 +39,20 @@ public class YouViewUploadTask extends ScheduledTask {
         }
     };
     
+    private final Logger log = LoggerFactory.getLogger(YouViewUploadTask.class);
+
     private final LastUpdatedContentFinder contentFinder;
     private final YouViewLastUpdatedStore store;
     private final boolean isBootstrap;
-    private final int chunkSize;
-    
-    private final Logger log = LoggerFactory.getLogger(YouViewUploadTask.class);
     private final Publisher publisher;
     private final YouViewRemoteClient remoteClient;
     private final TransactionStore transactionStore;
     private final FeedStatisticsStore statsStore;
     
-    public YouViewUploadTask(YouViewRemoteClient remoteClient, int chunkSize, LastUpdatedContentFinder contentFinder, 
-            YouViewLastUpdatedStore store, Publisher publisher, boolean isBootstrap, TransactionStore transactionStore,
-            FeedStatisticsStore statsStore) {
+    public YouViewUploadTask(YouViewRemoteClient remoteClient, LastUpdatedContentFinder contentFinder, 
+            YouViewLastUpdatedStore store, Publisher publisher, boolean isBootstrap, 
+            TransactionStore transactionStore, FeedStatisticsStore statsStore) {
         this.remoteClient = checkNotNull(remoteClient);
-        this.chunkSize = checkNotNull(chunkSize);
         this.contentFinder = checkNotNull(contentFinder);
         this.store = checkNotNull(store);
         this.publisher = checkNotNull(publisher);
@@ -106,8 +99,8 @@ public class YouViewUploadTask extends ScheduledTask {
         UpdateProgress deletionProgress = UpdateProgress.START;
         
         YouViewUploadProcessor<UpdateProgress> uploadProcessor = uploadProcessor();
-        for (Iterable<Content> chunk : Iterables.partition(notDeleted, chunkSize)) {
-            uploadProcessor.process(chunk);
+        for (Content content : notDeleted) {
+            uploadProcessor.process(content);
             reportStatus(createDeltaStatus(uploadProcessor.getResult(), deletionProgress, updatesSize, deletesSize));
             updateQueueSizeMetric(remainingCount--);
         }
@@ -152,19 +145,12 @@ public class YouViewUploadTask extends ScheduledTask {
             if (!shouldContinue()) {
                 return;
             }
-            Builder<Content> chunk = ImmutableList.builder();
-            int chunkCount = 0;
-            while (chunkCount < chunkSize && allContent.hasNext()) {
-                Content next = allContent.next();
-                if (IS_ACTIVELY_PUBLISHED.apply(next)) {
-                    chunk.add(next);
-                    chunkCount++;
-                    queueSize--;
-                }
+            Content next = allContent.next();
+            if (IS_ACTIVELY_PUBLISHED.apply(next)) {
+                processor.process(next);
+                reportStatus(processor.getResult().toString());
             }
-            processor.process(chunk.build());
-            updateQueueSizeMetric(queueSize);
-            reportStatus(processor.getResult().toString());
+            queueSize--;
         }
 
         store.setLastUpdated(lastUpdated, publisher);
@@ -178,7 +164,7 @@ public class YouViewUploadTask extends ScheduledTask {
     
     private Iterator<Content> getContentSinceDate(Optional<DateTime> since) {
         DateTime start = since.isPresent() ? since.get() : START_OF_TIME;
-        return contentFinder.updatedSince(PUBLISHER, start);
+        return contentFinder.updatedSince(publisher, start);
     }
 
     private YouViewUploadProcessor<UpdateProgress> uploadProcessor() {
@@ -187,14 +173,11 @@ public class YouViewUploadTask extends ScheduledTask {
             UpdateProgress progress = UpdateProgress.START;
             
             @Override
-            public boolean process(Iterable<Content> chunk) {
+            public boolean process(Content content) {
                 try {
-                    Optional<Transaction> transaction = remoteClient.upload(chunk);
-                    if (transaction.isPresent()) {
-                        Transaction txn = transaction.get();
-                        transactionStore.save(txn);
-                        statsStore.updateAverageLatency(Publisher.BBC_NITRO, calculateLatency(txn.uploadTime(), chunk));
-                    }
+                    Transaction transaction = remoteClient.upload(content);
+                    transactionStore.save(transaction);
+                    statsStore.updateAverageLatency(Publisher.BBC_NITRO, calculateLatency(transaction.uploadTime(), content));
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch (Exception e) {
                     log.error("error on chunk upload: " + e);
@@ -210,22 +193,7 @@ public class YouViewUploadTask extends ScheduledTask {
         };
     }
 
-    protected Duration calculateLatency(final DateTime uploadTime, Iterable<Content> content) {
-        Iterable<Long> latencies = Iterables.transform(content, new Function<Content, Long>() {
-            @Override
-            public Long apply(Content input) {
-                return new Duration(uploadTime, input.getLastFetched()).getMillis();
-            }
-        });
-        return Duration.millis(average(latencies));
-    }
-    
-    private Long average(Iterable<Long> values) {
-        long size = Iterables.size(values);
-        long total = 0;
-        for (Long value : values) {
-            total += value;
-        }
-        return total / size;
+    protected Duration calculateLatency(final DateTime uploadTime, Content content) {
+        return new Duration(uploadTime, content.getLastFetched());
     }
 }

@@ -1,31 +1,31 @@
 package org.atlasapi.feeds.youview;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.UnsupportedEncodingException;
 
 import javax.xml.bind.JAXBElement;
 
+import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
-import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
-import org.atlasapi.feeds.youview.ids.PublisherIdUtility;
+import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
 import org.atlasapi.feeds.youview.transactions.Transaction;
-import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
+import org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Publisher;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import tva.metadata._2010.ObjectFactory;
 import tva.metadata._2010.TVAMainType;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
@@ -41,25 +41,24 @@ public class YouViewRemoteClientTest {
     private static final String TRANSACTION_URL = "transactionUrl";
     private static final Publisher PUBLISHER = Publisher.LOVEFILM;
     
-    private TvAnytimeGenerator generator = Mockito.mock(TvAnytimeGenerator.class);
-    private YouViewPerPublisherFactory publisherFactory = Mockito.mock(YouViewPerPublisherFactory.class);
-    private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
-    private PublisherIdUtility lovefilmIdUtil = PublisherIdUtilities.idUtilFor(PUBLISHER, "baseUri");
+    private TvAnytimeGenerator generator = mock(TvAnytimeGenerator.class);
+    private SimpleHttpClient httpClient = mock(SimpleHttpClient.class);
     private HttpResponse response = createResponseWithTransaction(TRANSACTION_URL);
+    private IdGenerator idGenerator = new LoveFilmIdGenerator();
     
-    private final YouViewRemoteClient client = new YouViewRemoteClient(
+    private final HttpYouViewRemoteClient client = new HttpYouViewRemoteClient(
             generator, 
-            publisherFactory, 
+            httpClient,
+            "baseUri",
+            idGenerator,
             CLOCK, 
             false
     );
     
     @Before
     public void setup() throws HttpException {
-        Mockito.when(publisherFactory.getIdUtil(PUBLISHER)).thenReturn(lovefilmIdUtil);
-        Mockito.when(publisherFactory.getHttpClient(PUBLISHER)).thenReturn(httpClient);
-        Mockito.when(httpClient.post(Mockito.eq("baseUri/transaction"), Mockito.any(StringPayload.class))).thenReturn(response);
-        Mockito.when(generator.generateTVAnytimeFrom(Mockito.anyCollectionOf(Content.class))).thenReturn(createTVAElem());
+        when(httpClient.post(eq("baseUri/transaction"), any(StringPayload.class))).thenReturn(response);
+        when(generator.generateTVAnytimeFrom(any(Content.class))).thenReturn(createTVAElem());
     }
     
     private JAXBElement<TVAMainType> createTVAElem() {
@@ -74,24 +73,15 @@ public class YouViewRemoteClientTest {
 
     @Test
     public void testThatUploadingSuccessfullyReturnsTransaction() throws UnsupportedEncodingException, HttpException {
-        ImmutableList<Content> contentToUpload = ImmutableList.of(createContentForPublisher(PUBLISHER));
+        Content contentToUpload = createContentForPublisher(PUBLISHER);
         client.upload(contentToUpload);
 
-        Transaction returnedTxn = client.upload(contentToUpload).get();
+        Transaction returnedTxn = client.upload(contentToUpload);
         
         assertEquals(TRANSACTION_URL, returnedTxn.id());
         assertEquals(PUBLISHER, returnedTxn.publisher());
-        assertEquals(ImmutableSet.copyOf(urlsFrom(contentToUpload)), returnedTxn.content());
+        assertEquals(ImmutableSet.of(contentToUpload.getCanonicalUri()), returnedTxn.content());
         assertEquals(TransactionStateType.ACCEPTED, returnedTxn.status().status());
-    }
-
-    private Iterable<String> urlsFrom(ImmutableList<Content> content) {
-        return Iterables.transform(content, new Function<Content, String>() {
-            @Override
-            public String apply(Content input) {
-                return input.getCanonicalUri();
-            }
-        });
     }
 
     private Content createContentForPublisher(Publisher publisher) {

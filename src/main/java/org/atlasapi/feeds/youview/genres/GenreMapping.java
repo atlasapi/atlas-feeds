@@ -1,13 +1,11 @@
 package org.atlasapi.feeds.youview.genres;
 
-import java.util.Collection;
+import java.util.Set;
 
-import com.google.common.base.Function;
+import org.atlasapi.media.entity.Content;
 
 
 public interface GenreMapping {
-    
-    Collection<String> getYouViewGenresFor(String genre);
-    Function<String, String> toAtlasGenre();
-    Function<String, String> toAtlasSubGenre();
+
+    Set<String> youViewGenresFor(Content content);
 }

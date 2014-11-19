@@ -4,7 +4,7 @@ import org.atlasapi.media.entity.Content;
 
 public interface YouViewUploadProcessor<T> {
     
-    boolean process(Iterable<Content> chunk);
+    boolean process(Content content);
     
     T getResult();
     

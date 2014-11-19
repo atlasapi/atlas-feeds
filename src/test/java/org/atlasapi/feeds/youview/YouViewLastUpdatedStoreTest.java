@@ -3,18 +3,16 @@ package org.atlasapi.feeds.youview;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
-import org.atlasapi.feeds.tvanytime.TVAnytimeElementCreator;
+import org.atlasapi.feeds.tvanytime.IdGenerator;
+import org.atlasapi.feeds.tvanytime.JaxbTvAnytimeGenerator;
+import org.atlasapi.feeds.tvanytime.TvAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
-import org.atlasapi.feeds.youview.genres.GenreMappings;
-import org.atlasapi.feeds.youview.ids.IdParsers;
-import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
-import org.atlasapi.feeds.youview.images.ImageConfigurations;
+import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
-import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
+import org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
@@ -31,24 +29,19 @@ import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.time.TimeMachine;
 
 
+// TODO this isn't actually testing the store, it's testing the behaviour of the tasks with respect to the store
 public class YouViewLastUpdatedStoreTest {
 
     private LastUpdatedContentFinder lastUpdatedContentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     private SimpleHttpClient httpClient = Mockito.mock(SimpleHttpClient.class);
-    private YouViewPerPublisherFactory configFactory = YouViewPerPublisherFactory.builder()
-            .withPublisher(
-                    Publisher.LOVEFILM, 
-                    PublisherIdUtilities.idUtilFor(Publisher.LOVEFILM, "baseUri"),
-                    ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
-                    IdParsers.parserFor(Publisher.LOVEFILM), 
-                    GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    httpClient)
-            .build();
-    private TVAnytimeElementCreator elementCreator = Mockito.mock(TVAnytimeElementCreator.class);
-    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator);
-    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(
+    private TvAnytimeElementCreator elementCreator = Mockito.mock(TvAnytimeElementCreator.class);
+    private TvAnytimeGenerator generator = new JaxbTvAnytimeGenerator(elementCreator);
+    private IdGenerator idGenerator = new LoveFilmIdGenerator();
+    private HttpYouViewRemoteClient youViewClient = new HttpYouViewRemoteClient(
             generator, 
-            configFactory, 
+            httpClient,
+            "baseUri",
+            idGenerator,
             new TimeMachine(), 
             false
     );
@@ -57,7 +50,7 @@ public class YouViewLastUpdatedStoreTest {
     
     @Test(expected = RuntimeException.class)
     public void testDeltaWontRunIfNoLastUpdatedRecord() throws HttpException {
-        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, false, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
+        YouViewUploadTask task = new YouViewUploadTask(youViewClient, lastUpdatedContentFinder, store, Publisher.LOVEFILM, false, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
         task.run();
         Mockito.verifyZeroInteractions(lastUpdatedContentFinder.updatedSince(Publisher.LOVEFILM, Mockito.any(DateTime.class)));
         Mockito.verifyZeroInteractions(httpClient.post(Mockito.anyString(), Mockito.any(Payload.class)));
@@ -68,7 +61,7 @@ public class YouViewLastUpdatedStoreTest {
     public void testDeltaWontRunIfNoLastUpdatedRecordForThatPublisher() throws HttpException {
         store.setLastUpdated(DateTime.now().minusDays(2), Publisher.AMAZON_UNBOX);
         
-        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, false, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
+        YouViewUploadTask task = new YouViewUploadTask(youViewClient, lastUpdatedContentFinder, store, Publisher.LOVEFILM, false, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
         task.run();
         Mockito.verifyZeroInteractions(lastUpdatedContentFinder.updatedSince(Publisher.LOVEFILM, Mockito.any(DateTime.class)));
         Mockito.verifyZeroInteractions(httpClient.post(Mockito.anyString(), Mockito.any(Payload.class)));
@@ -81,7 +74,7 @@ public class YouViewLastUpdatedStoreTest {
         assertFalse(store.getLastUpdated(Publisher.LOVEFILM).isPresent());
         assertFalse(store.getLastUpdated(Publisher.AMAZON_UNBOX).isPresent());
         
-        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, true, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
+        YouViewUploadTask task = new YouViewUploadTask(youViewClient, lastUpdatedContentFinder, store, Publisher.LOVEFILM, true, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
         task.run();
         Mockito.when(lastUpdatedContentFinder.updatedSince(Publisher.LOVEFILM, Mockito.any(DateTime.class))).thenReturn(ImmutableList.<Content>of().iterator());
       
