@@ -4,6 +4,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.any;
 
 import java.util.List;
 
@@ -15,6 +17,7 @@ import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
@@ -25,6 +28,7 @@ import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -52,6 +56,7 @@ import com.metabroadcast.common.intl.Countries;
 
 public class NitroGroupInformationGeneratorTest {
     
+    private static final String BBC_SERVICE_PREFIX = "http://bbc.co.uk/services/";
     private static final String MASTER_BRAND = "master_brand";
 
     private static final Function<GenreType, String> TO_HREF = new Function<GenreType, String>() {
@@ -67,7 +72,12 @@ public class NitroGroupInformationGeneratorTest {
     private IdGenerator idGenerator = new NitroIdGenerator(bbcServiceIdResolver, Hashing.md5());
     private GenreMapping genreMapping = new NitroGenreMapping("nitro_genre_mapping.csv");
     
-    private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping);
+    private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping, bbcServiceIdResolver);
+    
+    @Before
+    public void setup() {
+        when(bbcServiceIdResolver.resolveSId(any(Content.class))).thenReturn(MASTER_BRAND);
+    }
     
     @Test
     public void testRelatedMaterialNotGeneratedIfNullOrEmptyImageString() {
@@ -104,13 +114,14 @@ public class NitroGroupInformationGeneratorTest {
     @Test
     public void testMasterbrandOutputAsServiceIDRef() {
         Film film = createFilm();
-        film.setPresentationChannel(MASTER_BRAND);
+        film.setPresentationChannel(BBC_SERVICE_PREFIX + MASTER_BRAND);
         
         GroupInformationType groupInfo = generator.generate(film);
 
         String serviceIDRef = groupInfo.getServiceIDRef();
         
-        assertEquals("http://bbc.co.uk/masterbrands/" + MASTER_BRAND, serviceIDRef);
+        // N.B. this has been temporarily changed from 'masterbrands' to 'master_brands'
+        assertEquals("http://bbc.co.uk/master_brands/" + MASTER_BRAND, serviceIDRef);
     }
     
     @Test

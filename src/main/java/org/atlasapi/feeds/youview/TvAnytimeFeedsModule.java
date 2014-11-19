@@ -72,7 +72,7 @@ public class TvAnytimeFeedsModule {
         
         return new NitroTvAnytimeElementCreator(
                 new NitroProgramInformationGenerator(nitroIdGenerator, elementFactory()), 
-                new NitroGroupInformationGenerator(nitroIdGenerator, genreMapping), 
+                new NitroGroupInformationGenerator(nitroIdGenerator, genreMapping, bbcServiceIdResolver()), 
                 new NitroOnDemandLocationGenerator(nitroIdGenerator, elementFactory()), 
                 new NitroBroadcastEventGenerator(nitroIdGenerator, elementFactory(), serviceMapping, bbcServiceIdResolver()),
                 contentHierarchy(), 

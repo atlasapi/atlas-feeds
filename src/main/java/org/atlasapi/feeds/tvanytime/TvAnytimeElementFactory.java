@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.tvanytime;
 
+import java.text.SimpleDateFormat;
+
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -7,13 +9,14 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
-import com.google.common.base.Throwables;
-
 import tva.metadata._2010.FlagType;
+
+import com.google.common.base.Throwables;
 
 
 public class TvAnytimeElementFactory {
     
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
     private DatatypeFactory datatypeFactory;
 
     public TvAnytimeElementFactory() {
@@ -31,7 +34,8 @@ public class TvAnytimeElementFactory {
     }
     
     public XMLGregorianCalendar gregorianCalendar(DateTime dateTime) {
-        return datatypeFactory.newXMLGregorianCalendar(dateTime.toGregorianCalendar());
+        String format = SIMPLE_DATE_FORMAT.format(dateTime.toDate());
+        return datatypeFactory.newXMLGregorianCalendar(format);
     }
     
     public javax.xml.datatype.Duration durationFrom(Duration duration) {

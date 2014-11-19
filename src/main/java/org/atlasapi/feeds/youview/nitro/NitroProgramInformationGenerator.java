@@ -10,6 +10,7 @@ import javax.xml.datatype.Duration;
 import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.youview.AbstractProgramInformationGenerator;
+import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
@@ -63,6 +64,8 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
             .put("15", "http://bbfc.org.uk/BBFCRatingCS/2002#15")
             .put("18", "http://bbfc.org.uk/BBFCRatingCS/2002#18")
             .build();
+
+    private static final Integer DEFAULT_DURATION = 30 * 60;
     
     private final TvAnytimeElementFactory elementFactory;
 
@@ -128,10 +131,21 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
 
     private Duration generateDuration(Version version) {
         Integer durationInSecs = version.getDuration();
-        if (durationInSecs != null) {
-            return elementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
+        if (durationInSecs == null) {
+            durationInSecs = durationFromFirstBroadcast(version);
         } 
-        return null;
+        return elementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
+    }
+
+    // TODO this is a workaround until versions are ingested correctly from BBC Nitro
+    private Integer durationFromFirstBroadcast(Version version) {
+        Broadcast broadcast = Iterables.getFirst(version.getBroadcasts(), null);
+        if (broadcast == null) {
+            // this needs to go away
+            return DEFAULT_DURATION;
+//            throw new RuntimeException("no broadcasts on version " + version.getCanonicalUri());
+        }
+        return broadcast.getBroadcastDuration();
     }
 
     private Optional<TVATimeType> generateProductionDate(Item item) {

@@ -77,12 +77,11 @@ public final class NitroIdGenerator implements IdGenerator {
         );
     }
     
-    // TODO hash this output string
+ // until id generator for b'casts takes into account yv service id not bbc service id
     private String generateBroadcastIdFor(Broadcast broadcast) {
         return JOIN_ON_COLON.join(pidFrom(broadcast), serviceIdResolver.resolveSId(broadcast));
     }
     
-    // TODO hash this output string
     private String generateVersionIdFor(Content content, Version version) {
         return JOIN_ON_COLON.join(pidFrom(content), durationInSecsFrom(version), isRestricted(version));
     }

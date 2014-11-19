@@ -45,7 +45,7 @@ public class TVAnytimeElementFactoryTest {
     @Test
     public void testGenerationOfGregorianCalendarFromDateTime() {
         XMLGregorianCalendar calendar = elementFactory.gregorianCalendar(clock.now());
-        assertEquals("2012-01-01T00:00:00.000Z", calendar.toString());
+        assertEquals("2012-01-01T00:00:00Z", calendar.toString());
     }
 
     @Test

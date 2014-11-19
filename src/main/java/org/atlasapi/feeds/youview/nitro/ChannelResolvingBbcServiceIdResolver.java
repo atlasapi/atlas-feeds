@@ -8,6 +8,7 @@ import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Content;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -47,5 +48,10 @@ public final class ChannelResolvingBbcServiceIdResolver implements BbcServiceIdR
         }
         Alias sidAlias = Iterables.getOnlyElement(bbcSIdAliases);
         return sidAlias.getValue();
+    }
+
+    @Override
+    public String resolveSId(Content content) {
+        return resolveServiceId(content.getPresentationChannel());
     }
 }

@@ -54,7 +54,8 @@ import com.google.common.collect.Lists;
 
 public class NitroGroupInformationGenerator implements GroupInformationGenerator {
 
-    private static final String MASTERBRAND_PREFIX = "http://bbc.co.uk/masterbrands/";
+//    private static final String MASTERBRAND_PREFIX = "http://bbc.co.uk/masterbrands/";
+    private static final String DEV_MASTERBRAND_PREFIX = "http://bbc.co.uk/master_brands/";
     private static final String YOUVIEW_CREDIT_ROLE = "urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN";
     private static final String YOUVIEW_IMAGE_FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS:2001:1";
     private static final String YOUVIEW_IMAGE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
@@ -86,13 +87,17 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             return genre;
         }
     };
+    private static final Integer DEFAULT_IMAGE_WIDTH = 1024;
+    private static final Integer DEFAULT_IMAGE_HEIGHT = 576;
 
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
+    private final BbcServiceIdResolver sIdResolver;
     
-    public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping) {
+    public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping, BbcServiceIdResolver sIdResolver) {
         this.idGenerator = checkNotNull(idGenerator);
         this.genreMapping = checkNotNull(genreMapping);
+        this.sIdResolver = checkNotNull(sIdResolver);
     }
     
     @Override
@@ -100,7 +105,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         GroupInformationType groupInfo = generateWithCommonFields(film, null);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
-        groupInfo.setServiceIDRef(MASTERBRAND_PREFIX + film.getPresentationChannel());
+        groupInfo.setServiceIDRef(createMasterBrandLink(film));
         
         return groupInfo;
     }
@@ -131,6 +136,8 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
                 }
             }
             groupInfo.getMemberOf().add(memberOf);
+        } else {
+            groupInfo.setServiceIDRef(createMasterBrandLink(item));
         }
         
         return groupInfo;  
@@ -151,7 +158,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             }
             groupInfo.getMemberOf().add(memberOf);
         } else {
-            groupInfo.setServiceIDRef(MASTERBRAND_PREFIX + series.getPresentationChannel());
+            groupInfo.setServiceIDRef(createMasterBrandLink(series));
         }
         
         return groupInfo;
@@ -163,11 +170,15 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
         groupInfo.setOrdered(true);
-        groupInfo.setServiceIDRef(MASTERBRAND_PREFIX + brand.getPresentationChannel());
+        groupInfo.setServiceIDRef(createMasterBrandLink(brand));
         
         return groupInfo;
     }
     
+    private String createMasterBrandLink(Content content) {
+        return DEV_MASTERBRAND_PREFIX + sIdResolver.resolveSId(content);
+    }
+
     private GroupInformationType generateWithCommonFields(Content content, Item item) {
         GroupInformationType groupInfo = new GroupInformationType();
         
@@ -244,13 +255,19 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         StillImageContentAttributesType attributes = new StillImageContentAttributesType();
         
         if (content.getImages() == null || content.getImages().isEmpty()) {
-           // TODO defaulted on a per service/masterbrand level
-//            attributes.setWidth(imageConfig.defaultImageWidth());
-//            attributes.setHeight(imageConfig.defaultImageHeight());
+            attributes.setWidth(DEFAULT_IMAGE_WIDTH);
+            attributes.setHeight(DEFAULT_IMAGE_HEIGHT);
         } else {
             Image image = Iterables.getFirst(content.getImages(), null);
             attributes.setWidth(image.getWidth());
             attributes.setHeight(image.getHeight());
+        }
+        // TODO remove this once we ingest image dimensions in the nitro ingest
+        if (attributes.getWidth() == null) {
+            attributes.setWidth(DEFAULT_IMAGE_WIDTH);
+        }
+        if (attributes.getHeight() == null) {
+            attributes.setHeight(DEFAULT_IMAGE_HEIGHT);
         }
         
         ControlledTermType primaryRole = new ControlledTermType();

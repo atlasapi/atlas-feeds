@@ -4,98 +4,52 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
+import org.atlasapi.feeds.youview.AbstractBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.services.ServiceMapping;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import tva.metadata._2010.AVAttributesType;
+import tva.metadata._2010.AspectRatioType;
+import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.BroadcastEventType;
-import tva.metadata._2010.CRIDRefType;
+import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.InstanceDescriptionType;
+import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
-import com.google.common.base.Function;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
+public class NitroBroadcastEventGenerator extends AbstractBroadcastEventGenerator {
 
-public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
-
+    private static final String DEFAULT_ASPECT_RATIO = "16:9";
+    private static final String MIX_TYPE_STEREO = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
     private static final String BROADCAST_AUTHORITY = "pcrid.dmol.co.uk";
     private static final String BROADCAST_PID_AUTHORITY = "bpid.bbc.co.uk";
     private static final String BROADCAST_CRID = "crid://fp.bbc.co.uk/SILG5";
-    private static final String SERVICE_ID_PREFIX = "http://bbc.co.uk/services/";
+//    private static final String SERVICE_ID_PREFIX = "http://bbc.co.uk/services/";
+    private static final String DEV_SERVICE_ID_PREFIX = "http://bbc.couk/services/";
     private static final String PROGRAM_URL = "dvb://233A..A020;A876";
 
-    private final Logger log = LoggerFactory.getLogger(NitroBroadcastEventGenerator.class);
-    private final IdGenerator idGenerator;
     private final TvAnytimeElementFactory elementFactory;
-    private final ServiceMapping serviceMapping;
-    private final BbcServiceIdResolver serviceIdResolver;
 
     public NitroBroadcastEventGenerator(IdGenerator idGenerator, TvAnytimeElementFactory elementFactory,
             ServiceMapping serviceMapping, BbcServiceIdResolver serviceIdResolver) {
-        this.idGenerator = checkNotNull(idGenerator);
+        super(idGenerator, serviceMapping, serviceIdResolver);
         this.elementFactory = checkNotNull(elementFactory);
-        this.serviceMapping = checkNotNull(serviceMapping);
-        this.serviceIdResolver = checkNotNull(serviceIdResolver);
     }
-    
-    @Override
-    public Iterable<BroadcastEventType> generate(Item item) {
-        return FluentIterable.from(item.getVersions())
-                .transformAndConcat(toBroadcastEventTypes(item));
-    }
-    
-    private Function<Version, Iterable<BroadcastEventType>> toBroadcastEventTypes(final Item item) {
-        return new Function<Version, Iterable<BroadcastEventType>>() {
-            @Override
-            public Iterable<BroadcastEventType> apply(Version input) {
-                return toBroadcastEventTypes(item, input);
-            }
-        };
-    }
-    
-    private Iterable<BroadcastEventType> toBroadcastEventTypes(final Item item, final Version version) {
-        return FluentIterable.from(version.getBroadcasts())
-                .transformAndConcat(new Function<Broadcast, Iterable<BroadcastEventType>>() {
-                    @Override
-                    public Iterable<BroadcastEventType> apply(Broadcast input) {
-                        return toBroadcastEventTypes(item, version, input);
-                    }
-                }
-        );
-    }
-    
-    private Iterable<BroadcastEventType> toBroadcastEventTypes(final Item item, final Version version, final Broadcast broadcast) {
-        Iterable<String> youViewServiceIds = serviceMapping.youviewServiceIdFor(serviceIdResolver.resolveSId(broadcast));
-        if (Iterables.isEmpty(youViewServiceIds)) {
-            log.warn("broadcast {} on {} has no mapped YouView service IDs", broadcast.getCanonicalUri(), broadcast.getBroadcastOn());
-            return ImmutableList.of();
-        }
-        return Iterables.transform(youViewServiceIds, new Function<String, BroadcastEventType>() {
-            @Override
-            public BroadcastEventType apply(String input) {
-                return toBroadcastEventType(item, version, broadcast, input);
-            }
-        });
-    }
-    
 
-    private BroadcastEventType toBroadcastEventType(Item item, Version version, Broadcast broadcast, String youViewServiceId) {
+    @Override
+    public BroadcastEventType generate(String imi, Item item, Version version, Broadcast broadcast, String youViewServiceId) {
         BroadcastEventType broadcastEvent = new BroadcastEventType();
         
         broadcastEvent.setServiceIDRef(serviceIdRefFrom(youViewServiceId));
         broadcastEvent.setProgram(createProgram(item, version));
         // TODO need to update nitro - ingest id from broadcast - type = "terrestrial_event_locator"
         broadcastEvent.setProgramURL(PROGRAM_URL);
-        broadcastEvent.setInstanceMetadataId(idGenerator.generateBroadcastImi(broadcast));
+        broadcastEvent.setInstanceMetadataId(imi);
         broadcastEvent.setInstanceDescription(instanceDescriptionFrom(broadcast));
         broadcastEvent.setPublishedStartTime(startTimeFrom(broadcast));
         broadcastEvent.setPublishedDuration(durationFrom(broadcast));
@@ -106,31 +60,61 @@ public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
     }
 
     private String serviceIdRefFrom(String youViewServiceId) {
-        return SERVICE_ID_PREFIX + youViewServiceId;
+//        return SERVICE_ID_PREFIX + youViewServiceId;
+        return DEV_SERVICE_ID_PREFIX + youViewServiceId;
     }
 
-    private CRIDRefType createProgram(Item item, Version version) {
-        CRIDRefType program = new CRIDRefType();
-        program.setCrid(idGenerator.generateVersionCrid(item, version));
-        return program;
-    }
-    
     private InstanceDescriptionType instanceDescriptionFrom(Broadcast broadcast) {
         InstanceDescriptionType description = new InstanceDescriptionType();
         
+        description.getOtherIdentifier().add(createTerrestrialProgrammeCridIdentifier());
+        description.getOtherIdentifier().add(createBroadcastPidIdentifier(broadcast));
+        description.setAVAttributes(createAVAttributes());
+        
+        return description;
+    }
+
+    private AVAttributesType createAVAttributes() {
+        AVAttributesType avAttributes = new AVAttributesType();
+        
+        avAttributes.getAudioAttributes().add(createAudioAttributes());
+        avAttributes.setVideoAttributes(createVideoAttributes());
+        
+        return avAttributes;
+    }
+
+    private VideoAttributesType createVideoAttributes() {
+        VideoAttributesType videoAttributes = new VideoAttributesType();
+        
+        AspectRatioType aspectRatio = new AspectRatioType();
+        aspectRatio.setValue(DEFAULT_ASPECT_RATIO);
+        
+        videoAttributes.getAspectRatio().add(aspectRatio);
+        
+        return videoAttributes;
+    }
+
+    private AudioAttributesType createAudioAttributes() {
+        AudioAttributesType audioAttributes = new AudioAttributesType();
+        ControlledTermType mixType = new ControlledTermType();
+        mixType.setHref(MIX_TYPE_STEREO);
+        audioAttributes.setMixType(mixType);
+        return audioAttributes;
+    }
+
+    private UniqueIDType createTerrestrialProgrammeCridIdentifier() {
         UniqueIDType otherId = new UniqueIDType();
         otherId.setAuthority(BROADCAST_AUTHORITY);
         // TODO this will need ingesting from NITRO - broadcast id, type = "terrestrial_programme_crid"
         otherId.setValue(BROADCAST_CRID);
-        
-        description.getOtherIdentifier().add(otherId);
-        
+        return otherId;
+    }
+
+    private UniqueIDType createBroadcastPidIdentifier(Broadcast broadcast) {
         UniqueIDType broadcastPidId = new UniqueIDType();
         broadcastPidId.setAuthority(BROADCAST_PID_AUTHORITY);
         broadcastPidId.setValue(broadcast.getSourceId().replace("bbc:", ""));
-        
-        description.getOtherIdentifier().add(broadcastPidId);
-        return description;
+        return broadcastPidId;
     }
     
     private XMLGregorianCalendar startTimeFrom(Broadcast broadcast) {

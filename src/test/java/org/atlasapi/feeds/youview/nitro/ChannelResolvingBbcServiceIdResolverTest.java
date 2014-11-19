@@ -8,6 +8,8 @@ import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Publisher;
 import org.junit.Test;
@@ -60,6 +62,27 @@ public class ChannelResolvingBbcServiceIdResolverTest {
         String resolved = serviceIdResolver.resolveSId(createBroadcastOn(broadcastOn));
         
         assertEquals(SERVICE_ID, resolved);
+    }
+    
+    @SuppressWarnings("deprecation") // Maybe
+    @Test
+    public void testResolvesCorrectAliasFromContentPresentationChannelWhenChannelHasAMatchingAlias() {
+        String broadcastOn = "bbcOne";
+        Channel channel = new Channel(Publisher.METABROADCAST, "BBC One", "bbc_one", true, MediaType.VIDEO, broadcastOn);
+        Alias alias = new Alias(SID_NAMESPACE, SERVICE_ID);
+        channel.addAlias(alias);
+        
+        Mockito.when(channelResolver.fromUri(broadcastOn)).thenReturn(Maybe.just(channel));
+        
+        String resolved = serviceIdResolver.resolveSId(createContentOn(broadcastOn));
+        
+        assertEquals(SERVICE_ID, resolved);
+    }
+
+    private Content createContentOn(String broadcastOn) {
+        Film film = new Film();
+        film.setPresentationChannel(broadcastOn);
+        return film;
     }
 
     private Broadcast createBroadcastOn(String broadcastOn) {
