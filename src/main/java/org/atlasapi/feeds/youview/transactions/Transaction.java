@@ -4,40 +4,43 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Set;
 
+import org.atlasapi.media.entity.Publisher;
+import org.joda.time.DateTime;
+
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 
 
 public class Transaction {
 
-    private final String transactionUrl;
-    private final Set<String> contentUrls;
+    private final String id;
+    private final Publisher publisher;
+    private final DateTime uploadTime;
+    private final Set<String> content;
     private final TransactionStatus status;
     
-    public static Transaction success(Transaction transaction) {
-        return new Transaction(transaction.url(), transaction.contentUrls(), TransactionStatus.SUCCESS);
-    }
-    
-    public static Transaction failure(Transaction transaction) {
-        return new Transaction(transaction.url(), transaction.contentUrls(), TransactionStatus.FAILURE);
-    }
-    
-    public Transaction(String transactionUrl, Iterable<String> contentUrls) {
-        this(transactionUrl, contentUrls, TransactionStatus.UNKNOWN);
-    }
-    
-    public Transaction(String transactionUrl, Iterable<String> contentUrls, TransactionStatus status) {
-        this.transactionUrl = checkNotNull(transactionUrl);
-        this.contentUrls = ImmutableSet.copyOf(contentUrls);
+    public Transaction(String id, Publisher publisher, DateTime uploadTime, Iterable<String> content, TransactionStatus status) {
+        this.id = checkNotNull(id);
+        this.publisher = checkNotNull(publisher);
+        this.uploadTime = checkNotNull(uploadTime);
+        this.content = ImmutableSet.copyOf(content);
         this.status = checkNotNull(status);
     }
     
-    public String url() {
-        return transactionUrl;
+    public String id() {
+        return id;
     }
     
-    public Set<String> contentUrls() {
-        return contentUrls;
+    public Publisher publisher() {
+        return publisher;
+    }
+    
+    public DateTime uploadTime() {
+        return uploadTime;
+    }
+    
+    public Set<String> content() {
+        return content;
     }
     
     public TransactionStatus status() {
@@ -47,15 +50,17 @@ public class Transaction {
     @Override
     public String toString() {
         return Objects.toStringHelper(getClass())
-                .add("transactionUrl", transactionUrl)
-                .add("contentUrls", contentUrls)
+                .add("id", id)
+                .add("publisher", publisher)
+                .add("uploadTime", uploadTime)
+                .add("content", content)
                 .add("status", status)
                 .toString();
     }
     
     @Override
     public int hashCode() {
-        return Objects.hashCode(transactionUrl);
+        return Objects.hashCode(id);
     }
     
     @Override
@@ -66,7 +71,8 @@ public class Transaction {
         
         if (that instanceof Transaction) {
             Transaction other = (Transaction) that;
-            return transactionUrl.equals(other.transactionUrl);
+            return id.equals(other.id)
+                    && publisher.equals(other.publisher);
         }
         
         return false;

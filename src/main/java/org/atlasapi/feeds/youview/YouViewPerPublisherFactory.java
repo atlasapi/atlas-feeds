@@ -8,7 +8,6 @@ import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdParser;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtility;
 import org.atlasapi.feeds.youview.images.ImageConfiguration;
-import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.media.entity.Publisher;
 
 import com.google.common.collect.ImmutableMap;
@@ -22,7 +21,6 @@ public class YouViewPerPublisherFactory {
     private final Map<Publisher, IdParser> idParsers;
     private final Map<Publisher, GenreMapping> genreMaps;
     private final Map<Publisher, SimpleHttpClient> httpClients;
-    private final Map<Publisher, TransactionStore> transactionStores;
     
     public static Builder builder() {
         return new Builder();
@@ -31,13 +29,12 @@ public class YouViewPerPublisherFactory {
     private YouViewPerPublisherFactory(Map<Publisher, PublisherIdUtility> configurations, 
             Map<Publisher, ImageConfiguration> imageConfigurations,
             Map<Publisher, IdParser> idParsers, Map<Publisher, GenreMapping> genreMaps, 
-            Map<Publisher, SimpleHttpClient> httpClients, Map<Publisher, TransactionStore> transactionStores) {
+            Map<Publisher, SimpleHttpClient> httpClients) {
                 this.configurations = ImmutableMap.copyOf(checkNotNull(configurations));
                 this.imageConfigurations = ImmutableMap.copyOf(checkNotNull(imageConfigurations));
                 this.idParsers = ImmutableMap.copyOf(checkNotNull(idParsers));
                 this.genreMaps = ImmutableMap.copyOf(checkNotNull(genreMaps));
                 this.httpClients = ImmutableMap.copyOf(checkNotNull(httpClients));
-                this.transactionStores = ImmutableMap.copyOf(checkNotNull(transactionStores));
     }
 
     public PublisherIdUtility getIdUtil(Publisher publisher) {
@@ -80,14 +77,6 @@ public class YouViewPerPublisherFactory {
         return httpClient;
     }
     
-    public TransactionStore getTransactionStore(Publisher publisher) {
-        TransactionStore transactionStore = transactionStores.get(publisher);
-        if (transactionStore == null) {
-            throw new InvalidPublisherException(publisher);
-        }
-        return transactionStore;
-    }
-    
     public static class Builder {
         
         private ImmutableMap.Builder<Publisher, PublisherIdUtility> idUtilities = ImmutableMap.<Publisher, PublisherIdUtility>builder();
@@ -95,23 +84,21 @@ public class YouViewPerPublisherFactory {
         private ImmutableMap.Builder<Publisher, IdParser> idParsers = ImmutableMap.<Publisher, IdParser>builder();
         private ImmutableMap.Builder<Publisher, GenreMapping> genreMaps = ImmutableMap.<Publisher, GenreMapping>builder();
         private ImmutableMap.Builder<Publisher, SimpleHttpClient> httpClients = ImmutableMap.<Publisher, SimpleHttpClient>builder();
-        private ImmutableMap.Builder<Publisher, TransactionStore> transactionStores = ImmutableMap.<Publisher, TransactionStore>builder();
         
         private Builder() {}
         
         public YouViewPerPublisherFactory build() {
             return new YouViewPerPublisherFactory(idUtilities.build(), imageConfigurations.build(), 
-                    idParsers.build(), genreMaps.build(), httpClients.build(), transactionStores.build());
+                    idParsers.build(), genreMaps.build(), httpClients.build());
         }
         
         public Builder withPublisher(Publisher publisher, PublisherIdUtility config, ImageConfiguration imageConfig,
-                IdParser idParser, GenreMapping genreMap, SimpleHttpClient httpClient, TransactionStore transactionStore) {
+                IdParser idParser, GenreMapping genreMap, SimpleHttpClient httpClient) {
             idUtilities.put(checkNotNull(publisher), checkNotNull(config));
             imageConfigurations.put(publisher, checkNotNull(imageConfig));
             idParsers.put(publisher, checkNotNull(idParser));
             genreMaps.put(publisher, checkNotNull(genreMap));
             httpClients.put(publisher, checkNotNull(httpClient));
-            transactionStores.put(publisher, checkNotNull(transactionStore));
             return this;
         }
     }

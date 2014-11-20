@@ -2,7 +2,6 @@ package org.atlasapi.feeds.youview;
 
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
@@ -13,10 +12,12 @@ import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
-import org.atlasapi.feeds.youview.transactions.MongoTransactionStore;
-import org.atlasapi.feeds.youview.transactions.TransactionStore;
-import org.atlasapi.feeds.youview.www.YouViewFeedController;
-import org.atlasapi.feeds.youview.www.YouViewUploadController;
+import org.atlasapi.feeds.youview.statistics.FeedStatisticsResolver;
+import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
+import org.atlasapi.feeds.youview.statistics.MongoFeedStatisticsStore;
+import org.atlasapi.feeds.youview.transactions.persistence.MongoTransactionStore;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
+import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
@@ -33,9 +34,10 @@ import com.metabroadcast.common.http.SimpleHttpClientBuilder;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.security.UsernameAndPassword;
+import com.metabroadcast.common.time.SystemClock;
 
 @Configuration
-public class YouViewFeedsWebModule {
+public class TVAnytimeFeedsModule {
     
     private static final String CONFIG_PREFIX = "youview.upload.";
 
@@ -53,21 +55,18 @@ public class YouViewFeedsWebModule {
     private @Autowired ChannelResolver channelResolver;
     
     @Bean
-    public YouViewUploadController uploadController() {
-        return new YouViewUploadController(contentFinder, contentResolver, youViewUploadClient());
+    public FeedStatisticsResolver feedStatsResolver() {
+        return feedStatsStore();
     }
     
-    @Bean
-    public YouViewFeedController feedController() {
-        return new YouViewFeedController(feedGenerator(), contentFinder, contentResolver);
+    @Bean 
+    public FeedStatisticsStore feedStatsStore() {
+        return new MongoFeedStatisticsStore(mongo, new SystemClock());
     }
     
     @Bean 
     public TvAnytimeGenerator feedGenerator() {
-        return new DefaultTvAnytimeGenerator(
-            elementCreator(),
-            Boolean.parseBoolean(performValidation)
-        );
+        return new DefaultTvAnytimeGenerator(elementCreator());
     }
     
     private TVAnytimeElementCreator elementCreator() {
@@ -95,31 +94,36 @@ public class YouViewFeedsWebModule {
 
     @Bean
     public YouViewRemoteClient youViewUploadClient() {
-        return new YouViewRemoteClient(feedGenerator(), configFactory());
+        return new YouViewRemoteClient(
+                feedGenerator(), 
+                configFactory(), 
+                new SystemClock(), 
+                Boolean.parseBoolean(performValidation)
+        );
     }
     
     private YouViewPerPublisherFactory configFactory() {
         YouViewPerPublisherFactory.Builder factory = YouViewPerPublisherFactory.builder();
-        for (UploadPublisherConfiguration config : parseConfig()) {
+        for (UploadPublisherConfiguration config : parseConfig().getConfigs()) {
             factory = factory.withPublisher(
                     config.publisher(), 
                     PublisherIdUtilities.idUtilFor(config.publisher(), config.url()), 
                     ImageConfigurations.imageConfigFor(config.publisher()),
                     IdParsers.parserFor(config.publisher()), 
                     GenreMappings.mappingFor(config.publisher()), 
-                    httpClient(config.credentials().username(), config.credentials().password()),
-                    transactionStore(config.publisher())
+                    httpClient(config.credentials().username(), config.credentials().password())
             );
         }
         return factory.build();
     }
     
-    private TransactionStore transactionStore(Publisher publisher) {
-        return new MongoTransactionStore(mongo, publisher);
+    @Bean
+    public TransactionStore transactionStore() {
+        return new MongoTransactionStore(mongo);
     }
     
     @Bean
-    public Set<UploadPublisherConfiguration> parseConfig() {
+    public UploadPublisherConfigurations parseConfig() {
         ImmutableSet.Builder<UploadPublisherConfiguration> config = ImmutableSet.builder();
         for (Entry<String, Publisher> publisher : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisher.getKey();
@@ -133,12 +137,11 @@ public class YouViewFeedsWebModule {
                 );
             }
         }
-        return config.build();
+        return new UploadPublisherConfigurations(config.build());
     }
 
     private boolean isEnabled(String publisherPrefix) {
-        return Boolean.parseBoolean(Configurer.get(publisherPrefix + ".endpoints.enabled").get())
-                || Boolean.parseBoolean(Configurer.get(publisherPrefix + ".upload.enabled").get());
+        return Boolean.parseBoolean(Configurer.get(publisherPrefix + ".upload.enabled").get());
     }
 
     private String parseUrl(String publisherPrefix) {

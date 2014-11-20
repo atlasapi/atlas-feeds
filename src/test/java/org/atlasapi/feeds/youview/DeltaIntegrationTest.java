@@ -26,7 +26,9 @@ import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
-import org.atlasapi.feeds.youview.transactions.TransactionStore;
+import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
+import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -60,6 +62,7 @@ import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.StringPayload;
 import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.time.TimeMachine;
 import com.metabroadcast.common.url.UrlEncoding;
 
 public class DeltaIntegrationTest {
@@ -73,8 +76,7 @@ public class DeltaIntegrationTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    httpClient,
-                    Mockito.mock(TransactionStore.class))
+                    httpClient)
             .build();
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
@@ -90,13 +92,18 @@ public class DeltaIntegrationTest {
             hierarchy,
             new UriBasedContentPermit()
     );
-    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
-    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
+    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator);
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(
+            generator, 
+            configFactory, 
+            new TimeMachine(),
+            false
+    );
     private HttpResponse response;
     private DummyContentFinder contentFinder = new DummyContentFinder();
     private YouViewLastUpdatedStore store = new DummyLastUpdatedStore();
     
-    private final YouViewUploadTask deltaUploader = new YouViewUploadTask(youViewClient, 5, contentFinder, store, PUBLISHER, false);
+    private final YouViewUploadTask deltaUploader = new YouViewUploadTask(youViewClient, 5, contentFinder, store, PUBLISHER, false, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
     
     public DeltaIntegrationTest() throws HttpException {
         response = new HttpResponse("", HttpServletResponse.SC_ACCEPTED, "", ImmutableMap.of("Location", "yv location"));

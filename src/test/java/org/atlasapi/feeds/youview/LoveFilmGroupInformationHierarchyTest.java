@@ -5,15 +5,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.util.Map;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
 
 import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeGenerator;
@@ -26,7 +20,6 @@ import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
-import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -81,8 +74,7 @@ public class LoveFilmGroupInformationHierarchyTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    Mockito.mock(SimpleHttpClient.class),
-                    Mockito.mock(TransactionStore.class))
+                    Mockito.mock(SimpleHttpClient.class))
             .build();
     private ProgramInformationGenerator progInfoGenerator = new DefaultProgramInformationGenerator(configFactory);
     private GroupInformationGenerator groupInfoGenerator = new DefaultGroupInformationGenerator(configFactory);
@@ -100,14 +92,14 @@ public class LoveFilmGroupInformationHierarchyTest {
             new UriBasedContentPermit()
     );
     
-    private final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
+    private final TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator);
     
     @Test
-    public void testSkipsAsinIfNoItem() throws JAXBException {
+    public void testSkipsItemIfNoAsin() throws JAXBException {
         Film film = createFilm("FilmUri");
         film.setImage("Film Image");
         
-        TVAMainType tvaMain = convertToXmlAndBack(film);
+        TVAMainType tvaMain = generateTVA(film);
         
         GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
         
@@ -120,7 +112,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         film.setImage("Film Image");
         film.addAlias(new Alias("gb:amazon:asin", "123456"));
         
-        TVAMainType tvaMain = convertToXmlAndBack(film);
+        TVAMainType tvaMain = generateTVA(film);
         
         GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
         
@@ -142,7 +134,7 @@ public class LoveFilmGroupInformationHierarchyTest {
 
         contentResolver.addContent(episode);
         
-       TVAMainType tvaMain = convertToXmlAndBack(brand);
+       TVAMainType tvaMain = generateTVA(brand);
        
        GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
        
@@ -164,7 +156,7 @@ public class LoveFilmGroupInformationHierarchyTest {
 
         contentResolver.addContent(episode);
 
-        TVAMainType tvaMain = convertToXmlAndBack(series);
+        TVAMainType tvaMain = generateTVA(series);
 
         GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
 
@@ -196,7 +188,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         contentResolver.addContent(episode);
         contentResolver.addContent(brand);
         
-       TVAMainType tvaMain = convertToXmlAndBack(series);
+       TVAMainType tvaMain = generateTVA(series);
        
        GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
        
@@ -264,7 +256,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         contentResolver.addContent(episode1S2);
         contentResolver.addContent(brand);
         
-       TVAMainType tvaMain = convertToXmlAndBack(series2);
+       TVAMainType tvaMain = generateTVA(series2);
        
        GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
        
@@ -298,7 +290,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         episode.setImage("Episode Image");
         episode.addAlias(new Alias("gb:amazon:asin", "123456"));
 
-        TVAMainType tvaMain = convertToXmlAndBack(episode);
+        TVAMainType tvaMain = generateTVA(episode);
 
         GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
 
@@ -326,7 +318,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         contentResolver.addContent(series);
         contentResolver.addContent(episode);
 
-        TVAMainType tvaMain = convertToXmlAndBack(episode);
+        TVAMainType tvaMain = generateTVA(episode);
 
         GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
 
@@ -365,7 +357,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         contentResolver.addContent(episode);
         contentResolver.addContent(brand);
 
-        TVAMainType tvaMain = convertToXmlAndBack(episode);
+        TVAMainType tvaMain = generateTVA(episode);
         
         GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
 
@@ -413,7 +405,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         contentResolver.addContent(series);
         contentResolver.addContent(brand);
 
-        TVAMainType tvaMain = convertToXmlAndBack(episode);
+        TVAMainType tvaMain = generateTVA(episode);
 
         GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
 
@@ -493,7 +485,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         contentResolver.addContent(series2);
         contentResolver.addContent(brand);
 
-        TVAMainType tvaMain = convertToXmlAndBack(episode1S2);
+        TVAMainType tvaMain = generateTVA(episode1S2);
 
         GroupInformationTableType groupInfoTable = tvaMain.getProgramDescription().getGroupInformationTable();
 
@@ -532,19 +524,8 @@ public class LoveFilmGroupInformationHierarchyTest {
         return groupType.getValue().equals("series");
     }
 
-    @SuppressWarnings("unchecked")
-    private TVAMainType convertToXmlAndBack(Content content) throws JAXBException {
-        JAXBContext context = JAXBContext.newInstance("tva.metadata._2010");
-        Unmarshaller unmarshaller = context.createUnmarshaller();
-        
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        
-        generator.generateXml(ImmutableList.<Content>of(content), baos);
-        
-        InputStream input = new ByteArrayInputStream(baos.toByteArray());
-        
-        JAXBElement<TVAMainType> tvaElem = (JAXBElement<TVAMainType>) unmarshaller.unmarshal(input);
-        return tvaElem.getValue();
+    private TVAMainType generateTVA(Content content) {
+        return generator.generateTVAnytimeFrom(ImmutableList.<Content>of(content)).getValue();
     }
     
     private String getImage(GroupInformationType groupInfo) {

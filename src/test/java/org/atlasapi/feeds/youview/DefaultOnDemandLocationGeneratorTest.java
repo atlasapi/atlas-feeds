@@ -12,7 +12,6 @@ import org.atlasapi.feeds.youview.genres.GenreMappings;
 import org.atlasapi.feeds.youview.ids.IdParsers;
 import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
-import org.atlasapi.feeds.youview.transactions.TransactionStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Encoding;
@@ -66,16 +65,14 @@ public class DefaultOnDemandLocationGeneratorTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    Mockito.mock(SimpleHttpClient.class),
-                    Mockito.mock(TransactionStore.class))
+                    Mockito.mock(SimpleHttpClient.class))
             .withPublisher(
                     Publisher.AMAZON_UNBOX, 
                     PublisherIdUtilities.idUtilFor(Publisher.AMAZON_UNBOX, "base uri"),
                     ImageConfigurations.imageConfigFor(Publisher.AMAZON_UNBOX),
                     IdParsers.parserFor(Publisher.AMAZON_UNBOX), 
                     GenreMappings.mappingFor(Publisher.AMAZON_UNBOX), 
-                    Mockito.mock(SimpleHttpClient.class),
-                    Mockito.mock(TransactionStore.class))
+                    Mockito.mock(SimpleHttpClient.class))
             .build();
     private final OnDemandLocationGenerator generator = new DefaultOnDemandLocationGenerator(configFactory);
 

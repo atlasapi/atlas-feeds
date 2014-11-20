@@ -12,7 +12,9 @@ import org.atlasapi.feeds.youview.ids.PublisherIdUtilities;
 import org.atlasapi.feeds.youview.images.ImageConfigurations;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
-import org.atlasapi.feeds.youview.transactions.TransactionStore;
+import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
+import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
+import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
@@ -26,6 +28,7 @@ import com.metabroadcast.common.http.Payload;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.persistence.MongoTestHelper;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.metabroadcast.common.time.TimeMachine;
 
 
 public class YouViewLastUpdatedStoreTest {
@@ -39,18 +42,22 @@ public class YouViewLastUpdatedStoreTest {
                     ImageConfigurations.imageConfigFor(Publisher.LOVEFILM),
                     IdParsers.parserFor(Publisher.LOVEFILM), 
                     GenreMappings.mappingFor(Publisher.LOVEFILM), 
-                    httpClient,
-                    Mockito.mock(TransactionStore.class))
+                    httpClient)
             .build();
     private TVAnytimeElementCreator elementCreator = Mockito.mock(TVAnytimeElementCreator.class);
-    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator, false);
-    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(generator, configFactory);
+    private TvAnytimeGenerator generator = new DefaultTvAnytimeGenerator(elementCreator);
+    private YouViewRemoteClient youViewClient = new YouViewRemoteClient(
+            generator, 
+            configFactory, 
+            new TimeMachine(), 
+            false
+    );
     private DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     private final YouViewLastUpdatedStore store = new MongoYouViewLastUpdatedStore(mongo);
     
     @Test(expected = RuntimeException.class)
     public void testDeltaWontRunIfNoLastUpdatedRecord() throws HttpException {
-        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, false);
+        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, false, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
         task.run();
         Mockito.verifyZeroInteractions(lastUpdatedContentFinder.updatedSince(Publisher.LOVEFILM, Mockito.any(DateTime.class)));
         Mockito.verifyZeroInteractions(httpClient.post(Mockito.anyString(), Mockito.any(Payload.class)));
@@ -61,7 +68,7 @@ public class YouViewLastUpdatedStoreTest {
     public void testDeltaWontRunIfNoLastUpdatedRecordForThatPublisher() throws HttpException {
         store.setLastUpdated(DateTime.now().minusDays(2), Publisher.AMAZON_UNBOX);
         
-        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, false);
+        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, false, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
         task.run();
         Mockito.verifyZeroInteractions(lastUpdatedContentFinder.updatedSince(Publisher.LOVEFILM, Mockito.any(DateTime.class)));
         Mockito.verifyZeroInteractions(httpClient.post(Mockito.anyString(), Mockito.any(Payload.class)));
@@ -74,7 +81,7 @@ public class YouViewLastUpdatedStoreTest {
         assertFalse(store.getLastUpdated(Publisher.LOVEFILM).isPresent());
         assertFalse(store.getLastUpdated(Publisher.AMAZON_UNBOX).isPresent());
         
-        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, true);
+        YouViewUploadTask task = new YouViewUploadTask(youViewClient, 1, lastUpdatedContentFinder, store, Publisher.LOVEFILM, true, Mockito.mock(TransactionStore.class), Mockito.mock(FeedStatisticsStore.class));
         task.run();
         Mockito.when(lastUpdatedContentFinder.updatedSince(Publisher.LOVEFILM, Mockito.any(DateTime.class))).thenReturn(ImmutableList.<Content>of().iterator());
       

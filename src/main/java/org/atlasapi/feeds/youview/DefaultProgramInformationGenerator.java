@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.youview;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
 
 import java.util.List;
 import java.util.Map;
@@ -97,17 +96,24 @@ public class DefaultProgramInformationGenerator implements ProgramInformationGen
         progInfo.setProgramId(idParser.createVersionCrid(config.getCridPrefix(), item));
         progInfo.setBasicDescription(generateBasicDescription(item));
         progInfo.setDerivedFrom(generateDerivedFrom(item));
-        progInfo.getOtherIdentifier().add(generateOtherId(item));
-
+        
+        Optional<UniqueIDType> otherId = generateOtherId(item);
+        if (otherId.isPresent()) {
+            progInfo.getOtherIdentifier().add(otherId.get());
+        }
         return progInfo;
     }
 
-    private UniqueIDType generateOtherId(Item item) {
+    private Optional<UniqueIDType> generateOtherId(Item item) {
         PublisherIdUtility config = configFactory.getIdUtil(item.getPublisher());
+        Optional<String> otherId = config.getOtherIdentifier(item);
+        if (!otherId.isPresent()) {
+            return Optional.absent();
+        }
         UniqueIDType id = new UniqueIDType();
         id.setAuthority(config.getDeepLinkingAuthorityId());
-        id.setValue(getAsin(item));
-        return id;
+        id.setValue(otherId.get());
+        return Optional.of(id);
     }
 
     private BasicContentDescriptionType generateBasicDescription(Item item) {
@@ -151,7 +157,8 @@ public class DefaultProgramInformationGenerator implements ProgramInformationGen
     }
 
     private Duration generateDuration(Item item) {
-        Version version = Iterables.getOnlyElement(item.getVersions());
+        // TODO massive hack
+        Version version = Iterables.getFirst(item.getVersions(), null);
         Integer durationInSecs = version.getDuration();
         if (durationInSecs != null) {
             return datatypeFactory.newDuration(durationInSecs * 1000);

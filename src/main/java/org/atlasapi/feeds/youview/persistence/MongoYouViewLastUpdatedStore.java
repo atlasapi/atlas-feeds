@@ -27,14 +27,14 @@ public class MongoYouViewLastUpdatedStore implements YouViewLastUpdatedStore {
         if (lastUpdated == null) {
             return Optional.absent();
         }
-        return Optional.of(TranslatorUtils.toDateTime(lastUpdated, publisher.key()));
+        return Optional.of(TranslatorUtils.toDateTime(lastUpdated, publisher.name()));
     }
 
     @Override
     public void setLastUpdated(DateTime lastUpdated, Publisher publisher) {
         DBObject dbo = new BasicDBObject();
         TranslatorUtils.from(dbo, MongoConstants.ID, ID_VALUE);
-        TranslatorUtils.fromDateTime(dbo, publisher.key(), lastUpdated);
+        TranslatorUtils.fromDateTime(dbo, publisher.name(), lastUpdated);
         collection.update(new BasicDBObject(MongoConstants.ID, ID_VALUE), dbo, true, false);
     }
 

@@ -1,9 +1,13 @@
 package org.atlasapi.feeds.youview.ids;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
 
 import org.atlasapi.feeds.youview.InvalidPublisherException;
+import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
+
+import com.google.common.base.Optional;
 
 
 public abstract class PublisherIdUtilities implements PublisherIdUtility {
@@ -65,6 +69,11 @@ public abstract class PublisherIdUtilities implements PublisherIdUtility {
         public String getYouViewBaseUrl() {
             return baseUri;
         }
+
+        @Override
+        public Optional<String> getOtherIdentifier(Item item) {
+            return Optional.of(getAsin(item));
+        }
     }
 
     public static final class NitroIdentifiers implements PublisherIdUtility {
@@ -111,6 +120,11 @@ public abstract class PublisherIdUtilities implements PublisherIdUtility {
         public String getYouViewBaseUrl() {
             return baseUri;
         }
+
+        @Override
+        public Optional<String> getOtherIdentifier(Item item) {
+            return Optional.absent();
+        }
     }
 
     public static final class UnboxIdentifiers implements PublisherIdUtility {
@@ -156,6 +170,11 @@ public abstract class PublisherIdUtilities implements PublisherIdUtility {
         @Override
         public String getYouViewBaseUrl() {
             return baseUri;
+        }
+
+        @Override
+        public Optional<String> getOtherIdentifier(Item item) {
+            return Optional.of(getAsin(item));
         }
     }
 }
