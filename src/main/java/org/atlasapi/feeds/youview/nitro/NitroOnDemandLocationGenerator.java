@@ -38,7 +38,7 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
 
     private static final String ASPECT_RATIO = "16:9";
 //    private static final String YOUVIEW_SERVICE = "http://bbc.co.uk/services/youview";
-    private static final String DEV_YOUVIEW_SERVICE = "crid://www.cptestmop.co.uk/application/1";
+    private static final String DEV_YOUVIEW_SERVICE = "http://bbc.couk/services/youview";
     private static final String MIX_TYPE_STEREO = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
     private static final String YOUVIEW_GENRE_MEDIA_AVAILABLE = "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available";
     private static final String GENRE_TYPE_OTHER = "other";
