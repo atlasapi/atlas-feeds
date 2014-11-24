@@ -4,6 +4,7 @@ import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.tasks.TaskQuery;
+import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
 
@@ -21,7 +22,7 @@ public interface TaskStore {
      */
     boolean updateWithStatus(Long taskId, Status status);
     
-    boolean updateWithRemoteId(Long taskId, Status status, String remoteId);
+    boolean updateWithRemoteId(Long taskId, Status status, String remoteId, DateTime uploadTime);
     
     /**
      * Updates the record for a given task with a response from the remote site. 

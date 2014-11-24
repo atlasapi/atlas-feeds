@@ -119,7 +119,7 @@ public class HttpYouViewClient implements YouViewClient {
     
     private void processResult(Task task, Content content, YouViewResult uploadResult) {
         if (uploadResult.isSuccess()) {
-            taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, parseIdFrom(uploadResult.result()));
+            taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, parseIdFrom(uploadResult.result()), clock.now());
         } else {
             Response response = new Response(Status.REJECTED, uploadResult.result(), clock.now());
             taskStore.updateWithResponse(task.id(), response);
@@ -283,7 +283,7 @@ public class HttpYouViewClient implements YouViewClient {
 
     private void processDeletionResult(Task task, Content content, YouViewResult deleteResult) {
         if (deleteResult.isSuccess()) {
-            taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, parseIdFrom(deleteResult.result()));
+            taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, parseIdFrom(deleteResult.result()), clock.now());
         } else {
             Response response = new Response(Status.REJECTED, deleteResult.result(), clock.now());
             taskStore.updateWithResponse(task.id(), response);
