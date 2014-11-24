@@ -14,7 +14,7 @@ public class TaskQuery {
     private final Selection selection;
     private final Publisher publisher;
     private final Optional<String> contentUri;
-    private final Optional<String> transactionId;
+    private final Optional<String> remoteId;
     private final Optional<Status> status;
     
     public static Builder builder(Selection selection, Publisher publisher) {
@@ -22,11 +22,11 @@ public class TaskQuery {
     }
     
     public TaskQuery(Selection selection, Publisher publisher, Optional<String> contentUri, 
-            Optional<String> transactionId, Optional<Status> status) {
+            Optional<String> remoteId, Optional<Status> status) {
         this.selection = checkNotNull(selection);
         this.publisher = checkNotNull(publisher);
         this.contentUri = checkNotNull(contentUri);
-        this.transactionId = checkNotNull(transactionId);
+        this.remoteId = checkNotNull(remoteId);
         this.status = checkNotNull(status);
     }
     
@@ -42,8 +42,8 @@ public class TaskQuery {
         return contentUri;
     }
     
-    public Optional<String> transactionId() {
-        return transactionId;
+    public Optional<String> remoteId() {
+        return remoteId;
     }
     
     public Optional<Status> status() {
@@ -56,7 +56,7 @@ public class TaskQuery {
                 .add("selection", selection)
                 .add("publisher", publisher)
                 .add("contentUri", contentUri)
-                .add("transactionId", transactionId)
+                .add("remoteId", remoteId)
                 .add("status", status)
                 .toString();
     }
@@ -66,7 +66,7 @@ public class TaskQuery {
         private final Selection selection;
         private final Publisher publisher;
         private Optional<String> contentUri = Optional.absent();
-        private Optional<String> transactionId = Optional.absent();
+        private Optional<String> remoteId = Optional.absent();
         private Optional<Status> status = Optional.absent();
 
         private Builder(Selection selection, Publisher publisher) {
@@ -75,7 +75,7 @@ public class TaskQuery {
         }
         
         public TaskQuery build() {
-            return new TaskQuery(selection, publisher, contentUri, transactionId, status);
+            return new TaskQuery(selection, publisher, contentUri, remoteId, status);
         }
         
         public Builder withContentUri(String contentUri) {
@@ -83,8 +83,8 @@ public class TaskQuery {
             return this;
         }
         
-        public Builder withTransactionId(String transactionId) {
-            this.transactionId = Optional.fromNullable(transactionId);
+        public Builder withRemoteId(String remoteId) {
+            this.remoteId = Optional.fromNullable(remoteId);
             return this;
         }
         

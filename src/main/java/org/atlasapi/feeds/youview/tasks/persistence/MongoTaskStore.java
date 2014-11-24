@@ -120,8 +120,8 @@ public class MongoTaskStore implements TaskStore {
         if (query.contentUri().isPresent()) {
             mongoQuery.regexMatch(CONTENT_KEY, transformToRegexPattern(query.contentUri().get()));
         }
-        if (query.transactionId().isPresent()) {
-            mongoQuery.regexMatch(REMOTE_ID_KEY, transformToRegexPattern(query.transactionId().get()));
+        if (query.remoteId().isPresent()) {
+            mongoQuery.regexMatch(REMOTE_ID_KEY, transformToRegexPattern(query.remoteId().get()));
         }
         if (query.status().isPresent()) {
             mongoQuery.fieldEquals(STATUS_KEY, query.status().get().name());
@@ -137,7 +137,6 @@ public class MongoTaskStore implements TaskStore {
     }
 
     private String transformToRegexPattern(String input) {
-//        return "/" + input.replace(".", "\\.") + "/";
         return input.replace(".", "\\.");
     }
 }
