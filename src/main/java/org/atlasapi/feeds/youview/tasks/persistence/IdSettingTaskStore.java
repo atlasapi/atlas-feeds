@@ -6,6 +6,7 @@ import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.tasks.TaskQuery;
+import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
 import com.metabroadcast.common.ids.IdGenerator;
@@ -27,7 +28,9 @@ public class IdSettingTaskStore implements TaskStore {
     }
 
     private Task generateId(Task task) {
-        task.setId(idGenerator.generateRaw());
+        if (task.id() == null) {
+            task.setId(idGenerator.generateRaw());
+        }
         return task;
     }
 
@@ -37,8 +40,8 @@ public class IdSettingTaskStore implements TaskStore {
     }
 
     @Override
-    public boolean updateWithRemoteId(Long taskId, Status status, String remoteId) {
-        return delegate.updateWithRemoteId(taskId, status, remoteId);
+    public boolean updateWithRemoteId(Long taskId, Status status, String remoteId, DateTime uploadTime) {
+        return delegate.updateWithRemoteId(taskId, status, remoteId, uploadTime);
     }
 
     @Override

@@ -13,6 +13,7 @@ import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.tasks.TaskQuery;
+import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
@@ -61,13 +62,14 @@ public class MongoTaskStore implements TaskStore {
     }
 
     @Override
-    public boolean updateWithRemoteId(Long taskId, Status status, String remoteId) {
+    public boolean updateWithRemoteId(Long taskId, Status status, String remoteId, DateTime uploadTime) {
         DBObject idQuery = new MongoQueryBuilder()
                 .idEquals(taskId)
                 .build();
         DBObject updateStatus = new MongoUpdateBuilder()
                 .setField(TaskTranslator.STATUS_KEY, status.name())
                 .setField(TaskTranslator.REMOTE_ID_KEY, remoteId)
+                .setField(TaskTranslator.UPLOAD_TIME_KEY, uploadTime)
                 .build();
         
         WriteResult result = collection.update(idQuery, updateStatus, false, false);
@@ -114,14 +116,15 @@ public class MongoTaskStore implements TaskStore {
         
         mongoQuery.fieldEquals(PUBLISHER_KEY, query.publisher().key());
         
+        // TODO regex matching
         if (query.contentUri().isPresent()) {
-            mongoQuery.fieldEquals(CONTENT_KEY, query.contentUri().get());
+            mongoQuery.regexMatch(CONTENT_KEY, transformToRegexPattern(query.contentUri().get()));
         }
         if (query.transactionId().isPresent()) {
-            mongoQuery.fieldEquals(REMOTE_ID_KEY, query.transactionId().get());
+            mongoQuery.regexMatch(REMOTE_ID_KEY, transformToRegexPattern(query.transactionId().get()));
         }
-        if (query.transactionStatus().isPresent()) {
-            mongoQuery.fieldEquals(STATUS_KEY, query.transactionStatus().get().name());
+        if (query.status().isPresent()) {
+            mongoQuery.fieldEquals(STATUS_KEY, query.status().get().name());
         }
         
         DBCursor cursor = getOrderedCursor(mongoQuery.build())
@@ -131,5 +134,10 @@ public class MongoTaskStore implements TaskStore {
         return FluentIterable.from(cursor)
                 .transform(TaskTranslator.fromDBObjects())
                 .filter(Predicates.notNull());
+    }
+
+    private String transformToRegexPattern(String input) {
+//        return "/" + input.replace(".", "\\.") + "/";
+        return input.replace(".", "\\.");
     }
 }

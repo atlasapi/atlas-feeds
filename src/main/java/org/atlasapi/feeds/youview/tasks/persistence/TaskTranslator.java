@@ -18,7 +18,7 @@ public class TaskTranslator {
     
     static final String PUBLISHER_KEY = "publisher";
     static final String ACTION_KEY = "action";
-    static final String CONTENT_KEY = "contentUrls";
+    static final String CONTENT_KEY = "content";
     static final String UPLOAD_TIME_KEY = "uploadTime";
     static final String REMOTE_ID_KEY = "remoteId";
     static final String REMOTE_STATUSES_KEY = "remoteStatuses";

@@ -7,7 +7,6 @@ import org.atlasapi.media.entity.Publisher;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.metabroadcast.common.query.Selection;
-import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
 
 
 public class TaskQuery {
@@ -16,19 +15,19 @@ public class TaskQuery {
     private final Publisher publisher;
     private final Optional<String> contentUri;
     private final Optional<String> transactionId;
-    private final Optional<TransactionStateType> transactionStatus;
+    private final Optional<Status> status;
     
     public static Builder builder(Selection selection, Publisher publisher) {
         return new Builder(selection, publisher);
     }
     
     public TaskQuery(Selection selection, Publisher publisher, Optional<String> contentUri, 
-            Optional<String> transactionId, Optional<TransactionStateType> transactionStatus) {
+            Optional<String> transactionId, Optional<Status> status) {
         this.selection = checkNotNull(selection);
         this.publisher = checkNotNull(publisher);
         this.contentUri = checkNotNull(contentUri);
         this.transactionId = checkNotNull(transactionId);
-        this.transactionStatus = checkNotNull(transactionStatus);
+        this.status = checkNotNull(status);
     }
     
     public Selection selection() {
@@ -47,8 +46,8 @@ public class TaskQuery {
         return transactionId;
     }
     
-    public Optional<TransactionStateType> transactionStatus() {
-        return transactionStatus;
+    public Optional<Status> status() {
+        return status;
     }
     
     @Override
@@ -58,7 +57,7 @@ public class TaskQuery {
                 .add("publisher", publisher)
                 .add("contentUri", contentUri)
                 .add("transactionId", transactionId)
-                .add("transactionStatus", transactionStatus)
+                .add("status", status)
                 .toString();
     }
     
@@ -68,7 +67,7 @@ public class TaskQuery {
         private final Publisher publisher;
         private Optional<String> contentUri = Optional.absent();
         private Optional<String> transactionId = Optional.absent();
-        private Optional<TransactionStateType> transactionStatus = Optional.absent();
+        private Optional<Status> status = Optional.absent();
 
         private Builder(Selection selection, Publisher publisher) {
             this.selection = selection;
@@ -76,7 +75,7 @@ public class TaskQuery {
         }
         
         public TaskQuery build() {
-            return new TaskQuery(selection, publisher, contentUri, transactionId, transactionStatus);
+            return new TaskQuery(selection, publisher, contentUri, transactionId, status);
         }
         
         public Builder withContentUri(String contentUri) {
@@ -84,13 +83,13 @@ public class TaskQuery {
             return this;
         }
         
-        public Builder withTaskId(String transactionId) {
+        public Builder withTransactionId(String transactionId) {
             this.transactionId = Optional.fromNullable(transactionId);
             return this;
         }
         
-        public Builder withTaskStatus(TransactionStateType transactionStatus) {
-            this.transactionStatus = Optional.fromNullable(transactionStatus);
+        public Builder withTaskStatus(Status status) {
+            this.status = Optional.fromNullable(status);
             return this;
         }
     }
