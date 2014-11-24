@@ -2,9 +2,9 @@ package org.atlasapi.feeds.youview.unbox;
 
 import static org.junit.Assert.assertEquals;
 
-import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Film;
@@ -25,7 +25,7 @@ import com.metabroadcast.common.intl.Countries;
 public class UnboxProgramInformationGeneratorTest {
     
     private IdGenerator idGenerator = new UnboxIdGenerator();
-    private TvAnytimeElementFactory elementFactory = new TvAnytimeElementFactory();
+    private TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
     
     private final ProgramInformationGenerator generator = new UnboxProgramInformationGenerator(idGenerator, elementFactory);
 

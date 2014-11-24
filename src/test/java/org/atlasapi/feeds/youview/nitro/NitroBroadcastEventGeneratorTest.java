@@ -4,15 +4,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.eq;
 
 import java.util.Set;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 
 import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
-import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.youview.services.ServiceMapping;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
@@ -44,13 +45,13 @@ public class NitroBroadcastEventGeneratorTest {
     private DateTime time = new DateTime(2012, 1, 1, 0, 0, 0, 0).withZone(DateTimeZone.UTC);
     private Clock clock = new TimeMachine(time);
     private IdGenerator idGenerator = Mockito.mock(IdGenerator.class);
-    private ServiceMapping serviceMapping = Mockito.mock(ServiceMapping.class);
+    private BroadcastServiceMapping serviceMapping = Mockito.mock(BroadcastServiceMapping.class);
     private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
     
     private final BroadcastEventGenerator generator;
     
     public NitroBroadcastEventGeneratorTest() throws DatatypeConfigurationException {
-        this.generator = new NitroBroadcastEventGenerator(idGenerator, new TvAnytimeElementFactory(), serviceMapping, bbcServiceIdResolver);
+        this.generator = new NitroBroadcastEventGenerator(idGenerator, TvAnytimeElementFactory.INSTANCE, serviceMapping, bbcServiceIdResolver);
     }
     
     @Before
@@ -60,7 +61,7 @@ public class NitroBroadcastEventGeneratorTest {
         Alias alias = new Alias("bbc:service:id", BBC_SERVICE_ID);
         when(channel.getAliases()).thenReturn(ImmutableSet.of(alias));
         
-        when(idGenerator.generateBroadcastImi(any(Broadcast.class))).thenReturn(BROADCAST_IMI);
+        when(idGenerator.generateBroadcastImi(eq(YOUVIEW_SERVICE_ID), any(Broadcast.class))).thenReturn(BROADCAST_IMI);
         when(idGenerator.generateVersionCrid(any(Item.class), any(Version.class))).thenReturn(VERSION_CRID);
     }
 

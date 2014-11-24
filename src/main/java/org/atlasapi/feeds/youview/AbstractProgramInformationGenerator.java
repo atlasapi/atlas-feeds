@@ -5,8 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 

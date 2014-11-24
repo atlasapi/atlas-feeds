@@ -4,10 +4,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.youview.AbstractBroadcastEventGenerator;
-import org.atlasapi.feeds.youview.services.ServiceMapping;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
@@ -36,7 +36,7 @@ public class NitroBroadcastEventGenerator extends AbstractBroadcastEventGenerato
     private final TvAnytimeElementFactory elementFactory;
 
     public NitroBroadcastEventGenerator(IdGenerator idGenerator, TvAnytimeElementFactory elementFactory,
-            ServiceMapping serviceMapping, BbcServiceIdResolver serviceIdResolver) {
+            BroadcastServiceMapping serviceMapping, BbcServiceIdResolver serviceIdResolver) {
         super(idGenerator, serviceMapping, serviceIdResolver);
         this.elementFactory = checkNotNull(elementFactory);
     }

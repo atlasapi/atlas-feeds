@@ -10,11 +10,10 @@ import java.util.Collections;
 import java.util.List;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
-import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.youview.NameComponentTypeEquivalence;
 import org.atlasapi.feeds.youview.SynopsisTypeEquivalence;
-import org.atlasapi.feeds.youview.genres.OldGenreMapping;
-import org.atlasapi.feeds.youview.genres.GenreMappings;
+import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -68,7 +67,7 @@ public class UnboxGroupInformationGeneratorTest {
     private SynopsisTypeEquivalence SYNOPSIS_EQUIVALENCE = new SynopsisTypeEquivalence();
     private NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
     private IdGenerator idGenerator = new UnboxIdGenerator();
-    private OldGenreMapping genreMapping = GenreMappings.mappingFor(Publisher.AMAZON_UNBOX); 
+    private GenreMapping genreMapping = new UnboxGenreMapping(); 
     
     private final GroupInformationGenerator generator = new UnboxGroupInformationGenerator(idGenerator, genreMapping);
     

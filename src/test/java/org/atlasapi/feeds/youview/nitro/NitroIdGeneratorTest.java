@@ -1,8 +1,6 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Encoding;
@@ -15,9 +13,7 @@ import org.atlasapi.media.entity.Restriction;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashFunction;
@@ -31,14 +27,8 @@ public class NitroIdGeneratorTest {
     private static final String NITRO_PROGRAMMES_URI_PREFIX = "http://nitro.bbc.co.uk/programmes/";
     private static final String SERVICE_ID = "serviceId";
     private Clock clock = new TimeMachine();
-    private BbcServiceIdResolver serviceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
     private HashFunction hashingFunction = Hashing.md5();
-    private final NitroIdGenerator idGenerator = new NitroIdGenerator(serviceIdResolver, hashingFunction);
-    
-    @Before
-    public void setup() {
-        when(serviceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(SERVICE_ID);
-    }
+    private final NitroIdGenerator idGenerator = new NitroIdGenerator(hashingFunction);
     
     @Test
     public void testVersionCridGeneration() {
@@ -96,7 +86,7 @@ public class NitroIdGeneratorTest {
     @Test
     public void testBroadcastImiGeneration() {
         String pid = "b012345";
-        String contentCrid = idGenerator.generateBroadcastImi(createBroadcastWithPid(pid));
+        String contentCrid = idGenerator.generateBroadcastImi(SERVICE_ID, createBroadcastWithPid(pid));
 
         String expectedId = pid + ":" + SERVICE_ID;
         assertEquals("imi:www.nitro.bbc.co.uk/" + hashingFunction.hashString(expectedId, Charsets.UTF_8), contentCrid);

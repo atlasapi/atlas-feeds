@@ -13,7 +13,7 @@ import com.google.common.collect.ImmutableSet;
 
 public class NitroGenreMappingTest {
 
-    private final NitroGenreMapping mapping = new NitroGenreMapping("nitro_genre_mapping.csv");
+    private final NitroGenreMapping mapping = new NitroGenreMapping();
     
     @Test
     public void testContentWithNoGenresProducesNoYVGenres() {

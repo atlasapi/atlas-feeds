@@ -14,12 +14,14 @@ import tva.metadata._2010.FlagType;
 import com.google.common.base.Throwables;
 
 
-public class TvAnytimeElementFactory {
+public enum TvAnytimeElementFactory {
+    
+    INSTANCE;
     
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
     private DatatypeFactory datatypeFactory;
 
-    public TvAnytimeElementFactory() {
+    private TvAnytimeElementFactory() {
         try {
             this.datatypeFactory = DatatypeFactory.newInstance();
         } catch (DatatypeConfigurationException e) {

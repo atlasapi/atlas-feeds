@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview.nitro;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -10,10 +11,10 @@ import static org.mockito.Mockito.any;
 import java.util.List;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
-import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.youview.NameComponentTypeEquivalence;
 import org.atlasapi.feeds.youview.SynopsisTypeEquivalence;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -69,8 +70,8 @@ public class NitroGroupInformationGeneratorTest {
     private SynopsisTypeEquivalence SYNOPSIS_EQUIVALENCE = new SynopsisTypeEquivalence();
     private NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
     private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
-    private IdGenerator idGenerator = new NitroIdGenerator(bbcServiceIdResolver, Hashing.md5());
-    private GenreMapping genreMapping = new NitroGenreMapping("nitro_genre_mapping.csv");
+    private IdGenerator idGenerator = new NitroIdGenerator(Hashing.md5());
+    private GenreMapping genreMapping = new NitroGenreMapping();
     
     private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping, bbcServiceIdResolver);
     
@@ -122,6 +123,90 @@ public class NitroGroupInformationGeneratorTest {
         
         // N.B. this has been temporarily changed from 'masterbrands' to 'master_brands'
         assertEquals("http://bbc.co.uk/master_brands/" + MASTER_BRAND, serviceIDRef);
+    }
+    
+    @Test
+    public void testContentWithNoSpecializationDoesntOutputSpecializationGenre() {
+        Film film = createFilm();
+        film.setSpecialization(null);
+        
+        GroupInformationType groupInfo = generator.generate(film);
+        Iterable<String> genres = Iterables.transform(groupInfo.getBasicDescription().getGenre(), TO_HREF);
+        
+        assertFalse("Genres shouldn't contain Film Specialization Genre if no specialization", Iterables.contains(genres, "urn:tva:metadata:cs:OriginationCS:2005:5.7"));
+        assertFalse("Genres shouldn't contain TV Specialization Genre if no specialization", Iterables.contains(genres, "urn:tva:metadata:cs:OriginationCS:2005:5.8"));
+        assertFalse("Genres shouldn't contain Radio Specialization Genre if no specialization", Iterables.contains(genres, "urn:tva:metadata:cs:OriginationCS:2005:5.9"));
+    }
+    
+    @Test
+    public void testContentWithFilmSpecializationOutputsFilmSpecializationGenre() {
+        Film film = createFilm();
+        film.setSpecialization(Specialization.FILM);
+        
+        GroupInformationType groupInfo = generator.generate(film);
+        Iterable<String> genres = Iterables.transform(groupInfo.getBasicDescription().getGenre(), TO_HREF);
+        
+        assertFalse("Genres shouldn't contain TV Specialization Genre if specialization is Film", Iterables.contains(genres, "urn:tva:metadata:cs:OriginationCS:2005:5.8"));
+        assertFalse("Genres shouldn't contain Radio Specialization Genre if specialization is Film", Iterables.contains(genres, "urn:tva:metadata:cs:OriginationCS:2005:5.9"));
+        assertTrue("Genres should contain Film Specialization Genre if specialization is Film", Iterables.contains(genres, "urn:tva:metadata:cs:OriginationCS:2005:5.7"));
+    }
+    
+    @Test
+    public void testContentWithTvSpecializationOutputsTvSpecializationGenre() {
+        Film film = createFilm();
+        film.setSpecialization(Specialization.TV);
+        
+        GroupInformationType groupInfo = generator.generate(film);
+        Iterable<String> genres = Iterables.transform(groupInfo.getBasicDescription().getGenre(), TO_HREF);
+        
+        assertFalse("Genres shouldn't contain Film Specialization Genre if specialization is TV", Iterables.contains(genres, "urn:tva:metadata:cs:OriginationCS:2005:5.7"));
+        assertFalse("Genres shouldn't contain Radio Specialization Genre if specialization is TV", Iterables.contains(genres, "urn:tva:metadata:cs:OriginationCS:2005:5.9"));
+        assertTrue("Genres should contain TV Specialization Genre if specialization is TV", Iterables.contains(genres, "urn:tva:metadata:cs:OriginationCS:2005:5.8"));
+    }
+    
+    @Test
+    public void testContentWithRadioSpecializationOutputsRadioSpecializationGenre() {
+        Film film = createFilm();
+        film.setSpecialization(Specialization.RADIO);
+        
+        GroupInformationType groupInfo = generator.generate(film);
+        Iterable<String> genres = Iterables.transform(groupInfo.getBasicDescription().getGenre(), TO_HREF);
+        
+        assertFalse("Genres shouldn't contain Film Specialization Genre if specialization is Radio", Iterables.contains(genres, "urn:tva:metadata:cs:OriginationCS:2005:5.7"));
+        assertFalse("Genres shouldn't contain TV Specialization Genre if specialization is Radio", Iterables.contains(genres, "urn:tva:metadata:cs:OriginationCS:2005:5.8"));
+        assertTrue("Genres should contain Radio Specialization Genre if specialization is Radio", Iterables.contains(genres, "urn:tva:metadata:cs:OriginationCS:2005:5.9"));
+    }
+    
+    @Test
+    public void testContentWithVideoMediaTypeOutputsVideoMediaTypeGenre() {
+        Film film = createFilm();
+        film.setMediaType(MediaType.VIDEO);
+        
+        GroupInformationType groupInfo = generator.generate(film);
+        Iterable<String> genres = Iterables.transform(groupInfo.getBasicDescription().getGenre(), TO_HREF);
+        
+        assertFalse("Genres shouldn't contain Audio MediaType Genre if media type is Video", Iterables.contains(genres, "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.1"));
+        assertTrue("Genres should contain Video MediaType Genre if media type is Video", Iterables.contains(genres, "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3"));
+    }
+    
+    @Test
+    public void testContentWithAudioMediaTypeOutputsAudioMediaTypeGenre() {
+        Film film = createFilm();
+        film.setMediaType(MediaType.AUDIO);
+        
+        GroupInformationType groupInfo = generator.generate(film);
+        Iterable<String> genres = Iterables.transform(groupInfo.getBasicDescription().getGenre(), TO_HREF);
+        
+        assertFalse("Genres shouldn't contain Video MediaType Genre if media type is Audio", Iterables.contains(genres, "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3"));
+        assertTrue("Genres should contain Audio MediaType Genre if media type is Audio", Iterables.contains(genres, "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.1"));
+    }
+    
+    @Test(expected = RuntimeException.class)
+    public void testContentWithNoMediaTypeThrowsException() {
+        Film film = createFilm();
+        film.setMediaType(null);
+        
+        generator.generate(film);
     }
     
     @Test

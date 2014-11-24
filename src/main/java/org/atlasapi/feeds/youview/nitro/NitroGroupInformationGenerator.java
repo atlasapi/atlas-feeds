@@ -9,8 +9,8 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
-import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.CrewMember;
@@ -69,12 +69,17 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private static final String GENRE_TYPE_OTHER = "other";
     private static final String TITLE_TYPE_MAIN = "main";
     private static final String TITLE_TYPE_SECONDARY = "secondary";
-    private static final String NITRO_MEDIATYPE_GENRE_VIDEO = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
+    
+    private static final Map<MediaType, String> YOUVIEW_MEDIATYPE_GENRE_MAPPING = ImmutableMap.<MediaType, String>builder()
+            .put(MediaType.VIDEO, "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3")
+            .put(MediaType.AUDIO, "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.1")
+            .build();
     
     private static final Map<Specialization, String> YOUVIEW_SPECIALIZATION_GENRE_MAPPING = ImmutableMap.<Specialization, String>builder()
-        .put(Specialization.FILM, "urn:tva:metadata:cs:OriginationCS:2005:5.7")
-        .put(Specialization.TV, "urn:tva:metadata:cs:OriginationCS:2005:5.8")
-        .build();
+            .put(Specialization.RADIO, "urn:tva:metadata:cs:OriginationCS:2005:5.9")
+            .put(Specialization.FILM, "urn:tva:metadata:cs:OriginationCS:2005:5.7")
+            .put(Specialization.TV, "urn:tva:metadata:cs:OriginationCS:2005:5.8")
+            .build();
     
     private static final List<String> TITLE_PREFIXES = ImmutableList.of("The ", "the ", "A ", "a ", "An ", "an ");
     
@@ -208,7 +213,12 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         
         basicDescription.getSynopsis().addAll(generateSynopses(content));
         basicDescription.getGenre().addAll(generateGenres(content));
-        basicDescription.getGenre().add(generateGenreFromSpecialization(content));
+        
+        Optional<GenreType> specializationGenre = generateGenreFromSpecialization(content);
+        if (specializationGenre.isPresent()) {
+            basicDescription.getGenre().add(specializationGenre.get());
+        }
+        
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
         basicDescription.getLanguage().addAll(generateLanguage());
         basicDescription.setCreditsList(generateCreditsList(content));
@@ -335,21 +345,30 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
                 .toList();
     }
 
-    private GenreType generateGenreFromSpecialization(Content content) {
+    private Optional<GenreType> generateGenreFromSpecialization(Content content) {
+        Specialization specialization = content.getSpecialization();
+        if (specialization == null) {
+            return Optional.absent();
+        }
         GenreType genre = new GenreType();
         genre.setType(GENRE_TYPE_MAIN);
-        genre.setHref(YOUVIEW_SPECIALIZATION_GENRE_MAPPING.get(content.getSpecialization()));
-        return genre;
+        genre.setHref(YOUVIEW_SPECIALIZATION_GENRE_MAPPING.get(specialization));
+        return Optional.of(genre);
     }
 
     private GenreType generateGenreFromMediaType(Content content) {
+       MediaType mediaType = content.getMediaType();
+       if (mediaType == null) {
+           throw new RuntimeException("invalid media type " + mediaType + " on item " + content.getCanonicalUri());
+       }
+       String genreHref = YOUVIEW_MEDIATYPE_GENRE_MAPPING.get(mediaType);
+       if (genreHref == null) {
+           throw new RuntimeException("invalid media type " + mediaType + " on item " + content.getCanonicalUri());
+       }
+       
        GenreType genre = new GenreType();
        genre.setType(GENRE_TYPE_OTHER);
-       if (content.getMediaType().equals(MediaType.VIDEO)) {
-           genre.setHref(NITRO_MEDIATYPE_GENRE_VIDEO);
-       } else {
-           throw new RuntimeException("invalid media type " + content.getMediaType() + " on item " + content.getCanonicalUri());
-       }
+       genre.setHref(genreHref);
        return genre;
     }
 

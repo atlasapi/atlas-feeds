@@ -2,7 +2,7 @@ package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.atlasapi.feeds.tvanytime.IdGenerator;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
@@ -24,11 +24,9 @@ public final class NitroIdGenerator implements IdGenerator {
     private static final String CRID_PREFIX = "crid://nitro.bbc.co.uk/iplayer/youview/";
     private static final String IMI_PREFIX = "imi:www.nitro.bbc.co.uk/";
     
-    private final BbcServiceIdResolver serviceIdResolver;
     private final HashFunction hasher;
 
-    public NitroIdGenerator(BbcServiceIdResolver serviceIdResolver, HashFunction hasher) {
-        this.serviceIdResolver = checkNotNull(serviceIdResolver);
+    public NitroIdGenerator(HashFunction hasher) {
         this.hasher = checkNotNull(hasher);
     }
 
@@ -48,8 +46,8 @@ public final class NitroIdGenerator implements IdGenerator {
     }
     
     @Override
-    public String generateBroadcastImi(Broadcast broadcast) {
-        return IMI_PREFIX + hasher.hashString(generateBroadcastIdFor(broadcast), Charsets.UTF_8);
+    public String generateBroadcastImi(String youViewServiceId, Broadcast broadcast) {
+        return IMI_PREFIX + hasher.hashString(generateBroadcastIdFor(youViewServiceId, broadcast), Charsets.UTF_8);
     }
     
     private String generateOnDemandIdFor(Item item, Version version, Encoding encoding, Location location) {
@@ -72,14 +70,15 @@ public final class NitroIdGenerator implements IdGenerator {
                 pidFrom(version),
                 encoding.getVideoHorizontalSize(),
                 encoding.getVideoVerticalSize(),
+                // has_dubbed_audio - encoding.audio_described
                 encoding.getVideoAspectRatio(),
                 true
         );
     }
     
  // until id generator for b'casts takes into account yv service id not bbc service id
-    private String generateBroadcastIdFor(Broadcast broadcast) {
-        return JOIN_ON_COLON.join(pidFrom(broadcast), serviceIdResolver.resolveSId(broadcast));
+    private String generateBroadcastIdFor(String youViewServiceId, Broadcast broadcast) {
+        return JOIN_ON_COLON.join(pidFrom(broadcast), youViewServiceId);
     }
     
     private String generateVersionIdFor(Content content, Version version) {

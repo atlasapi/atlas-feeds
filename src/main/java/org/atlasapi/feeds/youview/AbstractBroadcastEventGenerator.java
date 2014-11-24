@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
-import org.atlasapi.feeds.tvanytime.IdGenerator;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
-import org.atlasapi.feeds.youview.services.ServiceMapping;
+import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
@@ -30,10 +30,10 @@ public abstract class AbstractBroadcastEventGenerator implements BroadcastEventG
     private final Logger log = LoggerFactory.getLogger(AbstractBroadcastEventGenerator.class);
     
     private final IdGenerator idGenerator;
-    private final ServiceMapping serviceMapping;
+    private final BroadcastServiceMapping serviceMapping;
     private final BbcServiceIdResolver serviceIdResolver;
     
-    public AbstractBroadcastEventGenerator(IdGenerator idGenerator, ServiceMapping serviceMapping, 
+    public AbstractBroadcastEventGenerator(IdGenerator idGenerator, BroadcastServiceMapping serviceMapping, 
             BbcServiceIdResolver serviceIdResolver) {
         this.idGenerator = checkNotNull(idGenerator);
         this.serviceMapping = checkNotNull(serviceMapping);
@@ -47,7 +47,7 @@ public abstract class AbstractBroadcastEventGenerator implements BroadcastEventG
         Map<String, ItemBroadcastHierarchy> broadcastImis = Maps.newHashMap();
         for (ItemBroadcastHierarchy itemHierarchy : itemBroadcastHierarchies) {
             broadcastImis.put(
-                    idGenerator.generateBroadcastImi(itemHierarchy.broadcast()), 
+                    idGenerator.generateBroadcastImi(itemHierarchy.youViewServiceId(), itemHierarchy.broadcast()), 
                     itemHierarchy
             );
         }

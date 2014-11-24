@@ -1,7 +1,7 @@
     package org.atlasapi.feeds.youview;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient.orderContentForDeletion;
+import static org.atlasapi.feeds.youview.upload.HttpYouViewClient.orderContentForDeletion;
 
 import java.util.Iterator;
 import java.util.List;
@@ -9,9 +9,7 @@ import java.util.List;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.statistics.FeedStatistics;
 import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
-import org.atlasapi.feeds.youview.transactions.Transaction;
-import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
-import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
+import org.atlasapi.feeds.youview.upload.YouViewClient;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
@@ -45,19 +43,16 @@ public class YouViewUploadTask extends ScheduledTask {
     private final YouViewLastUpdatedStore store;
     private final boolean isBootstrap;
     private final Publisher publisher;
-    private final YouViewRemoteClient remoteClient;
-    private final TransactionStore transactionStore;
     private final FeedStatisticsStore statsStore;
+    private final YouViewClient remoteClient;
     
-    public YouViewUploadTask(YouViewRemoteClient remoteClient, LastUpdatedContentFinder contentFinder, 
-            YouViewLastUpdatedStore store, Publisher publisher, boolean isBootstrap, 
-            TransactionStore transactionStore, FeedStatisticsStore statsStore) {
+    public YouViewUploadTask(YouViewClient remoteClient, LastUpdatedContentFinder contentFinder, 
+            YouViewLastUpdatedStore store, Publisher publisher, boolean isBootstrap, FeedStatisticsStore statsStore) {
         this.remoteClient = checkNotNull(remoteClient);
         this.contentFinder = checkNotNull(contentFinder);
         this.store = checkNotNull(store);
         this.publisher = checkNotNull(publisher);
         this.isBootstrap = checkNotNull(isBootstrap);
-        this.transactionStore = checkNotNull(transactionStore);
         this.statsStore = checkNotNull(statsStore);
     }
     
@@ -108,11 +103,9 @@ public class YouViewUploadTask extends ScheduledTask {
         List<Content> orderedForDeletion = orderContentForDeletion(deleted);
 
         for (Content toBeDeleted : orderedForDeletion) {
-            if (remoteClient.sendDeleteFor(toBeDeleted)) {
-                deletionProgress = deletionProgress.reduce(UpdateProgress.SUCCESS);
-            } else {
-                deletionProgress = deletionProgress.reduce(UpdateProgress.FAILURE);
-            }
+            remoteClient.sendDeleteFor(toBeDeleted);
+            deletionProgress = deletionProgress.reduce(UpdateProgress.SUCCESS);
+            remoteClient.sendDeleteFor(toBeDeleted);
             reportStatus(createDeltaStatus(uploadProcessor.getResult(), deletionProgress, updatesSize, deletesSize));
             updateQueueSizeMetric(remainingCount--);
         }
@@ -175,9 +168,11 @@ public class YouViewUploadTask extends ScheduledTask {
             @Override
             public boolean process(Content content) {
                 try {
-                    Transaction transaction = remoteClient.upload(content);
-                    transactionStore.save(transaction);
-                    statsStore.updateAverageLatency(Publisher.BBC_NITRO, calculateLatency(transaction.uploadTime(), content));
+//                    Transaction transaction = remoteClient.upload(content);
+//                    transactionStore.save(transaction);
+                    remoteClient.upload(content);
+                    // TODO plumb in feed stats store properly here
+                    statsStore.updateAverageLatency(Publisher.BBC_NITRO, calculateLatency(new DateTime(), content));
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch (Exception e) {
                     log.error("error on chunk upload: " + e);

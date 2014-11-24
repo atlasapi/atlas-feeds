@@ -5,31 +5,43 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
+import javax.xml.bind.JAXBException;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastServiceMapping;
+import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
+import org.atlasapi.feeds.youview.nitro.NitroBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.revocation.MongoRevokedContentStore;
+import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
-import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
+import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
+import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
+import org.atlasapi.feeds.youview.upload.HttpYouViewClient;
 import org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.PublisherDelegatingYouViewRemoteClient;
+import org.atlasapi.feeds.youview.upload.ValidatingYouViewRemoteClient;
+import org.atlasapi.feeds.youview.upload.YouViewClient;
 import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.xml.sax.SAXException;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.SimpleHttpClientBuilder;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
@@ -39,6 +51,7 @@ import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.SimpleScheduler;
 import com.metabroadcast.common.security.UsernameAndPassword;
+import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
 
 @Configuration
@@ -57,47 +70,54 @@ public class YouViewUploadModule {
     private final static RepetitionRule REMOTE_CHECK_UPLOAD = RepetitionRules.every(Duration.standardMinutes(15));
     private static final String TASK_NAME_PATTERN = "YouView %s TVAnytime %s Upload";
     
+    private final Clock clock = new SystemClock(DateTimeZone.UTC);
+    
     private @Autowired DatabasedMongo mongo;
     private @Autowired LastUpdatedContentFinder contentFinder;
     private @Autowired ContentResolver contentResolver;
     private @Autowired SimpleScheduler scheduler;
     private @Autowired TvAnytimeGenerator generator;
-    private @Autowired TransactionStore transactionStore;
     private @Autowired FeedStatisticsStore feedStatsStore;
+    private @Autowired TaskStore taskStore;
     private @Autowired BbcServiceIdResolver bbcServiceIdResolver;
+    private @Autowired NitroIdGenerator nitroIdGenerator;
+    private @Autowired NitroBroadcastServiceMapping nitroBroadcastServiceMapping;
+    private @Autowired LoveFilmIdGenerator loveFilmIdGenerator;
+    private @Autowired LoveFilmBroadcastServiceMapping loveFilmServiceMapping;
+    private @Autowired UnboxIdGenerator unboxIdGenerator;
+    private @Autowired UnboxBroadcastServiceMapping unboxServiceMapping;
     
     private @Value("${youview.upload.validation}") String performValidation;
 
+    // TODO this module is still a mess...
     @PostConstruct
-    public void startScheduledTasks() {
-//        for (UploadPublisherConfiguration config : uploadConfig.getConfigs()) {
+    public void startScheduledTasks() throws JAXBException, SAXException {
         // TODO this duplicates the loop instantiating youview clients - fix this
         for (Entry<String, Publisher> publisherEntry : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
             if (isEnabled(publisherPrefix)) {
                 scheduler.schedule(scheduleTask(publisherEntry.getValue(), true, "Bootstrap"), BOOTSTRAP_UPLOAD);
                 scheduler.schedule(scheduleTask(publisherEntry.getValue(), false, "Delta"), DELTA_UPLOAD);
-                scheduler.schedule(remoteCheckTask(publisherEntry.getValue()).withName("YouView Transaction Status Check: " + publisherEntry.getValue().name()), REMOTE_CHECK_UPLOAD);
             }
         }
+        scheduler.schedule(remoteCheckTask().withName("YouView Transaction Status Check"), REMOTE_CHECK_UPLOAD);
     }
     
-    private ScheduledTask remoteCheckTask(Publisher publisher) {
-        return new YouViewRemoteCheckTask(transactionStore, publisher, youViewUploadClient());
+    private ScheduledTask remoteCheckTask() throws JAXBException, SAXException {
+        return new YouViewRemoteCheckTask(taskStore, youViewUploadClient());
     }
 
-    // TODO this should only work for those publishers whose feeds are enabled
     @Bean
-    public YouViewUploadController uploadController() {
-        return new YouViewUploadController(contentFinder, contentResolver, youViewUploadClient(), transactionStore);
+    public YouViewUploadController uploadController() throws JAXBException, SAXException {
+        return new YouViewUploadController(contentResolver, youViewUploadClient());
     }
 
-    private ScheduledTask scheduleTask(Publisher publisher, boolean isBootstrap, String taskKey) {
+    private ScheduledTask scheduleTask(Publisher publisher, boolean isBootstrap, String taskKey) throws JAXBException, SAXException {
         return uploadTask(publisher, isBootstrap).withName(String.format(TASK_NAME_PATTERN, taskKey, publisher.title()));
     }
 
-    private YouViewUploadTask uploadTask(Publisher publisher, boolean isBootstrap) {
-        return new YouViewUploadTask(youViewUploadClient(), contentFinder, store(), publisher, isBootstrap, transactionStore, feedStatsStore);
+    private YouViewUploadTask uploadTask(Publisher publisher, boolean isBootstrap) throws JAXBException, SAXException {
+        return new YouViewUploadTask(youViewUploadClient(), contentFinder, store(), publisher, isBootstrap, feedStatsStore);
     }
 
     public @Bean YouViewLastUpdatedStore store() {
@@ -105,34 +125,109 @@ public class YouViewUploadModule {
     }
     
     @Bean
-    public YouViewRemoteClient youViewUploadClient() {
-        ImmutableMap.Builder<Publisher, YouViewRemoteClient> clients = ImmutableMap.builder();
-        for (Entry<String, Publisher> publisherEntry : PUBLISHER_MAPPING.entrySet()) {
-            String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
-            if (isEnabled(publisherPrefix)) {
-                UsernameAndPassword credentials = parseCredentials(publisherPrefix);
-                YouViewRemoteClient client = new HttpYouViewRemoteClient(
-                        generator, 
-                        httpClient(credentials.username(), credentials.password()),
-                        parseUrl(publisherPrefix),
-                        // TODO this is suboptimal - this should use the same generator as the tvanytimefeedsmodule
-                        // this is also hardcoded to the nitro generator
-                        new NitroIdGenerator(bbcServiceIdResolver, hashFunction()),
-                        new SystemClock(), 
-                        Boolean.parseBoolean(performValidation)
-                );
-                clients.put(Publisher.BBC_NITRO, client);
-            }
+    public YouViewClient youViewUploadClient() throws JAXBException, SAXException {
+        ImmutableMap.Builder<Publisher, YouViewClient> clients = ImmutableMap.builder();
+        Optional<YouViewClient> nitroClient = createNitroClient();
+        if (nitroClient.isPresent()) {
+            clients.put(Publisher.BBC_NITRO, nitroClient.get());
+        }
+        Optional<YouViewClient> loveFilmClient = createLoveFilmClient();
+        if (loveFilmClient.isPresent()) {
+            clients.put(Publisher.LOVEFILM, loveFilmClient.get());
+        }
+        Optional<YouViewClient> unboxClient = createUnboxClient();
+        if (unboxClient.isPresent()) {
+            clients.put(Publisher.AMAZON_UNBOX, unboxClient.get());
         }
         
         return new PublisherDelegatingYouViewRemoteClient(clients.build());
     }
-    
-    // TODO refactor so this isn't implemented in two places
-    private HashFunction hashFunction() {
-        return Hashing.md5();
+
+    private Optional<YouViewClient> createNitroClient() throws JAXBException, SAXException {
+        String publisherPrefix = CONFIG_PREFIX + "nitro";
+        if (!isEnabled(publisherPrefix)) {
+            Optional.absent();
+        }
+        String baseUrl = parseUrl(publisherPrefix);
+        UsernameAndPassword credentials = parseCredentials(publisherPrefix);
+        
+        YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), baseUrl);
+        client = enableValidationIfAppropriate(client);
+        
+        return Optional.<YouViewClient>of(new HttpYouViewClient(
+                generator, 
+                baseUrl, 
+                nitroIdGenerator, 
+                clock, 
+                revokedContentStore(), 
+                client, 
+                taskStore, 
+                nitroBroadcastServiceMapping, 
+                bbcServiceIdResolver
+        ));
+    }
+
+    private YouViewRemoteClient enableValidationIfAppropriate(YouViewRemoteClient client) throws JAXBException,
+            SAXException {
+        if (Boolean.parseBoolean(performValidation)) {
+            client = new ValidatingYouViewRemoteClient(client);
+        }
+        return client;
     }
     
+    private Optional<YouViewClient> createLoveFilmClient() throws JAXBException, SAXException {
+        String publisherPrefix = CONFIG_PREFIX + "lovefilm";
+        if (!isEnabled(publisherPrefix)) {
+            Optional.absent();
+        }
+        String baseUrl = parseUrl(publisherPrefix);
+        UsernameAndPassword credentials = parseCredentials(publisherPrefix);
+        
+        YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), baseUrl);
+        client = enableValidationIfAppropriate(client);
+        
+        return Optional.<YouViewClient>of(new HttpYouViewClient(
+                generator, 
+                baseUrl, 
+                loveFilmIdGenerator, 
+                clock, 
+                revokedContentStore(), 
+                client, 
+                taskStore, 
+                loveFilmServiceMapping, 
+                bbcServiceIdResolver
+        ));
+    }
+    
+    private Optional<YouViewClient> createUnboxClient() throws JAXBException, SAXException {
+        String publisherPrefix = CONFIG_PREFIX + "unbox";
+        if (!isEnabled(publisherPrefix)) {
+            Optional.absent();
+        }
+        String baseUrl = parseUrl(publisherPrefix);
+        UsernameAndPassword credentials = parseCredentials(publisherPrefix);
+        
+        YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), baseUrl);
+        client = enableValidationIfAppropriate(client);      
+
+        return Optional.<YouViewClient>of(new HttpYouViewClient(
+                generator, 
+                baseUrl, 
+                unboxIdGenerator, 
+                clock, 
+                revokedContentStore(), 
+                client, 
+                taskStore, 
+                unboxServiceMapping, 
+                bbcServiceIdResolver
+        ));
+    }
+    
+    @Bean
+    public RevokedContentStore revokedContentStore() {
+        return new MongoRevokedContentStore(mongo);
+    }
+
     private boolean isEnabled(String publisherPrefix) {
         return Boolean.parseBoolean(Configurer.get(publisherPrefix + ".upload.enabled").get());
     }

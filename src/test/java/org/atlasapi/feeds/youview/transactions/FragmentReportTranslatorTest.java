@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview.transactions;
 
-import static org.atlasapi.feeds.youview.transactions.persistence.FragmentReportTranslator.fromDBObject;
-import static org.atlasapi.feeds.youview.transactions.persistence.FragmentReportTranslator.toDBObject;
+import static org.atlasapi.feeds.youview.tasks.persistence.FragmentReportTranslator.fromDBObject;
+import static org.atlasapi.feeds.youview.tasks.persistence.FragmentReportTranslator.toDBObject;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
