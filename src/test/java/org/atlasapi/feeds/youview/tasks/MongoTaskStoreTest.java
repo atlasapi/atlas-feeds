@@ -200,7 +200,7 @@ public class MongoTaskStoreTest {
         
         Selection selection = selectionWithParams(100, 0);
         TaskQuery query = TaskQuery.builder(selection, publisher)
-                .withTransactionId(transactionId)
+                .withRemoteId(transactionId)
                 .build();
         Iterable<Task> allTransactions = store.allTasks(query);
         
@@ -259,7 +259,7 @@ public class MongoTaskStoreTest {
         
         Selection selection = selectionWithParams(100, 0);
         TaskQuery query = TaskQuery.builder(selection, publisher)
-                .withTransactionId("desired")
+                .withRemoteId("desired")
                 .build();
         Iterable<Task> allTransactions = store.allTasks(query);
         
