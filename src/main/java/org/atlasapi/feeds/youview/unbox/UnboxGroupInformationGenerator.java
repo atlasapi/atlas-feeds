@@ -5,14 +5,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
-import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
-import org.atlasapi.feeds.youview.genres.OldGenreMapping;
+import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.CrewMember;
@@ -48,11 +47,11 @@ import tva.mpeg7._2008.TitleType;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.metabroadcast.common.text.Truncator;
 
 
@@ -106,9 +105,9 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
             .withOmissionMarker("...");
 
     private final IdGenerator idGenerator;
-    private final OldGenreMapping genreMapping;
+    private final GenreMapping genreMapping;
     
-    public UnboxGroupInformationGenerator(IdGenerator idGenerator, OldGenreMapping genreMapping) {
+    public UnboxGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping) {
         this.idGenerator = checkNotNull(idGenerator);
         this.genreMapping = checkNotNull(genreMapping);
     }
@@ -330,14 +329,9 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     }
 
     private List<GenreType> generateGenres(Content content) {
-        Set<String> genreHrefs = Sets.newHashSet();
-        for (String genreStr : content.getGenres()) {
-            for (String youViewGenre : genreMapping.getYouViewGenresFor(genreStr)) {
-                 genreHrefs.add(youViewGenre);               
-            }
-        }
-        
-        return ImmutableList.copyOf(Iterables.transform(genreHrefs, TO_GENRE));
+        return FluentIterable.from(genreMapping.youViewGenresFor(content))
+                .transform(TO_GENRE)
+                .toList();
     }
 
     private GenreType generateGenreFromSpecialization(Content content) {

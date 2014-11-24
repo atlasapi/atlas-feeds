@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.joda.time.DateTime;
@@ -22,12 +21,8 @@ public class TVAnytimeElementFactoryTest {
     
     private DateTime time = new DateTime(2012, 1, 1, 0, 0, 0, 0).withZone(DateTimeZone.UTC);
     private Clock clock = new TimeMachine(time);
-    private final TvAnytimeElementFactory elementFactory;
+    private final TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
     
-    public TVAnytimeElementFactoryTest() throws DatatypeConfigurationException {
-        this.elementFactory = new TvAnytimeElementFactory();
-    }
-
     @Test
     public void testGenerationOfTrueFlagType() {
         FlagType trueFlag = elementFactory.flag(true);

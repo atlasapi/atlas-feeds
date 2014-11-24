@@ -10,13 +10,10 @@ import java.util.Collections;
 import java.util.List;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
-import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.youview.NameComponentTypeEquivalence;
 import org.atlasapi.feeds.youview.SynopsisTypeEquivalence;
-import org.atlasapi.feeds.youview.genres.OldGenreMapping;
-import org.atlasapi.feeds.youview.genres.GenreMappings;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmGroupInformationGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
+import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -50,7 +47,6 @@ import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 
-import com.google.common.base.Equivalence;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -71,7 +67,7 @@ public class LoveFilmGroupInformationGeneratorTest {
     private SynopsisTypeEquivalence SYNOPSIS_EQUIVALENCE = new SynopsisTypeEquivalence();
     private NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
     private IdGenerator idGenerator = new LoveFilmIdGenerator();
-    private OldGenreMapping genreMapping = GenreMappings.mappingFor(Publisher.LOVEFILM); 
+    private GenreMapping genreMapping = new LoveFilmGenreMapping(); 
     
     private final GroupInformationGenerator generator = new LoveFilmGroupInformationGenerator(idGenerator, genreMapping);
     

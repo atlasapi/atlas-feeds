@@ -1,16 +1,20 @@
 package org.atlasapi.feeds.youview.upload;
 
-import org.atlasapi.feeds.youview.transactions.Transaction;
-import org.atlasapi.feeds.youview.transactions.TransactionStatus;
-import org.atlasapi.media.entity.Content;
+import javax.xml.bind.JAXBElement;
+
+import tva.metadata._2010.TVAMainType;
 
 
 public interface YouViewRemoteClient {
 
-    Transaction upload(Content content);
+    /**
+     * Upon success, returns the transaction ID associated with the uploaded
+     * {@link TVAMainType}, otherwise returns the error provided by YouView
+     * @param tvaElem
+     */
+    YouViewResult upload(JAXBElement<TVAMainType> tvaElem);
 
-    boolean sendDeleteFor(Content content);
+    YouViewResult sendDeleteFor(String remoteId);
     
-    TransactionStatus checkRemoteStatusOf(Transaction transaction);
-
+    YouViewResult checkRemoteStatusOf(String transactionId);
 }

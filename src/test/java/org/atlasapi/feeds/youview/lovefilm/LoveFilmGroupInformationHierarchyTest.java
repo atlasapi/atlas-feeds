@@ -10,7 +10,6 @@ import java.util.Map;
 import javax.xml.bind.JAXBException;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
-import org.atlasapi.feeds.tvanytime.IdGenerator;
 import org.atlasapi.feeds.tvanytime.JaxbTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
@@ -20,13 +19,8 @@ import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.ContentResolvingContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.UriBasedContentPermit;
-import org.atlasapi.feeds.youview.genres.OldGenreMapping;
-import org.atlasapi.feeds.youview.genres.GenreMappings;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmGroupInformationGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmOnDemandLocationGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmProgramInformationGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmTvAnytimeElementCreator;
+import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Certificate;
@@ -74,9 +68,9 @@ import com.metabroadcast.common.intl.Countries;
 public class LoveFilmGroupInformationHierarchyTest {
 
     private IdGenerator idGenerator = new LoveFilmIdGenerator();
-    private TvAnytimeElementFactory elementFactory = new TvAnytimeElementFactory();
+    private TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
     private ProgramInformationGenerator progInfoGenerator = new LoveFilmProgramInformationGenerator(idGenerator, elementFactory);
-    private OldGenreMapping genreMapping = GenreMappings.mappingFor(Publisher.LOVEFILM);
+    private GenreMapping genreMapping = new LoveFilmGenreMapping();
     private GroupInformationGenerator groupInfoGenerator = new LoveFilmGroupInformationGenerator(idGenerator, genreMapping);
     private OnDemandLocationGenerator progLocationGenerator = new LoveFilmOnDemandLocationGenerator(idGenerator);
     private DummyContentResolver contentResolver = new DummyContentResolver();

@@ -2,7 +2,7 @@ package org.atlasapi.feeds.youview.lovefilm;
 
 import static org.junit.Assert.assertEquals;
 
-import org.atlasapi.feeds.tvanytime.IdGenerator;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Film;
@@ -35,7 +35,7 @@ public class LoveFilmIdGeneratorTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testBroadcastImiGeneration() {
-        generator.generateBroadcastImi(createBroadcast());
+        generator.generateBroadcastImi("serviceId", createBroadcast());
     }
 
     @Test

@@ -11,7 +11,7 @@ import com.google.common.collect.ImmutableSet;
 
 public class NitroServiceMappingTest {
     
-    private final NitroServiceMapping mapping = new NitroServiceMapping("nitro_service_mapping.csv");
+    private final NitroBroadcastServiceMapping mapping = new NitroBroadcastServiceMapping("nitro_service_mapping.csv");
 
     // relies on file data, but does confirm that file is being read and processed correctly
     @Test

@@ -3,50 +3,57 @@ package org.atlasapi.feeds.youview.upload;
 import java.util.Map;
 
 import org.atlasapi.feeds.youview.InvalidPublisherException;
-import org.atlasapi.feeds.youview.transactions.Transaction;
-import org.atlasapi.feeds.youview.transactions.TransactionStatus;
+import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 
 import com.google.common.collect.ImmutableMap;
 
 
-public class PublisherDelegatingYouViewRemoteClient implements YouViewRemoteClient {
+public class PublisherDelegatingYouViewRemoteClient implements YouViewClient {
 
-    private final Map<Publisher, YouViewRemoteClient> clients;
+    private final Map<Publisher, YouViewClient> clients;
     
-    public PublisherDelegatingYouViewRemoteClient(Map<Publisher, YouViewRemoteClient> clients) {
+    public PublisherDelegatingYouViewRemoteClient(Map<Publisher, YouViewClient> clients) {
         this.clients = ImmutableMap.copyOf(clients);
     }
 
     @Override
-    public Transaction upload(Content content) {
-        Publisher publisher = content.getPublisher();
-        YouViewRemoteClient delegate = clients.get(publisher);
-        if (delegate == null) {
-            throw new InvalidPublisherException(publisher);
-        }
-        return delegate.upload(content);
+    public void upload(Content content) {
+        YouViewClient delegate = fetchDelegateOrThrow(content.getPublisher());
+        delegate.upload(content);
     }
 
     @Override
-    public boolean sendDeleteFor(Content content) {
-        Publisher publisher = content.getPublisher();
-        YouViewRemoteClient delegate = clients.get(publisher);
-        if (delegate == null) {
-            throw new InvalidPublisherException(publisher);
-        }
-        return delegate.sendDeleteFor(content);
+    public void sendDeleteFor(Content content) {
+        YouViewClient delegate = fetchDelegateOrThrow(content.getPublisher());
+        delegate.sendDeleteFor(content);
     }
 
     @Override
-    public TransactionStatus checkRemoteStatusOf(Transaction transaction) {
-        Publisher publisher = transaction.publisher();
-        YouViewRemoteClient delegate = clients.get(publisher);
+    public void checkRemoteStatusOf(Task transaction) {
+        YouViewClient delegate = fetchDelegateOrThrow(transaction.publisher());
+        delegate.checkRemoteStatusOf(transaction);
+    }
+
+    @Override
+    public void revoke(Content content) {
+        YouViewClient delegate = fetchDelegateOrThrow(content.getPublisher());
+        delegate.revoke(content);
+    }
+
+    @Override
+    public void unrevoke(Content content) {
+        YouViewClient delegate = fetchDelegateOrThrow(content.getPublisher());
+        delegate.unrevoke(content);
+    }
+    
+    private YouViewClient fetchDelegateOrThrow(Publisher publisher) {
+        YouViewClient delegate = clients.get(publisher);
         if (delegate == null) {
             throw new InvalidPublisherException(publisher);
         }
-        return delegate.checkRemoteStatusOf(transaction);
+        return delegate;
     }
 
 }

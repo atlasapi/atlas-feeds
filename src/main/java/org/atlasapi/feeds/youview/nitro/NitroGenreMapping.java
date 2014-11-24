@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -29,6 +27,7 @@ import com.google.common.io.Resources;
 
 public class NitroGenreMapping implements GenreMapping {
 
+    private static final String FILE_NAME = "nitro_genre_mapping.csv";
     private static final String GENRE_PREFIX = "http://nitro.bbc.co.uk/genres/";
     private static final String TOP_LEVEL_GENRE_PATTERN = GENRE_PREFIX + "1[0-9]*";
     private static final String SECOND_LEVEL_GENRE_PATTERN = GENRE_PREFIX + "2[0-9]*";
@@ -63,11 +62,11 @@ public class NitroGenreMapping implements GenreMapping {
         }
     };
     
-    private final Logger log = LoggerFactory.getLogger(NitroServiceMapping.class);
+    private final Logger log = LoggerFactory.getLogger(NitroBroadcastServiceMapping.class);
     private final Map<BbcGenreTree, Set<String>> youViewGenreMap;
     
-    public NitroGenreMapping(String fileName) {
-        this.youViewGenreMap = readFile(checkNotNull(fileName));
+    public NitroGenreMapping() {
+        this.youViewGenreMap = readFile();
     }
 
     @Override
@@ -110,14 +109,14 @@ public class NitroGenreMapping implements GenreMapping {
                 .toSet();
     }
 
-    private Map<BbcGenreTree, Set<String>> readFile(String fileName) {
+    private Map<BbcGenreTree, Set<String>> readFile() {
         try {
-            URL resource = Resources.getResource(getClass(), fileName);
+            URL resource = Resources.getResource(getClass(), FILE_NAME);
             InputSupplier<InputStreamReader> supplier = Resources.newReaderSupplier(resource, Charsets.UTF_8);
 
             return CharStreams.readLines(supplier, new NitroGenreMappingLineProcessor(GENRE_PREFIX));
         } catch (IOException e) {
-            log.error(String.format("Error reading genre file %s", fileName), e);
+            log.error(String.format("Error reading genre file %s", FILE_NAME), e);
             return null;
         }    
     }

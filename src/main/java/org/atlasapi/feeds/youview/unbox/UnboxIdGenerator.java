@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import org.atlasapi.feeds.tvanytime.IdGenerator;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
@@ -32,7 +32,7 @@ public class UnboxIdGenerator implements IdGenerator {
     }
     
     @Override
-    public String generateBroadcastImi(Broadcast broadcast) {
+    public String generateBroadcastImi(String serviceId, Broadcast broadcast) {
         throw new UnsupportedOperationException("Broadcasts are not supported for the Amazon Unbox publisher");
     }
 
