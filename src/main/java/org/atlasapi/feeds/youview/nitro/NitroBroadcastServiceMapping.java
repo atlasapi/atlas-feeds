@@ -8,10 +8,9 @@ import java.net.URL;
 
 import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
 import org.atlasapi.feeds.youview.services.ServiceMappingLineProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Multimap;
 import com.google.common.io.CharStreams;
 import com.google.common.io.InputSupplier;
@@ -20,7 +19,6 @@ import com.google.common.io.Resources;
 
 public class NitroBroadcastServiceMapping implements BroadcastServiceMapping {
     
-    private final Logger log = LoggerFactory.getLogger(NitroBroadcastServiceMapping.class);
     private final Multimap<String, String> youViewServiceIdMap;
     
     public NitroBroadcastServiceMapping(String fileName) {
@@ -34,8 +32,7 @@ public class NitroBroadcastServiceMapping implements BroadcastServiceMapping {
 
             return CharStreams.readLines(supplier, new ServiceMappingLineProcessor());
         } catch (IOException e) {
-            log.error(String.format("Error reading genre file %s", fileName), e);
-            return null;
+            throw Throwables.propagate(e);
         }        
     }
 

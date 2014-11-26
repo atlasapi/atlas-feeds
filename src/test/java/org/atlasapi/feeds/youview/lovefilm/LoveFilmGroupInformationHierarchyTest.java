@@ -16,6 +16,7 @@ import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.tvanytime.TvaGenerationException;
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.ContentResolvingContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.UriBasedContentPermit;
@@ -88,7 +89,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     // TODO how should this case be handled? where should ASIN checking logic sit?
     @Ignore
     @Test
-    public void testSkipsItemIfNoAsin() throws JAXBException {
+    public void testSkipsItemIfNoAsin() throws JAXBException, TvaGenerationException {
         Film film = createFilm("FilmUri");
         film.setImage("Film Image");
         
@@ -100,7 +101,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     }
     
     @Test
-    public void testFilmGeneration() throws JAXBException {
+    public void testFilmGeneration() throws JAXBException, TvaGenerationException {
         Film film = createFilm("FilmUri");
         film.setImage("Film Image");
         film.addAlias(new Alias("gb:amazon:asin", "123456"));
@@ -116,7 +117,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     }
     
     @Test
-    public void testBrandGeneration() throws JAXBException {
+    public void testBrandGeneration() throws JAXBException, TvaGenerationException {
         Brand brand = createBrand("BrandUri");
         brand.setImage("Brand Image");
         brand.addAlias(new Alias("gb:amazon:asin", "123456"));
@@ -138,7 +139,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     }
     
     @Test
-    public void testSeriesGeneration() throws JAXBException {
+    public void testSeriesGeneration() throws JAXBException, TvaGenerationException {
         Series series = createSeries("SeriesUri");
         series.setImage("Series Image");
         series.addAlias(new Alias("gb:amazon:asin", "123456"));
@@ -160,7 +161,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     }
     
     @Test
-    public void testSeriesGenerationWithBrand() throws JAXBException {
+    public void testSeriesGenerationWithBrand() throws JAXBException, TvaGenerationException {
         Series series = createSeries("SeriesUri");
         series.setImage("Series Image");
         series.addAlias(new Alias("gb:amazon:asin", "seriesAsin"));
@@ -204,7 +205,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     }
     
     @Test
-    public void testNonFirstSeriesGenerationWithBrand() throws JAXBException {
+    public void testNonFirstSeriesGenerationWithBrand() throws JAXBException, TvaGenerationException {
         Series series1 = createSeries("Series 1 Uri");
         series1.setImage("Series 1 Image");
         
@@ -278,7 +279,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     }
     
     @Test
-    public void testEpisodeGenerationNoSeriesNoBrand() throws JAXBException {
+    public void testEpisodeGenerationNoSeriesNoBrand() throws JAXBException, TvaGenerationException {
         Episode episode = createEpisode("EpisodeUri");
         episode.setImage("Episode Image");
         episode.addAlias(new Alias("gb:amazon:asin", "123456"));
@@ -295,7 +296,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     }
     
     @Test
-    public void testEpisodeGenerationNoBrand() throws JAXBException {
+    public void testEpisodeGenerationNoBrand() throws JAXBException, TvaGenerationException {
         Series series = createSeries("SeriesUri");
         series.setImage("Series Image");
         series.addAlias(new Alias("gb:amazon:asin", "seriesAsin"));
@@ -334,7 +335,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     }
     
     @Test
-    public void testEpisodeGenerationNoSeries() throws JAXBException {
+    public void testEpisodeGenerationNoSeries() throws JAXBException, TvaGenerationException {
         Brand brand = createBrand("BrandUri");
         brand.setImage("Brand Image");
         brand.addAlias(new Alias("gb:amazon:asin", "brandAsin"));
@@ -373,7 +374,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     }
     
     @Test
-    public void testEpisodeGeneration() throws JAXBException {
+    public void testEpisodeGeneration() throws JAXBException, TvaGenerationException {
         Brand brand = createBrand("BrandUri");
         brand.setImage("Brand Image");
         brand.addAlias(new Alias("gb:amazon:asin", "brandAsin"));
@@ -426,7 +427,7 @@ public class LoveFilmGroupInformationHierarchyTest {
     }
     
     @Test
-    public void testEpisodeGenerationFromNonFirstSeries() throws JAXBException {
+    public void testEpisodeGenerationFromNonFirstSeries() throws JAXBException, TvaGenerationException {
         Series series1 = createSeries("Series 1 Uri");
         series1.withSeriesNumber(1);
         series1.setImage("Series 1 Image");
@@ -517,7 +518,7 @@ public class LoveFilmGroupInformationHierarchyTest {
         return groupType.getValue().equals("series");
     }
 
-    private TVAMainType generateTVA(Content content) {
+    private TVAMainType generateTVA(Content content) throws TvaGenerationException {
         return generator.generateTVAnytimeFrom(content).getValue();
     }
     

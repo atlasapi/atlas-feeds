@@ -10,46 +10,46 @@ import org.atlasapi.media.entity.Publisher;
 import com.google.common.collect.ImmutableMap;
 
 
-public class PublisherDelegatingYouViewRemoteClient implements YouViewClient {
+public class PublisherDelegatingYouViewRemoteClient implements YouViewService {
 
-    private final Map<Publisher, YouViewClient> clients;
+    private final Map<Publisher, YouViewService> clients;
     
-    public PublisherDelegatingYouViewRemoteClient(Map<Publisher, YouViewClient> clients) {
+    public PublisherDelegatingYouViewRemoteClient(Map<Publisher, YouViewService> clients) {
         this.clients = ImmutableMap.copyOf(clients);
     }
 
     @Override
     public void upload(Content content) {
-        YouViewClient delegate = fetchDelegateOrThrow(content.getPublisher());
+        YouViewService delegate = fetchDelegateOrThrow(content.getPublisher());
         delegate.upload(content);
     }
 
     @Override
     public void sendDeleteFor(Content content) {
-        YouViewClient delegate = fetchDelegateOrThrow(content.getPublisher());
+        YouViewService delegate = fetchDelegateOrThrow(content.getPublisher());
         delegate.sendDeleteFor(content);
     }
 
     @Override
     public void checkRemoteStatusOf(Task transaction) {
-        YouViewClient delegate = fetchDelegateOrThrow(transaction.publisher());
+        YouViewService delegate = fetchDelegateOrThrow(transaction.publisher());
         delegate.checkRemoteStatusOf(transaction);
     }
 
     @Override
     public void revoke(Content content) {
-        YouViewClient delegate = fetchDelegateOrThrow(content.getPublisher());
+        YouViewService delegate = fetchDelegateOrThrow(content.getPublisher());
         delegate.revoke(content);
     }
 
     @Override
     public void unrevoke(Content content) {
-        YouViewClient delegate = fetchDelegateOrThrow(content.getPublisher());
+        YouViewService delegate = fetchDelegateOrThrow(content.getPublisher());
         delegate.unrevoke(content);
     }
     
-    private YouViewClient fetchDelegateOrThrow(Publisher publisher) {
-        YouViewClient delegate = clients.get(publisher);
+    private YouViewService fetchDelegateOrThrow(Publisher publisher) {
+        YouViewService delegate = clients.get(publisher);
         if (delegate == null) {
             throw new InvalidPublisherException(publisher);
         }

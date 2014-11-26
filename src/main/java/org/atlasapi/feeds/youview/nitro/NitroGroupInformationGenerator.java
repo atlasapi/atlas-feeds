@@ -272,7 +272,6 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             attributes.setWidth(image.getWidth());
             attributes.setHeight(image.getHeight());
         }
-        // TODO remove this once we ingest image dimensions in the nitro ingest
         if (attributes.getWidth() == null) {
             attributes.setWidth(DEFAULT_IMAGE_WIDTH);
         }

@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.tvanytime;
 
 
-public class TvaGenerationException extends RuntimeException {
+public class TvaGenerationException extends Exception {
 
     private static final long serialVersionUID = 1L;
 

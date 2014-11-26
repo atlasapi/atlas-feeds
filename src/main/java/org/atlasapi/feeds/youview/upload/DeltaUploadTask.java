@@ -19,7 +19,7 @@ public final class DeltaUploadTask extends UploadTask {
     private static final String DELTA_STATUS_PATTERN = "Updates: processed %d of %d, %d failures. Deletes: processed %d of %d total, %d failures.";
     
 
-    public DeltaUploadTask(YouViewClient remoteClient, LastUpdatedContentFinder contentFinder,
+    public DeltaUploadTask(YouViewService remoteClient, LastUpdatedContentFinder contentFinder,
             YouViewLastUpdatedStore lastUpdatedStore, Publisher publisher) {
         super(remoteClient, contentFinder, lastUpdatedStore, publisher);
     }

@@ -12,6 +12,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.tvanytime.TvaGenerationException;
 import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -38,9 +39,9 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 
 
-public class HttpYouViewClient implements YouViewClient {
+public class DefaultYouViewService implements YouViewService {
     
-    private final Logger log = LoggerFactory.getLogger(HttpYouViewClient.class);
+    private final Logger log = LoggerFactory.getLogger(DefaultYouViewService.class);
     
     private final TvAnytimeGenerator generator;
     private final IdGenerator idGenerator;
@@ -51,7 +52,7 @@ public class HttpYouViewClient implements YouViewClient {
     private final BroadcastHierarchyExpander broadcastHierarchyExpander;
     private final OnDemandHierarchyExpander onDemandHierarchyExpander;
     
-    public HttpYouViewClient(TvAnytimeGenerator generator, IdGenerator idGenerator, 
+    public DefaultYouViewService(TvAnytimeGenerator generator, IdGenerator idGenerator, 
             Clock clock, RevokedContentStore revocationStore, YouViewRemoteClient client,
             TaskStore taskStore, BroadcastHierarchyExpander broadcastHierarchyExpander, 
             OnDemandHierarchyExpander onDemandHierarchyExpander) {
@@ -72,14 +73,20 @@ public class HttpYouViewClient implements YouViewClient {
     @Override
     public void upload(Content content) {
         if (isRevoked(content)) {
+            log.info("content {} is revoked, not uploading", content.getCanonicalUri());
             return;
         }
-        JAXBElement<TVAMainType> tvaElem = generator.generateTVAnytimeFrom(content);
-        
-        Task task = createTaskFor(content, Action.UPDATE);
-        
-        YouViewResult uploadResult = client.upload(tvaElem);
-        processResult(task, content, uploadResult);
+        // TODO fix this
+        try {
+            JAXBElement<TVAMainType> tvaElem = generator.generateTVAnytimeFrom(content);
+
+            Task task = createTaskFor(content, Action.UPDATE);
+
+            YouViewResult uploadResult = client.upload(tvaElem);
+            processResult(task, content, uploadResult);
+        } catch (TvaGenerationException e) {
+            throw Throwables.propagate(e);
+        }
     }
     
     private boolean isRevoked(Content content) {
@@ -108,6 +115,10 @@ public class HttpYouViewClient implements YouViewClient {
     
     @Override
     public void sendDeleteFor(Content content) {
+        if (isRevoked(content)) {
+            log.info("content {} is revoked, not deleting", content.getCanonicalUri());
+            return;
+        }
         if (content instanceof Item) {
             sendDelete((Item) content);
         } else {
@@ -250,8 +261,8 @@ public class HttpYouViewClient implements YouViewClient {
 
     @Override
     public void unrevoke(Content content) {
+        revocationStore.unrevoke(content.getCanonicalUri());
         // TODO not quite granular enough, but it'll do
         upload(content);
-        revocationStore.unrevoke(content.getCanonicalUri());
     }
 }

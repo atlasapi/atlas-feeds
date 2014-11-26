@@ -56,11 +56,11 @@ public abstract class UploadTask extends ScheduledTask {
     private final Logger log = LoggerFactory.getLogger(UploadTask.class);
 
     private final LastUpdatedContentFinder contentFinder;
-    private final YouViewClient remoteClient;
+    private final YouViewService remoteClient;
     private final YouViewLastUpdatedStore lastUpdatedStore;
     private final Publisher publisher;
     
-    public UploadTask(YouViewClient remoteClient, LastUpdatedContentFinder contentFinder,
+    public UploadTask(YouViewService remoteClient, LastUpdatedContentFinder contentFinder,
             YouViewLastUpdatedStore lastUpdatedStore, Publisher publisher) {
         this.remoteClient = checkNotNull(remoteClient);
         this.contentFinder = checkNotNull(contentFinder);

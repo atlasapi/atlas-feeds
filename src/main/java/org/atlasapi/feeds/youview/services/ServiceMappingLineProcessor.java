@@ -34,6 +34,7 @@ public class ServiceMappingLineProcessor implements LineProcessor<Multimap<Strin
         // line should contain at least service id, service location, youview service id
         // service locator type is often not present, and not required
         if (Iterables.size(values) < 3) {
+            // TODO throw?
             return true;
         }
         String bbcSId = values.get(0);

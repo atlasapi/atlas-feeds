@@ -22,7 +22,7 @@ public final class BootstrapUploadTask extends UploadTask {
         }
     };
     
-    public BootstrapUploadTask(YouViewClient remoteClient, LastUpdatedContentFinder contentFinder,
+    public BootstrapUploadTask(YouViewService remoteClient, LastUpdatedContentFinder contentFinder,
             YouViewLastUpdatedStore lastUpdatedStore, Publisher publisher) {
         super(remoteClient, contentFinder, lastUpdatedStore, publisher);
     }

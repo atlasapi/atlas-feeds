@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview;
 import org.atlasapi.media.entity.Content;
 
 
+// TODO extend Predicate<Content>?
 public interface ContentPermit {
 
     /**

@@ -33,7 +33,7 @@ public class YouViewUploadTaskTest {
     private LastUpdatedContentFinder lastUpdatedContentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     private YouViewLastUpdatedStore lastUpdatedStore = Mockito.mock(YouViewLastUpdatedStore.class);
     private Clock clock = new TimeMachine();
-    private YouViewClient youViewClient = Mockito.mock(YouViewClient.class);
+    private YouViewService youViewClient = Mockito.mock(YouViewService.class);
     
     @Before
     public void setup() {

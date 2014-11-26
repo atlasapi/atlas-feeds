@@ -22,7 +22,7 @@ public class PublisherSpecificTVAnytimeGenerator implements TvAnytimeGenerator {
     }
 
     @Override
-    public JAXBElement<TVAMainType> generateTVAnytimeFrom(Content content) {
+    public JAXBElement<TVAMainType> generateTVAnytimeFrom(Content content) throws TvaGenerationException {
         Publisher publisher = content.getPublisher();
         TvAnytimeGenerator delegate = generators.get(publisher);
         if (delegate == null) {

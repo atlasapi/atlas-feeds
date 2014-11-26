@@ -29,7 +29,7 @@ public class JaxbTvAnytimeGenerator implements TvAnytimeGenerator {
     }
 
     @Override
-    public JAXBElement<TVAMainType> generateTVAnytimeFrom(Content content) {
+    public JAXBElement<TVAMainType> generateTVAnytimeFrom(Content content) throws TvaGenerationException {
         try {
             TVAMainType tvaMain = factory.createTVAMainType();
             elementCreator.permit().reset();

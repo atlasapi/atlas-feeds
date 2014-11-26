@@ -73,6 +73,7 @@ public class MongoTaskStore implements TaskStore {
         collection.update(idQuery, updateStatus, false, false);
     }
 
+    // TODO stop this from writing if there's already a response with the new status written
     @Override
     public void updateWithResponse(Long taskId, Response response) {
         DBObject idQuery = new MongoQueryBuilder()
