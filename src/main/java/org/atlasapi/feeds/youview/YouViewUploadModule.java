@@ -24,11 +24,11 @@ import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.feeds.youview.upload.BootstrapUploadTask;
 import org.atlasapi.feeds.youview.upload.DeltaUploadTask;
-import org.atlasapi.feeds.youview.upload.HttpYouViewClient;
+import org.atlasapi.feeds.youview.upload.DefaultYouViewService;
 import org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.PublisherDelegatingYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.ValidatingYouViewRemoteClient;
-import org.atlasapi.feeds.youview.upload.YouViewClient;
+import org.atlasapi.feeds.youview.upload.YouViewService;
 import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Publisher;
@@ -132,17 +132,17 @@ public class YouViewUploadModule {
     }
     
     @Bean
-    public YouViewClient youViewUploadClient() throws JAXBException, SAXException {
-        ImmutableMap.Builder<Publisher, YouViewClient> clients = ImmutableMap.builder();
-        Optional<YouViewClient> nitroClient = createNitroClient();
+    public YouViewService youViewUploadClient() throws JAXBException, SAXException {
+        ImmutableMap.Builder<Publisher, YouViewService> clients = ImmutableMap.builder();
+        Optional<YouViewService> nitroClient = createNitroClient();
         if (nitroClient.isPresent()) {
             clients.put(Publisher.BBC_NITRO, nitroClient.get());
         }
-        Optional<YouViewClient> loveFilmClient = createLoveFilmClient();
+        Optional<YouViewService> loveFilmClient = createLoveFilmClient();
         if (loveFilmClient.isPresent()) {
             clients.put(Publisher.LOVEFILM, loveFilmClient.get());
         }
-        Optional<YouViewClient> unboxClient = createUnboxClient();
+        Optional<YouViewService> unboxClient = createUnboxClient();
         if (unboxClient.isPresent()) {
             clients.put(Publisher.AMAZON_UNBOX, unboxClient.get());
         }
@@ -150,7 +150,7 @@ public class YouViewUploadModule {
         return new PublisherDelegatingYouViewRemoteClient(clients.build());
     }
 
-    private Optional<YouViewClient> createNitroClient() throws JAXBException, SAXException {
+    private Optional<YouViewService> createNitroClient() throws JAXBException, SAXException {
         String publisherPrefix = CONFIG_PREFIX + "nitro";
         if (!isEnabled(publisherPrefix)) {
             Optional.absent();
@@ -161,7 +161,7 @@ public class YouViewUploadModule {
         YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), baseUrl);
         client = enableValidationIfAppropriate(client);
         
-        return Optional.<YouViewClient>of(new HttpYouViewClient(
+        return Optional.<YouViewService>of(new DefaultYouViewService(
                 generator, 
                 nitroIdGenerator, 
                 clock, 
@@ -181,7 +181,7 @@ public class YouViewUploadModule {
         return client;
     }
     
-    private Optional<YouViewClient> createLoveFilmClient() throws JAXBException, SAXException {
+    private Optional<YouViewService> createLoveFilmClient() throws JAXBException, SAXException {
         String publisherPrefix = CONFIG_PREFIX + "lovefilm";
         if (!isEnabled(publisherPrefix)) {
             Optional.absent();
@@ -191,7 +191,7 @@ public class YouViewUploadModule {
         YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), parseUrl(publisherPrefix));
         client = enableValidationIfAppropriate(client);
         
-        return Optional.<YouViewClient>of(new HttpYouViewClient(
+        return Optional.<YouViewService>of(new DefaultYouViewService(
                 generator, 
                 loveFilmIdGenerator, 
                 clock, 
@@ -203,7 +203,7 @@ public class YouViewUploadModule {
         ));
     }
     
-    private Optional<YouViewClient> createUnboxClient() throws JAXBException, SAXException {
+    private Optional<YouViewService> createUnboxClient() throws JAXBException, SAXException {
         String publisherPrefix = CONFIG_PREFIX + "unbox";
         if (!isEnabled(publisherPrefix)) {
             Optional.absent();
@@ -213,7 +213,7 @@ public class YouViewUploadModule {
         YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), parseUrl(publisherPrefix));
         client = enableValidationIfAppropriate(client);      
 
-        return Optional.<YouViewClient>of(new HttpYouViewClient(
+        return Optional.<YouViewService>of(new DefaultYouViewService(
                 generator, 
                 unboxIdGenerator, 
                 clock, 

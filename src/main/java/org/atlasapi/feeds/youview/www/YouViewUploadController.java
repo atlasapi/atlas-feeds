@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.feeds.youview.upload.YouViewClient;
+import org.atlasapi.feeds.youview.upload.YouViewService;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
@@ -28,9 +28,9 @@ import com.metabroadcast.common.http.HttpException;
 public class YouViewUploadController {
 
     private final ContentResolver contentResolver;
-    private final YouViewClient remoteClient;
+    private final YouViewService remoteClient;
     
-    public YouViewUploadController(ContentResolver contentResolver, YouViewClient remoteClient) {
+    public YouViewUploadController(ContentResolver contentResolver, YouViewService remoteClient) {
         this.contentResolver = checkNotNull(contentResolver);
         this.remoteClient = checkNotNull(remoteClient);
     }

@@ -19,6 +19,7 @@ public enum TvAnytimeElementFactory {
     INSTANCE;
     
     private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    // TODO can this be instantiated staticly?
     private DatatypeFactory datatypeFactory;
 
     private TvAnytimeElementFactory() {

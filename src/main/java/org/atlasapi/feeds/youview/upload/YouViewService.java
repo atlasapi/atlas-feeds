@@ -4,7 +4,7 @@ import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.media.entity.Content;
 
 
-public interface YouViewClient {
+public interface YouViewService {
 
     void upload(Content content);
 

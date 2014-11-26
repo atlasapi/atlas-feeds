@@ -12,7 +12,7 @@ import java.io.IOException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.feeds.youview.upload.YouViewClient;
+import org.atlasapi.feeds.youview.upload.YouViewService;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.persistence.content.ContentResolver;
@@ -33,7 +33,7 @@ public class YouViewUploadControllerTest {
     private static final Content VALID_CONTENT = Mockito.mock(Content.class);
     
     private ContentResolver contentResolver = Mockito.mock(ContentResolver.class);
-    private YouViewClient remoteClient = Mockito.mock(YouViewClient.class);
+    private YouViewService remoteClient = Mockito.mock(YouViewService.class);
     private HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
     
     private final YouViewUploadController controller = new YouViewUploadController(contentResolver, remoteClient);

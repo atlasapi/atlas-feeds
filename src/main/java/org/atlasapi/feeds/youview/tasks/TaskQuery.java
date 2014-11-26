@@ -21,7 +21,7 @@ public class TaskQuery {
         return new Builder(selection, publisher);
     }
     
-    public TaskQuery(Selection selection, Publisher publisher, Optional<String> contentUri, 
+    private TaskQuery(Selection selection, Publisher publisher, Optional<String> contentUri, 
             Optional<String> remoteId, Optional<Status> status) {
         this.selection = checkNotNull(selection);
         this.publisher = checkNotNull(publisher);

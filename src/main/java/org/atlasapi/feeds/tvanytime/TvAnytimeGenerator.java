@@ -8,5 +8,6 @@ import tva.metadata._2010.TVAMainType;
 
 public interface TvAnytimeGenerator {
 
-    JAXBElement<TVAMainType> generateTVAnytimeFrom(Content content);
+    // TODO should this throw a checked exception?
+    JAXBElement<TVAMainType> generateTVAnytimeFrom(Content content) throws TvaGenerationException;
 }
