@@ -30,7 +30,7 @@ public class NitroProgramInformationGeneratorTest {
     
     private IdGenerator idGenerator = new NitroIdGenerator(Mockito.mock(HashFunction.class));
     private TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
-    private final ProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator, elementFactory);
+    private final ProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator);
 
     @Test
     public void testPublisherIndependentFields() {

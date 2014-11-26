@@ -26,9 +26,4 @@ public interface RevokedContentStore {
      * @return true if content is revoked, false otherwise
      */
     boolean isRevoked(String uri);
-    
-    /**
-     * Clears all revocations
-     */
-    void clearAllRevocations();
 }

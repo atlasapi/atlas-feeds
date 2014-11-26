@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
@@ -13,22 +12,17 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
+import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
-import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
 import org.atlasapi.feeds.youview.tasks.Action;
 import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
-import org.atlasapi.media.entity.Brand;
-import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
-import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
-import org.atlasapi.media.entity.Location;
-import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,10 +31,8 @@ import tva.metadata._2010.TVAMainType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Ordering;
 import com.metabroadcast.common.time.Clock;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
@@ -48,59 +40,29 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionRe
 
 public class HttpYouViewClient implements YouViewClient {
     
-    private static final String TRANSACTION_URL_STEM = "/transaction/";
-
-    private static final Ordering<Content> HIERARCHICAL_ORDER = new Ordering<Content>() {
-        @Override
-        public int compare(Content left, Content right) {
-            if (left instanceof Item) {
-                if (right instanceof Item) {
-                    return 0;
-                } else {
-                    return 1;
-                }
-            } else if (left instanceof Series) {
-                if (right instanceof Item) {
-                    return -1;
-                } else if (right instanceof Series) {
-                    return 0;
-                } else {
-                    return 1;
-                }
-            } else {
-                if (right instanceof Brand) {
-                    return 0;
-                } else {
-                    return -1;
-                }
-            }
-        }
-    };
-
     private final Logger log = LoggerFactory.getLogger(HttpYouViewClient.class);
     
     private final TvAnytimeGenerator generator;
-    private final String urlBase;
     private final IdGenerator idGenerator;
     private final Clock clock;
     private final RevokedContentStore revocationStore;
     private final YouViewRemoteClient client;
     private final TaskStore taskStore;
-    private final BroadcastServiceMapping serviceMapping;
-    private final BbcServiceIdResolver serviceIdResolver;
+    private final BroadcastHierarchyExpander broadcastHierarchyExpander;
+    private final OnDemandHierarchyExpander onDemandHierarchyExpander;
     
-    public HttpYouViewClient(TvAnytimeGenerator generator, String urlBase, IdGenerator idGenerator, 
+    public HttpYouViewClient(TvAnytimeGenerator generator, IdGenerator idGenerator, 
             Clock clock, RevokedContentStore revocationStore, YouViewRemoteClient client,
-            TaskStore taskStore, BroadcastServiceMapping serviceMapping, BbcServiceIdResolver serviceIdResolver) {
+            TaskStore taskStore, BroadcastHierarchyExpander broadcastHierarchyExpander, 
+            OnDemandHierarchyExpander onDemandHierarchyExpander) {
         this.generator = checkNotNull(generator);
-        this.urlBase = checkNotNull(urlBase);
         this.idGenerator = checkNotNull(idGenerator);
         this.clock = checkNotNull(clock);
         this.revocationStore = checkNotNull(revocationStore);
         this.client = checkNotNull(client);
         this.taskStore = checkNotNull(taskStore);
-        this.serviceMapping = checkNotNull(serviceMapping);
-        this.serviceIdResolver = checkNotNull(serviceIdResolver);
+        this.broadcastHierarchyExpander = checkNotNull(broadcastHierarchyExpander);
+        this.onDemandHierarchyExpander = checkNotNull(onDemandHierarchyExpander);
     }
     
     /**
@@ -109,6 +71,9 @@ public class HttpYouViewClient implements YouViewClient {
      */
     @Override
     public void upload(Content content) {
+        if (isRevoked(content)) {
+            return;
+        }
         JAXBElement<TVAMainType> tvaElem = generator.generateTVAnytimeFrom(content);
         
         Task task = createTaskFor(content, Action.UPDATE);
@@ -117,9 +82,13 @@ public class HttpYouViewClient implements YouViewClient {
         processResult(task, content, uploadResult);
     }
     
+    private boolean isRevoked(Content content) {
+        return revocationStore.isRevoked(content.getCanonicalUri());
+    }
+
     private void processResult(Task task, Content content, YouViewResult uploadResult) {
         if (uploadResult.isSuccess()) {
-            taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, parseIdFrom(uploadResult.result()), clock.now());
+            taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, uploadResult.result(), clock.now());
         } else {
             Response response = new Response(Status.REJECTED, uploadResult.result(), clock.now());
             taskStore.updateWithResponse(task.id(), response);
@@ -135,14 +104,6 @@ public class HttpYouViewClient implements YouViewClient {
                 .build();
         
         return taskStore.save(task);
-    }
-
-    private String parseIdFrom(String transactionUrl) {
-        return transactionUrl.replace(urlBase + TRANSACTION_URL_STEM, "");
-    }
-    
-    public static List<Content> orderContentForDeletion(Iterable<Content> toBeDeleted) {
-        return HIERARCHICAL_ORDER.immutableSortedCopy(toBeDeleted);
     }
     
     @Override
@@ -171,7 +132,7 @@ public class HttpYouViewClient implements YouViewClient {
             processDeletionResult(task, item, deleteResult);
         }
         
-        Set<String> onDemandIds = generateOnDemandIds(item);
+        Set<String> onDemandIds = onDemandHierarchyExpander.expandHierarchy(item).keySet();
         
         for (String onDemandId: onDemandIds) {
             task = createTaskFor(item, Action.DELETE);
@@ -180,7 +141,7 @@ public class HttpYouViewClient implements YouViewClient {
             processDeletionResult(task, item, deleteResult);
         }
 
-        Set<String> broadcastIds = generateBroadcastIds(item);
+        Set<String> broadcastIds = broadcastHierarchyExpander.expandHierarchy(item).keySet();
         
         for (String broadcastId: broadcastIds) {
             task = createTaskFor(item, Action.DELETE);
@@ -200,80 +161,6 @@ public class HttpYouViewClient implements YouViewClient {
         return versionIds;
     }
     
-    private Set<String> generateOnDemandIds(Item item) {
-        return FluentIterable.from(item.getVersions())
-                .transformAndConcat(toOnDemandHierarchy(item))
-                .toSet();
-    }
-    
-    private Function<Version, Iterable<String>> toOnDemandHierarchy(final Item item) {
-        return new Function<Version, Iterable<String>>() {
-            @Override
-            public Iterable<String> apply(Version input) {
-                return toOnDemandHierarchy(item, input, input.getManifestedAs());
-            }
-        };
-    }
-
-    private Iterable<String> toOnDemandHierarchy(final Item item, final Version version, Iterable<Encoding> encodings) {
-        return FluentIterable.from(encodings)
-                .transformAndConcat(toOnDemandHierarchy(item, version));
-    }
-
-    private Function<Encoding, Iterable<String>> toOnDemandHierarchy(final Item item, final Version version) {
-        return new Function<Encoding, Iterable<String>>() {
-            @Override
-            public Iterable<String> apply(Encoding input) {
-                return toOnDemandHierarchy(item, version, input, input.getAvailableAt());
-            }
-        };
-    }
-
-    private Iterable<String> toOnDemandHierarchy(final Item item, final Version version, 
-            final Encoding encoding, Iterable<Location> locations) {
-        return Iterables.transform(locations, new Function<Location, String>() {
-            @Override
-            public String apply(Location input) {
-                return idGenerator.generateOnDemandImi(item, version, encoding, input);
-            }
-        });
-    }
-    
-    private Set<String> generateBroadcastIds(Item item) {
-        return FluentIterable.from(item.getVersions())
-                .transformAndConcat(expandBroadcastHierarchy())
-                .toSet();
-    }
-
-    private Function<Version, Iterable<String>> expandBroadcastHierarchy() {
-        return new Function<Version, Iterable<String>>() {
-            @Override
-            public Iterable<String> apply(Version input) {
-                return expandBroadcastHierarchy(input);
-            }
-        };
-    }
-    
-    private Iterable<String> expandBroadcastHierarchy(Version version) {
-        return FluentIterable.from(version.getBroadcasts())
-                .transformAndConcat(new Function<Broadcast, Iterable<String>>() {
-                    @Override
-                    public Iterable<String> apply(Broadcast input) {
-                        return expandBroadcastHierarchy(input);
-                    }
-                });
-    }
-    
-    private Iterable<String> expandBroadcastHierarchy(final Broadcast broadcast) {
-        Iterable<String> youViewServiceIds = serviceMapping.youviewServiceIdFor(serviceIdResolver.resolveSId(broadcast));
-        return Iterables.transform(youViewServiceIds, new Function<String, String>() {
-            @Override
-            public String apply(String input) {
-                return idGenerator.generateBroadcastImi(input, broadcast);
-            }
-        });
-    }
-    
     private void sendDelete(Content content) {
         // TODO this may be too naive - does this need to send deletes for content + all children (e.g. series, episodes for brand)?
         Task task = createTaskFor(content, Action.DELETE);
@@ -283,7 +170,7 @@ public class HttpYouViewClient implements YouViewClient {
 
     private void processDeletionResult(Task task, Content content, YouViewResult deleteResult) {
         if (deleteResult.isSuccess()) {
-            taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, parseIdFrom(deleteResult.result()), clock.now());
+            taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, deleteResult.result(), clock.now());
         } else {
             Response response = new Response(Status.REJECTED, deleteResult.result(), clock.now());
             taskStore.updateWithResponse(task.id(), response);
@@ -349,7 +236,7 @@ public class HttpYouViewClient implements YouViewClient {
             throw new RuntimeException("content " + content.getCanonicalUri() + " not an item, cannot revoke");
         }
         Item item = (Item) content;
-        Set<String> onDemandIds = generateOnDemandIds(item);
+        Set<String> onDemandIds = onDemandHierarchyExpander.expandHierarchy(item).keySet();
 
         for (String onDemandId: onDemandIds) {
             Task task = createTaskFor(item, Action.DELETE);

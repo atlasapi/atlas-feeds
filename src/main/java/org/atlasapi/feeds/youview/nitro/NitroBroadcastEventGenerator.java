@@ -1,13 +1,11 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.youview.AbstractBroadcastEventGenerator;
+import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
@@ -33,16 +31,14 @@ public class NitroBroadcastEventGenerator extends AbstractBroadcastEventGenerato
     private static final String DEV_SERVICE_ID_PREFIX = "http://bbc.couk/services/";
     private static final String PROGRAM_URL = "dvb://233A..A020;A876";
 
-    private final TvAnytimeElementFactory elementFactory;
+    private final TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
 
-    public NitroBroadcastEventGenerator(IdGenerator idGenerator, TvAnytimeElementFactory elementFactory,
-            BroadcastServiceMapping serviceMapping, BbcServiceIdResolver serviceIdResolver) {
-        super(idGenerator, serviceMapping, serviceIdResolver);
-        this.elementFactory = checkNotNull(elementFactory);
+    public NitroBroadcastEventGenerator(IdGenerator idGenerator, BroadcastHierarchyExpander hierarchyExpander) {
+        super(idGenerator, hierarchyExpander);
     }
 
     @Override
-    public BroadcastEventType generate(String imi, Item item, Version version, Broadcast broadcast, String youViewServiceId) {
+    public final BroadcastEventType generate(String imi, Item item, Version version, Broadcast broadcast, String youViewServiceId) {
         BroadcastEventType broadcastEvent = new BroadcastEventType();
         
         broadcastEvent.setServiceIDRef(serviceIdRefFrom(youViewServiceId));

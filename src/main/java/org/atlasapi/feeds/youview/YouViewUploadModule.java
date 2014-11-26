@@ -8,6 +8,8 @@ import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBException;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
+import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
@@ -20,6 +22,8 @@ import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
+import org.atlasapi.feeds.youview.upload.BootstrapUploadTask;
+import org.atlasapi.feeds.youview.upload.DeltaUploadTask;
 import org.atlasapi.feeds.youview.upload.HttpYouViewClient;
 import org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.PublisherDelegatingYouViewRemoteClient;
@@ -84,6 +88,8 @@ public class YouViewUploadModule {
     private @Autowired LoveFilmBroadcastServiceMapping loveFilmServiceMapping;
     private @Autowired UnboxIdGenerator unboxIdGenerator;
     private @Autowired UnboxBroadcastServiceMapping unboxServiceMapping;
+    private @Autowired BroadcastHierarchyExpander broadcastHierarchyExpander;
+    private @Autowired OnDemandHierarchyExpander onDemandHierarchyExpander;
     
     private @Value("${youview.upload.validation}") String performValidation;
 
@@ -94,11 +100,12 @@ public class YouViewUploadModule {
         for (Entry<String, Publisher> publisherEntry : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
             if (isEnabled(publisherPrefix)) {
-                scheduler.schedule(scheduleTask(publisherEntry.getValue(), true, "Bootstrap"), BOOTSTRAP_UPLOAD);
-                scheduler.schedule(scheduleTask(publisherEntry.getValue(), false, "Delta"), DELTA_UPLOAD);
+                scheduler.schedule(scheduleBootstrapTask(publisherEntry.getValue()), BOOTSTRAP_UPLOAD);
+                scheduler.schedule(scheduleDeltaTask(publisherEntry.getValue()), DELTA_UPLOAD);
+                
             }
         }
-        scheduler.schedule(remoteCheckTask().withName("YouView Transaction Status Check"), REMOTE_CHECK_UPLOAD);
+        scheduler.schedule(remoteCheckTask().withName("YouView Task Status Check"), REMOTE_CHECK_UPLOAD);
     }
     
     private ScheduledTask remoteCheckTask() throws JAXBException, SAXException {
@@ -109,16 +116,18 @@ public class YouViewUploadModule {
     public YouViewUploadController uploadController() throws JAXBException, SAXException {
         return new YouViewUploadController(contentResolver, youViewUploadClient());
     }
-
-    private ScheduledTask scheduleTask(Publisher publisher, boolean isBootstrap, String taskKey) throws JAXBException, SAXException {
-        return uploadTask(publisher, isBootstrap).withName(String.format(TASK_NAME_PATTERN, taskKey, publisher.title()));
+    
+    private ScheduledTask scheduleBootstrapTask(Publisher publisher) throws JAXBException, SAXException {
+        return new BootstrapUploadTask(youViewUploadClient(), contentFinder, lastUpdatedStore(), publisher)
+                    .withName(String.format(TASK_NAME_PATTERN, "Bootstrap", publisher.title()));
+    }
+    
+    private ScheduledTask scheduleDeltaTask(Publisher publisher) throws JAXBException, SAXException {
+        return new DeltaUploadTask(youViewUploadClient(), contentFinder, lastUpdatedStore(), publisher)
+                    .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
 
-    private YouViewUploadTask uploadTask(Publisher publisher, boolean isBootstrap) throws JAXBException, SAXException {
-        return new YouViewUploadTask(youViewUploadClient(), contentFinder, store(), publisher, isBootstrap);
-    }
-
-    public @Bean YouViewLastUpdatedStore store() {
+    public @Bean YouViewLastUpdatedStore lastUpdatedStore() {
         return new MongoYouViewLastUpdatedStore(mongo);
     }
     
@@ -154,14 +163,13 @@ public class YouViewUploadModule {
         
         return Optional.<YouViewClient>of(new HttpYouViewClient(
                 generator, 
-                baseUrl, 
                 nitroIdGenerator, 
                 clock, 
                 revokedContentStore(), 
                 client, 
-                taskStore, 
-                nitroBroadcastServiceMapping, 
-                bbcServiceIdResolver
+                taskStore,
+                broadcastHierarchyExpander,
+                onDemandHierarchyExpander
         ));
     }
 
@@ -178,22 +186,20 @@ public class YouViewUploadModule {
         if (!isEnabled(publisherPrefix)) {
             Optional.absent();
         }
-        String baseUrl = parseUrl(publisherPrefix);
         UsernameAndPassword credentials = parseCredentials(publisherPrefix);
         
-        YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), baseUrl);
+        YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), parseUrl(publisherPrefix));
         client = enableValidationIfAppropriate(client);
         
         return Optional.<YouViewClient>of(new HttpYouViewClient(
                 generator, 
-                baseUrl, 
                 loveFilmIdGenerator, 
                 clock, 
                 revokedContentStore(), 
                 client, 
                 taskStore, 
-                loveFilmServiceMapping, 
-                bbcServiceIdResolver
+                broadcastHierarchyExpander,
+                onDemandHierarchyExpander
         ));
     }
     
@@ -202,22 +208,20 @@ public class YouViewUploadModule {
         if (!isEnabled(publisherPrefix)) {
             Optional.absent();
         }
-        String baseUrl = parseUrl(publisherPrefix);
         UsernameAndPassword credentials = parseCredentials(publisherPrefix);
         
-        YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), baseUrl);
+        YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), parseUrl(publisherPrefix));
         client = enableValidationIfAppropriate(client);      
 
         return Optional.<YouViewClient>of(new HttpYouViewClient(
                 generator, 
-                baseUrl, 
                 unboxIdGenerator, 
                 clock, 
                 revokedContentStore(), 
                 client, 
                 taskStore, 
-                unboxServiceMapping, 
-                bbcServiceIdResolver
+                broadcastHierarchyExpander,
+                onDemandHierarchyExpander
         ));
     }
     

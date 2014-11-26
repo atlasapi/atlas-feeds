@@ -15,23 +15,27 @@ public interface TaskStore {
     
     /**
      * Updates the record for a given task with a new status. 
-     * Returns true if the update occurs, and false otherwise.
      * @param taskId the id of the task to be updated
-     * @param response the desired new status
-     * @return
+     * @param status the desired new status
      */
-    boolean updateWithStatus(Long taskId, Status status);
+    void updateWithStatus(Long taskId, Status status);
     
-    boolean updateWithRemoteId(Long taskId, Status status, String remoteId, DateTime uploadTime);
+    /**
+     * Updates a given task with an ID provided by the remote system, along with
+     * an updated status and a time of upload
+     * @param taskId
+     * @param status
+     * @param remoteId
+     * @param uploadTime
+     */
+    void updateWithRemoteId(Long taskId, Status status, String remoteId, DateTime uploadTime);
     
     /**
      * Updates the record for a given task with a response from the remote site. 
-     * Returns true if the update occurs, and false otherwise.
      * @param taskId the id of the task to be updated
      * @param response the response from the remote site
-     * @return
      */
-    boolean updateWithResponse(Long taskId, Response response);
+    void  updateWithResponse(Long taskId, Response response);
     
     Optional<Task> taskFor(Long taskId);
     

@@ -19,7 +19,7 @@ public class MongoRevokedContentStoreTest {
     
     @After
     public void tearDown() {
-        store.clearAllRevocations();
+        MongoTestHelper.clearDB();
     }
     
     @Test

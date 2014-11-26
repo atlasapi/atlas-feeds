@@ -2,14 +2,14 @@ package org.atlasapi.feeds.youview.tasks;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.List;
+import java.util.Set;
 
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 
 public class Task {
@@ -21,7 +21,7 @@ public class Task {
     private final Optional<String> remoteId;
     private final String content;
     private final Status status;
-    private final List<Response> remoteResponses;
+    private final Set<Response> remoteResponses;
     
     public static Builder builder() {
         return new Builder();
@@ -36,7 +36,7 @@ public class Task {
         this.remoteId = checkNotNull(remoteId);
         this.content = checkNotNull(content);
         this.status = checkNotNull(status);
-        this.remoteResponses = ImmutableList.copyOf(remoteResponses);
+        this.remoteResponses = ImmutableSet.copyOf(remoteResponses);
     }
     
     public Long id() {
@@ -71,7 +71,7 @@ public class Task {
         return status;
     }
     
-    public List<Response> remoteResponses() {
+    public Set<Response> remoteResponses() {
         return remoteResponses;
     }
 
@@ -117,7 +117,7 @@ public class Task {
         private Optional<String> remoteId = Optional.absent();
         private String content;
         private Status status;
-        private ImmutableList.Builder<Response> remoteResponses = ImmutableList.builder();
+        private ImmutableSet.Builder<Response> remoteResponses = ImmutableSet.builder();
         
         private Builder() {
         }

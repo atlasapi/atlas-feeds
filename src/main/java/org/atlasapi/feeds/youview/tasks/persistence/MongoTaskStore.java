@@ -25,7 +25,6 @@ import com.metabroadcast.common.persistence.mongo.MongoUpdateBuilder;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.WriteResult;
 
 
 public class MongoTaskStore implements TaskStore {
@@ -49,7 +48,7 @@ public class MongoTaskStore implements TaskStore {
     }
 
     @Override
-    public boolean updateWithStatus(Long taskId, Status status) {
+    public void updateWithStatus(Long taskId, Status status) {
         DBObject idQuery = new MongoQueryBuilder()
                 .idEquals(taskId)
                 .build();
@@ -57,12 +56,11 @@ public class MongoTaskStore implements TaskStore {
                 .setField(STATUS_KEY, status.name())
                 .build();
         
-        WriteResult result = collection.update(idQuery, updateStatus, false, false);
-        return result.getN() == 1;
+        collection.update(idQuery, updateStatus, false, false);
     }
 
     @Override
-    public boolean updateWithRemoteId(Long taskId, Status status, String remoteId, DateTime uploadTime) {
+    public void updateWithRemoteId(Long taskId, Status status, String remoteId, DateTime uploadTime) {
         DBObject idQuery = new MongoQueryBuilder()
                 .idEquals(taskId)
                 .build();
@@ -72,12 +70,11 @@ public class MongoTaskStore implements TaskStore {
                 .setField(TaskTranslator.UPLOAD_TIME_KEY, uploadTime)
                 .build();
         
-        WriteResult result = collection.update(idQuery, updateStatus, false, false);
-        return result.getN() == 1;
+        collection.update(idQuery, updateStatus, false, false);
     }
 
     @Override
-    public boolean updateWithResponse(Long taskId, Response response) {
+    public void updateWithResponse(Long taskId, Response response) {
         DBObject idQuery = new MongoQueryBuilder()
                 .idEquals(taskId)
                 .build();
@@ -86,8 +83,7 @@ public class MongoTaskStore implements TaskStore {
                 .setField(STATUS_KEY, response.status().name())
                 .build();
         
-        WriteResult result = collection.update(idQuery, updateStatus, false, false);
-        return result.getN() == 1;
+        collection.update(idQuery, updateStatus, false, false);
     }
 
     @Override

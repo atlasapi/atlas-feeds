@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview;
 
-import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
+import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
+import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.ChannelResolvingBbcServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastEventGenerator;
@@ -28,18 +29,26 @@ public class NitroTVAnytimeModule {
     
     @Bean
     public NitroTvAnytimeElementCreator nitroElementCreator() {
-        TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
-        
         return new NitroTvAnytimeElementCreator(
-                new NitroProgramInformationGenerator(nitroIdGenerator(), elementFactory), 
+                new NitroProgramInformationGenerator(nitroIdGenerator()), 
                 new NitroGroupInformationGenerator(nitroIdGenerator(), nitroGenreMapping(), bbcServiceIdResolver()), 
-                new NitroOnDemandLocationGenerator(nitroIdGenerator(), elementFactory), 
-                new NitroBroadcastEventGenerator(nitroIdGenerator(), elementFactory, nitroServiceMapping(), bbcServiceIdResolver()),
+                new NitroOnDemandLocationGenerator(nitroIdGenerator(), onDemandHierarchyExpander()), 
+                new NitroBroadcastEventGenerator(nitroIdGenerator(), broadcastHierarchyExpander()),
                 contentHierarchy(), 
                 new UriBasedContentPermit()
         );
     }
     
+    @Bean
+    public OnDemandHierarchyExpander onDemandHierarchyExpander() {
+        return new OnDemandHierarchyExpander(nitroIdGenerator());
+    }
+
+    @Bean
+    public BroadcastHierarchyExpander broadcastHierarchyExpander() {
+        return new BroadcastHierarchyExpander(nitroIdGenerator(), nitroServiceMapping(), bbcServiceIdResolver());
+    }
+
     @Bean
     public NitroBroadcastServiceMapping nitroServiceMapping() {
         return new NitroBroadcastServiceMapping("nitro_service_mapping.csv");

@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
-import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 
@@ -40,10 +39,4 @@ public final class MongoRevokedContentStore implements RevokedContentStore {
         DBObject idQuery = new MongoQueryBuilder().idEquals(uri).build();
         return collection.findOne(idQuery) != null;
     }
-
-    @Override
-    public void clearAllRevocations() {
-        collection.remove(new BasicDBObject());
-    }
-
 }
