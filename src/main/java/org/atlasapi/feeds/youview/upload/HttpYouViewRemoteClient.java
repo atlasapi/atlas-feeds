@@ -72,7 +72,7 @@ public final class HttpYouViewRemoteClient implements YouViewRemoteClient {
             HttpResponse response = httpClient.post(queryUrl, new StringPayload(baos.toString(Charsets.UTF_8.name())));
 
             if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
-                String transactionUrl = response.header("Location");
+                String transactionUrl = parseIdFrom(response.header("Location"));
                 log.trace("Upload successful. Transaction url: " + transactionUrl);
                 return success(transactionUrl);
             }
@@ -92,7 +92,7 @@ public final class HttpYouViewRemoteClient implements YouViewRemoteClient {
             
             HttpResponse response = httpClient.delete(queryUrl);
             if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
-                String transactionUrl = response.header("Location");
+                String transactionUrl = parseIdFrom(response.header("Location"));
                 log.trace("Delete successful. Transaction url: " + transactionUrl);
                 return success(transactionUrl);
             } 
@@ -101,6 +101,10 @@ public final class HttpYouViewRemoteClient implements YouViewRemoteClient {
         } catch (HttpException e) {
             throw new YouViewRemoteClientException("Error deleting id " + remoteId, e);
         }
+    }
+
+    private String parseIdFrom(String transactionUrl) {
+        return transactionUrl.replace(urlBase + TRANSACTION_URL_STEM + "/", "");
     }
 
     private String buildDeleteQuery(String remoteId) {

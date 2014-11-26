@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import org.atlasapi.feeds.youview.upload.HttpYouViewClient;
+import org.atlasapi.feeds.youview.upload.UploadTask;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -25,7 +25,7 @@ public class TestHierarchicalOrdering {
         Brand brand = new Brand();
         
         for (List<Content> permutation : Collections2.permutations(ImmutableList.of(item, series, brand))) {
-            List<Content> sorted = HttpYouViewClient.orderContentForDeletion(permutation);
+            List<Content> sorted = UploadTask.orderContentForDeletion(permutation);
             assertEquals(brand, Iterables.get(sorted, 0));
             assertEquals(series, Iterables.get(sorted, 1));
             assertEquals(item, Iterables.get(sorted, 2));

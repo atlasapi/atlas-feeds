@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.math.BigInteger;
 import java.util.List;
 
@@ -10,6 +8,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.youview.AbstractOnDemandLocationGenerator;
+import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Encoding;
@@ -49,15 +48,14 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
     private static final String BROADCAST_AUTHORITY = "www.bbc.co.uk";
     private static final String DEFAULT_ON_DEMAND_PIPS_ID = "b00gszl0.imi:bbc.co.uk/pips/65751802";
 
-    private final TvAnytimeElementFactory elementFactory;
+    private final TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
 
-    public NitroOnDemandLocationGenerator(IdGenerator idGenerator, TvAnytimeElementFactory elementFactory) {
-        super(idGenerator);
-        this.elementFactory = checkNotNull(elementFactory);
+    public NitroOnDemandLocationGenerator(IdGenerator idGenerator, OnDemandHierarchyExpander hierarchyExpander) {
+        super(idGenerator, hierarchyExpander);
     }
     
     @Override
-    public OnDemandProgramType generate(String imi, Item item, Version version, Encoding encoding, Location location) {
+    public final OnDemandProgramType generate(String imi, Item item, Version version, Encoding encoding, Location location) {
         
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
         

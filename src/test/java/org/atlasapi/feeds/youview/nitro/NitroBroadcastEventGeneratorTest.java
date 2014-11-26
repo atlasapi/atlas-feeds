@@ -3,15 +3,15 @@ package org.atlasapi.feeds.youview.nitro;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.eq;
 
 import java.util.Set;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 
 import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
-import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
+import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
 import org.atlasapi.media.channel.Channel;
@@ -23,7 +23,6 @@ import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -47,11 +46,12 @@ public class NitroBroadcastEventGeneratorTest {
     private IdGenerator idGenerator = Mockito.mock(IdGenerator.class);
     private BroadcastServiceMapping serviceMapping = Mockito.mock(BroadcastServiceMapping.class);
     private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
+    private BroadcastHierarchyExpander hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping, bbcServiceIdResolver);
     
     private final BroadcastEventGenerator generator;
     
     public NitroBroadcastEventGeneratorTest() throws DatatypeConfigurationException {
-        this.generator = new NitroBroadcastEventGenerator(idGenerator, TvAnytimeElementFactory.INSTANCE, serviceMapping, bbcServiceIdResolver);
+        this.generator = new NitroBroadcastEventGenerator(idGenerator, hierarchyExpander);
     }
     
     @Before
@@ -62,6 +62,8 @@ public class NitroBroadcastEventGeneratorTest {
         when(channel.getAliases()).thenReturn(ImmutableSet.of(alias));
         
         when(idGenerator.generateBroadcastImi(eq(YOUVIEW_SERVICE_ID), any(Broadcast.class))).thenReturn(BROADCAST_IMI);
+        when(idGenerator.generateBroadcastImi(eq(YOUVIEW_SERVICE_ID + "_1"), any(Broadcast.class))).thenReturn(BROADCAST_IMI + "_1");
+        when(idGenerator.generateBroadcastImi(eq(YOUVIEW_SERVICE_ID + "_2"), any(Broadcast.class))).thenReturn(BROADCAST_IMI + "_2");
         when(idGenerator.generateVersionCrid(any(Item.class), any(Version.class))).thenReturn(VERSION_CRID);
     }
 
@@ -103,7 +105,6 @@ public class NitroBroadcastEventGeneratorTest {
         assertTrue("No BroadcastEvents should be generated if no service IDs are mapped", Iterables.isEmpty(generated));
     }
     
-    @Ignore // until id generator for b'casts takes into account yv service id not bbc service id
     @Test
     public void testMultipleBroadcastEventsGeneratedWhenMultipleYVServiceIDsInMapping() {
         

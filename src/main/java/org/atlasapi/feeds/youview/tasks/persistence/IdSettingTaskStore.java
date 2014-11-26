@@ -35,18 +35,18 @@ public class IdSettingTaskStore implements TaskStore {
     }
 
     @Override
-    public boolean updateWithStatus(Long taskId, Status status) {
-        return delegate.updateWithStatus(taskId, status);
+    public void updateWithStatus(Long taskId, Status status) {
+        delegate.updateWithStatus(taskId, status);
     }
 
     @Override
-    public boolean updateWithRemoteId(Long taskId, Status status, String remoteId, DateTime uploadTime) {
-        return delegate.updateWithRemoteId(taskId, status, remoteId, uploadTime);
+    public void updateWithRemoteId(Long taskId, Status status, String remoteId, DateTime uploadTime) {
+        delegate.updateWithRemoteId(taskId, status, remoteId, uploadTime);
     }
 
     @Override
-    public boolean updateWithResponse(Long taskId, Response response) {
-        return delegate.updateWithResponse(taskId, response);
+    public void updateWithResponse(Long taskId, Response response) {
+        delegate.updateWithResponse(taskId, response);
     }
 
     @Override

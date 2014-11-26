@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview.hierarchy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -8,8 +8,8 @@ import org.atlasapi.media.entity.Version;
 
 /**
  * Wrapper for the Broadcast portion of an {@link Item}'s version hierarchy:
- * Item, {@link Version}, {@link Broadcast}. This class holds one instance
- * of each.
+ * Item, {@link Version}, {@link Broadcast}, and the YouView service ID. This 
+ * class holds one instance of each.
  * 
  * @author Oliver Hall (oli@metabroadcast.com)
  *

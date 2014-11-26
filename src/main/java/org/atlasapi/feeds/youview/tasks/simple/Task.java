@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview.tasks.simple;
 import java.util.Date;
 import java.util.List;
 
+import org.atlasapi.feeds.youview.tasks.Action;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.media.entity.Publisher;
 
@@ -15,6 +16,7 @@ public class Task {
     private String id;
     private Publisher publisher;
     private Date uploadTime;
+    private Action action;
     private String remoteId;
     private String content;
     private Status status;
@@ -45,6 +47,14 @@ public class Task {
     
     public void setUploadTime(Date uploadTime) {
         this.uploadTime = uploadTime;
+    }
+    
+    public Action action() {
+        return action;
+    }
+    
+    public void setAction(Action action) {
+        this.action = action;
     }
     
     public String remoteId() {

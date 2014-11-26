@@ -9,6 +9,7 @@ import com.google.common.base.Function;
 // Unbox TVA output. However, the publisher-specific implementations are tied up with their
 // respective ingesters, so are hard to rewire to be more general.
 // TODO pull out the elements used in LF/Unbox ingesters to a separate interface
+@Deprecated
 public interface OldGenreMapping {
     
     Collection<String> getYouViewGenresFor(String genre);

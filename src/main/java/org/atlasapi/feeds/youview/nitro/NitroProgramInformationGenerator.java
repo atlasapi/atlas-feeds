@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -72,15 +70,14 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
 
     private static final Integer DEFAULT_DURATION = 30 * 60;
     
-    private final TvAnytimeElementFactory elementFactory;
+    private final TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
 
     /**
      * NB DatatypeFactory is required for creation of javax Durations
      * This DatatypeFactory class may not be threadsafe
      */
-    public NitroProgramInformationGenerator(IdGenerator idGenerator, TvAnytimeElementFactory elementFactory) {
+    public NitroProgramInformationGenerator(IdGenerator idGenerator) {
         super(idGenerator);
-        this.elementFactory = checkNotNull(elementFactory);
     }
 
     @Override
