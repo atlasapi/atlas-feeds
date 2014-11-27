@@ -57,40 +57,56 @@ public class UnboxTvAnytimeElementCreator implements TvAnytimeElementCreator {
         }
         
         if (content instanceof Film) {
-            return ImmutableSet.of(groupInfoGenerator.generate((Film) content));
+            return groupInfoElemsForFilm(content);
         }
 
         if (content instanceof Brand) {
-            return ImmutableSet.of(groupInfoGenerator.generate((Brand) content, hierarchy.lastItemFrom((Brand) content)));
+            return groupInfoElemsForBrand(content);
         }
 
         if (content instanceof Series) {
-            ImmutableSet.Builder<GroupInformationType> groupInfoElems = ImmutableSet.builder();
-            Series series = (Series) content;
-            Optional<Brand> brand = hierarchy.brandFor(series);
-            groupInfoElems.add(groupInfoGenerator.generate(series, brand, hierarchy.lastItemFrom(series)));
-            if (brand.isPresent() && permit.isPermitted(brand.get())) {
-                groupInfoElems.add(groupInfoGenerator.generate(brand.get(), hierarchy.lastItemFrom(brand.get())));
-            }
-            return groupInfoElems.build();
+            return groupInfoElemsForSeries(content);
         }
 
         if (content instanceof Item) {
-            ImmutableSet.Builder<GroupInformationType> groupInfoElems = ImmutableSet.builder(); 
-            Item item = (Item) content;
-            Optional<Series> series = hierarchy.seriesFor(item);
-            Optional<Brand> brand = hierarchy.brandFor(item);
-
-            groupInfoElems.add(groupInfoGenerator.generate(item, series, brand));
-            if (series.isPresent() && permit.isPermitted(series.get())) {
-                groupInfoElems.add(groupInfoGenerator.generate(series.get(), brand, hierarchy.lastItemFrom(series.get())));
-            }
-            if (brand.isPresent() && permit.isPermitted(brand.get())) {
-                groupInfoElems.add(groupInfoGenerator.generate(brand.get(), hierarchy.lastItemFrom(brand.get())));
-            }
-            return groupInfoElems.build();
+            return groupInfoElemsForItem(content);
         }
         throw new UnexpectedContentTypeException(content);
+    }
+
+    private Iterable<GroupInformationType> groupInfoElemsForItem(Content content) {
+        ImmutableSet.Builder<GroupInformationType> groupInfoElems = ImmutableSet.builder(); 
+        Item item = (Item) content;
+        Optional<Series> series = hierarchy.seriesFor(item);
+        Optional<Brand> brand = hierarchy.brandFor(item);
+
+        groupInfoElems.add(groupInfoGenerator.generate(item, series, brand));
+        if (series.isPresent() && permit.isPermitted(series.get())) {
+            groupInfoElems.add(groupInfoGenerator.generate(series.get(), brand, hierarchy.lastItemFrom(series.get())));
+        }
+        if (brand.isPresent() && permit.isPermitted(brand.get())) {
+            groupInfoElems.add(groupInfoGenerator.generate(brand.get(), hierarchy.lastItemFrom(brand.get())));
+        }
+        return groupInfoElems.build();
+    }
+
+    private Iterable<GroupInformationType> groupInfoElemsForSeries(Content content) {
+        ImmutableSet.Builder<GroupInformationType> groupInfoElems = ImmutableSet.builder();
+        Series series = (Series) content;
+        Optional<Brand> brand = hierarchy.brandFor(series);
+        groupInfoElems.add(groupInfoGenerator.generate(series, brand, hierarchy.lastItemFrom(series)));
+        if (brand.isPresent() && permit.isPermitted(brand.get())) {
+            groupInfoElems.add(groupInfoGenerator.generate(brand.get(), hierarchy.lastItemFrom(brand.get())));
+        }
+        return groupInfoElems.build();
+    }
+
+    private ImmutableSet<GroupInformationType> groupInfoElemsForBrand(Content content) {
+        return ImmutableSet.of(groupInfoGenerator.generate((Brand) content, hierarchy.lastItemFrom((Brand) content)));
+    }
+
+    private ImmutableSet<GroupInformationType> groupInfoElemsForFilm(Content content) {
+        return ImmutableSet.of(groupInfoGenerator.generate((Film) content));
     }
 
     @Override
