@@ -10,16 +10,20 @@ import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.youview.AbstractOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
 
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
+import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
+
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
 import tva.metadata._2010.AudioAttributesType;
+import tva.metadata._2010.AudioLanguageType;
 import tva.metadata._2010.BitRateType;
 import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.FlagType;
@@ -28,10 +32,6 @@ import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGenerator {
 
@@ -47,6 +47,8 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
     private static final Integer DEFAULT_DURATION = 30 * 60;
     private static final String BROADCAST_AUTHORITY = "www.bbc.co.uk";
     private static final String DEFAULT_ON_DEMAND_PIPS_ID = "b00gszl0.imi:bbc.co.uk/pips/65751802";
+    private static final String AUDIO_DESCRIPTION_PURPOSE = "urn:tva:metadata:cs:AudioPurposeCS:2007:1";
+    private static final String ENGLISH_LANG = "en";
 
     private final TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
 
@@ -98,32 +100,39 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
 
     private AVAttributesType generateAvAttributes(Encoding encoding) {
         AVAttributesType attributes = new AVAttributesType();
-
-        attributes.getAudioAttributes().add(generateAudioAttributes());
-        attributes.setVideoAttributes(generateVideoAttributes());       
+        attributes.getAudioAttributes().add(generateAudioAttributes(encoding.getAudioDescribed()));
+        attributes.setVideoAttributes(generateVideoAttributes(encoding));
         attributes.setBitRate(generateBitRate(encoding));
-        
+
         return attributes;
     }
 
-    private AudioAttributesType generateAudioAttributes() {
+    private AudioAttributesType generateAudioAttributes(boolean audioDescribed) {
         AudioAttributesType attributes = new AudioAttributesType();
-        
         ControlledTermType mixType = new ControlledTermType();
         mixType.setHref(MIX_TYPE_STEREO);
         attributes.setMixType(mixType);
+
+        if (audioDescribed) {
+            AudioLanguageType audioLanguage = new AudioLanguageType();
+            audioLanguage.setSupplemental(true);
+            audioLanguage.setPurpose(AUDIO_DESCRIPTION_PURPOSE);
+            audioLanguage.setValue(ENGLISH_LANG);
+            attributes.setAudioLanguage(audioLanguage);
+        }
         
         return attributes;
     }
     
-    private VideoAttributesType generateVideoAttributes() {
+    private VideoAttributesType generateVideoAttributes(Encoding encoding) {
         VideoAttributesType videoAttributes = new VideoAttributesType();
-        
+
+        // TODO: should we ingest those too?
         videoAttributes.setHorizontalSize(DEFAULT_HORIZONTAL_SIZE);
         videoAttributes.setVerticalSize(DEFAULT_VERTICAL_SIZE);
         
         AspectRatioType aspectRatio = new AspectRatioType();
-        aspectRatio.setValue(ASPECT_RATIO);
+        aspectRatio.setValue(Objects.firstNonNull(encoding.getVideoAspectRatio(), ASPECT_RATIO));
         
         videoAttributes.getAspectRatio().add(aspectRatio);
         
@@ -152,21 +161,7 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
 
     private Duration generatePublishedDuration(Version version) {
         Integer durationInSecs = version.getDuration();
-        if (durationInSecs == null) {
-            durationInSecs = durationFromFirstBroadcast(version);
-        } 
         return elementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
-    }
-
-    // TODO this is a workaround until versions are ingested correctly from BBC Nitro
-    private Integer durationFromFirstBroadcast(Version version) {
-        Broadcast broadcast = Iterables.getFirst(version.getBroadcasts(), null);
-        if (broadcast == null) {
-            // this needs to go away
-            return DEFAULT_DURATION;
-//            throw new RuntimeException("no broadcasts on version " + version.getCanonicalUri());
-        }
-        return broadcast.getBroadcastDuration();
     }
 
     private XMLGregorianCalendar generateAvailabilityStart(Location location) {

@@ -11,15 +11,8 @@ import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Restriction;
 import org.atlasapi.media.entity.Version;
-
-import tva.metadata._2010.BasicContentDescriptionType;
-import tva.metadata._2010.ProgramInformationType;
-import tva.metadata._2010.TVAParentalGuidanceType;
-import tva.metadata._2010.TVATimeType;
-import tva.metadata.extended._2010.ExtendedContentDescriptionType;
-import tva.metadata.extended._2010.TargetingInformationType;
-import tva.mpeg7._2008.ControlledTermUseType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -30,10 +23,21 @@ import com.google.common.collect.Iterables;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
 
+import tva.metadata._2010.BasicContentDescriptionType;
+import tva.metadata._2010.ExplanationLengthType;
+import tva.metadata._2010.ExplanationType;
+import tva.metadata._2010.ProgramInformationType;
+import tva.metadata._2010.TVAParentalGuidanceType;
+import tva.metadata._2010.TVATimeType;
+import tva.metadata.extended._2010.ExtendedContentDescriptionType;
+import tva.metadata.extended._2010.TargetingInformationType;
+import tva.mpeg7._2008.ControlledTermUseType;
+
 public final class NitroProgramInformationGenerator extends AbstractProgramInformationGenerator {
 
     // TODO all this certificate code will likely change
-    private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
+    private static final String YOUVIEW_UNRATED_PARENTAL_RATING = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
+    private static final String YOUVIEW_WARNINGS_PARENTAL_RATING = "urn:dtg:metadata:cs:DTGContentWarningCS:2011:W";
     
     // TODO fix all certificate code
     private static final Predicate<Certificate> FILTER_CERT_FOR_GB = new Predicate<Certificate>() {
@@ -42,13 +46,20 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
             return input.country().equals(Countries.GB);
         }
     };
+
+    private static final Predicate<Version> VERSION_WITH_RESTRICTION = new Predicate<Version>() {
+        @Override
+        public boolean apply(Version input) {
+            return input.getRestriction() != null;
+        }
+    };
     
     private static final Function<Certificate, String> CERTIFICATE_TO_CLASSIFICATION = new Function<Certificate, String>() {
         @Override
         public String apply(Certificate input) {
             String href = YOUVIEW_CERTIFICATE_MAPPING.get(input.classification());
             if (href == null) {
-                href = YOUVIEW_DEFAULT_CERTIFICATE;
+                href = YOUVIEW_UNRATED_PARENTAL_RATING;
             }
             return href;
         }
@@ -111,19 +122,46 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
     }
 
     private TVAParentalGuidanceType generateParentalGuidance(Item item) {
+        Optional<Restriction> restriction = getRestrictionFor(item);
+        if (!restriction.isPresent()) {
+            return unratedParentalGuidance();
+        }
+
+        return withWarningParentalGuidance(restriction.get());
+    }
+
+    private TVAParentalGuidanceType unratedParentalGuidance() {
+        TVAParentalGuidanceType parentalGuidance = new TVAParentalGuidanceType();
+        ControlledTermUseType unratedUseType = new ControlledTermUseType();
+        unratedUseType.setHref(YOUVIEW_UNRATED_PARENTAL_RATING);
+        parentalGuidance.setParentalRating(unratedUseType);
+        return parentalGuidance;
+    }
+
+    private TVAParentalGuidanceType withWarningParentalGuidance(Restriction restriction) {
         TVAParentalGuidanceType parentalGuidance = new TVAParentalGuidanceType();
 
-        String certificate = Iterables.getFirst(
-            Iterables.transform(
-                Iterables.filter(item.getCertificates(), FILTER_CERT_FOR_GB), 
-                CERTIFICATE_TO_CLASSIFICATION
-            ), 
-            YOUVIEW_DEFAULT_CERTIFICATE);
-
         ControlledTermUseType useType = new ControlledTermUseType();
-        useType.setHref(certificate);
+        useType.setHref(YOUVIEW_WARNINGS_PARENTAL_RATING);
         parentalGuidance.setParentalRating(useType);
+
+        ExplanationType explanationType = new ExplanationType();
+        explanationType.setLength(ExplanationLengthType.LONG);
+        explanationType.setValue(restriction.getMessage());
+        parentalGuidance.getExplanatoryText().add(explanationType);
+
         return parentalGuidance;
+    }
+
+    private Optional<Restriction> getRestrictionFor(Item item) {
+        Optional<Version> version = Iterables.tryFind(item.getVersions(),
+                VERSION_WITH_RESTRICTION);
+
+        if (!version.isPresent()) {
+            return Optional.absent();
+        }
+
+        return Optional.of(version.get().getRestriction());
     }
 
     private Duration generateDuration(Version version) {
