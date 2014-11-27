@@ -27,7 +27,7 @@ public class MongoYouViewLastUpdatedStore implements YouViewLastUpdatedStore {
         if (lastUpdated == null) {
             return Optional.absent();
         }
-        return Optional.of(TranslatorUtils.toDateTime(lastUpdated, publisher.name()));
+        return Optional.fromNullable(TranslatorUtils.toDateTime(lastUpdated, publisher.name()));
     }
 
     @Override

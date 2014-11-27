@@ -1,24 +1,18 @@
 package org.atlasapi.feeds.youview.www;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 
 import java.io.IOException;
-import java.util.Collection;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.feeds.youview.transactions.Transaction;
-import org.atlasapi.feeds.youview.transactions.persistence.TransactionStore;
-import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
+import org.atlasapi.feeds.youview.upload.YouViewService;
 import org.atlasapi.media.entity.Content;
-import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,33 +22,22 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.metabroadcast.common.http.HttpException;
-import com.metabroadcast.common.time.DateTimeZones;
 
 @Controller
 public class YouViewUploadController {
 
-    private static final DateTime START_OF_TIME = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.UTC);
-    
-    private final DateTimeFormatter fmt = ISODateTimeFormat.dateHourMinuteSecond().withZone(DateTimeZones.UTC);
-    private final LastUpdatedContentFinder contentFinder;
     private final ContentResolver contentResolver;
-    private final YouViewRemoteClient remoteClient;
-    private final TransactionStore txnStore;
+    private final YouViewService remoteClient;
     
-    public YouViewUploadController(LastUpdatedContentFinder contentFinder, ContentResolver contentResolver, 
-            YouViewRemoteClient remoteClient, TransactionStore txnStore) {
-        this.contentFinder = checkNotNull(contentFinder);
+    public YouViewUploadController(ContentResolver contentResolver, YouViewService remoteClient) {
         this.contentResolver = checkNotNull(contentResolver);
         this.remoteClient = checkNotNull(remoteClient);
-        this.txnStore = checkNotNull(txnStore);
     }
         
     /**
-     * Uploads the XML for a particular item to YouView
-     * @param uri -         the endpoint will upload the xml generated for the particular 
-     *                      item to youview.                    
+     * Uploads the XML for a particular piece of content to YouView
+     * @param uri the canonical uri for the item to upload
      * @throws IOException
      * @throws HttpException 
      */
@@ -63,30 +46,28 @@ public class YouViewUploadController {
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri", required = true) String uri) throws IOException, HttpException {
         
-        Publisher publisher = Publisher.valueOf(publisherStr.trim().toUpperCase());
-        if (publisher == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
-            response.setContentLength(0);
+        Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
+        if (!publisher.isPresent()) {
+            sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
             return;
         }
-
-        Optional<String> possibleUri = Optional.fromNullable(uri);
-        Iterable<Content> content = getContent(publisher, Optional.<String>absent(), possibleUri);
-
-        Optional<Transaction> txn = remoteClient.upload(content);
-        if (txn.isPresent()) {
-            txnStore.save(txn.get());
+        if (uri == null) {
+            sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
+            return;
         }
-
-        response.setStatus(HttpServletResponse.SC_OK);
-        String message = "Upload for " + uri + " sent sucessfully";
-        response.getOutputStream().write(message.getBytes(Charsets.UTF_8));
+        Optional<Content> toBeUploaded = getContent(publisher.get(), uri);
+        if (!toBeUploaded.isPresent()) {
+            sendError(response, SC_BAD_REQUEST, "content does not exist");
+            return;
+        }
+        remoteClient.upload(toBeUploaded.get());
+        
+        sendOkResponse(response, "Upload for " + uri + " sent sucessfully");
     }
     
     /**
-     * Sends deletes for the XML elements representing a particular item to YouView
-     * @param uri -         the endpoint will send the delete calls to remove the XML generated 
-     *                      for the particular item.                    
+     * Sends deletes for the XML elements representing a particular piece of content to YouView
+     * @param uri the canonical uri for the item to delete
      * @throws IOException 
      */    
     @RequestMapping(value="/feeds/youview/{publisher}/delete", method = RequestMethod.POST)
@@ -94,30 +75,105 @@ public class YouViewUploadController {
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri", required = true) String uri) throws IOException {
 
-        Publisher publisher = Publisher.valueOf(publisherStr.trim().toUpperCase());
-        if (publisher == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
-            response.setContentLength(0);
+        Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
+        if (!publisher.isPresent()) {
+            sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
+            return;
+        }
+        if (uri == null) {
+            sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
+            return;
+        }
+        Optional<Content> toBeDeleted = getContent(publisher.get(), uri);
+        if (!toBeDeleted.isPresent()) {
+            sendError(response, SC_BAD_REQUEST, "content does not exist");
+            return;
+        }
+        remoteClient.sendDeleteFor(toBeDeleted.get());
+
+        sendOkResponse(response, "Delete for " + uri + " sent sucessfully");
+    }
+    
+    /**
+    * Revokes a particular piece of content from the YouView system.
+    * @param uri the canonical uri for the item to revoke
+    * @throws IOException 
+    */ 
+    @RequestMapping(value="/feeds/youview/{publisher}/revoke", method = RequestMethod.POST)
+    public void revokeContent(HttpServletResponse response,
+            @PathVariable("publisher") String publisherStr,
+            @RequestParam(value = "uri", required = true) String uri) throws IOException {
+
+        Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
+        if (!publisher.isPresent()) {
+            sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
+            return;
+        }
+        if (uri == null) {
+            sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
             return;
         }
 
-        Content toBeDeleted = Iterables.getOnlyElement(getContent(publisher, Optional.<String>absent(), Optional.fromNullable(uri)));
-        
-        remoteClient.sendDeleteFor(toBeDeleted);
+        Optional<Content> toBeRevoked = getContent(publisher.get(), uri);
+        if (!toBeRevoked.isPresent()) {
+            sendError(response, SC_BAD_REQUEST, "content does not exist");
+            return;
+        }
+        remoteClient.revoke(toBeRevoked.get());
 
-        response.setStatus(HttpServletResponse.SC_OK);
-        String message = "Delete for " + uri + " sent sucessfully";
-        response.getOutputStream().write(message.getBytes(Charsets.UTF_8));
+        sendOkResponse(response, "Revoke for " + uri + " sent sucessfully");
     }
     
-    private Iterable<Content> getContent(Publisher publisher, Optional<String> since, Optional<String> possibleUri) {
-        if (possibleUri.isPresent()) {
-            ResolvedContent resolvedContent = contentResolver.findByCanonicalUris(ImmutableList.of(possibleUri.get()));
-            Collection<Identified> resolved = resolvedContent.asResolvedMap().values();
-            return ImmutableList.of((Content) Iterables.getOnlyElement(resolved));
-        } else {
-            DateTime start = since.isPresent() ? fmt.parseDateTime(since.get()) : START_OF_TIME;
-            return ImmutableList.copyOf(contentFinder.updatedSince(publisher, start));
+    /**
+     * Unrevokes a particular piece of content from the YouView system.
+     * @param uri the canonical uri for the item to unrevoke
+     * @throws IOException 
+     */ 
+    @RequestMapping(value="/feeds/youview/{publisher}/unrevoke", method = RequestMethod.POST)
+    public void unrevokeContent(HttpServletResponse response,
+            @PathVariable("publisher") String publisherStr,
+            @RequestParam(value = "uri", required = true) String uri) throws IOException {
+        
+        Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
+        if (!publisher.isPresent()) {
+            sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
+            return;
         }
+        if (uri == null) {
+            sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
+            return;
+        }
+        Optional<Content> toBeUnrevoked = getContent(publisher.get(), uri);
+        if (!toBeUnrevoked.isPresent()) {
+            sendError(response, SC_BAD_REQUEST, "content does not exist");
+            return;
+        }
+        remoteClient.unrevoke(toBeUnrevoked.get());
+
+        sendOkResponse(response, "Unrevoke for " + uri + " sent sucessfully");
+    }
+
+    private Optional<Publisher> findPublisher(String publisherStr) {
+        for (Publisher publisher : Publisher.all()) {
+            if (publisher.name().equals(publisherStr)) {
+                return Optional.of(publisher);
+            }
+        }
+        return Optional.absent();
+    }
+
+    private void sendError(HttpServletResponse response, int responseCode, String message) throws IOException {
+        response.sendError(responseCode, message);
+        response.setContentLength(0);
+    }
+    
+    private Optional<Content> getContent(Publisher publisher, String contentUri) {
+        ResolvedContent resolvedContent = contentResolver.findByCanonicalUris(ImmutableList.of(contentUri));
+        return Optional.fromNullable((Content) resolvedContent.getFirstValue().valueOrNull());
+    }
+    
+    private void sendOkResponse(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.getOutputStream().write(message.getBytes(Charsets.UTF_8));
     }
 }
