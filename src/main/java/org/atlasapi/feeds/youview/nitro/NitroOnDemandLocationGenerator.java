@@ -17,6 +17,7 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
@@ -48,6 +49,7 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
     private static final String BROADCAST_AUTHORITY = "www.bbc.co.uk";
     private static final String DEFAULT_ON_DEMAND_PIPS_ID = "b00gszl0.imi:bbc.co.uk/pips/65751802";
     private static final String AUDIO_DESCRIPTION_PURPOSE = "urn:tva:metadata:cs:AudioPurposeCS:2007:1";
+    private static final String AUDIO_DESCRIPTION_TYPE = "dubbed";
     private static final String ENGLISH_LANG = "en";
 
     private final TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
@@ -100,11 +102,15 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
 
     private AVAttributesType generateAvAttributes(Encoding encoding) {
         AVAttributesType attributes = new AVAttributesType();
-        attributes.getAudioAttributes().add(generateAudioAttributes(encoding.getAudioDescribed()));
+        attributes.getAudioAttributes().add(generateAudioAttributes(audioDescribedOrFalse(encoding)));
         attributes.setVideoAttributes(generateVideoAttributes(encoding));
         attributes.setBitRate(generateBitRate(encoding));
 
         return attributes;
+    }
+
+    private boolean audioDescribedOrFalse(Encoding encoding) {
+        return Optional.fromNullable(encoding.getAudioDescribed()).or(false);
     }
 
     private AudioAttributesType generateAudioAttributes(boolean audioDescribed) {
@@ -116,6 +122,7 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
         if (audioDescribed) {
             AudioLanguageType audioLanguage = new AudioLanguageType();
             audioLanguage.setSupplemental(true);
+            audioLanguage.setType(AUDIO_DESCRIPTION_TYPE);
             audioLanguage.setPurpose(AUDIO_DESCRIPTION_PURPOSE);
             audioLanguage.setValue(ENGLISH_LANG);
             attributes.setAudioLanguage(audioLanguage);
