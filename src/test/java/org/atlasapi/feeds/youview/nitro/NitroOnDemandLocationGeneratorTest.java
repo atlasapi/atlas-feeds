@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Set;
 
 import org.atlasapi.feeds.tvanytime.granular.GranularOnDemandLocationGenerator;
@@ -23,6 +24,7 @@ import org.junit.Test;
 
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AudioAttributesType;
+import tva.metadata._2010.AudioLanguageType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.VideoAttributesType;
@@ -37,7 +39,7 @@ import com.metabroadcast.common.intl.Countries;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class NitroOnDemandLocationGeneratorTest {
-    
+
     private static final String ON_DEMAND_IMI = "on_demand_imi";
 
     private static final Function<GenreType, String> GENRE_TO_HREF = new Function<GenreType, String>() {
@@ -111,10 +113,19 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals("http://bbc.couk/services/youview", onDemand.getServiceIDRef());
         assertEquals(versionCrid, onDemand.getProgram().getCrid());
         assertEquals(onDemandImi, onDemand.getInstanceMetadataId());
-        
+
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
         assertEquals("www.bbc.co.uk", otherId.getAuthority());
+
+        AVAttributesType avAttributes = instanceDesc.getAVAttributes();
+        List<AudioAttributesType> audioAttributes = avAttributes.getAudioAttributes();
+        AudioAttributesType audioAttribute = Iterables.getOnlyElement(audioAttributes);
+        AudioLanguageType audioLanguage = audioAttribute.getAudioLanguage();
+
+        assertEquals("urn:tva:metadata:cs:AudioPurposeCS:2007:1", audioLanguage.getPurpose());
+        assertEquals(true, audioLanguage.isSupplemental());
+        assertEquals("dubbed", audioLanguage.getType());
     }
     
     private ItemOnDemandHierarchy hierarchyFrom(Film film) {
@@ -138,7 +149,7 @@ public class NitroOnDemandLocationGeneratorTest {
 
     private Version createVersion() {
         Version version = new Version();
-        
+
         Restriction restriction = new Restriction();
         restriction.setRestricted(true);
         
@@ -157,7 +168,7 @@ public class NitroOnDemandLocationGeneratorTest {
         encoding.setVideoVerticalSize(720);
         encoding.setVideoAspectRatio("16:9");
         encoding.setBitRate(3308);
-        
+        encoding.setAudioDescribed(true);
         encoding.addAvailableAt(createLocation());
         
         return encoding;
