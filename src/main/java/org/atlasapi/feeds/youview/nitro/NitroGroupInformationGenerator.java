@@ -181,7 +181,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     }
     
     private String createMasterBrandLink(Content content) {
-        return DEV_MASTERBRAND_PREFIX + sIdResolver.resolveSId(content);
+        return DEV_MASTERBRAND_PREFIX + sIdResolver.resolveMasterBrandId(content);
     }
 
     private GroupInformationType generateWithCommonFields(Content content, Item item) {

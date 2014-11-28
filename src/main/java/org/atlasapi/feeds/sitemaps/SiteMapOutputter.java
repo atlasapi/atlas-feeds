@@ -44,7 +44,7 @@ import com.metabroadcast.common.collect.ImmutableOptionalMap;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
 import com.metabroadcast.common.text.Truncator;
-import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.Clock;
 
 public class SiteMapOutputter {
 
@@ -60,11 +60,14 @@ public class SiteMapOutputter {
     private final SiteMapUriGenerator defaultPublisherSpecificSitemapUriGenerator;
 
     private final Long serviceId;
+    private final Clock clock;
 
     public SiteMapOutputter(Map<Publisher, SiteMapUriGenerator> publisherSpecificUriGenerators, 
-            SiteMapUriGenerator defaultPublisherSpecificSitemapUriGenerator, Long serviceId) {
+            SiteMapUriGenerator defaultPublisherSpecificSitemapUriGenerator, Long serviceId,
+            Clock clock) {
         
         this.serviceId = serviceId;
+        this.clock = clock;
         this.defaultPublisherSpecificSitemapUriGenerator = checkNotNull(defaultPublisherSpecificSitemapUriGenerator);
         this.publisherSpecificUriGenerators = ImmutableOptionalMap.fromMap(publisherSpecificUriGenerators);
     }
@@ -104,35 +107,47 @@ public class SiteMapOutputter {
         return feed;
     }
 
-    private void entryForItem(Element feed, Item item, String title) {
-        Location location = locationFrom(item, Optional.of(TransportType.LINK), 
+    public boolean hasRequiredAttributesForOutput(Item item) {
+        return item.getThumbnail() != null;
+    }
+    
+    public Optional<Location> itemLocation(Item item) {
+        return locationFrom(item, Optional.of(TransportType.LINK), 
                 Optional.<TransportSubType>absent());
+    }
+    
+    public Optional<Location> clipLocation(Clip clip) {
+        return locationFrom(clip, Optional.of(TransportType.EMBED), 
+                Optional.of(TransportSubType.BRIGHTCOVE));
+    }
+    
+    private void entryForItem(Element feed, Item item, String title) {
+        Optional<Location> location = itemLocation(item);
         
-        if (location != null && item.getThumbnail() != null) {
+        if (location.isPresent() && hasRequiredAttributesForOutput(item)) {
             
             SiteMapUriGenerator uriGenerator = publisherSpecificUriGenerators
                     .get(item.getPublisher())
                     .or(defaultPublisherSpecificSitemapUriGenerator);
             feed.appendChild(urlEntry(
-                    uriGenerator.playerPageUriForContent(item, location),
-                    uriGenerator.videoUriForContent(item, location),
-                    item, location, title));
+                    uriGenerator.playerPageUriForContent(item, location.get()),
+                    uriGenerator.videoUriForContent(item, location.get()),
+                    item, location.get(), title));
         }
     }
     
     private void entryForClip(Element feed, Content content, Clip clip, String title) {
-        Location location = locationFrom(clip, Optional.of(TransportType.EMBED), 
-                Optional.of(TransportSubType.BRIGHTCOVE));
+        Optional<Location> location = clipLocation(clip);
         
-        if (location != null && clip.getThumbnail() != null) {
+        if (location.isPresent() && hasRequiredAttributesForOutput(clip)) {
             SiteMapUriGenerator uriGenerator = publisherSpecificUriGenerators
                     .get(content.getPublisher())
                     .or(defaultPublisherSpecificSitemapUriGenerator);
             
             feed.appendChild(urlEntry(
-                    uriGenerator.playerPageUriForClip(content, clip, location),
-                    uriGenerator.videoUriForClip(clip, location),
-                    clip, location, title));
+                    uriGenerator.playerPageUriForClip(content, clip, location.get()),
+                    uriGenerator.videoUriForClip(clip, location.get()),
+                    clip, location.get(), title));
         }
     }
 
@@ -173,7 +188,7 @@ public class SiteMapOutputter {
         Policy policy = location.getPolicy();
         if (policy != null) {
             DateTime availableTill = policy.getAvailabilityEnd();
-            if (availableTill != null && availableTill.isBefore(new DateTime(DateTimeZones.UTC).plusYears(10))) {
+            if (availableTill != null) {
                 videoElem.appendChild(stringElement("expiration_date", VIDEO, DATE_TIME_FORMAT.print(availableTill)));
             }
             Set<Country> countries = policy.getAvailableCountries();
@@ -232,18 +247,26 @@ public class SiteMapOutputter {
         return null;
     }
 
-    private Location locationFrom(Item item, Optional<TransportType> transportType, 
+    private Optional<Location> locationFrom(Item item, Optional<TransportType> transportType, 
             Optional<TransportSubType> transportSubType) {
         for (Version version : item.nativeVersions()) {
             for (Encoding encoding : version.getManifestedAs()) {
                 for (Location location : encoding.getAvailableAt()) {
-                    if (isPcOrNullPlatformLinkLocation(location, transportType, transportSubType)) {
-                        return location;
+                    if (isPcOrNullPlatformLinkLocation(location, transportType, transportSubType)
+                            && isAvailableNowOrInTheFuture(location)) {
+                        return Optional.of(location);
                     }
                 }
             }
         }
-        return null;
+        return Optional.absent();
+    }
+
+    private boolean isAvailableNowOrInTheFuture(Location location) {
+        Policy policy = location.getPolicy();
+        return policy == null
+                || policy.getAvailabilityEnd() == null
+                || policy.getAvailabilityEnd().isAfter(clock.now());
     }
 
     private boolean isPcOrNullPlatformLinkLocation(Location location, 

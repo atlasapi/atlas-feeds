@@ -41,10 +41,9 @@ public class NitroGenreMappingLineProcessor implements LineProcessor<Map<BbcGenr
     }
 
     private boolean processRow(String line) {
-        // doesn't deal with filtering out combination IDs
         List<String> values = ImmutableList.copyOf(ON_COMMA.split(line));
         if (Iterables.size(values) < 8) {
-            return true;
+            throw new RuntimeException("Error processing line " + line + ", expected 8 items per line");
         }
         
         BbcGenreTree.Builder genreTree = BbcGenreTree.builder(genresPrefix + values.get(0));

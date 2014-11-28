@@ -77,7 +77,7 @@ public class NitroGroupInformationGeneratorTest {
     
     @Before
     public void setup() {
-        when(bbcServiceIdResolver.resolveSId(any(Content.class))).thenReturn(MASTER_BRAND);
+        when(bbcServiceIdResolver.resolveMasterBrandId(any(Content.class))).thenReturn(MASTER_BRAND);
     }
     
     @Test
