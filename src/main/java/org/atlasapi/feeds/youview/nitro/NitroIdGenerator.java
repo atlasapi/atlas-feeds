@@ -98,7 +98,8 @@ public final class NitroIdGenerator implements IdGenerator {
     }
 
     private Boolean isRestricted(Version version) {
-        return version.getRestriction() != null && version.getRestriction().isRestricted();
+        return version.getRestriction() != null 
+                && Boolean.TRUE.equals(version.getRestriction().isRestricted());
     }
 
 }
