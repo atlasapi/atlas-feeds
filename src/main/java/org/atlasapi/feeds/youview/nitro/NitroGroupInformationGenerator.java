@@ -107,7 +107,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     
     @Override
     public GroupInformationType generate(Film film) {
-        GroupInformationType groupInfo = generateWithCommonFields(film, null);
+        GroupInformationType groupInfo = generateWithCommonFields(film);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         groupInfo.setServiceIDRef(createMasterBrandLink(film));
@@ -117,7 +117,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     
     @Override
     public GroupInformationType generate(Item item, Optional<Series> series, Optional<Brand> brand) {
-        GroupInformationType groupInfo = generateWithCommonFields(item, null);
+        GroupInformationType groupInfo = generateWithCommonFields(item);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
 
@@ -150,7 +150,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     
     @Override
     public GroupInformationType generate(Series series, Optional<Brand> brand, Item firstChild) {
-        GroupInformationType groupInfo = generateWithCommonFields(series, firstChild);
+        GroupInformationType groupInfo = generateWithCommonFields(series);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));
         groupInfo.setOrdered(true);
@@ -171,7 +171,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     
     @Override
     public GroupInformationType generate(Brand brand, Item item) {
-        GroupInformationType groupInfo = generateWithCommonFields(brand, item);
+        GroupInformationType groupInfo = generateWithCommonFields(brand);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
         groupInfo.setOrdered(true);
@@ -184,11 +184,11 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         return DEV_MASTERBRAND_PREFIX + sIdResolver.resolveMasterBrandId(content);
     }
 
-    private GroupInformationType generateWithCommonFields(Content content, Item item) {
+    private GroupInformationType generateWithCommonFields(Content content) {
         GroupInformationType groupInfo = new GroupInformationType();
         
         groupInfo.setGroupId(idGenerator.generateContentCrid(content));
-        groupInfo.setBasicDescription(generateBasicDescription(content, item));
+        groupInfo.setBasicDescription(generateBasicDescription(content));
         
         return groupInfo;
     }
@@ -199,7 +199,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         return type;
     }
 
-    private BasicContentDescriptionType generateBasicDescription(Content content, Item item) {
+    private BasicContentDescriptionType generateBasicDescription(Content content) {
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
         
         if (content.getTitle() != null) {
@@ -223,13 +223,8 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         basicDescription.getLanguage().addAll(generateLanguage());
         basicDescription.setCreditsList(generateCreditsList(content));
         Optional<RelatedMaterialType> relatedMaterial = Optional.absent();
-        if (content instanceof Series) {
-            relatedMaterial = generateRelatedMaterial(item);
-        } else if (content instanceof Brand) {
-            relatedMaterial = generateRelatedMaterial(item);
-        } else {
-            relatedMaterial = generateRelatedMaterial(content);
-        }
+        relatedMaterial = generateRelatedMaterial(content);
+        
         if (relatedMaterial.isPresent()) {
             basicDescription.getRelatedMaterial().add(relatedMaterial.get());
         }
