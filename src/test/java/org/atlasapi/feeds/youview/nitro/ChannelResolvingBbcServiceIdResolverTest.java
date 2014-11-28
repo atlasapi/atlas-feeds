@@ -24,6 +24,7 @@ public class ChannelResolvingBbcServiceIdResolverTest {
 
     private static final String SERVICE_ID = "serviceId";
     private static final String SID_NAMESPACE = "bbc:service:id";
+    private static final String MASTERBRAND_ID_NAMESPACE = "bbc:masterbrand:id";
     private Clock clock = new TimeMachine();
     private ChannelResolver channelResolver = Mockito.mock(ChannelResolver.class);
     private final BbcServiceIdResolver serviceIdResolver = new ChannelResolvingBbcServiceIdResolver(channelResolver); 
@@ -69,12 +70,12 @@ public class ChannelResolvingBbcServiceIdResolverTest {
     public void testResolvesCorrectAliasFromContentPresentationChannelWhenChannelHasAMatchingAlias() {
         String broadcastOn = "bbcOne";
         Channel channel = new Channel(Publisher.METABROADCAST, "BBC One", "bbc_one", true, MediaType.VIDEO, broadcastOn);
-        Alias alias = new Alias(SID_NAMESPACE, SERVICE_ID);
+        Alias alias = new Alias(MASTERBRAND_ID_NAMESPACE, SERVICE_ID);
         channel.addAlias(alias);
         
         Mockito.when(channelResolver.fromUri(broadcastOn)).thenReturn(Maybe.just(channel));
         
-        String resolved = serviceIdResolver.resolveSId(createContentOn(broadcastOn));
+        String resolved = serviceIdResolver.resolveMasterBrandId(createContentOn(broadcastOn));
         
         assertEquals(SERVICE_ID, resolved);
     }

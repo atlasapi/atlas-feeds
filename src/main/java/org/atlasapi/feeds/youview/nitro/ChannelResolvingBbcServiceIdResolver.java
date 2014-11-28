@@ -18,12 +18,8 @@ import com.metabroadcast.common.base.Maybe;
 public final class ChannelResolvingBbcServiceIdResolver implements BbcServiceIdResolver {
     
     private static final String BBC_SID_NAMESPACE = "bbc:service:id";
-    private static final Predicate<Alias> IS_BBC_SID_ALIAS = new Predicate<Alias>() {
-        @Override
-        public boolean apply(Alias input) {
-            return BBC_SID_NAMESPACE.equals(input.getNamespace());
-        }
-    };
+
+    private static final String BBC_MASTERBRAND_ID_NAMESPACE = "bbc:masterbrand:id";
     
     private final ChannelResolver channelResolver;
 
@@ -33,18 +29,18 @@ public final class ChannelResolvingBbcServiceIdResolver implements BbcServiceIdR
 
     @Override
     public String resolveSId(Broadcast broadcast) {
-        return resolveServiceId(broadcast.getBroadcastOn());
+        return resolveServiceId(broadcast.getBroadcastOn(), BBC_SID_NAMESPACE);
     }
 
-    private String resolveServiceId(String channelUri) {
+    private String resolveServiceId(String channelUri, String namespace) {
         Maybe<Channel> resolved = channelResolver.fromUri(channelUri);
         if (resolved.isNothing()) {
             throw new NoChannelFoundException(channelUri);
         }
         Channel channel = resolved.requireValue();
-        Iterable<Alias> bbcSIdAliases = Iterables.filter(channel.getAliases(), IS_BBC_SID_ALIAS);
+        Iterable<Alias> bbcSIdAliases = Iterables.filter(channel.getAliases(), hasNamespace(namespace));
         if (Iterables.isEmpty(bbcSIdAliases)) {
-            throw new NoSuchChannelAliasException(BBC_SID_NAMESPACE);
+            throw new NoSuchChannelAliasException(namespace);
         }
         Alias sidAlias = Iterables.getOnlyElement(bbcSIdAliases);
         return sidAlias.getValue();
@@ -52,6 +48,20 @@ public final class ChannelResolvingBbcServiceIdResolver implements BbcServiceIdR
 
     @Override
     public String resolveSId(Content content) {
-        return resolveServiceId(content.getPresentationChannel());
+        return resolveServiceId(content.getPresentationChannel(), BBC_SID_NAMESPACE);
+    }
+
+    @Override
+    public String resolveMasterBrandId(Content content) {
+        return resolveServiceId(content.getPresentationChannel(), BBC_MASTERBRAND_ID_NAMESPACE);
+    }
+    
+    private Predicate<Alias> hasNamespace(final String namespace) {
+        return new Predicate<Alias>() {
+            @Override
+            public boolean apply(Alias input) {
+                return namespace.equals(input.getNamespace());
+            }
+        };
     }
 }
