@@ -34,14 +34,15 @@ public class NitroProgramInformationGeneratorTest {
 
     @Test
     public void testPublisherIndependentFields() {
-        Version version = createVersion(Duration.standardMinutes(90), true);
+        String restrictionMessage = "This is a warning";
+        Version version = createRestrictedVersion(Duration.standardMinutes(90), restrictionMessage);
         Film film = createNitroFilm(ImmutableSet.of(version));
         
         ProgramInformationType progInfo = Iterables.getOnlyElement(generator.generate(film));
 
         ExtendedContentDescriptionType basicDescription = (ExtendedContentDescriptionType) progInfo.getBasicDescription();
         
-        assertEquals("http://bbfc.org.uk/BBFCRatingCS/2002#PG", basicDescription.getParentalGuidance().getParentalRating().getHref());
+        assertEquals("urn:dtg:metadata:cs:DTGContentWarningCS:2011:W", basicDescription.getParentalGuidance().getParentalRating().getHref());
         assertEquals("1963", basicDescription.getProductionDate().getTimePoint());
         // compare strings, as javax.xml.datatype.Duration is horrible to instantiate
         assertEquals("P0DT1H30M0.000S", basicDescription.getDuration().toString());
@@ -50,7 +51,7 @@ public class NitroProgramInformationGeneratorTest {
 
     @Test
     public void testNitroSpecificFields() {
-        Version version = createVersion(Duration.standardMinutes(90), false);
+        Version version = createBaseVersion(Duration.standardMinutes(90));
         
         Film film = createNitroFilm(ImmutableSet.of(version));
         ProgramInformationType progInfo = Iterables.getOnlyElement(generator.generate(film));
@@ -76,14 +77,22 @@ public class NitroProgramInformationGeneratorTest {
         return film;
     }
     
-    private Version createVersion(Duration duration, boolean isRestricted) {
+    private Version createBaseVersion(Duration duration) {
         Version version = new Version();
-        
         version.setCanonicalUri("http://nitro.bbc.co.uk/programmes/b01sjkjf");
         version.setDuration(duration);
+
+        return version;
+    }
+
+    private Version createRestrictedVersion(Duration duration, String restrictionMessage) {
+        Version version = createBaseVersion(duration);
+
         Restriction restriction = new Restriction();
-        restriction.setRestricted(isRestricted);
+        restriction.setRestricted(true);
+        restriction.setMessage(restrictionMessage);
         version.setRestriction(restriction);
+
         return version;
     }
 }
