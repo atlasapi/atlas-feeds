@@ -51,6 +51,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -182,7 +183,9 @@ public class SiteMapController {
 
     private boolean hasValidClip(Content content) {
         for (Clip clip : content.getClips()) {
-            if (outputter.clipLocation(clip).isPresent()) {
+            Optional<Location> clipLocation = outputter.clipLocation(clip);
+            if (clipLocation.isPresent() 
+                    && outputter.hasRequiredAttributesForOutput(clip)) {
                 return true;
             }
         }
