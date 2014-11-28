@@ -40,6 +40,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.metabroadcast.common.collect.ImmutableOptionalMap;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
@@ -95,13 +96,14 @@ public class SiteMapOutputter {
     private Element createFeed(Iterable<Content> contents, Map<ParentRef, Container> parentLookup) {
         Element feed = new Element("urlset", SITEMAP.getUri());
         VIDEO.addDeclarationTo(feed);
+        Set<String> addedUris = Sets.newHashSet();
         for (Content content : Iterables.concat(contents, parentLookup.values())) {
             if (content instanceof Item) {
                 Item item = (Item) content;
-                entryForItem(feed, item, itemTitle(item, parentLookup));
+                entryForItem(feed, item, itemTitle(item, parentLookup), addedUris);
             }
             for (Clip clip : content.getClips()) {
-                entryForClip(feed, content, clip, clipTitle(clip, content, parentLookup));
+                entryForClip(feed, content, clip, clipTitle(clip, content, parentLookup), addedUris);
             }
         }
         return feed;
@@ -121,7 +123,7 @@ public class SiteMapOutputter {
                 Optional.of(TransportSubType.BRIGHTCOVE));
     }
     
-    private void entryForItem(Element feed, Item item, String title) {
+    private void entryForItem(Element feed, Item item, String title, Set<String> addedUris) {
         Optional<Location> location = itemLocation(item);
         
         if (location.isPresent() && hasRequiredAttributesForOutput(item)) {
@@ -129,21 +131,36 @@ public class SiteMapOutputter {
             SiteMapUriGenerator uriGenerator = publisherSpecificUriGenerators
                     .get(item.getPublisher())
                     .or(defaultPublisherSpecificSitemapUriGenerator);
+            
+            Optional<String> playerPageUriForContent = uriGenerator.playerPageUriForContent(item, location.get());
+            if (playerPageUriForContent.isPresent()) {
+                if (addedUris.contains(playerPageUriForContent.get())) {
+                    return;
+                }
+                addedUris.add(playerPageUriForContent.get());
+            }
             feed.appendChild(urlEntry(
-                    uriGenerator.playerPageUriForContent(item, location.get()),
+                    playerPageUriForContent,
                     uriGenerator.videoUriForContent(item, location.get()),
                     item, location.get(), title));
         }
     }
     
-    private void entryForClip(Element feed, Content content, Clip clip, String title) {
+    private void entryForClip(Element feed, Content content, Clip clip, String title, Set<String> addedUris) {
         Optional<Location> location = clipLocation(clip);
         
         if (location.isPresent() && hasRequiredAttributesForOutput(clip)) {
             SiteMapUriGenerator uriGenerator = publisherSpecificUriGenerators
                     .get(content.getPublisher())
                     .or(defaultPublisherSpecificSitemapUriGenerator);
+            Optional<String> playerPageUriForClip = uriGenerator.playerPageUriForClip(content, clip, location.get());
             
+            if (playerPageUriForClip.isPresent()) {
+                if (addedUris.contains(playerPageUriForClip.get())) {
+                    return;
+                }
+                addedUris.add(playerPageUriForClip.get());
+            }
             feed.appendChild(urlEntry(
                     uriGenerator.playerPageUriForClip(content, clip, location.get()),
                     uriGenerator.videoUriForClip(clip, location.get()),
