@@ -44,7 +44,8 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
         @Override
         public boolean apply(Version input) {
             Restriction restriction = input.getRestriction();
-            return restriction != null && restriction.isRestricted();
+            return restriction != null 
+                    && Boolean.TRUE.equals(restriction.isRestricted());
         }
     };
     
