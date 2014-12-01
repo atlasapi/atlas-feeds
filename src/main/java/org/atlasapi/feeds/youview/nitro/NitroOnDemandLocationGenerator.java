@@ -134,9 +134,10 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
     private VideoAttributesType generateVideoAttributes(Encoding encoding) {
         VideoAttributesType videoAttributes = new VideoAttributesType();
 
-        // TODO: should we ingest those too?
-        videoAttributes.setHorizontalSize(DEFAULT_HORIZONTAL_SIZE);
-        videoAttributes.setVerticalSize(DEFAULT_VERTICAL_SIZE);
+        videoAttributes.setHorizontalSize(Optional.fromNullable(encoding.getVideoHorizontalSize())
+                .or(DEFAULT_HORIZONTAL_SIZE));
+        videoAttributes.setVerticalSize(Optional.fromNullable(encoding.getVideoVerticalSize())
+                .or(DEFAULT_VERTICAL_SIZE));
         
         AspectRatioType aspectRatio = new AspectRatioType();
         aspectRatio.setValue(Objects.firstNonNull(encoding.getVideoAspectRatio(), ASPECT_RATIO));
