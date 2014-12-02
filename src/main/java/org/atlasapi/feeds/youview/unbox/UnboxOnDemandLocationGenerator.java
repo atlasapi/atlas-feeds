@@ -6,12 +6,11 @@ import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
 import java.math.BigInteger;
 import java.util.List;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
+import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
@@ -34,7 +33,6 @@ import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -52,19 +50,8 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
 
     private final IdGenerator idGenerator;
     
-    private DatatypeFactory datatypeFactory;
-
-    /**
-     * NB DatatypeFactory is required for creation of javax Durations
-     * This DatatypeFactory class may not be threadsafe
-     */
     public UnboxOnDemandLocationGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
-        try {
-            this.datatypeFactory = DatatypeFactory.newInstance();
-        } catch (DatatypeConfigurationException e) {
-            Throwables.propagate(e);
-        }
     }
     
     @Override
@@ -115,8 +102,8 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
         onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(item, version, encoding, location));
         onDemand.setInstanceDescription(generateInstanceDescription(item, encoding));
         onDemand.setPublishedDuration(generatePublishedDuration(version));
-        onDemand.setStartOfAvailability(generateAvailabilityStart(encoding));
-        onDemand.setEndOfAvailability(generateAvailabilityEnd(encoding));
+        onDemand.setStartOfAvailability(generateAvailabilityStart(location));
+        onDemand.setEndOfAvailability(generateAvailabilityEnd(location));
         onDemand.setFree(generateFree());
 
         return onDemand;
@@ -213,20 +200,18 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
     private Duration generatePublishedDuration(Version version) {
         Integer durationInSecs = version.getDuration();
         if (durationInSecs != null) {
-            return datatypeFactory.newDurationDayTime(durationInSecs * 1000);
+            return TvAnytimeElementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
         } 
         return null;
     }
 
-    private XMLGregorianCalendar generateAvailabilityStart(Encoding encoding) {
-        // TODO massive hack
-        Policy policy = Iterables.getFirst(encoding.getAvailableAt(), null).getPolicy();
-        return datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityStart().toGregorianCalendar());
+    private XMLGregorianCalendar generateAvailabilityStart(Location location) {
+        Policy policy = location.getPolicy();
+        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart());
     }
 
-    private XMLGregorianCalendar generateAvailabilityEnd(Encoding encoding) {
-        // TODO massive hack
-        Policy policy = Iterables.getFirst(encoding.getAvailableAt(), null).getPolicy();
-        return datatypeFactory.newXMLGregorianCalendar(policy.getAvailabilityEnd().toGregorianCalendar());
+    private XMLGregorianCalendar generateAvailabilityEnd(Location location) {
+        Policy policy = location.getPolicy();
+        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityEnd());
     }
 }

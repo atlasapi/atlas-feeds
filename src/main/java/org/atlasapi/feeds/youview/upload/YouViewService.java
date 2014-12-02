@@ -7,7 +7,7 @@ import org.atlasapi.media.entity.Content;
 public interface YouViewService {
 
     void upload(Content content);
-
+    
     void sendDeleteFor(Content content);
     
     void checkRemoteStatusOf(Task transaction);

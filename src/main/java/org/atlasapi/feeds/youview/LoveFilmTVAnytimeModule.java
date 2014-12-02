@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview;
 
-import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
+import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmGenreMapping;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmGroupInformationGenerator;
@@ -21,10 +21,8 @@ public class LoveFilmTVAnytimeModule {
     
     @Bean
     public LoveFilmTvAnytimeElementCreator loveFilmElementCreator() {
-        TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
-        
         return new LoveFilmTvAnytimeElementCreator(
-                new LoveFilmProgramInformationGenerator(loveFilmIdGenerator(), elementFactory), 
+                new LoveFilmProgramInformationGenerator(loveFilmIdGenerator(), versionHierarchyExpander()), 
                 new LoveFilmGroupInformationGenerator(loveFilmIdGenerator(), loveFilmGenreMapping()), 
                 new LoveFilmOnDemandLocationGenerator(loveFilmIdGenerator()), 
                 contentHierarchy(), 
@@ -32,6 +30,10 @@ public class LoveFilmTVAnytimeModule {
         );
     }
     
+    private VersionHierarchyExpander versionHierarchyExpander() {
+        return new VersionHierarchyExpander(loveFilmIdGenerator());
+    }
+
     @Bean
     public LoveFilmIdGenerator loveFilmIdGenerator() {
         return new LoveFilmIdGenerator();

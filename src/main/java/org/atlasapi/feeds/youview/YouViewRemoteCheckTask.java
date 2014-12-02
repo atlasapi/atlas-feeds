@@ -7,7 +7,7 @@ import java.util.Set;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
-import org.atlasapi.feeds.youview.upload.YouViewService;
+import org.atlasapi.feeds.youview.upload.granular.GranularYouViewService;
 
 import com.google.common.collect.ImmutableSet;
 import com.metabroadcast.common.scheduling.ScheduledTask;
@@ -24,9 +24,9 @@ public class YouViewRemoteCheckTask extends ScheduledTask {
             Status.PUBLISHING
     );
     private final TaskStore taskStore;
-    private final YouViewService client;
+    private final GranularYouViewService client;
 
-    public YouViewRemoteCheckTask(TaskStore taskStore, YouViewService client) {
+    public YouViewRemoteCheckTask(TaskStore taskStore, GranularYouViewService client) {
         this.taskStore = checkNotNull(taskStore);
         this.client = checkNotNull(client);
     }

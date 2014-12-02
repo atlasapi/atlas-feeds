@@ -1,7 +1,10 @@
 package org.atlasapi.feeds.youview.tasks.persistence;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.ACTION_KEY;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.CONTENT_KEY;
+import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.ELEMENT_ID_KEY;
+import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.ELEMENT_TYPE_KEY;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.PUBLISHER_KEY;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.REMOTE_ID_KEY;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.STATUS_KEY;
@@ -113,7 +116,6 @@ public class MongoTaskStore implements TaskStore {
         
         mongoQuery.fieldEquals(PUBLISHER_KEY, query.publisher().key());
         
-        // TODO regex matching
         if (query.contentUri().isPresent()) {
             mongoQuery.regexMatch(CONTENT_KEY, transformToRegexPattern(query.contentUri().get()));
         }
@@ -122,6 +124,15 @@ public class MongoTaskStore implements TaskStore {
         }
         if (query.status().isPresent()) {
             mongoQuery.fieldEquals(STATUS_KEY, query.status().get().name());
+        }
+        if (query.action().isPresent()) {
+            mongoQuery.fieldEquals(ACTION_KEY, query.action().get().name());
+        }
+        if (query.elementType().isPresent()) {
+            mongoQuery.fieldEquals(ELEMENT_TYPE_KEY, query.elementType().get().name());
+        }
+        if (query.elementId().isPresent()) {
+            mongoQuery.fieldEquals(ELEMENT_ID_KEY, transformToRegexPattern(query.elementId().get()));
         }
         
         DBCursor cursor = getOrderedCursor(mongoQuery.build())

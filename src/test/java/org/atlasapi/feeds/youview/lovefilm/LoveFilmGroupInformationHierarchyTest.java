@@ -14,13 +14,13 @@ import org.atlasapi.feeds.tvanytime.JaxbTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementCreator;
-import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.TvaGenerationException;
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.ContentResolvingContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.UriBasedContentPermit;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
+import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
@@ -69,8 +69,8 @@ import com.metabroadcast.common.intl.Countries;
 public class LoveFilmGroupInformationHierarchyTest {
 
     private IdGenerator idGenerator = new LoveFilmIdGenerator();
-    private TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
-    private ProgramInformationGenerator progInfoGenerator = new LoveFilmProgramInformationGenerator(idGenerator, elementFactory);
+    private VersionHierarchyExpander hierarchyExpander = new VersionHierarchyExpander(idGenerator);
+    private ProgramInformationGenerator progInfoGenerator = new LoveFilmProgramInformationGenerator(idGenerator, hierarchyExpander);
     private GenreMapping genreMapping = new LoveFilmGenreMapping();
     private GroupInformationGenerator groupInfoGenerator = new LoveFilmGroupInformationGenerator(idGenerator, genreMapping);
     private OnDemandLocationGenerator progLocationGenerator = new LoveFilmOnDemandLocationGenerator(idGenerator);

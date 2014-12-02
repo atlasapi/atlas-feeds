@@ -8,7 +8,9 @@ import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBException;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.tvanytime.granular.GranularTvAnytimeGenerator;
 import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
+import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
@@ -17,19 +19,27 @@ import org.atlasapi.feeds.youview.nitro.NitroBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.resolution.AvailableContentResolver;
+import org.atlasapi.feeds.youview.resolution.UpdatedContentResolver;
+import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.feeds.youview.revocation.MongoRevokedContentStore;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.feeds.youview.upload.BootstrapUploadTask;
+import org.atlasapi.feeds.youview.upload.DefaultGranularYouViewService;
 import org.atlasapi.feeds.youview.upload.DefaultYouViewService;
 import org.atlasapi.feeds.youview.upload.DeltaUploadTask;
 import org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient;
+import org.atlasapi.feeds.youview.upload.PublisherDelegatingGranularYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.PublisherDelegatingYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.ValidatingYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.YouViewService;
+import org.atlasapi.feeds.youview.upload.granular.GranularBootstrapUploadTask;
+import org.atlasapi.feeds.youview.upload.granular.GranularDeltaUploadTask;
+import org.atlasapi.feeds.youview.upload.granular.GranularYouViewService;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
@@ -57,6 +67,8 @@ import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
 
+
+// TODO this module is still a mess...
 @Configuration
 @Import(TVAnytimeFeedsModule.class)
 public class YouViewUploadModule {
@@ -64,7 +76,10 @@ public class YouViewUploadModule {
     private static final String CONFIG_PREFIX = "youview.upload.";
     private static final Map<String, Publisher> PUBLISHER_MAPPING = ImmutableMap.of(
             "lovefilm", Publisher.LOVEFILM,
-            "unbox", Publisher.AMAZON_UNBOX,
+            "unbox", Publisher.AMAZON_UNBOX
+    );
+    
+    private static final Map<String, Publisher> GRANULAR_PUBLISHER_MAPPING = ImmutableMap.of(
             "nitro", Publisher.BBC_NITRO
     );
     
@@ -80,6 +95,7 @@ public class YouViewUploadModule {
     private @Autowired ContentResolver contentResolver;
     private @Autowired SimpleScheduler scheduler;
     private @Autowired TvAnytimeGenerator generator;
+    private @Autowired GranularTvAnytimeGenerator granularGenerator;
     private @Autowired TaskStore taskStore;
     private @Autowired BbcServiceIdResolver bbcServiceIdResolver;
     private @Autowired NitroIdGenerator nitroIdGenerator;
@@ -90,10 +106,10 @@ public class YouViewUploadModule {
     private @Autowired UnboxBroadcastServiceMapping unboxServiceMapping;
     private @Autowired BroadcastHierarchyExpander broadcastHierarchyExpander;
     private @Autowired OnDemandHierarchyExpander onDemandHierarchyExpander;
+    private @Autowired ContentHierarchyExpander contentHierarchyExpander;
     
     private @Value("${youview.upload.validation}") String performValidation;
 
-    // TODO this module is still a mess...
     @PostConstruct
     public void startScheduledTasks() throws JAXBException, SAXException {
         // TODO this duplicates the loop instantiating youview clients - fix this
@@ -105,39 +121,87 @@ public class YouViewUploadModule {
                 
             }
         }
+        for (Entry<String, Publisher> publisherEntry : GRANULAR_PUBLISHER_MAPPING.entrySet()) {
+            String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
+            if (isEnabled(publisherPrefix)) {
+                scheduler.schedule(scheduleGranularBootstrapTask(publisherEntry.getValue()), BOOTSTRAP_UPLOAD);
+                scheduler.schedule(scheduleGranularDeltaTask(publisherEntry.getValue()), DELTA_UPLOAD);
+                
+            }
+        }
+        
         scheduler.schedule(remoteCheckTask().withName("YouView Task Status Check"), REMOTE_CHECK_UPLOAD);
     }
     
     private ScheduledTask remoteCheckTask() throws JAXBException, SAXException {
-        return new YouViewRemoteCheckTask(taskStore, youViewUploadClient());
+        return new YouViewRemoteCheckTask(taskStore, granularYouViewUploadClient());
     }
 
     @Bean
     public YouViewUploadController uploadController() throws JAXBException, SAXException {
-        return new YouViewUploadController(contentResolver, youViewUploadClient());
+        return new YouViewUploadController(contentResolver, granularYouViewUploadClient(), contentHierarchyExpander);
     }
     
     private ScheduledTask scheduleBootstrapTask(Publisher publisher) throws JAXBException, SAXException {
-        return new BootstrapUploadTask(youViewUploadClient(), contentFinder, lastUpdatedStore(), publisher)
+        return new BootstrapUploadTask(youViewUploadClient(), lastUpdatedStore(), publisher, nitroContentResolver(publisher))
                     .withName(String.format(TASK_NAME_PATTERN, "Bootstrap", publisher.title()));
     }
     
     private ScheduledTask scheduleDeltaTask(Publisher publisher) throws JAXBException, SAXException {
-        return new DeltaUploadTask(youViewUploadClient(), contentFinder, lastUpdatedStore(), publisher)
+        return new DeltaUploadTask(youViewUploadClient(), lastUpdatedStore(), publisher, nitroContentResolver(publisher))
                     .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
+    
+    private ScheduledTask scheduleGranularBootstrapTask(Publisher publisher) throws JAXBException, SAXException {
+        return new GranularBootstrapUploadTask(
+                granularYouViewUploadClient(), 
+                lastUpdatedStore(), 
+                publisher, 
+                nitroContentResolver(publisher), 
+                contentHierarchyExpander, 
+                nitroIdGenerator
+        )
+        .withName(String.format(TASK_NAME_PATTERN, "Bootstrap", publisher.title()));
+    }
 
-    public @Bean YouViewLastUpdatedStore lastUpdatedStore() {
+    private ScheduledTask scheduleGranularDeltaTask(Publisher publisher) throws JAXBException, SAXException {
+        return new GranularDeltaUploadTask(
+                granularYouViewUploadClient(), 
+                lastUpdatedStore(), 
+                publisher, 
+                nitroContentResolver(publisher), 
+                contentHierarchyExpander, 
+                nitroIdGenerator
+        )
+        .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
+    }
+    
+    private YouViewContentResolver nitroContentResolver(Publisher publisher) {
+        return new AvailableContentResolver(new UpdatedContentResolver(contentFinder, publisher));
+    }
+            
+
+    @Bean
+    public YouViewLastUpdatedStore lastUpdatedStore() {
         return new MongoYouViewLastUpdatedStore(mongo);
+    }
+    
+    @Bean
+    public GranularYouViewService granularYouViewUploadClient() throws JAXBException, SAXException {
+        ImmutableMap.Builder<Publisher, GranularYouViewService> clients = ImmutableMap.builder();
+        
+        Optional<GranularYouViewService> nitroClient = createNitroClient();
+        if (nitroClient.isPresent()) {
+            clients.put(Publisher.BBC_NITRO, nitroClient.get());
+        }
+        
+        return new PublisherDelegatingGranularYouViewRemoteClient(clients.build());
     }
     
     @Bean
     public YouViewService youViewUploadClient() throws JAXBException, SAXException {
         ImmutableMap.Builder<Publisher, YouViewService> clients = ImmutableMap.builder();
-        Optional<YouViewService> nitroClient = createNitroClient();
-        if (nitroClient.isPresent()) {
-            clients.put(Publisher.BBC_NITRO, nitroClient.get());
-        }
+        
         Optional<YouViewService> loveFilmClient = createLoveFilmClient();
         if (loveFilmClient.isPresent()) {
             clients.put(Publisher.LOVEFILM, loveFilmClient.get());
@@ -150,7 +214,7 @@ public class YouViewUploadModule {
         return new PublisherDelegatingYouViewRemoteClient(clients.build());
     }
 
-    private Optional<YouViewService> createNitroClient() throws JAXBException, SAXException {
+    private Optional<GranularYouViewService> createNitroClient() throws JAXBException, SAXException {
         String publisherPrefix = CONFIG_PREFIX + "nitro";
         if (!isEnabled(publisherPrefix)) {
             Optional.absent();
@@ -161,14 +225,13 @@ public class YouViewUploadModule {
         YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), baseUrl);
         client = enableValidationIfAppropriate(client);
         
-        return Optional.<YouViewService>of(new DefaultYouViewService(
-                generator, 
+        return Optional.<GranularYouViewService>of(new DefaultGranularYouViewService(
+                granularGenerator, 
                 nitroIdGenerator, 
                 clock, 
                 revokedContentStore(), 
                 client, 
                 taskStore,
-                broadcastHierarchyExpander,
                 onDemandHierarchyExpander
         ));
     }

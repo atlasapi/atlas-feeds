@@ -16,18 +16,25 @@ public class TaskQuery {
     private final Optional<String> contentUri;
     private final Optional<String> remoteId;
     private final Optional<Status> status;
+    private final Optional<Action> action;
+    private final Optional<TVAElementType> elementType;
+    private final Optional<String> elementId;
     
     public static Builder builder(Selection selection, Publisher publisher) {
         return new Builder(selection, publisher);
     }
     
     private TaskQuery(Selection selection, Publisher publisher, Optional<String> contentUri, 
-            Optional<String> remoteId, Optional<Status> status) {
+            Optional<String> remoteId, Optional<Status> status, Optional<Action> action, 
+            Optional<TVAElementType> elementType, Optional<String> elementId) {
         this.selection = checkNotNull(selection);
         this.publisher = checkNotNull(publisher);
         this.contentUri = checkNotNull(contentUri);
         this.remoteId = checkNotNull(remoteId);
         this.status = checkNotNull(status);
+        this.action = checkNotNull(action);
+        this.elementType = checkNotNull(elementType);
+        this.elementId = checkNotNull(elementId);
     }
     
     public Selection selection() {
@@ -50,6 +57,18 @@ public class TaskQuery {
         return status;
     }
     
+    public Optional<Action> action() {
+        return action;
+    }
+    
+    public Optional<TVAElementType> elementType() {
+        return elementType;
+    }
+    
+    public Optional<String> elementId() {
+        return elementId;
+    }
+    
     @Override
     public String toString() {
         return Objects.toStringHelper(TaskQuery.class)
@@ -58,6 +77,9 @@ public class TaskQuery {
                 .add("contentUri", contentUri)
                 .add("remoteId", remoteId)
                 .add("status", status)
+                .add("action", action)
+                .add("elementType", elementType)
+                .add("elementId", elementId)
                 .toString();
     }
     
@@ -68,6 +90,9 @@ public class TaskQuery {
         private Optional<String> contentUri = Optional.absent();
         private Optional<String> remoteId = Optional.absent();
         private Optional<Status> status = Optional.absent();
+        private Optional<Action> action = Optional.absent();
+        private Optional<TVAElementType> elementType = Optional.absent();
+        private Optional<String> elementId = Optional.absent();
 
         private Builder(Selection selection, Publisher publisher) {
             this.selection = selection;
@@ -75,7 +100,7 @@ public class TaskQuery {
         }
         
         public TaskQuery build() {
-            return new TaskQuery(selection, publisher, contentUri, remoteId, status);
+            return new TaskQuery(selection, publisher, contentUri, remoteId, status, action, elementType, elementId);
         }
         
         public Builder withContentUri(String contentUri) {
@@ -90,6 +115,21 @@ public class TaskQuery {
         
         public Builder withTaskStatus(Status status) {
             this.status = Optional.fromNullable(status);
+            return this;
+        }
+        
+        public Builder withTaskAction(Action action) {
+            this.action = Optional.fromNullable(action);
+            return this;
+        }
+        
+        public Builder withTaskType(TVAElementType elementType) {
+            this.elementType = Optional.fromNullable(elementType);
+            return this;
+        }
+        
+        public Builder withElementId(String elementId) {
+            this.elementId = Optional.fromNullable(elementId);
             return this;
         }
     }

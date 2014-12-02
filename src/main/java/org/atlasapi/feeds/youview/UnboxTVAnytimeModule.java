@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview;
 
-import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
+import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxGenreMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxGroupInformationGenerator;
@@ -21,10 +21,8 @@ public class UnboxTVAnytimeModule {
     
     @Bean
     public UnboxTvAnytimeElementCreator unboxElementCreator() {
-        TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
-        
         return new UnboxTvAnytimeElementCreator(
-                new UnboxProgramInformationGenerator(unboxIdGenerator(), elementFactory), 
+                new UnboxProgramInformationGenerator(unboxIdGenerator(), versionHierarchyExpander()), 
                 new UnboxGroupInformationGenerator(unboxIdGenerator(), unboxGenreMapping()), 
                 new UnboxOnDemandLocationGenerator(unboxIdGenerator()), 
                 contentHierarchy(), 
@@ -32,6 +30,10 @@ public class UnboxTVAnytimeModule {
         );
     }
     
+    private VersionHierarchyExpander versionHierarchyExpander() {
+        return new VersionHierarchyExpander(unboxIdGenerator());
+    }
+
     @Bean
     public UnboxIdGenerator unboxIdGenerator() {
         return new UnboxIdGenerator();
