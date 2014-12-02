@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
@@ -9,7 +8,6 @@ import java.util.Set;
 
 import org.atlasapi.feeds.tvanytime.granular.GranularOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
-import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Film;
@@ -57,7 +55,6 @@ public class NitroOnDemandLocationGeneratorTest {
     };
 
     private IdGenerator idGenerator = new NitroIdGenerator(Hashing.md5());
-    private OnDemandHierarchyExpander hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
 
     private final GranularOnDemandLocationGenerator generator = new NitroOnDemandLocationGenerator(idGenerator);
 
@@ -95,7 +92,7 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals("16:9", Iterables.getOnlyElement(videoAttrs.getAspectRatio()).getValue());
 
         assertEquals(BigInteger.valueOf(3308), avAttributes.getBitRate().getValue());
-        assertFalse(avAttributes.getBitRate().isVariable());
+        assertTrue(avAttributes.getBitRate().isVariable());
         
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
         assertEquals("b00gszl0.imi:bbc.co.uk/pips/65751802", otherId.getValue());
