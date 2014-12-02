@@ -25,6 +25,8 @@ public class TaskTranslatorTest {
         assertEquals(transaction.publisher(), translated.publisher());
         assertEquals(transaction.uploadTime(), translated.uploadTime());
         assertEquals(transaction.action(), translated.action());
+        assertEquals(transaction.elementType(), translated.elementType());
+        assertEquals(transaction.elementId(), translated.elementId());
         assertEquals(transaction.content(), translated.content());
         assertEquals(transaction.remoteId(), translated.remoteId());
         assertEquals(transaction.status(), translated.status());
@@ -36,6 +38,8 @@ public class TaskTranslatorTest {
                 .withId(1234l)
                 .withPublisher(Publisher.METABROADCAST)
                 .withContent("content")
+                .withElementType(TVAElementType.ITEM)
+                .withElementId("elementId")
                 .withUploadTime(clock.now())
                 .withRemoteId("remoteId")
                 .withAction(Action.UPDATE)
