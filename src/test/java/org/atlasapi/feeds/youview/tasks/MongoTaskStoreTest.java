@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.persistence.MongoTestHelper;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
@@ -132,7 +133,7 @@ public class MongoTaskStoreTest {
         fetched = store.taskFor(taskId).get();
         
         assertEquals(finalResponse.status(), fetched.status());
-        assertEquals(ImmutableList.of(firstResponse, finalResponse), fetched.remoteResponses());
+        assertEquals(ImmutableSet.of(firstResponse, finalResponse), fetched.remoteResponses());
     }
     
     @Test
@@ -291,6 +292,8 @@ public class MongoTaskStoreTest {
                 .withId(taskId)
                 .withPublisher(publisher)
                 .withContent(content)
+                .withElementType(TVAElementType.ITEM)
+                .withElementId("elementId")
                 .withAction(Action.UPDATE)
                 .withStatus(status)
                 .build();

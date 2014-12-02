@@ -6,7 +6,6 @@ import org.joda.time.DateTime;
 
 import com.google.common.base.Objects;
 
-// TODO work out what's needed here
 public final class Response {
 
     private final Status status;
