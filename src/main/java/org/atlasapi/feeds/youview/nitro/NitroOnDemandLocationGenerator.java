@@ -50,6 +50,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private static final Integer DEFAULT_DURATION = 30 * 60;
     private static final String BROADCAST_AUTHORITY = "www.bbc.co.uk";
     private static final String DEFAULT_ON_DEMAND_PIPS_ID = "b00gszl0.imi:bbc.co.uk/pips/65751802";
+    private static final String LANGUAGE = "en";
 
     private final IdGenerator idGenerator;
     
@@ -71,6 +72,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         onDemand.setStartOfAvailability(generateAvailabilityStart(hierarchy.location()));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(hierarchy.location()));
         onDemand.setFree(generateFree());
+        onDemand.setLang(LANGUAGE);
 
         return onDemand;
     }
@@ -140,7 +142,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
             bitRate = DEFAULT_BIT_RATE;
         }
         BitRateType bitRateType = new BitRateType();
-        bitRateType.setVariable(false);
+        bitRateType.setVariable(true);
         bitRateType.setValue(BigInteger.valueOf(bitRate));
         return bitRateType;
     }

@@ -21,8 +21,6 @@ import tva.metadata._2010.DerivedFromType;
 import tva.metadata._2010.ProgramInformationType;
 import tva.metadata._2010.TVAParentalGuidanceType;
 import tva.metadata._2010.TVATimeType;
-import tva.metadata.extended._2010.ExtendedContentDescriptionType;
-import tva.metadata.extended._2010.TargetingInformationType;
 import tva.mpeg7._2008.ControlledTermUseType;
 
 import com.google.common.base.Function;
@@ -38,6 +36,7 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
 
     // TODO all this certificate code will likely change
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
+    private static final String LANGUAGE = "en";
     
     // TODO fix all certificate code
     private static final Predicate<Certificate> FILTER_CERT_FOR_GB = new Predicate<Certificate>() {
@@ -82,12 +81,13 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
         progInfo.setProgramId(versionCrid);
         progInfo.setBasicDescription(generateBasicDescription(hierarchy.item(), hierarchy.version()));
         progInfo.setDerivedFrom(generateDerivedFromElem(hierarchy.item()));
+        progInfo.setLang(LANGUAGE);
 
         return progInfo;
     }
 
     private BasicContentDescriptionType generateBasicDescription(Item item, Version version) {
-        ExtendedContentDescriptionType basicDescription = new ExtendedContentDescriptionType();
+        BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
 
         basicDescription.setParentalGuidance(generateParentalGuidance(item));
         Optional<TVATimeType> prodDate = generateProductionDate(item);
@@ -96,7 +96,6 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
         }
         basicDescription.getProductionLocation().addAll(generateProductLocations(item));
         basicDescription.setDuration(generateDuration(version));
-        basicDescription.getTargetingInformationOrTargetingInformationRef().add(new TargetingInformationType());
 
         return basicDescription;
     }

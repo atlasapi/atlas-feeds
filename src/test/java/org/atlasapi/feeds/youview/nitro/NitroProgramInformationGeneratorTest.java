@@ -16,8 +16,8 @@ import org.joda.time.Duration;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ProgramInformationType;
-import tva.metadata.extended._2010.ExtendedContentDescriptionType;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -40,7 +40,7 @@ public class NitroProgramInformationGeneratorTest {
         
         ProgramInformationType progInfo = generator.generate(hierarchy, "version_crid");
 
-        ExtendedContentDescriptionType basicDescription = (ExtendedContentDescriptionType) progInfo.getBasicDescription();
+        BasicContentDescriptionType basicDescription = progInfo.getBasicDescription();
         
         assertEquals("http://bbfc.org.uk/BBFCRatingCS/2002#PG", basicDescription.getParentalGuidance().getParentalRating().getHref());
         assertEquals("1963", basicDescription.getProductionDate().getTimePoint());

@@ -141,9 +141,9 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
                 }
             }
             groupInfo.getMemberOf().add(memberOf);
-        } else {
-            groupInfo.setServiceIDRef(createMasterBrandLink(item));
         }
+        
+        groupInfo.setServiceIDRef(createMasterBrandLink(item));
         
         return groupInfo;  
     }
@@ -187,6 +187,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private GroupInformationType generateWithCommonFields(Content content, Item item) {
         GroupInformationType groupInfo = new GroupInformationType();
         
+        groupInfo.setLang(LANGUAGE);
         groupInfo.setGroupId(idGenerator.generateContentCrid(content));
         groupInfo.setBasicDescription(generateBasicDescription(content, item));
         
@@ -394,6 +395,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         TitleType title = new TitleType();
         
         title.getType().add(titleType);
+        title.setLang(LANGUAGE);
         title.setValue(contentTitle);
         
         return title;
