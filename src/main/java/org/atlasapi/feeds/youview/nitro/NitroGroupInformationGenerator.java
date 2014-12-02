@@ -70,6 +70,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private static final String GENRE_TYPE_OTHER = "other";
     private static final String TITLE_TYPE_MAIN = "main";
     private static final String TITLE_TYPE_SECONDARY = "secondary";
+    private static final String CHILDREN_GENRE = "urn:tva:metadata:cs:IntendedAudienceCS:2010:4.2.1";
     
     private static final Map<MediaType, String> YOUVIEW_MEDIATYPE_GENRE_MAPPING = ImmutableMap.<MediaType, String>builder()
             .put(MediaType.VIDEO, "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3")
@@ -90,13 +91,23 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     
     private static final List<String> TITLE_PREFIXES = ImmutableList.of("The ", "the ", "A ", "a ", "An ", "an ");
     
-    private static final Function<String, GenreType> TO_GENRE = new Function<String, GenreType>() {
+    private static final Function<String, List<GenreType>> TO_GENRE = new Function<String, List<GenreType>>() {
         @Override
-        public GenreType apply(String input) {
+        public List<GenreType> apply(String input) {
+            ImmutableList.Builder<GenreType> genres = new ImmutableList.Builder<>();
+
             GenreType genre = new GenreType();
-            genre.setType(GENRE_TYPE_MAIN);
             genre.setHref(input);
-            return genre;
+            genres.add(genre);
+
+            if (input.equals(CHILDREN_GENRE)) {
+                GenreType childrenGenre = new GenreType();
+                childrenGenre.setType(GENRE_TYPE_MAIN);
+                childrenGenre.setHref(input);
+                genres.add(childrenGenre);
+            }
+
+            return genres.build();
         }
     };
     private static final Integer DEFAULT_IMAGE_WIDTH = 1024;
@@ -250,6 +261,10 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         return basicDescription;
     }
 
+    private GenreType generateGenreForChildren(Content content) {
+        return null;
+    }
+
     private String generateAlternateTitle(String title) {
         for (String prefix : TITLE_PREFIXES) {
             if (title.startsWith(prefix)) {
@@ -353,7 +368,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
 
     private List<GenreType> generateGenres(Content content) {
         return FluentIterable.from(genreMapping.youViewGenresFor(content))
-                .transform(TO_GENRE)
+                .transformAndConcat(TO_GENRE)
                 .toList();
     }
 
