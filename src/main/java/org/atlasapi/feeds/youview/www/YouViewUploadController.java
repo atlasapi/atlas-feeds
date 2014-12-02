@@ -158,14 +158,6 @@ public class YouViewUploadController {
             }
         }
         
-        
-        
-        
-        
-        
-        
-        
-        
         sendOkResponse(response, "Upload for " + uri + " sent sucessfully");
     }
     
