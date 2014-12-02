@@ -47,6 +47,8 @@ public class IdSettingTaskStoreTest {
                 .withAction(Action.UPDATE)
                 .withStatus(Status.NEW)
                 .withPublisher(Publisher.METABROADCAST)
+                .withElementType(TVAElementType.ITEM)
+                .withElementId("elementId")
                 .withContent("content")
                 .build();
     }

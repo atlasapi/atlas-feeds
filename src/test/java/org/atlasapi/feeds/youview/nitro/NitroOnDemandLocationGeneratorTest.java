@@ -68,8 +68,8 @@ public class NitroOnDemandLocationGeneratorTest {
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
 
         assertEquals("P0DT1H30M0.000S", onDemand.getPublishedDuration().toString());
-        assertEquals("2012-07-03T01:00:00Z", onDemand.getStartOfAvailability().toString());
-        assertEquals("2013-07-17T01:00:00Z", onDemand.getEndOfAvailability().toString());
+        assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
+        assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
         assertTrue(onDemand.getFree().isValue());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();

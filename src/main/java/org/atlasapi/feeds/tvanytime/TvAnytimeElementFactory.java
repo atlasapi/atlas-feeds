@@ -1,13 +1,13 @@
 package org.atlasapi.feeds.tvanytime;
 
-import java.text.SimpleDateFormat;
-
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
 import tva.metadata._2010.FlagType;
 
@@ -18,7 +18,7 @@ public enum TvAnytimeElementFactory {
     
     INSTANCE;
     
-    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = ISODateTimeFormat.dateTimeNoMillis();
     private static final DatatypeFactory datatypeFactory;
     
     static {
@@ -36,7 +36,7 @@ public enum TvAnytimeElementFactory {
     }
     
     public static XMLGregorianCalendar gregorianCalendar(DateTime dateTime) {
-        String format = SIMPLE_DATE_FORMAT.format(dateTime.toDate());
+        String format = DATE_TIME_FORMATTER.print(dateTime);
         return datatypeFactory.newXMLGregorianCalendar(format);
     }
     
