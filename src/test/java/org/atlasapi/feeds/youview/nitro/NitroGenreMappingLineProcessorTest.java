@@ -36,15 +36,11 @@ public class NitroGenreMappingLineProcessorTest {
         assertTrue("No lines should be processed", result.entrySet().isEmpty());
     }
     
-    @Test
+    @Test(expected=RuntimeException.class)
     public void testIgnoresLinesWithLessThanEightCommaSeparatedElements() throws IOException {
         readHeaders();
         
-        assertTrue("Line is still accepted even if it only has one element", lineProcessor.processLine("SingleElement"));
-        assertTrue("no results are parsed", lineProcessor.getResult().entrySet().isEmpty());
-        
-        assertTrue("Line is still accepted even if it has less than 8 elements", lineProcessor.processLine("1,2,3,4,5,6,7"));
-        assertTrue("no results are parsed", lineProcessor.getResult().entrySet().isEmpty());
+        lineProcessor.processLine("SingleElement");
     }
     
     @Test

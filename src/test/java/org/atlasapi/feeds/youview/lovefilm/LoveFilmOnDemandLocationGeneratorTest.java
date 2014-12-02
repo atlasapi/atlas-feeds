@@ -72,8 +72,8 @@ public class LoveFilmOnDemandLocationGeneratorTest {
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) Iterables.getOnlyElement(generator.generate(createLoveFilmFilm()));
 
         assertEquals("P0DT1H30M0.000S", onDemand.getPublishedDuration().toString());
-        assertEquals("2012-07-03T00:00:00.000Z", onDemand.getStartOfAvailability().toString());
-        assertEquals("2013-07-17T00:00:00.000Z", onDemand.getEndOfAvailability().toString());
+        assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
+        assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
         assertFalse(onDemand.getFree().isValue());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
