@@ -142,17 +142,19 @@ public class YouViewUploadController {
             }
         } else {
             remoteService.uploadContent(toBeUploaded.get());
-            Map<String, ItemAndVersion> versions = hierarchyExpander.versionHierarchiesFor((Item) content);
-            for (Entry<String, ItemAndVersion> version : versions.entrySet()) {
-                remoteService.uploadVersion(version.getValue(), version.getKey());
-            }
-            Map<String, ItemBroadcastHierarchy> broadcasts = hierarchyExpander.broadcastHierarchiesFor((Item) content);
-            for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcasts.entrySet()) {
-                remoteService.uploadBroadcast(broadcast.getValue(), broadcast.getKey());
-            }
-            Map<String, ItemOnDemandHierarchy> onDemands = hierarchyExpander.onDemandHierarchiesFor((Item) content);
-            for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
-                remoteService.uploadOnDemand(onDemand.getValue(), onDemand.getKey());
+            if (content instanceof Item) {
+                Map<String, ItemAndVersion> versions = hierarchyExpander.versionHierarchiesFor((Item) content);
+                for (Entry<String, ItemAndVersion> version : versions.entrySet()) {
+                    remoteService.uploadVersion(version.getValue(), version.getKey());
+                }
+                Map<String, ItemBroadcastHierarchy> broadcasts = hierarchyExpander.broadcastHierarchiesFor((Item) content);
+                for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcasts.entrySet()) {
+                    remoteService.uploadBroadcast(broadcast.getValue(), broadcast.getKey());
+                }
+                Map<String, ItemOnDemandHierarchy> onDemands = hierarchyExpander.onDemandHierarchiesFor((Item) content);
+                for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
+                    remoteService.uploadOnDemand(onDemand.getValue(), onDemand.getKey());
+                }
             }
         }
         
