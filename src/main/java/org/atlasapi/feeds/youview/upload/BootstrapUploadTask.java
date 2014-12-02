@@ -1,15 +1,15 @@
 package org.atlasapi.feeds.youview.upload;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Iterator;
 
-import org.atlasapi.feeds.youview.YouViewContentProcessor;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
@@ -22,15 +22,18 @@ public final class BootstrapUploadTask extends UploadTask {
         }
     };
     
-    public BootstrapUploadTask(YouViewService remoteClient, LastUpdatedContentFinder contentFinder,
-            YouViewLastUpdatedStore lastUpdatedStore, Publisher publisher) {
-        super(remoteClient, contentFinder, lastUpdatedStore, publisher);
+    private final YouViewContentResolver contentResolver;
+    
+    public BootstrapUploadTask(YouViewService remoteClient, YouViewLastUpdatedStore lastUpdatedStore, 
+            Publisher publisher, YouViewContentResolver contentResolver) {
+        super(remoteClient, lastUpdatedStore, publisher);
+        this.contentResolver = checkNotNull(contentResolver);
     }
     
     @Override
     public void runTask() {
         DateTime lastUpdated = new DateTime();
-        Iterator<Content> allContent = getContentSinceDate(Optional.<DateTime>absent());
+        Iterator<Content> allContent = contentResolver.allContent();
         
         YouViewContentProcessor<UpdateProgress> processor = uploadProcessor();
         

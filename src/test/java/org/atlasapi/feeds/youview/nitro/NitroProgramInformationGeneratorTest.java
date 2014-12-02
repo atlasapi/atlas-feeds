@@ -4,8 +4,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Set;
 
-import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
-import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
+import org.atlasapi.feeds.tvanytime.granular.GranularProgramInformationGenerator;
+import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Film;
@@ -29,16 +29,17 @@ import com.metabroadcast.common.intl.Countries;
 public class NitroProgramInformationGeneratorTest {
     
     private IdGenerator idGenerator = new NitroIdGenerator(Mockito.mock(HashFunction.class));
-    private TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
-    private final ProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator);
+    
+    private final GranularProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator);
 
     @Test
     public void testPublisherIndependentFields() {
         String restrictionMessage = "This is a warning";
         Version version = createRestrictedVersion(Duration.standardMinutes(90), restrictionMessage);
         Film film = createNitroFilm(ImmutableSet.of(version));
+        ItemAndVersion hierarchy = new ItemAndVersion(film, version);
         
-        ProgramInformationType progInfo = Iterables.getOnlyElement(generator.generate(film));
+        ProgramInformationType progInfo = generator.generate(hierarchy, "version_crid");
 
         ExtendedContentDescriptionType basicDescription = (ExtendedContentDescriptionType) progInfo.getBasicDescription();
         
@@ -52,17 +53,16 @@ public class NitroProgramInformationGeneratorTest {
     @Test
     public void testNitroSpecificFields() {
         Version version = createBaseVersion(Duration.standardMinutes(90));
-        
         Film film = createNitroFilm(ImmutableSet.of(version));
-        ProgramInformationType progInfo = Iterables.getOnlyElement(generator.generate(film));
         
-        assertEquals(idGenerator.generateVersionCrid(film, version), progInfo.getProgramId());
+        String versionCrid = idGenerator.generateVersionCrid(film, version);
+        
+        ProgramInformationType progInfo = generator.generate(new ItemAndVersion(film, version), versionCrid);
+        
+        assertEquals(versionCrid, progInfo.getProgramId());
         assertEquals(idGenerator.generateContentCrid(film), progInfo.getDerivedFrom().getCrid());
     }
     
-    // TODO test multiple versions created if multiple ids are created for a set of versions on an item
-    
-
     private Film createNitroFilm(Set<Version> versions) {
         Film film = new Film();
         

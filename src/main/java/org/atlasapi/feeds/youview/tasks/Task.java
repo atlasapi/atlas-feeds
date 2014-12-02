@@ -19,6 +19,9 @@ public class Task {
     private final Action action;
     private final Optional<DateTime> uploadTime;
     private final Optional<String> remoteId;
+    // TODO how to represent intermediate pids? e.g. version pid for a ProgramInformation upload
+    private final TVAElementType elementType;
+    private final String elementId;
     private final String content;
     private final Status status;
     private final Set<Response> remoteResponses;
@@ -28,13 +31,16 @@ public class Task {
     }
     
     private Task(Long id, Publisher publisher, Action action, Optional<DateTime> uploadTime, 
-            Optional<String> remoteId, String content, Status status, Iterable<Response> remoteResponses) {
+            Optional<String> remoteId, TVAElementType elementType, String elementId, String content, 
+            Status status, Iterable<Response> remoteResponses) {
         this.id = id;
         this.publisher = checkNotNull(publisher);
         this.action = checkNotNull(action);
         this.uploadTime = checkNotNull(uploadTime);
         this.remoteId = checkNotNull(remoteId);
         this.content = checkNotNull(content);
+        this.elementType = checkNotNull(elementType);
+        this.elementId = checkNotNull(elementId);
         this.status = checkNotNull(status);
         this.remoteResponses = ImmutableSet.copyOf(remoteResponses);
     }
@@ -63,6 +69,14 @@ public class Task {
         return remoteId;
     }
     
+    public TVAElementType elementType() {
+        return elementType;
+    }
+    
+    public String elementId() {
+        return elementId;
+    }
+    
     public String content() {
         return content;
     }
@@ -83,6 +97,8 @@ public class Task {
                 .add("action", action)
                 .add("uploadTime", uploadTime)
                 .add("remoteId", remoteId)
+                .add("elementType", elementType)
+                .add("elementId", elementId)
                 .add("content", content)
                 .add("status", status)
                 .add("remoteResponses", remoteResponses)
@@ -115,6 +131,8 @@ public class Task {
         private Action action;
         private Optional<DateTime> uploadTime = Optional.absent();
         private Optional<String> remoteId = Optional.absent();
+        private TVAElementType elementType;
+        private String elementId;
         private String content;
         private Status status;
         private ImmutableSet.Builder<Response> remoteResponses = ImmutableSet.builder();
@@ -123,7 +141,7 @@ public class Task {
         }
         
         public Task build() {
-            return new Task(id, publisher, action, uploadTime, remoteId, content, status, remoteResponses.build());
+            return new Task(id, publisher, action, uploadTime, remoteId, elementType, elementId, content, status, remoteResponses.build());
         }
         
         public Builder withId(Long id) {
@@ -148,6 +166,16 @@ public class Task {
         
         public Builder withRemoteId(String remoteId) {
             this.remoteId = Optional.fromNullable(remoteId);
+            return this;
+        }
+
+        public Builder withElementType(TVAElementType elementType) {
+            this.elementType = elementType;
+            return this;
+        }
+
+        public Builder withElementId(String elementId) {
+            this.elementId = elementId;
             return this;
         }
 

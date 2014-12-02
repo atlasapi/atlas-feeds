@@ -1,10 +1,12 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.youview.AbstractBroadcastEventGenerator;
-import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
+import org.atlasapi.feeds.tvanytime.granular.GranularBroadcastEventGenerator;
+import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
@@ -15,12 +17,13 @@ import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
 import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.BroadcastEventType;
+import tva.metadata._2010.CRIDRefType;
 import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
-public class NitroBroadcastEventGenerator extends AbstractBroadcastEventGenerator {
+public class NitroBroadcastEventGenerator implements GranularBroadcastEventGenerator {
 
     private static final String DEFAULT_ASPECT_RATIO = "16:9";
     private static final String MIX_TYPE_STEREO = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
@@ -30,26 +33,26 @@ public class NitroBroadcastEventGenerator extends AbstractBroadcastEventGenerato
 //    private static final String SERVICE_ID_PREFIX = "http://bbc.co.uk/services/";
     private static final String DEV_SERVICE_ID_PREFIX = "http://bbc.couk/services/";
     private static final String PROGRAM_URL = "dvb://233A..A020;A876";
+    
+    private final IdGenerator idGenerator;
 
-    private final TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
-
-    public NitroBroadcastEventGenerator(IdGenerator idGenerator, BroadcastHierarchyExpander hierarchyExpander) {
-        super(idGenerator, hierarchyExpander);
+    public NitroBroadcastEventGenerator(IdGenerator idGenerator) {
+        this.idGenerator = checkNotNull(idGenerator);
     }
 
     @Override
-    public final BroadcastEventType generate(String imi, Item item, Version version, Broadcast broadcast, String youViewServiceId) {
+    public final BroadcastEventType generate(ItemBroadcastHierarchy hierarchy, String imi) {
         BroadcastEventType broadcastEvent = new BroadcastEventType();
         
-        broadcastEvent.setServiceIDRef(serviceIdRefFrom(youViewServiceId));
-        broadcastEvent.setProgram(createProgram(item, version));
+        broadcastEvent.setServiceIDRef(serviceIdRefFrom(hierarchy.youViewServiceId()));
+        broadcastEvent.setProgram(createProgram(hierarchy.item(), hierarchy.version()));
         // TODO need to update nitro - ingest id from broadcast - type = "terrestrial_event_locator"
         broadcastEvent.setProgramURL(PROGRAM_URL);
         broadcastEvent.setInstanceMetadataId(imi);
-        broadcastEvent.setInstanceDescription(instanceDescriptionFrom(broadcast));
-        broadcastEvent.setPublishedStartTime(startTimeFrom(broadcast));
-        broadcastEvent.setPublishedDuration(durationFrom(broadcast));
-        broadcastEvent.setFree(elementFactory.flag(true));
+        broadcastEvent.setInstanceDescription(instanceDescriptionFrom(hierarchy.broadcast()));
+        broadcastEvent.setPublishedStartTime(startTimeFrom(hierarchy.broadcast()));
+        broadcastEvent.setPublishedDuration(durationFrom(hierarchy.broadcast()));
+        broadcastEvent.setFree(TvAnytimeElementFactory.flag(true));
         
         
         return broadcastEvent;
@@ -114,10 +117,16 @@ public class NitroBroadcastEventGenerator extends AbstractBroadcastEventGenerato
     }
     
     private XMLGregorianCalendar startTimeFrom(Broadcast broadcast) {
-        return elementFactory.gregorianCalendar(broadcast.getTransmissionTime());
+        return TvAnytimeElementFactory.gregorianCalendar(broadcast.getTransmissionTime());
     }
     
     private javax.xml.datatype.Duration durationFrom(Broadcast broadcast) {
-        return elementFactory.durationFrom(Duration.standardSeconds(broadcast.getBroadcastDuration()));
+        return TvAnytimeElementFactory.durationFrom(Duration.standardSeconds(broadcast.getBroadcastDuration()));
+    }
+    
+    private CRIDRefType createProgram(Item item, Version version) {
+        CRIDRefType program = new CRIDRefType();
+        program.setCrid(idGenerator.generateVersionCrid(item, version));
+        return program;
     }
 }

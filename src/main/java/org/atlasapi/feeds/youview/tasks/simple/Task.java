@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.atlasapi.feeds.youview.tasks.Action;
 import org.atlasapi.feeds.youview.tasks.Status;
+import org.atlasapi.feeds.youview.tasks.TVAElementType;
 import org.atlasapi.media.entity.Publisher;
 
 import com.google.common.base.Objects;
@@ -18,6 +19,8 @@ public class Task {
     private Date uploadTime;
     private Action action;
     private String remoteId;
+    private TVAElementType elementType;
+    private String elementId;
     private String content;
     private Status status;
     private List<Response> remoteResponses;
@@ -65,6 +68,22 @@ public class Task {
         this.remoteId = remoteId;
     }
     
+    public TVAElementType elementType() {
+        return elementType;
+    }
+    
+    public void setElementType(TVAElementType elementType) {
+        this.elementType = elementType;
+    }
+    
+    public String elementId() {
+        return elementId;
+    }
+    
+    public void setElementId(String elementId) {
+        this.elementId = elementId;
+    }
+    
     public String content() {
         return content;
     }
@@ -95,7 +114,10 @@ public class Task {
                 .add("id", id)
                 .add("publisher", publisher)
                 .add("uploadTime", uploadTime)
+                .add("action", action)
                 .add("remoteId", remoteId)
+                .add("elementType", elementType)
+                .add("elementId", elementId)
                 .add("content", content)
                 .add("status", status)
                 .add("remoteResponses", remoteResponses)
