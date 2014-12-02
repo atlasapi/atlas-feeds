@@ -93,7 +93,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
 
-        if (encoding.getSigned()) {
+        if (Boolean.TRUE.equals(encoding.getSigned())) {
             SignLanguageType signLanguageType = new SignLanguageType();
             signLanguageType.setValue(BRITISH_SIGN_LANGUAGE);
             instanceDescription.getSignLanguage().add(signLanguageType);
