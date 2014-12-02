@@ -292,7 +292,6 @@ public class NitroGroupInformationGeneratorTest {
         GroupInformationType groupInfo = generator.generate(createFilm());
 
         assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b020tm1g", groupInfo.getGroupId());
-//        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
         
@@ -333,10 +332,10 @@ public class NitroGroupInformationGeneratorTest {
     
     @Test
     public void testSeriesGroupInformationGeneration() {
-        Episode episode = createEpisode();
-        episode.setImage("episode image");
+        Series series = createSeries();
+        series.setImage("series image");
         
-        GroupInformationType groupInfo = generator.generate(createSeries(), Optional.of(createBrand()), episode);
+        GroupInformationType groupInfo = generator.generate(series, Optional.of(createBrand()), createEpisode());
 
         assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b020tm1g", groupInfo.getGroupId());
         assertTrue(groupInfo.isOrdered());
@@ -361,20 +360,19 @@ public class NitroGroupInformationGeneratorTest {
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
         assertEquals(
-            "episode image", 
+            "series image", 
             relatedMaterial.getMediaLocator().getMediaUri()
         );
     }
     
     @Test
     public void testBrandGroupInformationGeneration() {
-        Episode episode = createEpisode();
-        episode.setImage("episode image");
+        Brand brand = createBrand();
+        brand.setImage("brand image");
         
-        GroupInformationType groupInfo = generator.generate(createBrand(), episode);
+        GroupInformationType groupInfo = generator.generate(brand, createEpisode());
 
         assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b007n2qs", groupInfo.getGroupId());
-//        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
         assertTrue(groupInfo.isOrdered());
                 
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -389,7 +387,7 @@ public class NitroGroupInformationGeneratorTest {
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
         assertEquals(
-            "episode image", 
+            "brand image", 
             relatedMaterial.getMediaLocator().getMediaUri()
         );
     }
@@ -514,7 +512,7 @@ public class NitroGroupInformationGeneratorTest {
         brand.setCurie("lf:e-184930");
         brand.setTitle("Northern Lights");
         brand.setDescription("Some brand description");
-        brand.setImage("http://www.lovefilm.com/lovefilm/images/products/heroshots/0/184930-large.jpg");
+        brand.setImage("some brand image");
         brand.setPublisher(Publisher.BBC_NITRO);
         brand.setCertificates(ImmutableList.of(new Certificate("15", Countries.GB)));
         brand.setYear(2006);
@@ -539,7 +537,7 @@ public class NitroGroupInformationGeneratorTest {
         series.setCurie("lf:e-179534");
         series.setTitle("Series 2");
         series.setDescription("Some series description");
-        series.setImage("http://www.lovefilm.com/lovefilm/images/products/heroshots/0/179534-large.jpg");
+        series.setImage("some series image");
         series.setPublisher(Publisher.BBC_NITRO);
         series.setCertificates(ImmutableList.of(new Certificate("15", Countries.GB)));
         series.setYear(2006);
