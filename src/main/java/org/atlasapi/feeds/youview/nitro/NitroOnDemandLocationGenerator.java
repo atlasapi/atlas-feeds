@@ -34,6 +34,7 @@ import tva.metadata._2010.FlagType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.OnDemandProgramType;
+import tva.metadata._2010.SignLanguageType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
@@ -55,6 +56,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private static final String AUDIO_DESCRIPTION_PURPOSE = "urn:tva:metadata:cs:AudioPurposeCS:2007:1";
     private static final String AUDIO_DESCRIPTION_TYPE = "dubbed";
     private static final String ENGLISH_LANG = "en";
+    private static final String BRITISH_SIGN_LANGUAGE = "bfi";
 
     private final IdGenerator idGenerator;
     
@@ -93,6 +95,12 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         instanceDescription.getGenre().addAll(generateGenres());
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
+
+        if (encoding.getSigned()) {
+            SignLanguageType signLanguageType = new SignLanguageType();
+            signLanguageType.setValue(BRITISH_SIGN_LANGUAGE);
+            instanceDescription.getSignLanguage().add(signLanguageType);
+        }
         
         return instanceDescription;
     }
