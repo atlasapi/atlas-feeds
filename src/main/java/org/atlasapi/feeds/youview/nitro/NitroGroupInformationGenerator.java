@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
@@ -42,6 +44,7 @@ import tva.mpeg7._2008.MediaLocatorType;
 import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
+import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -71,7 +74,9 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private static final String TITLE_TYPE_MAIN = "main";
     private static final String TITLE_TYPE_SECONDARY = "secondary";
     private static final String CHILDREN_GENRE = "urn:tva:metadata:cs:IntendedAudienceCS:2010:4.2.1";
-    
+    private static final String OTHER_IDENTIFIER_AUTHORITY = "epid.bbc.co.uk";
+    private static final Pattern NITRO_URI_PATTERN = Pattern.compile("^http://nitro.bbc.co.uk/programmes/([a-zA-Z0-9]+)$");
+
     private static final Map<MediaType, String> YOUVIEW_MEDIATYPE_GENRE_MAPPING = ImmutableMap.<MediaType, String>builder()
             .put(MediaType.VIDEO, "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3")
             .put(MediaType.AUDIO, "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.1")
@@ -134,15 +139,34 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         groupInfo.setServiceIDRef(createMasterBrandLink(film));
-        
+
         return groupInfo;
     }
-    
+
+    private UniqueIDType createOtherIdentifier(Content content) {
+        Matcher matcher = NITRO_URI_PATTERN.matcher(content.getCanonicalUri());
+
+        if (!matcher.matches()) {
+            throw new RuntimeException("Uri not compliant to Nitro format: " + content.getCanonicalUri());
+        }
+
+        String pid = matcher.group(1);
+        UniqueIDType idType = new UniqueIDType();
+        idType.setAuthority(OTHER_IDENTIFIER_AUTHORITY);
+        idType.setValue(pid);
+
+        return idType;
+    }
+
     @Override
     public GroupInformationType generate(Item item, Optional<Series> series, Optional<Brand> brand) {
         GroupInformationType groupInfo = generateWithCommonFields(item, null);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
+
+        if (item instanceof Episode) {
+            groupInfo.getOtherIdentifier().add(createOtherIdentifier(item));
+        }
 
         if (series.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
