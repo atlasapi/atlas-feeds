@@ -55,6 +55,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private static final String AUDIO_DESCRIPTION_TYPE = "dubbed";
     private static final String ENGLISH_LANG = "en";
     private static final String BRITISH_SIGN_LANGUAGE = "bfi";
+    private static final String LANGUAGE = "en";
 
     private final IdGenerator idGenerator;
     
@@ -76,6 +77,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         onDemand.setStartOfAvailability(generateAvailabilityStart(hierarchy.location()));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(hierarchy.location()));
         onDemand.setFree(generateFree());
+        onDemand.setLang(LANGUAGE);
 
         return onDemand;
     }
@@ -164,7 +166,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
             bitRate = DEFAULT_BIT_RATE;
         }
         BitRateType bitRateType = new BitRateType();
-        bitRateType.setVariable(false);
+        bitRateType.setVariable(true);
         bitRateType.setValue(BigInteger.valueOf(bitRate));
         return bitRateType;
     }

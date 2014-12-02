@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
@@ -100,7 +99,7 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals("16:9", Iterables.getOnlyElement(videoAttrs.getAspectRatio()).getValue());
 
         assertEquals(BigInteger.valueOf(3308), avAttributes.getBitRate().getValue());
-        assertFalse(avAttributes.getBitRate().isVariable());
+        assertTrue(avAttributes.getBitRate().isVariable());
         
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
         assertEquals("b00gszl0.imi:bbc.co.uk/pips/65751802", otherId.getValue());
