@@ -46,6 +46,7 @@ import tva.mpeg7._2008.ExtendedLanguageType;
 import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
+import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -311,7 +312,11 @@ public class NitroGroupInformationGeneratorTest {
         GroupInformationType groupInfo = generator.generate(createEpisode(), Optional.of(createSeries()), Optional.of(createBrand()));
 
         assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b03dfd6d", groupInfo.getGroupId());
-        
+
+        UniqueIDType idType = Iterables.getOnlyElement(groupInfo.getOtherIdentifier());
+        assertEquals("epid.bbc.co.uk", idType.getAuthority());
+        assertEquals("b03dfd6d", idType.getValue());
+
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
         assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b020tm1g", memberOf.getCrid());
         assertEquals(Long.valueOf(5), memberOf.getIndex());
@@ -328,6 +333,7 @@ public class NitroGroupInformationGeneratorTest {
         ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
         assertEquals("original", language.getType());
         assertEquals("en", language.getValue());
+
     }
     
     @Test
