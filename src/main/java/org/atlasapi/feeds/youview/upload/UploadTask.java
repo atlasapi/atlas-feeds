@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Iterator;
 import java.util.List;
 
-import org.atlasapi.feeds.youview.YouViewContentProcessor;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
@@ -55,15 +54,13 @@ public abstract class UploadTask extends ScheduledTask {
     
     private final Logger log = LoggerFactory.getLogger(UploadTask.class);
 
-    private final LastUpdatedContentFinder contentFinder;
     private final YouViewService remoteClient;
     private final YouViewLastUpdatedStore lastUpdatedStore;
     private final Publisher publisher;
     
-    public UploadTask(YouViewService remoteClient, LastUpdatedContentFinder contentFinder,
-            YouViewLastUpdatedStore lastUpdatedStore, Publisher publisher) {
+    public UploadTask(YouViewService remoteClient, YouViewLastUpdatedStore lastUpdatedStore, 
+            Publisher publisher) {
         this.remoteClient = checkNotNull(remoteClient);
-        this.contentFinder = checkNotNull(contentFinder);
         this.lastUpdatedStore = checkNotNull(lastUpdatedStore);
         this.publisher = checkNotNull(publisher);
     }
@@ -76,11 +73,6 @@ public abstract class UploadTask extends ScheduledTask {
         lastUpdatedStore.setLastUpdated(lastUpdated, publisher);
     }
     
-    public Iterator<Content> getContentSinceDate(Optional<DateTime> since) {
-        DateTime start = since.isPresent() ? since.get() : START_OF_TIME;
-        return contentFinder.updatedSince(publisher, start);
-    }
-
     public static List<Content> orderContentForDeletion(Iterable<Content> toBeDeleted) {
         return HIERARCHICAL_ORDER.immutableSortedCopy(toBeDeleted);
     }

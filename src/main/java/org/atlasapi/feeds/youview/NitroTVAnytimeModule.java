@@ -1,11 +1,14 @@
 package org.atlasapi.feeds.youview;
 
 import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
+import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
+import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.ChannelResolvingBbcServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastServiceMapping;
+import org.atlasapi.feeds.youview.nitro.NitroContentHierarchyExpander;
 import org.atlasapi.feeds.youview.nitro.NitroGenreMapping;
 import org.atlasapi.feeds.youview.nitro.NitroGroupInformationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
@@ -32,21 +35,10 @@ public class NitroTVAnytimeModule {
         return new NitroTvAnytimeElementCreator(
                 new NitroProgramInformationGenerator(nitroIdGenerator()), 
                 new NitroGroupInformationGenerator(nitroIdGenerator(), nitroGenreMapping(), bbcServiceIdResolver()), 
-                new NitroOnDemandLocationGenerator(nitroIdGenerator(), onDemandHierarchyExpander()), 
-                new NitroBroadcastEventGenerator(nitroIdGenerator(), broadcastHierarchyExpander()),
-                contentHierarchy(), 
-                new UriBasedContentPermit()
+                new NitroOnDemandLocationGenerator(nitroIdGenerator()), 
+                new NitroBroadcastEventGenerator(nitroIdGenerator()),
+                contentHierarchy()
         );
-    }
-    
-    @Bean
-    public OnDemandHierarchyExpander onDemandHierarchyExpander() {
-        return new OnDemandHierarchyExpander(nitroIdGenerator());
-    }
-
-    @Bean
-    public BroadcastHierarchyExpander broadcastHierarchyExpander() {
-        return new BroadcastHierarchyExpander(nitroIdGenerator(), nitroServiceMapping(), bbcServiceIdResolver());
     }
 
     @Bean
@@ -71,5 +63,24 @@ public class NitroTVAnytimeModule {
 
     private ContentHierarchyExtractor contentHierarchy() {
         return new ContentResolvingContentHierarchyExtractor(contentResolver);
+    }
+    
+    @Bean
+    public ContentHierarchyExpander contentHierarchyExpander() {
+        return new NitroContentHierarchyExpander(versionHierarchyExpander(), broadcastHierarchyExpander(), onDemandHierarchyExpander());
+    }
+    
+    private VersionHierarchyExpander versionHierarchyExpander() {
+        return new VersionHierarchyExpander(nitroIdGenerator());
+    }
+    
+    @Bean
+    public OnDemandHierarchyExpander onDemandHierarchyExpander() {
+        return new OnDemandHierarchyExpander(nitroIdGenerator());
+    }
+
+    @Bean
+    public BroadcastHierarchyExpander broadcastHierarchyExpander() {
+        return new BroadcastHierarchyExpander(nitroIdGenerator(), nitroServiceMapping(), bbcServiceIdResolver());
     }
 }

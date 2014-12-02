@@ -9,9 +9,9 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,14 +30,15 @@ public class YouViewUploadTaskTest {
     private static final Publisher PUBLISHER = Publisher.LOVEFILM;
     private static final Publisher ANOTHER_PUBLISHER = Publisher.AMAZON_UNBOX;
     
-    private LastUpdatedContentFinder lastUpdatedContentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     private YouViewLastUpdatedStore lastUpdatedStore = Mockito.mock(YouViewLastUpdatedStore.class);
+    private YouViewContentResolver contentResolver = Mockito.mock(YouViewContentResolver.class);
     private Clock clock = new TimeMachine();
     private YouViewService youViewClient = Mockito.mock(YouViewService.class);
     
     @Before
     public void setup() {
-        when(lastUpdatedContentFinder.updatedSince(any(Publisher.class), any(DateTime.class))).thenReturn(Iterators.<Content>emptyIterator());
+        when(contentResolver.allContent()).thenReturn(Iterators.<Content>emptyIterator());
+        when(contentResolver.updatedSince(any(DateTime.class))).thenReturn(Iterators.<Content>emptyIterator());
     }
     
     @Test
@@ -45,7 +46,7 @@ public class YouViewUploadTaskTest {
         
         when(lastUpdatedStore.getLastUpdated(PUBLISHER)).thenReturn(Optional.<DateTime>absent());
         
-        DeltaUploadTask task = new DeltaUploadTask(youViewClient, lastUpdatedContentFinder, lastUpdatedStore, PUBLISHER);
+        DeltaUploadTask task = new DeltaUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver);
         task.run();
         
         verifyZeroInteractions(youViewClient);
@@ -58,7 +59,7 @@ public class YouViewUploadTaskTest {
         when(lastUpdatedStore.getLastUpdated(PUBLISHER)).thenReturn(Optional.<DateTime>absent());
         when(lastUpdatedStore.getLastUpdated(ANOTHER_PUBLISHER)).thenReturn(Optional.of(clock.now()));
         
-        new DeltaUploadTask(youViewClient, lastUpdatedContentFinder, lastUpdatedStore, PUBLISHER).run();
+        new DeltaUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver).run();
         
         verifyZeroInteractions(youViewClient);
     }
@@ -68,7 +69,7 @@ public class YouViewUploadTaskTest {
         
         when(lastUpdatedStore.getLastUpdated(PUBLISHER)).thenReturn(Optional.<DateTime>absent());
         
-        new BootstrapUploadTask(youViewClient, lastUpdatedContentFinder, lastUpdatedStore, PUBLISHER).run();
+        new BootstrapUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver).run();
         
         verify(lastUpdatedStore).setLastUpdated(any(DateTime.class), eq(PUBLISHER));
         verifyNoMoreInteractions(lastUpdatedStore);
