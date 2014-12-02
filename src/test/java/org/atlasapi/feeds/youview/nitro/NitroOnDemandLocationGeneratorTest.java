@@ -29,6 +29,7 @@ import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.AudioLanguageType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.InstanceDescriptionType;
+import tva.metadata._2010.SignLanguageType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
@@ -86,7 +87,11 @@ public class NitroOnDemandLocationGeneratorTest {
         Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
                 
         assertEquals("other", Iterables.getOnlyElement(types));
-        
+
+        List<SignLanguageType> signLanguages = instanceDesc.getSignLanguage();
+        SignLanguageType signLanguageType = Iterables.getOnlyElement(signLanguages);
+        assertEquals("bfi", signLanguageType.getValue());
+
         Set<String> expected = ImmutableSet.of("http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available");
         
         assertEquals(expected, hrefs);
@@ -164,6 +169,7 @@ public class NitroOnDemandLocationGeneratorTest {
         encoding.setVideoAspectRatio("16:9");
         encoding.setBitRate(3308);
         encoding.setAudioDescribed(true);
+        encoding.setSigned(true);
 
         Location location = new Location();
         
