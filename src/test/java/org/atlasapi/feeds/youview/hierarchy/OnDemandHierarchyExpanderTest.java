@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview.hierarchy;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import java.util.Map;
 import java.util.Set;
 
+import org.atlasapi.feeds.youview.UniqueIdGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -44,7 +45,7 @@ public class OnDemandHierarchyExpanderTest {
     }
 
     @Test
-    public void testIfBroadcastImisUniqueExpandsAllVersions() {
+    public void testIfOnDemandImisUniqueAreUniqueAllVersionsAreExpanded() {
         idGenerator = new UniqueIdGenerator();
         hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
         
@@ -61,7 +62,7 @@ public class OnDemandHierarchyExpanderTest {
     }
     
     @Test
-    public void testIfBroadcastImisUniqueExpandsAllEncodings() {
+    public void testIfOnDemandImisUniqueAreUniqueAllEncodingsAreExpanded() {
         idGenerator = new UniqueIdGenerator();
         hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
         
@@ -78,7 +79,7 @@ public class OnDemandHierarchyExpanderTest {
     }
     
     @Test
-    public void testIfBroadcastImisUniqueExpandsAllLocations() {
+    public void testIfOnDemandImisUniqueAreUniqueAllLocationsAreExpanded() {
         idGenerator = new UniqueIdGenerator();
         hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
         

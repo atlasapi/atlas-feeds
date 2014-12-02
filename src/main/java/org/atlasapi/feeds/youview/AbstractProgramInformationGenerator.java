@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
+import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
@@ -15,34 +17,23 @@ import tva.metadata._2010.ProgramInformationType;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 
 
 public abstract class AbstractProgramInformationGenerator implements ProgramInformationGenerator {
     
     private final IdGenerator idGenerator;
+    private final VersionHierarchyExpander hierarchyExpander;
     
-    public AbstractProgramInformationGenerator(IdGenerator idGenerator) {
+    public AbstractProgramInformationGenerator(IdGenerator idGenerator, VersionHierarchyExpander hierarchyExpander) {
         this.idGenerator = checkNotNull(idGenerator);
+        this.hierarchyExpander = checkNotNull(hierarchyExpander);
     }
 
     @Override
     public final Iterable<ProgramInformationType> generate(final Item item) {
-        Iterable<ItemAndVersion> itemsWithVersions = Iterables.transform(item.getVersions(), new Function<Version, ItemAndVersion>() {
-            @Override
-            public ItemAndVersion apply(Version input) {
-                return new ItemAndVersion(item, input);
-            }
-        });
+        Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.expandHierarchy(item);
         
-        // TODO will this cause issues if fields on version that differ are used to generate on-demands?
-        // may pick the incorrect version here
-        Map<String, ItemAndVersion> versionCrids = Maps.newHashMap();
-        for (ItemAndVersion itemAndVersion : itemsWithVersions) {
-            versionCrids.put(idGenerator.generateVersionCrid(itemAndVersion.item(), itemAndVersion.version()), itemAndVersion);
-        }
-        
-        return Iterables.transform(versionCrids.entrySet(), new Function<Entry<String, ItemAndVersion>, ProgramInformationType>() {
+        return Iterables.transform(versionHierarchies.entrySet(), new Function<Entry<String, ItemAndVersion>, ProgramInformationType>() {
             @Override
             public ProgramInformationType apply(Entry<String, ItemAndVersion> input) {
                 return generate(input.getKey(), input.getValue().item(), input.getValue().version());

@@ -83,7 +83,7 @@ public class DefaultYouViewService implements YouViewService {
             Task task = createTaskFor(content, Action.UPDATE);
 
             YouViewResult uploadResult = client.upload(tvaElem);
-            processResult(task, content, uploadResult);
+            processResult(task, uploadResult);
         } catch (TvaGenerationException e) {
             throw Throwables.propagate(e);
         }
@@ -93,7 +93,7 @@ public class DefaultYouViewService implements YouViewService {
         return revocationStore.isRevoked(content.getCanonicalUri());
     }
 
-    private void processResult(Task task, Content content, YouViewResult uploadResult) {
+    private void processResult(Task task, YouViewResult uploadResult) {
         if (uploadResult.isSuccess()) {
             taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, uploadResult.result(), clock.now());
         } else {
@@ -194,10 +194,10 @@ public class DefaultYouViewService implements YouViewService {
             log.error("attempted to check remote status for task {} with no remote id", task.id());
         }
         YouViewResult result = client.checkRemoteStatusOf(task.remoteId().get());
-        processResult(task, result);
+        processRemoteCheckResult(task, result);
     }
 
-    private void processResult(Task task, YouViewResult result) {
+    private void processRemoteCheckResult(Task task, YouViewResult result) {
         Status status;
         if (result.isSuccess()) {
             status = parseStatusFromResult(result.result());

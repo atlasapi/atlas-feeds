@@ -8,9 +8,8 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
 
-import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
+import org.atlasapi.feeds.tvanytime.granular.GranularOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
-import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Film;
@@ -42,6 +41,8 @@ import com.metabroadcast.common.intl.Countries;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class NitroOnDemandLocationGeneratorTest {
+    
+    private static final String ON_DEMAND_IMI = "on_demand_imi";
 
     private static final Function<GenreType, String> GENRE_TO_HREF = new Function<GenreType, String>() {
         @Override
@@ -58,27 +59,18 @@ public class NitroOnDemandLocationGeneratorTest {
     };
 
     private IdGenerator idGenerator = new NitroIdGenerator(Hashing.md5());
-    private OnDemandHierarchyExpander hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
 
-    private final OnDemandLocationGenerator generator = new NitroOnDemandLocationGenerator(idGenerator, hierarchyExpander);
+    private final GranularOnDemandLocationGenerator generator = new NitroOnDemandLocationGenerator(idGenerator);
 
-    @Test
-    public void testOnDemandNotCreatedWhenNoEncoding() {
-        Film film = createNitroFilm();
-        
-        Set<Version> versions = Sets.newHashSet(new Version());
-        film.setVersions(versions);
-        
-        assertTrue("No element should be created when no encoding present", Iterables.isEmpty(generator.generate(film)));
-    }
-    
     @Test
     public void testNonPublisherSpecificFields() {
-        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) Iterables.getOnlyElement(generator.generate(createNitroFilm()));
+        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm());
+        
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
 
         assertEquals("P0DT1H30M0.000S", onDemand.getPublishedDuration().toString());
-        assertEquals("2012-07-03T01:00:00Z", onDemand.getStartOfAvailability().toString());
-        assertEquals("2013-07-17T01:00:00Z", onDemand.getEndOfAvailability().toString());
+        assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
+        assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
         assertTrue(onDemand.getFree().isValue());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
@@ -117,11 +109,12 @@ public class NitroOnDemandLocationGeneratorTest {
     @Test
     public void testNitroSpecificFields() {
         Film film = createNitroFilm();
-        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) Iterables.getOnlyElement(generator.generate(film));
-        
         ItemOnDemandHierarchy hierarchy = hierarchyFrom(film);
         String versionCrid = idGenerator.generateVersionCrid(hierarchy.item(), hierarchy.version());
         String onDemandImi = idGenerator.generateOnDemandImi(hierarchy.item(), hierarchy.version(), hierarchy.encoding(), hierarchy.location());
+        
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(hierarchy, onDemandImi);
+        
         
         assertEquals("http://bbc.couk/services/youview", onDemand.getServiceIDRef());
         assertEquals(versionCrid, onDemand.getProgram().getCrid());
@@ -140,7 +133,7 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals(true, audioLanguage.isSupplemental());
         assertEquals("dubbed", audioLanguage.getType());
     }
-
+    
     private ItemOnDemandHierarchy hierarchyFrom(Film film) {
         Version version = Iterables.getOnlyElement(film.getVersions());
         Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
@@ -162,7 +155,20 @@ public class NitroOnDemandLocationGeneratorTest {
 
     private Version createVersion() {
         Version version = new Version();
+        
+        Restriction restriction = new Restriction();
+        restriction.setRestricted(true);
+        
+        version.setManifestedAs(Sets.newHashSet(createEncoding()));
+        
+        version.setDuration(Duration.standardMinutes(90));
+        version.setCanonicalUri("http://nitro.bbc.co.uk/programmes/b00gszl0");
+        version.setRestriction(restriction);
+        
+        return version;
+    }
 
+    private Encoding createEncoding() {
         Encoding encoding = new Encoding();
         encoding.setVideoHorizontalSize(1280);
         encoding.setVideoVerticalSize(720);
@@ -171,6 +177,12 @@ public class NitroOnDemandLocationGeneratorTest {
         encoding.setAudioDescribed(true);
         encoding.setSigned(true);
 
+        encoding.addAvailableAt(createLocation());
+        
+        return encoding;
+    }
+
+    private Location createLocation() {
         Location location = new Location();
         
         Policy policy = new Policy();
@@ -179,17 +191,6 @@ public class NitroOnDemandLocationGeneratorTest {
         policy.setAvailabilityEnd(new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC));
         
         location.setPolicy(policy);
-        
-        encoding.addAvailableAt(location);
-        
-        Restriction restriction = new Restriction();
-        restriction.setRestricted(true);
-        
-        version.addManifestedAs(encoding);
-        version.setDuration(Duration.standardMinutes(90));
-        version.setCanonicalUri("http://nitro.bbc.co.uk/programmes/b00gszl0");
-        version.setRestriction(restriction);
-        
-        return version;
+        return location;
     }
 }

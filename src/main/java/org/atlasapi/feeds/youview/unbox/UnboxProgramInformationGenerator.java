@@ -1,6 +1,5 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
 
 import java.util.List;
@@ -10,6 +9,7 @@ import javax.xml.datatype.Duration;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.youview.AbstractProgramInformationGenerator;
+import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Item;
@@ -66,11 +66,8 @@ public class UnboxProgramInformationGenerator extends AbstractProgramInformation
             .put("18", "http://bbfc.org.uk/BBFCRatingCS/2002#18")
             .build();
     
-    private final TvAnytimeElementFactory elementFactory;
-    
-    public UnboxProgramInformationGenerator(IdGenerator idGenerator, TvAnytimeElementFactory elementFactory) {
-        super(idGenerator);
-        this.elementFactory = checkNotNull(elementFactory);
+    public UnboxProgramInformationGenerator(IdGenerator idGenerator, VersionHierarchyExpander hierarchyExpander) {
+        super(idGenerator, hierarchyExpander);
     }
     
     @Override
@@ -137,7 +134,7 @@ public class UnboxProgramInformationGenerator extends AbstractProgramInformation
     private Duration generateDuration(Version version) {
         Integer durationInSecs = version.getDuration();
         if (durationInSecs != null) {
-            return elementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
+            return TvAnytimeElementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
         } 
         return null;
     }

@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview.tasks.persistence;
 import org.atlasapi.feeds.youview.tasks.Action;
 import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
+import org.atlasapi.feeds.youview.tasks.TVAElementType;
 import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.media.entity.Publisher;
 
@@ -23,6 +24,8 @@ public class TaskTranslator {
     static final String REMOTE_ID_KEY = "remoteId";
     static final String REMOTE_STATUSES_KEY = "remoteStatuses";
     static final String STATUS_KEY = "status";
+    static final String ELEMENT_TYPE_KEY = "elementType";
+    static final String ELEMENT_ID_KEY = "elementId";
     
     public static DBObject toDBObject(Task task) {
         DBObject dbo = new BasicDBObject();
@@ -33,6 +36,8 @@ public class TaskTranslator {
         TranslatorUtils.from(dbo, CONTENT_KEY, task.content());
         TranslatorUtils.fromDateTime(dbo, UPLOAD_TIME_KEY, task.uploadTime().orNull());
         TranslatorUtils.from(dbo, REMOTE_ID_KEY, task.remoteId().orNull());
+        TranslatorUtils.from(dbo, ELEMENT_TYPE_KEY, task.elementType().name());
+        TranslatorUtils.from(dbo, ELEMENT_ID_KEY, task.elementId());
         TranslatorUtils.fromIterable(dbo, REMOTE_STATUSES_KEY, task.remoteResponses(), ResponseTranslator.toDBObject());
         TranslatorUtils.from(dbo, STATUS_KEY, task.status().name());
         
@@ -43,7 +48,6 @@ public class TaskTranslator {
         if (dbo == null) {
             return null;
         }
-        
         return Task.builder()
                 .withId(TranslatorUtils.toLong(dbo, MongoConstants.ID))
                 .withPublisher(Publisher.fromKey(TranslatorUtils.toString(dbo, PUBLISHER_KEY)).requireValue())
@@ -51,6 +55,8 @@ public class TaskTranslator {
                 .withUploadTime(TranslatorUtils.toDateTime(dbo, UPLOAD_TIME_KEY))
                 .withRemoteId(TranslatorUtils.toString(dbo, REMOTE_ID_KEY))
                 .withContent(TranslatorUtils.toString(dbo, CONTENT_KEY))
+                .withElementType(TVAElementType.valueOf(TranslatorUtils.toString(dbo, ELEMENT_TYPE_KEY)))
+                .withElementId(TranslatorUtils.toString(dbo, ELEMENT_ID_KEY))
                 .withRemoteResponses(TranslatorUtils.toIterable(dbo, REMOTE_STATUSES_KEY, ResponseTranslator.fromDBObject()).or(ImmutableList.<Response>of()))
                 .withStatus(Status.valueOf(TranslatorUtils.toString(dbo, STATUS_KEY)))
                 .build();

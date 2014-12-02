@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.math.BigInteger;
 import java.util.List;
 
@@ -7,8 +9,8 @@ import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.youview.AbstractOnDemandLocationGenerator;
-import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
+import org.atlasapi.feeds.tvanytime.granular.GranularOnDemandLocationGenerator;
+import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
@@ -16,16 +18,12 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
-
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
 import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.AudioLanguageType;
 import tva.metadata._2010.BitRateType;
+import tva.metadata._2010.CRIDRefType;
 import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.FlagType;
 import tva.metadata._2010.GenreType;
@@ -35,7 +33,12 @@ import tva.metadata._2010.SignLanguageType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
-public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGenerator {
+import com.google.common.base.Objects;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
+import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
+
+public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationGenerator {
 
     private static final String ASPECT_RATIO = "16:9";
 //    private static final String YOUVIEW_SERVICE = "http://bbc.co.uk/services/youview";
@@ -46,7 +49,6 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
     private static final Integer DEFAULT_BIT_RATE = 3200000;
     private static final Integer DEFAULT_HORIZONTAL_SIZE = 1280;
     private static final Integer DEFAULT_VERTICAL_SIZE = 720;
-    private static final Integer DEFAULT_DURATION = 30 * 60;
     private static final String BROADCAST_AUTHORITY = "www.bbc.co.uk";
     private static final String DEFAULT_ON_DEMAND_PIPS_ID = "b00gszl0.imi:bbc.co.uk/pips/65751802";
     private static final String AUDIO_DESCRIPTION_PURPOSE = "urn:tva:metadata:cs:AudioPurposeCS:2007:1";
@@ -54,25 +56,25 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
     private static final String ENGLISH_LANG = "en";
     private static final String BRITISH_SIGN_LANGUAGE = "bfi";
 
-    private final TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
-
-    public NitroOnDemandLocationGenerator(IdGenerator idGenerator, OnDemandHierarchyExpander hierarchyExpander) {
-        super(idGenerator, hierarchyExpander);
+    private final IdGenerator idGenerator;
+    
+    public NitroOnDemandLocationGenerator(IdGenerator idGenerator) {
+        this.idGenerator = checkNotNull(idGenerator);
     }
     
     @Override
-    public final OnDemandProgramType generate(String imi, Item item, Version version, Encoding encoding, Location location) {
+    public final OnDemandProgramType generate(ItemOnDemandHierarchy hierarchy, String imi) {
         
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
         
         // TODO is this a single service?
         onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
-        onDemand.setProgram(generateProgram(item, version));
+        onDemand.setProgram(generateProgram(hierarchy.item(), hierarchy.version()));
         onDemand.setInstanceMetadataId(imi);
-        onDemand.setInstanceDescription(generateInstanceDescription(item, encoding));
-        onDemand.setPublishedDuration(generatePublishedDuration(version));
-        onDemand.setStartOfAvailability(generateAvailabilityStart(location));
-        onDemand.setEndOfAvailability(generateAvailabilityEnd(location));
+        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.item(), hierarchy.encoding()));
+        onDemand.setPublishedDuration(generatePublishedDuration(hierarchy.version()));
+        onDemand.setStartOfAvailability(generateAvailabilityStart(hierarchy.location()));
+        onDemand.setEndOfAvailability(generateAvailabilityEnd(hierarchy.location()));
         onDemand.setFree(generateFree());
 
         return onDemand;
@@ -177,16 +179,22 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
 
     private Duration generatePublishedDuration(Version version) {
         Integer durationInSecs = version.getDuration();
-        return elementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
+        return TvAnytimeElementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
     }
 
     private XMLGregorianCalendar generateAvailabilityStart(Location location) {
         Policy policy = location.getPolicy();
-        return elementFactory.gregorianCalendar(policy.getAvailabilityStart());
+        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart());
     }
 
     private XMLGregorianCalendar generateAvailabilityEnd(Location location) {
         Policy policy = location.getPolicy();
-        return elementFactory.gregorianCalendar(policy.getAvailabilityEnd());
+        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityEnd());
+    }
+    
+    private CRIDRefType generateProgram(Item item, Version version) {
+        CRIDRefType program = new CRIDRefType();
+        program.setCrid(idGenerator.generateVersionCrid(item, version));
+        return program;
     }
 }
