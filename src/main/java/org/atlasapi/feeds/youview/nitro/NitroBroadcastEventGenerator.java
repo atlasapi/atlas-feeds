@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.Set;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
@@ -8,10 +9,15 @@ import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.tvanytime.granular.GranularBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
+
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
@@ -32,9 +38,9 @@ public class NitroBroadcastEventGenerator implements GranularBroadcastEventGener
     private static final String BROADCAST_CRID = "crid://fp.bbc.co.uk/SILG5";
 //    private static final String SERVICE_ID_PREFIX = "http://bbc.co.uk/services/";
     private static final String DEV_SERVICE_ID_PREFIX = "http://bbc.couk/services/";
-    private static final String PROGRAM_URL = "dvb://233A..A020;A876";
-    
     private final IdGenerator idGenerator;
+    private static final String TERRESTRIAL_EVENT_LOCATOR_NS = "bbc:terrestrial_event_locator:teleview";
+    private static final String TERRESTRIAL_PROGRAMME_CRID_NS = "bbc:terrestrial_programme_crid:teleview";
 
     public NitroBroadcastEventGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
@@ -46,8 +52,13 @@ public class NitroBroadcastEventGenerator implements GranularBroadcastEventGener
         
         broadcastEvent.setServiceIDRef(serviceIdRefFrom(hierarchy.youViewServiceId()));
         broadcastEvent.setProgram(createProgram(hierarchy.item(), hierarchy.version()));
-        // TODO need to update nitro - ingest id from broadcast - type = "terrestrial_event_locator"
-        broadcastEvent.setProgramURL(PROGRAM_URL);
+
+        Optional<Alias> terrestrialEventLocator = terrestrialEventLocator(hierarchy.broadcast());
+
+        if (terrestrialEventLocator.isPresent()) {
+            broadcastEvent.setProgramURL(terrestrialEventLocator.get().getValue());
+        }
+
         broadcastEvent.setInstanceMetadataId(imi);
         broadcastEvent.setInstanceDescription(instanceDescriptionFrom(hierarchy.broadcast()));
         broadcastEvent.setPublishedStartTime(startTimeFrom(hierarchy.broadcast()));
@@ -58,6 +69,19 @@ public class NitroBroadcastEventGenerator implements GranularBroadcastEventGener
         return broadcastEvent;
     }
 
+    private Optional<Alias> terrestrialEventLocator(Broadcast broadcast) {
+        return aliasWithNamespace(broadcast.getAliases(), TERRESTRIAL_EVENT_LOCATOR_NS);
+    }
+
+    private Optional<Alias> aliasWithNamespace(Set<Alias> aliases, final String aliasNamespace) {
+        return Iterables.tryFind(aliases, new Predicate<Alias>() {
+            @Override
+            public boolean apply(Alias input) {
+                return aliasNamespace.equals(input.getNamespace());
+            }
+        });
+    }
+
     private String serviceIdRefFrom(String youViewServiceId) {
 //        return SERVICE_ID_PREFIX + youViewServiceId;
         return DEV_SERVICE_ID_PREFIX + youViewServiceId;
@@ -66,7 +90,7 @@ public class NitroBroadcastEventGenerator implements GranularBroadcastEventGener
     private InstanceDescriptionType instanceDescriptionFrom(Broadcast broadcast) {
         InstanceDescriptionType description = new InstanceDescriptionType();
         
-        description.getOtherIdentifier().add(createTerrestrialProgrammeCridIdentifier());
+        description.getOtherIdentifier().add(createTerrestrialProgrammeCridIdentifier(broadcast));
         description.getOtherIdentifier().add(createBroadcastPidIdentifier(broadcast));
         description.setAVAttributes(createAVAttributes());
         
@@ -101,11 +125,15 @@ public class NitroBroadcastEventGenerator implements GranularBroadcastEventGener
         return audioAttributes;
     }
 
-    private UniqueIDType createTerrestrialProgrammeCridIdentifier() {
+    private UniqueIDType createTerrestrialProgrammeCridIdentifier(Broadcast broadcast) {
         UniqueIDType otherId = new UniqueIDType();
         otherId.setAuthority(BROADCAST_AUTHORITY);
-        // TODO this will need ingesting from NITRO - broadcast id, type = "terrestrial_programme_crid"
-        otherId.setValue(BROADCAST_CRID);
+
+        Optional<Alias> alias = aliasWithNamespace(broadcast.getAliases(), TERRESTRIAL_PROGRAMME_CRID_NS);
+        if (alias.isPresent()) {
+            otherId.setValue(alias.get().getValue());
+        }
+
         return otherId;
     }
 

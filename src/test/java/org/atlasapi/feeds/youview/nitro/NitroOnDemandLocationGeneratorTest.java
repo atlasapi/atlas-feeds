@@ -100,9 +100,6 @@ public class NitroOnDemandLocationGeneratorTest {
 
         assertEquals(BigInteger.valueOf(3308), avAttributes.getBitRate().getValue());
         assertTrue(avAttributes.getBitRate().isVariable());
-        
-        UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
-        assertEquals("b00gszl0.imi:bbc.co.uk/pips/65751802", otherId.getValue());
     }
     
     @Test
@@ -120,8 +117,6 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals(onDemandImi, onDemand.getInstanceMetadataId());
 
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
-        UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
-        assertEquals("www.bbc.co.uk", otherId.getAuthority());
 
         AVAttributesType avAttributes = instanceDesc.getAVAttributes();
         List<AudioAttributesType> audioAttributes = avAttributes.getAudioAttributes();
