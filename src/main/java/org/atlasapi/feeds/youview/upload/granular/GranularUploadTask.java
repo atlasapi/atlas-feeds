@@ -101,7 +101,7 @@ public abstract class GranularUploadTask extends ScheduledTask {
                     expandAndUpload(content, updatedSince);
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch (Exception e) {
-                    log.error("error on upload for " + content.getCanonicalUri() + " : " + e);
+                    log.error("error on upload for " + content.getCanonicalUri(), e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
                 }
                 return shouldContinue();
@@ -160,7 +160,7 @@ public abstract class GranularUploadTask extends ScheduledTask {
                     expandHierarchiesAndSendDeletes(content);
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch (Exception e) {
-                    log.error("error on deletion for " + content.getCanonicalUri() + " : " + e);
+                    log.error("error on deletion for " + content.getCanonicalUri(), e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
                 }
                 return shouldContinue();

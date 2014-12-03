@@ -2,7 +2,6 @@
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Iterator;
 import java.util.List;
 
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
@@ -11,7 +10,6 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +86,7 @@ public abstract class UploadTask extends ScheduledTask {
                     remoteClient.upload(content);
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch (Exception e) {
-                    log.error("error on upload for " + content.getCanonicalUri() + " : " + e);
+                    log.error("error on upload for " + content.getCanonicalUri(), e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
                 }
                 return shouldContinue();
@@ -112,7 +110,7 @@ public abstract class UploadTask extends ScheduledTask {
                     remoteClient.sendDeleteFor(content);
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch (Exception e) {
-                    log.error("error on deletion for " + content.getCanonicalUri() + " : " + e);
+                    log.error("error on deletion for " + content.getCanonicalUri(), e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
                 }
                 return shouldContinue();
