@@ -24,6 +24,7 @@ import org.atlasapi.feeds.youview.resolution.UpdatedContentResolver;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.feeds.youview.revocation.MongoRevokedContentStore;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
+import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
@@ -107,6 +108,7 @@ public class YouViewUploadModule {
     private @Autowired BroadcastHierarchyExpander broadcastHierarchyExpander;
     private @Autowired OnDemandHierarchyExpander onDemandHierarchyExpander;
     private @Autowired ContentHierarchyExpander contentHierarchyExpander;
+    private @Autowired FeedStatisticsStore feedStatsStore;
     
     private @Value("${youview.upload.validation}") String performValidation;
 
@@ -143,12 +145,12 @@ public class YouViewUploadModule {
     }
     
     private ScheduledTask scheduleBootstrapTask(Publisher publisher) throws JAXBException, SAXException {
-        return new BootstrapUploadTask(youViewUploadClient(), lastUpdatedStore(), publisher, nitroContentResolver(publisher))
+        return new BootstrapUploadTask(youViewUploadClient(), lastUpdatedStore(), publisher, nitroContentResolver(publisher), feedStatsStore, clock)
                     .withName(String.format(TASK_NAME_PATTERN, "Bootstrap", publisher.title()));
     }
     
     private ScheduledTask scheduleDeltaTask(Publisher publisher) throws JAXBException, SAXException {
-        return new DeltaUploadTask(youViewUploadClient(), lastUpdatedStore(), publisher, nitroContentResolver(publisher))
+        return new DeltaUploadTask(youViewUploadClient(), lastUpdatedStore(), publisher, nitroContentResolver(publisher), feedStatsStore)
                     .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
     
@@ -159,7 +161,9 @@ public class YouViewUploadModule {
                 publisher, 
                 nitroContentResolver(publisher), 
                 contentHierarchyExpander, 
-                nitroIdGenerator
+                nitroIdGenerator,
+                feedStatsStore,
+                clock
         )
         .withName(String.format(TASK_NAME_PATTERN, "Bootstrap", publisher.title()));
     }
@@ -171,7 +175,8 @@ public class YouViewUploadModule {
                 publisher, 
                 nitroContentResolver(publisher), 
                 contentHierarchyExpander, 
-                nitroIdGenerator
+                nitroIdGenerator,
+                feedStatsStore
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
