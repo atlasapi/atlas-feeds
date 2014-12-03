@@ -28,6 +28,7 @@ import org.mockito.Mockito;
 
 import tva.metadata._2010.BroadcastEventType;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.time.Clock;
@@ -40,7 +41,9 @@ public class NitroBroadcastEventGeneratorTest {
     private static final String YOUVIEW_SERVICE_ID = "bbc_one_south_2_2871";
     private static final String BROADCAST_IMI = "broadcast_imi";
     private static final String VERSION_CRID = "version_crid";
-    
+    private static final String TERRESTRIAL_EVENT_LOCATOR = "dvb://233A..4600;938C";
+    private static final String TERRESTRIAL_PROGRAMME_CRID = "crid://fp.bbc.co.uk/241B1S";
+
     private DateTime time = new DateTime(2012, 1, 1, 0, 0, 0, 0).withZone(DateTimeZone.UTC);
     private Clock clock = new TimeMachine(time);
     private IdGenerator idGenerator = Mockito.mock(IdGenerator.class);
@@ -80,10 +83,10 @@ public class NitroBroadcastEventGeneratorTest {
         // N.B. temporarily changed from 'bbc.co.uk' to 'bbc.couk' for testing
         assertEquals("http://bbc.couk/services/" + YOUVIEW_SERVICE_ID, generated.getServiceIDRef());
         assertEquals(VERSION_CRID, generated.getProgram().getCrid());
-        assertEquals("dvb://233A..A020;A876", generated.getProgramURL());
+        assertEquals(TERRESTRIAL_EVENT_LOCATOR, generated.getProgramURL());
         assertEquals(BROADCAST_IMI, generated.getInstanceMetadataId());
         assertEquals("pcrid.dmol.co.uk", generated.getInstanceDescription().getOtherIdentifier().get(0).getAuthority());
-        assertEquals("crid://fp.bbc.co.uk/SILG5", generated.getInstanceDescription().getOtherIdentifier().get(0).getValue());
+        assertEquals(TERRESTRIAL_PROGRAMME_CRID, generated.getInstanceDescription().getOtherIdentifier().get(0).getValue());
         assertEquals("2012-01-01T00:00:00Z", generated.getPublishedStartTime().toString());
         assertEquals("p123456", generated.getInstanceDescription().getOtherIdentifier().get(1).getValue());
         assertEquals("bpid.bbc.co.uk", generated.getInstanceDescription().getOtherIdentifier().get(1).getAuthority());
@@ -131,7 +134,15 @@ public class NitroBroadcastEventGeneratorTest {
         Broadcast broadcast = new Broadcast("http://www.bbc.co.uk/services/bbcone/south_west", clock.now(), clock.now().plusMinutes(30));
         broadcast.setCanonicalUri("I'm a broadcast");
         broadcast.withId("bbc:p123456");
+        broadcast.setAliases(aliases());
         return broadcast;
+    }
+
+    private ImmutableList<Alias> aliases() {
+        return ImmutableList.of(
+                new Alias("bbc:terrestrial_event_locator:teleview", TERRESTRIAL_EVENT_LOCATOR),
+                new Alias("bbc:terrestrial_programme_crid:teleview", TERRESTRIAL_PROGRAMME_CRID)
+        );
     }
 
 }
