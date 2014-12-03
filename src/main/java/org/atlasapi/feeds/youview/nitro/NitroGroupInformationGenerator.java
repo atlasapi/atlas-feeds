@@ -43,6 +43,7 @@ import tva.mpeg7._2008.ExtendedLanguageType;
 import tva.mpeg7._2008.MediaLocatorType;
 import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
+import tva.mpeg7._2008.TextualType;
 import tva.mpeg7._2008.TitleType;
 import tva.mpeg7._2008.UniqueIDType;
 
@@ -295,6 +296,12 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         relatedMaterial.setFormat(generateFormat());
         relatedMaterial.setMediaLocator(generateMediaLocator(content));
         relatedMaterial.setContentProperties(generateContentProperties(content));
+
+        if (content instanceof Episode) {
+            TextualType textualType = new TextualType();
+            textualType.setValue(content.getTitle());
+            relatedMaterial.getPromotionalText().add(textualType);
+        }
         
         return Optional.<RelatedMaterialType>of(relatedMaterial);
     }

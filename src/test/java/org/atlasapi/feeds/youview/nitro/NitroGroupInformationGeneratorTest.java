@@ -39,12 +39,14 @@ import tva.metadata._2010.CreditsItemType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.GroupInformationType;
 import tva.metadata._2010.ProgramGroupTypeType;
+import tva.metadata._2010.RelatedMaterialType;
 import tva.metadata._2010.SynopsisLengthType;
 import tva.metadata._2010.SynopsisType;
 import tva.metadata.extended._2010.ExtendedRelatedMaterialType;
 import tva.mpeg7._2008.ExtendedLanguageType;
 import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
+import tva.mpeg7._2008.TextualType;
 import tva.mpeg7._2008.TitleType;
 import tva.mpeg7._2008.UniqueIDType;
 
@@ -310,7 +312,8 @@ public class NitroGroupInformationGeneratorTest {
 
     @Test
     public void testEpisodeGroupInformationGeneration() {
-        GroupInformationType groupInfo = generator.generate(createEpisode(), Optional.of(createSeries()), Optional.of(createBrand()));
+        Episode episode = createEpisode();
+        GroupInformationType groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
 
         assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b03dfd6d", groupInfo.getGroupId());
 
@@ -326,7 +329,10 @@ public class NitroGroupInformationGeneratorTest {
         assertEquals("programConcept", groupType.getValue());
         
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        
+        RelatedMaterialType relatedMaterial = Iterables.getOnlyElement(desc.getRelatedMaterial());
+        TextualType textualType = Iterables.getOnlyElement(relatedMaterial.getPromotionalText());
+        assertEquals(episode.getTitle(), textualType.getValue());
+
         TitleType title = Iterables.getOnlyElement(desc.getTitle());
         assertEquals("Episode 1", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
