@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
+import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
@@ -34,6 +35,9 @@ public class YouViewUploadTaskTest {
     private YouViewContentResolver contentResolver = Mockito.mock(YouViewContentResolver.class);
     private Clock clock = new TimeMachine();
     private YouViewService youViewClient = Mockito.mock(YouViewService.class);
+    private FeedStatisticsStore feedStatsStore = Mockito.mock(FeedStatisticsStore.class);
+    
+    // TODO test feed stats store usage
     
     @Before
     public void setup() {
@@ -46,7 +50,7 @@ public class YouViewUploadTaskTest {
         
         when(lastUpdatedStore.getLastUpdated(PUBLISHER)).thenReturn(Optional.<DateTime>absent());
         
-        DeltaUploadTask task = new DeltaUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver);
+        DeltaUploadTask task = new DeltaUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver, feedStatsStore);
         task.run();
         
         verifyZeroInteractions(youViewClient);
@@ -59,7 +63,7 @@ public class YouViewUploadTaskTest {
         when(lastUpdatedStore.getLastUpdated(PUBLISHER)).thenReturn(Optional.<DateTime>absent());
         when(lastUpdatedStore.getLastUpdated(ANOTHER_PUBLISHER)).thenReturn(Optional.of(clock.now()));
         
-        new DeltaUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver).run();
+        new DeltaUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver, feedStatsStore).run();
         
         verifyZeroInteractions(youViewClient);
     }
@@ -69,7 +73,7 @@ public class YouViewUploadTaskTest {
         
         when(lastUpdatedStore.getLastUpdated(PUBLISHER)).thenReturn(Optional.<DateTime>absent());
         
-        new BootstrapUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver).run();
+        new BootstrapUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver, feedStatsStore, clock).run();
         
         verify(lastUpdatedStore).setLastUpdated(any(DateTime.class), eq(PUBLISHER));
         verifyNoMoreInteractions(lastUpdatedStore);

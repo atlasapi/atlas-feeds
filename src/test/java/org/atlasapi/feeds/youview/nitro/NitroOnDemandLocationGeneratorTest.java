@@ -175,7 +175,6 @@ public class NitroOnDemandLocationGeneratorTest {
         encoding.setBitRate(3308);
         encoding.setAudioDescribed(true);
         encoding.setSigned(true);
-
         encoding.addAvailableAt(createLocation());
         
         return encoding;

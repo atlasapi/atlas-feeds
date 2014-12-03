@@ -41,7 +41,6 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
 
     private static final String YOUVIEW_UNRATED_PARENTAL_RATING = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
     private static final String YOUVIEW_WARNINGS_PARENTAL_RATING = "urn:dtg:metadata:cs:DTGContentWarningCS:2011:W";
-    
     private static final String LANGUAGE = "en";
 
     private static final Predicate<Version> VERSION_WITH_RESTRICTION = new Predicate<Version>() {
