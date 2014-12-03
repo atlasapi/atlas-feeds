@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview.resolution;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.joda.time.DateTimeConstants.NOVEMBER;
+import static org.joda.time.DateTimeConstants.DECEMBER;
 
 import java.util.Iterator;
 
@@ -19,7 +19,7 @@ public class UpdatedContentResolver implements YouViewContentResolver {
 
     @VisibleForTesting
     // TODO update this to point back to the genuine start of time once testing is complete
-    static final DateTime START_OF_TIME = new DateTime(2014, NOVEMBER, 28, 0, 0, 0, 0, DateTimeZones.UTC);
+    static final DateTime START_OF_TIME = new DateTime(2014, DECEMBER, 2, 0, 0, 0, 0, DateTimeZones.UTC);
     
     private final LastUpdatedContentFinder contentFinder;
     private final Publisher publisher;
