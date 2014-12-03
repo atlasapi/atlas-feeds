@@ -8,12 +8,14 @@ import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Policy;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Version;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
 
@@ -75,11 +77,31 @@ public class OnDemandHierarchyExpander {
 
     private Iterable<ItemOnDemandHierarchy> toOnDemandHierarchy(final Item item, final Version version, 
             final Encoding encoding, Iterable<Location> locations) {
-        return Iterables.transform(locations, new Function<Location, ItemOnDemandHierarchy>() {
+        return FluentIterable.from(locations)
+                .filter(filterNonYouViewIPlayerLocations())
+                .transform(toOnDemandHierarchy(item, version, encoding));
+    }
+
+    private static Predicate<Location> filterNonYouViewIPlayerLocations() {
+        return new Predicate<Location>() {
+            @Override
+            public boolean apply(Location input) {
+                Policy policy = input.getPolicy();
+                if (policy == null) {
+                    return false;
+                }
+                return policy.getPlatform() != null && Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform());
+            }
+        };
+    }
+
+    private Function<Location, ItemOnDemandHierarchy> toOnDemandHierarchy(final Item item,
+            final Version version, final Encoding encoding) {
+        return new Function<Location, ItemOnDemandHierarchy>() {
             @Override
             public ItemOnDemandHierarchy apply(Location input) {
                 return new ItemOnDemandHierarchy(item, version, encoding, input);
             }
-        });
+        };
     }
 }
