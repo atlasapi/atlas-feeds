@@ -49,7 +49,6 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private static final Integer DEFAULT_BIT_RATE = 3200000;
     private static final Integer DEFAULT_HORIZONTAL_SIZE = 1280;
     private static final Integer DEFAULT_VERTICAL_SIZE = 720;
-    private static final Integer DEFAULT_DURATION = 30 * 60;
     private static final String BROADCAST_AUTHORITY = "www.bbc.co.uk";
     private static final String DEFAULT_ON_DEMAND_PIPS_ID = "b00gszl0.imi:bbc.co.uk/pips/65751802";
     private static final String LANGUAGE = "en";
@@ -94,7 +93,6 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         
         instanceDescription.getGenre().addAll(generateGenres());
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
-        instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
 
         if (encoding.getSigned()) {
             SignLanguageType signLanguageType = new SignLanguageType();
