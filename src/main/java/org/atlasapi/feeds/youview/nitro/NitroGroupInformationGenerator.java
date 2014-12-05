@@ -69,6 +69,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private static final String GROUP_TYPE_SERIES = "series";
     private static final String GROUP_TYPE_SHOW = "show";
     private static final String LANGUAGE_TYPE_ORIGINAL = "original";
+    private static final String LANGUAGE = "en";
     private static final String GENRE_TYPE_MAIN = "main";
     private static final String GENRE_TYPE_OTHER = "other";
     private static final String TITLE_TYPE_MAIN = "main";
@@ -258,8 +259,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
 
-        String language = item == null ? getLanguageFor(content) : getLanguageFor(item);
-        basicDescription.getLanguage().addAll(generateLanguage(language));
+        basicDescription.getLanguage().addAll(generateLanguage(getLanguageFor(content)));
 
         basicDescription.setCreditsList(generateCreditsList(content));
         Optional<RelatedMaterialType> relatedMaterial = Optional.absent();
