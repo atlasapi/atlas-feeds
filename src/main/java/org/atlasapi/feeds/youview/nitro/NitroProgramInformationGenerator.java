@@ -12,7 +12,6 @@ import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.tvanytime.granular.GranularProgramInformationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Restriction;
 import org.atlasapi.media.entity.Version;
@@ -52,8 +51,6 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
         }
     };
     
-    private static final Integer DEFAULT_DURATION = 30 * 60;
-    
     private final IdGenerator idGenerator;
     
     public NitroProgramInformationGenerator(IdGenerator idGenerator) {
@@ -68,8 +65,8 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
         progInfo.setBasicDescription(generateBasicDescription(hierarchy.item(), hierarchy.version()));
         progInfo.setDerivedFrom(generateDerivedFromElem(hierarchy.item()));
         progInfo.setLang(LANGUAGE);
-
-        Optional<UniqueIDType> bbcVersionPid = versionPidOtherId(hierarchy.item());
+        
+        Optional<UniqueIDType> bbcVersionPid = versionPidOtherId(hierarchy.version());
         if (bbcVersionPid.isPresent()) {
             progInfo.getOtherIdentifier().add(bbcVersionPid.get());
         }
@@ -77,11 +74,7 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
         return progInfo;
     }
     
-    private Optional<UniqueIDType> versionPidOtherId(Item item) {
-        Version version = Iterables.getFirst(item.getVersions(), null);
-        if (version == null) {
-            return Optional.absent();
-        }
+    private Optional<UniqueIDType> versionPidOtherId(Version version) {
         Matcher matcher = BBC_VERSION_PID_URI_PATTERN.matcher(version.getCanonicalUri());
         if (!matcher.find()) {
             return Optional.absent();
@@ -149,20 +142,9 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
     private Duration generateDuration(Version version) {
         Integer durationInSecs = version.getDuration();
         if (durationInSecs == null) {
-            durationInSecs = durationFromFirstBroadcast(version);
+            return null;
         } 
         return TvAnytimeElementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
-    }
-
-    // TODO this is a workaround until versions are ingested correctly from BBC Nitro
-    private Integer durationFromFirstBroadcast(Version version) {
-        Broadcast broadcast = Iterables.getFirst(version.getBroadcasts(), null);
-        if (broadcast == null) {
-            // this needs to go away
-            return DEFAULT_DURATION;
-//            throw new RuntimeException("no broadcasts on version " + version.getCanonicalUri());
-        }
-        return broadcast.getBroadcastDuration();
     }
 
     private Optional<TVATimeType> generateProductionDate(Item item) {
