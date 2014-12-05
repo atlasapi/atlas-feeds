@@ -31,6 +31,7 @@ import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.SignLanguageType;
 import tva.metadata._2010.VideoAttributesType;
+import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
@@ -53,6 +54,8 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private static final String ENGLISH_LANG = "en";
     private static final String BRITISH_SIGN_LANGUAGE = "bfi";
     private static final String LANGUAGE = "en";
+    private static final String BROADCAST_AUTHORITY = "www.bbc.co.uk";
+    private static final String DEFAULT_ON_DEMAND_PIPS_ID = "b00gszl0.imi:bbc.co.uk/pips/65751802";
 
     private final IdGenerator idGenerator;
     
@@ -96,8 +99,19 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
             signLanguageType.setValue(BRITISH_SIGN_LANGUAGE);
             instanceDescription.getSignLanguage().add(signLanguageType);
         }
+
+        instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
         
         return instanceDescription;
+    }
+
+    private UniqueIDType createIdentifierFromPipsIdentifier() {
+        UniqueIDType otherId = new UniqueIDType();
+        otherId.setAuthority(BROADCAST_AUTHORITY);
+        // TODO waiting on feedback as to whether this is needed - it's absence is causing issues, so
+        // leaving it in for now
+        otherId.setValue(DEFAULT_ON_DEMAND_PIPS_ID);
+        return otherId;
     }
 
     private AVAttributesType generateAvAttributes(Encoding encoding) {
