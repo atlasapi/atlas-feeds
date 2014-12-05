@@ -16,6 +16,7 @@ import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.feeds.youview.tasks.TVAElementType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
@@ -23,6 +24,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +33,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
+import com.metabroadcast.common.time.Clock;
 
 public abstract class GranularUploadTask extends ScheduledTask {
 
@@ -68,14 +71,19 @@ public abstract class GranularUploadTask extends ScheduledTask {
     private final Publisher publisher;
     private final ContentHierarchyExpander hierarchyExpander;
     private final IdGenerator idGenerator;
+    private final FeedStatisticsStore statsStore;
+    private final Clock clock;
     
     public GranularUploadTask(GranularYouViewService youViewService, YouViewLastUpdatedStore lastUpdatedStore, 
-            Publisher publisher, ContentHierarchyExpander hierarchyExpander, IdGenerator idGenerator) {
+            Publisher publisher, ContentHierarchyExpander hierarchyExpander, IdGenerator idGenerator,
+            FeedStatisticsStore statsStore, Clock clock) {
         this.youViewService = checkNotNull(youViewService);
         this.lastUpdatedStore = checkNotNull(lastUpdatedStore);
         this.publisher = checkNotNull(publisher);
         this.hierarchyExpander = checkNotNull(hierarchyExpander);
         this.idGenerator = checkNotNull(idGenerator);
+        this.statsStore = checkNotNull(statsStore);
+        this.clock = checkNotNull(clock);
     }
     
     public Optional<DateTime> getLastUpdatedTime() {
@@ -201,5 +209,14 @@ public abstract class GranularUploadTask extends ScheduledTask {
         }
         // TODO this is crude
         return TVAElementType.ITEM;
+    }
+
+    // TODO this should use the transaction upload time
+    public void updateFeedStatistics(int queueSize, Content content) {
+        statsStore.updateFeedStatistics(publisher, queueSize, calculateLatency(clock.now(), content));
+    }
+    
+    private Duration calculateLatency(final DateTime uploadTime, Content content) {
+        return new Duration(uploadTime, content.getLastUpdated());
     }
 }

@@ -50,7 +50,7 @@ public class YouViewUploadTaskTest {
         
         when(lastUpdatedStore.getLastUpdated(PUBLISHER)).thenReturn(Optional.<DateTime>absent());
         
-        DeltaUploadTask task = new DeltaUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver, feedStatsStore);
+        DeltaUploadTask task = new DeltaUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver, feedStatsStore, clock);
         task.run();
         
         verifyZeroInteractions(youViewClient);
@@ -63,7 +63,7 @@ public class YouViewUploadTaskTest {
         when(lastUpdatedStore.getLastUpdated(PUBLISHER)).thenReturn(Optional.<DateTime>absent());
         when(lastUpdatedStore.getLastUpdated(ANOTHER_PUBLISHER)).thenReturn(Optional.of(clock.now()));
         
-        new DeltaUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver, feedStatsStore).run();
+        new DeltaUploadTask(youViewClient, lastUpdatedStore, PUBLISHER, contentResolver, feedStatsStore, clock).run();
         
         verifyZeroInteractions(youViewClient);
     }

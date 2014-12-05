@@ -26,7 +26,6 @@ import org.springframework.context.annotation.Import;
 
 import com.google.common.collect.ImmutableMap;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
-import com.metabroadcast.common.time.SystemClock;
 
 @Configuration
 @Import( { NitroTVAnytimeModule.class, LoveFilmTVAnytimeModule.class, UnboxTVAnytimeModule.class } )
@@ -44,7 +43,7 @@ public class TVAnytimeFeedsModule {
     
     @Bean 
     public FeedStatisticsStore feedStatsStore() {
-        return new MongoFeedStatisticsStore(mongo, new SystemClock());
+        return new MongoFeedStatisticsStore(mongo);
     }
     
     @Bean 

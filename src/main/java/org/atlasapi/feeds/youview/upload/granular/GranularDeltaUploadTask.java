@@ -17,22 +17,19 @@ import org.joda.time.DateTime;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.metabroadcast.common.scheduling.UpdateProgress;
+import com.metabroadcast.common.time.Clock;
 
 public final class GranularDeltaUploadTask extends GranularUploadTask {
 
     private static final String DELTA_STATUS_PATTERN = "Updates: processed %d of %d, %d failures. Deletes: processed %d of %d total, %d failures.";
     
     private final YouViewContentResolver contentResolver;
-    private final FeedStatisticsStore statsStore;
-    private final Publisher publisher;
     
     public GranularDeltaUploadTask(GranularYouViewService youViewService, YouViewLastUpdatedStore lastUpdatedStore, 
             Publisher publisher, YouViewContentResolver contentResolver, ContentHierarchyExpander hierarchyExpander, 
-            IdGenerator idGenerator, FeedStatisticsStore statsStore) {
-        super(youViewService, lastUpdatedStore, publisher, hierarchyExpander, idGenerator);
+            IdGenerator idGenerator, FeedStatisticsStore statsStore, Clock clock) {
+        super(youViewService, lastUpdatedStore, publisher, hierarchyExpander, idGenerator, statsStore, clock);
         this.contentResolver = checkNotNull(contentResolver);
-        this.statsStore = checkNotNull(statsStore);
-        this.publisher = checkNotNull(publisher);
     }
     
     @Override
@@ -61,7 +58,6 @@ public final class GranularDeltaUploadTask extends GranularUploadTask {
         int deletesSize = deleted.size();
         int updatesSize = notDeleted.size();
         int remainingCount = deletesSize + updatesSize;
-        updateQueueSizeMetric(remainingCount);
         UpdateProgress deletionProgress = UpdateProgress.START;
         
         GranularYouViewContentProcessor<UpdateProgress> uploadProcessor = uploadProcessor(lastUpdated);
@@ -69,7 +65,7 @@ public final class GranularDeltaUploadTask extends GranularUploadTask {
         
         for (Content content : notDeleted) {
             uploadProcessor.process(content);
-            updateQueueSizeMetric(remainingCount--);
+            updateFeedStatistics(remainingCount--, content);
             reportStatus(createDeltaStatus(uploadProcessor.getResult(), deletionProcessor.getResult(), updatesSize, deletesSize));
         }
         
@@ -77,16 +73,12 @@ public final class GranularDeltaUploadTask extends GranularUploadTask {
 
         for (Content toBeDeleted : orderedForDeletion) {
             deletionProcessor.process(toBeDeleted);
-            updateQueueSizeMetric(remainingCount--);
+            updateFeedStatistics(remainingCount--, toBeDeleted);
             reportStatus(createDeltaStatus(uploadProcessor.getResult(), deletionProcessor.getResult(), updatesSize, deletesSize));
         }
         
         setLastUpdatedTime(startOfTask.get());
         reportStatus("Complete. " + createDeltaStatus(uploadProcessor.getResult(), deletionProgress, updatesSize, deletesSize));
-    }
-    
-    private void updateQueueSizeMetric(int queueSize) {
-        statsStore.updateQueueSize(publisher, queueSize);
     }
     
     private String createDeltaStatus(UpdateProgress updateProgress, UpdateProgress deletionProgress, int updatesSize, int deletesSize) {
