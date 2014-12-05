@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.statistics.simple;
 
-import java.util.Date;
-
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.Duration;
 
@@ -13,7 +11,6 @@ public class FeedStatistics {
     private Publisher publisher;
     private int queueSize;
     private Duration updateLatency;
-    private Date lastOutage;
     
     public FeedStatistics() {
     }
@@ -42,21 +39,12 @@ public class FeedStatistics {
         this.updateLatency = updateLatency;
     }
     
-    public Date lastOutage() {
-        return lastOutage;
-    }
-    
-    public void setLastOutage(Date lastOutage) {
-        this.lastOutage = lastOutage;
-    }
-    
     @Override
     public String toString() {
         return Objects.toStringHelper(FeedStatistics.class)
                 .add("publisher", publisher)
                 .add("queueSize", queueSize)
                 .add("updateLatency", updateLatency)
-                .add("lastOutage", lastOutage)
                 .toString();
     }
     

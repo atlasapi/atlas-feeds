@@ -150,7 +150,7 @@ public class YouViewUploadModule {
     }
 
     private ScheduledTask scheduleDeltaTask(Publisher publisher) throws JAXBException, SAXException {
-        return new DeltaUploadTask(youViewUploadClient(), lastUpdatedStore(), publisher, nitroContentResolver(publisher), feedStatsStore)
+        return new DeltaUploadTask(youViewUploadClient(), lastUpdatedStore(), publisher, nitroContentResolver(publisher), feedStatsStore, clock)
                     .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
     
@@ -176,7 +176,8 @@ public class YouViewUploadModule {
                 nitroContentResolver(publisher), 
                 contentHierarchyExpander, 
                 nitroIdGenerator,
-                feedStatsStore
+                feedStatsStore,
+                clock
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
