@@ -38,7 +38,7 @@ import tva.mpeg7._2008.UniqueIDType;
 
 public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGenerator {
 
-    private static final String ASPECT_RATIO = "16:9";
+    private static final String DEFAULT_ASPECT_RATIO = "16:9";
 //    private static final String YOUVIEW_SERVICE = "http://bbc.co.uk/services/youview";
     private static final String DEV_YOUVIEW_SERVICE = "http://bbc.couk/services/youview";
     private static final String MIX_TYPE_STEREO = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
@@ -157,7 +157,7 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
                 .or(DEFAULT_VERTICAL_SIZE));
         
         AspectRatioType aspectRatio = new AspectRatioType();
-        aspectRatio.setValue(Objects.firstNonNull(encoding.getVideoAspectRatio(), ASPECT_RATIO));
+        aspectRatio.setValue(Objects.firstNonNull(encoding.getVideoAspectRatio(), DEFAULT_ASPECT_RATIO));
         
         videoAttributes.getAspectRatio().add(aspectRatio);
         
@@ -165,9 +165,8 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
     }
 
     private BitRateType generateBitRate(Encoding encoding) {
-        Integer bitRate = encoding.getBitRate();
+        Integer bitRate = encoding.getVideoBitRate();
         if (bitRate == null) {
-            // default bit rate
             bitRate = DEFAULT_BIT_RATE;
         }
         BitRateType bitRateType = new BitRateType();

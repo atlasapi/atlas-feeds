@@ -44,6 +44,8 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class NitroOnDemandLocationGeneratorTest {
 
+    private static final int VIDEO_BITRATE = 1500000;
+
     private static final Function<GenreType, String> GENRE_TO_HREF = new Function<GenreType, String>() {
         @Override
         public String apply(GenreType input) {
@@ -112,7 +114,7 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals(Integer.valueOf(720), videoAttrs.getVerticalSize());
         assertEquals("16:9", Iterables.getOnlyElement(videoAttrs.getAspectRatio()).getValue());
 
-        assertEquals(BigInteger.valueOf(3308), avAttributes.getBitRate().getValue());
+        assertEquals(BigInteger.valueOf(VIDEO_BITRATE), avAttributes.getBitRate().getValue());
         assertFalse(avAttributes.getBitRate().isVariable());
 
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
@@ -171,7 +173,7 @@ public class NitroOnDemandLocationGeneratorTest {
         encoding.setVideoHorizontalSize(1280);
         encoding.setVideoVerticalSize(720);
         encoding.setVideoAspectRatio("16:9");
-        encoding.setBitRate(3308);
+        encoding.setVideoBitRate(VIDEO_BITRATE);
         encoding.setAudioDescribed(true);
         encoding.setSigned(true);
 
@@ -185,7 +187,7 @@ public class NitroOnDemandLocationGeneratorTest {
         location.setPolicy(policy);
         
         encoding.addAvailableAt(location);
-        
+
         Restriction restriction = new Restriction();
         restriction.setRestricted(true);
         
