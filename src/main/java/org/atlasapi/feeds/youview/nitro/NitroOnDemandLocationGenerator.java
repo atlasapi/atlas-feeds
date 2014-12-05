@@ -52,7 +52,9 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
     private static final String AUDIO_DESCRIPTION_PURPOSE = "urn:tva:metadata:cs:AudioPurposeCS:2007:1";
     private static final String AUDIO_DESCRIPTION_TYPE = "dubbed";
     private static final String ENGLISH_LANG = "en";
+    private static final String GAELIC_LANG = "gla";
     private static final String BRITISH_SIGN_LANGUAGE = "bfi";
+    private static final String ALBA_CHANNEL = "http://ref.atlasapi.org/channels/bbcalba";
 
     private final TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
 
@@ -64,12 +66,13 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
     public final OnDemandProgramType generate(String imi, Item item, Version version, Encoding encoding, Location location) {
         
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
+        languageFor(item);
         
         // TODO is this a single service?
         onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(item, version));
         onDemand.setInstanceMetadataId(imi);
-        onDemand.setInstanceDescription(generateInstanceDescription(encoding));
+        onDemand.setInstanceDescription(generateInstanceDescription(encoding, languageFor(item)));
         onDemand.setPublishedDuration(generatePublishedDuration(version));
         onDemand.setStartOfAvailability(generateAvailabilityStart(location));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(location));
@@ -77,20 +80,28 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
 
         return onDemand;
     }
-    
+
+    private String languageFor(Item item) {
+        if (ALBA_CHANNEL.equals(item.getPresentationChannel())) {
+            return GAELIC_LANG;
+        }
+
+        return ENGLISH_LANG;
+    }
+
     private FlagType generateFree() {
         FlagType free = new FlagType();
         free.setValue(true);
         return free;
     }
 
-    private InstanceDescriptionType generateInstanceDescription(Encoding encoding) {
+    private InstanceDescriptionType generateInstanceDescription(Encoding encoding, String language) {
         InstanceDescriptionType instanceDescription = new InstanceDescriptionType();
         
         instanceDescription.getGenre().addAll(generateGenres());
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
-        instanceDescription.getCaptionLanguage().add(captionLanguage(ENGLISH_LANG));
+        instanceDescription.getCaptionLanguage().add(captionLanguage(language));
 
         if (encoding.getSigned()) {
             SignLanguageType signLanguageType = new SignLanguageType();
