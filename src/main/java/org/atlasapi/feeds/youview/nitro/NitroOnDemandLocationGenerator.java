@@ -33,6 +33,7 @@ import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.SignLanguageType;
 import tva.metadata._2010.VideoAttributesType;
+import tva.mpeg7._2008.UniqueIDType;
 
 public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGenerator {
 
@@ -45,6 +46,8 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
     private static final Integer DEFAULT_BIT_RATE = 3200000;
     private static final Integer DEFAULT_HORIZONTAL_SIZE = 1280;
     private static final Integer DEFAULT_VERTICAL_SIZE = 720;
+    private static final String BROADCAST_AUTHORITY = "www.bbc.co.uk";
+    private static final String DEFAULT_ON_DEMAND_PIPS_ID = "b00gszl0.imi:bbc.co.uk/pips/65751802";
     private static final String AUDIO_DESCRIPTION_PURPOSE = "urn:tva:metadata:cs:AudioPurposeCS:2007:1";
     private static final String AUDIO_DESCRIPTION_TYPE = "dubbed";
     private static final String ENGLISH_LANG = "en";
@@ -65,7 +68,7 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
         onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(item, version));
         onDemand.setInstanceMetadataId(imi);
-        onDemand.setInstanceDescription(generateInstanceDescription(item, encoding));
+        onDemand.setInstanceDescription(generateInstanceDescription(encoding));
         onDemand.setPublishedDuration(generatePublishedDuration(version));
         onDemand.setStartOfAvailability(generateAvailabilityStart(location));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(location));
@@ -80,11 +83,12 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
         return free;
     }
 
-    private InstanceDescriptionType generateInstanceDescription(Item item, Encoding encoding) {
+    private InstanceDescriptionType generateInstanceDescription(Encoding encoding) {
         InstanceDescriptionType instanceDescription = new InstanceDescriptionType();
         
         instanceDescription.getGenre().addAll(generateGenres());
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
+        instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
 
         if (encoding.getSigned()) {
             SignLanguageType signLanguageType = new SignLanguageType();
@@ -93,6 +97,14 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
         }
         
         return instanceDescription;
+    }
+
+    private UniqueIDType createIdentifierFromPipsIdentifier() {
+        UniqueIDType otherId = new UniqueIDType();
+        otherId.setAuthority(BROADCAST_AUTHORITY);
+        // Hard-coding this value because we don't receive an equivalent from Nitro at the moment
+        otherId.setValue(DEFAULT_ON_DEMAND_PIPS_ID);
+        return otherId;
     }
 
     private AVAttributesType generateAvAttributes(Encoding encoding) {
