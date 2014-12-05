@@ -51,6 +51,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.metabroadcast.common.text.Truncator;
 
 public class NitroGroupInformationGenerator implements GroupInformationGenerator {
 
@@ -81,6 +82,12 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             .put(Specialization.TV, "urn:tva:metadata:cs:OriginationCS:2005:5.8")
             .build();
     
+    private static final Map<SynopsisLengthType, Integer> YOUVIEW_SYNOPSIS_LENGTH = ImmutableMap.<SynopsisLengthType, Integer>builder()
+            .put(SynopsisLengthType.SHORT, 90)
+            .put(SynopsisLengthType.MEDIUM, 210)
+            .put(SynopsisLengthType.LONG, 1200)
+            .build();
+    
     private static final List<String> TITLE_PREFIXES = ImmutableList.of("The ", "the ", "A ", "a ", "An ", "an ");
     
     private static final Function<String, GenreType> TO_GENRE = new Function<String, GenreType>() {
@@ -98,6 +105,11 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
     private final BbcServiceIdResolver sIdResolver;
+    
+    private Truncator truncator = new Truncator()
+            .omitTrailingPunctuationWhenTruncated()
+            .onlyTruncateAtAWordBoundary()
+            .withOmissionMarker("...");
     
     public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping, BbcServiceIdResolver sIdResolver) {
         this.idGenerator = checkNotNull(idGenerator);
@@ -382,11 +394,17 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         return synopses;
     }
 
-    private SynopsisType createSynopsis(SynopsisLengthType length, String description) {
+    private SynopsisType createSynopsis(SynopsisLengthType synopsisType, String description) {
+        Integer length = YOUVIEW_SYNOPSIS_LENGTH.get(synopsisType);
+        if (length == null) {
+            throw new RuntimeException("No length mapping found for YouView Synopsis length " + synopsisType.name());
+        }
+        
+        truncator = truncator.withMaxLength(length);
         SynopsisType synopsis = new SynopsisType();
         
-        synopsis.setLength(length);
-        synopsis.setValue(description);
+        synopsis.setLength(synopsisType);
+        synopsis.setValue(truncator.truncate(description));
         
         return synopsis;
     }
