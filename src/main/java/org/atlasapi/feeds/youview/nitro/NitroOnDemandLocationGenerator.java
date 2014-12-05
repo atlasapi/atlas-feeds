@@ -55,8 +55,10 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private static final String AUDIO_DESCRIPTION_PURPOSE = "urn:tva:metadata:cs:AudioPurposeCS:2007:1";
     private static final String AUDIO_DESCRIPTION_TYPE = "dubbed";
     private static final String ENGLISH_LANG = "en";
+    private static final String GAELIC_LANG = "gla";
     private static final String BRITISH_SIGN_LANGUAGE = "bfi";
     private static final String LANGUAGE = "en";
+    private static final String ALBA_CHANNEL = "http://ref.atlasapi.org/channels/bbcalba";
 
     private final IdGenerator idGenerator;
     
@@ -68,12 +70,12 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     public final OnDemandProgramType generate(ItemOnDemandHierarchy hierarchy, String imi) {
         
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
-        
+
         // TODO is this a single service?
         onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(hierarchy.item(), hierarchy.version()));
         onDemand.setInstanceMetadataId(imi);
-        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.encoding()));
+        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.encoding(), languageFor(hierarchy.item())));
         onDemand.setPublishedDuration(generatePublishedDuration(hierarchy.version()));
         onDemand.setStartOfAvailability(generateAvailabilityStart(hierarchy.location()));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(hierarchy.location()));
@@ -82,20 +84,28 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
 
         return onDemand;
     }
-    
+
+    private String languageFor(Item item) {
+        if (ALBA_CHANNEL.equals(item.getPresentationChannel())) {
+            return GAELIC_LANG;
+        }
+
+        return ENGLISH_LANG;
+    }
+
     private FlagType generateFree() {
         FlagType free = new FlagType();
         free.setValue(true);
         return free;
     }
 
-    private InstanceDescriptionType generateInstanceDescription(Encoding encoding) {
+    private InstanceDescriptionType generateInstanceDescription(Encoding encoding, String language) {
         InstanceDescriptionType instanceDescription = new InstanceDescriptionType();
         
         instanceDescription.getGenre().addAll(generateGenres());
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
-        instanceDescription.getCaptionLanguage().add(captionLanguage(ENGLISH_LANG));
+        instanceDescription.getCaptionLanguage().add(captionLanguage(language));
 
         if (Boolean.TRUE.equals(encoding.getSigned())) {
             SignLanguageType signLanguageType = new SignLanguageType();
