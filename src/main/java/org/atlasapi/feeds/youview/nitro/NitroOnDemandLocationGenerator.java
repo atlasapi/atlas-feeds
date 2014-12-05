@@ -72,7 +72,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(hierarchy.item(), hierarchy.version()));
         onDemand.setInstanceMetadataId(imi);
-        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.item(), hierarchy.encoding()));
+        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.encoding()));
         onDemand.setPublishedDuration(generatePublishedDuration(hierarchy.version()));
         onDemand.setStartOfAvailability(generateAvailabilityStart(hierarchy.location()));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(hierarchy.location()));
@@ -88,11 +88,12 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return free;
     }
 
-    private InstanceDescriptionType generateInstanceDescription(Item item, Encoding encoding) {
+    private InstanceDescriptionType generateInstanceDescription(Encoding encoding) {
         InstanceDescriptionType instanceDescription = new InstanceDescriptionType();
         
         instanceDescription.getGenre().addAll(generateGenres());
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
+        instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
 
         if (encoding.getSigned()) {
             SignLanguageType signLanguageType = new SignLanguageType();
@@ -106,8 +107,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private UniqueIDType createIdentifierFromPipsIdentifier() {
         UniqueIDType otherId = new UniqueIDType();
         otherId.setAuthority(BROADCAST_AUTHORITY);
-        // TODO waiting on feedback as to whether this is needed - it's absence is causing issues, so
-        // leaving it in for now
+        // Hard-coding this value because we don't receive an equivalent from Nitro at the moment
         otherId.setValue(DEFAULT_ON_DEMAND_PIPS_ID);
         return otherId;
     }

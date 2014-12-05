@@ -26,6 +26,8 @@ import com.metabroadcast.common.intl.Country;
 
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.DerivedFromType;
+import tva.metadata._2010.ExplanationLengthType;
+import tva.metadata._2010.ExplanationType;
 import tva.metadata._2010.ProgramInformationType;
 import tva.metadata._2010.TVAParentalGuidanceType;
 import tva.metadata._2010.TVATimeType;
