@@ -96,7 +96,8 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private UniqueIDType createIdentifierFromPipsIdentifier() {
         UniqueIDType otherId = new UniqueIDType();
         otherId.setAuthority(BROADCAST_AUTHORITY);
-        // TODO this will need ingesting from NITRO - on-demand id, type = "pips"
+        // TODO waiting on feedback as to whether this is needed - it's absence is causing issues, so
+        // leaving it in for now
         otherId.setValue(DEFAULT_ON_DEMAND_PIPS_ID);
         return otherId;
     }
