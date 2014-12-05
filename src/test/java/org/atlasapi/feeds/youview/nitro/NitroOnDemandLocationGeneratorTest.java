@@ -27,6 +27,7 @@ import org.junit.Test;
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.AudioLanguageType;
+import tva.metadata._2010.CaptionLanguageType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.SignLanguageType;
@@ -85,14 +86,18 @@ public class NitroOnDemandLocationGeneratorTest {
         
         Set<String> hrefs = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_HREF));
         Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
-                
+        CaptionLanguageType captionLanguage = Iterables.getOnlyElement(instanceDesc.getCaptionLanguage());
+
         assertEquals("other", Iterables.getOnlyElement(types));
+        assertTrue(captionLanguage.isClosed());
+        assertEquals(captionLanguage.getValue(), "en");
 
         List<SignLanguageType> signLanguages = instanceDesc.getSignLanguage();
         SignLanguageType signLanguageType = Iterables.getOnlyElement(signLanguages);
         assertEquals("bfi", signLanguageType.getValue());
 
-        Set<String> expected = ImmutableSet.of("http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available");
+        Set<String> expected = ImmutableSet.of(
+                "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available");
         
         assertEquals(expected, hrefs);
 
