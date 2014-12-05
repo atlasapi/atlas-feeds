@@ -137,7 +137,22 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals(true, audioLanguage.isSupplemental());
         assertEquals("dubbed", audioLanguage.getType());
     }
-    
+
+    @Test
+    public void testGaelicLanguageIsSetForAlbaChannel() {
+        Film film = createAlbaNitroFilm();
+
+        ItemOnDemandHierarchy hierarchy = hierarchyFrom(film);
+        String onDemandImi = idGenerator.generateOnDemandImi(hierarchy.item(), hierarchy.version(), hierarchy.encoding(), hierarchy.location());
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(hierarchy, onDemandImi);
+
+        InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
+        CaptionLanguageType captionLanguage = Iterables.getOnlyElement(instanceDesc.getCaptionLanguage());
+
+        assertTrue(captionLanguage.isClosed());
+        assertEquals(captionLanguage.getValue(), "gla");
+    }
+
     private ItemOnDemandHierarchy hierarchyFrom(Film film) {
         Version version = Iterables.getOnlyElement(film.getVersions());
         Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
@@ -147,12 +162,19 @@ public class NitroOnDemandLocationGeneratorTest {
 
     private Film createNitroFilm() {
         Film film = new Film();
-        
+
         film.setCanonicalUri("http://nitro.bbc.co.uk/programmes/b020tm1g");
         film.setPublisher(Publisher.BBC_NITRO);
         film.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));
         film.setYear(1963);
         film.addVersion(createVersion());
+
+        return film;
+    }
+
+    private Film createAlbaNitroFilm() {
+        Film film = createNitroFilm();
+        film.setPresentationChannel("http://ref.atlasapi.org/channels/bbcalba");
         
         return film;
     }
