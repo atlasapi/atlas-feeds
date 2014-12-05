@@ -25,6 +25,7 @@ import org.junit.Test;
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.AudioLanguageType;
+import tva.metadata._2010.CaptionLanguageType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.SignLanguageType;
@@ -42,6 +43,8 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 public class NitroOnDemandLocationGeneratorTest {
     
     private static final String ON_DEMAND_IMI = "on_demand_imi";
+
+    private static final int VIDEO_BITRATE = 1500000;
 
     private static final Function<GenreType, String> GENRE_TO_HREF = new Function<GenreType, String>() {
         @Override
@@ -76,14 +79,18 @@ public class NitroOnDemandLocationGeneratorTest {
         
         Set<String> hrefs = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_HREF));
         Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
-                
+        CaptionLanguageType captionLanguage = Iterables.getOnlyElement(instanceDesc.getCaptionLanguage());
+
         assertEquals("other", Iterables.getOnlyElement(types));
+        assertTrue(captionLanguage.isClosed());
+        assertEquals(captionLanguage.getValue(), "en");
 
         List<SignLanguageType> signLanguages = instanceDesc.getSignLanguage();
         SignLanguageType signLanguageType = Iterables.getOnlyElement(signLanguages);
         assertEquals("bfi", signLanguageType.getValue());
 
-        Set<String> expected = ImmutableSet.of("http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available");
+        Set<String> expected = ImmutableSet.of(
+                "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available");
         
         assertEquals(expected, hrefs);
 
@@ -97,9 +104,12 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals(Integer.valueOf(1280), videoAttrs.getHorizontalSize());
         assertEquals(Integer.valueOf(720), videoAttrs.getVerticalSize());
         assertEquals("16:9", Iterables.getOnlyElement(videoAttrs.getAspectRatio()).getValue());
-
-        assertEquals(BigInteger.valueOf(3308), avAttributes.getBitRate().getValue());
         assertTrue(avAttributes.getBitRate().isVariable());
+        assertEquals(BigInteger.valueOf(VIDEO_BITRATE), avAttributes.getBitRate().getValue());
+
+        UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
+        assertEquals("b00gszl0.imi:bbc.co.uk/pips/65751802", otherId.getValue());
+        assertEquals("www.bbc.co.uk", otherId.getAuthority());
     }
     
     @Test
@@ -167,7 +177,7 @@ public class NitroOnDemandLocationGeneratorTest {
         encoding.setVideoHorizontalSize(1280);
         encoding.setVideoVerticalSize(720);
         encoding.setVideoAspectRatio("16:9");
-        encoding.setBitRate(3308);
+        encoding.setVideoBitRate(VIDEO_BITRATE);
         encoding.setAudioDescribed(true);
         encoding.setSigned(true);
         encoding.addAvailableAt(createLocation());

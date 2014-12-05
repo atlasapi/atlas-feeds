@@ -24,6 +24,7 @@ import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.AudioLanguageType;
 import tva.metadata._2010.BitRateType;
 import tva.metadata._2010.CRIDRefType;
+import tva.metadata._2010.CaptionLanguageType;
 import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.FlagType;
 import tva.metadata._2010.GenreType;
@@ -40,7 +41,7 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationGenerator {
 
-    private static final String ASPECT_RATIO = "16:9";
+    private static final String DEFAULT_ASPECT_RATIO = "16:9";
 //    private static final String YOUVIEW_SERVICE = "http://bbc.co.uk/services/youview";
     private static final String DEV_YOUVIEW_SERVICE = "http://bbc.couk/services/youview";
     private static final String MIX_TYPE_STEREO = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
@@ -49,13 +50,13 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private static final Integer DEFAULT_BIT_RATE = 3200000;
     private static final Integer DEFAULT_HORIZONTAL_SIZE = 1280;
     private static final Integer DEFAULT_VERTICAL_SIZE = 720;
+    private static final String BROADCAST_AUTHORITY = "www.bbc.co.uk";
+    private static final String DEFAULT_ON_DEMAND_PIPS_ID = "b00gszl0.imi:bbc.co.uk/pips/65751802";
     private static final String AUDIO_DESCRIPTION_PURPOSE = "urn:tva:metadata:cs:AudioPurposeCS:2007:1";
     private static final String AUDIO_DESCRIPTION_TYPE = "dubbed";
     private static final String ENGLISH_LANG = "en";
     private static final String BRITISH_SIGN_LANGUAGE = "bfi";
     private static final String LANGUAGE = "en";
-    private static final String BROADCAST_AUTHORITY = "www.bbc.co.uk";
-    private static final String DEFAULT_ON_DEMAND_PIPS_ID = "b00gszl0.imi:bbc.co.uk/pips/65751802";
 
     private final IdGenerator idGenerator;
     
@@ -72,7 +73,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(hierarchy.item(), hierarchy.version()));
         onDemand.setInstanceMetadataId(imi);
-        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.item(), hierarchy.encoding()));
+        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.encoding()));
         onDemand.setPublishedDuration(generatePublishedDuration(hierarchy.version()));
         onDemand.setStartOfAvailability(generateAvailabilityStart(hierarchy.location()));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(hierarchy.location()));
@@ -88,11 +89,13 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return free;
     }
 
-    private InstanceDescriptionType generateInstanceDescription(Item item, Encoding encoding) {
+    private InstanceDescriptionType generateInstanceDescription(Encoding encoding) {
         InstanceDescriptionType instanceDescription = new InstanceDescriptionType();
         
         instanceDescription.getGenre().addAll(generateGenres());
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
+        instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
+        instanceDescription.getCaptionLanguage().add(captionLanguage(ENGLISH_LANG));
 
         if (Boolean.TRUE.equals(encoding.getSigned())) {
             SignLanguageType signLanguageType = new SignLanguageType();
@@ -100,16 +103,21 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
             instanceDescription.getSignLanguage().add(signLanguageType);
         }
 
-        instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
-        
         return instanceDescription;
+    }
+
+    private CaptionLanguageType captionLanguage(String language) {
+        CaptionLanguageType captionLanguage = new CaptionLanguageType();
+        captionLanguage.setClosed(true);
+        captionLanguage.setValue(language);
+
+        return captionLanguage;
     }
 
     private UniqueIDType createIdentifierFromPipsIdentifier() {
         UniqueIDType otherId = new UniqueIDType();
         otherId.setAuthority(BROADCAST_AUTHORITY);
-        // TODO waiting on feedback as to whether this is needed - it's absence is causing issues, so
-        // leaving it in for now
+        // Hard-coding this value because we don't receive an equivalent from Nitro at the moment
         otherId.setValue(DEFAULT_ON_DEMAND_PIPS_ID);
         return otherId;
     }
@@ -154,7 +162,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
                 .or(DEFAULT_VERTICAL_SIZE));
         
         AspectRatioType aspectRatio = new AspectRatioType();
-        aspectRatio.setValue(Objects.firstNonNull(encoding.getVideoAspectRatio(), ASPECT_RATIO));
+        aspectRatio.setValue(Objects.firstNonNull(encoding.getVideoAspectRatio(), DEFAULT_ASPECT_RATIO));
         
         videoAttributes.getAspectRatio().add(aspectRatio);
         
@@ -162,9 +170,8 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     }
 
     private BitRateType generateBitRate(Encoding encoding) {
-        Integer bitRate = encoding.getBitRate();
+        Integer bitRate = encoding.getVideoBitRate();
         if (bitRate == null) {
-            // default bit rate
             bitRate = DEFAULT_BIT_RATE;
         }
         BitRateType bitRateType = new BitRateType();
