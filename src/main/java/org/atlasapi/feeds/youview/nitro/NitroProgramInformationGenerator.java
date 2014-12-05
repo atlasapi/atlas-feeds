@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.datatype.Duration;
 
@@ -22,6 +24,7 @@ import tva.metadata._2010.ProgramInformationType;
 import tva.metadata._2010.TVAParentalGuidanceType;
 import tva.metadata._2010.TVATimeType;
 import tva.mpeg7._2008.ControlledTermUseType;
+import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -34,6 +37,9 @@ import com.metabroadcast.common.intl.Country;
 
 public final class NitroProgramInformationGenerator implements GranularProgramInformationGenerator {
 
+    private static final String BBC_VERSION_PID_AUTHORITY = "vpid.bbc.co.uk";
+    private static final Pattern BBC_VERSION_PID_URI_PATTERN = Pattern.compile("http://nitro.bbc.co.uk/programmes/(.*)");
+    
     // TODO all this certificate code will likely change
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
     private static final String LANGUAGE = "en";
@@ -82,8 +88,24 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
         progInfo.setBasicDescription(generateBasicDescription(hierarchy.item(), hierarchy.version()));
         progInfo.setDerivedFrom(generateDerivedFromElem(hierarchy.item()));
         progInfo.setLang(LANGUAGE);
+        
+        Optional<UniqueIDType> bbcVersionPid = versionPidOtherId(hierarchy.version());
+        if (bbcVersionPid.isPresent()) {
+            progInfo.getOtherIdentifier().add(bbcVersionPid.get());
+        }
 
         return progInfo;
+    }
+    
+    private Optional<UniqueIDType> versionPidOtherId(Version version) {
+        Matcher matcher = BBC_VERSION_PID_URI_PATTERN.matcher(version.getCanonicalUri());
+        if (!matcher.find()) {
+            return Optional.absent();
+        }
+        UniqueIDType id = new UniqueIDType();
+        id.setAuthority(BBC_VERSION_PID_AUTHORITY);
+        id.setValue(matcher.group());
+        return Optional.of(id);
     }
 
     private BasicContentDescriptionType generateBasicDescription(Item item, Version version) {
