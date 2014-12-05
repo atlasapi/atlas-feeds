@@ -43,6 +43,7 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 public class NitroOnDemandLocationGeneratorTest {
 
     private static final String ON_DEMAND_IMI = "on_demand_imi";
+    private static final int VIDEO_BITRATE = 1500000;
 
     private static final Function<GenreType, String> GENRE_TO_HREF = new Function<GenreType, String>() {
         @Override
@@ -103,9 +104,9 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals(Integer.valueOf(720), videoAttrs.getVerticalSize());
         assertEquals("16:9", Iterables.getOnlyElement(videoAttrs.getAspectRatio()).getValue());
 
-        assertEquals(BigInteger.valueOf(3308), avAttributes.getBitRate().getValue());
+        assertEquals(BigInteger.valueOf(VIDEO_BITRATE), avAttributes.getBitRate().getValue());
         assertTrue(avAttributes.getBitRate().isVariable());
-        
+
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
         assertEquals("b00gszl0.imi:bbc.co.uk/pips/65751802", otherId.getValue());
         assertEquals("www.bbc.co.uk", otherId.getAuthority());
@@ -176,7 +177,7 @@ public class NitroOnDemandLocationGeneratorTest {
         encoding.setVideoHorizontalSize(1280);
         encoding.setVideoVerticalSize(720);
         encoding.setVideoAspectRatio("16:9");
-        encoding.setBitRate(3308);
+        encoding.setVideoBitRate(VIDEO_BITRATE);
         encoding.setAudioDescribed(true);
         encoding.setSigned(true);
         encoding.addAvailableAt(createLocation());
@@ -186,13 +187,14 @@ public class NitroOnDemandLocationGeneratorTest {
 
     private Location createLocation() {
         Location location = new Location();
-        
+
         Policy policy = new Policy();
 
         policy.setAvailabilityStart(new DateTime(2012, 7, 3, 0, 0, 0, DateTimeZone.UTC));
         policy.setAvailabilityEnd(new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC));
-        
+
         location.setPolicy(policy);
+
         return location;
     }
 }
