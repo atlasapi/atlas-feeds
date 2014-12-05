@@ -29,6 +29,7 @@ import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.AudioLanguageType;
 import tva.metadata._2010.BitRateType;
 import tva.metadata._2010.CRIDRefType;
+import tva.metadata._2010.CaptionLanguageType;
 import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.FlagType;
 import tva.metadata._2010.GenreType;
@@ -94,6 +95,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         instanceDescription.getGenre().addAll(generateGenres());
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
+        instanceDescription.getCaptionLanguage().add(captionLanguage(ENGLISH_LANG));
 
         if (encoding.getSigned()) {
             SignLanguageType signLanguageType = new SignLanguageType();
@@ -102,6 +104,14 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         }
         
         return instanceDescription;
+    }
+
+    private CaptionLanguageType captionLanguage(String language) {
+        CaptionLanguageType captionLanguage = new CaptionLanguageType();
+        captionLanguage.setClosed(true);
+        captionLanguage.setValue(language);
+
+        return captionLanguage;
     }
 
     private UniqueIDType createIdentifierFromPipsIdentifier() {
