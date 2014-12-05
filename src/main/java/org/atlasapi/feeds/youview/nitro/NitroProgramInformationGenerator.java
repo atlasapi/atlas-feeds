@@ -68,7 +68,7 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
     private BasicContentDescriptionType generateBasicDescription(Item item, Version version) {
         ExtendedContentDescriptionType basicDescription = new ExtendedContentDescriptionType();
 
-        basicDescription.setParentalGuidance(generateParentalGuidance(item));
+        basicDescription.setParentalGuidance(generateParentalGuidance(version));
         Optional<TVATimeType> prodDate = generateProductionDate(item);
         if (prodDate.isPresent()) {
             basicDescription.setProductionDate(prodDate.get());
@@ -89,13 +89,12 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
         }));
     }
 
-    private TVAParentalGuidanceType generateParentalGuidance(Item item) {
-        Optional<Restriction> restriction = getRestrictionFor(item);
-        if (!restriction.isPresent()) {
+    private TVAParentalGuidanceType generateParentalGuidance(Version version) {
+        if (!VERSION_WITH_RESTRICTION.apply(version)) {
             return unratedParentalGuidance();
         }
 
-        return withWarningParentalGuidance(restriction.get());
+        return withWarningParentalGuidance(version.getRestriction());
     }
 
     private TVAParentalGuidanceType unratedParentalGuidance() {
@@ -119,17 +118,6 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
         parentalGuidance.getExplanatoryText().add(explanationType);
 
         return parentalGuidance;
-    }
-
-    private Optional<Restriction> getRestrictionFor(Item item) {
-        Optional<Version> version = Iterables.tryFind(item.getVersions(),
-                VERSION_WITH_RESTRICTION);
-
-        if (!version.isPresent()) {
-            return Optional.absent();
-        }
-
-        return Optional.of(version.get().getRestriction());
     }
 
     private Duration generateDuration(Version version) {
