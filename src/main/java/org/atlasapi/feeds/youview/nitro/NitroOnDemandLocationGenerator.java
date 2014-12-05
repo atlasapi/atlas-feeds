@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageFor;
+
 import java.math.BigInteger;
 import java.util.List;
 
@@ -52,9 +54,7 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
     private static final String AUDIO_DESCRIPTION_PURPOSE = "urn:tva:metadata:cs:AudioPurposeCS:2007:1";
     private static final String AUDIO_DESCRIPTION_TYPE = "dubbed";
     private static final String ENGLISH_LANG = "en";
-    private static final String GAELIC_LANG = "gla";
     private static final String BRITISH_SIGN_LANGUAGE = "bfi";
-    private static final String ALBA_CHANNEL = "http://ref.atlasapi.org/channels/bbcalba";
 
     private final TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
 
@@ -66,27 +66,18 @@ public class NitroOnDemandLocationGenerator extends AbstractOnDemandLocationGene
     public final OnDemandProgramType generate(String imi, Item item, Version version, Encoding encoding, Location location) {
         
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
-        languageFor(item);
-        
+
         // TODO is this a single service?
         onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(item, version));
         onDemand.setInstanceMetadataId(imi);
-        onDemand.setInstanceDescription(generateInstanceDescription(encoding, languageFor(item)));
+        onDemand.setInstanceDescription(generateInstanceDescription(encoding, getLanguageFor(item)));
         onDemand.setPublishedDuration(generatePublishedDuration(version));
         onDemand.setStartOfAvailability(generateAvailabilityStart(location));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(location));
         onDemand.setFree(generateFree());
 
         return onDemand;
-    }
-
-    private String languageFor(Item item) {
-        if (ALBA_CHANNEL.equals(item.getPresentationChannel())) {
-            return GAELIC_LANG;
-        }
-
-        return ENGLISH_LANG;
     }
 
     private FlagType generateFree() {

@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageFor;
 
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,6 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private static final String GROUP_TYPE_SERIES = "series";
     private static final String GROUP_TYPE_SHOW = "show";
     private static final String LANGUAGE_TYPE_ORIGINAL = "original";
-    private static final String LANGUAGE = "en";
     private static final String GENRE_TYPE_MAIN = "main";
     private static final String GENRE_TYPE_OTHER = "other";
     private static final String TITLE_TYPE_MAIN = "main";
@@ -256,7 +256,10 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         }
         
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
-        basicDescription.getLanguage().addAll(generateLanguage());
+
+        String language = item == null ? getLanguageFor(content) : getLanguageFor(item);
+        basicDescription.getLanguage().addAll(generateLanguage(language));
+
         basicDescription.setCreditsList(generateCreditsList(content));
         Optional<RelatedMaterialType> relatedMaterial = Optional.absent();
         if (content instanceof Series) {
@@ -375,12 +378,12 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
        return creditsList;
     }
 
-    private List<ExtendedLanguageType> generateLanguage() {
+    private List<ExtendedLanguageType> generateLanguage(String language) {
         List<ExtendedLanguageType> languages = Lists.newArrayList();
-        ExtendedLanguageType language = new ExtendedLanguageType();
-        language.setType(LANGUAGE_TYPE_ORIGINAL);
-        language.setValue(LANGUAGE);
-        languages.add(language);
+        ExtendedLanguageType languageType = new ExtendedLanguageType();
+        languageType.setType(LANGUAGE_TYPE_ORIGINAL);
+        languageType.setValue(language);
+        languages.add(languageType);
         return languages;
     }
 
