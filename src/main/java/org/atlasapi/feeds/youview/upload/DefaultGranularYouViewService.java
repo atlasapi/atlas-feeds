@@ -20,7 +20,6 @@ import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventProgramUrlStore;
 import org.atlasapi.feeds.youview.persistence.SentBroadcastEventProgramUrlStore;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.tasks.Action;
@@ -63,8 +62,7 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
     public DefaultGranularYouViewService(GranularTvAnytimeGenerator generator, IdGenerator idGenerator, 
             Clock clock, RevokedContentStore revocationStore, YouViewRemoteClient client,
             TaskStore taskStore, OnDemandHierarchyExpander onDemandHierarchyExpander,
-            MongoSentBroadcastEventProgramUrlStore sentBroadcastProgramUrlStore) {
-        this.sentBroadcastProgramUrlStore = checkNotNull(sentBroadcastProgramUrlStore);
+            SentBroadcastEventProgramUrlStore sentBroadcastProgramUrlStore) {
         this.generator = checkNotNull(generator);
         this.idGenerator = checkNotNull(idGenerator);
         this.clock = checkNotNull(clock);
@@ -72,6 +70,7 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
         this.client = checkNotNull(client);
         this.taskStore = checkNotNull(taskStore);
         this.onDemandHierarchyExpander = checkNotNull(onDemandHierarchyExpander);
+        this.sentBroadcastProgramUrlStore = checkNotNull(sentBroadcastProgramUrlStore);
     }
     
     private boolean isRevoked(Content content) {
