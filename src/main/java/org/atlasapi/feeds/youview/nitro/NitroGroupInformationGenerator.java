@@ -404,7 +404,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         SynopsisType synopsis = new SynopsisType();
         
         synopsis.setLength(synopsisType);
-        synopsis.setValue(truncator.truncate(description));
+        synopsis.setValue(truncator.truncatePossibleNull(description));
         
         return synopsis;
     }

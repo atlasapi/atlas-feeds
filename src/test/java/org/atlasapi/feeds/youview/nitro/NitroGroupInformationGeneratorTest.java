@@ -122,8 +122,6 @@ public class NitroGroupInformationGeneratorTest {
         
         Film film = createFilm();
         film.setShortDescription(shortDescriptionLongerThanMaxLength);
-        film.setMediumDescription("");
-        film.setLongDescription("");
 
         GroupInformationType groupInfo = generator.generate(film);
         
