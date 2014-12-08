@@ -17,7 +17,9 @@ import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
+import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventProgramUrlStore;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.persistence.SentBroadcastEventProgramUrlStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.resolution.AvailableContentResolver;
 import org.atlasapi.feeds.youview.resolution.FullHierarchyResolvingContentResolver;
@@ -248,8 +250,14 @@ public class YouViewUploadModule {
                 revokedContentStore(), 
                 client, 
                 taskStore,
-                onDemandHierarchyExpander
+                onDemandHierarchyExpander,
+                sentBroadcastProgramUrlStore()
         ));
+    }
+    
+    @Bean
+    public SentBroadcastEventProgramUrlStore sentBroadcastProgramUrlStore() {
+        return new MongoSentBroadcastEventProgramUrlStore(mongo);
     }
 
     private YouViewRemoteClient enableValidationIfAppropriate(YouViewRemoteClient client) throws JAXBException,
