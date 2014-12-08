@@ -20,6 +20,8 @@ import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventProgramUrlStore;
+import org.atlasapi.feeds.youview.persistence.SentBroadcastEventProgramUrlStore;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.tasks.Action;
 import org.atlasapi.feeds.youview.tasks.Response;
@@ -35,9 +37,11 @@ import org.atlasapi.media.entity.Series;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import tva.metadata._2010.BroadcastEventType;
 import tva.metadata._2010.TVAMainType;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import com.metabroadcast.common.time.Clock;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
@@ -54,10 +58,13 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
     private final YouViewRemoteClient client;
     private final TaskStore taskStore;
     private final OnDemandHierarchyExpander onDemandHierarchyExpander;
+    private final SentBroadcastEventProgramUrlStore sentBroadcastProgramUrlStore;
     
     public DefaultGranularYouViewService(GranularTvAnytimeGenerator generator, IdGenerator idGenerator, 
             Clock clock, RevokedContentStore revocationStore, YouViewRemoteClient client,
-            TaskStore taskStore, OnDemandHierarchyExpander onDemandHierarchyExpander) {
+            TaskStore taskStore, OnDemandHierarchyExpander onDemandHierarchyExpander,
+            MongoSentBroadcastEventProgramUrlStore sentBroadcastProgramUrlStore) {
+        this.sentBroadcastProgramUrlStore = checkNotNull(sentBroadcastProgramUrlStore);
         this.generator = checkNotNull(generator);
         this.idGenerator = checkNotNull(idGenerator);
         this.clock = checkNotNull(clock);
@@ -246,13 +253,38 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
         try {
             JAXBElement<TVAMainType> tvaElem = generator.generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi);
 
+            if (alreadyUploaded(tvaElem)) {
+                log.trace("Not uploading broadcast, since its ProgramURL has already been associated with this service ID and item");
+                return;
+            }
+            
             Task task = createTaskFor(broadcastHierarchy.item(), Action.UPDATE, TVAElementType.BROADCAST, broadcastImi);
 
             YouViewResult uploadResult = client.upload(tvaElem);
+            
+            if (uploadResult.isSuccess()) {
+                recordUpload(tvaElem);
+            }
             processResult(task, uploadResult);
         } catch (TvaGenerationException e) {
             throw Throwables.propagate(e);
         }
+    }
+        
+    private void recordUpload(JAXBElement<TVAMainType> tvaElem) {
+        BroadcastEventType broadcastEvent = Iterables.getOnlyElement(tvaElem.getValue().getProgramDescription().getProgramLocationTable().getBroadcastEvent());
+        String programUrl = broadcastEvent.getProgramURL();
+        String serviceIdRef = broadcastEvent.getServiceIDRef();
+        String crid = broadcastEvent.getProgram().getCrid();
+        sentBroadcastProgramUrlStore.recordSent(crid, programUrl, serviceIdRef);
+    }
+
+    private boolean alreadyUploaded(JAXBElement<TVAMainType> tvaElem) {
+        BroadcastEventType broadcastEvent = Iterables.getOnlyElement(tvaElem.getValue().getProgramDescription().getProgramLocationTable().getBroadcastEvent());
+        String programUrl = broadcastEvent.getProgramURL();
+        String serviceIdRef = broadcastEvent.getServiceIDRef();
+        String crid = broadcastEvent.getProgram().getCrid();
+        return sentBroadcastProgramUrlStore.beenSent(crid, programUrl, serviceIdRef);
     }
 
     @Override
