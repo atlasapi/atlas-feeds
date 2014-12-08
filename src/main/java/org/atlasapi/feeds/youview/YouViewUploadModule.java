@@ -20,6 +20,7 @@ import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.resolution.AvailableContentResolver;
+import org.atlasapi.feeds.youview.resolution.FullHierarchyResolvingContentResolver;
 import org.atlasapi.feeds.youview.resolution.UpdatedContentResolver;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.feeds.youview.revocation.MongoRevokedContentStore;
@@ -183,9 +184,18 @@ public class YouViewUploadModule {
     }
     
     private YouViewContentResolver nitroContentResolver(Publisher publisher) {
-        return new AvailableContentResolver(new UpdatedContentResolver(contentFinder, publisher));
+        return new FullHierarchyResolvingContentResolver(
+                new AvailableContentResolver(
+                        new UpdatedContentResolver(contentFinder, publisher)
+                ), 
+                contentHierarchy()
+        );
     }
-            
+     
+    // TODO rewire so this isn't instantiated in multiple places 
+    private ContentHierarchyExtractor contentHierarchy() {
+        return new ContentResolvingContentHierarchyExtractor(contentResolver);
+    }
 
     @Bean
     public YouViewLastUpdatedStore lastUpdatedStore() {

@@ -52,6 +52,7 @@ import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -115,6 +116,41 @@ public class NitroGroupInformationGeneratorTest {
         assertEquals(expected, outputGenreHrefs);
     }
     
+    @Test
+    public void testDescriptionTrimmedToAppropriateLengthIfTooLong() {
+        int shortDescriptionMaxLength = 90;
+        String shortDescriptionLongerThanMaxLength = "Here's a really long string that's longer than the short description max length permitted by YouView";
+        
+        assertTrue("input short description should be longer than the max permitted length", shortDescriptionLongerThanMaxLength.length() > shortDescriptionMaxLength);
+        
+        Film film = createFilm();
+        film.setShortDescription(shortDescriptionLongerThanMaxLength);
+        film.setMediumDescription("");
+        film.setLongDescription("");
+
+        GroupInformationType groupInfo = generator.generate(film);
+        
+        String outputShortDesc = getShortDescriptionFrom(groupInfo);
+        assertTrue("output short description should be equal to max permitted length", outputShortDesc.length() < shortDescriptionMaxLength);
+    }
+    
+    private String getShortDescriptionFrom(GroupInformationType groupInfo) {
+        BasicContentDescriptionType basicDescription = groupInfo.getBasicDescription();
+        
+        List<SynopsisType> synopses = basicDescription.getSynopsis();
+        Optional<SynopsisType> shortDescription = Iterables.tryFind(synopses, new Predicate<SynopsisType>() {
+            @Override
+            public boolean apply(SynopsisType input) {
+                return SynopsisLengthType.SHORT.equals(input.getLength());
+            }
+        });
+        
+        if (!shortDescription.isPresent()) {
+            throw new RuntimeException("unable to find a short description on this group information");
+        }
+        return shortDescription.get().getValue();
+    }
+
     @Test
     public void testMasterbrandOutputAsServiceIDRef() {
         Film film = createFilm();

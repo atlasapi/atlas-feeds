@@ -70,7 +70,6 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
         if (bbcVersionPid.isPresent()) {
             progInfo.getOtherIdentifier().add(bbcVersionPid.get());
         }
-        
         return progInfo;
     }
     
