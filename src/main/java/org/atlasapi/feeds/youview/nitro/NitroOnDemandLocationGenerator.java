@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageFor;
+import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -20,7 +20,6 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
 
 import com.google.common.base.Objects;
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
@@ -74,7 +73,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(hierarchy.item(), hierarchy.version()));
         onDemand.setInstanceMetadataId(imi);
-        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.encoding(), getLanguageFor(hierarchy.item())));
+        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.encoding(), getLanguageCodeFor(hierarchy.item())));
         onDemand.setPublishedDuration(generatePublishedDuration(hierarchy.version()));
         onDemand.setStartOfAvailability(generateAvailabilityStart(hierarchy.location()));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(hierarchy.location()));
@@ -118,7 +117,8 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private UniqueIDType createIdentifierFromPipsIdentifier() {
         UniqueIDType otherId = new UniqueIDType();
         otherId.setAuthority(BROADCAST_AUTHORITY);
-        // Hard-coding this value because we don't receive an equivalent from Nitro at the moment
+        // YV has a legacy constraint requiring an OtherIdentifier. We don't receive that from Nitro
+        // at the moment, so we are hardcoding it
         otherId.setValue(DEFAULT_ON_DEMAND_PIPS_ID);
         return otherId;
     }
@@ -133,7 +133,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     }
 
     private boolean audioDescribedOrFalse(Encoding encoding) {
-        return Optional.fromNullable(encoding.getAudioDescribed()).or(false);
+        return Boolean.TRUE.equals(encoding.getAudioDescribed());
     }
 
     private AudioAttributesType generateAudioAttributes(boolean audioDescribed) {
@@ -157,13 +157,14 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private VideoAttributesType generateVideoAttributes(Encoding encoding) {
         VideoAttributesType videoAttributes = new VideoAttributesType();
 
-        videoAttributes.setHorizontalSize(Optional.fromNullable(encoding.getVideoHorizontalSize())
-                .or(DEFAULT_HORIZONTAL_SIZE));
-        videoAttributes.setVerticalSize(Optional.fromNullable(encoding.getVideoVerticalSize())
-                .or(DEFAULT_VERTICAL_SIZE));
+        videoAttributes.setHorizontalSize(Objects.firstNonNull(encoding.getVideoHorizontalSize(),
+                DEFAULT_HORIZONTAL_SIZE));
+        videoAttributes.setVerticalSize(Objects.firstNonNull(encoding.getVideoVerticalSize(),
+                DEFAULT_VERTICAL_SIZE));
         
         AspectRatioType aspectRatio = new AspectRatioType();
-        aspectRatio.setValue(Objects.firstNonNull(encoding.getVideoAspectRatio(), DEFAULT_ASPECT_RATIO));
+        aspectRatio.setValue(Objects.firstNonNull(encoding.getVideoAspectRatio(),
+                DEFAULT_ASPECT_RATIO));
         
         videoAttributes.getAspectRatio().add(aspectRatio);
         
@@ -171,10 +172,8 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     }
 
     private BitRateType generateBitRate(Encoding encoding) {
-        Integer bitRate = encoding.getVideoBitRate();
-        if (bitRate == null) {
-            bitRate = DEFAULT_BIT_RATE;
-        }
+        Integer bitRate = Objects.firstNonNull(encoding.getVideoBitRate(), DEFAULT_BIT_RATE);
+
         BitRateType bitRateType = new BitRateType();
         bitRateType.setVariable(true);
         bitRateType.setValue(BigInteger.valueOf(bitRate));

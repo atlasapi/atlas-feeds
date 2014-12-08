@@ -8,7 +8,7 @@ public class NitroUtils {
     private static final String GAELIC_LANG = "gla";
     private static final String ALBA_CHANNEL = "http://ref.atlasapi.org/channels/bbcalba";
 
-    public static String getLanguageFor(Content content) {
+    public static String getLanguageCodeFor(Content content) {
         if (ALBA_CHANNEL.equals(content.getPresentationChannel())) {
             return GAELIC_LANG;
         }

@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageFor;
+import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
 
 import java.util.List;
 import java.util.Map;
@@ -144,7 +144,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         return groupInfo;
     }
 
-    private UniqueIDType createOtherIdentifier(Content content) {
+    private UniqueIDType createContentPidOtherIdentifier(Content content) {
         Matcher matcher = NITRO_URI_PATTERN.matcher(content.getCanonicalUri());
 
         if (!matcher.matches()) {
@@ -166,7 +166,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
 
         if (item instanceof Episode) {
-            groupInfo.getOtherIdentifier().add(createOtherIdentifier(item));
+            groupInfo.getOtherIdentifier().add(createContentPidOtherIdentifier(item));
         }
 
         if (series.isPresent()) {
@@ -270,7 +270,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
 
-        String language = item == null ? getLanguageFor(content) : getLanguageFor(item);
+        String language = item == null ? getLanguageCodeFor(content) : getLanguageCodeFor(item);
         basicDescription.getLanguage().addAll(generateLanguage(language));
 
         basicDescription.setCreditsList(generateCreditsList(content));
@@ -287,10 +287,6 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         }
         
         return basicDescription;
-    }
-
-    private GenreType generateGenreForChildren(Content content) {
-        return null;
     }
 
     private String generateAlternateTitle(String title) {
