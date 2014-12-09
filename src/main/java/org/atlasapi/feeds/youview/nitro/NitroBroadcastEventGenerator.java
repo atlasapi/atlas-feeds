@@ -130,10 +130,12 @@ public class NitroBroadcastEventGenerator implements GranularBroadcastEventGener
         otherId.setAuthority(BROADCAST_AUTHORITY);
 
         Optional<Alias> alias = aliasWithNamespace(broadcast.getAliases(), TERRESTRIAL_PROGRAMME_CRID_NS);
-        if (alias.isPresent()) {
-            otherId.setValue(alias.get().getValue());
+
+        if (!alias.isPresent()) {
+            throw new RuntimeException("Terrestrial Programme Crid Identifier not present for broadcast " + broadcast.getCanonicalUri());
         }
 
+        otherId.setValue(alias.get().getValue());
         return otherId;
     }
 
