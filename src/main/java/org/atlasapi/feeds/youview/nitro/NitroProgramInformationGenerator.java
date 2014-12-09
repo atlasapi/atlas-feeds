@@ -48,7 +48,7 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
         @Override
         public boolean apply(Version input) {
             Restriction restriction = input.getRestriction();
-            return restriction != null && restriction.isRestricted();
+            return restriction != null && Boolean.TRUE.equals(restriction.isRestricted());
         }
     };
     
