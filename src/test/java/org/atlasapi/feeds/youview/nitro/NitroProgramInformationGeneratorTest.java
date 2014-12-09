@@ -27,7 +27,8 @@ import com.metabroadcast.common.intl.Countries;
 
 
 public class NitroProgramInformationGeneratorTest {
-    
+
+    private static final String VERSION_URI = "http://nitro.bbc.co.uk/programmes/p02cxz80";
     private IdGenerator idGenerator = new NitroIdGenerator(Mockito.mock(HashFunction.class));
     
     private final GranularProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator);
@@ -53,6 +54,7 @@ public class NitroProgramInformationGeneratorTest {
     @Test
     public void testNitroSpecificFields() {
         Version version = createBaseVersion(Duration.standardMinutes(90));
+
         Film film = createNitroFilm(ImmutableSet.of(version));
         
         String versionCrid = idGenerator.generateVersionCrid(film, version);
@@ -80,6 +82,7 @@ public class NitroProgramInformationGeneratorTest {
     private Version createBaseVersion(Duration duration) {
         Version version = new Version();
         version.setDuration(duration);
+        version.setCanonicalUri(VERSION_URI);
 
         return version;
     }
