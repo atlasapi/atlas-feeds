@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview.tasks;
+package org.atlasapi.feeds.youview.tasks.persistence;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -6,8 +6,13 @@ import static org.junit.Assert.assertTrue;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.atlasapi.feeds.youview.tasks.persistence.MongoTaskStore;
-import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.youview.tasks.Action;
+import org.atlasapi.feeds.youview.tasks.Payload;
+import org.atlasapi.feeds.youview.tasks.Response;
+import org.atlasapi.feeds.youview.tasks.Status;
+import org.atlasapi.feeds.youview.tasks.TVAElementType;
+import org.atlasapi.feeds.youview.tasks.Task;
+import org.atlasapi.feeds.youview.tasks.TaskQuery;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -28,8 +33,11 @@ public class MongoTaskStoreTest {
     
     private static final Publisher publisher = Publisher.METABROADCAST;
 
+
     private DateTime time = new DateTime(2012, 1, 1, 0, 0, 0).withZone(DateTimeZones.UTC);
     private Clock clock = new TimeMachine(time);
+    private Payload DEFAULT_PAYLOAD = new Payload("payload", clock.now());
+    
     private DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     
     private final TaskStore store = new MongoTaskStore(mongo);
@@ -294,6 +302,7 @@ public class MongoTaskStoreTest {
                 .withContent(content)
                 .withElementType(TVAElementType.ITEM)
                 .withElementId("elementId")
+                .withPayload(DEFAULT_PAYLOAD)
                 .withAction(Action.UPDATE)
                 .withStatus(status)
                 .build();

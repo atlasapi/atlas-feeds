@@ -1,9 +1,15 @@
-package org.atlasapi.feeds.youview.tasks;
+package org.atlasapi.feeds.youview.tasks.persistence;
 
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.fromDBObject;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.toDBObject;
 import static org.junit.Assert.assertEquals;
 
+import org.atlasapi.feeds.youview.tasks.Action;
+import org.atlasapi.feeds.youview.tasks.Payload;
+import org.atlasapi.feeds.youview.tasks.Response;
+import org.atlasapi.feeds.youview.tasks.Status;
+import org.atlasapi.feeds.youview.tasks.TVAElementType;
+import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.media.entity.Publisher;
 import org.junit.Test;
 
@@ -42,10 +48,15 @@ public class TaskTranslatorTest {
                 .withElementId("elementId")
                 .withUploadTime(clock.now())
                 .withRemoteId("remoteId")
+                .withPayload(createPayload())
                 .withAction(Action.UPDATE)
                 .withStatus(Status.ACCEPTED)
                 .withRemoteResponse(createResponse())
                 .build();
+    }
+
+    private Payload createPayload() {
+        return new Payload("payload", clock.now());
     }
 
     private Response createResponse() {

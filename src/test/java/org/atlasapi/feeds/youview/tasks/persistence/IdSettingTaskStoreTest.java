@@ -1,12 +1,18 @@
-package org.atlasapi.feeds.youview.tasks;
+package org.atlasapi.feeds.youview.tasks.persistence;
 
 import static org.junit.Assert.*;
 
+import org.atlasapi.feeds.youview.tasks.Action;
+import org.atlasapi.feeds.youview.tasks.Payload;
+import org.atlasapi.feeds.youview.tasks.Status;
+import org.atlasapi.feeds.youview.tasks.TVAElementType;
+import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.tasks.persistence.IdSettingTaskStore;
 import org.atlasapi.feeds.youview.tasks.persistence.MongoTaskStore;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.ids.MongoSequentialIdGenerator;
+import org.joda.time.DateTime;
 import org.junit.Test;
 
 import com.metabroadcast.common.ids.IdGenerator;
@@ -17,6 +23,7 @@ import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 public class IdSettingTaskStoreTest {
 
 
+    private static final DateTime TIME = new DateTime();
     private DatabasedMongo mongo = MongoTestHelper.anEmptyTestDatabase();
     private TaskStore delegate = new MongoTaskStore(mongo);
     private IdGenerator idGenerator = new MongoSequentialIdGenerator(mongo, "tasks");
@@ -47,6 +54,7 @@ public class IdSettingTaskStoreTest {
                 .withAction(Action.UPDATE)
                 .withStatus(Status.NEW)
                 .withPublisher(Publisher.METABROADCAST)
+                .withPayload(new Payload("payload", TIME))
                 .withElementType(TVAElementType.ITEM)
                 .withElementId("elementId")
                 .withContent("content")

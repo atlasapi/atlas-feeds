@@ -19,6 +19,7 @@ public class Task {
     private Date uploadTime;
     private Action action;
     private String remoteId;
+    private Payload payload;
     private TVAElementType elementType;
     private String elementId;
     private String content;
@@ -66,6 +67,14 @@ public class Task {
     
     public void setRemoteId(String remoteId) {
         this.remoteId = remoteId;
+    }
+    
+    public Payload payload() {
+        return payload;
+    }
+    
+    public void setPayload(Payload payload) {
+        this.payload = payload;
     }
     
     public TVAElementType elementType() {
