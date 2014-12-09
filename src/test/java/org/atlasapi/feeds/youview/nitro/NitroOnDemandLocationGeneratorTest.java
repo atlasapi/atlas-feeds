@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Set;
 
 import org.atlasapi.feeds.tvanytime.granular.GranularOnDemandLocationGenerator;
@@ -23,8 +24,11 @@ import org.junit.Test;
 
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AudioAttributesType;
+import tva.metadata._2010.AudioLanguageType;
+import tva.metadata._2010.CaptionLanguageType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.InstanceDescriptionType;
+import tva.metadata._2010.SignLanguageType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
@@ -37,8 +41,9 @@ import com.metabroadcast.common.intl.Countries;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class NitroOnDemandLocationGeneratorTest {
-    
+
     private static final String ON_DEMAND_IMI = "on_demand_imi";
+    private static final int VIDEO_BITRATE = 1500000;
 
     private static final Function<GenreType, String> GENRE_TO_HREF = new Function<GenreType, String>() {
         @Override
@@ -73,10 +78,18 @@ public class NitroOnDemandLocationGeneratorTest {
         
         Set<String> hrefs = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_HREF));
         Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
-                
+        CaptionLanguageType captionLanguage = Iterables.getOnlyElement(instanceDesc.getCaptionLanguage());
+
         assertEquals("other", Iterables.getOnlyElement(types));
-        
-        Set<String> expected = ImmutableSet.of("http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available");
+        assertTrue(captionLanguage.isClosed());
+        assertEquals(captionLanguage.getValue(), "en");
+
+        List<SignLanguageType> signLanguages = instanceDesc.getSignLanguage();
+        SignLanguageType signLanguageType = Iterables.getOnlyElement(signLanguages);
+        assertEquals("bfi", signLanguageType.getValue());
+
+        Set<String> expected = ImmutableSet.of(
+                "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available");
         
         assertEquals(expected, hrefs);
 
@@ -91,11 +104,12 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals(Integer.valueOf(720), videoAttrs.getVerticalSize());
         assertEquals("16:9", Iterables.getOnlyElement(videoAttrs.getAspectRatio()).getValue());
 
-        assertEquals(BigInteger.valueOf(3308), avAttributes.getBitRate().getValue());
+        assertEquals(BigInteger.valueOf(VIDEO_BITRATE), avAttributes.getBitRate().getValue());
         assertTrue(avAttributes.getBitRate().isVariable());
-        
+
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
         assertEquals("b00gszl0.imi:bbc.co.uk/pips/65751802", otherId.getValue());
+        assertEquals("www.bbc.co.uk", otherId.getAuthority());
     }
     
     @Test
@@ -111,12 +125,34 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals("http://bbc.couk/services/youview", onDemand.getServiceIDRef());
         assertEquals(versionCrid, onDemand.getProgram().getCrid());
         assertEquals(onDemandImi, onDemand.getInstanceMetadataId());
-        
+
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
-        UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
-        assertEquals("www.bbc.co.uk", otherId.getAuthority());
+
+        AVAttributesType avAttributes = instanceDesc.getAVAttributes();
+        List<AudioAttributesType> audioAttributes = avAttributes.getAudioAttributes();
+        AudioAttributesType audioAttribute = Iterables.getOnlyElement(audioAttributes);
+        AudioLanguageType audioLanguage = audioAttribute.getAudioLanguage();
+
+        assertEquals("urn:tva:metadata:cs:AudioPurposeCS:2007:1", audioLanguage.getPurpose());
+        assertEquals(true, audioLanguage.isSupplemental());
+        assertEquals("dubbed", audioLanguage.getType());
     }
-    
+
+    @Test
+    public void testGaelicLanguageIsSetForAlbaChannel() {
+        Film film = createAlbaNitroFilm();
+
+        ItemOnDemandHierarchy hierarchy = hierarchyFrom(film);
+        String onDemandImi = idGenerator.generateOnDemandImi(hierarchy.item(), hierarchy.version(), hierarchy.encoding(), hierarchy.location());
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(hierarchy, onDemandImi);
+
+        InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
+        CaptionLanguageType captionLanguage = Iterables.getOnlyElement(instanceDesc.getCaptionLanguage());
+
+        assertTrue(captionLanguage.isClosed());
+        assertEquals(captionLanguage.getValue(), "gla");
+    }
+
     private ItemOnDemandHierarchy hierarchyFrom(Film film) {
         Version version = Iterables.getOnlyElement(film.getVersions());
         Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
@@ -126,19 +162,26 @@ public class NitroOnDemandLocationGeneratorTest {
 
     private Film createNitroFilm() {
         Film film = new Film();
-        
+
         film.setCanonicalUri("http://nitro.bbc.co.uk/programmes/b020tm1g");
         film.setPublisher(Publisher.BBC_NITRO);
         film.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));
         film.setYear(1963);
         film.addVersion(createVersion());
+
+        return film;
+    }
+
+    private Film createAlbaNitroFilm() {
+        Film film = createNitroFilm();
+        film.setPresentationChannel("http://ref.atlasapi.org/channels/bbcalba");
         
         return film;
     }
 
     private Version createVersion() {
         Version version = new Version();
-        
+
         Restriction restriction = new Restriction();
         restriction.setRestricted(true);
         
@@ -156,8 +199,9 @@ public class NitroOnDemandLocationGeneratorTest {
         encoding.setVideoHorizontalSize(1280);
         encoding.setVideoVerticalSize(720);
         encoding.setVideoAspectRatio("16:9");
-        encoding.setBitRate(3308);
-        
+        encoding.setVideoBitRate(VIDEO_BITRATE);
+        encoding.setAudioDescribed(true);
+        encoding.setSigned(true);
         encoding.addAvailableAt(createLocation());
         
         return encoding;
@@ -165,13 +209,14 @@ public class NitroOnDemandLocationGeneratorTest {
 
     private Location createLocation() {
         Location location = new Location();
-        
+
         Policy policy = new Policy();
 
         policy.setAvailabilityStart(new DateTime(2012, 7, 3, 0, 0, 0, DateTimeZone.UTC));
         policy.setAvailabilityEnd(new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC));
-        
+
         location.setPolicy(policy);
+
         return location;
     }
 }

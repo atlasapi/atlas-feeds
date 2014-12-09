@@ -1,9 +1,12 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
@@ -41,7 +44,9 @@ import tva.mpeg7._2008.ExtendedLanguageType;
 import tva.mpeg7._2008.MediaLocatorType;
 import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
+import tva.mpeg7._2008.TextualType;
 import tva.mpeg7._2008.TitleType;
+import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -70,7 +75,10 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private static final String GENRE_TYPE_OTHER = "other";
     private static final String TITLE_TYPE_MAIN = "main";
     private static final String TITLE_TYPE_SECONDARY = "secondary";
-    
+    private static final String CHILDREN_GENRE = "urn:tva:metadata:cs:IntendedAudienceCS:2010:4.2.1";
+    private static final String OTHER_IDENTIFIER_AUTHORITY = "epid.bbc.co.uk";
+    private static final Pattern NITRO_URI_PATTERN = Pattern.compile("^http://nitro.bbc.co.uk/programmes/([a-zA-Z0-9]+)$");
+
     private static final Map<MediaType, String> YOUVIEW_MEDIATYPE_GENRE_MAPPING = ImmutableMap.<MediaType, String>builder()
             .put(MediaType.VIDEO, "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3")
             .put(MediaType.AUDIO, "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.1")
@@ -90,13 +98,23 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     
     private static final List<String> TITLE_PREFIXES = ImmutableList.of("The ", "the ", "A ", "a ", "An ", "an ");
     
-    private static final Function<String, GenreType> TO_GENRE = new Function<String, GenreType>() {
+    private static final Function<String, List<GenreType>> TO_GENRE = new Function<String, List<GenreType>>() {
         @Override
-        public GenreType apply(String input) {
+        public List<GenreType> apply(String input) {
+            ImmutableList.Builder<GenreType> genres = new ImmutableList.Builder<>();
+
             GenreType genre = new GenreType();
-            genre.setType(GENRE_TYPE_MAIN);
             genre.setHref(input);
-            return genre;
+            genres.add(genre);
+
+            if (input.equals(CHILDREN_GENRE)) {
+                GenreType childrenGenre = new GenreType();
+                childrenGenre.setType(GENRE_TYPE_MAIN);
+                childrenGenre.setHref(input);
+                genres.add(childrenGenre);
+            }
+
+            return genres.build();
         }
     };
     private static final Integer DEFAULT_IMAGE_WIDTH = 1024;
@@ -119,19 +137,38 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     
     @Override
     public GroupInformationType generate(Film film) {
-        GroupInformationType groupInfo = generateWithCommonFields(film, null);
+        GroupInformationType groupInfo = generateWithCommonFields(film);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         groupInfo.setServiceIDRef(createMasterBrandLink(film));
-        
+
         return groupInfo;
     }
-    
+
+    private UniqueIDType createContentPidOtherIdentifier(Content content) {
+        Matcher matcher = NITRO_URI_PATTERN.matcher(content.getCanonicalUri());
+
+        if (!matcher.matches()) {
+            throw new RuntimeException("Uri not compliant to Nitro format: " + content.getCanonicalUri());
+        }
+
+        String pid = matcher.group(1);
+        UniqueIDType idType = new UniqueIDType();
+        idType.setAuthority(OTHER_IDENTIFIER_AUTHORITY);
+        idType.setValue(pid);
+
+        return idType;
+    }
+
     @Override
     public GroupInformationType generate(Item item, Optional<Series> series, Optional<Brand> brand) {
-        GroupInformationType groupInfo = generateWithCommonFields(item, null);
+        GroupInformationType groupInfo = generateWithCommonFields(item);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
+
+        if (item instanceof Episode) {
+            groupInfo.getOtherIdentifier().add(createContentPidOtherIdentifier(item));
+        }
 
         if (series.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
@@ -162,7 +199,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     
     @Override
     public GroupInformationType generate(Series series, Optional<Brand> brand, Item firstChild) {
-        GroupInformationType groupInfo = generateWithCommonFields(series, firstChild);
+        GroupInformationType groupInfo = generateWithCommonFields(series);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));
         groupInfo.setOrdered(true);
@@ -183,7 +220,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     
     @Override
     public GroupInformationType generate(Brand brand, Item item) {
-        GroupInformationType groupInfo = generateWithCommonFields(brand, item);
+        GroupInformationType groupInfo = generateWithCommonFields(brand);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
         groupInfo.setOrdered(true);
@@ -196,12 +233,12 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         return DEV_MASTERBRAND_PREFIX + sIdResolver.resolveSId(content);
     }
 
-    private GroupInformationType generateWithCommonFields(Content content, Item item) {
+    private GroupInformationType generateWithCommonFields(Content content) {
         GroupInformationType groupInfo = new GroupInformationType();
         
         groupInfo.setLang(LANGUAGE);
         groupInfo.setGroupId(idGenerator.generateContentCrid(content));
-        groupInfo.setBasicDescription(generateBasicDescription(content, item));
+        groupInfo.setBasicDescription(generateBasicDescription(content));
         
         return groupInfo;
     }
@@ -212,7 +249,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         return type;
     }
 
-    private BasicContentDescriptionType generateBasicDescription(Content content, Item item) {
+    private BasicContentDescriptionType generateBasicDescription(Content content) {
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
         
         if (content.getTitle() != null) {
@@ -233,16 +270,14 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         }
         
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
-        basicDescription.getLanguage().addAll(generateLanguage());
+
+        String language = getLanguageCodeFor(content);
+        basicDescription.getLanguage().addAll(generateLanguage(language));
+
         basicDescription.setCreditsList(generateCreditsList(content));
         Optional<RelatedMaterialType> relatedMaterial = Optional.absent();
-        if (content instanceof Series) {
-            relatedMaterial = generateRelatedMaterial(item);
-        } else if (content instanceof Brand) {
-            relatedMaterial = generateRelatedMaterial(item);
-        } else {
-            relatedMaterial = generateRelatedMaterial(content);
-        }
+        relatedMaterial = generateRelatedMaterial(content);
+        
         if (relatedMaterial.isPresent()) {
             basicDescription.getRelatedMaterial().add(relatedMaterial.get());
         }
@@ -269,6 +304,12 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         relatedMaterial.setFormat(generateFormat());
         relatedMaterial.setMediaLocator(generateMediaLocator(content));
         relatedMaterial.setContentProperties(generateContentProperties(content));
+
+        if (content instanceof Episode) {
+            TextualType textualType = new TextualType();
+            textualType.setValue(content.getTitle());
+            relatedMaterial.getPromotionalText().add(textualType);
+        }
         
         return Optional.<RelatedMaterialType>of(relatedMaterial);
     }
@@ -342,18 +383,18 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
        return creditsList;
     }
 
-    private List<ExtendedLanguageType> generateLanguage() {
+    private List<ExtendedLanguageType> generateLanguage(String language) {
         List<ExtendedLanguageType> languages = Lists.newArrayList();
-        ExtendedLanguageType language = new ExtendedLanguageType();
-        language.setType(LANGUAGE_TYPE_ORIGINAL);
-        language.setValue(LANGUAGE);
-        languages.add(language);
+        ExtendedLanguageType languageType = new ExtendedLanguageType();
+        languageType.setType(LANGUAGE_TYPE_ORIGINAL);
+        languageType.setValue(language);
+        languages.add(languageType);
         return languages;
     }
 
     private List<GenreType> generateGenres(Content content) {
         return FluentIterable.from(genreMapping.youViewGenresFor(content))
-                .transform(TO_GENRE)
+                .transformAndConcat(TO_GENRE)
                 .toList();
     }
 
