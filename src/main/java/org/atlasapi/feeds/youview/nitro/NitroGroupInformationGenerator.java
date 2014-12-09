@@ -271,7 +271,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
 
-        String language = item == null ? getLanguageCodeFor(content) : getLanguageCodeFor(item);
+        String language = getLanguageCodeFor(content);
         basicDescription.getLanguage().addAll(generateLanguage(language));
 
         basicDescription.setCreditsList(generateCreditsList(content));
