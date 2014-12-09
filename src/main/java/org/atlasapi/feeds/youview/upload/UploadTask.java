@@ -2,18 +2,17 @@
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Iterator;
 import java.util.List;
 
-import org.atlasapi.feeds.youview.YouViewContentProcessor;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,11 +20,10 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Ordering;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
-import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.Clock;
 
 public abstract class UploadTask extends ScheduledTask {
 
-    private static final DateTime START_OF_TIME = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.UTC);
     private static final Ordering<Content> HIERARCHICAL_ORDER = new Ordering<Content>() {
         @Override
         public int compare(Content left, Content right) {
@@ -55,17 +53,19 @@ public abstract class UploadTask extends ScheduledTask {
     
     private final Logger log = LoggerFactory.getLogger(UploadTask.class);
 
-    private final LastUpdatedContentFinder contentFinder;
     private final YouViewService remoteClient;
     private final YouViewLastUpdatedStore lastUpdatedStore;
     private final Publisher publisher;
+    private final FeedStatisticsStore statsStore;
+    private final Clock clock;
     
-    public UploadTask(YouViewService remoteClient, LastUpdatedContentFinder contentFinder,
-            YouViewLastUpdatedStore lastUpdatedStore, Publisher publisher) {
+    public UploadTask(YouViewService remoteClient, YouViewLastUpdatedStore lastUpdatedStore, 
+            Publisher publisher, FeedStatisticsStore statsStore, Clock clock) {
         this.remoteClient = checkNotNull(remoteClient);
-        this.contentFinder = checkNotNull(contentFinder);
         this.lastUpdatedStore = checkNotNull(lastUpdatedStore);
         this.publisher = checkNotNull(publisher);
+        this.statsStore = checkNotNull(statsStore);
+        this.clock = checkNotNull(clock);
     }
     
     public Optional<DateTime> getLastUpdatedTime() {
@@ -76,11 +76,6 @@ public abstract class UploadTask extends ScheduledTask {
         lastUpdatedStore.setLastUpdated(lastUpdated, publisher);
     }
     
-    public Iterator<Content> getContentSinceDate(Optional<DateTime> since) {
-        DateTime start = since.isPresent() ? since.get() : START_OF_TIME;
-        return contentFinder.updatedSince(publisher, start);
-    }
-
     public static List<Content> orderContentForDeletion(Iterable<Content> toBeDeleted) {
         return HIERARCHICAL_ORDER.immutableSortedCopy(toBeDeleted);
     }
@@ -96,7 +91,7 @@ public abstract class UploadTask extends ScheduledTask {
                     remoteClient.upload(content);
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch (Exception e) {
-                    log.error("error on upload for " + content.getCanonicalUri() + " : " + e);
+                    log.error("error on upload for " + content.getCanonicalUri(), e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
                 }
                 return shouldContinue();
@@ -120,7 +115,7 @@ public abstract class UploadTask extends ScheduledTask {
                     remoteClient.sendDeleteFor(content);
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch (Exception e) {
-                    log.error("error on deletion for " + content.getCanonicalUri() + " : " + e);
+                    log.error("error on deletion for " + content.getCanonicalUri(), e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
                 }
                 return shouldContinue();
@@ -131,5 +126,14 @@ public abstract class UploadTask extends ScheduledTask {
                 return progress;
             }
         };
+    }
+
+    // TODO this should use the transaction upload time
+    public void updateFeedStatistics(int queueSize, Content content) {
+        statsStore.updateFeedStatistics(publisher, queueSize, calculateLatency(clock.now(), content));
+    }
+    
+    private Duration calculateLatency(final DateTime uploadTime, Content content) {
+        return new Duration(uploadTime, content.getLastUpdated());
     }
 }

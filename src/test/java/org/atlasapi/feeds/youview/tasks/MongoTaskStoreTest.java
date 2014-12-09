@@ -292,6 +292,8 @@ public class MongoTaskStoreTest {
                 .withId(taskId)
                 .withPublisher(publisher)
                 .withContent(content)
+                .withElementType(TVAElementType.ITEM)
+                .withElementId("elementId")
                 .withAction(Action.UPDATE)
                 .withStatus(status)
                 .build();

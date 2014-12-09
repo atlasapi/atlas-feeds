@@ -51,13 +51,11 @@ public final class HttpYouViewRemoteClient implements YouViewRemoteClient {
     private final SimpleHttpClient httpClient;
     private final String urlBase;
     private final JAXBContext context;
-    private final Marshaller marshaller;
 
     public HttpYouViewRemoteClient(SimpleHttpClient httpClient, String urlBase) throws JAXBException {
         this.httpClient = checkNotNull(httpClient);
         this.urlBase = checkNotNull(urlBase);
         this.context = JAXBContext.newInstance("tva.metadata._2010");
-        this.marshaller = context.createMarshaller();
     }
 
     @Override
@@ -67,6 +65,7 @@ public final class HttpYouViewRemoteClient implements YouViewRemoteClient {
             log.trace(String.format("POSTing YouView output xml to %s", queryUrl));
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Marshaller marshaller = context.createMarshaller();
             marshaller.marshal(tvaElem, baos);
 
             HttpResponse response = httpClient.post(queryUrl, new StringPayload(baos.toString(Charsets.UTF_8.name())));

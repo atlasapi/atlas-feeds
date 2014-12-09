@@ -6,7 +6,5 @@ import org.joda.time.Duration;
 
 public interface FeedStatisticsWriter {
 
-    void save(FeedStatistics feedStatistics);
-    void updateQueueSize(Publisher publisher, int queueSize);
-    void updateAverageLatency(Publisher publisher, Duration latency);
+    void updateFeedStatistics(Publisher publisher, int queueSize, Duration latency);
 }

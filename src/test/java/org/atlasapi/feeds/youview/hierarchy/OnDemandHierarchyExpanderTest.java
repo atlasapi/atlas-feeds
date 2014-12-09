@@ -1,20 +1,24 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview.hierarchy;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
+import org.atlasapi.feeds.youview.UniqueIdGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -44,7 +48,7 @@ public class OnDemandHierarchyExpanderTest {
     }
 
     @Test
-    public void testIfBroadcastImisUniqueExpandsAllVersions() {
+    public void testIfOnDemandImisUniqueAreUniqueAllVersionsAreExpanded() {
         idGenerator = new UniqueIdGenerator();
         hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
         
@@ -61,7 +65,7 @@ public class OnDemandHierarchyExpanderTest {
     }
     
     @Test
-    public void testIfBroadcastImisUniqueExpandsAllEncodings() {
+    public void testIfOnDemandImisUniqueAreUniqueAllEncodingsAreExpanded() {
         idGenerator = new UniqueIdGenerator();
         hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
         
@@ -78,7 +82,7 @@ public class OnDemandHierarchyExpanderTest {
     }
     
     @Test
-    public void testIfBroadcastImisUniqueExpandsAllLocations() {
+    public void testIfOnDemandImisUniqueAreUniqueAllLocationsAreExpanded() {
         idGenerator = new UniqueIdGenerator();
         hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
         
@@ -92,6 +96,36 @@ public class OnDemandHierarchyExpanderTest {
         Map<String, ItemOnDemandHierarchy> hierarchy = hierarchyExpander.expandHierarchy(item);
         
         assertEquals(numLocations, hierarchy.size());
+    }
+    
+    @Test
+    public void testFiltersNonYouViewIPlayerLocationsFromExpandedHierarchy() {
+        idGenerator = new UniqueIdGenerator();
+        hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
+        
+        Set<Version> versions = createNVersions(1);
+        Set<Encoding> encodings = createNEncodings(1);
+        Set<Location> locations = ImmutableSet.of(createLocationFrom(Platform.XBOX), createLocationFrom(Platform.YOUVIEW_IPLAYER));
+        
+        Item item = createItem(versions, encodings, locations);
+        
+        Map<String, ItemOnDemandHierarchy> hierarchy = hierarchyExpander.expandHierarchy(item);
+        
+        assertEquals(1, hierarchy.size());
+    }
+
+    private Location createLocationFrom(Platform platform) {
+        Location location = new Location();
+        
+        Random r = new Random();
+        location.setCanonicalUri("location_" + r.nextInt());
+        
+        Policy policy = new Policy();
+        policy.setPlatform(platform);
+        
+        location.setPolicy(policy);
+        
+        return location;
     }
 
     private Item createItem(Set<Version> versions, Set<Encoding> encodings, Set<Location> locations) {
@@ -131,6 +165,12 @@ public class OnDemandHierarchyExpanderTest {
         for (int i = 0; i < numLocations; i++) {
             Location location = new Location();
             location.setCanonicalUri("location_" + i);
+            
+            Policy policy = new Policy();
+            policy.setPlatform(Platform.YOUVIEW_IPLAYER);
+            
+            location.setPolicy(policy);
+            
             encodings.add(location);
         }
         return encodings.build();

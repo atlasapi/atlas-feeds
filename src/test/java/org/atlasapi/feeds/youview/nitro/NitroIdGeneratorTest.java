@@ -73,7 +73,6 @@ public class NitroIdGeneratorTest {
         String expectedId = availabilityStart + ":"
                     + availabilityEnd + ":"
                     + "" + ":"
-                    + actualAvailabilityStart + ":"
                     + versionPid + ":"
                     + horizontalSize + ":"
                     + verticalSize + ":"

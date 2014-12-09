@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview.hierarchy;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import java.util.Map;
 import java.util.Set;
 
+import org.atlasapi.feeds.youview.UniqueIdGenerator;
 import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -50,7 +51,7 @@ public class BroadcastHierarchyExpanderTest {
     }
     
     @Test
-    public void testIfBroadcastImisUniqueExpandsAllVersions() {
+    public void testIfBroadcastImisAreUniqueAllVersionsAreExpanded() {
         idGenerator = new UniqueIdGenerator();
         hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping, serviceIdResolver);
         
@@ -67,7 +68,7 @@ public class BroadcastHierarchyExpanderTest {
     }
     
     @Test
-    public void testIfBroadcastImisUniqueExpandsAllBroadcasts() {
+    public void testIfBroadcastImisAreUniqueAllBroadcastsAreExpanded() {
         idGenerator = new UniqueIdGenerator();
         hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping, serviceIdResolver);
         
@@ -84,7 +85,7 @@ public class BroadcastHierarchyExpanderTest {
     }
     
     @Test
-    public void testIfBroadcastImisUniqueExpandsAllYouViewServiceIds() {
+    public void testIfBroadcastImisUniqueAreUniqueAllYouViewServiceIdsAreExpanded() {
         idGenerator = new UniqueIdGenerator();
         hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping, serviceIdResolver);
         

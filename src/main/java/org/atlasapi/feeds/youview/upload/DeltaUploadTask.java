@@ -1,27 +1,33 @@
 package org.atlasapi.feeds.youview.upload;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Iterator;
 import java.util.List;
 
-import org.atlasapi.feeds.youview.YouViewContentProcessor;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
+import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.metabroadcast.common.scheduling.UpdateProgress;
+import com.metabroadcast.common.time.Clock;
 
 public final class DeltaUploadTask extends UploadTask {
 
     private static final String DELTA_STATUS_PATTERN = "Updates: processed %d of %d, %d failures. Deletes: processed %d of %d total, %d failures.";
-    
 
-    public DeltaUploadTask(YouViewService remoteClient, LastUpdatedContentFinder contentFinder,
-            YouViewLastUpdatedStore lastUpdatedStore, Publisher publisher) {
-        super(remoteClient, contentFinder, lastUpdatedStore, publisher);
+    private final YouViewContentResolver contentResolver;
+
+    public DeltaUploadTask(YouViewService remoteClient, YouViewLastUpdatedStore lastUpdatedStore, 
+            Publisher publisher, YouViewContentResolver contentResolver, FeedStatisticsStore statsStore,
+            Clock clock) {
+        super(remoteClient, lastUpdatedStore, publisher, statsStore, clock);
+        this.contentResolver = checkNotNull(contentResolver);
     }
     
     @Override
@@ -31,7 +37,7 @@ public final class DeltaUploadTask extends UploadTask {
             throw new RuntimeException("The bootstrap has not successfully run. Please run the bootstrap upload and ensure that it succeeds before running the delta upload.");
         }
         
-        Iterator<Content> updatedContent = getContentSinceDate(Optional.of(lastUpdated.get()));
+        Iterator<Content> updatedContent = contentResolver.updatedSince(lastUpdated.get());
         
         lastUpdated = Optional.of(new DateTime());
         
@@ -49,6 +55,7 @@ public final class DeltaUploadTask extends UploadTask {
         
         int deletesSize = deleted.size();
         int updatesSize = notDeleted.size();
+        int remainingCount = deletesSize + updatesSize;
         UpdateProgress deletionProgress = UpdateProgress.START;
         
         YouViewContentProcessor<UpdateProgress> uploadProcessor = uploadProcessor();
@@ -56,6 +63,7 @@ public final class DeltaUploadTask extends UploadTask {
         
         for (Content content : notDeleted) {
             uploadProcessor.process(content);
+            updateFeedStatistics(remainingCount--, content);
             reportStatus(createDeltaStatus(uploadProcessor.getResult(), deletionProcessor.getResult(), updatesSize, deletesSize));
         }
         
@@ -63,6 +71,7 @@ public final class DeltaUploadTask extends UploadTask {
 
         for (Content toBeDeleted : orderedForDeletion) {
             deletionProcessor.process(toBeDeleted);
+            updateFeedStatistics(remainingCount--, toBeDeleted);
             reportStatus(createDeltaStatus(uploadProcessor.getResult(), deletionProcessor.getResult(), updatesSize, deletesSize));
         }
         

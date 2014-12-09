@@ -3,7 +3,7 @@ package org.atlasapi.feeds.youview.lovefilm;
 import static org.junit.Assert.assertEquals;
 
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
-import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
+import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Certificate;
@@ -25,9 +25,9 @@ import com.metabroadcast.common.intl.Countries;
 public class LoveFilmProgramInformationGeneratorTest {
     
     private IdGenerator idGenerator = new LoveFilmIdGenerator();
-    private TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
+    private VersionHierarchyExpander hierarchyExpander = new VersionHierarchyExpander(idGenerator);
     
-    private final ProgramInformationGenerator generator = new LoveFilmProgramInformationGenerator(idGenerator, elementFactory);
+    private final ProgramInformationGenerator generator = new LoveFilmProgramInformationGenerator(idGenerator, hierarchyExpander);
 
     @Test
     public void testPublisherIndependentFields() {

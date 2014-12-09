@@ -55,7 +55,6 @@ public final class NitroIdGenerator implements IdGenerator {
 //      scheduled_end
 //      youview_media_quality
 //      ??? - hd/sd/undef - based on mediaset
-//      actual_start
 //      version_id
 //      horizontal_size
 //      vertical_size
@@ -66,7 +65,6 @@ public final class NitroIdGenerator implements IdGenerator {
                 location.getPolicy().getAvailabilityStart(),
                 location.getPolicy().getAvailabilityEnd(),
                 null,
-                location.getPolicy().getActualAvailabilityStart(),
                 pidFrom(version),
                 encoding.getVideoHorizontalSize(),
                 encoding.getVideoVerticalSize(),

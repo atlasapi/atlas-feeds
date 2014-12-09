@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview.hierarchy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

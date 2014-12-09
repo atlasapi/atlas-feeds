@@ -1,12 +1,17 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.datatype.Duration;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.youview.AbstractProgramInformationGenerator;
+import org.atlasapi.feeds.tvanytime.granular.GranularProgramInformationGenerator;
+import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Certificate;
@@ -14,12 +19,12 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 
 import tva.metadata._2010.BasicContentDescriptionType;
+import tva.metadata._2010.DerivedFromType;
 import tva.metadata._2010.ProgramInformationType;
 import tva.metadata._2010.TVAParentalGuidanceType;
 import tva.metadata._2010.TVATimeType;
-import tva.metadata.extended._2010.ExtendedContentDescriptionType;
-import tva.metadata.extended._2010.TargetingInformationType;
 import tva.mpeg7._2008.ControlledTermUseType;
+import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -30,10 +35,14 @@ import com.google.common.collect.Iterables;
 import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
 
-public final class NitroProgramInformationGenerator extends AbstractProgramInformationGenerator {
+public final class NitroProgramInformationGenerator implements GranularProgramInformationGenerator {
 
+    private static final String BBC_VERSION_PID_AUTHORITY = "vpid.bbc.co.uk";
+    private static final Pattern BBC_VERSION_PID_URI_PATTERN = Pattern.compile("http://nitro.bbc.co.uk/programmes/(.*)");
+    
     // TODO all this certificate code will likely change
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
+    private static final String LANGUAGE = "en";
     
     // TODO fix all certificate code
     private static final Predicate<Certificate> FILTER_CERT_FOR_GB = new Predicate<Certificate>() {
@@ -65,29 +74,42 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
 
     private static final Integer DEFAULT_DURATION = 30 * 60;
     
-    private final TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
-
-    /**
-     * NB DatatypeFactory is required for creation of javax Durations
-     * This DatatypeFactory class may not be threadsafe
-     */
+    private final IdGenerator idGenerator;
+    
     public NitroProgramInformationGenerator(IdGenerator idGenerator) {
-        super(idGenerator);
+        this.idGenerator = checkNotNull(idGenerator);
     }
 
     @Override
-    public final ProgramInformationType generate(String versionCrid, Item item, Version version) {
+    public final ProgramInformationType generate(ItemAndVersion hierarchy, String versionCrid) {
         ProgramInformationType progInfo = new ProgramInformationType();
 
         progInfo.setProgramId(versionCrid);
-        progInfo.setBasicDescription(generateBasicDescription(item, version));
-        progInfo.setDerivedFrom(generateDerivedFromElem(item));
+        progInfo.setBasicDescription(generateBasicDescription(hierarchy.item(), hierarchy.version()));
+        progInfo.setDerivedFrom(generateDerivedFromElem(hierarchy.item()));
+        progInfo.setLang(LANGUAGE);
+        
+        Optional<UniqueIDType> bbcVersionPid = versionPidOtherId(hierarchy.version());
+        if (bbcVersionPid.isPresent()) {
+            progInfo.getOtherIdentifier().add(bbcVersionPid.get());
+        }
 
         return progInfo;
     }
+    
+    private Optional<UniqueIDType> versionPidOtherId(Version version) {
+        Matcher matcher = BBC_VERSION_PID_URI_PATTERN.matcher(version.getCanonicalUri());
+        if (!matcher.find()) {
+            return Optional.absent();
+        }
+        UniqueIDType id = new UniqueIDType();
+        id.setAuthority(BBC_VERSION_PID_AUTHORITY);
+        id.setValue(matcher.group());
+        return Optional.of(id);
+    }
 
     private BasicContentDescriptionType generateBasicDescription(Item item, Version version) {
-        ExtendedContentDescriptionType basicDescription = new ExtendedContentDescriptionType();
+        BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
 
         basicDescription.setParentalGuidance(generateParentalGuidance(item));
         Optional<TVATimeType> prodDate = generateProductionDate(item);
@@ -96,7 +118,6 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
         }
         basicDescription.getProductionLocation().addAll(generateProductLocations(item));
         basicDescription.setDuration(generateDuration(version));
-        basicDescription.getTargetingInformationOrTargetingInformationRef().add(new TargetingInformationType());
 
         return basicDescription;
     }
@@ -131,7 +152,7 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
         if (durationInSecs == null) {
             durationInSecs = durationFromFirstBroadcast(version);
         } 
-        return elementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
+        return TvAnytimeElementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
     }
 
     // TODO this is a workaround until versions are ingested correctly from BBC Nitro
@@ -152,5 +173,11 @@ public final class NitroProgramInformationGenerator extends AbstractProgramInfor
             return Optional.of(productionDate);
         }
         return Optional.absent();
+    }
+    
+    private DerivedFromType generateDerivedFromElem(Item item) {
+        DerivedFromType derivedFrom = new DerivedFromType();
+        derivedFrom.setCrid(idGenerator.generateContentCrid(item));
+        return derivedFrom;
     }
 }

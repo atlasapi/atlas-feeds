@@ -4,8 +4,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Set;
 
-import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
-import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
+import org.atlasapi.feeds.tvanytime.granular.GranularProgramInformationGenerator;
+import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Film;
@@ -16,8 +16,8 @@ import org.joda.time.Duration;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ProgramInformationType;
-import tva.metadata.extended._2010.ExtendedContentDescriptionType;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -29,17 +29,18 @@ import com.metabroadcast.common.intl.Countries;
 public class NitroProgramInformationGeneratorTest {
     
     private IdGenerator idGenerator = new NitroIdGenerator(Mockito.mock(HashFunction.class));
-    private TvAnytimeElementFactory elementFactory = TvAnytimeElementFactory.INSTANCE;
-    private final ProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator);
+    
+    private final GranularProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator);
 
     @Test
     public void testPublisherIndependentFields() {
         Version version = createVersion(Duration.standardMinutes(90), true);
         Film film = createNitroFilm(ImmutableSet.of(version));
+        ItemAndVersion hierarchy = new ItemAndVersion(film, version);
         
-        ProgramInformationType progInfo = Iterables.getOnlyElement(generator.generate(film));
+        ProgramInformationType progInfo = generator.generate(hierarchy, "version_crid");
 
-        ExtendedContentDescriptionType basicDescription = (ExtendedContentDescriptionType) progInfo.getBasicDescription();
+        BasicContentDescriptionType basicDescription = progInfo.getBasicDescription();
         
         assertEquals("http://bbfc.org.uk/BBFCRatingCS/2002#PG", basicDescription.getParentalGuidance().getParentalRating().getHref());
         assertEquals("1963", basicDescription.getProductionDate().getTimePoint());
@@ -51,17 +52,16 @@ public class NitroProgramInformationGeneratorTest {
     @Test
     public void testNitroSpecificFields() {
         Version version = createVersion(Duration.standardMinutes(90), false);
-        
         Film film = createNitroFilm(ImmutableSet.of(version));
-        ProgramInformationType progInfo = Iterables.getOnlyElement(generator.generate(film));
         
-        assertEquals(idGenerator.generateVersionCrid(film, version), progInfo.getProgramId());
+        String versionCrid = idGenerator.generateVersionCrid(film, version);
+        
+        ProgramInformationType progInfo = generator.generate(new ItemAndVersion(film, version), versionCrid);
+        
+        assertEquals(versionCrid, progInfo.getProgramId());
         assertEquals(idGenerator.generateContentCrid(film), progInfo.getDerivedFrom().getCrid());
     }
     
-    // TODO test multiple versions created if multiple ids are created for a set of versions on an item
-    
-
     private Film createNitroFilm(Set<Version> versions) {
         Film film = new Film();
         

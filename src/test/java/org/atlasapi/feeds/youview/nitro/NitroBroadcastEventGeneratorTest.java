@@ -6,12 +6,10 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
-import java.util.Set;
-
 import javax.xml.datatype.DatatypeConfigurationException;
 
-import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
-import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
+import org.atlasapi.feeds.tvanytime.granular.GranularBroadcastEventGenerator;
+import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
 import org.atlasapi.media.channel.Channel;
@@ -29,7 +27,6 @@ import org.mockito.Mockito;
 import tva.metadata._2010.BroadcastEventType;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
 
@@ -46,12 +43,11 @@ public class NitroBroadcastEventGeneratorTest {
     private IdGenerator idGenerator = Mockito.mock(IdGenerator.class);
     private BroadcastServiceMapping serviceMapping = Mockito.mock(BroadcastServiceMapping.class);
     private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
-    private BroadcastHierarchyExpander hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping, bbcServiceIdResolver);
     
-    private final BroadcastEventGenerator generator;
+    private final GranularBroadcastEventGenerator generator;
     
     public NitroBroadcastEventGeneratorTest() throws DatatypeConfigurationException {
-        this.generator = new NitroBroadcastEventGenerator(idGenerator, hierarchyExpander);
+        this.generator = new NitroBroadcastEventGenerator(idGenerator);
     }
     
     @Before
@@ -73,9 +69,9 @@ public class NitroBroadcastEventGeneratorTest {
         when(serviceMapping.youviewServiceIdFor(BBC_SERVICE_ID)).thenReturn(ImmutableSet.of(YOUVIEW_SERVICE_ID));
         
         Broadcast broadcast = createBroadcast();
-        Item item = createItemWithBroadcasts(ImmutableSet.of(broadcast));
+        ItemBroadcastHierarchy broadcastHierarchy = createItemHierarchyFrom(broadcast);
         
-        BroadcastEventType generated = Iterables.getOnlyElement(generator.generate(item));
+        BroadcastEventType generated = generator.generate(broadcastHierarchy, BROADCAST_IMI);
         
         // N.B. temporarily changed from 'bbc.co.uk' to 'bbc.couk' for testing
         assertEquals("http://bbc.couk/services/" + YOUVIEW_SERVICE_ID, generated.getServiceIDRef());
@@ -91,40 +87,15 @@ public class NitroBroadcastEventGeneratorTest {
         assertEquals("P0DT0H30M0.000S", generated.getPublishedDuration().toString());
         assertTrue("Free should be hardcoded to true", generated.getFree().isValue());
     }
-    
-    @Test
-    public void testNoBroadcastEventsGeneratedWhenNoYVServiceIDsInMapping() {
-        
-        when(serviceMapping.youviewServiceIdFor(BBC_SERVICE_ID)).thenReturn(ImmutableSet.<String>of());
-        
-        Broadcast broadcast = createBroadcast();
-        Item item = createItemWithBroadcasts(ImmutableSet.of(broadcast));
-        
-        Iterable<BroadcastEventType> generated = generator.generate(item);
-        
-        assertTrue("No BroadcastEvents should be generated if no service IDs are mapped", Iterables.isEmpty(generated));
-    }
-    
-    @Test
-    public void testMultipleBroadcastEventsGeneratedWhenMultipleYVServiceIDsInMapping() {
-        
-        ImmutableSet<String> youViewServiceIDs = ImmutableSet.of(YOUVIEW_SERVICE_ID + "_1", YOUVIEW_SERVICE_ID + "_2");
-        when(serviceMapping.youviewServiceIdFor(BBC_SERVICE_ID)).thenReturn(youViewServiceIDs);
-        
-        Broadcast broadcast = createBroadcast();
-        Item item = createItemWithBroadcasts(ImmutableSet.of(broadcast));
-        
-        Iterable<BroadcastEventType> generated = generator.generate(item);
-        
-        assertEquals(Iterables.size(youViewServiceIDs), Iterables.size(generated));
-    }
 
-    private Item createItemWithBroadcasts(Set<Broadcast> broadcasts) {
+    private ItemBroadcastHierarchy createItemHierarchyFrom(Broadcast broadcast) {
+        
         Item item = new Item("item", "curie", Publisher.METABROADCAST);
         Version version = new Version();
-        version.setBroadcasts(broadcasts);
+        version.setBroadcasts(ImmutableSet.of(broadcast));
         item.setVersions(ImmutableSet.of(version));
-        return item;
+        
+        return new ItemBroadcastHierarchy(item, version, broadcast, YOUVIEW_SERVICE_ID);
     }
 
     private Broadcast createBroadcast() {
