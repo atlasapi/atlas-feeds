@@ -87,7 +87,7 @@ public class YouViewUploadModule {
             "nitro", Publisher.BBC_NITRO
     );
     
-    private final static RepetitionRule DELTA_UPLOAD = RepetitionRules.every(Duration.standardMinutes(30));
+    private final static RepetitionRule DELTA_UPLOAD = RepetitionRules.NEVER;//RepetitionRules.every(Duration.standardMinutes(30));
     private final static RepetitionRule BOOTSTRAP_UPLOAD = RepetitionRules.NEVER;
     private final static RepetitionRule REMOTE_CHECK_UPLOAD = RepetitionRules.every(Duration.standardMinutes(15));
     private static final String TASK_NAME_PATTERN = "YouView %s TVAnytime %s Upload";
