@@ -8,4 +8,5 @@ public interface BbcServiceIdResolver {
 
     String resolveSId(Broadcast broadcast);
     String resolveSId(Content content);
+    String resolveMasterBrandId(Content content);
 }
