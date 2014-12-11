@@ -54,8 +54,11 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
     private static final Integer DEFAULT_DURATION = 30 * 60;
     
     private final IdGenerator idGenerator;
+    private final NitroCreditsItemGenerator creditsGenerator;
     
-    public NitroProgramInformationGenerator(IdGenerator idGenerator) {
+    public NitroProgramInformationGenerator(IdGenerator idGenerator,
+            NitroCreditsItemGenerator creditsGenerator) {
+        this.creditsGenerator = checkNotNull(creditsGenerator);
         this.idGenerator = checkNotNull(idGenerator);
     }
 
@@ -96,17 +99,20 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
         }
         basicDescription.getProductionLocation().addAll(generateProductLocations(item));
         basicDescription.setDuration(generateDuration(version));
+        basicDescription.setCreditsList(creditsGenerator.generate(item));
 
         return basicDescription;
     }
 
     private List<String> generateProductLocations(Item item) {
-        return ImmutableList.copyOf(Iterables.transform(item.getCountriesOfOrigin(), new Function<Country, String>() {
-            @Override
-            public String apply(Country input) {
-                return input.code().toLowerCase();
-            }
-        }));
+        return ImmutableList.copyOf(Iterables.transform(item.getCountriesOfOrigin(),
+                new Function<Country, String>() {
+
+                    @Override
+                    public String apply(Country input) {
+                        return input.code().toLowerCase();
+                    }
+                }));
     }
 
     private TVAParentalGuidanceType generateParentalGuidance(Version version) {
