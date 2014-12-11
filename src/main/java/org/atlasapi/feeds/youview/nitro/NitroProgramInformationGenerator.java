@@ -51,8 +51,11 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
     };
     
     private final IdGenerator idGenerator;
+    private final NitroCreditsItemGenerator creditsGenerator;
     
-    public NitroProgramInformationGenerator(IdGenerator idGenerator) {
+    public NitroProgramInformationGenerator(IdGenerator idGenerator,
+            NitroCreditsItemGenerator creditsGenerator) {
+        this.creditsGenerator = checkNotNull(creditsGenerator);
         this.idGenerator = checkNotNull(idGenerator);
     }
 
@@ -98,17 +101,20 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
             throw new RuntimeException("null version for item " + item.getCanonicalUri());
         }
         basicDescription.setDuration(versionDuration);
+        basicDescription.setCreditsList(creditsGenerator.generate(item));
 
         return basicDescription;
     }
 
     private List<String> generateProductLocations(Item item) {
-        return ImmutableList.copyOf(Iterables.transform(item.getCountriesOfOrigin(), new Function<Country, String>() {
-            @Override
-            public String apply(Country input) {
-                return input.code().toLowerCase();
-            }
-        }));
+        return ImmutableList.copyOf(Iterables.transform(item.getCountriesOfOrigin(),
+                new Function<Country, String>() {
+
+                    @Override
+                    public String apply(Country input) {
+                        return input.code().toLowerCase();
+                    }
+                }));
     }
 
     private TVAParentalGuidanceType generateParentalGuidance(Version version) {
