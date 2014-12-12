@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageFor;
+import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -74,7 +74,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(hierarchy.item(), hierarchy.version()));
         onDemand.setInstanceMetadataId(imi);
-        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.encoding(), getLanguageFor(hierarchy.item())));
+        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.encoding(), hierarchy.location(), getLanguageCodeFor(hierarchy.item())));
         onDemand.setPublishedDuration(generatePublishedDuration(hierarchy.version()));
         onDemand.setStartOfAvailability(generateAvailabilityStart(hierarchy.location()));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(hierarchy.location()));
@@ -90,10 +90,10 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return free;
     }
 
-    private InstanceDescriptionType generateInstanceDescription(Encoding encoding, String language) {
+    private InstanceDescriptionType generateInstanceDescription(Encoding encoding, Location location, String language) {
         InstanceDescriptionType instanceDescription = new InstanceDescriptionType();
         
-        instanceDescription.getGenre().addAll(generateGenres());
+        instanceDescription.getGenre().addAll(generateGenres(location.getPolicy()));
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
         instanceDescription.getCaptionLanguage().add(captionLanguage(language));
@@ -181,8 +181,13 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return bitRateType;
     }
 
-    private List<GenreType> generateGenres() {
+    private List<GenreType> generateGenres(Policy policy) {
+        if (policy == null || policy.getActualAvailabilityStart() == null) {
+            return ImmutableList.of();
+        }
+        
         GenreType mediaAvailable = new GenreType();
+        
         mediaAvailable.setType(GENRE_TYPE_OTHER);
         mediaAvailable.setHref(YOUVIEW_GENRE_MEDIA_AVAILABLE);
         
@@ -196,6 +201,12 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
 
     private XMLGregorianCalendar generateAvailabilityStart(Location location) {
         Policy policy = location.getPolicy();
+        if (policy == null) {
+            return null;
+        }
+        if (policy.getActualAvailabilityStart() != null) {
+            return TvAnytimeElementFactory.gregorianCalendar(policy.getActualAvailabilityStart());
+        }
         return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart());
     }
 

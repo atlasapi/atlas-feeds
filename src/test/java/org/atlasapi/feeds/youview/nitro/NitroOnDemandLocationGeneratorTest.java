@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -71,28 +72,18 @@ public class NitroOnDemandLocationGeneratorTest {
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
 
         assertEquals("P0DT1H30M0.000S", onDemand.getPublishedDuration().toString());
-        assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
-        assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
         assertTrue(onDemand.getFree().isValue());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
         
-        Set<String> hrefs = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_HREF));
-        Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
         CaptionLanguageType captionLanguage = Iterables.getOnlyElement(instanceDesc.getCaptionLanguage());
 
-        assertEquals("other", Iterables.getOnlyElement(types));
         assertTrue(captionLanguage.isClosed());
         assertEquals(captionLanguage.getValue(), "en");
 
         List<SignLanguageType> signLanguages = instanceDesc.getSignLanguage();
         SignLanguageType signLanguageType = Iterables.getOnlyElement(signLanguages);
         assertEquals("bfi", signLanguageType.getValue());
-
-        Set<String> expected = ImmutableSet.of(
-                "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available");
-        
-        assertEquals(expected, hrefs);
 
         AVAttributesType avAttributes = instanceDesc.getAVAttributes();
         AudioAttributesType audioAttrs = Iterables.getOnlyElement(avAttributes.getAudioAttributes());
@@ -152,6 +143,40 @@ public class NitroOnDemandLocationGeneratorTest {
         assertTrue(captionLanguage.isClosed());
         assertEquals(captionLanguage.getValue(), "gla");
     }
+    
+    @Test
+    public void testIfNoActualAvailabilityThenContentNotMarkedAsAvailable() {
+        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm());
+        
+        onDemandHierarchy.location().getPolicy().setActualAvailabilityStart(null);
+        
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
+        
+        InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
+        Set<String> hrefs = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_HREF));
+        
+        assertTrue("No 'media available' genre should be added if no actual availability has been identified", hrefs.isEmpty());
+        
+        assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
+        assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
+}
+
+@Test
+public void testIfActualAvailabilityPresentThenContentMarkedAsAvailable() {
+    ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm());
+    
+    ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
+    
+    InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
+    Set<String> hrefs = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_HREF));
+    Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
+    
+    assertEquals("http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available", getOnlyElement(hrefs));
+    assertEquals("other", getOnlyElement(types));
+    
+    assertEquals("2012-07-03T00:10:00Z", onDemand.getStartOfAvailability().toString());
+    assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
+}
 
     private ItemOnDemandHierarchy hierarchyFrom(Film film) {
         Version version = Iterables.getOnlyElement(film.getVersions());
@@ -212,6 +237,7 @@ public class NitroOnDemandLocationGeneratorTest {
         
         Policy policy = new Policy();
 
+        policy.setActualAvailabilityStart(new DateTime(2012, 7, 3, 0, 10, 0, DateTimeZone.UTC));
         policy.setAvailabilityStart(new DateTime(2012, 7, 3, 0, 0, 0, DateTimeZone.UTC));
         policy.setAvailabilityEnd(new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC));
         

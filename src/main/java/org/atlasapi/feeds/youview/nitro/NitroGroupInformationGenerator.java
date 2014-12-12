@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageFor;
+import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
 
 import java.util.List;
 import java.util.Map;
@@ -271,7 +271,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
 
-        basicDescription.getLanguage().addAll(generateLanguage(getLanguageFor(content)));
+        basicDescription.getLanguage().addAll(generateLanguage(getLanguageCodeFor(content)));
 
         basicDescription.setCreditsList(generateCreditsList(content));
         Optional<RelatedMaterialType> relatedMaterial = Optional.absent();
