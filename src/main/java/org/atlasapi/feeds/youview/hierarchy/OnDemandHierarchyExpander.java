@@ -78,11 +78,11 @@ public class OnDemandHierarchyExpander {
     private Iterable<ItemOnDemandHierarchy> toOnDemandHierarchy(final Item item, final Version version, 
             final Encoding encoding, Iterable<Location> locations) {
         return FluentIterable.from(locations)
-                .filter(filterNonYouViewIPlayerLocations())
+                .filter(isYouViewIPlayerLocation())
                 .transform(toOnDemandHierarchy(item, version, encoding));
     }
 
-    private static Predicate<Location> filterNonYouViewIPlayerLocations() {
+    private static Predicate<Location> isYouViewIPlayerLocation() {
         return new Predicate<Location>() {
             @Override
             public boolean apply(Location input) {
