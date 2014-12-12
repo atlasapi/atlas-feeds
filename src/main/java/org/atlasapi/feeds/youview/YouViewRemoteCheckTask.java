@@ -4,10 +4,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Set;
 
+import org.atlasapi.feeds.youview.service.TaskProcessor;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
-import org.atlasapi.feeds.youview.upload.granular.GranularYouViewService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +18,7 @@ import com.metabroadcast.common.scheduling.UpdateProgress;
 
 public class YouViewRemoteCheckTask extends ScheduledTask {
     
-    private static final Set<Status> UNCHECKED = ImmutableSet.of(
+    private static final Set<Status> TO_BE_CHECKED = ImmutableSet.of(
             Status.ACCEPTED,
             Status.VALIDATING,
             Status.QUARANTINED,
@@ -29,17 +29,17 @@ public class YouViewRemoteCheckTask extends ScheduledTask {
     
     private final Logger log = LoggerFactory.getLogger(YouViewRemoteCheckTask.class);
     private final TaskStore taskStore;
-    private final GranularYouViewService client;
+    private final TaskProcessor processor;
 
-    public YouViewRemoteCheckTask(TaskStore taskStore, GranularYouViewService client) {
+    public YouViewRemoteCheckTask(TaskStore taskStore, TaskProcessor processor) {
         this.taskStore = checkNotNull(taskStore);
-        this.client = checkNotNull(client);
+        this.processor = checkNotNull(processor);
     }
 
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
-        for (Status uncheckedStatus : UNCHECKED) {
+        for (Status uncheckedStatus : TO_BE_CHECKED) {
             if (!shouldContinue()) {
                 break;
             }
@@ -49,7 +49,7 @@ public class YouViewRemoteCheckTask extends ScheduledTask {
                     break;
                 }
                 try {
-                    client.checkRemoteStatusOf(task);
+                    processor.checkRemoteStatusOf(task);
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch (Exception e) {
                     log.error("error checking task {}", task.id(), e);
