@@ -36,6 +36,7 @@ import org.atlasapi.feeds.youview.upload.DefaultGranularYouViewService;
 import org.atlasapi.feeds.youview.upload.DefaultYouViewService;
 import org.atlasapi.feeds.youview.upload.DeltaUploadTask;
 import org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient;
+import org.atlasapi.feeds.youview.upload.NoOpYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.PublisherDelegatingGranularYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.PublisherDelegatingYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.ValidatingYouViewRemoteClient;
@@ -240,7 +241,7 @@ public class YouViewUploadModule {
         String baseUrl = parseUrl(publisherPrefix);
         UsernameAndPassword credentials = parseCredentials(publisherPrefix);
         
-        YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), baseUrl);
+        YouViewRemoteClient client = new NoOpYouViewRemoteClient();//new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), baseUrl);
         client = enableValidationIfAppropriate(client);
         
         return Optional.<GranularYouViewService>of(new DefaultGranularYouViewService(
