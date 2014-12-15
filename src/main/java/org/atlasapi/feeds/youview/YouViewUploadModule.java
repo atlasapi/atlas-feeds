@@ -242,7 +242,7 @@ public class YouViewUploadModule {
         String baseUrl = parseUrl(publisherPrefix);
         UsernameAndPassword credentials = parseCredentials(publisherPrefix);
         
-        YouViewRemoteClient client = new NoOpYouViewRemoteClient();//new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), baseUrl);
+        YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), baseUrl);
         client = enableValidationIfAppropriate(client);
         
         return Optional.<GranularYouViewService>of(new DefaultGranularYouViewService(
