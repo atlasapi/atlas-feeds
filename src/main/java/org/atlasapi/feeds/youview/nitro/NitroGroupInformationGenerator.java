@@ -145,7 +145,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         return groupInfo;
     }
 
-    private UniqueIDType createOtherIdentifier(Content content) {
+    private UniqueIDType createContentPidOtherIdentifier(Content content) {
         Matcher matcher = NITRO_URI_PATTERN.matcher(content.getCanonicalUri());
 
         if (!matcher.matches()) {
@@ -167,7 +167,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
 
         if (item instanceof Episode) {
-            groupInfo.getOtherIdentifier().add(createOtherIdentifier(item));
+            groupInfo.getOtherIdentifier().add(createContentPidOtherIdentifier(item));
         }
 
         if (series.isPresent()) {
@@ -271,7 +271,8 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
 
-        basicDescription.getLanguage().addAll(generateLanguage(getLanguageCodeFor(content)));
+        String language = getLanguageCodeFor(content);
+        basicDescription.getLanguage().addAll(generateLanguage(language));
 
         basicDescription.setCreditsList(generateCreditsList(content));
         Optional<RelatedMaterialType> relatedMaterial = Optional.absent();

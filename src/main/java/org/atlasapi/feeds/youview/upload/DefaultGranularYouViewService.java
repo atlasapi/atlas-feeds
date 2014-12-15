@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.upload;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.ByteArrayInputStream;
@@ -108,31 +109,31 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
 
     private Status parseStatusFromResult(String result) {
         try {
-        JAXBContext context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
-        Unmarshaller unmarshaller = context.createUnmarshaller();
-        StatusReport report = (StatusReport) unmarshaller.unmarshal(new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8)));
-        TransactionReportType txnReport = report.getTransactionReport().get(0);
-        
-        switch (txnReport.getState()) {
-        case ACCEPTED:
-            return Status.ACCEPTED;
-        case COMMITTED:
-            return Status.COMMITTED;
-        case COMMITTING:
-            return Status.COMMITTING;
-        case FAILED:
-            return Status.FAILED;
-        case PUBLISHED:
-            return Status.PUBLISHED;
-        case PUBLISHING:
-            return Status.PUBLISHING;
-        case QUARANTINED:
-            return Status.QUARANTINED;
-        case VALIDATING:
-            return Status.VALIDATING;
-        default:
-            return Status.UNKNOWN;
-        }
+            JAXBContext context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
+            Unmarshaller unmarshaller = context.createUnmarshaller();
+            StatusReport report = (StatusReport) unmarshaller.unmarshal(new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8)));
+            TransactionReportType txnReport = Iterables.getOnlyElement(report.getTransactionReport());
+
+            switch (txnReport.getState()) {
+            case ACCEPTED:
+                return Status.ACCEPTED;
+            case COMMITTED:
+                return Status.COMMITTED;
+            case COMMITTING:
+                return Status.COMMITTING;
+            case FAILED:
+                return Status.FAILED;
+            case PUBLISHED:
+                return Status.PUBLISHED;
+            case PUBLISHING:
+                return Status.PUBLISHING;
+            case QUARANTINED:
+                return Status.QUARANTINED;
+            case VALIDATING:
+                return Status.VALIDATING;
+            default:
+                return Status.UNKNOWN;
+            }
         } catch (JAXBException e) {
             // TODO horrible things happened
             throw Throwables.propagate(e);
@@ -141,9 +142,8 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
 
     @Override
     public void revoke(Content content) {
-        if (!(content instanceof Item)) {
-            throw new RuntimeException("content " + content.getCanonicalUri() + " not an item, cannot revoke");
-        }
+        checkArgument(content instanceof Item, "content " + content.getCanonicalUri() + " not an item, cannot revoke");
+        
         Item item = (Item) content;
         Set<String> onDemandIds = onDemandHierarchyExpander.expandHierarchy(item).keySet();
 
@@ -158,9 +158,8 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
 
     @Override
     public void unrevoke(Content content) {
-        if (!(content instanceof Item)) {
-            throw new RuntimeException("content " + content.getCanonicalUri() + " not an item, cannot revoke");
-        }
+        checkArgument(content instanceof Item, "content " + content.getCanonicalUri() + " not an item, cannot unrevoke");
+        
         revocationStore.unrevoke(content.getCanonicalUri());
         
         Item item = (Item) content;

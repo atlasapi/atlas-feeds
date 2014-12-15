@@ -19,6 +19,10 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
 
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
+import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
+
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
 import tva.metadata._2010.AudioAttributesType;
@@ -35,11 +39,6 @@ import tva.metadata._2010.SignLanguageType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
-
 public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationGenerator {
 
     private static final String DEFAULT_ASPECT_RATIO = "16:9";
@@ -53,11 +52,11 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private static final Integer DEFAULT_VERTICAL_SIZE = 720;
     private static final String BROADCAST_AUTHORITY = "www.bbc.co.uk";
     private static final String DEFAULT_ON_DEMAND_PIPS_ID = "b00gszl0.imi:bbc.co.uk/pips/65751802";
+    private static final String LANGUAGE = "en";
     private static final String AUDIO_DESCRIPTION_PURPOSE = "urn:tva:metadata:cs:AudioPurposeCS:2007:1";
     private static final String AUDIO_DESCRIPTION_TYPE = "dubbed";
     private static final String ENGLISH_LANG = "en";
     private static final String BRITISH_SIGN_LANGUAGE = "bfi";
-    private static final String LANGUAGE = "en";
 
     private final IdGenerator idGenerator;
     
@@ -118,7 +117,8 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private UniqueIDType createIdentifierFromPipsIdentifier() {
         UniqueIDType otherId = new UniqueIDType();
         otherId.setAuthority(BROADCAST_AUTHORITY);
-        // Hard-coding this value because we don't receive an equivalent from Nitro at the moment
+        // YV has a legacy constraint requiring an OtherIdentifier. We don't receive that from Nitro
+        // at the moment, so we are hardcoding it
         otherId.setValue(DEFAULT_ON_DEMAND_PIPS_ID);
         return otherId;
     }
@@ -133,7 +133,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     }
 
     private boolean audioDescribedOrFalse(Encoding encoding) {
-        return Optional.fromNullable(encoding.getAudioDescribed()).or(false);
+        return Boolean.TRUE.equals(encoding.getAudioDescribed());
     }
 
     private AudioAttributesType generateAudioAttributes(boolean audioDescribed) {
@@ -157,24 +157,23 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private VideoAttributesType generateVideoAttributes(Encoding encoding) {
         VideoAttributesType videoAttributes = new VideoAttributesType();
 
-        videoAttributes.setHorizontalSize(Optional.fromNullable(encoding.getVideoHorizontalSize())
-                .or(DEFAULT_HORIZONTAL_SIZE));
-        videoAttributes.setVerticalSize(Optional.fromNullable(encoding.getVideoVerticalSize())
-                .or(DEFAULT_VERTICAL_SIZE));
+        videoAttributes.setHorizontalSize(Objects.firstNonNull(encoding.getVideoHorizontalSize(),
+                DEFAULT_HORIZONTAL_SIZE));
+        videoAttributes.setVerticalSize(Objects.firstNonNull(encoding.getVideoVerticalSize(),
+                DEFAULT_VERTICAL_SIZE));
         
         AspectRatioType aspectRatio = new AspectRatioType();
-        aspectRatio.setValue(Objects.firstNonNull(encoding.getVideoAspectRatio(), DEFAULT_ASPECT_RATIO));
-        
+        aspectRatio.setValue(Objects.firstNonNull(encoding.getVideoAspectRatio(),
+                DEFAULT_ASPECT_RATIO));
+
         videoAttributes.getAspectRatio().add(aspectRatio);
         
         return videoAttributes;
     }
 
     private BitRateType generateBitRate(Encoding encoding) {
-        Integer bitRate = encoding.getVideoBitRate();
-        if (bitRate == null) {
-            bitRate = DEFAULT_BIT_RATE;
-        }
+        Integer bitRate = Objects.firstNonNull(encoding.getVideoBitRate(), DEFAULT_BIT_RATE);
+
         BitRateType bitRateType = new BitRateType();
         bitRateType.setVariable(true);
         bitRateType.setValue(BigInteger.valueOf(bitRate));

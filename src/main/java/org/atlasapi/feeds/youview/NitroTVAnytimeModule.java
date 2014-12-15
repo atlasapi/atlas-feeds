@@ -15,6 +15,8 @@ import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroProgramInformationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroTvAnytimeElementCreator;
+import org.atlasapi.feeds.youview.persistence.IdMappingStore;
+import org.atlasapi.feeds.youview.persistence.StoringMappingIdGenerator;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,7 @@ public class NitroTVAnytimeModule {
 
     private @Autowired ContentResolver contentResolver;
     private @Autowired ChannelResolver channelResolver;
+    private @Autowired IdMappingStore idMappingStore;
     
     @Bean
     public NitroTvAnytimeElementCreator nitroElementCreator() {
@@ -47,8 +50,8 @@ public class NitroTVAnytimeModule {
     }
     
     @Bean
-    public NitroIdGenerator nitroIdGenerator() {
-        return new NitroIdGenerator(Hashing.md5());
+    public StoringMappingIdGenerator nitroIdGenerator() {
+        return new StoringMappingIdGenerator(idMappingStore, new NitroIdGenerator(Hashing.md5()));
     }
     
     @Bean
@@ -83,4 +86,5 @@ public class NitroTVAnytimeModule {
     public BroadcastHierarchyExpander broadcastHierarchyExpander() {
         return new BroadcastHierarchyExpander(nitroIdGenerator(), nitroServiceMapping(), bbcServiceIdResolver());
     }
+
 }

@@ -42,9 +42,8 @@ import com.metabroadcast.common.intl.Countries;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class NitroOnDemandLocationGeneratorTest {
-    
-    private static final String ON_DEMAND_IMI = "on_demand_imi";
 
+    private static final String ON_DEMAND_IMI = "on_demand_imi";
     private static final int VIDEO_BITRATE = 1500000;
 
     private static final Function<GenreType, String> GENRE_TO_HREF = new Function<GenreType, String>() {
@@ -95,8 +94,9 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals(Integer.valueOf(1280), videoAttrs.getHorizontalSize());
         assertEquals(Integer.valueOf(720), videoAttrs.getVerticalSize());
         assertEquals("16:9", Iterables.getOnlyElement(videoAttrs.getAspectRatio()).getValue());
-        assertTrue(avAttributes.getBitRate().isVariable());
+
         assertEquals(BigInteger.valueOf(VIDEO_BITRATE), avAttributes.getBitRate().getValue());
+        assertTrue(avAttributes.getBitRate().isVariable());
 
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
         assertEquals("b00gszl0.imi:bbc.co.uk/pips/65751802", otherId.getValue());
@@ -159,24 +159,24 @@ public class NitroOnDemandLocationGeneratorTest {
         
         assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
         assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
-}
+    }
 
-@Test
-public void testIfActualAvailabilityPresentThenContentMarkedAsAvailable() {
-    ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm());
-    
-    ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
-    
-    InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
-    Set<String> hrefs = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_HREF));
-    Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
-    
-    assertEquals("http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available", getOnlyElement(hrefs));
-    assertEquals("other", getOnlyElement(types));
-    
-    assertEquals("2012-07-03T00:10:00Z", onDemand.getStartOfAvailability().toString());
-    assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
-}
+    @Test
+    public void testIfActualAvailabilityPresentThenContentMarkedAsAvailable() {
+        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm());
+
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
+
+        InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
+        Set<String> hrefs = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_HREF));
+        Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
+
+        assertEquals("http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available", getOnlyElement(hrefs));
+        assertEquals("other", getOnlyElement(types));
+
+        assertEquals("2012-07-03T00:10:00Z", onDemand.getStartOfAvailability().toString());
+        assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
+    }
 
     private ItemOnDemandHierarchy hierarchyFrom(Film film) {
         Version version = Iterables.getOnlyElement(film.getVersions());
@@ -206,7 +206,7 @@ public void testIfActualAvailabilityPresentThenContentMarkedAsAvailable() {
 
     private Version createVersion() {
         Version version = new Version();
-        
+
         Restriction restriction = new Restriction();
         restriction.setRestricted(true);
         
@@ -234,14 +234,15 @@ public void testIfActualAvailabilityPresentThenContentMarkedAsAvailable() {
 
     private Location createLocation() {
         Location location = new Location();
-        
+
         Policy policy = new Policy();
 
         policy.setActualAvailabilityStart(new DateTime(2012, 7, 3, 0, 10, 0, DateTimeZone.UTC));
         policy.setAvailabilityStart(new DateTime(2012, 7, 3, 0, 0, 0, DateTimeZone.UTC));
         policy.setAvailabilityEnd(new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC));
-        
+
         location.setPolicy(policy);
+
         return location;
     }
 }
