@@ -12,6 +12,7 @@ import org.atlasapi.feeds.tvanytime.granular.GranularTvAnytimeGenerator;
 import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
@@ -104,7 +105,7 @@ public class YouViewUploadModule {
     private @Autowired GranularTvAnytimeGenerator granularGenerator;
     private @Autowired TaskStore taskStore;
     private @Autowired BbcServiceIdResolver bbcServiceIdResolver;
-    private @Autowired NitroIdGenerator nitroIdGenerator;
+    private @Autowired IdGenerator nitroIdGenerator;
     private @Autowired NitroBroadcastServiceMapping nitroBroadcastServiceMapping;
     private @Autowired LoveFilmIdGenerator loveFilmIdGenerator;
     private @Autowired LoveFilmBroadcastServiceMapping loveFilmServiceMapping;
