@@ -35,6 +35,20 @@ public class MongoIdMappingStoreTest {
     }
 
     @Test
+    public void testShouldReturnTheLatestWrittenValue() {
+        String key = "thisisthekey";
+        String value = "thisisthevalue";
+        String newValue = "thisistheNewvalue";
+
+        store.storeMapping(key, value);
+        store.storeMapping(key, newValue);
+        Optional<String> retrievedValue = store.getValueFor(key);
+
+        assertTrue(retrievedValue.isPresent());
+        assertEquals(newValue, retrievedValue.get());
+    }
+
+    @Test
     public void testReturnsOptionalForANotExistentKey() {
         String key = "thisisthenotexistentkey";
 

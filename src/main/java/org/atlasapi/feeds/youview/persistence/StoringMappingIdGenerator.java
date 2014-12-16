@@ -24,6 +24,7 @@ public class StoringMappingIdGenerator implements IdGenerator {
     public String generateVersionCrid(Item item, Version version) {
         String versionCrid = delegate.generateVersionCrid(item, version);
         idMappingStore.storeMapping(version.getCanonicalUri(), versionCrid);
+
         return versionCrid;
     }
 
