@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Optional;
 import com.google.gson.Gson;
+import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.webapp.json.GsonFactory;
 
 @Controller
@@ -35,16 +36,16 @@ public class NitroYouViewResolutionController {
     public void getYouViewVersionCridJson(HttpServletResponse response,
             @RequestParam(value = "pid", required = true) String pid)
             throws IOException {
-        response.setContentType("application/json");
-        serializeJSON(response, outputForPid(pid));
+        response.setContentType(MimeType.APPLICATION_JSON.toString());
+        serializeJson(response, outputForPid(pid));
     }
 
     @RequestMapping(value = "/feeds/nitro-youview/version.xml", method = RequestMethod.GET)
     public void getYouViewVersionCridXml(HttpServletResponse response,
             @RequestParam(value = "pid", required = true) String pid)
             throws JAXBException, IOException {
-        response.setContentType("application/xml");
-        serializeXML(response, outputForPid(pid));
+        response.setContentType(MimeType.APPLICATION_XML.toString());
+        serializeXml(response, outputForPid(pid));
     }
 
     private ResolutionApiOutput outputForPid(String pid) {
@@ -56,13 +57,13 @@ public class NitroYouViewResolutionController {
         }
     }
 
-    private void serializeJSON(HttpServletResponse response,
+    private void serializeJson(HttpServletResponse response,
             ResolutionApiOutput output) throws IOException {
         GSON.toJson(output.getBlocklist(), response.getWriter());
     }
 
 
-    private void serializeXML(HttpServletResponse response, ResolutionApiOutput output)
+    private void serializeXml(HttpServletResponse response, ResolutionApiOutput output)
             throws JAXBException, IOException {
         JAXBContext context = JAXBContext.newInstance(ResolutionApiOutput.class);
         Marshaller jaxbMarshaller = context.createMarshaller();

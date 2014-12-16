@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.persistence;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
@@ -14,8 +16,8 @@ public class StoringMappingIdGenerator implements IdGenerator {
     private final IdGenerator delegate;
 
     public StoringMappingIdGenerator(IdMappingStore idMappingStore, IdGenerator delegate) {
-        this.idMappingStore = idMappingStore;
-        this.delegate = delegate;
+        this.idMappingStore = checkNotNull(idMappingStore);
+        this.delegate = checkNotNull(delegate);
     }
 
     @Override
