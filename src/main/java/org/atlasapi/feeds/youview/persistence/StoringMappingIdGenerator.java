@@ -10,8 +10,6 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
 
-import com.google.common.base.Optional;
-
 public class StoringMappingIdGenerator implements IdGenerator {
 
     private final IdMappingStore idMappingStore;
@@ -25,11 +23,7 @@ public class StoringMappingIdGenerator implements IdGenerator {
     @Override
     public String generateVersionCrid(Item item, Version version) {
         String versionCrid = delegate.generateVersionCrid(item, version);
-        Optional<String> value = idMappingStore.getValueFor(version.getCanonicalUri());
-
-        if (!value.isPresent() || !versionCrid.equals(value.get())) {
-            idMappingStore.storeMapping(version.getCanonicalUri(), versionCrid);
-        }
+        idMappingStore.storeMapping(version.getCanonicalUri(), versionCrid);
 
         return versionCrid;
     }

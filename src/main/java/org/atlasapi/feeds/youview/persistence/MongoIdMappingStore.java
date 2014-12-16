@@ -22,6 +22,14 @@ public class MongoIdMappingStore implements IdMappingStore {
 
     @Override
     public void storeMapping(String key, String value) {
+        Optional<String> currentValue = getValueFor(key);
+
+        if (!currentValue.isPresent() || !value.equals(currentValue.get())) {
+            doStore(key, value);
+        }
+    }
+
+    private void doStore(String key, String value) {
         collection.save(BasicDBObjectBuilder
                 .start(MongoConstants.ID, key)
                 .add(VALUE, value)

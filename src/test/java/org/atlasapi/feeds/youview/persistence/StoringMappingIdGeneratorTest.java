@@ -2,8 +2,6 @@ package org.atlasapi.feeds.youview.persistence;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -17,8 +15,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import com.google.common.base.Optional;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StoringMappingIdGeneratorTest {
@@ -44,30 +40,7 @@ public class StoringMappingIdGeneratorTest {
     }
 
     @Test
-    public void testShouldWriteWhenNoMappingExists() {
-        when(store.getValueFor(anyString())).thenReturn(Optional.<String>absent());
-
-        String versionCrid = idGenerator.generateVersionCrid(new Item(), version());
-
-        assertEquals(VERSION_CRID, versionCrid);
-        verify(store, times(1)).storeMapping(VERSION_URI, VERSION_CRID);
-    }
-
-    @Test
-    public void testShouldNotWriteWhenMappingAlreadyExists() {
-        when(store.getValueFor(anyString())).thenReturn(Optional.of(VERSION_CRID));
-
-        String versionCrid = idGenerator.generateVersionCrid(new Item(), version());
-
-        assertEquals(VERSION_CRID, versionCrid);
-        verify(store, never()).storeMapping(anyString(), anyString());
-    }
-
-    @Test
-    public void testShouldWriteWhenMappingWithDifferentValueExists() {
-        String oldVersionCrid = "oldVersionCrid";
-        when(store.getValueFor(anyString())).thenReturn(Optional.of(oldVersionCrid));
-
+    public void testShouldWriteMappingWhenVersionCridIsGenerated() {
         String versionCrid = idGenerator.generateVersionCrid(new Item(), version());
 
         assertEquals(VERSION_CRID, versionCrid);
