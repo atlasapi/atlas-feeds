@@ -7,4 +7,5 @@ public interface ResultHandler {
 
     void handleTransactionResult(Task task, YouViewResult result);
     void handleRemoteCheckResult(Task task, YouViewResult result);
+    void registerReportHandler(YouViewReportHandler reportHandler);
 }

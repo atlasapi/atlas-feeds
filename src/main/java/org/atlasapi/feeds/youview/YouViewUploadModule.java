@@ -145,6 +145,8 @@ public class YouViewUploadModule {
         }
         
         scheduler.schedule(remoteCheckTask().withName("YouView Task Status Check"), REMOTE_CHECK_UPLOAD);
+        
+        resultHandler().registerReportHandler(reportHandler());
     }
     
     private ScheduledTask remoteCheckTask() throws JAXBException, SAXException {
@@ -264,7 +266,7 @@ public class YouViewUploadModule {
     
     @Bean
     public ResultHandler resultHandler() throws JAXBException, SAXException {
-        return new TaskUpdatingResultHandler(clock, taskStore, reportHandler());
+        return new TaskUpdatingResultHandler(clock, taskStore);
     }
 
     @Bean

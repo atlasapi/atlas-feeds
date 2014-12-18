@@ -19,7 +19,6 @@ import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import tva.mpeg7._2008.TextualType;
 
@@ -46,7 +45,8 @@ public class TaskUpdatingResultHandlerTest {
     private final ResultHandler handler;
     
     public TaskUpdatingResultHandlerTest() throws JAXBException {
-        this.handler = new TaskUpdatingResultHandler(clock, taskStore, reportHandler);
+        this.handler = new TaskUpdatingResultHandler(clock, taskStore);
+        handler.registerReportHandler(reportHandler);
     }
     
     @Test

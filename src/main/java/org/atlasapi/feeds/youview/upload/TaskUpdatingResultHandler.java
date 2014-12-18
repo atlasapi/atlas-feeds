@@ -26,13 +26,17 @@ public class TaskUpdatingResultHandler implements ResultHandler {
     private final Clock clock;
     private final TaskStore taskStore;
     private final JAXBContext context;
-    private final YouViewReportHandler reportHandler;
+    private YouViewReportHandler reportHandler;
     
-    public TaskUpdatingResultHandler(Clock clock, TaskStore taskStore, YouViewReportHandler reportHandler) throws JAXBException {
+    public TaskUpdatingResultHandler(Clock clock, TaskStore taskStore) throws JAXBException {
         this.clock = checkNotNull(clock);
         this.taskStore = checkNotNull(taskStore);
-        this.reportHandler = checkNotNull(reportHandler);
         this.context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
+    }
+    
+    @Override
+    public void registerReportHandler(YouViewReportHandler reportHandler) {
+        this.reportHandler = checkNotNull(reportHandler);
     }
 
     @Override
@@ -60,7 +64,9 @@ public class TaskUpdatingResultHandler implements ResultHandler {
     private Status parseAndHandleStatusReport(String result, Task task) {
         try {
             TransactionReportType txnReport = parseReportFrom(result);
-            reportHandler.handle(txnReport, task);
+            if (reportHandler != null) {
+                reportHandler.handle(txnReport, task);
+            }
             switch (txnReport.getState()) {
             case ACCEPTED:
                 return Status.ACCEPTED;
