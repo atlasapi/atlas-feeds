@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
 
 import java.math.BigInteger;
-import java.util.List;
 
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -18,10 +17,6 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
-
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
@@ -38,6 +33,10 @@ import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.SignLanguageType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
+
+import com.google.common.base.Objects;
+import com.google.common.base.Optional;
+import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationGenerator {
 
@@ -73,7 +72,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(hierarchy.item(), hierarchy.version()));
         onDemand.setInstanceMetadataId(imi);
-        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.encoding(), getLanguageCodeFor(hierarchy.item())));
+        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.encoding(), hierarchy.location(), getLanguageCodeFor(hierarchy.item())));
         onDemand.setPublishedDuration(generatePublishedDuration(hierarchy.version()));
         onDemand.setStartOfAvailability(generateAvailabilityStart(hierarchy.location()));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(hierarchy.location()));
@@ -89,10 +88,13 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return free;
     }
 
-    private InstanceDescriptionType generateInstanceDescription(Encoding encoding, String language) {
+    private InstanceDescriptionType generateInstanceDescription(Encoding encoding, Location location, String language) {
         InstanceDescriptionType instanceDescription = new InstanceDescriptionType();
         
-        instanceDescription.getGenre().addAll(generateGenres());
+        Optional<GenreType> mediaAvailableGenre = generateMediaAvailableMarkerGenre(location.getPolicy());
+        if (mediaAvailableGenre.isPresent()) {
+            instanceDescription.getGenre().add(mediaAvailableGenre.get());
+        }
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
         instanceDescription.getCaptionLanguage().add(captionLanguage(language));
@@ -180,12 +182,17 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return bitRateType;
     }
 
-    private List<GenreType> generateGenres() {
+    private Optional<GenreType> generateMediaAvailableMarkerGenre(Policy policy) {
+        if (policy == null || policy.getActualAvailabilityStart() == null) {
+            return Optional.absent();
+        }
+        
         GenreType mediaAvailable = new GenreType();
+        
         mediaAvailable.setType(GENRE_TYPE_OTHER);
         mediaAvailable.setHref(YOUVIEW_GENRE_MEDIA_AVAILABLE);
         
-        return ImmutableList.of(mediaAvailable);
+        return Optional.of(mediaAvailable);
     }
 
     private Duration generatePublishedDuration(Version version) {
@@ -193,8 +200,19 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return TvAnytimeElementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
     }
 
+    // Initially, the BBC will provide scheduled availability start and end dates for an on demand window. Once
+    // the correct availability start is known (which may differ from the scheduled time), this will be 
+    // ingested as the actual availability start. This will cause the start of the on demand window to
+    // be updated to the actual availability start, as well as adding the 'media available' marker genre
+    // to the OnDemand element.
     private XMLGregorianCalendar generateAvailabilityStart(Location location) {
         Policy policy = location.getPolicy();
+        if (policy == null) {
+            return null;
+        }
+        if (policy.getActualAvailabilityStart() != null) {
+            return TvAnytimeElementFactory.gregorianCalendar(policy.getActualAvailabilityStart());
+        }
         return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart());
     }
 
