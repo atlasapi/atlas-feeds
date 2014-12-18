@@ -65,13 +65,13 @@ public class ResolutionApiOutput {
 
     public static class Resolution {
 
-        @XmlElement
+        @XmlElement(name = "input_id")
         private String inputId;
-        @XmlElement
+        @XmlElement(name = "input_type")
         private String inputType;
-        @XmlElement
+        @XmlElement(name = "resolved_as")
         private String resolvedAs;
-        @XmlElement
+        @XmlElement(name = "resolved_type")
         private String resolvedType;
         
         public Resolution() {
