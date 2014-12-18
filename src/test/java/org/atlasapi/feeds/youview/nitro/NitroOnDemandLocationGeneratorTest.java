@@ -108,8 +108,8 @@ public class NitroOnDemandLocationGeneratorTest {
         assertTrue(avAttributes.getBitRate().isVariable());
 
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
-        assertEquals("b00gszl0.imi:bbc.co.uk/pips/65751802", otherId.getValue());
-        assertEquals("www.bbc.co.uk", otherId.getAuthority());
+        assertEquals("b020tm1g", otherId.getValue());
+        assertEquals("epid.bbc.co.uk", otherId.getAuthority());
     }
     
     @Test
