@@ -12,6 +12,7 @@ import org.atlasapi.feeds.tvanytime.granular.GranularTvAnytimeGenerator;
 import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
+import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
@@ -39,11 +40,13 @@ import org.atlasapi.feeds.youview.upload.DeltaUploadTask;
 import org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.PublisherDelegatingGranularYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.PublisherDelegatingYouViewRemoteClient;
+import org.atlasapi.feeds.youview.upload.ReferentialIntegrityCheckingReportHandler;
 import org.atlasapi.feeds.youview.upload.ResultHandler;
 import org.atlasapi.feeds.youview.upload.RevocationHonouringYouViewService;
 import org.atlasapi.feeds.youview.upload.TaskUpdatingResultHandler;
 import org.atlasapi.feeds.youview.upload.ValidatingYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
+import org.atlasapi.feeds.youview.upload.YouViewReportHandler;
 import org.atlasapi.feeds.youview.upload.YouViewService;
 import org.atlasapi.feeds.youview.upload.granular.DefaultGranularYouViewService;
 import org.atlasapi.feeds.youview.upload.granular.GranularBootstrapUploadTask;
@@ -115,6 +118,7 @@ public class YouViewUploadModule {
     private @Autowired UnboxBroadcastServiceMapping unboxServiceMapping;
     private @Autowired BroadcastHierarchyExpander broadcastHierarchyExpander;
     private @Autowired OnDemandHierarchyExpander onDemandHierarchyExpander;
+    private @Autowired VersionHierarchyExpander versionHierarchyExpander;
     private @Autowired ContentHierarchyExpander contentHierarchyExpander;
     private @Autowired FeedStatisticsStore feedStatsStore;
     
@@ -259,8 +263,13 @@ public class YouViewUploadModule {
     }
     
     @Bean
-    public ResultHandler resultHandler() throws JAXBException {
-        return new TaskUpdatingResultHandler(clock, taskStore);
+    public ResultHandler resultHandler() throws JAXBException, SAXException {
+        return new TaskUpdatingResultHandler(clock, taskStore, reportHandler());
+    }
+
+    @Bean
+    public YouViewReportHandler reportHandler() throws JAXBException, SAXException {
+        return new ReferentialIntegrityCheckingReportHandler(granularYouViewService(), contentResolver, versionHierarchyExpander, contentHierarchy());
     }
 
     @Bean

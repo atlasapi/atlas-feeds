@@ -26,10 +26,12 @@ public class TaskUpdatingResultHandler implements ResultHandler {
     private final Clock clock;
     private final TaskStore taskStore;
     private final JAXBContext context;
+    private final YouViewReportHandler reportHandler;
     
-    public TaskUpdatingResultHandler(Clock clock, TaskStore taskStore) throws JAXBException {
+    public TaskUpdatingResultHandler(Clock clock, TaskStore taskStore, YouViewReportHandler reportHandler) throws JAXBException {
         this.clock = checkNotNull(clock);
         this.taskStore = checkNotNull(taskStore);
+        this.reportHandler = checkNotNull(reportHandler);
         this.context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
     }
 
@@ -47,7 +49,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
     public void handleRemoteCheckResult(Task task, YouViewResult result) {
         Status status;
         if (result.isSuccess()) {
-            status = parseStatusFromResult(result.result());
+            status = parseAndHandleStatusReport(result.result(), task);
         } else {
             status = Status.REJECTED;
         }
@@ -55,12 +57,10 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         taskStore.updateWithResponse(task.id(), response);
     }
     
-    private Status parseStatusFromResult(String result) {
+    private Status parseAndHandleStatusReport(String result, Task task) {
         try {
-            Unmarshaller unmarshaller = context.createUnmarshaller();
-            StatusReport report = (StatusReport) unmarshaller.unmarshal(new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8)));
-            TransactionReportType txnReport = Iterables.getOnlyElement(report.getTransactionReport());
-
+            TransactionReportType txnReport = parseReportFrom(result);
+            reportHandler.handle(txnReport, task);
             switch (txnReport.getState()) {
             case ACCEPTED:
                 return Status.ACCEPTED;
@@ -84,5 +84,12 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         } catch (JAXBException e) {
             throw Throwables.propagate(e);
         }
+    }
+
+    private TransactionReportType parseReportFrom(String result) throws JAXBException {
+        Unmarshaller unmarshaller = context.createUnmarshaller();
+        StatusReport report = (StatusReport) unmarshaller.unmarshal(new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8)));
+        TransactionReportType txnReport = Iterables.getOnlyElement(report.getTransactionReport());
+        return txnReport;
     }
 }

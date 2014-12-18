@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.upload;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.io.ByteArrayOutputStream;
@@ -38,13 +39,14 @@ public class TaskUpdatingResultHandlerTest {
     private static final String ELEMENT_ID = "element_id";
     
     private Clock clock = new TimeMachine();
-    private TaskStore taskStore = Mockito.mock(TaskStore.class);
+    private TaskStore taskStore = mock(TaskStore.class);
+    private YouViewReportHandler reportHandler = mock(YouViewReportHandler.class);
     private JAXBContext context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
     
     private final ResultHandler handler;
     
     public TaskUpdatingResultHandlerTest() throws JAXBException {
-        this.handler = new TaskUpdatingResultHandler(clock, taskStore);
+        this.handler = new TaskUpdatingResultHandler(clock, taskStore, reportHandler);
     }
     
     @Test
