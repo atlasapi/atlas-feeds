@@ -26,21 +26,26 @@ import org.atlasapi.feeds.youview.resolution.FullHierarchyResolvingContentResolv
 import org.atlasapi.feeds.youview.resolution.UpdatedContentResolver;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.feeds.youview.revocation.MongoRevokedContentStore;
+import org.atlasapi.feeds.youview.revocation.OnDemandBasedRevocationProcessor;
+import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.feeds.youview.upload.BootstrapUploadTask;
-import org.atlasapi.feeds.youview.upload.DefaultGranularYouViewService;
 import org.atlasapi.feeds.youview.upload.DefaultYouViewService;
 import org.atlasapi.feeds.youview.upload.DeltaUploadTask;
 import org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.PublisherDelegatingGranularYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.PublisherDelegatingYouViewRemoteClient;
+import org.atlasapi.feeds.youview.upload.ResultHandler;
+import org.atlasapi.feeds.youview.upload.RevocationHonouringYouViewService;
+import org.atlasapi.feeds.youview.upload.TaskUpdatingResultHandler;
 import org.atlasapi.feeds.youview.upload.ValidatingYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.YouViewService;
+import org.atlasapi.feeds.youview.upload.granular.DefaultGranularYouViewService;
 import org.atlasapi.feeds.youview.upload.granular.GranularBootstrapUploadTask;
 import org.atlasapi.feeds.youview.upload.granular.GranularDeltaUploadTask;
 import org.atlasapi.feeds.youview.upload.granular.GranularYouViewService;
@@ -139,12 +144,12 @@ public class YouViewUploadModule {
     }
     
     private ScheduledTask remoteCheckTask() throws JAXBException, SAXException {
-        return new YouViewRemoteCheckTask(taskStore, granularYouViewUploadClient());
+        return new YouViewRemoteCheckTask(taskStore, granularYouViewService());
     }
 
     @Bean
     public YouViewUploadController uploadController() throws JAXBException, SAXException {
-        return new YouViewUploadController(contentResolver, granularYouViewUploadClient(), contentHierarchyExpander);
+        return new YouViewUploadController(contentResolver, granularYouViewService(), contentHierarchyExpander, revocationProcessor());
     }
     
     private ScheduledTask scheduleBootstrapTask(Publisher publisher) throws JAXBException, SAXException {
@@ -159,7 +164,7 @@ public class YouViewUploadModule {
     
     private ScheduledTask scheduleGranularBootstrapTask(Publisher publisher) throws JAXBException, SAXException {
         return new GranularBootstrapUploadTask(
-                granularYouViewUploadClient(), 
+                granularYouViewService(), 
                 lastUpdatedStore(), 
                 publisher, 
                 nitroContentResolver(publisher), 
@@ -173,7 +178,7 @@ public class YouViewUploadModule {
 
     private ScheduledTask scheduleGranularDeltaTask(Publisher publisher) throws JAXBException, SAXException {
         return new GranularDeltaUploadTask(
-                granularYouViewUploadClient(), 
+                granularYouViewService(), 
                 lastUpdatedStore(), 
                 publisher, 
                 nitroContentResolver(publisher), 
@@ -205,7 +210,7 @@ public class YouViewUploadModule {
     }
     
     @Bean
-    public GranularYouViewService granularYouViewUploadClient() throws JAXBException, SAXException {
+    public GranularYouViewService granularYouViewService() throws JAXBException, SAXException {
         ImmutableMap.Builder<Publisher, GranularYouViewService> clients = ImmutableMap.builder();
         
         Optional<GranularYouViewService> nitroClient = createNitroClient();
@@ -213,7 +218,7 @@ public class YouViewUploadModule {
             clients.put(Publisher.BBC_NITRO, nitroClient.get());
         }
         
-        return new PublisherDelegatingGranularYouViewRemoteClient(clients.build());
+        return new RevocationHonouringYouViewService(revokedContentStore(), new PublisherDelegatingGranularYouViewRemoteClient(clients.build()));
     }
     
     @Bean
@@ -246,13 +251,21 @@ public class YouViewUploadModule {
         return Optional.<GranularYouViewService>of(new DefaultGranularYouViewService(
                 granularGenerator, 
                 nitroIdGenerator, 
-                clock, 
-                revokedContentStore(), 
                 client, 
                 taskStore,
-                onDemandHierarchyExpander,
-                sentBroadcastProgramUrlStore()
+                sentBroadcastProgramUrlStore(),
+                resultHandler()
         ));
+    }
+    
+    @Bean
+    public ResultHandler resultHandler() throws JAXBException {
+        return new TaskUpdatingResultHandler(clock, taskStore);
+    }
+
+    @Bean
+    public RevocationProcessor revocationProcessor() throws JAXBException, SAXException {
+        return new OnDemandBasedRevocationProcessor(revokedContentStore(), onDemandHierarchyExpander, granularYouViewService());
     }
     
     @Bean
