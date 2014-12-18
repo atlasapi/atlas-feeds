@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Optional;
+import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.webapp.json.GsonFactory;
@@ -26,7 +27,9 @@ public class NitroYouViewResolutionController {
 
     private static final String NITRO_URI_PREFIX = "http://nitro.bbc.co.uk/programmes/";
     private final IdMappingStore mappingStore;
-    private static final Gson GSON = GsonFactory.defaultGson();
+    private static final Gson GSON = GsonFactory.defaultGsonBuilder()
+            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+            .create();
 
     public NitroYouViewResolutionController(IdMappingStore mappingStore) {
         this.mappingStore = checkNotNull(mappingStore);
