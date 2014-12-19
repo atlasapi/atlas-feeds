@@ -9,22 +9,23 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
-import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.entity.Policy.Platform;
+import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
+import org.joda.time.Interval;
 
 import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 
-// TODO this, in combination with the later granular identification of changes, may
-// mean updates are missed if updates to items happen when they have no current availabilities.
-public class AvailableContentResolver implements YouViewContentResolver {
+public class SevenDayWindowAvailableContentResolver implements YouViewContentResolver {
 
+    private static final Duration WINDOW_DURATION = Duration.standardDays(7);
+    
     private final YouViewContentResolver delegate;
     
-    public AvailableContentResolver(YouViewContentResolver delegate) {
+    public SevenDayWindowAvailableContentResolver(YouViewContentResolver delegate) {
         this.delegate = checkNotNull(delegate);
     }
 
@@ -54,7 +55,7 @@ public class AvailableContentResolver implements YouViewContentResolver {
         );
     }
     
-    private Predicate<Version> isVersionAvailable() {
+    private static Predicate<Version> isVersionAvailable() {
         return new Predicate<Version>() {
             @Override
             public boolean apply(Version input) {
@@ -63,11 +64,11 @@ public class AvailableContentResolver implements YouViewContentResolver {
         };
     }
 
-    private Predicate<Encoding> isEncodingAvailable() {
+    private static Predicate<Encoding> isEncodingAvailable() {
         return new Predicate<Encoding>() {
             @Override
             public boolean apply(Encoding input) {
-                return Iterables.any(input.getAvailableAt(), Predicates.and(isLocationAvailable(), isYouViewPlatform()));
+                return Iterables.any(input.getAvailableAt(), isLocationAvailable());
             }
         };
     }
@@ -76,20 +77,16 @@ public class AvailableContentResolver implements YouViewContentResolver {
         return new Predicate<Location>() {
             @Override
             public boolean apply(Location input) {
-                return input.getAvailable();
-            }
-        };
-    }
-
-    private static Predicate<Location> isYouViewPlatform() {
-        return new Predicate<Location>() {
-            @Override
-            public boolean apply(Location input) {
                 Policy policy = input.getPolicy();
-                if (policy == null) {
+                if (policy == null || policy.getAvailabilityStart() == null) { 
                     return false;
                 }
-                return Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform());
+                if (!Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform())) {
+                    return false;
+                }
+                
+                Interval sevenDayWindow = new Interval(policy.getAvailabilityStart(), policy.getAvailabilityStart().plus(WINDOW_DURATION));
+                return sevenDayWindow.containsNow();
             }
         };
     }

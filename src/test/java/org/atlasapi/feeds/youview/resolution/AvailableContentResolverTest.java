@@ -10,9 +10,11 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -136,6 +138,11 @@ public class AvailableContentResolverTest {
         
         Location location = new Location();
         
+        Policy policy = new Policy();
+        
+        policy.setPlatform(Platform.YOUVIEW_IPLAYER);
+        
+        location.setPolicy(policy);
         location.setAvailable(available);
         
         encoding.setAvailableAt(ImmutableSet.of(location));
