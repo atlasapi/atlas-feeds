@@ -60,6 +60,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private static final String ENGLISH_LANG = "en";
     private static final String BRITISH_SIGN_LANGUAGE = "bfi";
     private static final Pattern NITRO_URI_PATTERN = Pattern.compile("^http://nitro.bbc.co.uk/programmes/([a-zA-Z0-9]+)$");
+    private static final org.joda.time.Duration AVAILABILITY_WINDOW = org.joda.time.Duration.standardDays(7);
 
     private final IdGenerator idGenerator;
     
@@ -217,9 +218,13 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart());
     }
 
+    // This has been changed to reflect that content is currently available for only a 7 day window,
+    // whereas we ingest it from Nitro with a 30 day availability. This will be updated once the 
+    // switch-over has taken place.
     private XMLGregorianCalendar generateAvailabilityEnd(Location location) {
         Policy policy = location.getPolicy();
-        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityEnd());
+//        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityEnd());
+        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart().plus(AVAILABILITY_WINDOW));
     }
     
     private CRIDRefType generateProgram(Item item, Version version) {
