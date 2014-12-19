@@ -71,7 +71,7 @@ public class NitroOnDemandLocationGeneratorTest {
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
 
         assertEquals("P0DT1H30M0.000S", onDemand.getPublishedDuration().toString());
-        assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
+        assertEquals("2012-07-03T00:10:00Z", onDemand.getStartOfAvailability().toString());
         assertEquals("2012-07-10T00:00:00Z", onDemand.getEndOfAvailability().toString());
         assertTrue(onDemand.getFree().isValue());
         
@@ -160,7 +160,7 @@ public class NitroOnDemandLocationGeneratorTest {
         assertTrue("No 'media available' genre should be added if no actual availability has been identified", hrefs.isEmpty());
         
         assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
-        assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
+        assertEquals("2012-07-10T00:00:00Z", onDemand.getEndOfAvailability().toString());
     }
 
     @Test
@@ -177,7 +177,7 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals("other", getOnlyElement(types));
 
         assertEquals("2012-07-03T00:10:00Z", onDemand.getStartOfAvailability().toString());
-        assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
+        assertEquals("2012-07-10T00:00:00Z", onDemand.getEndOfAvailability().toString());
     }
 
     private ItemOnDemandHierarchy hierarchyFrom(Film film) {
