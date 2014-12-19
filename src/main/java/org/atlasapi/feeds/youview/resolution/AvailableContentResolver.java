@@ -30,15 +30,15 @@ public class AvailableContentResolver implements YouViewContentResolver {
 
     @Override
     public Iterator<Content> updatedSince(DateTime dateTime) {
-        return fetchAvailableUpdatedContent(delegate.updatedSince(dateTime));
+        return filterAvailableUpdatedContent(delegate.updatedSince(dateTime));
     }
 
     @Override
     public Iterator<Content> allContent() {
-        return fetchAvailableUpdatedContent(delegate.allContent());
+        return filterAvailableUpdatedContent(delegate.allContent());
     }
     
-    private Iterator<Content> fetchAvailableUpdatedContent(Iterator<Content> content) {
+    private Iterator<Content> filterAvailableUpdatedContent(Iterator<Content> content) {
         return Iterators.filter(
                 content, 
                 new Predicate<Content>(){
@@ -86,10 +86,7 @@ public class AvailableContentResolver implements YouViewContentResolver {
             @Override
             public boolean apply(Location input) {
                 Policy policy = input.getPolicy();
-                if (policy == null) {
-                    return false;
-                }
-                return Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform());
+                return policy != null && Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform());
             }
         };
     }

@@ -21,6 +21,7 @@ import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.YouViewResult;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Series;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,7 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
     @Override
     public void checkRemoteStatusOf(Task task) {
         if (!task.remoteId().isPresent()) {
-            log.error("attempted to check remote status for task {} with no remote id", task.id());
+            throw new RuntimeException("attempted to check remote status for task " + task.id() + " with no remote id");
         }
         resultHandler.handleRemoteCheckResult(task, client.checkRemoteStatusOf(task.remoteId().get()));
     }
@@ -99,8 +100,10 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
         if (content instanceof Series) {
             return TVAElementType.SERIES;
         }
-        // TODO this is crude
-        return TVAElementType.ITEM;
+        if (content instanceof Item) {
+            return TVAElementType.ITEM;
+        }
+        throw new RuntimeException("Content " + content.getCanonicalUri() + " of unexpected type. Expected Brand/Series/Item");
     }
 
     @Override

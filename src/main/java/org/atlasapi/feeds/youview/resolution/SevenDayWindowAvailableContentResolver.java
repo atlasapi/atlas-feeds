@@ -19,6 +19,14 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 
+/**
+ * This is designed to help simulate a seven day availability window, from content
+ * with 30 day windows. This class filters out all content that is not currently 
+ * within the first 7 days of its availability window. 
+ * 
+ * @author Oliver Hall (oli@metabroadcast.com)
+ *
+ */
 public class SevenDayWindowAvailableContentResolver implements YouViewContentResolver {
 
     private static final Duration WINDOW_DURATION = Duration.standardDays(7);
@@ -31,15 +39,15 @@ public class SevenDayWindowAvailableContentResolver implements YouViewContentRes
 
     @Override
     public Iterator<Content> updatedSince(DateTime dateTime) {
-        return fetchAvailableUpdatedContent(delegate.updatedSince(dateTime));
+        return filterAvailableUpdatedContent(delegate.updatedSince(dateTime));
     }
 
     @Override
     public Iterator<Content> allContent() {
-        return fetchAvailableUpdatedContent(delegate.allContent());
+        return filterAvailableUpdatedContent(delegate.allContent());
     }
     
-    private Iterator<Content> fetchAvailableUpdatedContent(Iterator<Content> content) {
+    private Iterator<Content> filterAvailableUpdatedContent(Iterator<Content> content) {
         return Iterators.filter(
                 content, 
                 new Predicate<Content>(){
