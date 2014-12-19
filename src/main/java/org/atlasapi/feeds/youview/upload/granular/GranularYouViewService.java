@@ -15,7 +15,5 @@ public interface GranularYouViewService {
     void uploadBroadcast(ItemBroadcastHierarchy broadcastHierarchy, String broadcastImi);
     void uploadOnDemand(ItemOnDemandHierarchy onDemandHierarchy, String onDemandImi);
     void sendDeleteFor(Content content, TVAElementType type, String elementId);
-    void checkRemoteStatusOf(Task transaction);
-    void revoke(Content content);
-    void unrevoke(Content content);
+    void checkRemoteStatusOf(Task task);
 }

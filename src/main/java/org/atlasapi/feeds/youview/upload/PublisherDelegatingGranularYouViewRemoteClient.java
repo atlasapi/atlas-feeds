@@ -58,18 +58,6 @@ public class PublisherDelegatingGranularYouViewRemoteClient implements GranularY
         GranularYouViewService delegate = fetchDelegateOrThrow(transaction.publisher());
         delegate.checkRemoteStatusOf(transaction);
     }
-
-    @Override
-    public void revoke(Content content) {
-        GranularYouViewService delegate = fetchDelegateOrThrow(content.getPublisher());
-        delegate.revoke(content);
-    }
-
-    @Override
-    public void unrevoke(Content content) {
-        GranularYouViewService delegate = fetchDelegateOrThrow(content.getPublisher());
-        delegate.unrevoke(content);
-    }
     
     private GranularYouViewService fetchDelegateOrThrow(Publisher publisher) {
         GranularYouViewService delegate = clients.get(publisher);

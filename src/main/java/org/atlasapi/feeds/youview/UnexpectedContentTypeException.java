@@ -10,4 +10,8 @@ public class UnexpectedContentTypeException extends RuntimeException {
     public <C extends Content> UnexpectedContentTypeException(C type) {
         super("Unknown sub type of content " + type.getClass().getCanonicalName());
     }
+    
+    public <C extends Content> UnexpectedContentTypeException(Class<? extends Content> expectedType, C actual) {
+        super(String.format("Expected %s to be %s but was %s", actual.getCanonicalUri(), expectedType.getCanonicalName(), actual.getClass().getCanonicalName()));
+    }
 }
