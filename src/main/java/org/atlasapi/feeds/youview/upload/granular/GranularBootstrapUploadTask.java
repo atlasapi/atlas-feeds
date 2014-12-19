@@ -41,8 +41,6 @@ public final class GranularBootstrapUploadTask extends GranularUploadTask {
         DateTime lastUpdated = new DateTime();
         Iterator<Content> allContent = contentResolver.allContent();
         
-        int queueSize = Iterators.size(allContent);
-        
         GranularYouViewContentProcessor<UpdateProgress> processor = uploadProcessor(Optional.<DateTime>absent());
         
         while (allContent.hasNext()) {
@@ -52,7 +50,6 @@ public final class GranularBootstrapUploadTask extends GranularUploadTask {
             Content next = allContent.next();
             if (IS_ACTIVELY_PUBLISHED.apply(next)) {
                 processor.process(next);
-                updateFeedStatistics(queueSize--, next);
                 reportStatus(processor.getResult().toString());
             }
         }
