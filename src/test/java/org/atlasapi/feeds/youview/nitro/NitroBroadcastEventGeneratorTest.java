@@ -76,8 +76,7 @@ public class NitroBroadcastEventGeneratorTest {
         
         BroadcastEventType generated = generator.generate(broadcastHierarchy, BROADCAST_IMI);
         
-        // N.B. temporarily changed from 'bbc.co.uk' to 'bbc.couk' for testing
-        assertEquals("http://bbc.couk/services/" + YOUVIEW_SERVICE_ID, generated.getServiceIDRef());
+        assertEquals("http://nitro.bbc.co.uk/services/" + YOUVIEW_SERVICE_ID, generated.getServiceIDRef());
         assertEquals(VERSION_CRID, generated.getProgram().getCrid());
         assertEquals(TERRESTRIAL_EVENT_LOCATOR, generated.getProgramURL());
         assertEquals(BROADCAST_IMI, generated.getInstanceMetadataId());

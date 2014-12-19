@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Set;
 
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -15,10 +16,6 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
 import tva.metadata._2010.AudioAttributesType;
@@ -29,15 +26,17 @@ import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+
 public class NitroBroadcastEventGenerator implements GranularBroadcastEventGenerator {
 
     private static final String DEFAULT_ASPECT_RATIO = "16:9";
     private static final String MIX_TYPE_STEREO = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
     private static final String BROADCAST_AUTHORITY = "pcrid.dmol.co.uk";
     private static final String BROADCAST_PID_AUTHORITY = "bpid.bbc.co.uk";
-    private static final String BROADCAST_CRID = "crid://fp.bbc.co.uk/SILG5";
-//    private static final String SERVICE_ID_PREFIX = "http://bbc.co.uk/services/";
-    private static final String DEV_SERVICE_ID_PREFIX = "http://bbc.couk/services/";
+    private static final String SERVICE_ID_PREFIX = "http://nitro.bbc.co.uk/services/";
     private final IdGenerator idGenerator;
     private static final String TERRESTRIAL_EVENT_LOCATOR_NS = "bbc:terrestrial_event_locator:teleview";
     private static final String TERRESTRIAL_PROGRAMME_CRID_NS = "bbc:terrestrial_programme_crid:teleview";
@@ -83,8 +82,7 @@ public class NitroBroadcastEventGenerator implements GranularBroadcastEventGener
     }
 
     private String serviceIdRefFrom(String youViewServiceId) {
-//        return SERVICE_ID_PREFIX + youViewServiceId;
-        return DEV_SERVICE_ID_PREFIX + youViewServiceId;
+        return SERVICE_ID_PREFIX + youViewServiceId;
     }
 
     private InstanceDescriptionType instanceDescriptionFrom(Broadcast broadcast) {

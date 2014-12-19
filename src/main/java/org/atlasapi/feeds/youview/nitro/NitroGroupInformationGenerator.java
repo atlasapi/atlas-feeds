@@ -60,8 +60,7 @@ import com.metabroadcast.common.text.Truncator;
 
 public class NitroGroupInformationGenerator implements GroupInformationGenerator {
 
-//    private static final String MASTERBRAND_PREFIX = "http://bbc.co.uk/masterbrands/";
-    private static final String DEV_MASTERBRAND_PREFIX = "http://bbc.co.uk/master_brands/";
+    private static final String MASTERBRAND_PREFIX = "http://nitro.bbc.co.uk/masterbrands/";
     private static final String YOUVIEW_CREDIT_ROLE = "urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN";
     private static final String YOUVIEW_IMAGE_FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS:2001:1";
     private static final String YOUVIEW_IMAGE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
@@ -230,7 +229,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     }
     
     private String createMasterBrandLink(Content content) {
-        return DEV_MASTERBRAND_PREFIX + sIdResolver.resolveMasterBrandId(content);
+        return MASTERBRAND_PREFIX + sIdResolver.resolveMasterBrandId(content);
     }
 
     private GroupInformationType generateWithCommonFields(Content content) {

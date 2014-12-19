@@ -44,8 +44,7 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationGenerator {
 
     private static final String DEFAULT_ASPECT_RATIO = "16:9";
-//    private static final String YOUVIEW_SERVICE = "http://bbc.co.uk/services/youview";
-    private static final String DEV_YOUVIEW_SERVICE = "http://bbc.couk/services/youview";
+    private static final String YOUVIEW_SERVICE = "http://nitro.bbc.co.uk/services/youview";
     private static final String MIX_TYPE_STEREO = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
     private static final String YOUVIEW_GENRE_MEDIA_AVAILABLE = "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available";
     private static final String GENRE_TYPE_OTHER = "other";
@@ -72,7 +71,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
 
-        onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
+        onDemand.setServiceIDRef(YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(hierarchy.item(), hierarchy.version()));
         onDemand.setInstanceMetadataId(imi);
         onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.item(), hierarchy.encoding(), hierarchy.location(), getLanguageCodeFor(hierarchy.item())));

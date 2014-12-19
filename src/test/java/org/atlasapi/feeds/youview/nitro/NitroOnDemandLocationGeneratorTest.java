@@ -115,7 +115,7 @@ public class NitroOnDemandLocationGeneratorTest {
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(hierarchy, onDemandImi);
         
         
-        assertEquals("http://bbc.couk/services/youview", onDemand.getServiceIDRef());
+        assertEquals("http://nitro.bbc.co.uk/services/youview", onDemand.getServiceIDRef());
         assertEquals(versionCrid, onDemand.getProgram().getCrid());
         assertEquals(onDemandImi, onDemand.getInstanceMetadataId());
 
