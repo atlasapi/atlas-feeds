@@ -17,7 +17,6 @@ import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastServiceMapping;
-import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
 import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventProgramUrlStore;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.SentBroadcastEventProgramUrlStore;
@@ -149,12 +148,12 @@ public class YouViewUploadModule {
     }
     
     private ScheduledTask scheduleBootstrapTask(Publisher publisher) throws JAXBException, SAXException {
-        return new BootstrapUploadTask(youViewUploadClient(), lastUpdatedStore(), publisher, nitroContentResolver(publisher), feedStatsStore, clock)
+        return new BootstrapUploadTask(youViewUploadClient(), lastUpdatedStore(), publisher, nitroBootstrapContentResolver(publisher), feedStatsStore, clock)
                     .withName(String.format(TASK_NAME_PATTERN, "Bootstrap", publisher.title()));
     }
     
     private ScheduledTask scheduleDeltaTask(Publisher publisher) throws JAXBException, SAXException {
-        return new DeltaUploadTask(youViewUploadClient(), lastUpdatedStore(), publisher, nitroContentResolver(publisher), feedStatsStore, clock)
+        return new DeltaUploadTask(youViewUploadClient(), lastUpdatedStore(), publisher, nitroDeltaContentResolver(publisher), feedStatsStore, clock)
                     .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
     
@@ -163,7 +162,7 @@ public class YouViewUploadModule {
                 granularYouViewUploadClient(), 
                 lastUpdatedStore(), 
                 publisher, 
-                nitroContentResolver(publisher), 
+                nitroBootstrapContentResolver(publisher), 
                 contentHierarchyExpander, 
                 nitroIdGenerator,
                 feedStatsStore,
@@ -177,7 +176,7 @@ public class YouViewUploadModule {
                 granularYouViewUploadClient(), 
                 lastUpdatedStore(), 
                 publisher, 
-                nitroContentResolver(publisher), 
+                nitroDeltaContentResolver(publisher), 
                 contentHierarchyExpander, 
                 nitroIdGenerator,
                 feedStatsStore,
@@ -186,12 +185,18 @@ public class YouViewUploadModule {
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
     
-    private YouViewContentResolver nitroContentResolver(Publisher publisher) {
+    private YouViewContentResolver nitroBootstrapContentResolver(Publisher publisher) {
         return new FullHierarchyResolvingContentResolver(
                 new AvailableContentResolver(
                         new UpdatedContentResolver(contentFinder, publisher)
                 ), 
                 contentHierarchy()
+        );
+    }
+    
+    private YouViewContentResolver nitroDeltaContentResolver(Publisher publisher) {
+        return new AvailableContentResolver(
+                new UpdatedContentResolver(contentFinder, publisher)
         );
     }
      
