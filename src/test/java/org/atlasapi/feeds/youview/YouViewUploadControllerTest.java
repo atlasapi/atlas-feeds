@@ -13,7 +13,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
-import org.atlasapi.feeds.youview.upload.YouViewService;
+import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.feeds.youview.upload.granular.GranularYouViewService;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Content;
@@ -39,9 +39,10 @@ public class YouViewUploadControllerTest {
     private ContentResolver contentResolver = Mockito.mock(ContentResolver.class);
     private GranularYouViewService remoteClient = Mockito.mock(GranularYouViewService.class);
     private ContentHierarchyExpander hierarchyExpander = Mockito.mock(ContentHierarchyExpander.class);
+    private RevocationProcessor revocationProcessor = Mockito.mock(RevocationProcessor.class);
     private HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
     
-    private final YouViewUploadController controller = new YouViewUploadController(contentResolver, remoteClient, hierarchyExpander);
+    private final YouViewUploadController controller = new YouViewUploadController(contentResolver, remoteClient, hierarchyExpander, revocationProcessor);
     
     @Before
     public void setup() throws IOException {
@@ -129,7 +130,7 @@ public class YouViewUploadControllerTest {
     public void testRevokeRequestTriggersUploadIfContentFound() throws IOException, HttpException {
         controller.revokeContent(response, VALID_PUBLISHER_STR, VALID_CONTENT_URI);
         
-        verify(remoteClient).revoke(VALID_CONTENT);
+        verify(revocationProcessor).revoke(VALID_CONTENT);
         verify(response).setStatus(SC_OK);
     }
 
@@ -161,7 +162,7 @@ public class YouViewUploadControllerTest {
     public void testUnrevokeRequestTriggersUploadIfContentFound() throws IOException, HttpException {
         controller.unrevokeContent(response, VALID_PUBLISHER_STR, VALID_CONTENT_URI);
         
-        verify(remoteClient).unrevoke(VALID_CONTENT);
+        verify(revocationProcessor).unrevoke(VALID_CONTENT);
         verify(response).setStatus(SC_OK);
     }
 

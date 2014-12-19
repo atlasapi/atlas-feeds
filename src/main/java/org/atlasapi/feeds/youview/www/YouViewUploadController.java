@@ -14,6 +14,7 @@ import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
+import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.feeds.youview.tasks.TVAElementType;
 import org.atlasapi.feeds.youview.upload.granular.GranularYouViewService;
 import org.atlasapi.media.entity.Content;
@@ -39,12 +40,14 @@ public class YouViewUploadController {
     private final ContentResolver contentResolver;
     private final GranularYouViewService remoteService;
     private final ContentHierarchyExpander hierarchyExpander;
+    private final RevocationProcessor revocationProcessor;
     
     public YouViewUploadController(ContentResolver contentResolver, GranularYouViewService remoteService,
-            ContentHierarchyExpander hierarchyExpander) {
+            ContentHierarchyExpander hierarchyExpander, RevocationProcessor revocationProcessor) {
         this.contentResolver = checkNotNull(contentResolver);
         this.remoteService = checkNotNull(remoteService);
         this.hierarchyExpander = checkNotNull(hierarchyExpander);
+        this.revocationProcessor = checkNotNull(revocationProcessor);
     }
         
     /**
@@ -241,7 +244,7 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
         }
-        remoteService.revoke(toBeRevoked.get());
+        revocationProcessor.revoke(toBeRevoked.get());
 
         sendOkResponse(response, "Revoke for " + uri + " sent sucessfully");
     }
@@ -270,7 +273,7 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
         }
-        remoteService.unrevoke(toBeUnrevoked.get());
+        revocationProcessor.unrevoke(toBeUnrevoked.get());
 
         sendOkResponse(response, "Unrevoke for " + uri + " sent sucessfully");
     }

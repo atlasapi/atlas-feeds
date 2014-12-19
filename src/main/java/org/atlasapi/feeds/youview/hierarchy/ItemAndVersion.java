@@ -5,6 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 
+import com.google.common.base.Objects;
+
 
 /**
  * A wrapper for an {@link Item} and a {@link Version}
@@ -28,5 +30,25 @@ public class ItemAndVersion {
     
     public Version version() {
         return version;
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(item, version);
+    }
+    
+    @Override
+    public boolean equals(Object that) {
+        if (this == that) {
+            return true;
+        }
+        
+        if (!(that instanceof ItemAndVersion)) {
+            return false;
+        }
+        
+        ItemAndVersion other = (ItemAndVersion) that;
+        return item.equals(other.item)
+                && version.equals(other.version);
     }
 }

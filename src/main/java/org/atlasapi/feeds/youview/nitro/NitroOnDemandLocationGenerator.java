@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
 
 import java.math.BigInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -12,6 +14,7 @@ import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.tvanytime.granular.GranularOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
@@ -49,13 +52,14 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private static final Integer DEFAULT_BIT_RATE = 3200000;
     private static final Integer DEFAULT_HORIZONTAL_SIZE = 1280;
     private static final Integer DEFAULT_VERTICAL_SIZE = 720;
-    private static final String BROADCAST_AUTHORITY = "www.bbc.co.uk";
-    private static final String DEFAULT_ON_DEMAND_PIPS_ID = "b00gszl0.imi:bbc.co.uk/pips/65751802";
+    private static final String EPID_AUTHORITY = "epid.bbc.co.uk";
     private static final String LANGUAGE = "en";
     private static final String AUDIO_DESCRIPTION_PURPOSE = "urn:tva:metadata:cs:AudioPurposeCS:2007:1";
     private static final String AUDIO_DESCRIPTION_TYPE = "dubbed";
     private static final String ENGLISH_LANG = "en";
     private static final String BRITISH_SIGN_LANGUAGE = "bfi";
+    private static final Pattern NITRO_URI_PATTERN = Pattern.compile("^http://nitro.bbc.co.uk/programmes/([a-zA-Z0-9]+)$");
+    private static final org.joda.time.Duration AVAILABILITY_WINDOW = org.joda.time.Duration.standardDays(7);
 
     private final IdGenerator idGenerator;
     
@@ -68,11 +72,10 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
 
-        // TODO is this a single service?
         onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(hierarchy.item(), hierarchy.version()));
         onDemand.setInstanceMetadataId(imi);
-        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.encoding(), hierarchy.location(), getLanguageCodeFor(hierarchy.item())));
+        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.item(), hierarchy.encoding(), hierarchy.location(), getLanguageCodeFor(hierarchy.item())));
         onDemand.setPublishedDuration(generatePublishedDuration(hierarchy.version()));
         onDemand.setStartOfAvailability(generateAvailabilityStart(hierarchy.location()));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(hierarchy.location()));
@@ -88,7 +91,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return free;
     }
 
-    private InstanceDescriptionType generateInstanceDescription(Encoding encoding, Location location, String language) {
+    private InstanceDescriptionType generateInstanceDescription(Content content, Encoding encoding, Location location, String language) {
         InstanceDescriptionType instanceDescription = new InstanceDescriptionType();
         
         Optional<GenreType> mediaAvailableGenre = generateMediaAvailableMarkerGenre(location.getPolicy());
@@ -96,7 +99,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
             instanceDescription.getGenre().add(mediaAvailableGenre.get());
         }
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
-        instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier());
+        instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier(content));
         instanceDescription.getCaptionLanguage().add(captionLanguage(language));
 
         if (Boolean.TRUE.equals(encoding.getSigned())) {
@@ -116,13 +119,19 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return captionLanguage;
     }
 
-    private UniqueIDType createIdentifierFromPipsIdentifier() {
-        UniqueIDType otherId = new UniqueIDType();
-        otherId.setAuthority(BROADCAST_AUTHORITY);
-        // YV has a legacy constraint requiring an OtherIdentifier. We don't receive that from Nitro
-        // at the moment, so we are hardcoding it
-        otherId.setValue(DEFAULT_ON_DEMAND_PIPS_ID);
-        return otherId;
+    private UniqueIDType createIdentifierFromPipsIdentifier(Content content) {
+        Matcher matcher = NITRO_URI_PATTERN.matcher(content.getCanonicalUri());
+
+        if (!matcher.matches()) {
+            throw new RuntimeException("Uri not compliant to Nitro format: " + content.getCanonicalUri());
+        }
+
+        String pid = matcher.group(1);
+        UniqueIDType idType = new UniqueIDType();
+        idType.setAuthority(EPID_AUTHORITY);
+        idType.setValue(pid);
+
+        return idType;
     }
 
     private AVAttributesType generateAvAttributes(Encoding encoding) {
@@ -216,9 +225,13 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart());
     }
 
+    // This has been changed to reflect that content is currently available for only a 7 day window,
+    // whereas we ingest it from Nitro with a 30 day availability. This will be updated once the 
+    // switch-over has taken place.
     private XMLGregorianCalendar generateAvailabilityEnd(Location location) {
         Policy policy = location.getPolicy();
-        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityEnd());
+//        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityEnd());
+        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart().plus(AVAILABILITY_WINDOW));
     }
     
     private CRIDRefType generateProgram(Item item, Version version) {
