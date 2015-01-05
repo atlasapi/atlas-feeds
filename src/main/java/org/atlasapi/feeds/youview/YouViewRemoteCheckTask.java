@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet;
 import com.metabroadcast.common.scheduling.ScheduledTask;
+import com.metabroadcast.common.scheduling.UpdateProgress;
 
 
 public class YouViewRemoteCheckTask extends ScheduledTask {
@@ -37,14 +38,24 @@ public class YouViewRemoteCheckTask extends ScheduledTask {
 
     @Override
     protected void runTask() {
+        UpdateProgress progress = UpdateProgress.START;
         for (Status uncheckedStatus : UNCHECKED) {
+            if (!shouldContinue()) {
+                break;
+            }
             Iterable<Task> tasksToCheck = taskStore.allTasks(uncheckedStatus);
             for (Task task : tasksToCheck) {
+                if (!shouldContinue()) {
+                    break;
+                }
                 try {
                     client.checkRemoteStatusOf(task);
+                    progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch (Exception e) {
                     log.error("error checking task {}", task.id(), e);
+                    progress = progress.reduce(UpdateProgress.FAILURE);
                 }
+                reportStatus(progress.toString());
             }
         }
     }
