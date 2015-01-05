@@ -8,6 +8,8 @@ import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.upload.granular.GranularYouViewService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet;
 import com.metabroadcast.common.scheduling.ScheduledTask;
@@ -23,6 +25,8 @@ public class YouViewRemoteCheckTask extends ScheduledTask {
             Status.COMMITTED,
             Status.PUBLISHING
     );
+    
+    private final Logger log = LoggerFactory.getLogger(YouViewRemoteCheckTask.class);
     private final TaskStore taskStore;
     private final GranularYouViewService client;
 
@@ -36,7 +40,11 @@ public class YouViewRemoteCheckTask extends ScheduledTask {
         for (Status uncheckedStatus : UNCHECKED) {
             Iterable<Task> tasksToCheck = taskStore.allTasks(uncheckedStatus);
             for (Task task : tasksToCheck) {
-                client.checkRemoteStatusOf(task);
+                try {
+                    client.checkRemoteStatusOf(task);
+                } catch (Exception e) {
+                    log.error("error checking task {}", task.id(), e);
+                }
             }
         }
     }
