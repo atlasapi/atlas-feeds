@@ -35,9 +35,6 @@ public class FilterFactory {
     }
 
     public static Predicate<ItemBroadcastHierarchy> broadcastFilter(final Optional<DateTime> updatedSince) {
-        if (!updatedSince.isPresent()) {
-            return Predicates.alwaysTrue();
-        }
         return new Predicate<ItemBroadcastHierarchy>() {
             @Override
             public boolean apply(ItemBroadcastHierarchy input) {
@@ -45,9 +42,10 @@ public class FilterFactory {
                 // send a broadcast is for the linking between EPG items and on-demands, via
                 // programme crids. Therefore we filter broadcasts without pcrids
                 return hasPCrid(input.broadcast())
-                         && (hasBeenUpdated(input.item(), updatedSince.get())
-                            || hasBeenUpdated(input.version(), updatedSince.get())
-                            || hasBeenUpdated(input.broadcast(), updatedSince.get()));
+                         && (!updatedSince.isPresent()
+                             || (hasBeenUpdated(input.item(), updatedSince.get())
+                                || hasBeenUpdated(input.version(), updatedSince.get())
+                                || hasBeenUpdated(input.broadcast(), updatedSince.get())));
             }
 
         };
