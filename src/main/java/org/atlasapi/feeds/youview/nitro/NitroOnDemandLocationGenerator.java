@@ -191,7 +191,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     }
 
     private Optional<GenreType> generateMediaAvailableMarkerGenre(Policy policy) {
-        if (policy == null || policy.getActualAvailabilityStart() == null) {
+        if (!isAvailable(policy)) {
             return Optional.absent();
         }
         
@@ -202,24 +202,29 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         
         return Optional.of(mediaAvailable);
     }
+    
+    // The BBC provide an actual availability start time when the content is available
+    // on-demand. However, if the content is repeatedly available, this timestamp can point
+    // to the start of the original availability window, rather than an updated window.
+    // hence we check for both presence of this timestamp and whether both it and the availability
+    // start have passed (i.e. we are within the current availability window) before declaring
+    // content to be available.
+    private boolean isAvailable(Policy policy) {
+        return policy != null 
+                && policy.getActualAvailabilityStart() != null 
+                && policy.getAvailabilityStart().isBeforeNow() 
+                && policy.getActualAvailabilityStart().isBeforeNow();
+    }
 
     private Duration generatePublishedDuration(Version version) {
         Integer durationInSecs = version.getDuration();
         return TvAnytimeElementFactory.durationFrom(org.joda.time.Duration.standardSeconds(durationInSecs));
     }
 
-    // Initially, the BBC will provide scheduled availability start and end dates for an on demand window. Once
-    // the correct availability start is known (which may differ from the scheduled time), this will be 
-    // ingested as the actual availability start. This will cause the start of the on demand window to
-    // be updated to the actual availability start, as well as adding the 'media available' marker genre
-    // to the OnDemand element.
     private XMLGregorianCalendar generateAvailabilityStart(Location location) {
         Policy policy = location.getPolicy();
         if (policy == null) {
             return null;
-        }
-        if (policy.getActualAvailabilityStart() != null) {
-            return TvAnytimeElementFactory.gregorianCalendar(policy.getActualAvailabilityStart());
         }
         return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart());
     }
