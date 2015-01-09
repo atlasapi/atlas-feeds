@@ -9,22 +9,20 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
-import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.entity.Policy.Platform;
+import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 
-// TODO this, in combination with the later granular identification of changes, may
-// mean updates are missed if updates to items happen when they have no current availabilities.
-public class AvailableContentResolver implements YouViewContentResolver {
 
+public class PlatformFilteringContentResolver implements YouViewContentResolver {
+    
     private final YouViewContentResolver delegate;
     
-    public AvailableContentResolver(YouViewContentResolver delegate) {
+    public PlatformFilteringContentResolver(YouViewContentResolver delegate) {
         this.delegate = checkNotNull(delegate);
     }
 
@@ -67,16 +65,7 @@ public class AvailableContentResolver implements YouViewContentResolver {
         return new Predicate<Encoding>() {
             @Override
             public boolean apply(Encoding input) {
-                return Iterables.any(input.getAvailableAt(), Predicates.and(isLocationAvailable(), isYouViewPlatform()));
-            }
-        };
-    }
-
-    private static Predicate<Location> isLocationAvailable() {
-        return new Predicate<Location>() {
-            @Override
-            public boolean apply(Location input) {
-                return input.getAvailable();
+                return Iterables.any(input.getAvailableAt(), isYouViewPlatform());
             }
         };
     }

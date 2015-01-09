@@ -23,7 +23,7 @@ import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.SentBroadcastEventProgramUrlStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.resolution.FullHierarchyResolvingContentResolver;
-import org.atlasapi.feeds.youview.resolution.SevenDayWindowAvailableContentResolver;
+import org.atlasapi.feeds.youview.resolution.PlatformFilteringContentResolver;
 import org.atlasapi.feeds.youview.resolution.UpdatedContentResolver;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.feeds.youview.revocation.MongoRevokedContentStore;
@@ -198,7 +198,7 @@ public class YouViewUploadModule {
     
     private YouViewContentResolver nitroBootstrapContentResolver(Publisher publisher) {
         return new FullHierarchyResolvingContentResolver(
-                new SevenDayWindowAvailableContentResolver(
+                new PlatformFilteringContentResolver(
                         new UpdatedContentResolver(contentFinder, publisher)
                 ), 
                 contentHierarchy()
@@ -206,7 +206,7 @@ public class YouViewUploadModule {
     }
     
     private YouViewContentResolver nitroDeltaContentResolver(Publisher publisher) {
-        return new SevenDayWindowAvailableContentResolver(
+        return new PlatformFilteringContentResolver(
                 new UpdatedContentResolver(contentFinder, publisher)
         );
     }
