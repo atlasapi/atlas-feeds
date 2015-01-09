@@ -23,14 +23,14 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 
 
-public class AvailableContentResolverTest {
+public class PlatformFilteringContentResolverTest {
     
     private static final Publisher PUBLISHER = Publisher.METABROADCAST;
     private static final DateTime TIMESTAMP = DateTime.now();
     
     private YouViewContentResolver delegate = Mockito.mock(YouViewContentResolver.class);
     
-    private final YouViewContentResolver resolver = new AvailableContentResolver(delegate);
+    private final YouViewContentResolver resolver = new PlatformFilteringContentResolver(delegate);
 
     @Test
     public void testBrandIsAlwaysPassedThroughFromDelegate() {
@@ -74,23 +74,23 @@ public class AvailableContentResolverTest {
     }
 
     @Test
-    public void testItemWithNoCurrentAvailabilitiesIsNotPassedThroughFromDelegate() {
+    public void testItemWithNoYouViewAvailabilitiesIsNotPassedThroughFromDelegate() {
         Film film = new Film("item", "curie", PUBLISHER);
-        film.addVersion(createVersionWithoutAvailability());
+        film.addVersion(createVersionOnOtherPlatform());
         
         alwaysReturnContentFromDelegate(film);
         
         ImmutableSet<Content> allContent = ImmutableSet.copyOf(resolver.allContent());
         ImmutableSet<Content> updatedContent = ImmutableSet.copyOf(resolver.updatedSince(TIMESTAMP));
         
-        assertTrue("Content has no current availability, so shouldn't be passed through", allContent.isEmpty());
-        assertTrue("Content has no current availability, so shouldn't be passed through", updatedContent.isEmpty());
+        assertTrue("Content has no availability on YouView platform, so shouldn't be passed through", allContent.isEmpty());
+        assertTrue("Content has no availability on YouView platform, so shouldn't be passed through", updatedContent.isEmpty());
     }
 
     @Test
-    public void testItemWithCurrentAvailabilitiesIsAlwaysPassedThroughFromDelegate() {
+    public void testItemWithYouViewAvailabilitiesIsAlwaysPassedThroughFromDelegate() {
         Film film = new Film("item", "curie", PUBLISHER);
-        film.addVersion(createVersionWithAvailability());
+        film.addVersion(createVersionOnYouViewPlatform());
         
         alwaysReturnContentFromDelegate(film);
         
@@ -103,10 +103,10 @@ public class AvailableContentResolverTest {
     }
 
     @Test
-    public void testItemWithSomeCurrentAndSomeNonCurrentAvailabilitiesIsAlwaysPassedThroughFromDelegate() {
+    public void testItemWithSomeYouViewAndSomeNonYouViewAvailabilitiesIsAlwaysPassedThroughFromDelegate() {
         Film film = new Film("item", "curie", PUBLISHER);
-        film.addVersion(createVersionWithAvailability());
-        film.addVersion(createVersionWithoutAvailability());
+        film.addVersion(createVersionOnYouViewPlatform());
+        film.addVersion(createVersionOnOtherPlatform());
         
         alwaysReturnContentFromDelegate(film);
         
@@ -123,15 +123,15 @@ public class AvailableContentResolverTest {
         when(delegate.updatedSince(any(DateTime.class))).thenReturn(Iterators.forArray(content));
     }
 
-    private Version createVersionWithAvailability() {
-        return createWithAvailability(true);
+    private Version createVersionOnYouViewPlatform() {
+        return createWithAvailability(Platform.YOUVIEW_IPLAYER);
     }
 
-    private Version createVersionWithoutAvailability() {
-        return createWithAvailability(false);
+    private Version createVersionOnOtherPlatform() {
+        return createWithAvailability(Platform.PC);
     }
 
-    private Version createWithAvailability(boolean available) {
+    private Version createWithAvailability(Platform platform) {
         Version version = new Version();
         
         Encoding encoding = new Encoding();
@@ -140,10 +140,9 @@ public class AvailableContentResolverTest {
         
         Policy policy = new Policy();
         
-        policy.setPlatform(Platform.YOUVIEW_IPLAYER);
+        policy.setPlatform(platform);
         
         location.setPolicy(policy);
-        location.setAvailable(available);
         
         encoding.setAvailableAt(ImmutableSet.of(location));
         
