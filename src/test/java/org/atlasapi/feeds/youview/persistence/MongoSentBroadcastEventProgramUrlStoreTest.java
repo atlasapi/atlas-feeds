@@ -26,14 +26,13 @@ public class MongoSentBroadcastEventProgramUrlStoreTest {
     public void testStoreAndRemove() {
         String crid = "crid1";
         String programUrl = "http://example.org/1";
-        String serviceIdRef = "1234";
         
-        assertFalse(sentBroadcastProgramUrlStore.beenSent(crid, programUrl, serviceIdRef));
+        assertFalse(sentBroadcastProgramUrlStore.beenSent(crid, programUrl));
             
-        sentBroadcastProgramUrlStore.recordSent(crid, programUrl, serviceIdRef);
-        assertTrue(sentBroadcastProgramUrlStore.beenSent(crid, programUrl, serviceIdRef));
+        sentBroadcastProgramUrlStore.recordSent(crid, programUrl);
+        assertTrue(sentBroadcastProgramUrlStore.beenSent(crid, programUrl));
         
-        sentBroadcastProgramUrlStore.removeSentRecord(crid, programUrl, serviceIdRef);
-        assertFalse(sentBroadcastProgramUrlStore.beenSent(crid, programUrl, serviceIdRef));
+        sentBroadcastProgramUrlStore.removeSentRecord(crid, programUrl);
+        assertFalse(sentBroadcastProgramUrlStore.beenSent(crid, programUrl));
     }
 }
