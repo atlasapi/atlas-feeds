@@ -11,7 +11,7 @@ import com.mongodb.DBObject;
 
 public class MongoSentBroadcastEventProgramUrlStore implements SentBroadcastEventProgramUrlStore {
 
-    private static final Joiner KEY_JOINER = Joiner.on(":").skipNulls();
+    private static final Joiner KEY_JOINER = Joiner.on("|").skipNulls();
     
     private static final String COLLECTION = "sentBroadcastProgramUrls";
     
