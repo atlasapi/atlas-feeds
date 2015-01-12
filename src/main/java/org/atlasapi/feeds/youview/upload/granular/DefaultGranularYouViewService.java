@@ -143,17 +143,15 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
     private void recordUpload(JAXBElement<TVAMainType> tvaElem) {
         BroadcastEventType broadcastEvent = Iterables.getOnlyElement(tvaElem.getValue().getProgramDescription().getProgramLocationTable().getBroadcastEvent());
         String programUrl = broadcastEvent.getProgramURL();
-        String serviceIdRef = broadcastEvent.getServiceIDRef();
         String crid = broadcastEvent.getProgram().getCrid();
-        sentBroadcastProgramUrlStore.recordSent(crid, programUrl, serviceIdRef);
+        sentBroadcastProgramUrlStore.recordSent(crid, programUrl);
     }
 
     private boolean alreadyUploaded(JAXBElement<TVAMainType> tvaElem) {
         BroadcastEventType broadcastEvent = Iterables.getOnlyElement(tvaElem.getValue().getProgramDescription().getProgramLocationTable().getBroadcastEvent());
         String programUrl = broadcastEvent.getProgramURL();
-        String serviceIdRef = broadcastEvent.getServiceIDRef();
         String crid = broadcastEvent.getProgram().getCrid();
-        return sentBroadcastProgramUrlStore.beenSent(crid, programUrl, serviceIdRef);
+        return sentBroadcastProgramUrlStore.beenSent(crid, programUrl);
     }
 
     @Override

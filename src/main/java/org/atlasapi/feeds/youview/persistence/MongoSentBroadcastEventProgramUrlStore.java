@@ -22,33 +22,33 @@ public class MongoSentBroadcastEventProgramUrlStore implements SentBroadcastEven
     }
     
     @Override
-    public void recordSent(String crid, String programUrl, String serviceIdRef) {
-        if (find(crid, programUrl, serviceIdRef) != null) {
+    public void recordSent(String crid, String programUrl) {
+        if (find(crid, programUrl) != null) {
             return;
         }
         collection.save(BasicDBObjectBuilder
-                            .start(MongoConstants.ID, keyFrom(crid, programUrl, serviceIdRef))
+                            .start(MongoConstants.ID, keyFrom(crid, programUrl))
                             .get());
     }
     
     @Override
-    public void removeSentRecord(String crid, String programUrl, String serviceIdRef) {
+    public void removeSentRecord(String crid, String programUrl) {
         collection.remove(new MongoQueryBuilder()
-                                .idEquals(keyFrom(crid, programUrl, serviceIdRef))
+                                .idEquals(keyFrom(crid, programUrl))
                                 .build());
     }
     
     @Override
-    public boolean beenSent(String crid, String programUrl, String serviceIdRef) {
-        return find(crid, programUrl, serviceIdRef) != null;
+    public boolean beenSent(String crid, String programUrl) {
+        return find(crid, programUrl) != null;
     }
     
-    private DBObject find(String crid, String programUrl, String serviceIdRef) {
-        return collection.findOne(keyFrom(crid, programUrl, serviceIdRef));
+    private DBObject find(String crid, String programUrl) {
+        return collection.findOne(keyFrom(crid, programUrl));
     }
     
-    private String keyFrom(String crid, String programUrl, String serviceIdRef) {
-        return KEY_JOINER.join(crid, programUrl, serviceIdRef);
+    private String keyFrom(String crid, String programUrl) {
+        return KEY_JOINER.join(crid, programUrl);
     }
     
 }
