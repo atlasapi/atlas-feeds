@@ -16,8 +16,8 @@ import org.atlasapi.media.entity.Content;
  */
 public interface TaskCreator {
     
-    Task create(String contentCrid, Content content, Action action);
-    Task create(String versionCrid, ItemAndVersion versionHierarchy, Action action);
-    Task create(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Action action);
-    Task create(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action);
+    Task create(String contentCrid, Content content, Action action) throws TaskCreationException;
+    Task create(String versionCrid, ItemAndVersion versionHierarchy, Action action) throws TaskCreationException;
+    Task create(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Action action) throws TaskCreationException;
+    Task create(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) throws TaskCreationException;
 }

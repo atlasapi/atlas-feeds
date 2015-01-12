@@ -17,32 +17,28 @@ public class Task {
     private Long id;
     private final Publisher publisher;
     private final Action action;
+    private final Destination destination;
+    private final Status status;
     private final Optional<DateTime> uploadTime;
     private final Optional<String> remoteId;
-    private final Payload payload;
-    private final TVAElementType elementType;
-    private final String elementId;
-    private final String content;
-    private final Status status;
+    private final Optional<Payload> payload;
     private final Set<Response> remoteResponses;
     
     public static Builder builder() {
         return new Builder();
     }
     
-    private Task(Long id, Publisher publisher, Action action, Optional<DateTime> uploadTime, 
-            Optional<String> remoteId, Payload payload, TVAElementType elementType, String elementId, 
-            String content, Status status, Iterable<Response> remoteResponses) {
+    private Task(Long id, Publisher publisher, Action action, Destination destination, Status status, 
+            Optional<DateTime> uploadTime, Optional<String> remoteId, Optional<Payload> payload, 
+            Iterable<Response> remoteResponses) {
         this.id = id;
         this.publisher = checkNotNull(publisher);
         this.action = checkNotNull(action);
+        this.destination = checkNotNull(destination);
+        this.status = checkNotNull(status);
         this.uploadTime = checkNotNull(uploadTime);
         this.remoteId = checkNotNull(remoteId);
         this.payload = checkNotNull(payload);
-        this.content = checkNotNull(content);
-        this.elementType = checkNotNull(elementType);
-        this.elementId = checkNotNull(elementId);
-        this.status = checkNotNull(status);
         this.remoteResponses = ImmutableSet.copyOf(remoteResponses);
     }
     
@@ -62,6 +58,14 @@ public class Task {
         return publisher;
     }
     
+    public Destination destination() {
+        return destination;
+    }
+    
+    public Status status() {
+        return status;
+    }
+    
     public Optional<DateTime> uploadTime() {
         return uploadTime;
     }
@@ -70,24 +74,8 @@ public class Task {
         return remoteId;
     }
     
-    public Payload payload() {
+    public Optional<Payload> payload() {
         return payload;
-    }
-    
-    public TVAElementType elementType() {
-        return elementType;
-    }
-    
-    public String elementId() {
-        return elementId;
-    }
-    
-    public String content() {
-        return content;
-    }
-    
-    public Status status() {
-        return status;
     }
     
     public Set<Response> remoteResponses() {
@@ -100,13 +88,11 @@ public class Task {
                 .add("id", id)
                 .add("publisher", publisher)
                 .add("action", action)
+                .add("destination", destination)
+                .add("status", status)
                 .add("uploadTime", uploadTime)
                 .add("remoteId", remoteId)
                 .add("payload", payload)
-                .add("elementType", elementType)
-                .add("elementId", elementId)
-                .add("content", content)
-                .add("status", status)
                 .add("remoteResponses", remoteResponses)
                 .toString();
     }
@@ -135,21 +121,18 @@ public class Task {
         private Long id;
         private Publisher publisher;
         private Action action;
+        private Destination destination;
+        private Status status;
         private Optional<DateTime> uploadTime = Optional.absent();
         private Optional<String> remoteId = Optional.absent();
-        private Payload payload;
-        private TVAElementType elementType;
-        private String elementId;
-        private String content;
-        private Status status;
+        private Optional<Payload> payload = Optional.absent();
         private ImmutableSet.Builder<Response> remoteResponses = ImmutableSet.builder();
         
-        private Builder() {
-        }
+        private Builder() { }
         
         public Task build() {
-            return new Task(id, publisher, action, uploadTime, remoteId, payload, elementType, 
-                    elementId, content, status, remoteResponses.build());
+            return new Task(id, publisher, action, destination, status, uploadTime, remoteId, 
+                    payload, remoteResponses.build());
         }
         
         public Builder withId(Long id) {
@@ -167,6 +150,16 @@ public class Task {
             return this;
         }
         
+        public Builder withDestination(Destination destination) {
+            this.destination = destination;
+            return this;
+        }
+
+        public Builder withStatus(Status status) {
+            this.status = status;
+            return this;
+        }
+        
         public Builder withUploadTime(DateTime uploadTime) {
             this.uploadTime = Optional.fromNullable(uploadTime);
             return this;
@@ -178,27 +171,7 @@ public class Task {
         }
         
         public Builder withPayload(Payload payload) {
-            this.payload = payload;
-            return this;
-        }
-
-        public Builder withElementType(TVAElementType elementType) {
-            this.elementType = elementType;
-            return this;
-        }
-
-        public Builder withElementId(String elementId) {
-            this.elementId = elementId;
-            return this;
-        }
-
-        public Builder withContent(String content) {
-            this.content = content;
-            return this;
-        }
-
-        public Builder withStatus(Status status) {
-            this.status = status;
+            this.payload = Optional.fromNullable(payload);
             return this;
         }
         
@@ -206,7 +179,6 @@ public class Task {
             this.remoteResponses.add(response);
             return this;
         }
-
         
         public Builder withRemoteResponses(Iterable<Response> responses) {
             this.remoteResponses.addAll(responses);

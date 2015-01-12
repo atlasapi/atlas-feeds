@@ -22,22 +22,22 @@ public class PersistingTaskCreator implements TaskCreator {
     }
 
     @Override
-    public Task create(String contentCrid, Content content, Action action) {
+    public Task create(String contentCrid, Content content, Action action) throws TaskCreationException {
         return taskStore.save(delegate.create(contentCrid, content, action));
     }
 
     @Override
-    public Task create(String versionCrid, ItemAndVersion versionHierarchy, Action action) {
+    public Task create(String versionCrid, ItemAndVersion versionHierarchy, Action action) throws TaskCreationException {
         return taskStore.save(delegate.create(versionCrid, versionHierarchy, action));
     }
 
     @Override
-    public Task create(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Action action) {
+    public Task create(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Action action) throws TaskCreationException {
         return taskStore.save(delegate.create(broadcastImi, broadcastHierarchy, action));
     }
 
     @Override
-    public Task create(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) {
+    public Task create(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) throws TaskCreationException {
         return taskStore.save(delegate.create(onDemandImi, onDemandHierarchy, action));
     }
 

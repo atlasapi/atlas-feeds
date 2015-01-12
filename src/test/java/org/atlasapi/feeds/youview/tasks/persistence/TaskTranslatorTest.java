@@ -5,11 +5,13 @@ import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.toDBOb
 import static org.junit.Assert.assertEquals;
 
 import org.atlasapi.feeds.youview.tasks.Action;
+import org.atlasapi.feeds.youview.tasks.Destination;
 import org.atlasapi.feeds.youview.tasks.Payload;
 import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.TVAElementType;
 import org.atlasapi.feeds.youview.tasks.Task;
+import org.atlasapi.feeds.youview.tasks.YouViewDestination;
 import org.atlasapi.media.entity.Publisher;
 import org.junit.Test;
 
@@ -31,9 +33,7 @@ public class TaskTranslatorTest {
         assertEquals(transaction.publisher(), translated.publisher());
         assertEquals(transaction.uploadTime(), translated.uploadTime());
         assertEquals(transaction.action(), translated.action());
-        assertEquals(transaction.elementType(), translated.elementType());
-        assertEquals(transaction.elementId(), translated.elementId());
-        assertEquals(transaction.content(), translated.content());
+        assertEquals(transaction.destination(), translated.destination());
         assertEquals(transaction.remoteId(), translated.remoteId());
         assertEquals(transaction.status(), translated.status());
         assertEquals(transaction.remoteResponses(), translated.remoteResponses());
@@ -43,9 +43,7 @@ public class TaskTranslatorTest {
         return Task.builder()
                 .withId(1234l)
                 .withPublisher(Publisher.METABROADCAST)
-                .withContent("content")
-                .withElementType(TVAElementType.ITEM)
-                .withElementId("elementId")
+                .withDestination(createDestination())
                 .withUploadTime(clock.now())
                 .withRemoteId("remoteId")
                 .withPayload(createPayload())
@@ -53,6 +51,10 @@ public class TaskTranslatorTest {
                 .withStatus(Status.ACCEPTED)
                 .withRemoteResponse(createResponse())
                 .build();
+    }
+
+    private Destination createDestination() {
+        return new YouViewDestination("content", TVAElementType.ITEM, "elementId");
     }
 
     private Payload createPayload() {

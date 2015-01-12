@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.tasks.persistence;
 
+import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
@@ -41,5 +42,12 @@ public interface TaskStore {
     
     Iterable<Task> allTasks(TaskQuery query);
     
-    Iterable<Task> allTasks(Status status);
+    /**
+     * Fetches all tasks for a given DestinationType (~= feed destination, e.g. YouView, RadioPlayer)
+     * and Status
+     * @param type The destination type of feed desired
+     * @param status the status to fetch 
+     * @return
+     */
+    Iterable<Task> allTasks(DestinationType type, Status status);
 }

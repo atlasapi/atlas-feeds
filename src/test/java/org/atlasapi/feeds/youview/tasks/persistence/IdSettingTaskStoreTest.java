@@ -3,10 +3,12 @@ package org.atlasapi.feeds.youview.tasks.persistence;
 import static org.junit.Assert.*;
 
 import org.atlasapi.feeds.youview.tasks.Action;
+import org.atlasapi.feeds.youview.tasks.Destination;
 import org.atlasapi.feeds.youview.tasks.Payload;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.TVAElementType;
 import org.atlasapi.feeds.youview.tasks.Task;
+import org.atlasapi.feeds.youview.tasks.YouViewDestination;
 import org.atlasapi.feeds.youview.tasks.persistence.IdSettingTaskStore;
 import org.atlasapi.feeds.youview.tasks.persistence.MongoTaskStore;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
@@ -55,10 +57,12 @@ public class IdSettingTaskStoreTest {
                 .withStatus(Status.NEW)
                 .withPublisher(Publisher.METABROADCAST)
                 .withPayload(new Payload("payload", TIME))
-                .withElementType(TVAElementType.ITEM)
-                .withElementId("elementId")
-                .withContent("content")
+                .withDestination(createDestination())
                 .build();
+    }
+
+    private Destination createDestination() {
+        return new YouViewDestination("content", TVAElementType.ITEM, "elementId");
     }
 
 }

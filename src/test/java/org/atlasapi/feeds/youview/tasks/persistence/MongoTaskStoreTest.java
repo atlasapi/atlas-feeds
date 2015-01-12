@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.tasks.persistence;
 
+import static org.atlasapi.feeds.youview.tasks.Destination.DestinationType.YOUVIEW;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -7,12 +8,15 @@ import static org.junit.Assert.assertTrue;
 import javax.servlet.http.HttpServletRequest;
 
 import org.atlasapi.feeds.youview.tasks.Action;
+import org.atlasapi.feeds.youview.tasks.Destination;
+import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.youview.tasks.Payload;
 import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.TVAElementType;
 import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.tasks.TaskQuery;
+import org.atlasapi.feeds.youview.tasks.YouViewDestination;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 import org.junit.Test;
@@ -31,8 +35,8 @@ import com.metabroadcast.common.time.TimeMachine;
 
 public class MongoTaskStoreTest {
     
-    private static final Publisher publisher = Publisher.METABROADCAST;
-
+    private static final Publisher PUBLISHER = Publisher.METABROADCAST;
+    private static final DestinationType TYPE = DestinationType.YOUVIEW;
 
     private DateTime time = new DateTime(2012, 1, 1, 0, 0, 0).withZone(DateTimeZones.UTC);
     private Clock clock = new TimeMachine(time);
@@ -42,8 +46,6 @@ public class MongoTaskStoreTest {
     
     private final TaskStore store = new MongoTaskStore(mongo);
 
-    // TODO separate test class for id-setting store
-    
     @Test
     public void testSavingAndRetrievingTaskReturnsSameTask() {
         long taskId = 1234l;
@@ -53,7 +55,7 @@ public class MongoTaskStoreTest {
         
         assertEquals(task, fetched);
         
-        assertEquals(task.content(), fetched.content());
+        assertEquals(task.destination(), fetched.destination());
         assertEquals(task.uploadTime(), fetched.uploadTime());
         assertEquals(task.status(), fetched.status());
     }
@@ -151,13 +153,13 @@ public class MongoTaskStoreTest {
         Task t3 = createAndStoreTask(3456l, "", Status.ACCEPTED);
         
         Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery.builder(selection, publisher).build();
+        TaskQuery query = TaskQuery.builder(selection, PUBLISHER, TYPE).build();
         Iterable<Task> allTransactions = store.allTasks(query);
         
         assertEquals(ImmutableList.of(t1, t2, t3), ImmutableList.copyOf(allTransactions));
         
         selection = selectionWithParams(1, 1);
-        query = TaskQuery.builder(selection, publisher).build();
+        query = TaskQuery.builder(selection, PUBLISHER, TYPE).build();
         allTransactions = store.allTasks(query);
         
         assertEquals(Iterables.getOnlyElement(allTransactions), t2);
@@ -169,7 +171,7 @@ public class MongoTaskStoreTest {
         createAndStoreTask(2345l, "", Status.FAILED);
         createAndStoreTask(3456l, "", Status.ACCEPTED);
         
-        Iterable<Task> fetched = store.allTasks(Status.NEW);
+        Iterable<Task> fetched = store.allTasks(YOUVIEW, Status.NEW);
         
         assertEquals(desired, Iterables.getOnlyElement(fetched));
     }
@@ -186,7 +188,7 @@ public class MongoTaskStoreTest {
         createAndStoreTask(3456l, anotherContentUri, Status.ACCEPTED);
         
         Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery.builder(selection, publisher)
+        TaskQuery query = TaskQuery.builder(selection, PUBLISHER, TYPE)
                 .withContentUri(desiredUri)
                 .build();
         Iterable<Task> allTransactions = store.allTasks(query);
@@ -208,7 +210,7 @@ public class MongoTaskStoreTest {
         store.updateWithRemoteId(thirdTask.id(), Status.COMMITTED, "txn3", clock.now());
         
         Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery.builder(selection, publisher)
+        TaskQuery query = TaskQuery.builder(selection, PUBLISHER, TYPE)
                 .withRemoteId(transactionId)
                 .build();
         Iterable<Task> allTransactions = store.allTasks(query);
@@ -225,7 +227,7 @@ public class MongoTaskStoreTest {
         createAndStoreTask(2345l, "content", Status.COMMITTED);
         
         Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery.builder(selection, publisher)
+        TaskQuery query = TaskQuery.builder(selection, PUBLISHER, TYPE)
                 .withTaskStatus(status)
                 .build();
         Iterable<Task> allTransactions = store.allTasks(query);
@@ -245,7 +247,7 @@ public class MongoTaskStoreTest {
         createAndStoreTask(3456l, anotherContentUri, Status.ACCEPTED);
         
         Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery.builder(selection, publisher)
+        TaskQuery query = TaskQuery.builder(selection, PUBLISHER, TYPE)
                 .withContentUri("filterBy")
                 .build();
         Iterable<Task> allTransactions = store.allTasks(query);
@@ -267,7 +269,7 @@ public class MongoTaskStoreTest {
         store.updateWithRemoteId(thirdTask.id(), Status.COMMITTED, "txn3", clock.now());
         
         Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery.builder(selection, publisher)
+        TaskQuery query = TaskQuery.builder(selection, PUBLISHER, TYPE)
                 .withRemoteId("desired")
                 .build();
         Iterable<Task> allTransactions = store.allTasks(query);
@@ -294,17 +296,19 @@ public class MongoTaskStoreTest {
         return Selection.builder().build(request);
     }
 
-    private Task createTransaction(long taskId, String content,
+    private Task createTransaction(long taskId, String contentUri,
             Status status) {
         return Task.builder()
                 .withId(taskId)
-                .withPublisher(publisher)
-                .withContent(content)
-                .withElementType(TVAElementType.ITEM)
-                .withElementId("elementId")
+                .withPublisher(PUBLISHER)
+                .withDestination(createDestination(contentUri))
                 .withPayload(DEFAULT_PAYLOAD)
                 .withAction(Action.UPDATE)
                 .withStatus(status)
                 .build();
+    }
+
+    private Destination createDestination(String contentUri) {
+        return new YouViewDestination(contentUri, TVAElementType.ITEM, "elementId");
     }
 }

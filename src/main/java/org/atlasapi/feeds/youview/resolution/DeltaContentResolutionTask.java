@@ -21,6 +21,7 @@ import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.tasks.Action;
+import org.atlasapi.feeds.youview.tasks.creation.TaskCreationException;
 import org.atlasapi.feeds.youview.tasks.creation.TaskCreator;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
@@ -32,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
@@ -104,51 +106,59 @@ public class DeltaContentResolutionTask extends ScheduledTask {
 
     // TODO if this fails early, we don't note/retry any of the elements after the failure
     private void expandAndUpload(Content content, Optional<DateTime> updatedSince) {
-        if (hasBeenUpdated(content, updatedSince.get())) {
-            taskCreator.create(content, Action.UPDATE);
-        }
-        if (content instanceof Item) {
-            Map<String, ItemAndVersion> versionHierarchies = Maps.filterValues(
-                    hierarchyExpander.versionHierarchiesFor((Item) content), 
-                    versionFilter(updatedSince)
-            );
-            Map<String, ItemBroadcastHierarchy> broadcastHierarchies = Maps.filterValues(
-                    hierarchyExpander.broadcastHierarchiesFor((Item) content), 
-                    broadcastFilter(updatedSince)
-            );
-            Map<String, ItemOnDemandHierarchy> onDemandHierarchies = Maps.filterValues(
-                    hierarchyExpander.onDemandHierarchiesFor((Item) content), 
-                    onDemandFilter(updatedSince)
-            );
-            
-            for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
-                taskCreator.create(version.getKey(), version.getValue(), Action.UPDATE);
+        try {
+            if (hasBeenUpdated(content, updatedSince.get())) {
+                taskCreator.create(hierarchyExpander.contentCridFor(content), content, Action.UPDATE);
             }
-            for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcastHierarchies.entrySet()) {
-                taskCreator.create(broadcast.getKey(), broadcast.getValue(), Action.UPDATE);
+            if (content instanceof Item) {
+                Map<String, ItemAndVersion> versionHierarchies = Maps.filterValues(
+                        hierarchyExpander.versionHierarchiesFor((Item) content), 
+                        versionFilter(updatedSince)
+                        );
+                Map<String, ItemBroadcastHierarchy> broadcastHierarchies = Maps.filterValues(
+                        hierarchyExpander.broadcastHierarchiesFor((Item) content), 
+                        broadcastFilter(updatedSince)
+                        );
+                Map<String, ItemOnDemandHierarchy> onDemandHierarchies = Maps.filterValues(
+                        hierarchyExpander.onDemandHierarchiesFor((Item) content), 
+                        onDemandFilter(updatedSince)
+                        );
+
+                for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
+                    taskCreator.create(version.getKey(), version.getValue(), Action.UPDATE);
+                }
+                for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcastHierarchies.entrySet()) {
+                    taskCreator.create(broadcast.getKey(), broadcast.getValue(), Action.UPDATE);
+                }
+                for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
+                    taskCreator.create(onDemand.getKey(), onDemand.getValue(), Action.UPDATE);
+                }
             }
-            for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
-                taskCreator.create(onDemand.getKey(), onDemand.getValue(), Action.UPDATE);
-            }
+        } catch(TaskCreationException e) {
+            throw Throwables.propagate(e);
         }
     }
     
     private void expandElementsAndCreateTasks(Content content) {
-        taskCreator.create(content, Action.DELETE);
-        if (content instanceof Item) {
-            Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor((Item) content);
-            Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor((Item) content);
-            Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor((Item) content);
-            
-            for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
-                taskCreator.create(version.getKey(), version.getValue(), Action.DELETE);
+        try {
+            taskCreator.create(hierarchyExpander.contentCridFor(content), content, Action.DELETE);
+            if (content instanceof Item) {
+                Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor((Item) content);
+                Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor((Item) content);
+                Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor((Item) content);
+
+                for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
+                    taskCreator.create(version.getKey(), version.getValue(), Action.DELETE);
+                }
+                for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcastHierarchies.entrySet()) {
+                    taskCreator.create(broadcast.getKey(), broadcast.getValue(), Action.DELETE);
+                }
+                for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
+                    taskCreator.create(onDemand.getKey(), onDemand.getValue(), Action.DELETE);
+                }
             }
-            for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcastHierarchies.entrySet()) {
-                taskCreator.create(broadcast.getKey(), broadcast.getValue(), Action.DELETE);
-            }
-            for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
-                taskCreator.create(onDemand.getKey(), onDemand.getValue(), Action.DELETE);
-            }
+        } catch(TaskCreationException e) {
+            throw Throwables.propagate(e);
         }
     }
 

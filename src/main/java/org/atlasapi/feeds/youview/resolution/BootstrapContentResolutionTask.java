@@ -12,13 +12,16 @@ import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.tasks.Action;
+import org.atlasapi.feeds.youview.tasks.creation.TaskCreationException;
 import org.atlasapi.feeds.youview.tasks.creation.TaskCreator;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Throwables;
 import com.metabroadcast.common.scheduling.ScheduledTask;
+import com.metabroadcast.common.scheduling.UpdateProgress;
 
 
 public class BootstrapContentResolutionTask extends ScheduledTask {
@@ -44,17 +47,24 @@ public class BootstrapContentResolutionTask extends ScheduledTask {
     }
 
     // TODO check sent broadcast uri store before creating task for broadcast event
-    // TODO record/output counts of items resolved
     @Override
     protected void runTask() {
         Iterator<Content> resolved = resolveContent();
-        while (resolved.hasNext()) { 
+        UpdateProgress progress = UpdateProgress.START;
+        while (resolved.hasNext() && shouldContinue()) { 
             Content content = resolved.next();
-            if (isRevoked(content)) {
-                log.trace("Content {} is revoked, not uploading", content.getCanonicalUri());
-                continue;
+            try {
+                if (isRevoked(content)) {
+                    log.trace("Content {} is revoked, not uploading", content.getCanonicalUri());
+                    continue;
+                }
+                expandElementsAndCreateTasks(content);
+                progress = progress.reduce(UpdateProgress.SUCCESS);
+            } catch (Exception e) {
+                log.error("Error creating task for " + content.getCanonicalUri(), e);
+                progress = progress.reduce(UpdateProgress.FAILURE);
             }
-            expandElementsAndCreateTasks(content);
+            reportStatus(progress.toString());
         }
     }
     
@@ -62,25 +72,27 @@ public class BootstrapContentResolutionTask extends ScheduledTask {
         return revocationStore.isRevoked(content.getCanonicalUri());
     }
     
-    // TODO consider error handling
     private void expandElementsAndCreateTasks(Content content) {
-        
-        taskCreator.create(content, Action.UPDATE);
-        
-        if (content instanceof Item) {
-            Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor((Item) content);
-            Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor((Item) content);
-            Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor((Item) content);
-            
-            for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
-                taskCreator.create(version.getKey(), version.getValue(), Action.UPDATE);
+        try {
+            taskCreator.create(hierarchyExpander.contentCridFor(content), content, Action.UPDATE);
+
+            if (content instanceof Item) {
+                Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor((Item) content);
+                Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor((Item) content);
+                Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor((Item) content);
+
+                for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
+                    taskCreator.create(version.getKey(), version.getValue(), Action.UPDATE);
+                }
+                for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcastHierarchies.entrySet()) {
+                    taskCreator.create(broadcast.getKey(), broadcast.getValue(), Action.UPDATE);
+                }
+                for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
+                    taskCreator.create(onDemand.getKey(), onDemand.getValue(), Action.UPDATE);
+                }
             }
-            for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcastHierarchies.entrySet()) {
-                taskCreator.create(broadcast.getKey(), broadcast.getValue(), Action.UPDATE);
-            }
-            for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
-                taskCreator.create(onDemand.getKey(), onDemand.getValue(), Action.UPDATE);
-            }
+        } catch (TaskCreationException e) {
+            throw Throwables.propagate(e);
         }
     }
 }

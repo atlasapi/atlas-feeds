@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview.tasks;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
 import org.atlasapi.media.entity.Publisher;
 
 import com.google.common.base.Objects;
@@ -13,6 +14,7 @@ public class TaskQuery {
 
     private final Selection selection;
     private final Publisher publisher;
+    private final DestinationType destinationType;
     private final Optional<String> contentUri;
     private final Optional<String> remoteId;
     private final Optional<Status> status;
@@ -20,15 +22,16 @@ public class TaskQuery {
     private final Optional<TVAElementType> elementType;
     private final Optional<String> elementId;
     
-    public static Builder builder(Selection selection, Publisher publisher) {
-        return new Builder(selection, publisher);
+    public static Builder builder(Selection selection, Publisher publisher, DestinationType destinationType) {
+        return new Builder(selection, publisher, destinationType);
     }
     
-    private TaskQuery(Selection selection, Publisher publisher, Optional<String> contentUri, 
-            Optional<String> remoteId, Optional<Status> status, Optional<Action> action, 
-            Optional<TVAElementType> elementType, Optional<String> elementId) {
+    private TaskQuery(Selection selection, Publisher publisher, DestinationType destinationType, 
+            Optional<String> contentUri, Optional<String> remoteId, Optional<Status> status, 
+            Optional<Action> action, Optional<TVAElementType> elementType, Optional<String> elementId) {
         this.selection = checkNotNull(selection);
         this.publisher = checkNotNull(publisher);
+        this.destinationType = checkNotNull(destinationType);
         this.contentUri = checkNotNull(contentUri);
         this.remoteId = checkNotNull(remoteId);
         this.status = checkNotNull(status);
@@ -43,6 +46,10 @@ public class TaskQuery {
     
     public Publisher publisher() {
         return publisher;
+    }
+    
+    public DestinationType destinationType() {
+        return destinationType;
     }
     
     public Optional<String> contentUri() {
@@ -74,6 +81,7 @@ public class TaskQuery {
         return Objects.toStringHelper(TaskQuery.class)
                 .add("selection", selection)
                 .add("publisher", publisher)
+                .add("destinationType", destinationType)
                 .add("contentUri", contentUri)
                 .add("remoteId", remoteId)
                 .add("status", status)
@@ -87,6 +95,7 @@ public class TaskQuery {
         
         private final Selection selection;
         private final Publisher publisher;
+        private final DestinationType destinationType;
         private Optional<String> contentUri = Optional.absent();
         private Optional<String> remoteId = Optional.absent();
         private Optional<Status> status = Optional.absent();
@@ -94,13 +103,15 @@ public class TaskQuery {
         private Optional<TVAElementType> elementType = Optional.absent();
         private Optional<String> elementId = Optional.absent();
 
-        private Builder(Selection selection, Publisher publisher) {
+        private Builder(Selection selection, Publisher publisher, DestinationType destinationType) {
             this.selection = selection;
             this.publisher = publisher;
+            this.destinationType = destinationType;
         }
         
         public TaskQuery build() {
-            return new TaskQuery(selection, publisher, contentUri, remoteId, status, action, elementType, elementId);
+            return new TaskQuery(selection, publisher, destinationType, contentUri, remoteId, 
+                    status, action, elementType, elementId);
         }
         
         public Builder withContentUri(String contentUri) {

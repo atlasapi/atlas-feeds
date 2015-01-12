@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview.tasks.persistence;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.ACTION_KEY;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.CONTENT_KEY;
+import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.DESTINATION_TYPE_KEY;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.ELEMENT_ID_KEY;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.ELEMENT_TYPE_KEY;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.PUBLISHER_KEY;
@@ -12,6 +13,7 @@ import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.UPLOAD
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.fromDBObject;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.toDBObject;
 
+import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
@@ -76,7 +78,6 @@ public class MongoTaskStore implements TaskStore {
         collection.update(idQuery, updateStatus, false, false);
     }
 
-    // TODO stop this from writing if there's already a response with the new status written
     @Override
     public void updateWithResponse(Long taskId, Response response) {
         DBObject idQuery = new MongoQueryBuilder()
@@ -99,8 +100,9 @@ public class MongoTaskStore implements TaskStore {
     }
 
     @Override
-    public Iterable<Task> allTasks(Status status) {
+    public Iterable<Task> allTasks(DestinationType type, Status status) {
         MongoQueryBuilder mongoQuery = new MongoQueryBuilder()
+                .fieldEquals(DESTINATION_TYPE_KEY, type.name())
                 .fieldEquals(STATUS_KEY, status.name());
         
         DBCursor cursor = getOrderedCursor(mongoQuery.build());
@@ -114,7 +116,8 @@ public class MongoTaskStore implements TaskStore {
     public Iterable<Task> allTasks(TaskQuery query) {
         MongoQueryBuilder mongoQuery = new MongoQueryBuilder();
         
-        mongoQuery.fieldEquals(PUBLISHER_KEY, query.publisher().key());
+        mongoQuery.fieldEquals(PUBLISHER_KEY, query.publisher().key())
+                .fieldEquals(DESTINATION_TYPE_KEY, query.destinationType().name());
         
         if (query.contentUri().isPresent()) {
             mongoQuery.regexMatch(CONTENT_KEY, transformToRegexPattern(query.contentUri().get()));

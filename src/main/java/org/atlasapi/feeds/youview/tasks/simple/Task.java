@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.atlasapi.feeds.youview.tasks.Action;
+import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.TVAElementType;
 import org.atlasapi.media.entity.Publisher;
@@ -16,14 +17,15 @@ public class Task {
 
     private String id;
     private Publisher publisher;
-    private Date uploadTime;
     private Action action;
-    private String remoteId;
-    private Payload payload;
+    private DestinationType destinationType;
+    private String contentUri;
     private TVAElementType elementType;
     private String elementId;
-    private String content;
     private Status status;
+    private String remoteId;
+    private Date uploadTime;
+    private Payload payload;
     private List<Response> remoteResponses;
     
     public Task() {
@@ -45,14 +47,6 @@ public class Task {
         this.publisher = publisher;
     }
     
-    public Date uploadTime() {
-        return uploadTime;
-    }
-    
-    public void setUploadTime(Date uploadTime) {
-        this.uploadTime = uploadTime;
-    }
-    
     public Action action() {
         return action;
     }
@@ -61,20 +55,20 @@ public class Task {
         this.action = action;
     }
     
-    public String remoteId() {
-        return remoteId;
+    public DestinationType destinationType() {
+        return destinationType;
     }
     
-    public void setRemoteId(String remoteId) {
-        this.remoteId = remoteId;
+    public void setDestinationType(DestinationType destinationType) {
+        this.destinationType = destinationType;
     }
     
-    public Payload payload() {
-        return payload;
+    public String contentUri() {
+        return contentUri;
     }
     
-    public void setPayload(Payload payload) {
-        this.payload = payload;
+    public void setContentUri(String contentUri) {
+        this.contentUri = contentUri;
     }
     
     public TVAElementType elementType() {
@@ -93,20 +87,36 @@ public class Task {
         this.elementId = elementId;
     }
     
-    public String content() {
-        return content;
-    }
-    
-    public void setContent(String content) {
-        this.content = content;
-    }
-    
     public Status status() {
         return status;
     }
     
     public void setStatus(Status status) {
         this.status = status;
+    }
+    
+    public Date uploadTime() {
+        return uploadTime;
+    }
+    
+    public void setUploadTime(Date uploadTime) {
+        this.uploadTime = uploadTime;
+    }
+    
+    public String remoteId() {
+        return remoteId;
+    }
+    
+    public void setRemoteId(String remoteId) {
+        this.remoteId = remoteId;
+    }
+    
+    public Payload payload() {
+        return payload;
+    }
+    
+    public void setPayload(Payload payload) {
+        this.payload = payload;
     }
     
     public List<Response> remoteResponses() {
@@ -124,11 +134,13 @@ public class Task {
                 .add("publisher", publisher)
                 .add("uploadTime", uploadTime)
                 .add("action", action)
-                .add("remoteId", remoteId)
+                .add("destinationType", destinationType)
+                .add("contentUri", contentUri)
                 .add("elementType", elementType)
                 .add("elementId", elementId)
-                .add("content", content)
                 .add("status", status)
+                .add("remoteId", remoteId)
+                .add("payload", payload)
                 .add("remoteResponses", remoteResponses)
                 .toString();
     }

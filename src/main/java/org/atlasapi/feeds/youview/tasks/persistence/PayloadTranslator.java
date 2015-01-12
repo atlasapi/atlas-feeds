@@ -17,6 +17,10 @@ public final class PayloadTranslator {
     }
     
     public static final DBObject toDBObject(Payload payload) {
+        // This makes usage with Optional<Payload> more elegant in the TaskTranslator
+        if (payload == null) {
+            return null;
+        }
         DBObject dbo = new BasicDBObject();
         
         TranslatorUtils.from(dbo, PAYLOAD_KEY, payload.payload());
