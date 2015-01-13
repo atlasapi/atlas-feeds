@@ -23,7 +23,8 @@ public class RadioPlayerServices {
 	public static final Set<RadioPlayerService> untracked;
 
     public static final Map<String, RadioPlayerService> serviceUriToService;
-    
+    public static final Map<String, RadioPlayerService> ionIdToService;
+
     public static final Set<RadioPlayerService> nationalNetworks;
 	
 	static {
@@ -101,6 +102,13 @@ public class RadioPlayerServices {
             @Override
             public String apply(RadioPlayerService input) {
                 return input.getServiceUri();
+            }
+        });
+
+        ionIdToService = Maps.uniqueIndex(services, new Function<RadioPlayerService, String>() {
+            @Override
+            public String apply(RadioPlayerService input) {
+                return input.getIonId();
             }
         });
         
