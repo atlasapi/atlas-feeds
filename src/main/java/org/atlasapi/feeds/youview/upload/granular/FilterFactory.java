@@ -6,6 +6,8 @@ import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Identified;
+import org.atlasapi.media.entity.Policy;
+import org.atlasapi.media.entity.Policy.Platform;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
@@ -62,15 +64,28 @@ public class FilterFactory {
     
     public static Predicate<ItemOnDemandHierarchy> onDemandFilter(final Optional<DateTime> updatedSince) {
         if (!updatedSince.isPresent()) {
-            return Predicates.alwaysTrue();
+            return platformFilter();
         }
+        return Predicates.and(
+                platformFilter(), 
+                new Predicate<ItemOnDemandHierarchy>() {
+                    @Override
+                    public boolean apply(ItemOnDemandHierarchy input) {
+                        return hasBeenUpdated(input.item(), updatedSince.get())
+                                || hasBeenUpdated(input.version(), updatedSince.get())
+                                || hasBeenUpdated(input.encoding(), updatedSince.get())
+                                || hasBeenUpdated(input.location(), updatedSince.get());
+                    }
+                }
+        );
+    }
+
+    private static Predicate<ItemOnDemandHierarchy> platformFilter() {
         return new Predicate<ItemOnDemandHierarchy>() {
             @Override
             public boolean apply(ItemOnDemandHierarchy input) {
-                return hasBeenUpdated(input.item(), updatedSince.get())
-                        || hasBeenUpdated(input.version(), updatedSince.get())
-                        || hasBeenUpdated(input.encoding(), updatedSince.get())
-                        || hasBeenUpdated(input.location(), updatedSince.get());
+                Policy policy = input.location().getPolicy();
+                return policy != null && Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform());
             }
         };
     }
