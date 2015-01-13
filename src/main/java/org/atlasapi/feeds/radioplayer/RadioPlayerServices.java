@@ -24,6 +24,7 @@ public class RadioPlayerServices {
 
     public static final Map<String, RadioPlayerService> serviceUriToService;
     public static final Map<String, RadioPlayerService> ionIdToService;
+    public static final Map<String, RadioPlayerService> masterBrandIdToService;
 
     public static final Set<RadioPlayerService> nationalNetworks;
 	
@@ -73,13 +74,13 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(341, "1xtra").withIonServiceId("bbc_1xtra")).
 			add(new RadioPlayerService(342, "radio2").withIonServiceId("bbc_radio_two")).
 			add(new RadioPlayerService(343, "radio3").withIonServiceId("bbc_radio_three")).
-			add(new RadioPlayerService(344, "radio4").withServiceUriSuffix("radio4/fm").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/fm").withIonServiceId("bbc_radio_fourfm")).
+			add(new RadioPlayerService(344, "radio4").withServiceUriSuffix("radio4/fm").withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/fm").withIonServiceId("bbc_radio_fourfm").withMasterBrandId("bbc_radio_four")).
 			add(new RadioPlayerService(345, "5live").withIonServiceId("bbc_radio_five_live")).
 			add(new RadioPlayerService(346, "5livesportsextra").withIonServiceId("bbc_radio_five_live_sports_extra")).
 			add(new RadioPlayerService(347, "6music").withIonServiceId("bbc_6music")).
 			add(new RadioPlayerService(349, "asiannetwork").withIonServiceId("bbc_asian_network")).
 			add(new RadioPlayerService(350, "worldservice").withIonServiceId("bbc_world_service")).
-			add(new RadioPlayerService(351, "radioscotland").withServiceUriSuffix("radioscotland/fm").withScheduleUri("http://www.bbc.co.uk/radioscotland/programmes/schedules/fm").withIonServiceId("bbc_radio_scotland_fm")).
+			add(new RadioPlayerService(351, "radioscotland").withServiceUriSuffix("radioscotland/fm").withScheduleUri("http://www.bbc.co.uk/radioscotland/programmes/schedules/fm").withIonServiceId("bbc_radio_scotland_fm").withMasterBrandId("bbc_radio_scotland")).
 			add(new RadioPlayerService(352, "radionangaidheal").withIonServiceId("bbc_radio_nan_gaidheal")).
 			add(new RadioPlayerService(353, "radioulster").withIonServiceId("bbc_radio_ulster")).
 			add(new RadioPlayerService(354, "radiofoyle").withIonServiceId("bbc_radio_foyle")).
@@ -109,6 +110,13 @@ public class RadioPlayerServices {
             @Override
             public String apply(RadioPlayerService input) {
                 return input.getIonId();
+            }
+        });
+
+        masterBrandIdToService = Maps.uniqueIndex(services, new Function<RadioPlayerService, String>() {
+            @Override
+            public String apply(RadioPlayerService input) {
+                return input.getMasterBrandId();
             }
         });
         

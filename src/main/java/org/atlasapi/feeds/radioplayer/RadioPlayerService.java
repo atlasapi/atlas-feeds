@@ -10,6 +10,7 @@ public class RadioPlayerService {
     private String dabServiceId = "00.0000.0000.0";
     private String scheduleUri;
     private String ionId;
+    private String masterBrandId;
 
     public RadioPlayerService(int radioplayerId, String name) {
         this.radioplayerId = radioplayerId;
@@ -38,8 +39,21 @@ public class RadioPlayerService {
         return this;
     }
 
+    public RadioPlayerService withMasterBrandId(String id) {
+        this.masterBrandId = id;
+        return this;
+    }
+
     public String getIonId() {
         return ionId == null ? "bbc_radio_" + name : ionId;
+    }
+
+    /**
+     *
+     * @return the masterbrand id for this service. If a masterbrand id is not set it will fallback to the ion id.
+     */
+    public String getMasterBrandId() {
+        return masterBrandId == null ? getIonId() : masterBrandId;
     }
 
     public RadioPlayerService withServiceUriSuffix(String serviceUri) {
