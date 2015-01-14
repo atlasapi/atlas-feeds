@@ -91,6 +91,6 @@ public class FilterFactory {
     }
 
     public static boolean hasBeenUpdated(Identified identified, DateTime updatedSince) {
-        return identified.getLastUpdated().isBefore(updatedSince);
+        return !identified.getLastUpdated().isBefore(updatedSince);
     }
 }

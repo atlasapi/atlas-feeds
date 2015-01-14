@@ -1,4 +1,4 @@
-    package org.atlasapi.feeds.youview.upload.granular;
+package org.atlasapi.feeds.youview.upload.granular;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.youview.upload.granular.FilterFactory.broadcastFilter;
