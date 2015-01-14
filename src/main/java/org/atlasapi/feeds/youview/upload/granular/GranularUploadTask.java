@@ -139,20 +139,25 @@ public abstract class GranularUploadTask extends ScheduledTask {
             );
             
             for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
+                log.trace("uploading version {}", version.getKey());
                 youViewService.uploadVersion(version.getValue(), version.getKey());
             }
             for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcastHierarchies.entrySet()) {
+                log.trace("uploading broadcast {}", broadcast.getKey());
                 youViewService.uploadBroadcast(broadcast.getValue(), broadcast.getKey());
             }
             for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
+                log.trace("uploading onDemand {}", onDemand.getKey());
                 youViewService.uploadOnDemand(onDemand.getValue(), onDemand.getKey());
             }
         }
         if (updatedSince.isPresent()) {
             if (hasBeenUpdated(content, updatedSince.get())) {
+                log.trace("uploading content {}", content.getCanonicalUri());
                 youViewService.uploadContent(content);
             }
         } else {
+            log.trace("uploading content {}", content.getCanonicalUri());
             youViewService.uploadContent(content);
         }
     }

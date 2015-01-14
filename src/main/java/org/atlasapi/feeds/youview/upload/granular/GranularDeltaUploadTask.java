@@ -13,6 +13,8 @@ import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
@@ -23,6 +25,7 @@ public final class GranularDeltaUploadTask extends GranularUploadTask {
 
     private static final String DELTA_STATUS_PATTERN = "Updates: processed %d of %d, %d failures. Deletes: processed %d of %d total, %d failures.";
     
+    private final Logger log = LoggerFactory.getLogger(GranularDeltaUploadTask.class);
     private final YouViewContentResolver contentResolver;
     
     public GranularDeltaUploadTask(GranularYouViewService youViewService, YouViewLastUpdatedStore lastUpdatedStore, 
@@ -64,6 +67,7 @@ public final class GranularDeltaUploadTask extends GranularUploadTask {
         GranularYouViewContentProcessor<UpdateProgress> deletionProcessor = deleteProcessor();
         
         for (Content content : notDeleted) {
+            log.trace("uploading: " + content.getCanonicalUri());
             uploadProcessor.process(content);
             updateFeedStatistics(remainingCount--, content);
             reportStatus(createDeltaStatus(uploadProcessor.getResult(), deletionProcessor.getResult(), updatesSize, deletesSize));
@@ -72,6 +76,7 @@ public final class GranularDeltaUploadTask extends GranularUploadTask {
         List<Content> orderedForDeletion = orderContentForDeletion(deleted);
 
         for (Content toBeDeleted : orderedForDeletion) {
+            log.trace("deleting: " + toBeDeleted.getCanonicalUri());
             deletionProcessor.process(toBeDeleted);
             updateFeedStatistics(remainingCount--, toBeDeleted);
             reportStatus(createDeltaStatus(uploadProcessor.getResult(), deletionProcessor.getResult(), updatesSize, deletesSize));
