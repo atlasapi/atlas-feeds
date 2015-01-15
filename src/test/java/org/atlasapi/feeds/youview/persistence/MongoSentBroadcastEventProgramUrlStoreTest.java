@@ -3,7 +3,7 @@ package org.atlasapi.feeds.youview.persistence;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventProgramUrlStore;
+import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventPcridStore;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,12 +14,12 @@ import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 public class MongoSentBroadcastEventProgramUrlStoreTest {
 
     private DatabasedMongo mongo;
-    private MongoSentBroadcastEventProgramUrlStore sentBroadcastProgramUrlStore;
+    private MongoSentBroadcastEventPcridStore sentBroadcastProgramUrlStore;
     
     @Before
     public void setUp() {
         mongo = MongoTestHelper.anEmptyTestDatabase();
-        sentBroadcastProgramUrlStore = new MongoSentBroadcastEventProgramUrlStore(mongo);
+        sentBroadcastProgramUrlStore = new MongoSentBroadcastEventPcridStore(mongo);
     }
     
     @Test

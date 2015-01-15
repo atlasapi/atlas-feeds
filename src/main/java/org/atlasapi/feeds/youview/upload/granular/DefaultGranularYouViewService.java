@@ -2,6 +2,8 @@ package org.atlasapi.feeds.youview.upload.granular;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.List;
+
 import javax.xml.bind.JAXBElement;
 
 import org.atlasapi.feeds.tvanytime.TvaGenerationException;
@@ -10,7 +12,7 @@ import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.feeds.youview.persistence.SentBroadcastEventProgramUrlStore;
+import org.atlasapi.feeds.youview.persistence.SentBroadcastEventPcridStore;
 import org.atlasapi.feeds.youview.tasks.Action;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.TVAElementType;
@@ -27,13 +29,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import tva.metadata._2010.BroadcastEventType;
+import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.TVAMainType;
+import tva.mpeg7._2008.UniqueIDType;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 
 
 public class DefaultGranularYouViewService implements GranularYouViewService {
+    
+    private static final String PCRID_AUTHORITY = "pcrid.dmol.co.uk";
     
     private final Logger log = LoggerFactory.getLogger(DefaultGranularYouViewService.class);
     
@@ -44,12 +51,12 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
     // TODO this will be moved out once task creation happens separately
     private final TaskStore taskStore;
     // TODO move this into decorating youview service?
-    private final SentBroadcastEventProgramUrlStore sentBroadcastProgramUrlStore;
+    private final SentBroadcastEventPcridStore sentBroadcastProgramUrlStore;
     private final ResultHandler resultHandler;
     
     public DefaultGranularYouViewService(GranularTvAnytimeGenerator generator, IdGenerator idGenerator, 
             YouViewRemoteClient client, TaskStore taskStore, 
-            SentBroadcastEventProgramUrlStore sentBroadcastProgramUrlStore, ResultHandler resultHandler) {
+            SentBroadcastEventPcridStore sentBroadcastProgramUrlStore, ResultHandler resultHandler) {
         this.sentBroadcastProgramUrlStore = checkNotNull(sentBroadcastProgramUrlStore);
         this.generator = checkNotNull(generator);
         this.idGenerator = checkNotNull(idGenerator);
@@ -142,9 +149,29 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
     
     private void recordUpload(JAXBElement<TVAMainType> tvaElem) {
         BroadcastEventType broadcastEvent = Iterables.getOnlyElement(tvaElem.getValue().getProgramDescription().getProgramLocationTable().getBroadcastEvent());
-        String programUrl = broadcastEvent.getProgramURL();
+        Optional<String> broadcastPcrid = getPcrid(broadcastEvent);
         String crid = broadcastEvent.getProgram().getCrid();
-        sentBroadcastProgramUrlStore.recordSent(crid, programUrl);
+        if (broadcastPcrid.isPresent()) {
+            sentBroadcastProgramUrlStore.recordSent(crid, broadcastPcrid.get());
+        }
+    }
+
+    private Optional<String> getPcrid(BroadcastEventType broadcastEvent) {
+        InstanceDescriptionType instanceDescription = broadcastEvent.getInstanceDescription();
+        if (instanceDescription == null) {
+            return Optional.absent();
+        }
+        List<UniqueIDType> otherIdentifier = instanceDescription.getOtherIdentifier();
+        if (otherIdentifier == null) {
+            return Optional.absent();
+        }
+        
+        for (UniqueIDType uniqueId : otherIdentifier) {
+            if (PCRID_AUTHORITY.equals(uniqueId.getAuthority())) {
+                return Optional.of(uniqueId.getValue());
+            }
+        }
+        return Optional.absent();
     }
 
     private boolean alreadyUploaded(JAXBElement<TVAMainType> tvaElem) {
@@ -170,6 +197,8 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
     @Override
     public void sendDeleteFor(Content content, TVAElementType type, String elementId) {
         Task task = createTaskFor(content, Action.DELETE, type, elementId);
+        //TODO check for BroadcastEvent deletes, and only issue if we have 
+        //uploaded this BroadcastEvent
         resultHandler.handleTransactionResult(task, client.sendDeleteFor(elementId));
     }
 }
