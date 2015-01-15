@@ -93,7 +93,11 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
             basicDescription.setProductionDate(prodDate.get());
         }
         basicDescription.getProductionLocation().addAll(generateProductLocations(item));
-        basicDescription.setDuration(generateDuration(version));
+        Duration versionDuration = generateDuration(version);
+        if (versionDuration == null) {
+            throw new RuntimeException("null version for item " + item.getCanonicalUri());
+        }
+        basicDescription.setDuration(versionDuration);
 
         return basicDescription;
     }
