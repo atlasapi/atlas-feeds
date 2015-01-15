@@ -9,7 +9,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 
 
-public class MongoSentBroadcastEventProgramUrlStore implements SentBroadcastEventProgramUrlStore {
+public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcridStore {
 
     private static final Joiner KEY_JOINER = Joiner.on("|").skipNulls();
     
@@ -17,7 +17,7 @@ public class MongoSentBroadcastEventProgramUrlStore implements SentBroadcastEven
     
     private final DBCollection collection;
     
-    public MongoSentBroadcastEventProgramUrlStore(DatabasedMongo mongo) {
+    public MongoSentBroadcastEventPcridStore(DatabasedMongo mongo) {
         this.collection = mongo.collection(COLLECTION);
     }
     

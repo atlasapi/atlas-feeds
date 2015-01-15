@@ -11,12 +11,12 @@ package org.atlasapi.feeds.youview.persistence;
  * @author tom
  *
  */
-public interface SentBroadcastEventProgramUrlStore {
+public interface SentBroadcastEventPcridStore {
 
-    boolean beenSent(String crid, String programUrl);
+    boolean beenSent(String crid, String pcrid);
     
-    void removeSentRecord(String crid, String programUrl);
+    void removeSentRecord(String crid, String pcrid);
 
-    void recordSent(String crid, String programUrl);
+    void recordSent(String crid, String pcrid);
 
 }
