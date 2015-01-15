@@ -3,14 +3,21 @@ package org.atlasapi.feeds.youview.www;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
+import java.util.Locale;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.HttpHeaders;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
 import org.atlasapi.feeds.youview.persistence.IdMappingStore;
 import org.atlasapi.feeds.youview.resolutionapi.ResolutionApiOutput;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Duration;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -26,10 +33,17 @@ import com.metabroadcast.common.webapp.json.GsonFactory;
 public class NitroYouViewResolutionController {
 
     private static final String NITRO_URI_PREFIX = "http://nitro.bbc.co.uk/programmes/";
-    private final IdMappingStore mappingStore;
+    private static final Duration CACHE_DURATION = Duration.standardMinutes(16);
     private static final Gson GSON = GsonFactory.defaultGsonBuilder()
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
             .create();
+
+    private static final DateTimeFormatter RFC1123_DATE_TIME_FORMATTER = DateTimeFormat
+            .forPattern("EEE, dd MMM yyyy HH:mm:ss 'UTC'")
+            .withZoneUTC()
+            .withLocale(Locale.ENGLISH);
+
+    private final IdMappingStore mappingStore;
 
     public NitroYouViewResolutionController(IdMappingStore mappingStore) {
         this.mappingStore = checkNotNull(mappingStore);
@@ -39,7 +53,7 @@ public class NitroYouViewResolutionController {
     public void getYouViewVersionCridJson(HttpServletResponse response,
             @RequestParam(value = "pid", required = true) String pid)
             throws IOException {
-        response.setContentType(MimeType.APPLICATION_JSON.toString());
+        setHeaders(response, MimeType.APPLICATION_JSON.toString());
         serializeJson(response, outputForPid(pid));
     }
 
@@ -47,8 +61,26 @@ public class NitroYouViewResolutionController {
     public void getYouViewVersionCridXml(HttpServletResponse response,
             @RequestParam(value = "pid", required = true) String pid)
             throws JAXBException, IOException {
-        response.setContentType(MimeType.APPLICATION_XML.toString());
+        setHeaders(response, MimeType.APPLICATION_XML.toString());
         serializeXml(response, outputForPid(pid));
+    }
+
+    private void setHeaders(HttpServletResponse response, String contentType) {
+        response.setContentType(contentType);
+        response.setHeader(HttpHeaders.CACHE_CONTROL, cacheControlHeaderValue());
+        response.setHeader(HttpHeaders.EXPIRES, expiresHeaderValue());
+    }
+
+    private String expiresHeaderValue() {
+        return DateTime.now(DateTimeZone.UTC)
+                .plus(CACHE_DURATION)
+                .toString(RFC1123_DATE_TIME_FORMATTER);
+    }
+
+    private String cacheControlHeaderValue() {
+        return String.format("s-maxage=%d, max-age=%d",
+                    CACHE_DURATION.getStandardSeconds(),
+                    CACHE_DURATION.getStandardSeconds());
     }
 
     private ResolutionApiOutput outputForPid(String pid) {
