@@ -222,6 +222,6 @@ public abstract class GranularUploadTask extends ScheduledTask {
     }
     
     private Duration calculateLatency(final DateTime uploadTime, Content content) {
-        return new Duration(uploadTime, content.getLastUpdated());
+        return new Duration(content.getLastUpdated(), uploadTime);
     }
 }
