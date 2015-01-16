@@ -191,7 +191,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     }
 
     private Optional<GenreType> generateMediaAvailableMarkerGenre(Policy policy) {
-        if (!isAvailable(policy)) {
+        if (!isMediaAvailable(policy)) {
             return Optional.absent();
         }
         
@@ -203,16 +203,9 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return Optional.of(mediaAvailable);
     }
     
-    // The BBC provide an actual availability start time when the content is available
-    // on-demand. However, if the content is repeatedly available, this timestamp can point
-    // to the start of the original availability window, rather than an updated window.
-    // hence we check for both presence of this timestamp and whether both it and the availability
-    // start have passed (i.e. we are within the current availability window) before declaring
-    // content to be available.
-    private boolean isAvailable(Policy policy) {
+    private boolean isMediaAvailable(Policy policy) {
         return policy != null 
                 && policy.getActualAvailabilityStart() != null 
-                && policy.getAvailabilityStart().isBeforeNow() 
                 && policy.getActualAvailabilityStart().isBeforeNow();
     }
 
