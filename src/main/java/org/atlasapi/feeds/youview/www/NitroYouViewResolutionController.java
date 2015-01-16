@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -11,6 +12,9 @@ import javax.xml.bind.Marshaller;
 
 import org.atlasapi.feeds.youview.persistence.IdMappingStore;
 import org.atlasapi.feeds.youview.resolutionapi.ResolutionApiOutput;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Duration;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -20,35 +24,49 @@ import com.google.common.base.Optional;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.metabroadcast.common.media.MimeType;
+import com.metabroadcast.common.webapp.http.CacheHeaderWriter;
 import com.metabroadcast.common.webapp.json.GsonFactory;
 
 @Controller
 public class NitroYouViewResolutionController {
 
     private static final String NITRO_URI_PREFIX = "http://nitro.bbc.co.uk/programmes/";
-    private final IdMappingStore mappingStore;
+    private static final Duration CACHE_DURATION = Duration.standardMinutes(16);
     private static final Gson GSON = GsonFactory.defaultGsonBuilder()
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
             .create();
+
+    private final IdMappingStore mappingStore;
 
     public NitroYouViewResolutionController(IdMappingStore mappingStore) {
         this.mappingStore = checkNotNull(mappingStore);
     }
 
     @RequestMapping(value = "/feeds/nitro-youview/version.json", method = RequestMethod.GET)
-    public void getYouViewVersionCridJson(HttpServletResponse response,
+    public void getYouViewVersionCridJson(HttpServletRequest request, HttpServletResponse response,
             @RequestParam(value = "pid", required = true) String pid)
             throws IOException {
-        response.setContentType(MimeType.APPLICATION_JSON.toString());
+        setHeaders(request, response, MimeType.APPLICATION_JSON.toString());
         serializeJson(response, outputForPid(pid));
     }
 
     @RequestMapping(value = "/feeds/nitro-youview/version.xml", method = RequestMethod.GET)
-    public void getYouViewVersionCridXml(HttpServletResponse response,
+    public void getYouViewVersionCridXml(HttpServletRequest request, HttpServletResponse response,
             @RequestParam(value = "pid", required = true) String pid)
             throws JAXBException, IOException {
-        response.setContentType(MimeType.APPLICATION_XML.toString());
+        setHeaders(request, response, MimeType.APPLICATION_XML.toString());
         serializeXml(response, outputForPid(pid));
+    }
+
+    private void setHeaders(HttpServletRequest request, HttpServletResponse response, String contentType) {
+        response.setContentType(contentType);
+        CacheHeaderWriter cacheHeaderWriter = CacheHeaderWriter.cacheUntil(cacheUntil());
+        cacheHeaderWriter.writeHeaders(request, response);
+    }
+
+    private DateTime cacheUntil() {
+        return DateTime.now(DateTimeZone.UTC)
+                .plus(CACHE_DURATION);
     }
 
     private ResolutionApiOutput outputForPid(String pid) {
