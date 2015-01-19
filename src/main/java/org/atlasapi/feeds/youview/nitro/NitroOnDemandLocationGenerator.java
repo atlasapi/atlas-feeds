@@ -20,6 +20,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
+import org.joda.time.DateTime;
 
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
@@ -234,8 +235,14 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     // switch-over has taken place.
     private XMLGregorianCalendar generateAvailabilityEnd(Location location) {
         Policy policy = location.getPolicy();
-//        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityEnd());
-        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart().plus(AVAILABILITY_WINDOW));
+        
+        DateTime sevenDayEnd = policy.getAvailabilityStart().plus(AVAILABILITY_WINDOW);
+        DateTime fullWindowEnd = policy.getAvailabilityEnd();
+        
+        if (sevenDayEnd.isBefore(fullWindowEnd)) {
+            return TvAnytimeElementFactory.gregorianCalendar(sevenDayEnd);
+        }
+        return TvAnytimeElementFactory.gregorianCalendar(fullWindowEnd);
     }
     
     private CRIDRefType generateProgram(Item item, Version version) {
