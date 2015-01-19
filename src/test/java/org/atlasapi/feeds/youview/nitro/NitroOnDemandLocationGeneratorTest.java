@@ -161,24 +161,52 @@ public class NitroOnDemandLocationGeneratorTest {
         
         assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
         assertEquals("2012-07-10T00:00:00Z", onDemand.getEndOfAvailability().toString());
-}
+    }
 
-@Test
-public void testIfActualAvailabilityPresentThenContentMarkedAsAvailable() {
-    ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm());
+    @Test
+    public void testIfActualAvailabilityPresentThenContentMarkedAsAvailable() {
+        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm());
+
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
+
+        InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
+        Set<String> hrefs = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_HREF));
+        Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
+
+        assertEquals("http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available", getOnlyElement(hrefs));
+        assertEquals("other", getOnlyElement(types));
+
+        assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
+        assertEquals("2012-07-10T00:00:00Z", onDemand.getEndOfAvailability().toString());
+    }
     
-    ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
+    @Test
+    public void testIfFullWindowLongerThanSevenDaysThenSevenDayEndUsedAsWindowEnd() {
+        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm());
+        
+        DateTime start = onDemandHierarchy.location().getPolicy().getAvailabilityStart();
+        
+        onDemandHierarchy.location().getPolicy().setAvailabilityEnd(start.plusDays(10));
+        
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
+        
+        assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
+        assertEquals("2012-07-10T00:00:00Z", onDemand.getEndOfAvailability().toString());
+    }
     
-    InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
-    Set<String> hrefs = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_HREF));
-    Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
-    
-    assertEquals("http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available", getOnlyElement(hrefs));
-    assertEquals("other", getOnlyElement(types));
-    
-    assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
-    assertEquals("2012-07-10T00:00:00Z", onDemand.getEndOfAvailability().toString());
-}
+    @Test
+    public void testIfFullWindowShorterThanSevenDaysThenFullWindowEndUsedAsWindowEnd() {
+        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm());
+        
+        DateTime start = onDemandHierarchy.location().getPolicy().getAvailabilityStart();
+        
+        onDemandHierarchy.location().getPolicy().setAvailabilityEnd(start.plusDays(3));
+        
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
+        
+        assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
+        assertEquals("2012-07-06T00:00:00Z", onDemand.getEndOfAvailability().toString());
+    }
 
     private ItemOnDemandHierarchy hierarchyFrom(Film film) {
         Version version = Iterables.getOnlyElement(film.getVersions());
