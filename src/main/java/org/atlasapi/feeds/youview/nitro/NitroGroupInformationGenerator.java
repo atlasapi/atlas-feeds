@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
+import static org.atlasapi.feeds.youview.nitro.NitroUtils.isGaelic;
 
 import java.util.List;
 import java.util.Map;
@@ -95,7 +96,8 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             .put(SynopsisLengthType.LONG, 1200)
             .build();
     
-    private static final List<String> TITLE_PREFIXES = ImmutableList.of("The ", "the ", "A ", "a ", "An ", "an ");
+    private static final List<String> ENGLISH_TITLE_PREFIXES = ImmutableList.of("The ", "the ");
+    private static final List<String> GAELIC_TITLE_PREFIXES = ImmutableList.of("An ", "an ");
     
     private static final Function<String, List<GenreType>> TO_GENRE = new Function<String, List<GenreType>>() {
         @Override
@@ -254,7 +256,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         if (content.getTitle() != null) {
             basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, content.getTitle()));
             
-            String secondaryTitle = generateAlternateTitle(content.getTitle());
+            String secondaryTitle = generateAlternateTitle(content);
             if (!content.getTitle().equals(secondaryTitle)) {
                 basicDescription.getTitle().add(generateTitle(TITLE_TYPE_SECONDARY, secondaryTitle));
             }            
@@ -284,13 +286,20 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         return basicDescription;
     }
 
-    private String generateAlternateTitle(String title) {
-        for (String prefix : TITLE_PREFIXES) {
+    private String generateAlternateTitle(Content content) {
+        String title = content.getTitle();
+
+        for (String prefix : getTitlePrefixes(content)) {
             if (title.startsWith(prefix)) {
                 return title.replaceFirst(prefix, "").concat(", " + prefix).trim();
             }    
         }
+
         return title;
+    }
+
+    private List<String> getTitlePrefixes(Content content) {
+        return isGaelic(content) ? GAELIC_TITLE_PREFIXES : ENGLISH_TITLE_PREFIXES;
     }
 
     private Optional<RelatedMaterialType> generateRelatedMaterial(Content content) {

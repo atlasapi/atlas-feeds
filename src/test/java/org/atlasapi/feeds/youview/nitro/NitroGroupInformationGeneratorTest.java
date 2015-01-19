@@ -480,7 +480,9 @@ public class NitroGroupInformationGeneratorTest {
             assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
         }
         
-        film.setTitle("a film");
+        film.setTitle("An Rainse");
+        // Setting alba as the master brand in order to mark the content as Gaelic
+        film.setPresentationChannel("http://ref.atlasapi.org/channels/bbcalba");
         groupInfo = generator.generate(film);
         
         titles = groupInfo.getBasicDescription().getTitle();
@@ -490,12 +492,12 @@ public class NitroGroupInformationGeneratorTest {
         second = titles.get(1);
         
         if (Iterables.getOnlyElement(first.getType()).equals("main")) {
-            assertEquals("a film", first.getValue());
-            assertEquals("film, a", second.getValue());
+            assertEquals("An Rainse", first.getValue());
+            assertEquals("Rainse, An", second.getValue());
             assertEquals("secondary", Iterables.getOnlyElement(second.getType()));
         } else if (Iterables.getOnlyElement(second.getType()).equals("main")) {
-            assertEquals("a film", second.getValue());
-            assertEquals("film, a", first.getValue());
+            assertEquals("An Rainse", second.getValue());
+            assertEquals("Rainse, An", first.getValue());
             assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
         }
         

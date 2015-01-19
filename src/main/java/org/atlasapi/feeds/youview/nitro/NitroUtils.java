@@ -16,4 +16,8 @@ public class NitroUtils {
         return ENGLISH_LANG;
     }
 
+    public static boolean isGaelic(Content content) {
+        return GAELIC_LANG.equals(getLanguageCodeFor(content));
+    }
+
 }
