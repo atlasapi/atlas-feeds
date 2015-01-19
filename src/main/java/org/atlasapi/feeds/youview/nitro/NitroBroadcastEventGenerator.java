@@ -15,6 +15,8 @@ import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
@@ -40,6 +42,8 @@ public class NitroBroadcastEventGenerator implements GranularBroadcastEventGener
     private final IdGenerator idGenerator;
     private static final String TERRESTRIAL_EVENT_LOCATOR_NS = "bbc:terrestrial_event_locator:teleview";
     private static final String TERRESTRIAL_PROGRAMME_CRID_NS = "bbc:terrestrial_programme_crid:teleview";
+    
+    private final Logger log = LoggerFactory.getLogger(NitroBroadcastEventGenerator.class);
 
     public NitroBroadcastEventGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
@@ -88,7 +92,10 @@ public class NitroBroadcastEventGenerator implements GranularBroadcastEventGener
     private InstanceDescriptionType instanceDescriptionFrom(Broadcast broadcast) {
         InstanceDescriptionType description = new InstanceDescriptionType();
         
-        description.getOtherIdentifier().add(createTerrestrialProgrammeCridIdentifier(broadcast));
+        Optional<UniqueIDType> pCridIdentifier = createTerrestrialProgrammeCridIdentifier(broadcast);
+        if (pCridIdentifier.isPresent()) {
+            description.getOtherIdentifier().add(pCridIdentifier.get());
+        }
         description.getOtherIdentifier().add(createBroadcastPidIdentifier(broadcast));
         description.setAVAttributes(createAVAttributes());
         
@@ -123,18 +130,19 @@ public class NitroBroadcastEventGenerator implements GranularBroadcastEventGener
         return audioAttributes;
     }
 
-    private UniqueIDType createTerrestrialProgrammeCridIdentifier(Broadcast broadcast) {
+    private Optional<UniqueIDType> createTerrestrialProgrammeCridIdentifier(Broadcast broadcast) {
         UniqueIDType otherId = new UniqueIDType();
         otherId.setAuthority(BROADCAST_AUTHORITY);
 
         Optional<Alias> alias = aliasWithNamespace(broadcast.getAliases(), TERRESTRIAL_PROGRAMME_CRID_NS);
 
         if (!alias.isPresent()) {
-            throw new RuntimeException("Terrestrial Programme Crid Identifier not present for broadcast " + broadcast.getCanonicalUri());
+            log.trace("Terrestrial Programme Crid Identifier not present for broadcast " + broadcast.getCanonicalUri());
+            return Optional.absent();
         }
 
         otherId.setValue(alias.get().getValue());
-        return otherId;
+        return Optional.of(otherId);
     }
 
     private UniqueIDType createBroadcastPidIdentifier(Broadcast broadcast) {
