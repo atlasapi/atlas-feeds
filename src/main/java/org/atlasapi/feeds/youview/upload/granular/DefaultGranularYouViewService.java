@@ -21,7 +21,9 @@ import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.upload.ResultHandler;
 import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.YouViewResult;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
+import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Series;
@@ -34,12 +36,14 @@ import tva.metadata._2010.TVAMainType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 
 
 public class DefaultGranularYouViewService implements GranularYouViewService {
-    
+
+    private static final String TERRESTRIAL_PROGRAMME_CRID_NS = "bbc:terrestrial_programme_crid:teleview";
     private static final String PCRID_AUTHORITY = "pcrid.dmol.co.uk";
     
     private final Logger log = LoggerFactory.getLogger(DefaultGranularYouViewService.class);
@@ -130,7 +134,7 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
         try {
             JAXBElement<TVAMainType> tvaElem = generator.generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi);
 
-            if (alreadyUploaded(tvaElem)) {
+            if (hasPCrid(broadcastHierarchy.broadcast()) && alreadyUploaded(tvaElem)) {
                 log.trace("Not uploading broadcast, since its ProgramURL has already been associated with this service ID and item");
                 return;
             }
@@ -138,7 +142,7 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
             Task task = createTaskFor(broadcastHierarchy.item(), Action.UPDATE, TVAElementType.BROADCAST, broadcastImi);
             YouViewResult uploadResult = client.upload(tvaElem);
 
-            if (uploadResult.isSuccess()) {
+            if (hasPCrid(broadcastHierarchy.broadcast()) && uploadResult.isSuccess()) {
                 recordUpload(tvaElem);
             }
             resultHandler.handleTransactionResult(task, uploadResult);
@@ -146,6 +150,15 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
             throw Throwables.propagate(e);
         }
     }
+    
+    private static boolean hasPCrid(Broadcast broadcast) {
+        return Iterables.tryFind(broadcast.getAliases(), new Predicate<Alias>() {
+            @Override
+            public boolean apply(Alias input) {
+                return TERRESTRIAL_PROGRAMME_CRID_NS.equals(input.getNamespace());
+            }
+        }).isPresent();
+    };
     
     private void recordUpload(JAXBElement<TVAMainType> tvaElem) {
         BroadcastEventType broadcastEvent = Iterables.getOnlyElement(tvaElem.getValue().getProgramDescription().getProgramLocationTable().getBroadcastEvent());
