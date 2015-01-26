@@ -70,7 +70,7 @@ public class NitroTVAnytimeModule {
     
     @Bean
     public ContentHierarchyExpander contentHierarchyExpander() {
-        return new NitroContentHierarchyExpander(versionHierarchyExpander(), broadcastHierarchyExpander(), onDemandHierarchyExpander());
+        return new NitroContentHierarchyExpander(versionHierarchyExpander(), broadcastHierarchyExpander(), onDemandHierarchyExpander(), nitroIdGenerator());
     }
     
     @Bean

@@ -8,7 +8,6 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.joda.time.DateTime;
 
-import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 
@@ -18,47 +17,38 @@ public class FilterFactory {
     private FilterFactory() {
     }
     
-    public static Predicate<ItemAndVersion> versionFilter(final Optional<DateTime> updatedSince) {
-        if (!updatedSince.isPresent()) {
-            return Predicates.alwaysTrue();
-        }
+    public static Predicate<ItemAndVersion> versionFilter(final DateTime updatedSince) {
         return new Predicate<ItemAndVersion>() {
             @Override
             public boolean apply(ItemAndVersion input) {
-                return hasBeenUpdated(input.item(), updatedSince.get())
-                        || hasBeenUpdated(input.version(), updatedSince.get());
+                return hasBeenUpdated(input.item(), updatedSince)
+                        || hasBeenUpdated(input.version(), updatedSince);
             }
         };
     }
 
-    public static Predicate<ItemBroadcastHierarchy> broadcastFilter(final Optional<DateTime> updatedSince) {
-        if (!updatedSince.isPresent()) {
-            return Predicates.alwaysTrue();
-        }
+    public static Predicate<ItemBroadcastHierarchy> broadcastFilter(final DateTime updatedSince) {
         return new Predicate<ItemBroadcastHierarchy>() {
             @Override
             public boolean apply(ItemBroadcastHierarchy input) {
-                return (hasBeenUpdated(input.item(), updatedSince.get())
-                        || hasBeenUpdated(input.version(), updatedSince.get())
-                        || hasBeenUpdated(input.broadcast(), updatedSince.get()));
+                return (hasBeenUpdated(input.item(), updatedSince)
+                        || hasBeenUpdated(input.version(), updatedSince)
+                        || hasBeenUpdated(input.broadcast(), updatedSince));
             }
 
         };
     }
 
-    public static Predicate<ItemOnDemandHierarchy> onDemandFilter(final Optional<DateTime> updatedSince) {
-        if (!updatedSince.isPresent()) {
-            return platformFilter();
-        }
+    public static Predicate<ItemOnDemandHierarchy> onDemandFilter(final DateTime updatedSince) {
         return Predicates.and(
                 platformFilter(), 
                 new Predicate<ItemOnDemandHierarchy>() {
                     @Override
                     public boolean apply(ItemOnDemandHierarchy input) {
-                        return hasBeenUpdated(input.item(), updatedSince.get())
-                                || hasBeenUpdated(input.version(), updatedSince.get())
-                                || hasBeenUpdated(input.encoding(), updatedSince.get())
-                                || hasBeenUpdated(input.location(), updatedSince.get());
+                        return hasBeenUpdated(input.item(), updatedSince)
+                                || hasBeenUpdated(input.version(), updatedSince)
+                                || hasBeenUpdated(input.encoding(), updatedSince)
+                                || hasBeenUpdated(input.location(), updatedSince);
                     }
                 }
         );

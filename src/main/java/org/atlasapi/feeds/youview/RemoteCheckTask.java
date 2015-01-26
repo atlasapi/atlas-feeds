@@ -4,10 +4,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Set;
 
-import org.atlasapi.feeds.youview.service.TaskProcessor;
+import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.youview.tasks.processing.TaskProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +17,7 @@ import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
 
-public class YouViewRemoteCheckTask extends ScheduledTask {
+public class RemoteCheckTask extends ScheduledTask {
     
     private static final Set<Status> TO_BE_CHECKED = ImmutableSet.of(
             Status.ACCEPTED,
@@ -27,23 +28,22 @@ public class YouViewRemoteCheckTask extends ScheduledTask {
             Status.PUBLISHING
     );
     
-    private final Logger log = LoggerFactory.getLogger(YouViewRemoteCheckTask.class);
+    private final Logger log = LoggerFactory.getLogger(RemoteCheckTask.class);
     private final TaskStore taskStore;
     private final TaskProcessor processor;
+    private final DestinationType destinationType;
 
-    public YouViewRemoteCheckTask(TaskStore taskStore, TaskProcessor processor) {
+    public RemoteCheckTask(TaskStore taskStore, TaskProcessor processor, DestinationType destinationType) {
         this.taskStore = checkNotNull(taskStore);
         this.processor = checkNotNull(processor);
+        this.destinationType = checkNotNull(destinationType);
     }
 
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
         for (Status uncheckedStatus : TO_BE_CHECKED) {
-            if (!shouldContinue()) {
-                break;
-            }
-            Iterable<Task> tasksToCheck = taskStore.allTasks(uncheckedStatus);
+            Iterable<Task> tasksToCheck = taskStore.allTasks(destinationType, uncheckedStatus);
             for (Task task : tasksToCheck) {
                 if (!shouldContinue()) {
                     break;

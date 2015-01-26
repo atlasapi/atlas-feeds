@@ -44,14 +44,14 @@ public class PayloadCreatingTaskCreatorTest {
     private Payload payload = createPayload();
     private PayloadCreator payloadCreator = mock(PayloadCreator.class);
     
-    private final TaskCreator creator = new PayloadCreatingTaskCreator(payloadCreator);
+    private final TaskCreator creator = new YouViewEntityTaskCreator(payloadCreator);
     
     @Before
     public void setup() {
-        when(payloadCreator.createFrom(any(Content.class))).thenReturn(payload);
-        when(payloadCreator.createFrom(anyString(), any(ItemAndVersion.class))).thenReturn(payload);
-        when(payloadCreator.createFrom(anyString(), any(ItemBroadcastHierarchy.class))).thenReturn(payload);
-        when(payloadCreator.createFrom(anyString(), any(ItemOnDemandHierarchy.class))).thenReturn(payload);
+        when(payloadCreator.payloadFrom(any(Content.class))).thenReturn(payload);
+        when(payloadCreator.payloadFrom(anyString(), any(ItemAndVersion.class))).thenReturn(payload);
+        when(payloadCreator.payloadFrom(anyString(), any(ItemBroadcastHierarchy.class))).thenReturn(payload);
+        when(payloadCreator.payloadFrom(anyString(), any(ItemOnDemandHierarchy.class))).thenReturn(payload);
     }
 
     @Test
@@ -69,7 +69,7 @@ public class PayloadCreatingTaskCreatorTest {
         assertEquals(payload, createdTask.payload());
         assertEquals(Status.NEW, createdTask.status());
         
-        verify(payloadCreator).createFrom(content);
+        verify(payloadCreator).payloadFrom(content);
     }
     
     @Test
@@ -88,7 +88,7 @@ public class PayloadCreatingTaskCreatorTest {
         assertEquals(payload, createdTask.payload());
         assertEquals(Status.NEW, createdTask.status());
         
-        verify(payloadCreator).createFrom(versionCrid, versionHierarchy);
+        verify(payloadCreator).payloadFrom(versionCrid, versionHierarchy);
     }
     
     @Test
@@ -107,7 +107,7 @@ public class PayloadCreatingTaskCreatorTest {
         assertEquals(payload, createdTask.payload());
         assertEquals(Status.NEW, createdTask.status());
         
-        verify(payloadCreator).createFrom(broadcastImi, broadcastHierarchy);
+        verify(payloadCreator).payloadFrom(broadcastImi, broadcastHierarchy);
     }
     
     @Test
@@ -126,7 +126,7 @@ public class PayloadCreatingTaskCreatorTest {
         assertEquals(payload, createdTask.payload());
         assertEquals(Status.NEW, createdTask.status());
         
-        verify(payloadCreator).createFrom(onDemandImi, onDemandHierarchy);
+        verify(payloadCreator).payloadFrom(onDemandImi, onDemandHierarchy);
     }
 
     private Content createBrand() {

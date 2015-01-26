@@ -14,6 +14,7 @@ import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.fromDB
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.toDBObject;
 
 import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
+import org.atlasapi.feeds.youview.tasks.Payload;
 import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
@@ -86,6 +87,18 @@ public class MongoTaskStore implements TaskStore {
         DBObject updateStatus = new MongoUpdateBuilder()
                 .push(TaskTranslator.REMOTE_STATUSES_KEY, ResponseTranslator.toDBObject(response))
                 .setField(STATUS_KEY, response.status().name())
+                .build();
+        
+        collection.update(idQuery, updateStatus, false, false);
+    }
+
+    @Override
+    public void updateWithPayload(Long taskId, Payload payload) {
+        DBObject idQuery = new MongoQueryBuilder()
+                .idEquals(taskId)
+                .build();
+        DBObject updateStatus = new MongoUpdateBuilder()
+                .push(TaskTranslator.PAYLOAD_KEY, PayloadTranslator.toDBObject(payload))
                 .build();
         
         collection.update(idQuery, updateStatus, false, false);

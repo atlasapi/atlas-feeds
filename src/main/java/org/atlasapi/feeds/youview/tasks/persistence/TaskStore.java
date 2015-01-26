@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview.tasks.persistence;
 
 import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
+import org.atlasapi.feeds.youview.tasks.Payload;
 import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
@@ -36,7 +37,15 @@ public interface TaskStore {
      * @param taskId the id of the task to be updated
      * @param response the response from the remote site
      */
-    void  updateWithResponse(Long taskId, Response response);
+    void updateWithResponse(Long taskId, Response response);
+    
+    /**
+     * Updates a task with a {@link Payload}, containing the content (to be) uploaded to the 
+     * remote site.
+     * @param taskId
+     * @param payload
+     */
+    void updateWithPayload(Long taskId, Payload payload);
     
     Optional<Task> taskFor(Long taskId);
     

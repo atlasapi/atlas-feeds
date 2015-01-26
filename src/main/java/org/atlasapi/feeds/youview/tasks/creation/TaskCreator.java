@@ -8,7 +8,7 @@ import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.media.entity.Content;
 
 /**
- * This interface wraps up the creation of a task from its given Atlas objects,
+ * This interface wraps up the creation of a {@link Task} from its given Atlas objects,
  * generating TVAnytime output, and producing a Task object containing this ouput.
  * 
  * @author Oliver Hall (oli@metabroadcast.com)
@@ -16,8 +16,8 @@ import org.atlasapi.media.entity.Content;
  */
 public interface TaskCreator {
     
-    Task create(String contentCrid, Content content, Action action) throws TaskCreationException;
-    Task create(String versionCrid, ItemAndVersion versionHierarchy, Action action) throws TaskCreationException;
-    Task create(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Action action) throws TaskCreationException;
-    Task create(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) throws TaskCreationException;
+    Task taskFor(String contentCrid, Content content, Action action);
+    Task taskFor(String versionCrid, ItemAndVersion versionHierarchy, Action action);
+    Task taskFor(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Action action);
+    Task taskFor(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action);
 }

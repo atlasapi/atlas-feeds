@@ -16,20 +16,18 @@ import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
-import com.metabroadcast.common.time.Clock;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 
 
 public class TaskUpdatingResultHandler implements ResultHandler {
 
-    private final Clock clock;
     private final TaskStore taskStore;
     private final JAXBContext context;
+    
     private YouViewReportHandler reportHandler;
     
-    public TaskUpdatingResultHandler(Clock clock, TaskStore taskStore) throws JAXBException {
-        this.clock = checkNotNull(clock);
+    public TaskUpdatingResultHandler(TaskStore taskStore) throws JAXBException {
         this.taskStore = checkNotNull(taskStore);
         this.context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
     }
@@ -42,9 +40,9 @@ public class TaskUpdatingResultHandler implements ResultHandler {
     @Override
     public void handleTransactionResult(Task task, YouViewResult result) {
         if (result.isSuccess()) {
-            taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, result.result(), clock.now());
+            taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, result.result(), result.uploadTime());
         } else {
-            Response response = new Response(Status.REJECTED, result.result(), clock.now());
+            Response response = new Response(Status.REJECTED, result.result(), result.uploadTime());
             taskStore.updateWithResponse(task.id(), response);
         }
     }
@@ -57,7 +55,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         } else {
             status = Status.REJECTED;
         }
-        Response response = new Response(status, result.result(), clock.now());
+        Response response = new Response(status, result.result(), result.uploadTime());
         taskStore.updateWithResponse(task.id(), response);
     }
     

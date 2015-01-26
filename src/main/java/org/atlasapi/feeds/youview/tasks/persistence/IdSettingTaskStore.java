@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview.tasks.persistence;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
+import org.atlasapi.feeds.youview.tasks.Payload;
 import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
@@ -51,6 +52,11 @@ public class IdSettingTaskStore implements TaskStore {
     }
 
     @Override
+    public void updateWithPayload(Long taskId, Payload payload) {
+        delegate.updateWithPayload(taskId, payload);
+    }
+
+    @Override
     public Optional<Task> taskFor(Long taskId) {
         return delegate.taskFor(taskId);
     }
@@ -64,5 +70,4 @@ public class IdSettingTaskStore implements TaskStore {
     public Iterable<Task> allTasks(DestinationType type, Status status) {
         return delegate.allTasks(type, status);
     }
-
 }

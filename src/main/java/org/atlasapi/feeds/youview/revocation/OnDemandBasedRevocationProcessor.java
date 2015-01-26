@@ -5,12 +5,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
-import org.atlasapi.feeds.youview.tasks.TVAElementType;
-import org.atlasapi.feeds.youview.upload.granular.GranularYouViewService;
+import org.atlasapi.feeds.youview.tasks.Action;
+import org.atlasapi.feeds.youview.tasks.Task;
+import org.atlasapi.feeds.youview.tasks.creation.TaskCreator;
+import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 
@@ -19,13 +20,16 @@ public class OnDemandBasedRevocationProcessor implements RevocationProcessor {
 
     private final RevokedContentStore revocationStore;
     private final OnDemandHierarchyExpander onDemandHierarchyExpander;
-    private final GranularYouViewService youviewService;
+    private final TaskCreator taskCreator;
+    private final TaskStore taskStore;
     
     public OnDemandBasedRevocationProcessor(RevokedContentStore revocationStore,
-            OnDemandHierarchyExpander onDemandHierarchyExpander, GranularYouViewService youviewService) {
+            OnDemandHierarchyExpander onDemandHierarchyExpander, TaskCreator taskCreator,
+            TaskStore taskStore) {
         this.revocationStore = checkNotNull(revocationStore);
         this.onDemandHierarchyExpander = checkNotNull(onDemandHierarchyExpander);
-        this.youviewService = checkNotNull(youviewService);
+        this.taskCreator = checkNotNull(taskCreator);
+        this.taskStore = checkNotNull(taskStore);
     }
 
     @Override
@@ -33,10 +37,11 @@ public class OnDemandBasedRevocationProcessor implements RevocationProcessor {
         checkArgument(content instanceof Item, "content " + content.getCanonicalUri() + " not an item, cannot revoke");
         
         Item item = (Item) content;
-        Set<String> onDemandIds = onDemandHierarchyExpander.expandHierarchy(item).keySet();
+        Map<String, ItemOnDemandHierarchy> onDemands = onDemandHierarchyExpander.expandHierarchy(item);
 
-        for (String onDemandId : onDemandIds) {
-            youviewService.sendDeleteFor(content, TVAElementType.ONDEMAND, onDemandId);
+        for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
+            Task task = taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), Action.DELETE);
+            taskStore.save(task);
         }
         revocationStore.revoke(content.getCanonicalUri());
     }
@@ -48,10 +53,11 @@ public class OnDemandBasedRevocationProcessor implements RevocationProcessor {
         revocationStore.unrevoke(content.getCanonicalUri());
         
         Item item = (Item) content;
-        Map<String, ItemOnDemandHierarchy> onDemandHierarchies = onDemandHierarchyExpander.expandHierarchy(item);
+        Map<String, ItemOnDemandHierarchy> onDemands = onDemandHierarchyExpander.expandHierarchy(item);
         
-        for (Entry<String, ItemOnDemandHierarchy> onDemandHierarchy : onDemandHierarchies.entrySet()) {
-            youviewService.uploadOnDemand(onDemandHierarchy.getValue(), onDemandHierarchy.getKey());
+        for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
+            Task task = taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), Action.UPDATE);
+            taskStore.save(task);
         }
     }
 }

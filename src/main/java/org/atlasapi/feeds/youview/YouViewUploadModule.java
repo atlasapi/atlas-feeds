@@ -1,10 +1,14 @@
 package org.atlasapi.feeds.youview;
 
+import static com.metabroadcast.common.time.DateTimeZones.UTC;
+import static org.joda.time.DateTimeConstants.JANUARY;
+
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
@@ -18,6 +22,10 @@ import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastServiceMapping;
+import org.atlasapi.feeds.youview.payload.Converter;
+import org.atlasapi.feeds.youview.payload.PayloadCreator;
+import org.atlasapi.feeds.youview.payload.TVAPayloadCreator;
+import org.atlasapi.feeds.youview.payload.TVAnytimeStringConverter;
 import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventPcridStore;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.SentBroadcastEventPcridStore;
@@ -30,31 +38,36 @@ import org.atlasapi.feeds.youview.revocation.OnDemandBasedRevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
+import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
+import org.atlasapi.feeds.youview.tasks.creation.BootstrapTaskCreationTask;
+import org.atlasapi.feeds.youview.tasks.creation.DeltaTaskCreationTask;
+import org.atlasapi.feeds.youview.tasks.creation.TaskCreator;
+import org.atlasapi.feeds.youview.tasks.creation.YouViewEntityTaskCreator;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.youview.tasks.processing.HttpYouViewClient;
+import org.atlasapi.feeds.youview.tasks.processing.PublisherDelegatingTaskProcessor;
+import org.atlasapi.feeds.youview.tasks.processing.TaskProcessor;
+import org.atlasapi.feeds.youview.tasks.processing.YouViewClient;
+import org.atlasapi.feeds.youview.tasks.processing.YouViewTaskProcessor;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.feeds.youview.upload.BootstrapUploadTask;
 import org.atlasapi.feeds.youview.upload.DefaultYouViewService;
 import org.atlasapi.feeds.youview.upload.DeltaUploadTask;
 import org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient;
-import org.atlasapi.feeds.youview.upload.PublisherDelegatingGranularYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.PublisherDelegatingYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.ReferentialIntegrityCheckingReportHandler;
 import org.atlasapi.feeds.youview.upload.ResultHandler;
-import org.atlasapi.feeds.youview.upload.RevocationHonouringYouViewService;
 import org.atlasapi.feeds.youview.upload.TaskUpdatingResultHandler;
 import org.atlasapi.feeds.youview.upload.ValidatingYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.YouViewReportHandler;
 import org.atlasapi.feeds.youview.upload.YouViewService;
-import org.atlasapi.feeds.youview.upload.granular.DefaultGranularYouViewService;
-import org.atlasapi.feeds.youview.upload.granular.GranularBootstrapUploadTask;
-import org.atlasapi.feeds.youview.upload.granular.GranularDeltaUploadTask;
-import org.atlasapi.feeds.youview.upload.granular.GranularYouViewService;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +76,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.xml.sax.SAXException;
+
+import tva.metadata._2010.TVAMainType;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
@@ -98,6 +113,8 @@ public class YouViewUploadModule {
     private final static RepetitionRule BOOTSTRAP_UPLOAD = RepetitionRules.NEVER;
     private final static RepetitionRule REMOTE_CHECK_UPLOAD = RepetitionRules.every(Duration.standardMinutes(15));
     private static final String TASK_NAME_PATTERN = "YouView %s TVAnytime %s Upload";
+    private static final DestinationType DESTINATION_TYPE = DestinationType.YOUVIEW;
+    private static final DateTime BOOTSTRAP_START_DATE = new DateTime(2015, JANUARY, 5, 0, 0, 0, 0, UTC);
     
     private final Clock clock = new SystemClock(DateTimeZone.UTC);
     
@@ -137,8 +154,8 @@ public class YouViewUploadModule {
         for (Entry<String, Publisher> publisherEntry : GRANULAR_PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
             if (isEnabled(publisherPrefix)) {
-                scheduler.schedule(scheduleGranularBootstrapTask(publisherEntry.getValue()), BOOTSTRAP_UPLOAD);
-                scheduler.schedule(scheduleGranularDeltaTask(publisherEntry.getValue()), DELTA_UPLOAD);
+                scheduler.schedule(scheduleBootstrapTaskCreationTask(publisherEntry.getValue()), BOOTSTRAP_UPLOAD);
+                scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), DELTA_UPLOAD);
                 
             }
         }
@@ -149,12 +166,45 @@ public class YouViewUploadModule {
     }
     
     private ScheduledTask remoteCheckTask() throws JAXBException, SAXException {
-        return new YouViewRemoteCheckTask(taskStore, granularYouViewService());
+        return new RemoteCheckTask(taskStore, taskProcessor(), DESTINATION_TYPE);
+    }
+
+    @Bean
+    public TaskProcessor taskProcessor() throws JAXBException, SAXException {
+        ImmutableMap.Builder<Publisher, TaskProcessor> processors = ImmutableMap.builder();
+        
+        Optional<TaskProcessor> nitroProcessor = nitroTaskProcessor();
+        if (nitroProcessor.isPresent()) {
+            processors.put(Publisher.BBC_NITRO, nitroProcessor.get());
+        }
+        
+        return new PublisherDelegatingTaskProcessor(processors.build());
+    }
+    
+    /**
+     * Creates a {@link TaskProcessor} for the BBC_NITRO publisher, if that publisher
+     * is enabled, wrapping it within an {@link Optional}. 
+     * @return Optional.absent() if Nitro configuration disabled, or the processor (wrapped in an
+     * Optional) if configuration is present.
+     * @throws SAXException 
+     * @throws JAXBException 
+     */
+    private Optional<TaskProcessor> nitroTaskProcessor() throws JAXBException, SAXException {
+        String publisherPrefix = CONFIG_PREFIX + "nitro";
+        if (!isEnabled(publisherPrefix)) {
+            Optional.absent();
+        }
+        String baseUrl = parseUrl(publisherPrefix);
+        UsernameAndPassword credentials = parseCredentials(publisherPrefix);
+        
+        YouViewClient client = new HttpYouViewClient(httpClient(credentials.username(), credentials.password()), baseUrl, clock);
+        
+        return Optional.<TaskProcessor>of(new YouViewTaskProcessor(client, resultHandler(), revokedContentStore()));
     }
 
     @Bean
     public YouViewUploadController uploadController() throws JAXBException, SAXException {
-        return new YouViewUploadController(contentResolver, granularYouViewService(), contentHierarchyExpander, revocationProcessor());
+        return new YouViewUploadController(contentResolver, taskCreator(), taskStore, contentHierarchyExpander, revocationProcessor());
     }
     
     private ScheduledTask scheduleBootstrapTask(Publisher publisher) throws JAXBException, SAXException {
@@ -167,32 +217,39 @@ public class YouViewUploadModule {
                     .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
     
-    private ScheduledTask scheduleGranularBootstrapTask(Publisher publisher) throws JAXBException, SAXException {
-        return new GranularBootstrapUploadTask(
-                granularYouViewService(), 
+    // TODO remove dependency on nitro Id generator
+    private ScheduledTask scheduleBootstrapTaskCreationTask(Publisher publisher) throws JAXBException {
+        return new BootstrapTaskCreationTask(
                 lastUpdatedStore(), 
                 publisher, 
-                nitroBootstrapContentResolver(publisher), 
                 contentHierarchyExpander, 
-                nitroIdGenerator,
-                feedStatsStore,
-                clock
+                nitroIdGenerator, 
+                taskStore, 
+                taskCreator(), 
+                payloadCreator(), 
+                nitroBootstrapContentResolver(publisher), 
+                BOOTSTRAP_START_DATE
         )
         .withName(String.format(TASK_NAME_PATTERN, "Bootstrap", publisher.title()));
     }
-
-    private ScheduledTask scheduleGranularDeltaTask(Publisher publisher) throws JAXBException, SAXException {
-        return new GranularDeltaUploadTask(
-                granularYouViewService(), 
+    
+    private ScheduledTask scheduleDeltaTaskCreationTask(Publisher publisher) throws JAXBException {
+        return new DeltaTaskCreationTask(
                 lastUpdatedStore(), 
                 publisher, 
-                nitroDeltaContentResolver(publisher), 
                 contentHierarchyExpander, 
-                nitroIdGenerator,
-                feedStatsStore,
-                clock
+                nitroIdGenerator, 
+                taskStore, 
+                taskCreator(), 
+                payloadCreator(), 
+                nitroBootstrapContentResolver(publisher)
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
+    }
+    
+    private PayloadCreator payloadCreator() throws JAXBException {
+        Converter<JAXBElement<TVAMainType>, String> outputConverter = new TVAnytimeStringConverter();
+        return new TVAPayloadCreator(granularGenerator, outputConverter, clock);
     }
     
     private YouViewContentResolver nitroBootstrapContentResolver(Publisher publisher) {
@@ -217,18 +274,6 @@ public class YouViewUploadModule {
     }
     
     @Bean
-    public GranularYouViewService granularYouViewService() throws JAXBException, SAXException {
-        ImmutableMap.Builder<Publisher, GranularYouViewService> clients = ImmutableMap.builder();
-        
-        Optional<GranularYouViewService> nitroClient = createNitroClient();
-        if (nitroClient.isPresent()) {
-            clients.put(Publisher.BBC_NITRO, nitroClient.get());
-        }
-        
-        return new RevocationHonouringYouViewService(revokedContentStore(), new PublisherDelegatingGranularYouViewRemoteClient(clients.build()));
-    }
-    
-    @Bean
     public YouViewService youViewUploadClient() throws JAXBException, SAXException {
         ImmutableMap.Builder<Publisher, YouViewService> clients = ImmutableMap.builder();
         
@@ -243,41 +288,31 @@ public class YouViewUploadModule {
         
         return new PublisherDelegatingYouViewRemoteClient(clients.build());
     }
-
-    private Optional<GranularYouViewService> createNitroClient() throws JAXBException, SAXException {
-        String publisherPrefix = CONFIG_PREFIX + "nitro";
-        if (!isEnabled(publisherPrefix)) {
-            Optional.absent();
-        }
-        String baseUrl = parseUrl(publisherPrefix);
-        UsernameAndPassword credentials = parseCredentials(publisherPrefix);
-        
-        YouViewRemoteClient client = new HttpYouViewRemoteClient(httpClient(credentials.username(), credentials.password()), baseUrl);
-        client = enableValidationIfAppropriate(client);
-        
-        return Optional.<GranularYouViewService>of(new DefaultGranularYouViewService(
-                granularGenerator, 
-                nitroIdGenerator, 
-                client, 
-                taskStore,
-                sentBroadcastProgramUrlStore(),
-                resultHandler()
-        ));
-    }
     
     @Bean
     public ResultHandler resultHandler() throws JAXBException, SAXException {
-        return new TaskUpdatingResultHandler(clock, taskStore);
+        return new TaskUpdatingResultHandler(taskStore);
     }
 
     @Bean
     public YouViewReportHandler reportHandler() throws JAXBException, SAXException {
-        return new ReferentialIntegrityCheckingReportHandler(granularYouViewService(), contentResolver, versionHierarchyExpander, contentHierarchy());
+        return new ReferentialIntegrityCheckingReportHandler(
+                taskCreator(), 
+                nitroIdGenerator, 
+                taskStore, 
+                contentResolver, 
+                versionHierarchyExpander, 
+                contentHierarchy()
+        );
+    }
+
+    private TaskCreator taskCreator() {
+        return new YouViewEntityTaskCreator();
     }
 
     @Bean
     public RevocationProcessor revocationProcessor() throws JAXBException, SAXException {
-        return new OnDemandBasedRevocationProcessor(revokedContentStore(), onDemandHierarchyExpander, granularYouViewService());
+        return new OnDemandBasedRevocationProcessor(revokedContentStore(), onDemandHierarchyExpander, taskCreator(), taskStore);
     }
     
     @Bean

@@ -15,8 +15,14 @@ import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
+import org.atlasapi.feeds.youview.tasks.Action;
+import org.atlasapi.feeds.youview.tasks.Destination;
+import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.TVAElementType;
-import org.atlasapi.feeds.youview.upload.granular.GranularYouViewService;
+import org.atlasapi.feeds.youview.tasks.Task;
+import org.atlasapi.feeds.youview.tasks.YouViewDestination;
+import org.atlasapi.feeds.youview.tasks.creation.TaskCreator;
+import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
@@ -38,14 +44,17 @@ import com.metabroadcast.common.http.HttpException;
 public class YouViewUploadController {
 
     private final ContentResolver contentResolver;
-    private final GranularYouViewService remoteService;
+    private final TaskCreator taskCreator;
+    private final TaskStore taskStore;
     private final ContentHierarchyExpander hierarchyExpander;
     private final RevocationProcessor revocationProcessor;
     
-    public YouViewUploadController(ContentResolver contentResolver, GranularYouViewService remoteService,
-            ContentHierarchyExpander hierarchyExpander, RevocationProcessor revocationProcessor) {
+    public YouViewUploadController(ContentResolver contentResolver, TaskCreator taskCreator, 
+            TaskStore taskStore, ContentHierarchyExpander hierarchyExpander, 
+            RevocationProcessor revocationProcessor) {
         this.contentResolver = checkNotNull(contentResolver);
-        this.remoteService = checkNotNull(remoteService);
+        this.taskCreator = checkNotNull(taskCreator);
+        this.taskStore = checkNotNull(taskStore);
         this.hierarchyExpander = checkNotNull(hierarchyExpander);
         this.revocationProcessor = checkNotNull(revocationProcessor);
     }
@@ -56,6 +65,7 @@ public class YouViewUploadController {
      * @throws IOException
      * @throws HttpException 
      */
+    // TODO this method does far too much right now
     @RequestMapping(value="/feeds/youview/{publisher}/upload", method = RequestMethod.POST)
     public void uploadContent(HttpServletResponse response,
             @PathVariable("publisher") String publisherStr,
@@ -93,12 +103,12 @@ public class YouViewUploadController {
                 sendError(response, SC_BAD_REQUEST, "Invalid type provided");
                 return;
             }
-            
+            Task task = null;
             switch(type) {
             case BRAND:
             case ITEM:
             case SERIES:
-                remoteService.uploadContent(toBeUploaded.get());
+                task = taskCreator.taskFor(elementId, toBeUploaded.get(), Action.UPDATE);
                 break;
             case BROADCAST:
                 if (!(content instanceof Item)) {
@@ -111,7 +121,7 @@ public class YouViewUploadController {
                     sendError(response, SC_BAD_REQUEST, "No Broadcast found with the provided elementId");
                     return;
                 }
-                remoteService.uploadBroadcast(broadcastHierarchy.get(), elementId);
+                task = taskCreator.taskFor(elementId, broadcastHierarchy.get(), Action.UPDATE);
                 break;
             case ONDEMAND:
                 if (!(content instanceof Item)) {
@@ -124,7 +134,7 @@ public class YouViewUploadController {
                     sendError(response, SC_BAD_REQUEST, "No OnDemand found with the provided elementId");
                     return;
                 }
-                remoteService.uploadOnDemand(onDemandHierarchy.get(), elementId);
+                task = taskCreator.taskFor(elementId, onDemandHierarchy.get(), Action.UPDATE);
                 break;
             case VERSION:
                 if (!(content instanceof Item)) {
@@ -137,26 +147,33 @@ public class YouViewUploadController {
                     sendError(response, SC_BAD_REQUEST, "No Version found with the provided elementId");
                     return;
                 }
-                remoteService.uploadVersion(versionHierarchy.get(), elementId);
+                task = taskCreator.taskFor(elementId, versionHierarchy.get(), Action.UPDATE);
                 break;
             default:
                 sendError(response, SC_BAD_REQUEST, "Invalid type provided");
                 return;
             }
+            if (task != null) {
+                taskStore.save(task);
+            }
         } else {
-            remoteService.uploadContent(toBeUploaded.get());
+            Task task = taskCreator.taskFor(hierarchyExpander.contentCridFor(toBeUploaded.get()), toBeUploaded.get(), Action.UPDATE);
+            taskStore.save(task);
             if (content instanceof Item) {
                 Map<String, ItemAndVersion> versions = hierarchyExpander.versionHierarchiesFor((Item) content);
                 for (Entry<String, ItemAndVersion> version : versions.entrySet()) {
-                    remoteService.uploadVersion(version.getValue(), version.getKey());
+                    Task versionTask = taskCreator.taskFor(version.getKey(), version.getValue(), Action.UPDATE);
+                    taskStore.save(versionTask);
                 }
                 Map<String, ItemBroadcastHierarchy> broadcasts = hierarchyExpander.broadcastHierarchiesFor((Item) content);
                 for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcasts.entrySet()) {
-                    remoteService.uploadBroadcast(broadcast.getValue(), broadcast.getKey());
+                    Task bcastTask = taskCreator.taskFor(broadcast.getKey(), broadcast.getValue(), Action.UPDATE);
+                    taskStore.save(bcastTask);
                 }
                 Map<String, ItemOnDemandHierarchy> onDemands = hierarchyExpander.onDemandHierarchiesFor((Item) content);
                 for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
-                    remoteService.uploadOnDemand(onDemand.getValue(), onDemand.getKey());
+                    Task odTask = taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), Action.UPDATE);
+                    taskStore.save(odTask);
                 }
             }
         }
@@ -214,7 +231,16 @@ public class YouViewUploadController {
             return;
         }
         
-        remoteService.sendDeleteFor(toBeDeleted.get(), type, elementId);
+        // TODO ideally this would go via the TaskCreator, but that would require resolving 
+        // the hierarchies for each type of element
+        Destination destination = new YouViewDestination(toBeDeleted.get().getCanonicalUri(), type, elementId);
+        Task task = Task.builder()
+                .withAction(Action.DELETE)
+                .withDestination(destination)
+                .withPublisher(toBeDeleted.get().getPublisher())
+                .withStatus(Status.NEW)
+                .build();
+        taskStore.save(task);
 
         sendOkResponse(response, "Delete for " + uri + " sent sucessfully");
     }

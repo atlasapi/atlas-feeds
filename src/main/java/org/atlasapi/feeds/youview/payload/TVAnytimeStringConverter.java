@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.payload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 
@@ -19,8 +17,8 @@ public class TVAnytimeStringConverter implements Converter<JAXBElement<TVAMainTy
     
     private final JAXBContext context;
     
-    public TVAnytimeStringConverter(JAXBContext context) {
-        this.context = checkNotNull(context);
+    public TVAnytimeStringConverter() throws JAXBException {
+        this.context = JAXBContext.newInstance("tva.metadata._2010");
     }
 
     @Override

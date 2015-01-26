@@ -34,7 +34,7 @@ public class TVAPayloadCreator implements PayloadCreator {
     }
 
     @Override
-    public Payload createFrom(Content content) throws PayloadGenerationException {
+    public Payload payloadFrom(String contentCrid, Content content) throws PayloadGenerationException {
         try {
             JAXBElement<TVAMainType> tvaElem = generator.generateContentTVAFrom(content);
             return new Payload(converter.convert(tvaElem), clock.now());
@@ -44,7 +44,7 @@ public class TVAPayloadCreator implements PayloadCreator {
     }
 
     @Override
-    public Payload createFrom(String versionCrid, ItemAndVersion versionHierarchy) throws PayloadGenerationException {
+    public Payload payloadFrom(String versionCrid, ItemAndVersion versionHierarchy) throws PayloadGenerationException {
         try {
             JAXBElement<TVAMainType> tvaElem = generator.generateVersionTVAFrom(versionHierarchy, versionCrid);
             return new Payload(converter.convert(tvaElem), clock.now());
@@ -54,7 +54,7 @@ public class TVAPayloadCreator implements PayloadCreator {
     }
 
     @Override
-    public Payload createFrom(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy) throws PayloadGenerationException {
+    public Payload payloadFrom(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy) throws PayloadGenerationException {
         try {
             JAXBElement<TVAMainType> tvaElem = generator.generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi);
             return new Payload(converter.convert(tvaElem), clock.now());
@@ -64,7 +64,7 @@ public class TVAPayloadCreator implements PayloadCreator {
     }
 
     @Override
-    public Payload createFrom(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy) throws PayloadGenerationException {
+    public Payload payloadFrom(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy) throws PayloadGenerationException {
         try {
             JAXBElement<TVAMainType> tvaElem = generator.generateOnDemandTVAFrom(onDemandHierarchy, onDemandImi);
             return new Payload(converter.convert(tvaElem), clock.now());

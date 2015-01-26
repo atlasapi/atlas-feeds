@@ -9,8 +9,8 @@ import org.atlasapi.media.entity.Content;
 
 public interface PayloadCreator {
 
-    Payload createFrom(Content content) throws PayloadGenerationException;
-    Payload createFrom(String versionCrid, ItemAndVersion versionHierarchy) throws PayloadGenerationException;
-    Payload createFrom(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy) throws PayloadGenerationException;
-    Payload createFrom(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy) throws PayloadGenerationException;
+    Payload payloadFrom(String contentCrid, Content content) throws PayloadGenerationException;
+    Payload payloadFrom(String versionCrid, ItemAndVersion versionHierarchy) throws PayloadGenerationException;
+    Payload payloadFrom(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy) throws PayloadGenerationException;
+    Payload payloadFrom(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy) throws PayloadGenerationException;
 }
