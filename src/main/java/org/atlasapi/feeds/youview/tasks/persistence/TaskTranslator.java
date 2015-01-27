@@ -26,6 +26,7 @@ public class TaskTranslator {
     private static final Logger log = LoggerFactory.getLogger(TaskTranslator.class);
     
     static final String PUBLISHER_KEY = "publisher";
+    static final String CREATED_KEY = "created";
     static final String ACTION_KEY = "action";
     static final String CONTENT_KEY = "content";
     static final String UPLOAD_TIME_KEY = "uploadTime";
@@ -41,6 +42,7 @@ public class TaskTranslator {
         DBObject dbo = new BasicDBObject();
         
         TranslatorUtils.from(dbo, MongoConstants.ID, task.id());
+        TranslatorUtils.fromDateTime(dbo, CREATED_KEY, task.created());
         TranslatorUtils.from(dbo, PUBLISHER_KEY, task.publisher().key());
         TranslatorUtils.from(dbo, ACTION_KEY, task.action().name());
         TranslatorUtils.from(dbo, STATUS_KEY, task.status().name());
@@ -80,6 +82,7 @@ public class TaskTranslator {
         
         return Task.builder()
                 .withId(TranslatorUtils.toLong(dbo, MongoConstants.ID))
+                .withCreated(TranslatorUtils.toDateTime(dbo, CREATED_KEY))
                 .withPublisher(Publisher.fromKey(TranslatorUtils.toString(dbo, PUBLISHER_KEY)).requireValue())
                 .withAction(Action.valueOf(TranslatorUtils.toString(dbo, ACTION_KEY)))
                 .withDestination(readDestination(dbo))

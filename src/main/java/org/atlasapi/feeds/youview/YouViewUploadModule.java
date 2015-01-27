@@ -49,6 +49,7 @@ import org.atlasapi.feeds.youview.tasks.processing.PublisherDelegatingTaskProces
 import org.atlasapi.feeds.youview.tasks.processing.TaskProcessor;
 import org.atlasapi.feeds.youview.tasks.processing.YouViewClient;
 import org.atlasapi.feeds.youview.tasks.processing.YouViewTaskProcessor;
+import org.atlasapi.feeds.youview.tasks.upload.UploadTask;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.feeds.youview.upload.BootstrapUploadTask;
@@ -70,6 +71,7 @@ import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
+import org.joda.time.LocalTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -112,9 +114,11 @@ public class YouViewUploadModule {
     private final static RepetitionRule DELTA_UPLOAD = RepetitionRules.every(Duration.standardMinutes(30));
     private final static RepetitionRule BOOTSTRAP_UPLOAD = RepetitionRules.NEVER;
     private final static RepetitionRule REMOTE_CHECK_UPLOAD = RepetitionRules.every(Duration.standardMinutes(15));
+    private static final RepetitionRule UPLOAD = RepetitionRules.every(Duration.standardMinutes(15));
     private static final String TASK_NAME_PATTERN = "YouView %s TVAnytime %s Upload";
     private static final DestinationType DESTINATION_TYPE = DestinationType.YOUVIEW;
     private static final DateTime BOOTSTRAP_START_DATE = new DateTime(2015, JANUARY, 5, 0, 0, 0, 0, UTC);
+    private static final RepetitionRule TASK_REMOVAL = RepetitionRules.daily(LocalTime.MIDNIGHT);
     
     private final Clock clock = new SystemClock(DateTimeZone.UTC);
     
@@ -139,6 +143,8 @@ public class YouViewUploadModule {
     private @Autowired FeedStatisticsStore feedStatsStore;
     
     private @Value("${youview.upload.validation}") String performValidation;
+    private @Value("{youview.upload.maxRetries}") Integer maxRetries;
+    private @Value("{youview.upload.taskTrimWindow.days}") Long trimWindowLengthDays;
 
     @PostConstruct
     public void startScheduledTasks() throws JAXBException, SAXException {
@@ -160,13 +166,20 @@ public class YouViewUploadModule {
             }
         }
         
+        scheduler.schedule(uploadTask().withName("YouView Task Upload"), UPLOAD);
         scheduler.schedule(remoteCheckTask().withName("YouView Task Status Check"), REMOTE_CHECK_UPLOAD);
+        scheduler.schedule(taskTrimmingTask().withName("Old Task Removal"), TASK_REMOVAL);
         
         resultHandler().registerReportHandler(reportHandler());
     }
     
     private ScheduledTask remoteCheckTask() throws JAXBException, SAXException {
         return new RemoteCheckTask(taskStore, taskProcessor(), DESTINATION_TYPE);
+    }
+    
+    private ScheduledTask taskTrimmingTask() {
+        Duration taskTrimmingWindow = Duration.standardDays(trimWindowLengthDays);
+        return new TaskTrimmingTask(taskStore, clock, taskTrimmingWindow);
     }
 
     @Bean
@@ -217,6 +230,10 @@ public class YouViewUploadModule {
                     .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
     
+    private ScheduledTask uploadTask() throws JAXBException, SAXException {
+        return new UploadTask(taskStore, taskProcessor(), DESTINATION_TYPE);
+    }
+    
     // TODO remove dependency on nitro Id generator
     private ScheduledTask scheduleBootstrapTaskCreationTask(Publisher publisher) throws JAXBException {
         return new BootstrapTaskCreationTask(
@@ -249,7 +266,7 @@ public class YouViewUploadModule {
     
     private PayloadCreator payloadCreator() throws JAXBException {
         Converter<JAXBElement<TVAMainType>, String> outputConverter = new TVAnytimeStringConverter();
-        return new TVAPayloadCreator(granularGenerator, outputConverter, clock);
+        return new TVAPayloadCreator(granularGenerator, outputConverter, sentBroadcastProgramUrlStore(), clock);
     }
     
     private YouViewContentResolver nitroBootstrapContentResolver(Publisher publisher) {
@@ -291,7 +308,7 @@ public class YouViewUploadModule {
     
     @Bean
     public ResultHandler resultHandler() throws JAXBException, SAXException {
-        return new TaskUpdatingResultHandler(taskStore);
+        return new TaskUpdatingResultHandler(taskStore, maxRetries);
     }
 
     @Bean

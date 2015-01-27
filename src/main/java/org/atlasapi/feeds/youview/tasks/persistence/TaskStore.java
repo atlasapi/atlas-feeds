@@ -59,4 +59,10 @@ public interface TaskStore {
      * @return
      */
     Iterable<Task> allTasks(DestinationType type, Status status);
+    
+    /**
+     * Remove all Tasks from the store created before a certain date.  
+     * @param removalDate
+     */
+    void removeBefore(DateTime removalDate);
 }

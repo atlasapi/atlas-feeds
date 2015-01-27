@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-// analogous to the youview service
 public class YouViewTaskProcessor implements TaskProcessor {
     
     private final Logger log = LoggerFactory.getLogger(YouViewTaskProcessor.class);

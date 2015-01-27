@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableSet;
 public class Task {
 
     private Long id;
+    private final DateTime created;
     private final Publisher publisher;
     private final Action action;
     private final Destination destination;
@@ -28,10 +29,11 @@ public class Task {
         return new Builder();
     }
     
-    private Task(Long id, Publisher publisher, Action action, Destination destination, Status status, 
+    private Task(Long id, DateTime created, Publisher publisher, Action action, Destination destination, Status status, 
             Optional<DateTime> uploadTime, Optional<String> remoteId, Optional<Payload> payload, 
             Iterable<Response> remoteResponses) {
         this.id = id;
+        this.created = checkNotNull(created);
         this.publisher = checkNotNull(publisher);
         this.action = checkNotNull(action);
         this.destination = checkNotNull(destination);
@@ -44,6 +46,10 @@ public class Task {
     
     public Long id() {
         return id;
+    }
+    
+    public DateTime created() {
+        return created;
     }
     
     public void setId(Long id) {
@@ -86,6 +92,7 @@ public class Task {
     public String toString() {
         return Objects.toStringHelper(getClass())
                 .add("id", id)
+                .add("created", created)
                 .add("publisher", publisher)
                 .add("action", action)
                 .add("destination", destination)
@@ -119,6 +126,7 @@ public class Task {
     public static class Builder {
         
         private Long id;
+        private DateTime created;
         private Publisher publisher;
         private Action action;
         private Destination destination;
@@ -131,12 +139,17 @@ public class Task {
         private Builder() { }
         
         public Task build() {
-            return new Task(id, publisher, action, destination, status, uploadTime, remoteId, 
-                    payload, remoteResponses.build());
+            return new Task(id, created, publisher, action, destination, status, uploadTime, 
+                    remoteId, payload, remoteResponses.build());
         }
         
         public Builder withId(Long id) {
             this.id = id;
+            return this;
+        }
+        
+        public Builder withCreated(DateTime created) {
+            this.created = created;
             return this;
         }
         

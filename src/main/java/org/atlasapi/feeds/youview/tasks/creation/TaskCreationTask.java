@@ -14,6 +14,7 @@ import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.tasks.Action;
 import org.atlasapi.feeds.youview.tasks.Payload;
+import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.upload.granular.FilterFactory;
@@ -124,8 +125,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
     }
     
     private UpdateProgress processContent(Content content, Action action) {
+        Task task = taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, action));
         try {
-            Task task = taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, action));
             // not strictly necessary, but will save space
             if (!Action.DELETE.equals(action)) {
                 Payload p = payloadCreator.payloadFrom(idGenerator.generateContentCrid(content), content);
@@ -133,57 +134,64 @@ public abstract class TaskCreationTask extends ScheduledTask {
             }
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
-            log.error("Failed to create task for content {}", content.getCanonicalUri(), e);
+            log.error("Failed to create payload for content {}", content.getCanonicalUri(), e);
+            taskStore.updateWithStatus(task.id(), Status.FAILED);
             return UpdateProgress.FAILURE;
         }
     }
     
     private UpdateProgress processVersion(String versionCrid, ItemAndVersion versionHierarchy, Action action) {
+        Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action));
         try {
-            Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action));
             Payload p = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
             taskStore.updateWithPayload(task.id(), p);
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
-                            "Failed to create task for content %s, version %s", 
+                            "Failed to create payload for content %s, version %s", 
                             versionHierarchy.item().getCanonicalUri(),
                             versionHierarchy.version().getCanonicalUri()
                     ), 
                     e
             );
+            taskStore.updateWithStatus(task.id(), Status.FAILED);
             return UpdateProgress.FAILURE;
         }
     }
-    
+
     private UpdateProgress processBroadcast(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Action action) {
         try {
+            Optional<Payload> p = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
+            if (!p.isPresent()) {
+                return UpdateProgress.START;
+            }
             Task task = taskStore.save(taskCreator.taskFor(broadcastImi, broadcastHierarchy, action));
-            Payload p = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
-            taskStore.updateWithPayload(task.id(), p);
+            taskStore.updateWithPayload(task.id(), p.get());
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
-                            "Failed to create task for content %s, version %s, broadcast %s", 
+                            "Failed to create payload for content %s, version %s, broadcast %s", 
                             broadcastHierarchy.item().getCanonicalUri(),
                             broadcastHierarchy.version().getCanonicalUri(), 
                             broadcastHierarchy.broadcast().toString()
                     ),
                     e
             );
+            Task task = taskStore.save(taskCreator.taskFor(broadcastImi, broadcastHierarchy, action));
+            taskStore.updateWithStatus(task.id(), Status.FAILED);
             return UpdateProgress.FAILURE;
         }
     }
     
     private UpdateProgress processOnDemand(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) {
+        Task task = taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, action));
         try {
-            Task task = taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, action));
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
             taskStore.updateWithPayload(task.id(), p);
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
-                            "Failed to create task for content %s, version %s, encoding %s, location %s", 
+                            "Failed to create payload for content %s, version %s, encoding %s, location %s", 
                             onDemandHierarchy.item().getCanonicalUri(),
                             onDemandHierarchy.version().getCanonicalUri(),
                             onDemandHierarchy.encoding().toString(),
@@ -191,6 +199,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     ),
                     e
             );
+            taskStore.updateWithStatus(task.id(), Status.FAILED);
             return UpdateProgress.FAILURE;
         }
     }

@@ -70,4 +70,9 @@ public class IdSettingTaskStore implements TaskStore {
     public Iterable<Task> allTasks(DestinationType type, Status status) {
         return delegate.allTasks(type, status);
     }
+
+    @Override
+    public void removeBefore(DateTime removalDate) {
+        delegate.removeBefore(removalDate);
+    }
 }

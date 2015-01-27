@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview.tasks.persistence;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.ACTION_KEY;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.CONTENT_KEY;
+import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.CREATED_KEY;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.DESTINATION_TYPE_KEY;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.ELEMENT_ID_KEY;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.ELEMENT_TYPE_KEY;
@@ -162,5 +163,14 @@ public class MongoTaskStore implements TaskStore {
 
     private String transformToRegexPattern(String input) {
         return input.replace(".", "\\.");
+    }
+
+    @Override
+    public void removeBefore(DateTime removalDate) {
+        DBObject mongoQuery = new MongoQueryBuilder()
+            .fieldBefore(CREATED_KEY, removalDate)
+            .build();
+        
+        collection.remove(mongoQuery);
     }
 }

@@ -19,7 +19,8 @@ public final class UploadTask extends TaskProcessingTask {
     }
 
     private static final Set<Status> TO_BE_UPLOADED = ImmutableSet.of(
-            Status.NEW
+            Status.NEW,
+            Status.PENDING
     );
     private static final Action TO_UPLOAD = Action.UPDATE; 
 

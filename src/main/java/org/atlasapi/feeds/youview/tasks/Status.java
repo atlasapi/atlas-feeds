@@ -4,7 +4,7 @@ package org.atlasapi.feeds.youview.tasks;
 public enum Status {
 
     NEW,
-    UPLOADING,
+    PENDING,
     ACCEPTED,
     REJECTED,
     POLLING,

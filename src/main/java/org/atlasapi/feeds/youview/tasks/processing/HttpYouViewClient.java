@@ -55,10 +55,10 @@ public class HttpYouViewClient implements YouViewClient {
             if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
                 String transactionUrl = parseIdFrom(response.header("Location"));
                 log.trace("Delete successful. Transaction url: " + transactionUrl);
-                return success(transactionUrl, clock.now());
+                return success(transactionUrl, clock.now(), response.statusCode());
             } 
             
-            return failure(response.body(), clock.now());
+            return failure(response.body(), clock.now(), response.statusCode());
         } catch (HttpException e) {
             throw new YouViewClientException("Error deleting id " + elementId, e);
         }
@@ -81,10 +81,10 @@ public class HttpYouViewClient implements YouViewClient {
             if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
                 String transactionUrl = parseIdFrom(response.header("Location"));
                 log.trace("Upload successful. Transaction url: " + transactionUrl);
-                return success(transactionUrl, clock.now());
+                return success(transactionUrl, clock.now(), response.statusCode());
             }
 
-            return failure(response.body(), clock.now());
+            return failure(response.body(), clock.now(), response.statusCode());
         } catch (HttpException e) {
             throw new YouViewClientException("Error uploading " + payload, e);
         }
@@ -108,13 +108,13 @@ public class HttpYouViewClient implements YouViewClient {
         }
         
         @Override
-        public YouViewResult transform(HttpResponsePrologue prologue, InputStream body)
+        public YouViewResult transform(HttpResponsePrologue response, InputStream body)
                 throws HttpException, Exception {
             String bodyStr = IOUtils.toString(body, "UTF-8");
-            if (prologue.statusCode() == HttpServletResponse.SC_OK) {
-                return success(bodyStr, clock.now());
+            if (response.statusCode() == HttpServletResponse.SC_OK) {
+                return success(bodyStr, clock.now(), response.statusCode());
             }
-            return failure(bodyStr, clock.now());
+            return failure(bodyStr, clock.now(), response.statusCode());
         }
     }
 
