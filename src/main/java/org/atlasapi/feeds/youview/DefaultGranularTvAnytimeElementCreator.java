@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview.nitro;
+package org.atlasapi.feeds.youview;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -26,7 +26,7 @@ import tva.metadata._2010.ProgramInformationType;
 import com.google.common.base.Optional;
 
 
-public class NitroTvAnytimeElementCreator implements GranularTvAnytimeElementCreator {
+public class DefaultGranularTvAnytimeElementCreator implements GranularTvAnytimeElementCreator {
     
     private final GranularProgramInformationGenerator progInfoGenerator;
     private final GroupInformationGenerator groupInfoGenerator;
@@ -34,7 +34,7 @@ public class NitroTvAnytimeElementCreator implements GranularTvAnytimeElementCre
     private final GranularBroadcastEventGenerator broadcastGenerator;
     private final ContentHierarchyExtractor hierarchy;
     
-    public NitroTvAnytimeElementCreator(GranularProgramInformationGenerator progInfoGenerator, 
+    public DefaultGranularTvAnytimeElementCreator(GranularProgramInformationGenerator progInfoGenerator, 
             GroupInformationGenerator groupInfoGenerator, GranularOnDemandLocationGenerator onDemandGenerator,
             GranularBroadcastEventGenerator broadcastGenerator, ContentHierarchyExtractor hierarchy) {
         this.progInfoGenerator = checkNotNull(progInfoGenerator);

@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.lovefilm;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
 
 import java.util.List;
@@ -8,14 +9,15 @@ import java.util.Map;
 import javax.xml.datatype.Duration;
 
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.youview.AbstractProgramInformationGenerator;
-import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
+import org.atlasapi.feeds.tvanytime.granular.GranularProgramInformationGenerator;
+import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 
 import tva.metadata._2010.BasicContentDescriptionType;
+import tva.metadata._2010.DerivedFromType;
 import tva.metadata._2010.ProgramInformationType;
 import tva.metadata._2010.TVAParentalGuidanceType;
 import tva.metadata._2010.TVATimeType;
@@ -34,7 +36,7 @@ import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
 
 
-public class LoveFilmProgramInformationGenerator extends AbstractProgramInformationGenerator {
+public class LoveFilmProgramInformationGenerator implements GranularProgramInformationGenerator {
 
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
     private static final String LOVEFILM_DEEP_LINKING_ID = "deep_linking_id.lovefilm.com";
@@ -66,20 +68,28 @@ public class LoveFilmProgramInformationGenerator extends AbstractProgramInformat
             .put("18", "http://bbfc.org.uk/BBFCRatingCS/2002#18")
             .build();
     
-    public LoveFilmProgramInformationGenerator(IdGenerator idGenerator, VersionHierarchyExpander hierarchyExpander) {
-        super(idGenerator, hierarchyExpander);
-    }
+    private final IdGenerator idGenerator;
     
+    public LoveFilmProgramInformationGenerator(IdGenerator idGenerator) {
+        this.idGenerator = checkNotNull(idGenerator);
+    }
+
     @Override
-    public final ProgramInformationType generate(String versionCrid, Item item, Version version) {
+    public ProgramInformationType generate(ItemAndVersion versionHierarchy, String versionCrid) {
         ProgramInformationType progInfo = new ProgramInformationType();
         
         progInfo.setProgramId(versionCrid);
-        progInfo.setBasicDescription(generateBasicDescription(item, version));
-        progInfo.setDerivedFrom(generateDerivedFromElem(item));
-        progInfo.getOtherIdentifier().add(generateOtherId(item));
+        progInfo.setBasicDescription(generateBasicDescription(versionHierarchy.item(), versionHierarchy.version()));
+        progInfo.setDerivedFrom(generateDerivedFromElem(versionHierarchy.item()));
+        progInfo.getOtherIdentifier().add(generateOtherId(versionHierarchy.item()));
         
         return progInfo;
+    }
+    
+    private DerivedFromType generateDerivedFromElem(Item item) {
+        DerivedFromType derivedFrom = new DerivedFromType();
+        derivedFrom.setCrid(idGenerator.generateContentCrid(item));
+        return derivedFrom;
     }
 
     private UniqueIDType generateOtherId(Item item) {

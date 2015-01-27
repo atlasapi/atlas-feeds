@@ -10,13 +10,13 @@ import com.google.common.collect.ImmutableMap;
 
 
 public class PublisherDelegatingTaskProcessor implements TaskProcessor {
-
+    
     private final Map<Publisher, TaskProcessor> processors;
     
     public PublisherDelegatingTaskProcessor(Map<Publisher, TaskProcessor> processors) {
         this.processors = ImmutableMap.copyOf(processors);
     }
-    
+
     @Override
     public void process(Task task) {
         TaskProcessor delegate = fetchDelegateOrThrow(task.publisher());

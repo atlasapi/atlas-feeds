@@ -27,7 +27,7 @@ public class UnboxProgramInformationGeneratorTest {
     private IdGenerator idGenerator = new UnboxIdGenerator();
     private VersionHierarchyExpander hierarchyExpander = new VersionHierarchyExpander(idGenerator);
     
-    private final ProgramInformationGenerator generator = new UnboxProgramInformationGenerator(idGenerator, hierarchyExpander);
+    private final ProgramInformationGenerator generator = new NonGranularUnboxProgramInformationGenerator(idGenerator, hierarchyExpander);
 
     @Test
     public void testPublisherIndependentFields() {

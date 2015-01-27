@@ -70,7 +70,7 @@ public class LoveFilmGroupInformationHierarchyTest {
 
     private IdGenerator idGenerator = new LoveFilmIdGenerator();
     private VersionHierarchyExpander hierarchyExpander = new VersionHierarchyExpander(idGenerator);
-    private ProgramInformationGenerator progInfoGenerator = new LoveFilmProgramInformationGenerator(idGenerator, hierarchyExpander);
+    private ProgramInformationGenerator progInfoGenerator = new NonGranularLoveFilmProgramInformationGenerator(idGenerator, hierarchyExpander);
     private GenreMapping genreMapping = new LoveFilmGenreMapping();
     private GroupInformationGenerator groupInfoGenerator = new LoveFilmGroupInformationGenerator(idGenerator, genreMapping);
     private OnDemandLocationGenerator progLocationGenerator = new LoveFilmOnDemandLocationGenerator(idGenerator);

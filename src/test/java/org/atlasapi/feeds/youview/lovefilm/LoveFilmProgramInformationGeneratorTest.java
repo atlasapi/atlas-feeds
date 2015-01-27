@@ -27,7 +27,7 @@ public class LoveFilmProgramInformationGeneratorTest {
     private IdGenerator idGenerator = new LoveFilmIdGenerator();
     private VersionHierarchyExpander hierarchyExpander = new VersionHierarchyExpander(idGenerator);
     
-    private final ProgramInformationGenerator generator = new LoveFilmProgramInformationGenerator(idGenerator, hierarchyExpander);
+    private final ProgramInformationGenerator generator = new NonGranularLoveFilmProgramInformationGenerator(idGenerator, hierarchyExpander);
 
     @Test
     public void testPublisherIndependentFields() {

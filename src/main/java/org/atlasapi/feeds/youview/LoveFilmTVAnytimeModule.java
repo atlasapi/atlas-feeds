@@ -1,15 +1,12 @@
 package org.atlasapi.feeds.youview;
 
-import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
+import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmGenreMapping;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmGroupInformationGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmProgramInformationGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmTvAnytimeElementCreator;
-import org.atlasapi.persistence.content.ContentResolver;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,23 +14,26 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class LoveFilmTVAnytimeModule {
 
-    private @Autowired ContentResolver contentResolver;
+    @Bean
+    public LoveFilmProgramInformationGenerator loveFilmProgInfoGenerator() {
+        return new LoveFilmProgramInformationGenerator(loveFilmIdGenerator());
+    }
     
     @Bean
-    public LoveFilmTvAnytimeElementCreator loveFilmElementCreator() {
-        return new LoveFilmTvAnytimeElementCreator(
-                new LoveFilmProgramInformationGenerator(loveFilmIdGenerator(), versionHierarchyExpander()), 
-                new LoveFilmGroupInformationGenerator(loveFilmIdGenerator(), loveFilmGenreMapping()), 
-                new LoveFilmOnDemandLocationGenerator(loveFilmIdGenerator()), 
-                contentHierarchy(), 
-                new UriBasedContentPermit()
-        );
+    public LoveFilmGroupInformationGenerator loveFilmGroupInfoGenerator() {
+        return new LoveFilmGroupInformationGenerator(loveFilmIdGenerator(), loveFilmGenreMapping());
     }
     
-    private VersionHierarchyExpander versionHierarchyExpander() {
-        return new VersionHierarchyExpander(loveFilmIdGenerator());
+    @Bean
+    public LoveFilmOnDemandLocationGenerator loveFilmOnDemandGenerator() {
+        return new LoveFilmOnDemandLocationGenerator(loveFilmIdGenerator());
     }
-
+    
+    @Bean
+    public LoveFilmBroadcastEventGenerator loveFilmBroadcastGenerator() {
+        return new LoveFilmBroadcastEventGenerator();
+    }
+    
     @Bean
     public LoveFilmIdGenerator loveFilmIdGenerator() {
         return new LoveFilmIdGenerator();
@@ -47,9 +47,5 @@ public class LoveFilmTVAnytimeModule {
     @Bean
     public LoveFilmBroadcastServiceMapping loveFilmBroadcastServiceMapping() {
         return new LoveFilmBroadcastServiceMapping();
-    }
-
-    private ContentHierarchyExtractor contentHierarchy() {
-        return new ContentResolvingContentHierarchyExtractor(contentResolver);
     }
 }
