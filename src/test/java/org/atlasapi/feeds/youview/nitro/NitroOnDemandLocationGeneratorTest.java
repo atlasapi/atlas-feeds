@@ -8,7 +8,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
 
-import org.atlasapi.feeds.tvanytime.granular.GranularOnDemandLocationGenerator;
+import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Encoding;
@@ -62,7 +62,7 @@ public class NitroOnDemandLocationGeneratorTest {
 
     private IdGenerator idGenerator = new NitroIdGenerator(Hashing.md5());
 
-    private final GranularOnDemandLocationGenerator generator = new NitroOnDemandLocationGenerator(idGenerator);
+    private final OnDemandLocationGenerator generator = new NitroOnDemandLocationGenerator(idGenerator);
 
     @Test
     public void testNonPublisherSpecificFields() {

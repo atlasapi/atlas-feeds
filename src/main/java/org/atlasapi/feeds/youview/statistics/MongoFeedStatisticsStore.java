@@ -4,9 +4,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.concurrent.locks.Lock;
 
-import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
-import org.atlasapi.feeds.youview.tasks.Status;
-import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.tasks.Status;
+import org.atlasapi.feeds.tasks.Destination.DestinationType;
+import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;

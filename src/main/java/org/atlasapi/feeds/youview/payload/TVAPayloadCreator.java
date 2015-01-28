@@ -7,13 +7,13 @@ import java.util.List;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 
+import org.atlasapi.feeds.tasks.Payload;
+import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.TvaGenerationException;
-import org.atlasapi.feeds.tvanytime.granular.GranularTvAnytimeGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.persistence.SentBroadcastEventPcridStore;
-import org.atlasapi.feeds.youview.tasks.Payload;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
@@ -37,12 +37,12 @@ public class TVAPayloadCreator implements PayloadCreator {
     private static final String PCRID_AUTHORITY = "pcrid.dmol.co.uk";
     
     private final Logger log = LoggerFactory.getLogger(TVAPayloadCreator.class);
-    private final GranularTvAnytimeGenerator generator;
+    private final TvAnytimeGenerator generator;
     private final Converter<JAXBElement<TVAMainType>, String> converter;
     private final SentBroadcastEventPcridStore sentBroadcastProgramUrlStore;
     private final Clock clock;
     
-    public TVAPayloadCreator(GranularTvAnytimeGenerator generator, 
+    public TVAPayloadCreator(TvAnytimeGenerator generator, 
             Converter<JAXBElement<TVAMainType>, String> converter, 
             SentBroadcastEventPcridStore sentBroadcastProgramUrlStore, Clock clock) 
                     throws JAXBException {

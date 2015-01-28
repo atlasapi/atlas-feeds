@@ -11,9 +11,9 @@ import static org.mockito.Mockito.when;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 
+import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient;
 import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
-import org.atlasapi.feeds.youview.upload.YouViewResult;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;

@@ -9,8 +9,8 @@ import java.util.List;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.tvanytime.granular.GranularOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Encoding;
@@ -36,7 +36,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
-public class LoveFilmOnDemandLocationGenerator implements GranularOnDemandLocationGenerator {
+public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
     private static final String LOVEFILM_ONDEMAND_SERVICE_ID = "http://lovefilm.com/OnDemand";
     private static final String LOVEFILM_DEEP_LINKING_ID = "deep_linking_id.lovefilm.com";

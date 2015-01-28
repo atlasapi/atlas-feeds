@@ -1,9 +1,9 @@
 package org.atlasapi.feeds.youview.payload;
 
+import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
-import org.atlasapi.feeds.youview.tasks.Payload;
 import org.atlasapi.media.entity.Content;
 
 import com.google.common.base.Optional;

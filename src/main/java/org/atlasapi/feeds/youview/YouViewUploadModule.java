@@ -11,8 +11,27 @@ import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 
-import org.atlasapi.feeds.tvanytime.granular.GranularTvAnytimeGenerator;
-import org.atlasapi.feeds.tvanytime.granular.ValidatingGranularTvAnytimeGenerator;
+import org.atlasapi.feeds.tasks.Destination.DestinationType;
+import org.atlasapi.feeds.tasks.checking.RemoteCheckTask;
+import org.atlasapi.feeds.tasks.maintainance.TaskTrimmingTask;
+import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.tasks.youview.creation.BootstrapTaskCreationTask;
+import org.atlasapi.feeds.tasks.youview.creation.DeltaTaskCreationTask;
+import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
+import org.atlasapi.feeds.tasks.youview.creation.YouViewEntityTaskCreator;
+import org.atlasapi.feeds.tasks.youview.processing.DeleteTask;
+import org.atlasapi.feeds.tasks.youview.processing.PublisherDelegatingTaskProcessor;
+import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
+import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
+import org.atlasapi.feeds.tasks.youview.processing.YouViewTaskProcessor;
+import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
+import org.atlasapi.feeds.tvanytime.ValidatingTvAnytimeGenerator;
+import org.atlasapi.feeds.youview.client.HttpYouViewClient;
+import org.atlasapi.feeds.youview.client.ReferentialIntegrityCheckingReportHandler;
+import org.atlasapi.feeds.youview.client.ResultHandler;
+import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
+import org.atlasapi.feeds.youview.client.YouViewClient;
+import org.atlasapi.feeds.youview.client.YouViewReportHandler;
 import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
@@ -38,24 +57,8 @@ import org.atlasapi.feeds.youview.revocation.OnDemandBasedRevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
-import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
-import org.atlasapi.feeds.youview.tasks.creation.BootstrapTaskCreationTask;
-import org.atlasapi.feeds.youview.tasks.creation.DeltaTaskCreationTask;
-import org.atlasapi.feeds.youview.tasks.creation.TaskCreator;
-import org.atlasapi.feeds.youview.tasks.creation.YouViewEntityTaskCreator;
-import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
-import org.atlasapi.feeds.youview.tasks.processing.HttpYouViewClient;
-import org.atlasapi.feeds.youview.tasks.processing.PublisherDelegatingTaskProcessor;
-import org.atlasapi.feeds.youview.tasks.processing.TaskProcessor;
-import org.atlasapi.feeds.youview.tasks.processing.YouViewClient;
-import org.atlasapi.feeds.youview.tasks.processing.YouViewTaskProcessor;
-import org.atlasapi.feeds.youview.tasks.upload.UploadTask;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
-import org.atlasapi.feeds.youview.upload.ReferentialIntegrityCheckingReportHandler;
-import org.atlasapi.feeds.youview.upload.ResultHandler;
-import org.atlasapi.feeds.youview.upload.TaskUpdatingResultHandler;
-import org.atlasapi.feeds.youview.upload.YouViewReportHandler;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
@@ -88,24 +91,36 @@ import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
 
 
-// TODO this module is still a mess...
+/**
+ * This Module wraps all code concerning upload of YouView TVAnytime feeds, including identification
+ * of content to upload, conversion of this into Tasks, and upload of the payloads of those Tasks to
+ * a YouView environment, and status checking of those transactions.
+ * <p>
+ * This module also instantiates a controller for manual upload/deletion/revocation of particular 
+ * TVAnytime elements/Atlas pieces of content to/from the YouView environment. 
+ * 
+ * @author Oliver Hall (oli@metabroadcast.com)
+ *
+ */
 @Configuration
 @Import(TVAnytimeFeedsModule.class)
 public class YouViewUploadModule {
     
     private static final String CONFIG_PREFIX = "youview.upload.";
     
-    private static final Map<String, Publisher> GRANULAR_PUBLISHER_MAPPING = ImmutableMap.of(
+    private static final Map<String, Publisher> PUBLISHER_MAPPING = ImmutableMap.of(
             "nitro", Publisher.BBC_NITRO,
             "lovefilm", Publisher.LOVEFILM,
             "unbox", Publisher.AMAZON_UNBOX
     );
     
-    private static final RepetitionRule DELTA_UPLOAD = RepetitionRules.every(Duration.standardMinutes(30));
-    private static final RepetitionRule BOOTSTRAP_UPLOAD = RepetitionRules.NEVER;
-    private static final RepetitionRule REMOTE_CHECK_UPLOAD = RepetitionRules.every(Duration.standardMinutes(15));
+    private static final RepetitionRule DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(30));
+    private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
+    private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardMinutes(15));
     private static final RepetitionRule UPLOAD = RepetitionRules.every(Duration.standardMinutes(15));
+    private static final RepetitionRule DELETE = RepetitionRules.every(Duration.standardMinutes(15)).withOffset(Duration.standardMinutes(5));
     private static final RepetitionRule TASK_REMOVAL = RepetitionRules.daily(LocalTime.MIDNIGHT);
+    
     private static final String TASK_NAME_PATTERN = "YouView %s TVAnytime %s Upload";
     private static final DestinationType DESTINATION_TYPE = DestinationType.YOUVIEW;
     private static final DateTime BOOTSTRAP_START_DATE = new DateTime(2015, JANUARY, 5, 0, 0, 0, 0, UTC);
@@ -116,7 +131,7 @@ public class YouViewUploadModule {
     private @Autowired LastUpdatedContentFinder contentFinder;
     private @Autowired ContentResolver contentResolver;
     private @Autowired SimpleScheduler scheduler;
-    private @Autowired GranularTvAnytimeGenerator granularGenerator;
+    private @Autowired TvAnytimeGenerator generator;
     private @Autowired TaskStore taskStore;
     private @Autowired BbcServiceIdResolver bbcServiceIdResolver;
     private @Autowired IdGenerator nitroIdGenerator;
@@ -136,18 +151,22 @@ public class YouViewUploadModule {
     private @Value("{youview.upload.maxRetries}") Integer maxRetries;
     private @Value("{youview.upload.taskTrimWindow.days}") Long trimWindowLengthDays;
 
+    // N.B. The Task trimming task should probably move to a more appropriate location once Tasks
+    // are used for other feeds, as currently if no youview uploads are enabled for an environment, then
+    // this task will be disabled.
     @PostConstruct
     public void startScheduledTasks() throws JAXBException, SAXException {
-        for (Entry<String, Publisher> publisherEntry : GRANULAR_PUBLISHER_MAPPING.entrySet()) {
+        for (Entry<String, Publisher> publisherEntry : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
             if (isEnabled(publisherPrefix)) {
-                scheduler.schedule(scheduleBootstrapTaskCreationTask(publisherEntry.getValue()), BOOTSTRAP_UPLOAD);
-                scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), DELTA_UPLOAD);
+                scheduler.schedule(scheduleBootstrapTaskCreationTask(publisherEntry.getValue()), BOOTSTRAP_CONTENT_CHECK);
+                scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), DELTA_CONTENT_CHECK);
             }
         }
         
-        scheduler.schedule(uploadTask().withName("YouView Task Upload"), UPLOAD);
-        scheduler.schedule(remoteCheckTask().withName("YouView Task Status Check"), REMOTE_CHECK_UPLOAD);
+        scheduler.schedule(uploadTask().withName("YouView Uploads"), UPLOAD);
+        scheduler.schedule(deleteTask().withName("YouView Deletes"), DELETE);
+        scheduler.schedule(remoteCheckTask().withName("YouView Task Status Check"), REMOTE_CHECK);
         scheduler.schedule(taskTrimmingTask().withName("Old Task Removal"), TASK_REMOVAL);
         
         resultHandler().registerReportHandler(reportHandler());
@@ -166,7 +185,7 @@ public class YouViewUploadModule {
     public TaskProcessor taskProcessor() throws JAXBException, SAXException {
         ImmutableMap.Builder<Publisher, TaskProcessor> processors = ImmutableMap.builder();
         
-        for (Entry<String, Publisher> publisherEntry : GRANULAR_PUBLISHER_MAPPING.entrySet()) {
+        for (Entry<String, Publisher> publisherEntry : PUBLISHER_MAPPING.entrySet()) {
             Optional<TaskProcessor> processor = taskProcessor(publisherEntry.getKey());
             if (processor.isPresent()) {
                 processors.put(publisherEntry.getValue(), processor.get());
@@ -203,7 +222,11 @@ public class YouViewUploadModule {
     }
     
     private ScheduledTask uploadTask() throws JAXBException, SAXException {
-        return new UploadTask(taskStore, taskProcessor(), DESTINATION_TYPE);
+        return new UpdateTask(taskStore, taskProcessor(), DESTINATION_TYPE);
+    }
+    
+    private ScheduledTask deleteTask() throws JAXBException, SAXException {
+        return new DeleteTask(taskStore, taskProcessor(), DESTINATION_TYPE);
     }
     
     // TODO remove dependency on nitro Id generator
@@ -240,18 +263,17 @@ public class YouViewUploadModule {
     
     private PayloadCreator payloadCreator() throws JAXBException, SAXException {
         Converter<JAXBElement<TVAMainType>, String> outputConverter = new TVAnytimeStringConverter();
-        GranularTvAnytimeGenerator generator = enableValidationIfAppropriate(granularGenerator);
-        return new TVAPayloadCreator(generator, outputConverter, sentBroadcastProgramUrlStore(), clock);
+        TvAnytimeGenerator tvaGenerator = enableValidationIfAppropriate(generator);
+        return new TVAPayloadCreator(tvaGenerator, outputConverter, sentBroadcastProgramUrlStore(), clock);
     }
     
-    // TODO this could move to the TVAnytimeFeedsModule
-    private GranularTvAnytimeGenerator enableValidationIfAppropriate(
-            GranularTvAnytimeGenerator granularGenerator) throws JAXBException, SAXException {
+    private TvAnytimeGenerator enableValidationIfAppropriate(TvAnytimeGenerator generator) 
+            throws JAXBException, SAXException {
         
         if (Boolean.parseBoolean(performValidation)) {
-            granularGenerator = new ValidatingGranularTvAnytimeGenerator(granularGenerator);
+            generator = new ValidatingTvAnytimeGenerator(generator);
         }
-        return granularGenerator;
+        return generator;
     }
     
     private YouViewContentResolver nitroBootstrapContentResolver(Publisher publisher) {
@@ -293,7 +315,7 @@ public class YouViewUploadModule {
 
     @Bean
     public RevocationProcessor revocationProcessor() throws JAXBException, SAXException {
-        return new OnDemandBasedRevocationProcessor(revokedContentStore(), onDemandHierarchyExpander, taskCreator(), taskStore);
+        return new OnDemandBasedRevocationProcessor(revokedContentStore(), onDemandHierarchyExpander, payloadCreator(), taskCreator(), taskStore);
     }
     
     @Bean

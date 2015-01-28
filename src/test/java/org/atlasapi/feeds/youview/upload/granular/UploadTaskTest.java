@@ -6,13 +6,13 @@ import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.atlasapi.feeds.youview.tasks.Action;
-import org.atlasapi.feeds.youview.tasks.Payload;
-import org.atlasapi.feeds.youview.tasks.Status;
-import org.atlasapi.feeds.youview.tasks.TVAElementType;
-import org.atlasapi.feeds.youview.tasks.Task;
-import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
-import org.atlasapi.feeds.youview.tasks.processing.TaskProcessor;
+import org.atlasapi.feeds.tasks.Action;
+import org.atlasapi.feeds.tasks.Payload;
+import org.atlasapi.feeds.tasks.Status;
+import org.atlasapi.feeds.tasks.TVAElementType;
+import org.atlasapi.feeds.tasks.Task;
+import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
 import org.atlasapi.media.entity.Publisher;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class UploadTaskTest {
     private Task newTask = createTask(Status.NEW);
     private Task nonNewTask = createTask(Status.ACCEPTED);
     
-    private final UploadTask uploadTask = new UploadTask(taskStore, processor);
+    private final UpdateTask uploadTask = new UpdateTask(taskStore, processor);
     
     @Before
     public void setup() {

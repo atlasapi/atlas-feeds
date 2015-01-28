@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 
-import org.atlasapi.feeds.tvanytime.granular.GranularBroadcastEventGenerator;
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
@@ -47,7 +47,7 @@ public class NitroBroadcastEventGeneratorTest {
     private BroadcastServiceMapping serviceMapping = Mockito.mock(BroadcastServiceMapping.class);
     private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
     
-    private final GranularBroadcastEventGenerator generator;
+    private final BroadcastEventGenerator generator;
     
     public NitroBroadcastEventGeneratorTest() throws DatatypeConfigurationException {
         this.generator = new NitroBroadcastEventGenerator(idGenerator);

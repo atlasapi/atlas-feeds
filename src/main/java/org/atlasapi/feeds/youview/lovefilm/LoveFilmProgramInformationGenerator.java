@@ -8,8 +8,8 @@ import java.util.Map;
 
 import javax.xml.datatype.Duration;
 
+import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.tvanytime.granular.GranularProgramInformationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Certificate;
@@ -36,7 +36,7 @@ import com.metabroadcast.common.intl.Countries;
 import com.metabroadcast.common.intl.Country;
 
 
-public class LoveFilmProgramInformationGenerator implements GranularProgramInformationGenerator {
+public class LoveFilmProgramInformationGenerator implements ProgramInformationGenerator {
 
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
     private static final String LOVEFILM_DEEP_LINKING_ID = "deep_linking_id.lovefilm.com";

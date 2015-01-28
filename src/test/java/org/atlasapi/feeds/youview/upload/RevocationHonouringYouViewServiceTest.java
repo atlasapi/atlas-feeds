@@ -5,12 +5,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
+import org.atlasapi.feeds.tasks.TVAElementType;
+import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
-import org.atlasapi.feeds.youview.tasks.TVAElementType;
-import org.atlasapi.feeds.youview.tasks.Task;
 import org.atlasapi.feeds.youview.upload.granular.GranularYouViewService;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Encoding;

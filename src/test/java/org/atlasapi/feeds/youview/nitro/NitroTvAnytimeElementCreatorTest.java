@@ -8,14 +8,14 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
+import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
+import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
+import org.atlasapi.feeds.tvanytime.TvAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementCreator;
-import org.atlasapi.feeds.tvanytime.granular.GranularBroadcastEventGenerator;
-import org.atlasapi.feeds.tvanytime.granular.GranularOnDemandLocationGenerator;
-import org.atlasapi.feeds.tvanytime.granular.GranularProgramInformationGenerator;
-import org.atlasapi.feeds.tvanytime.granular.GranularTvAnytimeElementCreator;
 import org.atlasapi.feeds.youview.AlwaysPermittedContentPermit;
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.ContentPermit;
@@ -43,13 +43,13 @@ import com.google.common.collect.Iterables;
 @Ignore // refactor this - does this test class make sense still?
 public class NitroTvAnytimeElementCreatorTest {
     
-    private GranularProgramInformationGenerator progInfoGenerator = Mockito.mock(GranularProgramInformationGenerator.class);
+    private ProgramInformationGenerator progInfoGenerator = Mockito.mock(ProgramInformationGenerator.class);
     private GroupInformationGenerator groupInfoGenerator = Mockito.mock(GroupInformationGenerator.class);
-    private GranularOnDemandLocationGenerator onDemandGenerator = Mockito.mock(GranularOnDemandLocationGenerator.class);
-    private GranularBroadcastEventGenerator broadcastGenerator = Mockito.mock(GranularBroadcastEventGenerator.class);
+    private OnDemandLocationGenerator onDemandGenerator = Mockito.mock(OnDemandLocationGenerator.class);
+    private BroadcastEventGenerator broadcastGenerator = Mockito.mock(BroadcastEventGenerator.class);
     private ContentHierarchyExtractor contentHierarchy = Mockito.mock(ContentHierarchyExtractor.class);
     
-    private final GranularTvAnytimeElementCreator elementCreator = new NitroTvAnytimeElementCreator(
+    private final TvAnytimeElementCreator elementCreator = new NitroTvAnytimeElementCreator(
             progInfoGenerator, 
             groupInfoGenerator, 
             onDemandGenerator,

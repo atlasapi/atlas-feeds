@@ -1,11 +1,11 @@
 package org.atlasapi.feeds.youview.lovefilm;
 
-import org.atlasapi.feeds.tvanytime.granular.GranularBroadcastEventGenerator;
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 
 import tva.metadata._2010.BroadcastEventType;
 
-public class LoveFilmBroadcastEventGenerator implements GranularBroadcastEventGenerator {
+public class LoveFilmBroadcastEventGenerator implements BroadcastEventGenerator {
 
     public LoveFilmBroadcastEventGenerator() { }
 

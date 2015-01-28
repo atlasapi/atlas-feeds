@@ -11,12 +11,16 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
 
-import org.atlasapi.feeds.youview.tasks.Action;
-import org.atlasapi.feeds.youview.tasks.Response;
-import org.atlasapi.feeds.youview.tasks.Status;
-import org.atlasapi.feeds.youview.tasks.TVAElementType;
-import org.atlasapi.feeds.youview.tasks.Task;
-import org.atlasapi.feeds.youview.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.tasks.Action;
+import org.atlasapi.feeds.tasks.Response;
+import org.atlasapi.feeds.tasks.Status;
+import org.atlasapi.feeds.tasks.TVAElementType;
+import org.atlasapi.feeds.tasks.Task;
+import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.youview.client.ResultHandler;
+import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
+import org.atlasapi.feeds.youview.client.YouViewReportHandler;
+import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.media.entity.Publisher;
 import org.junit.Test;
 

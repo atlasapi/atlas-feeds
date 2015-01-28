@@ -1,22 +1,24 @@
 package org.atlasapi.feeds.youview.tasks.persistence;
 
-import static org.atlasapi.feeds.youview.tasks.Destination.DestinationType.YOUVIEW;
+import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.atlasapi.feeds.youview.tasks.Action;
-import org.atlasapi.feeds.youview.tasks.Destination;
-import org.atlasapi.feeds.youview.tasks.Destination.DestinationType;
-import org.atlasapi.feeds.youview.tasks.Payload;
-import org.atlasapi.feeds.youview.tasks.Response;
-import org.atlasapi.feeds.youview.tasks.Status;
-import org.atlasapi.feeds.youview.tasks.TVAElementType;
-import org.atlasapi.feeds.youview.tasks.Task;
-import org.atlasapi.feeds.youview.tasks.TaskQuery;
-import org.atlasapi.feeds.youview.tasks.YouViewDestination;
+import org.atlasapi.feeds.tasks.Action;
+import org.atlasapi.feeds.tasks.Destination;
+import org.atlasapi.feeds.tasks.Payload;
+import org.atlasapi.feeds.tasks.Response;
+import org.atlasapi.feeds.tasks.Status;
+import org.atlasapi.feeds.tasks.TVAElementType;
+import org.atlasapi.feeds.tasks.Task;
+import org.atlasapi.feeds.tasks.TaskQuery;
+import org.atlasapi.feeds.tasks.YouViewDestination;
+import org.atlasapi.feeds.tasks.Destination.DestinationType;
+import org.atlasapi.feeds.tasks.persistence.MongoTaskStore;
+import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 import org.junit.Test;

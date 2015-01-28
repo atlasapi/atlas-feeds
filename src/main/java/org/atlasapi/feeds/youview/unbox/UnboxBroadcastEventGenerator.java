@@ -1,11 +1,11 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import org.atlasapi.feeds.tvanytime.granular.GranularBroadcastEventGenerator;
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 
 import tva.metadata._2010.BroadcastEventType;
 
-public class UnboxBroadcastEventGenerator implements GranularBroadcastEventGenerator {
+public class UnboxBroadcastEventGenerator implements BroadcastEventGenerator {
 
     public UnboxBroadcastEventGenerator() { }
 

@@ -1,10 +1,10 @@
 package org.atlasapi.feeds.youview.tasks.persistence;
 
-import static org.atlasapi.feeds.youview.tasks.persistence.PayloadTranslator.fromDBObject;
-import static org.atlasapi.feeds.youview.tasks.persistence.PayloadTranslator.toDBObject;
+import static org.atlasapi.feeds.tasks.persistence.PayloadTranslator.fromDBObject;
+import static org.atlasapi.feeds.tasks.persistence.PayloadTranslator.toDBObject;
 import static org.junit.Assert.assertEquals;
 
-import org.atlasapi.feeds.youview.tasks.Payload;
+import org.atlasapi.feeds.tasks.Payload;
 import org.junit.Test;
 
 import com.metabroadcast.common.time.Clock;

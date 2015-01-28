@@ -4,9 +4,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
-import org.atlasapi.feeds.youview.tasks.TVAElementType;
 import org.atlasapi.feeds.youview.upload.granular.GranularYouViewService;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Film;

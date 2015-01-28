@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Set;
 
-import org.atlasapi.feeds.tvanytime.granular.GranularProgramInformationGenerator;
+import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Certificate;
@@ -31,7 +31,7 @@ public class NitroProgramInformationGeneratorTest {
     private static final String VERSION_URI = "http://nitro.bbc.co.uk/programmes/p02cxz80";
     private IdGenerator idGenerator = new NitroIdGenerator(Mockito.mock(HashFunction.class));
     
-    private final GranularProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator);
+    private final ProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator);
 
     @Test
     public void testPublisherIndependentFields() {

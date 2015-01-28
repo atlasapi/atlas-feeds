@@ -25,7 +25,7 @@ public class TestHierarchicalOrdering {
         Brand brand = new Brand();
         
         for (List<Content> permutation : Collections2.permutations(ImmutableList.of(item, series, brand))) {
-            List<Content> sorted = UploadTask.orderContentForDeletion(permutation);
+            List<Content> sorted = UpdateTask.orderContentForDeletion(permutation);
             assertEquals(brand, Iterables.get(sorted, 0));
             assertEquals(series, Iterables.get(sorted, 1));
             assertEquals(item, Iterables.get(sorted, 2));

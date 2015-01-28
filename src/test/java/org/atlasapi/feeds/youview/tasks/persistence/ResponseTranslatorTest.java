@@ -1,11 +1,11 @@
 package org.atlasapi.feeds.youview.tasks.persistence;
 
-import static org.atlasapi.feeds.youview.tasks.persistence.ResponseTranslator.fromDBObject;
-import static org.atlasapi.feeds.youview.tasks.persistence.ResponseTranslator.toDBObject;
+import static org.atlasapi.feeds.tasks.persistence.ResponseTranslator.fromDBObject;
+import static org.atlasapi.feeds.tasks.persistence.ResponseTranslator.toDBObject;
 import static org.junit.Assert.assertEquals;
 
-import org.atlasapi.feeds.youview.tasks.Response;
-import org.atlasapi.feeds.youview.tasks.Status;
+import org.atlasapi.feeds.tasks.Response;
+import org.atlasapi.feeds.tasks.Status;
 import org.junit.Test;
 
 import com.metabroadcast.common.time.Clock;
