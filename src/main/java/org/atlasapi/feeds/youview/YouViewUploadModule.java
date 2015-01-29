@@ -148,8 +148,6 @@ public class YouViewUploadModule {
     private @Autowired ContentHierarchyExtractor contentHierarchy;
     
     private @Value("${youview.upload.validation}") String performValidation;
-    private @Value("{youview.upload.maxRetries}") Integer maxRetries;
-    private @Value("{youview.upload.taskTrimWindow.days}") Long trimWindowLengthDays;
 
     // N.B. The Task trimming task should probably move to a more appropriate location once Tasks
     // are used for other feeds, as currently if no youview uploads are enabled for an environment, then
@@ -177,7 +175,7 @@ public class YouViewUploadModule {
     }
     
     private ScheduledTask taskTrimmingTask() {
-        Duration taskTrimmingWindow = Duration.standardDays(trimWindowLengthDays);
+        Duration taskTrimmingWindow = Duration.standardDays(Configurer.get("youview.upload.taskTrimWindow.days").toLong());
         return new TaskTrimmingTask(taskStore, clock, taskTrimmingWindow);
     }
 
@@ -294,7 +292,7 @@ public class YouViewUploadModule {
     
     @Bean
     public ResultHandler resultHandler() throws JAXBException, SAXException {
-        return new TaskUpdatingResultHandler(taskStore, maxRetries);
+        return new TaskUpdatingResultHandler(taskStore, Configurer.get("youview.upload.maxRetries").toInt());
     }
 
     @Bean

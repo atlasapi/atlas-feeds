@@ -125,7 +125,7 @@ public class TVAnytimeFeedsModule {
     }
     
     @Bean
-    private ContentHierarchyExtractor contentHierarchy() {
+    public ContentHierarchyExtractor contentHierarchy() {
         return new ContentResolvingContentHierarchyExtractor(contentResolver);
     }
 
