@@ -4,22 +4,28 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
 import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-
+import com.metabroadcast.common.time.Clock;
 
 public class BroadcastHierarchyExpander {
     
@@ -27,12 +33,16 @@ public class BroadcastHierarchyExpander {
     private final IdGenerator idGenerator;
     private final BroadcastServiceMapping serviceMapping;
     private final BbcServiceIdResolver serviceIdResolver;
+    private final Clock clock;
 
-    public BroadcastHierarchyExpander(IdGenerator idGenerator, BroadcastServiceMapping serviceMapping, 
-            BbcServiceIdResolver serviceIdResolver) {
+    private static final Duration MAXIMUM_BROADCAST_AGE = Duration.standardDays(7);
+
+    public BroadcastHierarchyExpander(IdGenerator idGenerator, BroadcastServiceMapping serviceMapping,
+            BbcServiceIdResolver serviceIdResolver, Clock clock) {
         this.idGenerator = checkNotNull(idGenerator);
         this.serviceMapping = checkNotNull(serviceMapping);
         this.serviceIdResolver = checkNotNull(serviceIdResolver);
+        this.clock = checkNotNull(clock);
     }
 
     public Map<String, ItemBroadcastHierarchy> expandHierarchy(Item item) {
@@ -62,9 +72,10 @@ public class BroadcastHierarchyExpander {
             }
         };
     }
-    
+
     private Iterable<ItemBroadcastHierarchy> expandBroadcastHierarchyFor(final Item item, final Version version) {
         return FluentIterable.from(version.getBroadcasts())
+                .filter(isBroadcastNotTooOld())
                 .transformAndConcat(new Function<Broadcast, Iterable<ItemBroadcastHierarchy>>() {
                     @Override
                     public Iterable<ItemBroadcastHierarchy> apply(Broadcast input) {
@@ -86,5 +97,15 @@ public class BroadcastHierarchyExpander {
                 return new ItemBroadcastHierarchy(item, version, broadcast, input);
             }
         });
+    }
+
+    private Predicate<Broadcast> isBroadcastNotTooOld() {
+        return new Predicate<Broadcast>() {
+            @Override
+            public boolean apply(Broadcast broadcast) {
+                DateTime now = clock.now();
+                return broadcast.getTransmissionTime().isAfter(now.minus(MAXIMUM_BROADCAST_AGE));
+            }
+        };
     }
 }
