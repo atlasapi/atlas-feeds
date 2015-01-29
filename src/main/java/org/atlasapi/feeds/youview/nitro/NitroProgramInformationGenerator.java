@@ -54,11 +54,8 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
     private static final Integer DEFAULT_DURATION = 30 * 60;
     
     private final IdGenerator idGenerator;
-    private final NitroCreditsItemGenerator creditsGenerator;
-    
-    public NitroProgramInformationGenerator(IdGenerator idGenerator,
-            NitroCreditsItemGenerator creditsGenerator) {
-        this.creditsGenerator = checkNotNull(creditsGenerator);
+
+    public NitroProgramInformationGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
     }
 
@@ -99,7 +96,6 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
         }
         basicDescription.getProductionLocation().addAll(generateProductLocations(item));
         basicDescription.setDuration(generateDuration(version));
-        basicDescription.setCreditsList(creditsGenerator.generate(item));
 
         return basicDescription;
     }

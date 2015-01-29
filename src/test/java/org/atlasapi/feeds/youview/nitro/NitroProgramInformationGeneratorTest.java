@@ -30,10 +30,8 @@ public class NitroProgramInformationGeneratorTest {
 
     private static final String VERSION_URI = "http://nitro.bbc.co.uk/programmes/p02cxz80";
     private IdGenerator idGenerator = new NitroIdGenerator(Mockito.mock(HashFunction.class));
-    private NitroCreditsItemGenerator creditsGenerator = Mockito.mock(NitroCreditsItemGenerator.class);
 
-    private final GranularProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator,
-            creditsGenerator);
+    private final GranularProgramInformationGenerator generator = new NitroProgramInformationGenerator(idGenerator);
 
     @Test
     public void testPublisherIndependentFields() {

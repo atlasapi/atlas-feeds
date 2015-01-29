@@ -76,8 +76,10 @@ public class NitroGroupInformationGeneratorTest {
     private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
     private IdGenerator idGenerator = new NitroIdGenerator(Hashing.md5());
     private GenreMapping genreMapping = new NitroGenreMapping();
+    private NitroCreditsItemGenerator creditsGenerator = Mockito.mock(NitroCreditsItemGenerator.class);
     
-    private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping, bbcServiceIdResolver);
+    private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping, bbcServiceIdResolver,
+            creditsGenerator);
     
     @Before
     public void setup() {

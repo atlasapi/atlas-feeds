@@ -7,6 +7,7 @@ import javax.xml.namespace.QName;
 
 import org.atlasapi.feeds.tvanytime.CreditsItemGenerator;
 import org.atlasapi.media.entity.Actor;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Person;
@@ -29,8 +30,8 @@ public class NitroCreditsItemGenerator implements CreditsItemGenerator {
     }
 
     @Override
-    public CreditsListType generate(Item item) {
-        List<CrewMember> crewMembers = item.getPeople();
+    public CreditsListType generate(Content content) {
+        List<CrewMember> crewMembers = content.people();
         CreditsListType creditsListType = new CreditsListType();
 
         for (CrewMember crewMember : crewMembers) {
