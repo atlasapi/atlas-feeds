@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.google.common.hash.Hashing;
-
+import com.metabroadcast.common.time.SystemClock;
 
 @Configuration
 public class NitroTVAnytimeModule {
@@ -85,7 +85,7 @@ public class NitroTVAnytimeModule {
 
     @Bean
     public BroadcastHierarchyExpander broadcastHierarchyExpander() {
-        return new BroadcastHierarchyExpander(nitroIdGenerator(), nitroServiceMapping(), bbcServiceIdResolver());
+        return new BroadcastHierarchyExpander(nitroIdGenerator(), nitroServiceMapping(), bbcServiceIdResolver(), new SystemClock());
     }
 
 }
