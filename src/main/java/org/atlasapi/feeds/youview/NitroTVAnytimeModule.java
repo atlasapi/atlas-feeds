@@ -39,8 +39,9 @@ public class NitroTVAnytimeModule {
     @Bean
     public NitroTvAnytimeElementCreator nitroElementCreator() {
         return new NitroTvAnytimeElementCreator(
-                new NitroProgramInformationGenerator(nitroIdGenerator(), nitroCreditsGenerator()),
-                new NitroGroupInformationGenerator(nitroIdGenerator(), nitroGenreMapping(), bbcServiceIdResolver()), 
+                new NitroProgramInformationGenerator(nitroIdGenerator()),
+                new NitroGroupInformationGenerator(nitroIdGenerator(), nitroGenreMapping(), bbcServiceIdResolver(),
+                        nitroCreditsGenerator()),
                 new NitroOnDemandLocationGenerator(nitroIdGenerator()), 
                 new NitroBroadcastEventGenerator(nitroIdGenerator()),
                 contentHierarchy()

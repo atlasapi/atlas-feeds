@@ -51,11 +51,8 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
     };
     
     private final IdGenerator idGenerator;
-    private final NitroCreditsItemGenerator creditsGenerator;
-    
-    public NitroProgramInformationGenerator(IdGenerator idGenerator,
-            NitroCreditsItemGenerator creditsGenerator) {
-        this.creditsGenerator = checkNotNull(creditsGenerator);
+
+    public NitroProgramInformationGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
     }
 
@@ -101,7 +98,6 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
             throw new RuntimeException("null version for item " + item.getCanonicalUri());
         }
         basicDescription.setDuration(versionDuration);
-        basicDescription.setCreditsList(creditsGenerator.generate(item));
 
         return basicDescription;
     }
