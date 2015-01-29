@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview.upload;
+package org.atlasapi.feeds.youview.client;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -8,12 +8,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-
-import org.atlasapi.feeds.youview.client.YouViewResult;
-import org.atlasapi.feeds.youview.upload.HttpYouViewRemoteClient;
-import org.atlasapi.feeds.youview.upload.YouViewRemoteClient;
+import org.atlasapi.feeds.tasks.Payload;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -21,28 +16,26 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import tva.metadata._2010.ObjectFactory;
-import tva.metadata._2010.TVAMainType;
-
 import com.google.common.collect.ImmutableMap;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.SimpleHttpRequest;
 import com.metabroadcast.common.http.StringPayload;
+import com.metabroadcast.common.time.Clock;
+import com.metabroadcast.common.time.TimeMachine;
 
 
-public class YouViewRemoteClientTest {
-
+public class HttpYouViewClientTest {
+    
     @Captor
     private ArgumentCaptor<SimpleHttpRequest<YouViewResult>> requestCaptor;    
     private SimpleHttpClient httpClient = mock(SimpleHttpClient.class);
     private String baseUrl = "youviewUrl";
-    private final YouViewRemoteClient client;
+    private Clock clock = new TimeMachine();
+    private Payload payload = createPayload();
     
-    public YouViewRemoteClientTest() throws JAXBException {
-        this.client = new HttpYouViewRemoteClient(httpClient, baseUrl);
-    }
+    private final YouViewClient client = new HttpYouViewClient(httpClient, baseUrl, clock);
     
     @Before
     public void init() {
@@ -55,7 +48,7 @@ public class YouViewRemoteClientTest {
         HttpResponse response = createSuccessfulResponseWithTransaction(txnUrl);
         when(httpClient.post(eq(baseUrl + "/transaction"), any(StringPayload.class))).thenReturn(response);
         
-        YouViewResult result = client.upload(createTVAElem());
+        YouViewResult result = client.upload(payload);
         
         Mockito.verify(httpClient).post(Mockito.eq(baseUrl + "/transaction"), any(StringPayload.class));
         
@@ -70,7 +63,7 @@ public class YouViewRemoteClientTest {
         HttpResponse response = createResponse(error, 400);
         when(httpClient.post(eq(baseUrl + "/transaction"), any(StringPayload.class))).thenReturn(response);
         
-        YouViewResult result = client.upload(createTVAElem());
+        YouViewResult result = client.upload(payload);
         
         Mockito.verify(httpClient).post(Mockito.eq(baseUrl + "/transaction"), any(StringPayload.class));
         
@@ -86,7 +79,7 @@ public class YouViewRemoteClientTest {
         String deletedId = "anId";
         when(httpClient.delete(eq(baseUrl + "/fragment?id=" + deletedId))).thenReturn(response);
         
-        YouViewResult result = client.sendDeleteFor(deletedId);
+        YouViewResult result = client.delete(deletedId);
         
         Mockito.verify(httpClient).delete(Mockito.eq(baseUrl + "/fragment?id=" + deletedId));
         
@@ -101,7 +94,7 @@ public class YouViewRemoteClientTest {
         String deletedId = "anId";
         when(httpClient.delete(eq(baseUrl + "/fragment?id=" + deletedId))).thenReturn(response);
         
-        YouViewResult result = client.sendDeleteFor(deletedId);
+        YouViewResult result = client.delete(deletedId);
         
         Mockito.verify(httpClient).delete(Mockito.eq(baseUrl + "/fragment?id=" + deletedId));
         
@@ -112,9 +105,9 @@ public class YouViewRemoteClientTest {
     @Test
     public void testThatCheckingStatusSuccessfullyReturnsSuccessfulResult() throws Exception {
         String report = "status report";
-        when(httpClient.get(Mockito.<SimpleHttpRequest<YouViewResult>>any())).thenReturn(YouViewResult.success(report));
+        when(httpClient.get(Mockito.<SimpleHttpRequest<YouViewResult>>any())).thenReturn(YouViewResult.success(report, clock.now(), 202));
         
-        YouViewResult result = client.checkRemoteStatusOf("txnId");
+        YouViewResult result = client.checkRemoteStatus("txnId");
         
         Mockito.verify(httpClient).get(requestCaptor.capture());
         
@@ -127,9 +120,9 @@ public class YouViewRemoteClientTest {
     @Test
     public void testThatAFailedStatusCheckReturnsFailedResult() throws Exception {
         String error = "something went wrong";
-        when(httpClient.get(Mockito.<SimpleHttpRequest<YouViewResult>>any())).thenReturn(YouViewResult.failure(error));
+        when(httpClient.get(Mockito.<SimpleHttpRequest<YouViewResult>>any())).thenReturn(YouViewResult.failure(error, clock.now(), 503));
         
-        YouViewResult result = client.checkRemoteStatusOf("txnId");
+        YouViewResult result = client.checkRemoteStatus("txnId");
         
         Mockito.verify(httpClient).get(requestCaptor.capture());
         
@@ -146,9 +139,7 @@ public class YouViewRemoteClientTest {
         return new HttpResponse(body, statusCode);
     }
     
-    private JAXBElement<TVAMainType> createTVAElem() {
-        ObjectFactory factory = new ObjectFactory();
-        TVAMainType tvaMain = factory.createTVAMainType();
-        return factory.createTVAMain(tvaMain);
+    private Payload createPayload() {
+        return new Payload("payload", clock.now());
     }
 }

@@ -17,4 +17,7 @@ public enum Status {
     FAILED,
     UNKNOWN
     ;
+    
+    // TODO it may be worth adding subsets of these as public static methods, such as
+    // non-terminal states, or un-uploaded states.
 }

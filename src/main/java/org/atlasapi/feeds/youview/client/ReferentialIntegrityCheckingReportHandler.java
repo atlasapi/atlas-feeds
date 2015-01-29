@@ -16,6 +16,8 @@ import org.atlasapi.feeds.youview.UnexpectedContentTypeException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.feeds.youview.payload.PayloadCreator;
+import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -51,12 +53,14 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
     private final TaskStore taskStore;
     private final VersionHierarchyExpander versionExpander;
     private final ContentHierarchyExtractor hierarchyExtractor;
+    private PayloadCreator payloadCreator;
 
     public ReferentialIntegrityCheckingReportHandler(TaskCreator taskCreator, IdGenerator idGenerator,
-            TaskStore taskStore, ContentResolver contentResolver, VersionHierarchyExpander versionExpander,
-            ContentHierarchyExtractor hierarchyExtractor) {
+            TaskStore taskStore, PayloadCreator payloadCreator, ContentResolver contentResolver, 
+            VersionHierarchyExpander versionExpander, ContentHierarchyExtractor hierarchyExtractor) {
         this.taskCreator = checkNotNull(taskCreator);
         this.taskStore = checkNotNull(taskStore);
+        this.payloadCreator = checkNotNull(payloadCreator);
         this.idGenerator = checkNotNull(idGenerator);
         this.contentResolver = checkNotNull(contentResolver);
         this.versionExpander = checkNotNull(versionExpander);
@@ -88,35 +92,38 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
                 destination.elementId(), 
                 destination.contentUri()
         ));
-        
-        switch (destination.elementType()) {
-        case BRAND:
-            throw new RuntimeException(String.format(
-                    "encountered missing content for brand %s: %s", 
-                    destination.contentUri(), 
-                    message.getComment().getValue()
-            ));
-        case SERIES:
-            handleMissingBrand(message, destination.contentUri());
-            break;
-        case ITEM:
-            handleMissingContainer(message, destination.contentUri());
-            break;
-        case BROADCAST:
-            handleMissingVersion(message, destination.contentUri());
-            break;
-        case ONDEMAND:
-            handleMissingVersion(message, destination.contentUri());
-            break;
-        case VERSION:
-            handleMissingItem(message, destination.contentUri());
-            break;
-        default:
-            throw new RuntimeException("encountered unknown element type " + destination.elementType().name());
+        try {
+            switch (destination.elementType()) {
+            case BRAND:
+                throw new RuntimeException(String.format(
+                        "encountered missing content for brand %s: %s", 
+                        destination.contentUri(), 
+                        message.getComment().getValue()
+                        ));
+            case SERIES:
+                handleMissingBrand(message, destination.contentUri());
+                break;
+            case ITEM:
+                handleMissingContainer(message, destination.contentUri());
+                break;
+            case BROADCAST:
+                handleMissingVersion(message, destination.contentUri());
+                break;
+            case ONDEMAND:
+                handleMissingVersion(message, destination.contentUri());
+                break;
+            case VERSION:
+                handleMissingItem(message, destination.contentUri());
+                break;
+            default:
+                throw new RuntimeException("encountered unknown element type " + destination.elementType().name());
+            }
+        } catch(Exception e) {
+            log.error("failed to handle missing element for task {}", task.id(), e);
         }
     }
 
-    private void handleMissingBrand(ControlledMessageType message, String contentUri) {
+    private void handleMissingBrand(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
         Content resolved = resolveContentFor(contentUri);
         if (!(resolved instanceof Series)) {
             throw new UnexpectedContentTypeException(Series.class, resolved);
@@ -130,7 +137,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         createAndWriteTaskFor(brand.get());
     }
 
-    private void handleMissingContainer(ControlledMessageType message, String contentUri) {
+    private void handleMissingContainer(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
         Content resolved = resolveContentFor(contentUri);
         if (!(resolved instanceof Item)) {
             throw new UnexpectedContentTypeException(Item.class, resolved);
@@ -148,18 +155,18 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         throw new RuntimeException("No series or brand found for item " + contentUri + ", unable to resolve semantic integrity error");
     }
 
-    private void handleMissingItem(ControlledMessageType message, String contentUri) {
+    private void handleMissingItem(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
         Content resolved = resolveContentFor(contentUri);
         createAndWriteTaskFor(resolved);
     }
 
-    private void createAndWriteTaskFor(Content content) {
+    private void createAndWriteTaskFor(Content content) throws PayloadGenerationException {
         String contentCrid = idGenerator.generateContentCrid(content);
-        Task task = taskCreator.taskFor(contentCrid, content, Action.UPDATE);
-        taskStore.save(task);
+        Task task = taskStore.save(taskCreator.taskFor(contentCrid, content, Action.UPDATE));
+        taskStore.updateWithPayload(task.id(), payloadCreator.payloadFrom(contentCrid, content));
     }
 
-    private void handleMissingVersion(ControlledMessageType message, String contentUri) {
+    private void handleMissingVersion(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
         Content resolved = resolveContentFor(contentUri);
         if (!(resolved instanceof Item)) {
             throw new UnexpectedContentTypeException(Item.class, resolved);
@@ -169,8 +176,8 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         if (versionHierarchy == null) {
             throw new RuntimeException("Missing version crid " + versionCrid + " is not a valid version crid for content " + contentUri);
         }
-        Task task = taskCreator.taskFor(versionCrid, versionHierarchy, Action.UPDATE);
-        taskStore.save(task);
+        Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, Action.UPDATE));
+        taskStore.updateWithPayload(task.id(), payloadCreator.payloadFrom(versionCrid, versionHierarchy));
     }
 
     private String resolveVersionId(TextualType comment) {

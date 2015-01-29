@@ -82,8 +82,9 @@ public class TVAPayloadCreator implements PayloadCreator {
                 if (alreadyUploaded(tvaElem)) {
                     log.trace("Not uploading broadcast, since its ProgramURL has already been associated with this service ID and item");
                     return Optional.absent();
+                } else {
+                    recordUpload(tvaElem);
                 }
-                recordUpload(tvaElem);
             }
             
             return Optional.of(new Payload(converter.convert(tvaElem), clock.now()));

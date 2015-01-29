@@ -3,7 +3,7 @@ package org.atlasapi.feeds.youview.lovefilm;
 import static org.junit.Assert.assertEquals;
 
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
-import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
+import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Certificate;
@@ -25,13 +25,17 @@ import com.metabroadcast.common.intl.Countries;
 public class LoveFilmProgramInformationGeneratorTest {
     
     private IdGenerator idGenerator = new LoveFilmIdGenerator();
-    private VersionHierarchyExpander hierarchyExpander = new VersionHierarchyExpander(idGenerator);
     
-    private final ProgramInformationGenerator generator = new NonGranularLoveFilmProgramInformationGenerator(idGenerator, hierarchyExpander);
+    private final ProgramInformationGenerator generator = new LoveFilmProgramInformationGenerator(idGenerator);
 
     @Test
     public void testPublisherIndependentFields() {
-        ProgramInformationType progInfo = Iterables.getOnlyElement(generator.generate(createLoveFilmFilm()));
+        Version version = createVersion();
+        Film film = createFilm(version);
+        ItemAndVersion versionHierarchy = new ItemAndVersion(film, version);
+        String versionCrid = "versionCrid";
+        
+        ProgramInformationType progInfo = generator.generate(versionHierarchy, versionCrid);
 
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
         assertEquals("filmAsin", otherId.getValue());
@@ -47,15 +51,20 @@ public class LoveFilmProgramInformationGeneratorTest {
     
     @Test
     public void testLoveFilmSpecificFields() {
-        ProgramInformationType progInfo = Iterables.getOnlyElement(generator.generate(createLoveFilmFilm()));
+        Version version = createVersion();
+        Film film = createFilm(version);
+        ItemAndVersion versionHierarchy = new ItemAndVersion(film, version);
+        String versionCrid = "versionCrid";
         
-        assertEquals("crid://lovefilm.com/product/177221_version", progInfo.getProgramId());
+        ProgramInformationType progInfo = generator.generate(versionHierarchy, versionCrid);
+        
+        assertEquals(versionCrid, progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
         assertEquals("deep_linking_id.lovefilm.com", otherId.getAuthority());
         assertEquals("crid://lovefilm.com/product/177221", progInfo.getDerivedFrom().getCrid());
     }
 
-    private Film createLoveFilmFilm() {
+    private Film createFilm(Version version) {
         Film film = new Film();
         
         film.setCanonicalUri("http://lovefilm.com/films/177221");
@@ -66,9 +75,14 @@ public class LoveFilmProgramInformationGeneratorTest {
         film.setYear(1963);
         film.addAlias(new Alias("gb:amazon:asin", "filmAsin"));
         
-        Version version = new Version();
-        version.setDuration(Duration.standardMinutes(90));
+        
         film.setVersions(ImmutableSet.of(version));
         return film;
+    }
+
+    private Version createVersion() {
+        Version version = new Version();
+        version.setDuration(Duration.standardMinutes(90));
+        return version;
     }
 }

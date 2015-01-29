@@ -4,8 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.concurrent.locks.Lock;
 
-import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
+import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
@@ -92,11 +92,19 @@ public class MongoFeedStatisticsStore implements FeedStatisticsStore {
 
             DBObject today = collection.findOne(idQuery(publisher, clock.now()));
 
-            Duration totalLatency = TranslatorUtils.toDuration(today, LATENCY_SUM_KEY);
-            int totalCount = TranslatorUtils.toInteger(today, LATENCY_COUNT_KEY);
+            if (today == null) {
+                today = idQuery(publisher, clock.now());
+                
+                TranslatorUtils.fromDuration(today, LATENCY_SUM_KEY, latency);
+                TranslatorUtils.from(today, LATENCY_COUNT_KEY, 1);
+            } else {
+                Duration totalLatency = TranslatorUtils.toDuration(today, LATENCY_SUM_KEY);
+                int totalCount = TranslatorUtils.toInteger(today, LATENCY_COUNT_KEY);
+                
+                TranslatorUtils.fromDuration(today, LATENCY_SUM_KEY, totalLatency.plus(latency));
+                TranslatorUtils.from(today, LATENCY_COUNT_KEY, totalCount + 1);
+            }
 
-            TranslatorUtils.fromDuration(today, LATENCY_SUM_KEY, totalLatency.plus(latency));
-            TranslatorUtils.from(today, LATENCY_COUNT_KEY, totalCount + 1);
 
             collection.save(today);
         } finally {

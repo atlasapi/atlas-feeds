@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview.tasks.persistence;
+package org.atlasapi.feeds.tasks.persistence;
 
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.fromDBObject;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.toDBObject;
@@ -44,6 +44,7 @@ public class TaskTranslatorTest {
                 .withId(1234l)
                 .withPublisher(Publisher.METABROADCAST)
                 .withDestination(createDestination())
+                .withCreated(clock.now())
                 .withUploadTime(clock.now())
                 .withRemoteId("remoteId")
                 .withPayload(createPayload())

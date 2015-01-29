@@ -1,6 +1,7 @@
-package org.atlasapi.feeds.youview.tasks.persistence;
+package org.atlasapi.feeds.tasks.persistence;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Destination;
@@ -9,9 +10,6 @@ import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
-import org.atlasapi.feeds.tasks.persistence.IdSettingTaskStore;
-import org.atlasapi.feeds.tasks.persistence.MongoTaskStore;
-import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.ids.MongoSequentialIdGenerator;
 import org.joda.time.DateTime;
@@ -55,6 +53,7 @@ public class IdSettingTaskStoreTest {
                 .withId(id)
                 .withAction(Action.UPDATE)
                 .withStatus(Status.NEW)
+                .withCreated(TIME)
                 .withPublisher(Publisher.METABROADCAST)
                 .withPayload(new Payload("payload", TIME))
                 .withDestination(createDestination())

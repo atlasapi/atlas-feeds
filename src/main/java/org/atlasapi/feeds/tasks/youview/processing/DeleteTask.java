@@ -18,7 +18,8 @@ public final class DeleteTask extends TaskProcessingTask {
     }
 
     private static final Set<Status> TO_BE_UPLOADED = ImmutableSet.of(
-            Status.NEW
+            Status.NEW,
+            Status.PENDING
     );
     private static final Action TO_DELETE = Action.DELETE; 
 

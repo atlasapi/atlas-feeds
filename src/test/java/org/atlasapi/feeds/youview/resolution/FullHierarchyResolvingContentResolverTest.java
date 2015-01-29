@@ -36,11 +36,9 @@ public class FullHierarchyResolvingContentResolverTest {
         
         alwaysReturnContentFromDelegate(brand);
         
-        ImmutableSet<Content> allContent = ImmutableSet.copyOf(resolver.allContent());
         ImmutableSet<Content> updatedContent = ImmutableSet.copyOf(resolver.updatedSince(TIMESTAMP));
         
         ImmutableSet<Content> expected = ImmutableSet.<Content>of(brand);
-        assertEquals(expected, allContent);
         assertEquals(expected, updatedContent);
     }
 
@@ -53,11 +51,9 @@ public class FullHierarchyResolvingContentResolverTest {
         when(hierarchyExtractor.brandFor(series)).thenReturn(Optional.of(brand));
         alwaysReturnContentFromDelegate(series);
         
-        ImmutableSet<Content> allContent = ImmutableSet.copyOf(resolver.allContent());
         ImmutableSet<Content> updatedContent = ImmutableSet.copyOf(resolver.updatedSince(TIMESTAMP));
         
         ImmutableSet<Content> expected = ImmutableSet.<Content>of(series, brand);
-        assertEquals(expected, allContent);
         assertEquals(expected, updatedContent);
     }
 
@@ -68,11 +64,9 @@ public class FullHierarchyResolvingContentResolverTest {
         when(hierarchyExtractor.brandFor(series)).thenReturn(Optional.<Brand>absent());
         alwaysReturnContentFromDelegate(series);
         
-        ImmutableSet<Content> allContent = ImmutableSet.copyOf(resolver.allContent());
         ImmutableSet<Content> updatedContent = ImmutableSet.copyOf(resolver.updatedSince(TIMESTAMP));
         
         ImmutableSet<Content> expected = ImmutableSet.<Content>of(series);
-        assertEquals(expected, allContent);
         assertEquals(expected, updatedContent);
     }
 
@@ -86,11 +80,9 @@ public class FullHierarchyResolvingContentResolverTest {
         when(hierarchyExtractor.seriesFor(item)).thenReturn(Optional.<Series>absent());
         alwaysReturnContentFromDelegate(item);
         
-        ImmutableSet<Content> allContent = ImmutableSet.copyOf(resolver.allContent());
         ImmutableSet<Content> updatedContent = ImmutableSet.copyOf(resolver.updatedSince(TIMESTAMP));
         
         ImmutableSet<Content> expected = ImmutableSet.<Content>of(item, brand);
-        assertEquals(expected, allContent);
         assertEquals(expected, updatedContent);
     }
 
@@ -104,11 +96,9 @@ public class FullHierarchyResolvingContentResolverTest {
         when(hierarchyExtractor.seriesFor(item)).thenReturn(Optional.of(series));
         alwaysReturnContentFromDelegate(item);
         
-        ImmutableSet<Content> allContent = ImmutableSet.copyOf(resolver.allContent());
         ImmutableSet<Content> updatedContent = ImmutableSet.copyOf(resolver.updatedSince(TIMESTAMP));
         
         ImmutableSet<Content> expected = ImmutableSet.<Content>of(item, series);
-        assertEquals(expected, allContent);
         assertEquals(expected, updatedContent);
     }
 
@@ -124,11 +114,9 @@ public class FullHierarchyResolvingContentResolverTest {
         when(hierarchyExtractor.seriesFor(episode)).thenReturn(Optional.of(series));
         alwaysReturnContentFromDelegate(episode);
         
-        ImmutableSet<Content> allContent = ImmutableSet.copyOf(resolver.allContent());
         ImmutableSet<Content> updatedContent = ImmutableSet.copyOf(resolver.updatedSince(TIMESTAMP));
         
         ImmutableSet<Content> expected = ImmutableSet.<Content>of(episode, series, brand);
-        assertEquals(expected, allContent);
         assertEquals(expected, updatedContent);
     }
 
@@ -140,16 +128,13 @@ public class FullHierarchyResolvingContentResolverTest {
         when(hierarchyExtractor.seriesFor(item)).thenReturn(Optional.<Series>absent());
         alwaysReturnContentFromDelegate(item);
         
-        ImmutableSet<Content> allContent = ImmutableSet.copyOf(resolver.allContent());
         ImmutableSet<Content> updatedContent = ImmutableSet.copyOf(resolver.updatedSince(TIMESTAMP));
         
         ImmutableSet<Content> expected = ImmutableSet.<Content>of(item);
-        assertEquals(expected, allContent);
         assertEquals(expected, updatedContent);
     }
 
     private void alwaysReturnContentFromDelegate(Content content) {
-        when(delegate.allContent()).thenReturn(Iterators.forArray(content));
         when(delegate.updatedSince(any(DateTime.class))).thenReturn(Iterators.forArray(content));
     }
 }

@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview.tasks.persistence;
+package org.atlasapi.feeds.tasks.persistence;
 
 import static org.atlasapi.feeds.tasks.persistence.ResponseTranslator.fromDBObject;
 import static org.atlasapi.feeds.tasks.persistence.ResponseTranslator.toDBObject;

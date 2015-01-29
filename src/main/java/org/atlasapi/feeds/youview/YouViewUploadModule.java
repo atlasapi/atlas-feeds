@@ -303,6 +303,7 @@ public class YouViewUploadModule {
                 taskCreator(), 
                 nitroIdGenerator, 
                 taskStore, 
+                payloadCreator(),
                 contentResolver, 
                 versionHierarchyExpander, 
                 contentHierarchy

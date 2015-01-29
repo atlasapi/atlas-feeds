@@ -1,10 +1,10 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.tasks.youview.creation;
 
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
-import org.atlasapi.feeds.youview.upload.UploadTask;
+import org.atlasapi.feeds.tasks.youview.creation.HierarchicalOrdering;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -18,6 +18,8 @@ import com.google.common.collect.Iterables;
 
 public class TestHierarchicalOrdering {
 
+    private final HierarchicalOrdering ordering = new HierarchicalOrdering();
+    
     @Test
     public void testHierarchicalContentOrdering() {
         Item item = new Item();
@@ -25,7 +27,7 @@ public class TestHierarchicalOrdering {
         Brand brand = new Brand();
         
         for (List<Content> permutation : Collections2.permutations(ImmutableList.of(item, series, brand))) {
-            List<Content> sorted = UpdateTask.orderContentForDeletion(permutation);
+            List<Content> sorted = ordering.sortedCopy(permutation);
             assertEquals(brand, Iterables.get(sorted, 0));
             assertEquals(series, Iterables.get(sorted, 1));
             assertEquals(item, Iterables.get(sorted, 2));

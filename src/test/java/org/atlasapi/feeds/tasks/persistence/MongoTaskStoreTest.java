@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview.tasks.persistence;
+package org.atlasapi.feeds.tasks.persistence;
 
 import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
 import static org.junit.Assert.assertEquals;
@@ -279,14 +279,36 @@ public class MongoTaskStoreTest {
         assertEquals(desiredTask, Iterables.getOnlyElement(allTransactions));
     }
     
+    @Test
+    public void testRemovalOfOldTasks() {
+        DateTime removalDate = clock.now().minusDays(1);
+        
+        Task newTask = createAndStoreTask(1234l, "content", Status.ACCEPTED, removalDate.plusHours(1));
+        Task oldTask = createAndStoreTask(2345l, "content", Status.ACCEPTED, removalDate.minusHours(1));
+        
+        Iterable<Task> allTasks = store.allTasks(YOUVIEW, Status.ACCEPTED);
+        
+        assertEquals(ImmutableSet.of(newTask, oldTask), ImmutableSet.copyOf(allTasks));
+        
+        store.removeBefore(removalDate);
+        
+        allTasks = store.allTasks(YOUVIEW, Status.ACCEPTED);
+        
+        assertEquals(ImmutableSet.of(newTask), ImmutableSet.copyOf(allTasks));
+    }
+    
     private Task createAndStoreTask(long taskId, String content, Status status) {
-        Task txn = createTransaction(
+        return createAndStoreTask(taskId, content, status, DateTime.now());
+    }
+    
+    private Task createAndStoreTask(long taskId, String content, Status status, DateTime created) {
+        Task txn = createTask(
                 taskId, 
                 content,
-                status
+                status,
+                created
         );
-        store.save(txn);
-        return txn;
+        return store.save(txn);
     }
 
     private Selection selectionWithParams(int limit, int offset) {
@@ -298,11 +320,12 @@ public class MongoTaskStoreTest {
         return Selection.builder().build(request);
     }
 
-    private Task createTransaction(long taskId, String contentUri,
-            Status status) {
+    private Task createTask(long taskId, String contentUri,
+            Status status, DateTime created) {
         return Task.builder()
                 .withId(taskId)
                 .withPublisher(PUBLISHER)
+                .withCreated(created)
                 .withDestination(createDestination(contentUri))
                 .withPayload(DEFAULT_PAYLOAD)
                 .withAction(Action.UPDATE)
