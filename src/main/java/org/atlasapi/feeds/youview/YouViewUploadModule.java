@@ -27,6 +27,7 @@ import org.atlasapi.feeds.tasks.youview.processing.YouViewTaskProcessor;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.ValidatingTvAnytimeGenerator;
 import org.atlasapi.feeds.youview.client.HttpYouViewClient;
+import org.atlasapi.feeds.youview.client.NoOpYouViewClient;
 import org.atlasapi.feeds.youview.client.ReferentialIntegrityCheckingReportHandler;
 import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
@@ -209,14 +210,15 @@ public class YouViewUploadModule {
         String baseUrl = parseUrl(publisherPrefix);
         UsernameAndPassword credentials = parseCredentials(publisherPrefix);
         
-        YouViewClient client = new HttpYouViewClient(httpClient(credentials.username(), credentials.password()), baseUrl, clock);
+//        YouViewClient client = new HttpYouViewClient(httpClient(credentials.username(), credentials.password()), baseUrl, clock);
+        YouViewClient client = new NoOpYouViewClient(clock);
         
         return Optional.<TaskProcessor>of(new YouViewTaskProcessor(client, resultHandler(), revokedContentStore()));
     }
 
     @Bean
     public YouViewUploadController uploadController() throws JAXBException, SAXException {
-        return new YouViewUploadController(contentResolver, taskCreator(), taskStore, contentHierarchyExpander, revocationProcessor());
+        return new YouViewUploadController(contentResolver, taskCreator(), taskStore, contentHierarchyExpander, revocationProcessor(), clock);
     }
     
     private ScheduledTask uploadTask() throws JAXBException, SAXException {
@@ -309,7 +311,7 @@ public class YouViewUploadModule {
     }
 
     private TaskCreator taskCreator() {
-        return new YouViewEntityTaskCreator();
+        return new YouViewEntityTaskCreator(clock);
     }
 
     @Bean

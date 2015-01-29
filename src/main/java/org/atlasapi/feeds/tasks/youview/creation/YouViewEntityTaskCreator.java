@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Destination;
 import org.atlasapi.feeds.tasks.Status;
@@ -16,8 +18,16 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 
+import com.metabroadcast.common.time.Clock;
+
 
 public class YouViewEntityTaskCreator implements TaskCreator {
+    
+    private final Clock clock;
+
+    public YouViewEntityTaskCreator(Clock clock) {
+        this.clock = checkNotNull(clock);
+    }
 
     @Override
     public Task taskFor(String contentCrid, Content content, Action action) {
@@ -46,6 +56,7 @@ public class YouViewEntityTaskCreator implements TaskCreator {
     private Task createTask(Publisher publisher, Action action, Destination destination) {
         return Task.builder()
                 .withAction(action)
+                .withCreated(clock.now())
                 .withDestination(destination)
                 .withPublisher(publisher)
                 .withStatus(Status.NEW)

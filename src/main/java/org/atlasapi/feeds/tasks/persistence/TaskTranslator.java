@@ -50,7 +50,7 @@ public class TaskTranslator {
         
         TranslatorUtils.fromDateTime(dbo, UPLOAD_TIME_KEY, task.uploadTime().orNull());
         TranslatorUtils.from(dbo, REMOTE_ID_KEY, task.remoteId().orNull());
-        TranslatorUtils.from(dbo, PAYLOAD_KEY, PayloadTranslator.toDBObject(task.payload().orNull()));
+        TranslatorUtils.from(dbo, PAYLOAD_KEY, (DBObject) PayloadTranslator.toDBObject(task.payload().orNull()));
         
         TranslatorUtils.fromIterable(dbo, REMOTE_STATUSES_KEY, task.remoteResponses(), ResponseTranslator.toDBObject());
         

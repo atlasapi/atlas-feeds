@@ -99,7 +99,7 @@ public class MongoTaskStore implements TaskStore {
                 .idEquals(taskId)
                 .build();
         DBObject updateStatus = new MongoUpdateBuilder()
-                .push(TaskTranslator.PAYLOAD_KEY, PayloadTranslator.toDBObject(payload))
+                .setField(TaskTranslator.PAYLOAD_KEY, PayloadTranslator.toDBObject(payload))
                 .build();
         
         collection.update(idQuery, updateStatus, false, false);

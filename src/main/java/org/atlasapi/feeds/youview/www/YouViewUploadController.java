@@ -38,6 +38,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.metabroadcast.common.http.HttpException;
+import com.metabroadcast.common.time.Clock;
 
 // TODO remove all the duplication
 @Controller
@@ -48,15 +49,17 @@ public class YouViewUploadController {
     private final TaskStore taskStore;
     private final ContentHierarchyExpander hierarchyExpander;
     private final RevocationProcessor revocationProcessor;
+    private final Clock clock;
     
     public YouViewUploadController(ContentResolver contentResolver, TaskCreator taskCreator, 
             TaskStore taskStore, ContentHierarchyExpander hierarchyExpander, 
-            RevocationProcessor revocationProcessor) {
+            RevocationProcessor revocationProcessor, Clock clock) {
         this.contentResolver = checkNotNull(contentResolver);
         this.taskCreator = checkNotNull(taskCreator);
         this.taskStore = checkNotNull(taskStore);
         this.hierarchyExpander = checkNotNull(hierarchyExpander);
         this.revocationProcessor = checkNotNull(revocationProcessor);
+        this.clock = checkNotNull(clock);
     }
         
     /**
@@ -237,6 +240,7 @@ public class YouViewUploadController {
         Task task = Task.builder()
                 .withAction(Action.DELETE)
                 .withDestination(destination)
+                .withCreated(clock.now())
                 .withPublisher(toBeDeleted.get().getPublisher())
                 .withStatus(Status.NEW)
                 .build();
