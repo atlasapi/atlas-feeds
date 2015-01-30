@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -8,7 +9,12 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.any;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import javax.annotation.Nullable;
+import javax.xml.bind.JAXBElement;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.youview.NameComponentTypeEquivalence;
@@ -24,11 +30,15 @@ import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
+import org.atlasapi.media.entity.Person;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 import org.atlasapi.media.entity.Version;
+import org.atlasapi.persistence.content.PeopleResolver;
+import org.hamcrest.Matchers;
 import org.joda.time.Duration;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -53,9 +63,11 @@ import tva.mpeg7._2008.UniqueIDType;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.common.hash.Hashing;
 import com.metabroadcast.common.intl.Countries;
 
@@ -63,6 +75,16 @@ public class NitroGroupInformationGeneratorTest {
     
     private static final String BBC_SERVICE_PREFIX = "http://bbc.co.uk/services/";
     private static final String MASTER_BRAND = "master_brand";
+
+    private static final String GEORGE_SCOTT_URI = "http://george.scott";
+    private static final String KUBRICK_URI = "http://stanley.kubrick";
+
+    private static final Function<JAXBElement<?>, NameComponentType> TO_NAME_COMPONENT_TYPE = new Function<JAXBElement<?>, NameComponentType>() {
+        @Override
+        public NameComponentType apply(JAXBElement<?> input) {
+            return (NameComponentType) input.getValue();
+        }
+    };
 
     private static final Function<GenreType, String> TO_HREF = new Function<GenreType, String>() {
         @Override
@@ -76,7 +98,8 @@ public class NitroGroupInformationGeneratorTest {
     private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
     private IdGenerator idGenerator = new NitroIdGenerator(Hashing.md5());
     private GenreMapping genreMapping = new NitroGenreMapping();
-    private NitroCreditsItemGenerator creditsGenerator = Mockito.mock(NitroCreditsItemGenerator.class);
+    private PeopleResolver peopleResolver = Mockito.mock(PeopleResolver.class);
+    private NitroCreditsItemGenerator creditsGenerator = new NitroCreditsItemGenerator(peopleResolver);
     
     private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping, bbcServiceIdResolver,
             creditsGenerator);
@@ -84,6 +107,8 @@ public class NitroGroupInformationGeneratorTest {
     @Before
     public void setup() {
         when(bbcServiceIdResolver.resolveMasterBrandId(any(Content.class))).thenReturn(MASTER_BRAND);
+        when(peopleResolver.person(GEORGE_SCOTT_URI)).thenReturn(Optional.of(createPerson(GEORGE_SCOTT_URI, "George C.", "Scott")));
+        when(peopleResolver.person(KUBRICK_URI)).thenReturn(Optional.of(createPerson(KUBRICK_URI, "Stanley", "Kubrick")));
     }
     
     @Test
@@ -291,8 +316,14 @@ public class NitroGroupInformationGeneratorTest {
         
         CrewMember georgeScott = new CrewMember();
         georgeScott.withName("George C. Scott");
+        georgeScott.withRole(CrewMember.Role.ACTOR);
+        georgeScott.setCanonicalUri(GEORGE_SCOTT_URI);
+
         CrewMember stanley = new CrewMember();
         stanley.withName("Stanley Kubrick");
+        stanley.withRole(CrewMember.Role.ACTOR);
+        stanley.setCanonicalUri(KUBRICK_URI);
+
         film.setPeople(ImmutableList.of(georgeScott, stanley));
         
         GroupInformationType groupInfo = generator.generate(film);
@@ -300,30 +331,43 @@ public class NitroGroupInformationGeneratorTest {
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
         
         List<CreditsItemType> creditsList = desc.getCreditsList().getCreditsItem();
+
+        assertEquals(2, creditsList.size());
+
         for (CreditsItemType credit : creditsList) {
-            assertEquals("urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN", credit.getRole());
+            assertEquals("urn:mpeg:mpeg7:cs:RoleCS:2001:ACTOR", credit.getRole());
+            checkNames(credit);
         }
-        
-        Iterable<NameComponentType> people = Iterables.transform(
-            creditsList, 
-            new Function<CreditsItemType, NameComponentType>() {
-                @Override
-                public NameComponentType apply(CreditsItemType input) {
-                    PersonNameType firstPerson = (PersonNameType) Iterables.getOnlyElement(input.getPersonNameOrPersonNameIDRefOrOrganizationName()).getValue();
-                    return (NameComponentType) Iterables.getOnlyElement(firstPerson.getGivenNameOrLinkingNameOrFamilyName()).getValue();
-                }
-            });
-     
-        NameComponentType scott = new NameComponentType();
-        scott.setValue("George C. Scott");
-        
-        NameComponentType kubrick = new NameComponentType();
-        kubrick.setValue("Stanley Kubrick");
-        
-        assertTrue(NAME_EQUIVALENCE.pairwise().equivalent(
-                ImmutableSet.of(scott, kubrick), 
-                people
-                ));
+    }
+
+    private void checkNames(CreditsItemType credit) {
+        Set<String> names = getNames(credit);
+        Assert.assertThat(names,
+                Matchers.either(containsInAnyOrder("George C.", "Scott"))
+                        .or(containsInAnyOrder("Stanley", "Kubrick")));
+    }
+
+    private Set<String> getNames(CreditsItemType credit) {
+        PersonNameType name = (PersonNameType) Iterables.getOnlyElement(credit.getPersonNameOrPersonNameIDRefOrOrganizationName())
+                .getValue();
+
+        return FluentIterable.from(name.getGivenNameOrLinkingNameOrFamilyName()).transform(
+                new Function<JAXBElement<?>, String>() {
+                    @Override
+                    public String apply(JAXBElement<?> input) {
+                        return ((NameComponentType) input.getValue()).getValue();
+
+                    }
+                }).toSet();
+    }
+
+    private Person createPerson(String uri, String givenName, String familyName) {
+        Person person = new Person();
+        person.setCanonicalUri(uri);
+        person.setGivenName(givenName);
+        person.setFamilyName(familyName);
+
+        return person;
     }
     
     @Test
@@ -571,12 +615,6 @@ public class NitroGroupInformationGeneratorTest {
         brand.setSpecialization(Specialization.TV);
         brand.addAlias(new Alias("gb:amazon:asin", "brandAsin"));
         
-        CrewMember robson = new CrewMember();
-        robson.withName("Robson Green");
-        CrewMember mark = new CrewMember();
-        mark.withName("Mark Benton");
-        brand.setPeople(ImmutableList.of(robson, mark));
-        
         return brand;
     }
     
@@ -595,12 +633,6 @@ public class NitroGroupInformationGeneratorTest {
         series.setMediaType(MediaType.VIDEO);
         series.setSpecialization(Specialization.TV);
         series.addAlias(new Alias("gb:amazon:asin", "seriesAsin"));
-        
-        CrewMember robson = new CrewMember();
-        robson.withName("Robson Green");
-        CrewMember mark = new CrewMember();
-        mark.withName("Mark Benton");
-        series.setPeople(ImmutableList.of(robson, mark));
         
         ParentRef brandRef = new ParentRef("http://nitro.bbc.co.uk/programmes/b007n2qs");
         series.setParentRef(brandRef);
