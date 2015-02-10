@@ -134,7 +134,7 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
         try {
             JAXBElement<TVAMainType> tvaElem = generator.generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi);
 
-            if (hasPCrid(broadcastHierarchy.broadcast()) && alreadyUploaded(tvaElem)) {
+            if (hasPCrid(broadcastHierarchy.broadcast()) && !shouldUploadBroadcastEvent(tvaElem)) {
                 log.trace("Not uploading broadcast, since its ProgramURL has already been associated with this service ID and item");
                 return;
             }
@@ -165,7 +165,10 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
         Optional<String> broadcastPcrid = getPcrid(broadcastEvent);
         String crid = broadcastEvent.getProgram().getCrid();
         if (broadcastPcrid.isPresent()) {
-            sentBroadcastProgramUrlStore.recordSent(crid, broadcastPcrid.get());
+            sentBroadcastProgramUrlStore.recordSent(
+                    broadcastEvent.getInstanceMetadataId(), 
+                    crid, 
+                    broadcastPcrid.get());
         }
     }
 
@@ -187,12 +190,18 @@ public class DefaultGranularYouViewService implements GranularYouViewService {
         return Optional.absent();
     }
 
-    private boolean alreadyUploaded(JAXBElement<TVAMainType> tvaElem) {
+    private boolean shouldUploadBroadcastEvent(JAXBElement<TVAMainType> tvaElem) {
         BroadcastEventType broadcastEvent = Iterables.getOnlyElement(tvaElem.getValue().getProgramDescription().getProgramLocationTable().getBroadcastEvent());
         Optional<String> broadcastPcrid = getPcrid(broadcastEvent);
         String crid = broadcastEvent.getProgram().getCrid();
-        return broadcastPcrid.isPresent() 
-                && sentBroadcastProgramUrlStore.beenSent(crid, broadcastPcrid.get());
+        
+        if (!broadcastPcrid.isPresent()) {
+            return true;
+        }
+        
+        Optional<String> sentBroadcastEventImi = sentBroadcastProgramUrlStore.getSentBroadcastEventImi(crid, broadcastPcrid.get());
+        return !sentBroadcastEventImi.isPresent()
+                || sentBroadcastEventImi.get().equals(broadcastEvent.getInstanceMetadataId());
     }
 
     @Override

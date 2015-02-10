@@ -1,9 +1,11 @@
 package org.atlasapi.feeds.youview.persistence;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoConstants;
 import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
+import com.metabroadcast.common.persistence.translator.TranslatorUtils;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -14,7 +16,9 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
     private static final Joiner KEY_JOINER = Joiner.on("|").skipNulls();
     
     private static final String COLLECTION = "sentBroadcastProgramUrls";
-    
+
+    private static final String BROADCAST_EVENT_IMI_KEY = "broadcastEventImi";
+        
     private final DBCollection collection;
     
     public MongoSentBroadcastEventPcridStore(DatabasedMongo mongo) {
@@ -22,12 +26,13 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
     }
     
     @Override
-    public void recordSent(String crid, String programUrl) {
-        if (find(crid, programUrl) != null) {
+    public void recordSent(String broadcasteEventImi, String itemCrid, String programmeCrid) {
+        if (find(itemCrid, programmeCrid) != null) {
             return;
         }
         collection.save(BasicDBObjectBuilder
-                            .start(MongoConstants.ID, keyFrom(crid, programUrl))
+                            .start(MongoConstants.ID, keyFrom(itemCrid, programmeCrid))
+                            .add(BROADCAST_EVENT_IMI_KEY, broadcasteEventImi)
                             .get());
     }
     
@@ -39,16 +44,20 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
     }
     
     @Override
-    public boolean beenSent(String crid, String programUrl) {
-        return find(crid, programUrl) != null;
+    public Optional<String> getSentBroadcastEventImi(String itemCrid, String programmeCrid) {
+        DBObject found = find(itemCrid, programmeCrid);
+        if (found == null) {
+            return Optional.absent();
+        }
+        return Optional.of(TranslatorUtils.toString(found,  BROADCAST_EVENT_IMI_KEY));
     }
     
-    private DBObject find(String crid, String programUrl) {
-        return collection.findOne(keyFrom(crid, programUrl));
+    private DBObject find(String itemCrid, String programmeCrid) {
+        return collection.findOne(keyFrom(itemCrid, programmeCrid));
     }
     
-    private String keyFrom(String crid, String programUrl) {
-        return KEY_JOINER.join(crid, programUrl);
+    private String keyFrom(String itemCrid, String programmeCrid) {
+        return KEY_JOINER.join(itemCrid, programmeCrid);
     }
     
 }

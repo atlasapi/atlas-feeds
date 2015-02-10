@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.persistence;
 
+import com.google.common.base.Optional;
+
 /**
  * A store to record that a programUrl reference has been sent to YouView 
  * for a particular content crid, on a given service. 
@@ -13,10 +15,10 @@ package org.atlasapi.feeds.youview.persistence;
  */
 public interface SentBroadcastEventPcridStore {
 
-    boolean beenSent(String crid, String pcrid);
+    Optional<String> getSentBroadcastEventImi(String itemCrid, String pcrid);
     
     void removeSentRecord(String crid, String pcrid);
 
-    void recordSent(String crid, String pcrid);
+    void recordSent(String broadcasteEventImi, String contentCrid, String programmeCrid);
 
 }
