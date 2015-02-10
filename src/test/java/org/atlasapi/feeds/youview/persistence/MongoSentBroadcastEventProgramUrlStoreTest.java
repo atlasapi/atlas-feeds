@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.persistence;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -24,15 +25,16 @@ public class MongoSentBroadcastEventProgramUrlStoreTest {
     
     @Test
     public void testStoreAndRemove() {
-        String crid = "crid1";
-        String programUrl = "http://example.org/1";
+        String itemCrid = "crid1";
+        String programmeCrid = "http://example.org/1";
+        String broadcastEventImi = "imi:example.org/1234";
         
-        assertFalse(sentBroadcastProgramUrlStore.beenSent(crid, programUrl));
+        assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(itemCrid, programmeCrid).isPresent());
             
-        sentBroadcastProgramUrlStore.recordSent(crid, programUrl);
-        assertTrue(sentBroadcastProgramUrlStore.beenSent(crid, programUrl));
+        sentBroadcastProgramUrlStore.recordSent(broadcastEventImi, itemCrid, programmeCrid);
+        assertEquals(broadcastEventImi, sentBroadcastProgramUrlStore.getSentBroadcastEventImi(itemCrid, programmeCrid).get());
         
-        sentBroadcastProgramUrlStore.removeSentRecord(crid, programUrl);
-        assertFalse(sentBroadcastProgramUrlStore.beenSent(crid, programUrl));
+        sentBroadcastProgramUrlStore.removeSentRecord(itemCrid, programmeCrid);
+        assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(itemCrid, programmeCrid).isPresent());
     }
 }
