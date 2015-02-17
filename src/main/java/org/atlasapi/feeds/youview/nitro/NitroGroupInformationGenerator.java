@@ -49,6 +49,7 @@ import tva.mpeg7._2008.TitleType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.FluentIterable;
@@ -427,13 +428,24 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private List<SynopsisType> generateSynopses(Content content) {
         List<SynopsisType> synopses = Lists.newArrayList();
 
-        synopses.add(createSynopsis(SynopsisLengthType.SHORT, content.getShortDescription()));
+        synopses.add(createSynopsis(SynopsisLengthType.SHORT, shortDescriptionOrFallback(content)));
         synopses.add(createSynopsis(SynopsisLengthType.MEDIUM, content.getMediumDescription()));
         synopses.add(createSynopsis(SynopsisLengthType.LONG, content.getLongDescription()));
         
         return synopses;
     }
 
+    /**
+     * Short description is mandatory, so if it's not present, we'll
+     * fall back to another description length, which may subsequently
+     * be truncated
+     * 
+     */
+    private String shortDescriptionOrFallback(Content content) {
+        return Objects.firstNonNull(content.getShortDescription(), 
+                Objects.firstNonNull(content.getMediumDescription(), content.getLongDescription()));
+    }
+    
     private SynopsisType createSynopsis(SynopsisLengthType synopsisType, String description) {
         Integer length = YOUVIEW_SYNOPSIS_LENGTH.get(synopsisType);
         if (length == null) {

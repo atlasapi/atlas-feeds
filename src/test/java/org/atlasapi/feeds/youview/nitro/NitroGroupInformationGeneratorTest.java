@@ -22,6 +22,7 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
+import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
@@ -550,6 +551,50 @@ public class NitroGroupInformationGeneratorTest {
             assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
         }
     }
+    
+    @Test
+    public void testFallbackSynopses() {
+        Episode episode = createEpisode();
+        episode.setShortDescription("short");
+        episode.setMediumDescription("medium");
+        episode.setLongDescription("long");
+        
+        
+        assertEquals("short", generateShortSynopsis(episode).getValue());
+        
+        episode.setShortDescription(null);
+        assertEquals("medium", generateShortSynopsis(episode).getValue());
+        
+        episode.setMediumDescription(null);
+        assertEquals("long", generateShortSynopsis(episode).getValue());
+    }
+    
+    private SynopsisType generateShortSynopsis(Item item) {
+        GroupInformationType groupInfo = generator.generate(item, 
+                Optional.<Series>absent(), Optional.<Brand>absent());
+        
+        return Iterables.find(groupInfo.getBasicDescription().getSynopsis(), 
+                new Predicate<SynopsisType>() {
+
+                    @Override
+                    public boolean apply(SynopsisType input) {
+                        return SynopsisLengthType.SHORT.equals(input.getLength());
+                    }
+                });
+    }
+    
+    private SynopsisType getShortSynopsis(Iterable<SynopsisType> synopses) {
+        return Iterables.find(synopses, new Predicate<SynopsisType>() {
+
+            @Override
+            public boolean apply(SynopsisType input) {
+                return SynopsisLengthType.SHORT.equals(input.getLength());
+            }
+            
+        });
+    }
+    
+    
 
     private Brand createBrand() {
         Brand brand = new Brand();
