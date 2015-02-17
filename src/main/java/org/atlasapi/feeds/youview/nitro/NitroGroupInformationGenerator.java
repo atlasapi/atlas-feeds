@@ -49,7 +49,6 @@ import tva.mpeg7._2008.TitleType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.FluentIterable;
@@ -442,8 +441,13 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
      * 
      */
     private String shortDescriptionOrFallback(Content content) {
-        return Objects.firstNonNull(content.getShortDescription(), 
-                Objects.firstNonNull(content.getMediumDescription(), content.getLongDescription()));
+        if (content.getShortDescription() != null) {
+            return content.getShortDescription();
+        }
+        if (content.getMediumDescription() != null) {
+            return content.getMediumDescription();
+        }
+        return content.getLongDescription();
     }
     
     private SynopsisType createSynopsis(SynopsisLengthType synopsisType, String description) {
