@@ -22,7 +22,7 @@ public class UpdatedContentResolver implements YouViewContentResolver {
 
     @VisibleForTesting
     // TODO update this to point back to the genuine start of time once testing is complete
-    static final DateTime START_OF_TIME = new DateTime(2015, JANUARY, 7, 0, 0, 0, 0, DateTimeZones.UTC);
+    static final DateTime START_OF_TIME = new DateTime(2015, JANUARY, 20, 0, 0, 0, 0, DateTimeZones.UTC);
 
     private static final Predicate<Content> IS_VIDEO_CONTENT = new Predicate<Content>() {
         @Override
