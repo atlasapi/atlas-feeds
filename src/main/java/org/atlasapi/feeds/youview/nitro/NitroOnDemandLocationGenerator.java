@@ -4,15 +4,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.tvanytime.granular.GranularOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Content;
@@ -21,6 +20,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
+import org.joda.time.DateTime;
 
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
@@ -39,14 +39,13 @@ import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.Optional;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
-public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationGenerator {
+public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
     private static final String DEFAULT_ASPECT_RATIO = "16:9";
-//    private static final String YOUVIEW_SERVICE = "http://bbc.co.uk/services/youview";
-    private static final String DEV_YOUVIEW_SERVICE = "http://bbc.couk/services/youview";
+    private static final String YOUVIEW_SERVICE = "http://nitro.bbc.co.uk/services/youview";
     private static final String MIX_TYPE_STEREO = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
     private static final String YOUVIEW_GENRE_MEDIA_AVAILABLE = "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available";
     private static final String GENRE_TYPE_OTHER = "other";
@@ -73,7 +72,7 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
 
-        onDemand.setServiceIDRef(DEV_YOUVIEW_SERVICE);
+        onDemand.setServiceIDRef(YOUVIEW_SERVICE);
         onDemand.setProgram(generateProgram(hierarchy.item(), hierarchy.version()));
         onDemand.setInstanceMetadataId(imi);
         onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.item(), hierarchy.encoding(), hierarchy.location(), getLanguageCodeFor(hierarchy.item())));
@@ -95,7 +94,10 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     private InstanceDescriptionType generateInstanceDescription(Content content, Encoding encoding, Location location, String language) {
         InstanceDescriptionType instanceDescription = new InstanceDescriptionType();
         
-        instanceDescription.getGenre().addAll(generateGenres(location.getPolicy()));
+        Optional<GenreType> mediaAvailableGenre = generateMediaAvailableMarkerGenre(location.getPolicy());
+        if (mediaAvailableGenre.isPresent()) {
+            instanceDescription.getGenre().add(mediaAvailableGenre.get());
+        }
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier(content));
         instanceDescription.getCaptionLanguage().add(captionLanguage(language));
@@ -189,9 +191,9 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         return bitRateType;
     }
 
-    private List<GenreType> generateGenres(Policy policy) {
-        if (policy == null || policy.getActualAvailabilityStart() == null) {
-            return ImmutableList.of();
+    private Optional<GenreType> generateMediaAvailableMarkerGenre(Policy policy) {
+        if (!isMediaAvailable(policy)) {
+            return Optional.absent();
         }
         
         GenreType mediaAvailable = new GenreType();
@@ -199,7 +201,13 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         mediaAvailable.setType(GENRE_TYPE_OTHER);
         mediaAvailable.setHref(YOUVIEW_GENRE_MEDIA_AVAILABLE);
         
-        return ImmutableList.of(mediaAvailable);
+        return Optional.of(mediaAvailable);
+    }
+    
+    private boolean isMediaAvailable(Policy policy) {
+        return policy != null 
+                && policy.getActualAvailabilityStart() != null 
+                && policy.getActualAvailabilityStart().isBeforeNow();
     }
 
     private Duration generatePublishedDuration(Version version) {
@@ -223,8 +231,14 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
     // switch-over has taken place.
     private XMLGregorianCalendar generateAvailabilityEnd(Location location) {
         Policy policy = location.getPolicy();
-//        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityEnd());
-        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart().plus(AVAILABILITY_WINDOW));
+        
+        DateTime sevenDayEnd = policy.getAvailabilityStart().plus(AVAILABILITY_WINDOW);
+        DateTime fullWindowEnd = policy.getAvailabilityEnd();
+        
+        if (sevenDayEnd.isBefore(fullWindowEnd)) {
+            return TvAnytimeElementFactory.gregorianCalendar(sevenDayEnd);
+        }
+        return TvAnytimeElementFactory.gregorianCalendar(fullWindowEnd);
     }
     
     private CRIDRefType generateProgram(Item item, Version version) {

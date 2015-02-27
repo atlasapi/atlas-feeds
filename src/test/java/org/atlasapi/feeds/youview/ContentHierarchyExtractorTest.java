@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
@@ -18,11 +18,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
-// TODO there's a few edge cases still to test here
 public class ContentHierarchyExtractorTest {
     
     private ContentResolver contentResolver = Mockito.mock(ContentResolver.class);
-    private final ContentHierarchyExtractor hierarchy = new ContentResolvingContentHierarchyExtractor(contentResolver );
+    
+    private final ContentHierarchyExtractor hierarchy = new ContentResolvingContentHierarchyExtractor(contentResolver);
 
     @Test
     public void testResolvingFirstItemForASeries() {
@@ -47,7 +47,6 @@ public class ContentHierarchyExtractorTest {
         
         assertEquals(item, resolved);
     }
-
 
     @Test
     public void testResolvingBrandForASeries() {

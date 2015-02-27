@@ -186,7 +186,7 @@ public class NitroGroupInformationGeneratorTest {
         String serviceIDRef = groupInfo.getServiceIDRef();
         
         // N.B. this has been temporarily changed from 'masterbrands' to 'master_brands'
-        assertEquals("http://bbc.co.uk/master_brands/" + MASTER_BRAND, serviceIDRef);
+        assertEquals("http://nitro.bbc.co.uk/masterbrands/" + MASTER_BRAND, serviceIDRef);
     }
     
     @Test

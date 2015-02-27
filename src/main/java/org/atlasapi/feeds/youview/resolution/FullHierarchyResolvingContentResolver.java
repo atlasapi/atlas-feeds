@@ -10,6 +10,8 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Series;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -18,6 +20,8 @@ import com.google.common.collect.Iterators;
 
 
 public class FullHierarchyResolvingContentResolver implements YouViewContentResolver {
+    
+    private final Logger log = LoggerFactory.getLogger(FullHierarchyResolvingContentResolver.class);
     
     private final YouViewContentResolver delegate;
     private final ContentHierarchyExtractor hierarchyExtractor;
@@ -33,11 +37,6 @@ public class FullHierarchyResolvingContentResolver implements YouViewContentReso
         return resolveHierarchyFor(delegate.updatedSince(dateTime));
     }
 
-    @Override
-    public Iterator<Content> allContent() {
-        return resolveHierarchyFor(delegate.allContent());
-    }
-    
     private Iterator<Content> resolveHierarchyFor(Iterator<Content> content) {
         return Iterators.concat(Iterators.transform(content, new Function<Content, Iterator<Content>>() {
             @Override
@@ -49,7 +48,7 @@ public class FullHierarchyResolvingContentResolver implements YouViewContentReso
 
     private Iterator<Content> generateHierarchyFor(Content input) {
         ImmutableSet.Builder<Content> hierarchy = ImmutableSet.builder();
-        
+        log.trace("expanding hierarchy for {}", input.getCanonicalUri());
         hierarchy.add(input);
         
         if (input instanceof Item) {
