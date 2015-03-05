@@ -210,9 +210,8 @@ public class YouViewUploadModule {
         String baseUrl = parseUrl(publisherPrefix);
         UsernameAndPassword credentials = parseCredentials(publisherPrefix);
         
-//        YouViewClient client = new HttpYouViewClient(httpClient(credentials.username(), credentials.password()), baseUrl, clock);
-        YouViewClient client = new NoOpYouViewClient(clock);
-        
+        YouViewClient client = new HttpYouViewClient(httpClient(credentials.username(), credentials.password()), baseUrl, clock);
+
         return Optional.<TaskProcessor>of(new YouViewTaskProcessor(client, resultHandler(), revokedContentStore()));
     }
 
