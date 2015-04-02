@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import javax.xml.bind.JAXBElement;
@@ -37,6 +38,7 @@ public class NitroCreditsItemGenerator implements CreditsItemGenerator {
         List<CrewMember> crewMembers = content.people();
         CreditsListType creditsListType = new CreditsListType();
 
+        int index = 0;
         for (CrewMember crewMember : crewMembers) {
             Optional<Person> person = peopleResolver.person(crewMember.getCanonicalUri());
             if (person.isPresent() 
@@ -51,9 +53,10 @@ public class NitroCreditsItemGenerator implements CreditsItemGenerator {
     }
 
     private CreditsItemType createCreditsItem(CrewMember crewMember,
-            Optional<Person> optionalPerson) {
+            Optional<Person> optionalPerson, int index) {
         CreditsItemType credits = new CreditsItemType();
         credits.setRole(crewMember.role().requireTvaUri());
+        credits.setIndex(BigInteger.valueOf(index));
         setCharacterNameIfPresent(credits, crewMember);
 
         if (optionalPerson.isPresent()) {
