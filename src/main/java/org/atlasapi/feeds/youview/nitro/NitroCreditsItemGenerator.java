@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import javax.xml.bind.JAXBElement;
