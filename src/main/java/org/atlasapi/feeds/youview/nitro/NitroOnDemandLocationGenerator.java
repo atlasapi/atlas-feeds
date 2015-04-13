@@ -100,7 +100,10 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
         }
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier(content));
-        instanceDescription.getCaptionLanguage().add(captionLanguage(language));
+        
+        if (Boolean.TRUE.equals(encoding.getSubtitled())) {
+            instanceDescription.getCaptionLanguage().add(captionLanguage(language));
+        }
 
         if (Boolean.TRUE.equals(encoding.getSigned())) {
             SignLanguageType signLanguageType = new SignLanguageType();
