@@ -65,7 +65,7 @@ public class LakeviewFeedCompiler {
     private static final XMLNamespace LAKEVIEW = new XMLNamespace("", "http://schemas.microsoft.com/Lakeview/2013/07/01/ingestion");
     private static final String PROVIDER_NAME = "Channel 4";
     private static final String LOCALE = "en-GB";
-    private static final String PROVIDER_ID = "0x484707D1";
+    private static final String PROVIDER_ID = "0x484707D2";
     private static final String XBOX_ONE_PROVIDER_ID = "25148946";
     private static final Pattern HIERARCHICAL_URI_PATTERN
         = Pattern.compile("http://www.channel4.com/programmes/[a-z0-9\\-]+(\\/.*)?");
