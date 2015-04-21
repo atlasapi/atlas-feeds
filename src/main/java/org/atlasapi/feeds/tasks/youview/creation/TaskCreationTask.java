@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
@@ -77,6 +78,9 @@ public abstract class TaskCreationTask extends ScheduledTask {
             @Override
             public boolean process(Content content) {
                 try {
+                    if (!shouldProcess(content)) {
+                        return shouldContinue();
+                    }
                     if (content instanceof Item) {
                         progress = progress.reduce(processVersions((Item) content, updatedSince, action));
                     }
@@ -95,19 +99,43 @@ public abstract class TaskCreationTask extends ScheduledTask {
         };
     }
     
+    /**
+     * Should this piece of content be processed? Allows sub-classes to 
+     * have more fine-grained control over whether or not to consider
+     * for processing.
+     * 
+     * @param content
+     * @return
+     */
+    protected boolean shouldProcess(Content content) {
+        return true;
+    }
+    
+    protected Predicate<ItemAndVersion> versionFilter(DateTime updatedSince) {
+        return FilterFactory.versionFilter(updatedSince);
+    }
+    
+    protected Predicate<ItemOnDemandHierarchy> onDemandFilter(DateTime updatedSince) {
+        return FilterFactory.onDemandFilter(updatedSince);
+    }
+    
+    protected Predicate<ItemBroadcastHierarchy> broadcastFilter(DateTime updatedSince) {
+        return FilterFactory.broadcastFilter(updatedSince);
+    }
+    
     // TODO tidy this up, ideally simplify/streamline it
     private UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
         Map<String, ItemAndVersion> versionHierarchies = Maps.filterValues(
                 hierarchyExpander.versionHierarchiesFor(item), 
-                FilterFactory.versionFilter(updatedSince)
+                versionFilter(updatedSince)
         );
         Map<String, ItemBroadcastHierarchy> broadcastHierarchies = Maps.filterValues(
                 hierarchyExpander.broadcastHierarchiesFor(item), 
-                FilterFactory.broadcastFilter(updatedSince)
+                broadcastFilter(updatedSince)
         );
         Map<String, ItemOnDemandHierarchy> onDemandHierarchies = Maps.filterValues(
                 hierarchyExpander.onDemandHierarchiesFor(item), 
-                FilterFactory.onDemandFilter(updatedSince)
+                onDemandFilter(updatedSince)
         );
         
         UpdateProgress progress = UpdateProgress.START;
