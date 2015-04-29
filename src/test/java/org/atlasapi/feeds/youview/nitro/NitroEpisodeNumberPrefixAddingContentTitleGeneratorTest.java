@@ -69,7 +69,12 @@ public class NitroEpisodeNumberPrefixAddingContentTitleGeneratorTest {
     
     private Episode createEpisode(Brand brand, Series series) {
         Episode episode = new Episode();
-        episode.setContainer(brand);
+        if (brand != null) {
+            episode.setContainer(brand);
+        }
+        if (series != null) {
+            episode.setSeries(series);
+        }
         episode.setEpisodeNumber(1);
         episode.setTitle(EPISODE_TITLE);
         return episode;
