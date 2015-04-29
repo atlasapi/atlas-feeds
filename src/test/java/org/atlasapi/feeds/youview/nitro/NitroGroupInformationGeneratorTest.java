@@ -33,6 +33,8 @@ import org.joda.time.Duration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import tva.metadata._2010.BaseMemberOfType;
 import tva.metadata._2010.BasicContentDescriptionType;
@@ -77,12 +79,21 @@ public class NitroGroupInformationGeneratorTest {
     private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
     private IdGenerator idGenerator = new NitroIdGenerator(Hashing.md5());
     private GenreMapping genreMapping = new NitroGenreMapping();
+    private ContentTitleGenerator titleGenerator = Mockito.mock(ContentTitleGenerator.class);
     
-    private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping, bbcServiceIdResolver);
+    private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping, bbcServiceIdResolver, titleGenerator);
     
     @Before
     public void setup() {
         when(bbcServiceIdResolver.resolveMasterBrandId(any(Content.class))).thenReturn(MASTER_BRAND);
+        when(titleGenerator.titleFor(any(Content.class))).thenAnswer(new Answer<String>() {
+
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                Object[] args = invocation.getArguments();
+                return ((Content)args[0]).getTitle();
+            }
+        });
     }
     
     @Test

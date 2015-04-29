@@ -122,16 +122,18 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
     private final BbcServiceIdResolver sIdResolver;
+    private final ContentTitleGenerator titleGenerator;
     
     private Truncator truncator = new Truncator()
             .omitTrailingPunctuationWhenTruncated()
             .onlyTruncateAtAWordBoundary()
             .withOmissionMarker("...");
     
-    public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping, BbcServiceIdResolver sIdResolver) {
+    public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping, BbcServiceIdResolver sIdResolver, ContentTitleGenerator titleGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
         this.genreMapping = checkNotNull(genreMapping);
         this.sIdResolver = checkNotNull(sIdResolver);
+        this.titleGenerator = checkNotNull(titleGenerator);
     }
     
     @Override
@@ -252,10 +254,12 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
         
         if (content.getTitle() != null) {
-            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, content.getTitle()));
             
-            String secondaryTitle = generateAlternateTitle(content.getTitle());
-            if (!content.getTitle().equals(secondaryTitle)) {
+            String title = titleGenerator.titleFor(content);
+            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, title));
+            
+            String secondaryTitle = generateAlternateTitle(title);
+            if (!title.equals(secondaryTitle)) {
                 basicDescription.getTitle().add(generateTitle(TITLE_TYPE_SECONDARY, secondaryTitle));
             }            
         }
@@ -306,7 +310,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
 
         if (content instanceof Episode) {
             TextualType textualType = new TextualType();
-            textualType.setValue(content.getTitle());
+            textualType.setValue(titleGenerator.titleFor(content));
             relatedMaterial.getPromotionalText().add(textualType);
         }
         
