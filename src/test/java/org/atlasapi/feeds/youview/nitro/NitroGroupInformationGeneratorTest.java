@@ -6,14 +6,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.any;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
 
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
@@ -42,6 +40,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import tva.metadata._2010.BaseMemberOfType;
 import tva.metadata._2010.BasicContentDescriptionType;
@@ -67,7 +67,6 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.common.hash.Hashing;
 import com.metabroadcast.common.intl.Countries;
 
@@ -99,16 +98,25 @@ public class NitroGroupInformationGeneratorTest {
     private IdGenerator idGenerator = new NitroIdGenerator(Hashing.md5());
     private GenreMapping genreMapping = new NitroGenreMapping();
     private PeopleResolver peopleResolver = Mockito.mock(PeopleResolver.class);
+    private ContentTitleGenerator titleGenerator = Mockito.mock(ContentTitleGenerator.class);
     private NitroCreditsItemGenerator creditsGenerator = new NitroCreditsItemGenerator(peopleResolver);
     
     private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping, bbcServiceIdResolver,
-            creditsGenerator);
+            creditsGenerator, titleGenerator);
     
     @Before
     public void setup() {
         when(bbcServiceIdResolver.resolveMasterBrandId(any(Content.class))).thenReturn(MASTER_BRAND);
         when(peopleResolver.person(GEORGE_SCOTT_URI)).thenReturn(Optional.of(createPerson(GEORGE_SCOTT_URI, "George C.", "Scott")));
         when(peopleResolver.person(KUBRICK_URI)).thenReturn(Optional.of(createPerson(KUBRICK_URI, "Stanley", "Kubrick")));
+        when(titleGenerator.titleFor(any(Content.class))).thenAnswer(new Answer<String>() {
+
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                Object[] args = invocation.getArguments();
+                return ((Content)args[0]).getTitle();
+            }
+        });
     }
     
     @Test
