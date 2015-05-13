@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 
 import java.util.List;
@@ -43,13 +43,13 @@ public class RadioPlayerGenreElementCreatorTest {
 			}
 		}));
 		assertThat(mappedGenres.size(), is(6));
-		assertThat(mappedGenres, is(equalTo(ImmutableList.of(
+		assertThat(mappedGenres, hasItems(
                 "urn:tva:metadata:cs:ContentCS:2007:3.5",
                 "urn:tva:metadata:cs:IntendedAudienceCS:2005:4.2.1",
                 "urn:radioplayer:metadata:cs:Category:2012:7",
 				"urn:tva:metadata:cs:ContentCS:2007:3.1",
 				"urn:tva:metadata:cs:ContentCS:2007:3.1.3",
 				"urn:radioplayer:metadata:cs:Category:2012:6"
-		))));
+		));
 	}
 }
