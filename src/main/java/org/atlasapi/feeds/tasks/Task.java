@@ -24,6 +24,7 @@ public class Task {
     private final Optional<String> remoteId;
     private final Optional<Payload> payload;
     private final Set<Response> remoteResponses;
+    private final Optional<String> lastError;
     
     public static Builder builder() {
         return new Builder();
@@ -31,7 +32,7 @@ public class Task {
     
     private Task(Long id, DateTime created, Publisher publisher, Action action, Destination destination, Status status, 
             Optional<DateTime> uploadTime, Optional<String> remoteId, Optional<Payload> payload, 
-            Iterable<Response> remoteResponses) {
+            Iterable<Response> remoteResponses, Optional<String> lastError) {
         this.id = id;
         this.created = checkNotNull(created);
         this.publisher = checkNotNull(publisher);
@@ -42,6 +43,7 @@ public class Task {
         this.remoteId = checkNotNull(remoteId);
         this.payload = checkNotNull(payload);
         this.remoteResponses = ImmutableSet.copyOf(remoteResponses);
+        this.lastError = checkNotNull(lastError);
     }
     
     public Long id() {
@@ -66,6 +68,10 @@ public class Task {
     
     public Destination destination() {
         return destination;
+    }
+    
+    public Optional<String> lastError() {
+        return lastError;
     }
     
     public Status status() {
@@ -101,6 +107,7 @@ public class Task {
                 .add("remoteId", remoteId)
                 .add("payload", payload)
                 .add("remoteResponses", remoteResponses)
+                .add("lastError", lastError)
                 .toString();
     }
     
@@ -134,13 +141,14 @@ public class Task {
         private Optional<DateTime> uploadTime = Optional.absent();
         private Optional<String> remoteId = Optional.absent();
         private Optional<Payload> payload = Optional.absent();
+        private Optional<String> lastError = Optional.absent();
         private ImmutableSet.Builder<Response> remoteResponses = ImmutableSet.builder();
         
         private Builder() { }
         
         public Task build() {
             return new Task(id, created, publisher, action, destination, status, uploadTime, 
-                    remoteId, payload, remoteResponses.build());
+                    remoteId, payload, remoteResponses.build(), lastError);
         }
         
         public Builder withId(Long id) {
@@ -165,6 +173,11 @@ public class Task {
         
         public Builder withDestination(Destination destination) {
             this.destination = destination;
+            return this;
+        }
+        
+        public Builder withLastError(String lastError) {
+            this.lastError = Optional.fromNullable(lastError);
             return this;
         }
 

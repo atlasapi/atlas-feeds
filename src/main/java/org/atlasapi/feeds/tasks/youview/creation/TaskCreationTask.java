@@ -2,6 +2,8 @@ package org.atlasapi.feeds.tasks.youview.creation;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -136,6 +138,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
         } catch (Exception e) {
             log.error("Failed to create payload for content {}", content.getCanonicalUri(), e);
             taskStore.updateWithStatus(task.id(), Status.FAILED);
+            taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
     }
@@ -155,6 +158,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     e
             );
             taskStore.updateWithStatus(task.id(), Status.FAILED);
+            taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
     }
@@ -179,8 +183,16 @@ public abstract class TaskCreationTask extends ScheduledTask {
             );
             Task task = taskStore.save(taskCreator.taskFor(broadcastImi, broadcastHierarchy, action));
             taskStore.updateWithStatus(task.id(), Status.FAILED);
+            taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
+    }
+    
+    private String exceptionToString(Exception e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        return e.getMessage() + " " + sw.toString();
     }
     
     private UpdateProgress processOnDemand(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) {
@@ -200,6 +212,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     e
             );
             taskStore.updateWithStatus(task.id(), Status.FAILED);
+            taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
     }

@@ -75,4 +75,9 @@ public class IdSettingTaskStore implements TaskStore {
     public void removeBefore(DateTime removalDate) {
         delegate.removeBefore(removalDate);
     }
+
+    @Override
+    public void updateWithLastError(Long taskId, String lastError) {
+        delegate.updateWithLastError(taskId, lastError);
+    }
 }
