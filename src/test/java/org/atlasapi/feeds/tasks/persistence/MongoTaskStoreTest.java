@@ -24,6 +24,7 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -146,6 +147,19 @@ public class MongoTaskStoreTest {
         
         assertEquals(finalResponse.status(), fetched.status());
         assertEquals(ImmutableSet.of(firstResponse, finalResponse), fetched.remoteResponses());
+    }
+    
+    @Test
+    public void testUpdatingLastError() {
+        long taskId = 1234l;
+        Task task = createAndStoreTask(taskId, "filmUri", Status.ACCEPTED);
+        
+        store.save(task);
+        
+        store.updateWithLastError(taskId, "Error");
+        Optional<Task> retrievedTask = store.taskFor(taskId);
+        
+        assertEquals("Error", retrievedTask.get().lastError().get());
     }
     
     @Test

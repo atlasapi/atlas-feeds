@@ -37,6 +37,7 @@ public class TaskTranslatorTest {
         assertEquals(transaction.remoteId(), translated.remoteId());
         assertEquals(transaction.status(), translated.status());
         assertEquals(transaction.remoteResponses(), translated.remoteResponses());
+        assertEquals(transaction.lastError(), translated.lastError());
     }
 
     private Task createTask() {
@@ -51,6 +52,7 @@ public class TaskTranslatorTest {
                 .withAction(Action.UPDATE)
                 .withStatus(Status.ACCEPTED)
                 .withRemoteResponse(createResponse())
+                .withLastError("error")
                 .build();
     }
 

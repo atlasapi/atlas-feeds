@@ -65,4 +65,12 @@ public interface TaskStore {
      * @param removalDate
      */
     void removeBefore(DateTime removalDate);
+
+    /**
+     * Updates the record for a given task with the last error.
+     * 
+     * @param taskId
+     * @param lastError
+     */
+    void updateWithLastError(Long taskId, String lastError);
 }

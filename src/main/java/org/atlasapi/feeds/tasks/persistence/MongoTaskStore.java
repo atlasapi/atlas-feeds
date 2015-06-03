@@ -7,6 +7,7 @@ import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.CREATED_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.DESTINATION_TYPE_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.ELEMENT_ID_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.ELEMENT_TYPE_KEY;
+import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.LAST_ERROR_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.PUBLISHER_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.REMOTE_ID_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.STATUS_KEY;
@@ -64,6 +65,18 @@ public class MongoTaskStore implements TaskStore {
                 .build();
         
         collection.update(idQuery, updateStatus, false, false);
+    }
+    
+    @Override
+    public void updateWithLastError(Long taskId, String lastError) {
+        DBObject idQuery = new MongoQueryBuilder()
+                                .idEquals(taskId)
+                                .build();
+        
+        DBObject updateLastError = new MongoUpdateBuilder()
+                                      .setField(LAST_ERROR_KEY, lastError)
+                                      .build();
+        collection.update(idQuery, updateLastError, false, false);
     }
 
     @Override

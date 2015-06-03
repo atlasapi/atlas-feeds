@@ -35,6 +35,7 @@ public class TaskTranslator {
     static final String DESTINATION_TYPE_KEY = "destinationType";
     static final String REMOTE_STATUSES_KEY = "remoteStatuses";
     static final String STATUS_KEY = "status";
+    static final String LAST_ERROR_KEY = "lastError";
     static final String ELEMENT_TYPE_KEY = "elementType";
     static final String ELEMENT_ID_KEY = "elementId";
     
@@ -51,6 +52,7 @@ public class TaskTranslator {
         TranslatorUtils.fromDateTime(dbo, UPLOAD_TIME_KEY, task.uploadTime().orNull());
         TranslatorUtils.from(dbo, REMOTE_ID_KEY, task.remoteId().orNull());
         TranslatorUtils.from(dbo, PAYLOAD_KEY, (DBObject) PayloadTranslator.toDBObject(task.payload().orNull()));
+        TranslatorUtils.from(dbo, LAST_ERROR_KEY, task.lastError().orNull());
         
         TranslatorUtils.fromIterable(dbo, REMOTE_STATUSES_KEY, task.remoteResponses(), ResponseTranslator.toDBObject());
         
@@ -91,6 +93,7 @@ public class TaskTranslator {
                 .withRemoteId(TranslatorUtils.toString(dbo, REMOTE_ID_KEY))
                 .withPayload(PayloadTranslator.fromDBObject(TranslatorUtils.toDBObject(dbo, PAYLOAD_KEY)))
                 .withRemoteResponses(TranslatorUtils.toIterable(dbo, REMOTE_STATUSES_KEY, ResponseTranslator.fromDBObject()).or(ImmutableList.<Response>of()))
+                .withLastError(TranslatorUtils.toString(dbo, LAST_ERROR_KEY))
                 .build();
     }
     
