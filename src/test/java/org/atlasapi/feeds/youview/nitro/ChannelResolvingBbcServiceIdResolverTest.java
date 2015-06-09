@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import org.atlasapi.feeds.youview.NoChannelFoundException;
 import org.atlasapi.feeds.youview.NoSuchChannelAliasException;
@@ -30,24 +31,22 @@ public class ChannelResolvingBbcServiceIdResolverTest {
     private final BbcServiceIdResolver serviceIdResolver = new ChannelResolvingBbcServiceIdResolver(channelResolver); 
     
     @SuppressWarnings("deprecation") // Maybe
-    @Test(expected = NoChannelFoundException.class)
-    public void testExceptionThrownWhenNoMatchingChannelFound() {
+    public void testAbsentReturnedWhenNoMatchingChannelFound() {
         String broadcastOn = "bbcOne";
         
         Mockito.when(channelResolver.fromUri(broadcastOn)).thenReturn(Maybe.<Channel>nothing());
         
-        serviceIdResolver.resolveSId(createBroadcastOn(broadcastOn));
+        assertFalse(serviceIdResolver.resolveSId(createBroadcastOn(broadcastOn)).isPresent());
     }
 
     @SuppressWarnings("deprecation") // Maybe
-    @Test(expected = NoSuchChannelAliasException.class)
-    public void testExceptionThrownWhenChannelHasNoMatchingAlias() {
+    public void testAbsentReturnedWhenChannelHasNoMatchingAlias() {
         String broadcastOn = "bbcOne";
         Channel channel = new Channel(Publisher.METABROADCAST, "BBC One", "bbc_one", true, MediaType.VIDEO, broadcastOn);
         
         Mockito.when(channelResolver.fromUri(broadcastOn)).thenReturn(Maybe.just(channel));
         
-        serviceIdResolver.resolveSId(createBroadcastOn(broadcastOn));
+        assertFalse(serviceIdResolver.resolveSId(createBroadcastOn(broadcastOn)).isPresent());
     }
 
     @SuppressWarnings("deprecation") // Maybe
@@ -60,7 +59,7 @@ public class ChannelResolvingBbcServiceIdResolverTest {
         
         Mockito.when(channelResolver.fromUri(broadcastOn)).thenReturn(Maybe.just(channel));
         
-        String resolved = serviceIdResolver.resolveSId(createBroadcastOn(broadcastOn));
+        String resolved = serviceIdResolver.resolveSId(createBroadcastOn(broadcastOn)).get();
         
         assertEquals(SERVICE_ID, resolved);
     }
@@ -75,7 +74,7 @@ public class ChannelResolvingBbcServiceIdResolverTest {
         
         Mockito.when(channelResolver.fromUri(broadcastOn)).thenReturn(Maybe.just(channel));
         
-        String resolved = serviceIdResolver.resolveMasterBrandId(createContentOn(broadcastOn));
+        String resolved = serviceIdResolver.resolveMasterBrandId(createContentOn(broadcastOn)).get();
         
         assertEquals(SERVICE_ID, resolved);
     }

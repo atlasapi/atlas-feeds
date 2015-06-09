@@ -278,13 +278,13 @@ public class YouViewUploadModule {
     
     private YouViewContentResolver nitroBootstrapContentResolver(Publisher publisher) {
         return new FullHierarchyResolvingContentResolver(
-                new UpdatedContentResolver(contentFinder, publisher), 
+                new UpdatedContentResolver(contentFinder, bbcServiceIdResolver, publisher), 
                 contentHierarchy
         );
     }
     
     private YouViewContentResolver nitroDeltaContentResolver(Publisher publisher) {
-        return new UpdatedContentResolver(contentFinder, publisher);
+        return new UpdatedContentResolver(contentFinder, bbcServiceIdResolver, publisher);
     }
      
     @Bean
