@@ -20,6 +20,7 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
@@ -41,6 +42,7 @@ public class BroadcastHierarchyExpanderTest {
         hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping, serviceIdResolver, clock);
         
         when(idGenerator.generateBroadcastImi(anyString(), any(Broadcast.class))).thenReturn("broadcast_imi");
+        when(serviceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of("123"));
         when(serviceMapping.youviewServiceIdFor(anyString())).thenReturn(ImmutableSet.of("youviewServiceId"));
         
         Set<Version> versions = createNVersions(3);
@@ -56,6 +58,7 @@ public class BroadcastHierarchyExpanderTest {
         idGenerator = new UniqueIdGenerator();
         hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping, serviceIdResolver, clock);
         
+        when(serviceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of("123"));
         when(serviceMapping.youviewServiceIdFor(anyString())).thenReturn(ImmutableSet.of("youviewServiceId"));
         
         int numVersions = 3;
@@ -73,6 +76,7 @@ public class BroadcastHierarchyExpanderTest {
         idGenerator = new UniqueIdGenerator();
         hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping, serviceIdResolver, clock);
         
+        when(serviceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of("123"));
         when(serviceMapping.youviewServiceIdFor(anyString())).thenReturn(ImmutableSet.of("youviewServiceId"));
         
         int numNewBroadcasts = 3;
@@ -93,7 +97,7 @@ public class BroadcastHierarchyExpanderTest {
         
         ImmutableSet<String> youViewServiceIds = ImmutableSet.of("yvSID_1", "yvSID_2");
         when(serviceMapping.youviewServiceIdFor(anyString())).thenReturn(youViewServiceIds);
-        
+        when(serviceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of("123"));
         
         Set<Version> versions = createNVersions(1);
         Set<Broadcast> broadcasts = createNBroadcasts(1);
