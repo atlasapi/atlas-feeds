@@ -45,6 +45,10 @@ public class NitroTVAnytimeModule {
     public NitroGroupInformationGenerator nitroGroupInfoGenerator() {
         return new NitroGroupInformationGenerator(nitroIdGenerator(), nitroGenreMapping(), bbcServiceIdResolver(), nitroCreditsGenerator(), titleGenerator());
     }
+
+    public NitroEpisodeNumberPrefixAddingContentTitleGenerator titleGenerator() {
+        return new NitroEpisodeNumberPrefixAddingContentTitleGenerator();
+    }
     
     @Bean
     public NitroOnDemandLocationGenerator nitroOnDemandGenerator() {
@@ -55,10 +59,6 @@ public class NitroTVAnytimeModule {
         return new NitroBroadcastEventGenerator(nitroIdGenerator());
     }
     
-    public NitroEpisodeNumberPrefixAddingContentTitleGenerator titleGenerator() {
-        return new NitroEpisodeNumberPrefixAddingContentTitleGenerator(contentResolver);
-    }
-
     @Bean
     public NitroBroadcastServiceMapping nitroServiceMapping() {
         return new NitroBroadcastServiceMapping("nitro_service_mapping.csv");
