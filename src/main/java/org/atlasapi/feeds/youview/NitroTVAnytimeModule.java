@@ -44,6 +44,10 @@ public class NitroTVAnytimeModule {
     public NitroGroupInformationGenerator nitroGroupInfoGenerator() {
         return new NitroGroupInformationGenerator(nitroIdGenerator(), nitroGenreMapping(), bbcServiceIdResolver(), titleGenerator());
     }
+
+    public NitroEpisodeNumberPrefixAddingContentTitleGenerator titleGenerator() {
+        return new NitroEpisodeNumberPrefixAddingContentTitleGenerator();
+    }
     
     @Bean
     public NitroOnDemandLocationGenerator nitroOnDemandGenerator() {
