@@ -36,7 +36,7 @@ public class NitroTVAnytimeModule {
     
     @Bean
     public NitroEpisodeNumberPrefixAddingContentTitleGenerator titleGenerator() {
-        return new NitroEpisodeNumberPrefixAddingContentTitleGenerator(contentResolver);
+        return new NitroEpisodeNumberPrefixAddingContentTitleGenerator();
     }
     @Bean
     public NitroTvAnytimeElementCreator nitroElementCreator() {
