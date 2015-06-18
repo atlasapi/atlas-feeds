@@ -50,13 +50,22 @@ public class NitroEpisodeNumberPrefixAddingContentTitleGeneratorTest {
     }
     
     @Test
+    public void testNullEpisodeNumbersAreNotMutated() {
+        Brand brand = createBrand("Brand");
+        Episode episode = createEpisode(brand, null);
+        episode.setEpisodeNumber(null);
+        String episodeTitle = "Foo";
+        episode.setTitle(episodeTitle);
+        
+        assertEquals(episodeTitle, generator.titleFor(episode));
+    }
+    
+    @Test
     public void testNonEpisodeTypesAreNotMutated() {
         Item item = new Item();
         item.setTitle(EPISODE_TITLE);
         assertEquals(EPISODE_TITLE, generator.titleFor(item));
     }
-    
-    
     
     private Episode createEpisode(Brand brand, Series series) {
         Episode episode = new Episode();

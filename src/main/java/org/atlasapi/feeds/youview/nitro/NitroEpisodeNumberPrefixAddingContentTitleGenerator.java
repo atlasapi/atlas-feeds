@@ -21,6 +21,7 @@ public class NitroEpisodeNumberPrefixAddingContentTitleGenerator implements Cont
         String episodeTitle = episode.getTitle();
         
         if (episodeTitle == null 
+                || episode.getEpisodeNumber() == null
                 || DATE_PATTERN.matcher(episodeTitle).matches()
                 || EPISODE_NUMBER_PATTERN.matcher(episodeTitle).matches()) {
             return episodeTitle;
