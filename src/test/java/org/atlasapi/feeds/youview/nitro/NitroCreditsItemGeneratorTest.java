@@ -23,12 +23,17 @@ import tva.metadata._2010.CreditsListType;
 
 public class NitroCreditsItemGeneratorTest {
 
+    private final Actor ACTOR = actor("Graham Norton", "Character Name", "12345");
+    private final CrewMember ACTOR_WITHOUT_NAME = actor("", "Character Name", "12346");
+    private final CrewMember CREW_MEMBER = crewMember("So Television", PRODUCTION_COMPANY, "67890");
+    
     private final PeopleResolver peopleResolver = Mockito.mock(PeopleResolver.class);
     private final NitroCreditsItemGenerator generator = new NitroCreditsItemGenerator(peopleResolver);
 
     @Before
     public void setup() {
         when(peopleResolver.person("12345")).thenReturn(person("Graham", "Norton"));
+        when(peopleResolver.person("12346")).thenReturn(person("", ""));
         when(peopleResolver.person("67890")).thenReturn(person(null, "So Television"));
     }
 
@@ -42,6 +47,37 @@ public class NitroCreditsItemGeneratorTest {
 
     @Test
     public void testCreditsListGeneration() {
+        List<CreditsItemType> creditsItem = generateCreditsFor(people());
+        assertEquals(2, creditsItem.size());
+
+        // Improve credits check
+    }
+    
+    @Test
+    public void testCrewWithNoNameAreOmitted() {
+        List<CreditsItemType> creditsItem = generateCreditsFor(ImmutableList.of(ACTOR_WITHOUT_NAME));
+        assertTrue(creditsItem.isEmpty());
+    }
+    
+    // GivenName is a mandatory field, so if we only have a family name
+    // we should use the GivenName field rather than FamilyName, which
+    // is optional
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testSingleNameIsAlwaysGivenName() {
+        CreditsItemType credit = Iterables.getOnlyElement(generateCreditsFor(ImmutableList.of(CREW_MEMBER)));
+        
+        JAXBElement<PersonNameType> person = (JAXBElement<PersonNameType>) 
+                Iterables.getOnlyElement(credit.getPersonNameOrPersonNameIDRefOrOrganizationName());
+        
+        JAXBElement<NameComponentType> name = (JAXBElement<NameComponentType>) 
+                Iterables.getOnlyElement(person.getValue().getGivenNameOrLinkingNameOrFamilyName());
+        
+        assertThat(name.getName().getLocalPart(), is("GivenName"));
+        
+    }
+    
+    private List<CreditsItemType> generateCreditsFor(List<CrewMember> crew) {
         Item item = new Item();
         item.setPeople(people());
 
