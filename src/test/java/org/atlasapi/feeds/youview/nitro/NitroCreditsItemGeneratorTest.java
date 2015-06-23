@@ -32,6 +32,7 @@ import tva.mpeg7._2008.PersonNameType;
 public class NitroCreditsItemGeneratorTest {
 
     private final Actor ACTOR = actor("Graham Norton", "Character Name", "12345");
+    private final CrewMember ACTOR_WITHOUT_NAME = actor("", "Character Name", "12346");
     private final CrewMember CREW_MEMBER = crewMember("So Television", PRODUCTION_COMPANY, "67890");
     
     private final PeopleResolver peopleResolver = Mockito.mock(PeopleResolver.class);
@@ -40,6 +41,7 @@ public class NitroCreditsItemGeneratorTest {
     @Before
     public void setup() {
         when(peopleResolver.person("12345")).thenReturn(person("Graham", "Norton"));
+        when(peopleResolver.person("12346")).thenReturn(person("", ""));
         when(peopleResolver.person("67890")).thenReturn(person(null, "So Television"));
     }
 
@@ -57,6 +59,12 @@ public class NitroCreditsItemGeneratorTest {
         assertEquals(2, creditsItem.size());
 
         // Improve credits check
+    }
+    
+    @Test
+    public void testCrewWithNoNameAreOmitted() {
+        List<CreditsItemType> creditsItem = generateCreditsFor(ImmutableList.of(ACTOR_WITHOUT_NAME));
+        assertTrue(creditsItem.isEmpty());
     }
     
     // GivenName is a mandatory field, so if we only have a family name
