@@ -229,19 +229,12 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
         return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart());
     }
 
-    // This has been changed to reflect that content is currently available for only a 7 day window,
-    // whereas we ingest it from Nitro with a 30 day availability. This will be updated once the 
-    // switch-over has taken place.
     private XMLGregorianCalendar generateAvailabilityEnd(Location location) {
         Policy policy = location.getPolicy();
-        
-        DateTime sevenDayEnd = policy.getAvailabilityStart().plus(AVAILABILITY_WINDOW);
-        DateTime fullWindowEnd = policy.getAvailabilityEnd();
-        
-        if (sevenDayEnd.isBefore(fullWindowEnd)) {
-            return TvAnytimeElementFactory.gregorianCalendar(sevenDayEnd);
+        if (policy == null) {
+            return null;
         }
-        return TvAnytimeElementFactory.gregorianCalendar(fullWindowEnd);
+        return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityEnd());
     }
     
     private CRIDRefType generateProgram(Item item, Version version) {
