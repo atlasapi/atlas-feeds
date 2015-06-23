@@ -23,6 +23,9 @@ import tva.mpeg7._2008.PersonNameType;
 
 public class NitroCreditsItemGenerator implements CreditsItemGenerator {
 
+    private static final String FAMILY_NAME_TYPE = "FamilyName";
+    private static final String GIVEN_NAME_TYPE = "GivenName";
+    
     private final PeopleResolver peopleResolver;
 
     public NitroCreditsItemGenerator(PeopleResolver peopleResolver) {
@@ -57,9 +60,13 @@ public class NitroCreditsItemGenerator implements CreditsItemGenerator {
             Person person = optionalPerson.get();
             PersonNameType personName = new PersonNameType();
 
-            setGivenName(person, personName);
-            setFamilyName(person, personName);
-
+            if (person.getGivenName() == null) {
+                setName(person.getFamilyName(), GIVEN_NAME_TYPE, personName);
+            } else {
+                setName(person.getGivenName(), GIVEN_NAME_TYPE, personName);
+                setName(person.getFamilyName(), FAMILY_NAME_TYPE, personName);
+            }
+            
             JAXBElement<PersonNameType> personNameElem = new JAXBElement<PersonNameType>(new QName(
                     "urn:tva:metadata:2010",
                     "PersonName"), PersonNameType.class, personName);
@@ -93,24 +100,13 @@ public class NitroCreditsItemGenerator implements CreditsItemGenerator {
         return personName;
     }
 
-    private void setFamilyName(Person person, PersonNameType personName) {
-        if (person.getFamilyName() != null) {
-            NameComponentType familyName = new NameComponentType();
-            familyName.setValue(person.getFamilyName());
+    private void setName(String name, String nameType, PersonNameType personName) {
+        if (name != null) {
+            NameComponentType nameComponent = new NameComponentType();
+            nameComponent.setValue(name);
             JAXBElement<NameComponentType> nameElem = new JAXBElement<>(new QName(
                     "urn:tva:mpeg7:2008",
-                    "FamilyName"), NameComponentType.class, familyName);
-            personName.getGivenNameOrLinkingNameOrFamilyName().add(nameElem);
-        }
-    }
-
-    private void setGivenName(Person person, PersonNameType personName) {
-        if (person.getGivenName() != null) {
-            NameComponentType givenName = new NameComponentType();
-            givenName.setValue(person.getGivenName());
-            JAXBElement<NameComponentType> nameElem = new JAXBElement<>(new QName(
-                    "urn:tva:mpeg7:2008",
-                    "GivenName"), NameComponentType.class, givenName);
+                    nameType), NameComponentType.class, nameComponent);
             personName.getGivenNameOrLinkingNameOrFamilyName().add(nameElem);
         }
     }
