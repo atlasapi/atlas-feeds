@@ -12,6 +12,8 @@ import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.UPLOAD
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.fromDBObject;
 import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.toDBObject;
 
+import java.util.regex.Pattern;
+
 import org.atlasapi.feeds.youview.tasks.Response;
 import org.atlasapi.feeds.youview.tasks.Status;
 import org.atlasapi.feeds.youview.tasks.Task;
@@ -117,10 +119,10 @@ public class MongoTaskStore implements TaskStore {
         mongoQuery.fieldEquals(PUBLISHER_KEY, query.publisher().key());
         
         if (query.contentUri().isPresent()) {
-            mongoQuery.regexMatch(CONTENT_KEY, transformToRegexPattern(query.contentUri().get()));
+            mongoQuery.regexMatch(CONTENT_KEY, transformToPrefixRegexPattern(query.contentUri().get()));
         }
         if (query.remoteId().isPresent()) {
-            mongoQuery.regexMatch(REMOTE_ID_KEY, transformToRegexPattern(query.remoteId().get()));
+            mongoQuery.regexMatch(REMOTE_ID_KEY, transformToPrefixRegexPattern(query.remoteId().get()));
         }
         if (query.status().isPresent()) {
             mongoQuery.fieldEquals(STATUS_KEY, query.status().get().name());
@@ -132,7 +134,7 @@ public class MongoTaskStore implements TaskStore {
             mongoQuery.fieldEquals(ELEMENT_TYPE_KEY, query.elementType().get().name());
         }
         if (query.elementId().isPresent()) {
-            mongoQuery.fieldEquals(ELEMENT_ID_KEY, transformToRegexPattern(query.elementId().get()));
+            mongoQuery.fieldEquals(ELEMENT_ID_KEY, transformToPrefixRegexPattern(query.elementId().get()));
         }
         
         DBCursor cursor = getOrderedCursor(mongoQuery.build())
@@ -144,7 +146,7 @@ public class MongoTaskStore implements TaskStore {
                 .filter(Predicates.notNull());
     }
 
-    private String transformToRegexPattern(String input) {
-        return input.replace(".", "\\.");
+    private String transformToPrefixRegexPattern(String input) {
+        return "^" + Pattern.quote(input);
     }
 }

@@ -249,7 +249,7 @@ public class MongoTaskStoreTest {
     public void testRegexMatchOnTransactionIdQueryCorrectlyTrimsReturnedSetOfTransactions() {
         
         Task desiredTask = createAndStoreTask(1234l, "content", Status.ACCEPTED);
-        Task anotherTask = createAndStoreTask(2345l, "content", Status.ACCEPTED);
+        Task anotherTask = createAndStoreTask(2345l, "notdesiredcontent", Status.ACCEPTED);
         Task thirdTask = createAndStoreTask(3456l, "content", Status.ACCEPTED);
         
         String transactionId = "desiredTxn";
@@ -265,6 +265,29 @@ public class MongoTaskStoreTest {
         Iterable<Task> allTransactions = store.allTasks(query);
         
         assertEquals(desiredTask, Iterables.getOnlyElement(allTransactions));
+    }
+    
+    @Test
+    public void testRegexMatchOnContentUriIsPrefixQuery() {
+        
+        Task desiredTask = createAndStoreTask(1234l, "desireduri", Status.ACCEPTED);
+        Task notDesiredTask = createAndStoreTask(1235l, "notdesireduri", Status.ACCEPTED);
+        
+        Selection selection = selectionWithParams(100, 0);
+        TaskQuery query = TaskQuery
+                            .builder(selection, publisher)
+                            .withContentUri("uri")
+                            .build();
+        
+        assertFalse(store.allTasks(query).iterator().hasNext());
+        
+        TaskQuery successfulQuery = TaskQuery
+                                        .builder(selection, publisher)
+                                        .withContentUri("desireduri")
+                                        .build();
+        
+        assertEquals(desiredTask, Iterables.getOnlyElement(store.allTasks(successfulQuery)));
+        
     }
     
     private Task createAndStoreTask(long taskId, String content, Status status) {
