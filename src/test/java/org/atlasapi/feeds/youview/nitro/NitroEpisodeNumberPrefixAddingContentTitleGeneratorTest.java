@@ -61,6 +61,28 @@ public class NitroEpisodeNumberPrefixAddingContentTitleGeneratorTest {
     }
     
     @Test
+    public void testEpisodePrefixedWithPennodIsNotMutated() {
+        Brand brand = createBrand("Brand");
+        Episode episode = createEpisode(brand, null);
+        episode.setEpisodeNumber(1);
+        String episodeTitle = "Pennod 33";
+        episode.setTitle(episodeTitle);
+        
+        assertEquals(episodeTitle, generator.titleFor(episode));
+    }
+    
+    @Test
+    public void testEpisodePrefixedWithEpisodesIsNotMutated() {
+        Brand brand = createBrand("Brand");
+        Episode episode = createEpisode(brand, null);
+        episode.setEpisodeNumber(1);
+        String episodeTitle = "Episodes 1 and 2";
+        episode.setTitle(episodeTitle);
+        
+        assertEquals(episodeTitle, generator.titleFor(episode));
+    }
+    
+    @Test
     public void testNonEpisodeTypesAreNotMutated() {
         Item item = new Item();
         item.setTitle(EPISODE_TITLE);

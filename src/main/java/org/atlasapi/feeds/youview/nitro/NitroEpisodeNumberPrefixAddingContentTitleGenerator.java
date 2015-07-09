@@ -9,7 +9,7 @@ import org.atlasapi.media.entity.Episode;
 public class NitroEpisodeNumberPrefixAddingContentTitleGenerator implements ContentTitleGenerator {
     
     private static Pattern DATE_PATTERN = Pattern.compile("^\\d{2}\\/\\d{2}\\/\\d{4}$");
-    private static Pattern EPISODE_NUMBER_PATTERN = Pattern.compile("^(Episode|Pennod|Part|Week) [\\d+]$");
+    private static Pattern EPISODE_NUMBER_PATTERN = Pattern.compile("^(Episode|Episodes|Pennod|Pennodau|Part|Week) [\\d]+(.*)?");
     
     public String titleFor(Content content) {
         if (!(content instanceof Episode) 
