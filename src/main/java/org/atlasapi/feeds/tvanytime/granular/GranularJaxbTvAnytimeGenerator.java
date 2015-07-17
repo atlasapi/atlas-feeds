@@ -12,8 +12,11 @@ import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.media.entity.Content;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
@@ -30,6 +33,8 @@ import tva.metadata._2010.TVAMainType;
 
 public class GranularJaxbTvAnytimeGenerator implements GranularTvAnytimeGenerator {
 
+    private static final Logger log = LoggerFactory.getLogger(GranularJaxbTvAnytimeGenerator.class);
+    
     private static final String TVA_LANGUAGE = "en-GB";
 
     private final ObjectFactory factory = new ObjectFactory();
@@ -109,33 +114,54 @@ public class GranularJaxbTvAnytimeGenerator implements GranularTvAnytimeGenerato
             Map<String, ItemOnDemandHierarchy> onDemands) throws TvaGenerationException {
         try {
             GroupInformationType groupInformationElem = elementCreator.createGroupInformationElementFor(content);
-            Iterable<ProgramInformationType> programInformationElems = Iterables.transform(
+            Iterable<ProgramInformationType> programInformationElems = Iterables.filter(Iterables.transform(
                     versions.entrySet(), 
                     new Function<Entry<String, ItemAndVersion>, ProgramInformationType>(){
                         @Override
                         public ProgramInformationType apply(Entry<String, ItemAndVersion> input) {
-                            return elementCreator.createProgramInformationElementFor(input.getValue(), input.getKey());
+                            try {
+                                return elementCreator.createProgramInformationElementFor(input.getValue(), input.getKey());
+                            } catch (Exception e) {
+                                log.error("Failed to generate programme information for item {} version {}", 
+                                        input.getValue().item().getCanonicalUri(), input.getValue().version().getCanonicalUri());
+                                return null;
+                            }
                         }
                     }
-            );
-            Iterable<BroadcastEventType> broadcastElems = Iterables.transform(
+            ), Predicates.notNull());
+            
+            Iterable<BroadcastEventType> broadcastElems = Iterables.filter(Iterables.transform(
                     broadcasts.entrySet(), 
                     new Function<Entry<String, ItemBroadcastHierarchy>, BroadcastEventType>(){
                         @Override
                         public BroadcastEventType apply(Entry<String, ItemBroadcastHierarchy> input) {
-                            return elementCreator.createBroadcastEventElementFor(input.getValue(), input.getKey());
+                            try {
+                                return elementCreator.createBroadcastEventElementFor(input.getValue(), input.getKey());
+                            } catch (Exception e) {
+                                log.error("Failed to generate programme information for item {} broadcast {}", 
+                                        input.getValue().item().getCanonicalUri(), input.getValue().broadcast().getSourceId());
+                                return null;
+                            }
                         }
                     }
-            );
-            Iterable<OnDemandProgramType> onDemandElems = Iterables.transform(
+            ), Predicates.notNull());
+            
+            Iterable<OnDemandProgramType> onDemandElems = Iterables.filter(Iterables.transform(
                     onDemands.entrySet(), 
                     new Function<Entry<String, ItemOnDemandHierarchy>, OnDemandProgramType>(){
                         @Override
                         public OnDemandProgramType apply(Entry<String, ItemOnDemandHierarchy> input) {
-                            return elementCreator.createOnDemandElementFor(input.getValue(), input.getKey());
+                            try {
+                                return elementCreator.createOnDemandElementFor(input.getValue(), input.getKey());
+                            } catch (Exception e) {
+                                log.error("Failed to generate programme information for item {} location {}", 
+                                        input.getValue().item().getCanonicalUri(), input.getValue().location().getUri());
+                                return null;
+                            }
                         }
                     }
-            );
+            ), Predicates.notNull());
+            
             return createTVAMainFrom(
                     ImmutableSet.of(groupInformationElem),
                     programInformationElems,
