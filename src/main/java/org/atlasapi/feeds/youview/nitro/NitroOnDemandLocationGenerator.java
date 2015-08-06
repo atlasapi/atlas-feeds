@@ -223,9 +223,6 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
         if (policy == null) {
             return null;
         }
-        if (policy.getActualAvailabilityStart() != null) {
-            return TvAnytimeElementFactory.gregorianCalendar(policy.getActualAvailabilityStart());
-        }
         return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart());
     }
 
