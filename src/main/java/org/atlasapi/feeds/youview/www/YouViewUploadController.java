@@ -189,7 +189,7 @@ public class YouViewUploadController {
                     Task bcastTask = taskCreator.taskFor(broadcast.getKey(), broadcast.getValue(), Action.UPDATE);
                     Optional<Payload> broadcastPayload = payloadCreator.payloadFrom(broadcast.getKey(), broadcast.getValue());
                     taskStore.save(bcastTask);
-                    if (!broadcastPayload.isPresent()) {
+                    if (broadcastPayload.isPresent()) {
                         taskStore.updateWithPayload(bcastTask.id(), broadcastPayload.get());
                     }
                 }
