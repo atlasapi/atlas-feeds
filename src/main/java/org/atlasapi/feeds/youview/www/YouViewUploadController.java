@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Destination;
+import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
@@ -22,6 +23,9 @@ import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.feeds.youview.payload.PayloadCreator;
+import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -47,16 +51,24 @@ public class YouViewUploadController {
     private final ContentResolver contentResolver;
     private final TaskCreator taskCreator;
     private final TaskStore taskStore;
+    private final PayloadCreator payloadCreator;
     private final ContentHierarchyExpander hierarchyExpander;
     private final RevocationProcessor revocationProcessor;
     private final Clock clock;
     
-    public YouViewUploadController(ContentResolver contentResolver, TaskCreator taskCreator, 
-            TaskStore taskStore, ContentHierarchyExpander hierarchyExpander, 
-            RevocationProcessor revocationProcessor, Clock clock) {
+    public YouViewUploadController(
+            ContentResolver contentResolver,
+            TaskCreator taskCreator,
+            TaskStore taskStore,
+            PayloadCreator payloadCreator,
+            ContentHierarchyExpander hierarchyExpander,
+            RevocationProcessor revocationProcessor,
+            Clock clock
+    ) {
         this.contentResolver = checkNotNull(contentResolver);
         this.taskCreator = checkNotNull(taskCreator);
         this.taskStore = checkNotNull(taskStore);
+        this.payloadCreator = checkNotNull(payloadCreator);
         this.hierarchyExpander = checkNotNull(hierarchyExpander);
         this.revocationProcessor = checkNotNull(revocationProcessor);
         this.clock = checkNotNull(clock);
@@ -74,7 +86,7 @@ public class YouViewUploadController {
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri", required = true) String uri,
             @RequestParam(value = "element_id", required = false) String elementId,
-            @RequestParam(value = "type", required = false) String typeStr) throws IOException, HttpException {
+            @RequestParam(value = "type", required = false) String typeStr) throws IOException, HttpException, PayloadGenerationException {
         
         Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
         if (!publisher.isPresent()) {
@@ -162,21 +174,31 @@ public class YouViewUploadController {
         } else {
             Task task = taskCreator.taskFor(hierarchyExpander.contentCridFor(toBeUploaded.get()), toBeUploaded.get(), Action.UPDATE);
             taskStore.save(task);
+            Payload p = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(toBeUploaded.get()), toBeUploaded.get());
+            taskStore.updateWithPayload(task.id(), p);
             if (content instanceof Item) {
                 Map<String, ItemAndVersion> versions = hierarchyExpander.versionHierarchiesFor((Item) content);
                 for (Entry<String, ItemAndVersion> version : versions.entrySet()) {
                     Task versionTask = taskCreator.taskFor(version.getKey(), version.getValue(), Action.UPDATE);
+                    Payload versionPayload = payloadCreator.payloadFrom(version.getKey(), version.getValue());
                     taskStore.save(versionTask);
+                    taskStore.updateWithPayload(versionTask.id(), versionPayload);
                 }
                 Map<String, ItemBroadcastHierarchy> broadcasts = hierarchyExpander.broadcastHierarchiesFor((Item) content);
                 for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcasts.entrySet()) {
                     Task bcastTask = taskCreator.taskFor(broadcast.getKey(), broadcast.getValue(), Action.UPDATE);
+                    Optional<Payload> broadcastPayload = payloadCreator.payloadFrom(broadcast.getKey(), broadcast.getValue());
                     taskStore.save(bcastTask);
+                    if (!broadcastPayload.isPresent()) {
+                        taskStore.updateWithPayload(bcastTask.id(), broadcastPayload.get());
+                    }
                 }
                 Map<String, ItemOnDemandHierarchy> onDemands = hierarchyExpander.onDemandHierarchiesFor((Item) content);
                 for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
                     Task odTask = taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), Action.UPDATE);
+                    Payload odPayload = payloadCreator.payloadFrom(onDemand.getKey(), onDemand.getValue());
                     taskStore.save(odTask);
+                    taskStore.updateWithPayload(odTask.id(), odPayload);
                 }
             }
         }

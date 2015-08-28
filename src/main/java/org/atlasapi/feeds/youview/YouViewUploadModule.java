@@ -27,7 +27,6 @@ import org.atlasapi.feeds.tasks.youview.processing.YouViewTaskProcessor;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.ValidatingTvAnytimeGenerator;
 import org.atlasapi.feeds.youview.client.HttpYouViewClient;
-import org.atlasapi.feeds.youview.client.NoOpYouViewClient;
 import org.atlasapi.feeds.youview.client.ReferentialIntegrityCheckingReportHandler;
 import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
@@ -147,7 +146,7 @@ public class YouViewUploadModule {
     private @Autowired ContentHierarchyExpander contentHierarchyExpander;
     private @Autowired FeedStatisticsStore feedStatsStore;
     private @Autowired ContentHierarchyExtractor contentHierarchy;
-    
+
     private @Value("${youview.upload.validation}") String performValidation;
 
     // N.B. The Task trimming task should probably move to a more appropriate location once Tasks
@@ -217,7 +216,15 @@ public class YouViewUploadModule {
 
     @Bean
     public YouViewUploadController uploadController() throws JAXBException, SAXException {
-        return new YouViewUploadController(contentResolver, taskCreator(), taskStore, contentHierarchyExpander, revocationProcessor(), clock);
+        return new YouViewUploadController(
+                contentResolver,
+                taskCreator(),
+                taskStore,
+                payloadCreator(),
+                contentHierarchyExpander,
+                revocationProcessor(),
+                clock
+        );
     }
     
     private ScheduledTask uploadTask() throws JAXBException, SAXException {
