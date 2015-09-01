@@ -99,9 +99,12 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         }
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier(content));
-        instanceDescription.getCaptionLanguage().add(captionLanguage(language));
+        
+        if (Boolean.TRUE.equals(encoding.getSubtitled())) {
+            instanceDescription.getCaptionLanguage().add(captionLanguage(language));
+        }
 
-        if (Boolean.TRUE.equals(encoding.getSigned())) {
+        if (!Boolean.FALSE.equals(encoding.getSigned())) {
             SignLanguageType signLanguageType = new SignLanguageType();
             signLanguageType.setValue(BRITISH_SIGN_LANGUAGE);
             instanceDescription.getSignLanguage().add(signLanguageType);
