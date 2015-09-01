@@ -10,6 +10,7 @@ import org.atlasapi.feeds.youview.nitro.NitroBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.nitro.NitroContentHierarchyExpander;
 import org.atlasapi.feeds.youview.nitro.NitroCreditsItemGenerator;
+import org.atlasapi.feeds.youview.nitro.NitroEpisodeNumberPrefixAddingContentTitleGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroGenreMapping;
 import org.atlasapi.feeds.youview.nitro.NitroGroupInformationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
@@ -18,11 +19,8 @@ import org.atlasapi.feeds.youview.nitro.NitroProgramInformationGenerator;
 import org.atlasapi.feeds.youview.persistence.IdMappingStore;
 import org.atlasapi.feeds.youview.persistence.StoringMappingIdGenerator;
 import org.atlasapi.media.channel.ChannelResolver;
-<<<<<<< HEAD
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.PeopleResolver;
-=======
->>>>>>> mbst-9956-tasks-refactor
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,7 +42,7 @@ public class NitroTVAnytimeModule {
     
     @Bean
     public NitroGroupInformationGenerator nitroGroupInfoGenerator() {
-        return new NitroGroupInformationGenerator(nitroIdGenerator(), nitroGenreMapping(), bbcServiceIdResolver());
+        return new NitroGroupInformationGenerator(nitroIdGenerator(), nitroGenreMapping(), bbcServiceIdResolver(), titleGenerator());
     }
     
     @Bean
@@ -52,8 +50,14 @@ public class NitroTVAnytimeModule {
         return new NitroOnDemandLocationGenerator(nitroIdGenerator());
     }
     
-    @Bean NitroBroadcastEventGenerator nitroBroadcastGenerator() {
+    @Bean 
+    public NitroBroadcastEventGenerator nitroBroadcastGenerator() {
         return new NitroBroadcastEventGenerator(nitroIdGenerator());
+    }
+
+    @Bean
+    public NitroEpisodeNumberPrefixAddingContentTitleGenerator titleGenerator() {
+        return new NitroEpisodeNumberPrefixAddingContentTitleGenerator();
     }
 
     @Bean

@@ -43,6 +43,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import tva.metadata._2010.BaseMemberOfType;
 import tva.metadata._2010.BasicContentDescriptionType;
@@ -101,15 +103,24 @@ public class NitroGroupInformationGeneratorTest {
     private GenreMapping genreMapping = new NitroGenreMapping();
     private PeopleResolver peopleResolver = Mockito.mock(PeopleResolver.class);
     private NitroCreditsItemGenerator creditsGenerator = new NitroCreditsItemGenerator(peopleResolver);
+    private ContentTitleGenerator titleGenerator = Mockito.mock(ContentTitleGenerator.class);
     
     private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping, bbcServiceIdResolver,
-            creditsGenerator);
+            creditsGenerator, titleGenerator);
     
     @Before
     public void setup() {
         when(bbcServiceIdResolver.resolveMasterBrandId(any(Content.class))).thenReturn(Optional.of(MASTER_BRAND));
         when(peopleResolver.person(GEORGE_SCOTT_URI)).thenReturn(Optional.of(createPerson(GEORGE_SCOTT_URI, "George C.", "Scott")));
         when(peopleResolver.person(KUBRICK_URI)).thenReturn(Optional.of(createPerson(KUBRICK_URI, "Stanley", "Kubrick")));
+        when(titleGenerator.titleFor(any(Content.class))).thenAnswer(new Answer<String>() {
+
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                Object[] args = invocation.getArguments();
+                return ((Content)args[0]).getTitle();
+            }
+        });
     }
     
     @Test
