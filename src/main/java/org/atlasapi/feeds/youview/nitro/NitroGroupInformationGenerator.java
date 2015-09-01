@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
+import org.atlasapi.feeds.tvanytime.CreditsItemGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -122,16 +123,19 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
     private final BbcServiceIdResolver sIdResolver;
+    private final CreditsItemGenerator creditsGenerator;
     
     private Truncator truncator = new Truncator()
             .omitTrailingPunctuationWhenTruncated()
             .onlyTruncateAtAWordBoundary()
             .withOmissionMarker("...");
     
-    public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping, BbcServiceIdResolver sIdResolver) {
+    public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping,
+            BbcServiceIdResolver sIdResolver, CreditsItemGenerator creditsGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
         this.genreMapping = checkNotNull(genreMapping);
         this.sIdResolver = checkNotNull(sIdResolver);
+        this.creditsGenerator = checkNotNull(creditsGenerator);
     }
     
     @Override
@@ -280,6 +284,8 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         if (relatedMaterial.isPresent()) {
             basicDescription.getRelatedMaterial().add(relatedMaterial.get());
         }
+
+        basicDescription.setCreditsList(creditsGenerator.generate(content));
         
         return basicDescription;
     }

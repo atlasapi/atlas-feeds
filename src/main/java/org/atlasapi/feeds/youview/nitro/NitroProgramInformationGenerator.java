@@ -51,7 +51,7 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
     };
     
     private final IdGenerator idGenerator;
-    
+
     public NitroProgramInformationGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
     }
@@ -103,12 +103,14 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
     }
 
     private List<String> generateProductLocations(Item item) {
-        return ImmutableList.copyOf(Iterables.transform(item.getCountriesOfOrigin(), new Function<Country, String>() {
-            @Override
-            public String apply(Country input) {
-                return input.code().toLowerCase();
-            }
-        }));
+        return ImmutableList.copyOf(Iterables.transform(item.getCountriesOfOrigin(),
+                new Function<Country, String>() {
+
+                    @Override
+                    public String apply(Country input) {
+                        return input.code().toLowerCase();
+                    }
+                }));
     }
 
     private TVAParentalGuidanceType generateParentalGuidance(Version version) {

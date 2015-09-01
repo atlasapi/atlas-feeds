@@ -1,0 +1,81 @@
+package org.atlasapi.feeds.youview.nitro;
+
+import static org.atlasapi.media.entity.CrewMember.Role.PRODUCTION_COMPANY;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+
+import org.atlasapi.media.entity.Actor;
+import org.atlasapi.media.entity.CrewMember;
+import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Person;
+import org.atlasapi.persistence.content.PeopleResolver;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
+
+import tva.metadata._2010.CreditsItemType;
+import tva.metadata._2010.CreditsListType;
+
+public class NitroCreditsItemGeneratorTest {
+
+    private final PeopleResolver peopleResolver = Mockito.mock(PeopleResolver.class);
+    private final NitroCreditsItemGenerator generator = new NitroCreditsItemGenerator(peopleResolver);
+
+    @Before
+    public void setup() {
+        when(peopleResolver.person("12345")).thenReturn(person("Graham", "Norton"));
+        when(peopleResolver.person("67890")).thenReturn(person(null, "So Television"));
+    }
+
+    private Optional<Person> person(String givenName, String familyName) {
+        Person person = new Person();
+        person.setGivenName(givenName);
+        person.setFamilyName(familyName);
+
+        return Optional.of(person);
+    }
+
+    @Test
+    public void testCreditsListGeneration() {
+        Item item = new Item();
+        item.setPeople(people());
+
+        CreditsListType creditsList = generator.generate(item);
+        List<CreditsItemType> creditsItem = creditsList.getCreditsItem();
+
+        assertEquals(2, creditsItem.size());
+
+        // Improve credits check
+    }
+
+    private List<CrewMember> people() {
+        return ImmutableList.of(
+            actor("Graham Norton", "Character Name", "12345"),
+            crewMember("So Television", PRODUCTION_COMPANY, "67890")
+        );
+    }
+
+    private CrewMember crewMember(String name, CrewMember.Role role, String id) {
+        CrewMember crewMember = new CrewMember();
+        crewMember.withName(name);
+        crewMember.withRole(role);
+        crewMember.setCanonicalUri(id);
+
+        return crewMember;
+    }
+
+    private Actor actor(String name, String characterName, String id) {
+        Actor actor = new Actor();
+        actor.withName(name);
+        actor.withCharacter(characterName);
+        actor.setCanonicalUri(id);
+
+        return actor;
+    }
+
+}
