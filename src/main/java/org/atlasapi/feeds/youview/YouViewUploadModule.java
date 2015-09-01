@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview;
 
 import static com.metabroadcast.common.time.DateTimeZones.UTC;
-import static org.joda.time.DateTimeConstants.JUNE;
+import static org.joda.time.DateTimeConstants.AUGUST;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -123,7 +123,7 @@ public class YouViewUploadModule {
     
     private static final String TASK_NAME_PATTERN = "YouView %s TVAnytime %s Upload";
     private static final DestinationType DESTINATION_TYPE = DestinationType.YOUVIEW;
-    private static final DateTime BOOTSTRAP_START_DATE = new DateTime(2015, JUNE, 1, 0, 0, 0, 0, UTC);
+    private static final DateTime BOOTSTRAP_START_DATE = new DateTime(2015, AUGUST, 24, 0, 0, 0, 0, UTC);
     
     private final Clock clock = new SystemClock(DateTimeZone.UTC);
     
