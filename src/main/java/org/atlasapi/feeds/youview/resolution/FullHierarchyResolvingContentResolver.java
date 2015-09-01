@@ -37,11 +37,6 @@ public class FullHierarchyResolvingContentResolver implements YouViewContentReso
         return resolveHierarchyFor(delegate.updatedSince(dateTime));
     }
 
-    @Override
-    public Iterator<Content> allContent() {
-        return resolveHierarchyFor(delegate.allContent());
-    }
-    
     private Iterator<Content> resolveHierarchyFor(Iterator<Content> content) {
         return Iterators.concat(Iterators.transform(content, new Function<Content, Iterator<Content>>() {
             @Override

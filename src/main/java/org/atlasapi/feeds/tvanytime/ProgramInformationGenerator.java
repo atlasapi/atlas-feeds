@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.tvanytime;
 
+import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 
@@ -16,5 +17,5 @@ import tva.metadata._2010.ProgramInformationType;
  */
 public interface ProgramInformationGenerator {
     
-    Iterable<ProgramInformationType> generate(Item item);
+    ProgramInformationType generate(ItemAndVersion version, String versionCrid);
 }

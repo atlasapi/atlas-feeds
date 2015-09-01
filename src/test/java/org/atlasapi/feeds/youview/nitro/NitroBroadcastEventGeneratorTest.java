@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 
-import org.atlasapi.feeds.tvanytime.granular.GranularBroadcastEventGenerator;
+import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
@@ -26,6 +26,7 @@ import org.mockito.Mockito;
 
 import tva.metadata._2010.BroadcastEventType;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.metabroadcast.common.time.Clock;
@@ -47,7 +48,7 @@ public class NitroBroadcastEventGeneratorTest {
     private BroadcastServiceMapping serviceMapping = Mockito.mock(BroadcastServiceMapping.class);
     private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
     
-    private final GranularBroadcastEventGenerator generator;
+    private final BroadcastEventGenerator generator;
     
     public NitroBroadcastEventGeneratorTest() throws DatatypeConfigurationException {
         this.generator = new NitroBroadcastEventGenerator(idGenerator);
@@ -56,7 +57,7 @@ public class NitroBroadcastEventGeneratorTest {
     @Before
     public void setup() {
         Channel channel = Mockito.mock(Channel.class);
-        when(bbcServiceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(BBC_SERVICE_ID);
+        when(bbcServiceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of(BBC_SERVICE_ID));
         Alias alias = new Alias("bbc:service:id", BBC_SERVICE_ID);
         when(channel.getAliases()).thenReturn(ImmutableSet.of(alias));
         

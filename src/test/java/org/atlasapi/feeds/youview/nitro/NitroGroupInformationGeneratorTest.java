@@ -107,7 +107,7 @@ public class NitroGroupInformationGeneratorTest {
     
     @Before
     public void setup() {
-        when(bbcServiceIdResolver.resolveMasterBrandId(any(Content.class))).thenReturn(MASTER_BRAND);
+        when(bbcServiceIdResolver.resolveMasterBrandId(any(Content.class))).thenReturn(Optional.of(MASTER_BRAND));
         when(peopleResolver.person(GEORGE_SCOTT_URI)).thenReturn(Optional.of(createPerson(GEORGE_SCOTT_URI, "George C.", "Scott")));
         when(peopleResolver.person(KUBRICK_URI)).thenReturn(Optional.of(createPerson(KUBRICK_URI, "Stanley", "Kubrick")));
     }

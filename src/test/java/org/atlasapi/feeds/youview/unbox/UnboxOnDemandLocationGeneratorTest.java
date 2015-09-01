@@ -2,12 +2,12 @@ package org.atlasapi.feeds.youview.unbox;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
 import java.util.Set;
 
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
+import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Certificate;
@@ -33,7 +33,6 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.metabroadcast.common.intl.Countries;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
@@ -58,18 +57,15 @@ public class UnboxOnDemandLocationGeneratorTest {
     private final OnDemandLocationGenerator generator = new UnboxOnDemandLocationGenerator(idGenerator);
 
     @Test
-    public void testOnDemandNotCreatedWhenNoEncoding() {
-        Film film = createUnboxFilm();
-        
-        Set<Version> versions = Sets.newHashSet(new Version());
-        film.setVersions(versions);
-        
-        assertTrue("No element should be created when no encoding present", Iterables.isEmpty(generator.generate(film)));
-    }
-    
-    @Test
     public void testNonPublisherSpecificFields() {
-        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) Iterables.getOnlyElement(generator.generate(createUnboxFilm()));
+        Location location = createLocation();
+        Encoding encoding = createEncoding(location);
+        Version version = createVersion(encoding);
+        Film film = createFilm(version);
+        ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, location);
+        String onDemandImi = "onDemandImi";
+        
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);
 
         assertEquals("P0DT1H30M0.000S", onDemand.getPublishedDuration().toString());
         assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
@@ -109,7 +105,14 @@ public class UnboxOnDemandLocationGeneratorTest {
     
     @Test
     public void testUnboxSpecificFields() {
-        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) Iterables.getOnlyElement(generator.generate(createUnboxFilm()));
+        Location location = createLocation();
+        Encoding encoding = createEncoding(location);
+        Version version = createVersion(encoding);
+        Film film = createFilm(version);
+        ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, location);
+        String onDemandImi = "onDemandImi";
+        
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);
         
         assertEquals("http://unbox.amazon.co.uk/OnDemand", onDemand.getServiceIDRef());
         assertEquals("crid://unbox.amazon.co.uk/product/177221_version", onDemand.getProgram().getCrid());
@@ -120,7 +123,7 @@ public class UnboxOnDemandLocationGeneratorTest {
         assertEquals("deep_linking_id.unbox.amazon.co.uk", otherId.getAuthority());
     }
 
-    private Film createUnboxFilm() {
+    private Film createFilm(Version version) {
         Film film = new Film();
         
         film.setCanonicalUri("http://unbox.amazon.co.uk/movies/177221");
@@ -130,29 +133,42 @@ public class UnboxOnDemandLocationGeneratorTest {
         film.setCertificates(ImmutableList.of(new Certificate("PG", Countries.GB)));
         film.setYear(1963);
         film.addAlias(new Alias("gb:amazon:asin", "filmAsin"));
-        film.addVersion(createVersion());
+        film.addVersion(version);
         
         return film;
     }
 
-    private Version createVersion() {
+    private Version createVersion(Encoding encoding) {
         Version version = new Version();
+        
+        version.addManifestedAs(encoding);
+        version.setDuration(Duration.standardMinutes(90));
+        
+        return version;
+    }
+
+    private Encoding createEncoding(Location location) {
         Encoding encoding = new Encoding();
+        
         encoding.setVideoHorizontalSize(1280);
         encoding.setVideoVerticalSize(720);
         encoding.setVideoAspectRatio("16:9");
         encoding.setBitRate(3308);
+        encoding.addAvailableAt(location);
         
+        return encoding;
+    }
+
+    private Location createLocation() {
         Location location = new Location();
+        
         Policy policy = new Policy();
 
         policy.setAvailabilityStart(new DateTime(2012, 7, 3, 0, 0, 0, DateTimeZone.UTC));
         policy.setAvailabilityEnd(new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC));
         
         location.setPolicy(policy);
-        encoding.addAvailableAt(location);
-        version.addManifestedAs(encoding);
-        version.setDuration(Duration.standardMinutes(90));
-        return version;
+        
+        return location;
     }
 }

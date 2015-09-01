@@ -1,11 +1,11 @@
 package org.atlasapi.feeds.tvanytime;
 
-import org.atlasapi.media.entity.Item;
+import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 
 import tva.metadata._2010.BroadcastEventType;
 
 
 public interface BroadcastEventGenerator {
 
-    Iterable<BroadcastEventType> generate(Item item);
+    BroadcastEventType generate(ItemBroadcastHierarchy broadcast, String broadcastImi);
 }

@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -86,12 +87,23 @@ public class BroadcastHierarchyExpander {
     }
     
     private Iterable<ItemBroadcastHierarchy> expandBroadcastHierarchyFor(final Item item, final Version version, final Broadcast broadcast) {
-        Iterable<String> youViewServiceIds = serviceMapping.youviewServiceIdFor(serviceIdResolver.resolveSId(broadcast));
-        if (Iterables.isEmpty(youViewServiceIds)) {
+        Optional<Iterable<String>> youViewServiceIds 
+            = serviceIdResolver.resolveSId(broadcast)
+                               .transform(new Function<String, Iterable<String>>() {
+                                                    @Override
+                                                    public Iterable<String> apply(
+                                                            String input) {
+                                                        return serviceMapping.youviewServiceIdFor(input);
+                                                    }
+                                               }
+                                          );
+        
+        if (!youViewServiceIds.isPresent() || Iterables.isEmpty(youViewServiceIds.get())) {
             log.warn("broadcast {} on {} has no mapped YouView service IDs", broadcast.getCanonicalUri(), broadcast.getBroadcastOn());
             return ImmutableList.of();
         }
-        return Iterables.transform(youViewServiceIds, new Function<String, ItemBroadcastHierarchy>() {
+        
+        return Iterables.transform(youViewServiceIds.get(), new Function<String, ItemBroadcastHierarchy>() {
             @Override
             public ItemBroadcastHierarchy apply(String input) {
                 return new ItemBroadcastHierarchy(item, version, broadcast, input);

@@ -9,6 +9,7 @@ import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Series;
+import org.atlasapi.media.entity.SeriesRef;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
 
@@ -90,6 +91,20 @@ public class ContentResolvingContentHierarchyExtractor implements ContentHierarc
         ChildRef last = Iterables.getLast(brand.getChildRefs());
         ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(last.getUri()));
         return (Item) resolved.asResolvedMap().get(last.getUri()); 
+    }
+
+    @Override
+    public Iterable<Series> seriesFor(Brand brand) {
+        Iterable<String> seriesUris = Iterables.transform(brand.getSeriesRefs(), SeriesRef.TO_URI);
+        ResolvedContent resolved = contentResolver.findByCanonicalUris(seriesUris);
+        return Iterables.filter(resolved.asResolvedMap().values(), Series.class);
+    }
+
+    @Override
+    public Iterable<Item> itemsFor(Series series) {
+        Iterable<String> itemUris = Iterables.transform(series.getChildRefs(), ChildRef.TO_URI);
+        ResolvedContent resolved = contentResolver.findByCanonicalUris(itemUris);
+        return Iterables.filter(resolved.asResolvedMap().values(), Item.class);
     }
 
 }
