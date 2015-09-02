@@ -1,23 +1,9 @@
 package org.atlasapi.feeds.tasks.persistence;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.ACTION_KEY;
-import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.CONTENT_KEY;
-import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.ELEMENT_ID_KEY;
-import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.ELEMENT_TYPE_KEY;
-import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.PUBLISHER_KEY;
-import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.REMOTE_ID_KEY;
-import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.STATUS_KEY;
-import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.UPLOAD_TIME_KEY;
-import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.fromDBObject;
-import static org.atlasapi.feeds.youview.tasks.persistence.TaskTranslator.toDBObject;
 
 import java.util.regex.Pattern;
 
-import org.atlasapi.feeds.youview.tasks.Response;
-import org.atlasapi.feeds.youview.tasks.Status;
-import org.atlasapi.feeds.youview.tasks.Task;
-import org.atlasapi.feeds.youview.tasks.TaskQuery;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.ACTION_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.CONTENT_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.CREATED_KEY;

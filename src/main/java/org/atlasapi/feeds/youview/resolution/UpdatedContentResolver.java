@@ -1,10 +1,7 @@
 package org.atlasapi.feeds.youview.resolution;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-<<<<<<< HEAD
 import static org.joda.time.DateTimeConstants.APRIL;
-=======
->>>>>>> mbst-9956-tasks-refactor
 
 import java.util.Iterator;
 
@@ -15,9 +12,11 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterators;
+import com.metabroadcast.common.time.DateTimeZones;
 
 
 public class UpdatedContentResolver implements YouViewContentResolver {

@@ -87,36 +87,6 @@ public class NitroCreditsItemGeneratorTest {
     
     private List<CreditsItemType> generateCreditsFor(List<CrewMember> crew) {
         Item item = new Item();
-        item.setPeople(people());
-
-        CreditsListType creditsList = generator.generate(item);
-        List<CreditsItemType> creditsItem = creditsList.getCreditsItem();
-
-        assertEquals(2, creditsItem.size());
-
-        // Improve credits check
-    }
-    
-    // GivenName is a mandatory field, so if we only have a family name
-    // we should use the GivenName field rather than FamilyName, which
-    // is optional
-    @Test
-    @SuppressWarnings("unchecked")
-    public void testSingleNameIsAlwaysGivenName() {
-        CreditsItemType credit = Iterables.getOnlyElement(generateCreditsFor(ImmutableList.of(CREW_MEMBER)));
-        
-        JAXBElement<PersonNameType> person = (JAXBElement<PersonNameType>) 
-                Iterables.getOnlyElement(credit.getPersonNameOrPersonNameIDRefOrOrganizationName());
-        
-        JAXBElement<NameComponentType> name = (JAXBElement<NameComponentType>) 
-                Iterables.getOnlyElement(person.getValue().getGivenNameOrLinkingNameOrFamilyName());
-        
-        assertThat(name.getName().getLocalPart(), is("GivenName"));
-        
-    }
-    
-    private List<CreditsItemType> generateCreditsFor(List<CrewMember> crew) {
-        Item item = new Item();
         item.setPeople(crew);
 
         CreditsListType creditsList = generator.generate(item);

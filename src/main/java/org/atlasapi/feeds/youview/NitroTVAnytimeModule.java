@@ -19,7 +19,6 @@ import org.atlasapi.feeds.youview.nitro.NitroProgramInformationGenerator;
 import org.atlasapi.feeds.youview.persistence.IdMappingStore;
 import org.atlasapi.feeds.youview.persistence.StoringMappingIdGenerator;
 import org.atlasapi.media.channel.ChannelResolver;
-import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.PeopleResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -42,13 +41,15 @@ public class NitroTVAnytimeModule {
     
     @Bean
     public NitroGroupInformationGenerator nitroGroupInfoGenerator() {
-        return new NitroGroupInformationGenerator(nitroIdGenerator(), nitroGenreMapping(), bbcServiceIdResolver(), titleGenerator());
+        return new NitroGroupInformationGenerator(
+                        nitroIdGenerator(), 
+                        nitroGenreMapping(), 
+                        bbcServiceIdResolver(), 
+                        nitroCreditsGenerator(), 
+                        titleGenerator()
+                   );
     }
 
-    public NitroEpisodeNumberPrefixAddingContentTitleGenerator titleGenerator() {
-        return new NitroEpisodeNumberPrefixAddingContentTitleGenerator();
-    }
-    
     @Bean
     public NitroOnDemandLocationGenerator nitroOnDemandGenerator() {
         return new NitroOnDemandLocationGenerator(nitroIdGenerator());

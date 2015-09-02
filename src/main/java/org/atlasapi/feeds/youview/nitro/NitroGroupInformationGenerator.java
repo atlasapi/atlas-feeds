@@ -133,7 +133,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     
     public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping,
             BbcServiceIdResolver sIdResolver, CreditsItemGenerator creditsGenerator, 
-            ContentTitleGenerator tileGenerator) {
+            ContentTitleGenerator titleGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
         this.genreMapping = checkNotNull(genreMapping);
         this.sIdResolver = checkNotNull(sIdResolver);

@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview;
 
 import static com.metabroadcast.common.time.DateTimeZones.UTC;
-import static org.joda.time.DateTimeConstants.JANUARY;
+import static org.joda.time.DateTimeConstants.AUGUST;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,7 +27,6 @@ import org.atlasapi.feeds.tasks.youview.processing.YouViewTaskProcessor;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.ValidatingTvAnytimeGenerator;
 import org.atlasapi.feeds.youview.client.HttpYouViewClient;
-import org.atlasapi.feeds.youview.client.NoOpYouViewClient;
 import org.atlasapi.feeds.youview.client.ReferentialIntegrityCheckingReportHandler;
 import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
@@ -124,7 +123,7 @@ public class YouViewUploadModule {
     
     private static final String TASK_NAME_PATTERN = "YouView %s TVAnytime %s Upload";
     private static final DestinationType DESTINATION_TYPE = DestinationType.YOUVIEW;
-    private static final DateTime BOOTSTRAP_START_DATE = new DateTime(2015, JANUARY, 5, 0, 0, 0, 0, UTC);
+    private static final DateTime BOOTSTRAP_START_DATE = new DateTime(2015, AUGUST, 5, 0, 0, 0, 0, UTC);
     
     private final Clock clock = new SystemClock(DateTimeZone.UTC);
     
@@ -217,7 +216,15 @@ public class YouViewUploadModule {
 
     @Bean
     public YouViewUploadController uploadController() throws JAXBException, SAXException {
-        return new YouViewUploadController(contentResolver, taskCreator(), taskStore, contentHierarchyExpander, revocationProcessor(), clock);
+        return new YouViewUploadController(
+                        contentResolver, 
+                        taskCreator(), 
+                        taskStore, 
+                        payloadCreator(), 
+                        contentHierarchyExpander, 
+                        revocationProcessor(), 
+                        clock
+                   );
     }
     
     private ScheduledTask uploadTask() throws JAXBException, SAXException {

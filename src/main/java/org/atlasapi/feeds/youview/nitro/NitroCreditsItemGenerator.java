@@ -38,7 +38,7 @@ public class NitroCreditsItemGenerator implements CreditsItemGenerator {
         List<CrewMember> crewMembers = content.people();
         CreditsListType creditsListType = new CreditsListType();
 
-        int index = 0;
+        int index = 1;
         for (CrewMember crewMember : crewMembers) {
             Optional<Person> person = peopleResolver.person(crewMember.getCanonicalUri());
             if (person.isPresent() 

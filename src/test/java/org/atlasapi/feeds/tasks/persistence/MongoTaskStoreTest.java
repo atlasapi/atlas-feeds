@@ -294,26 +294,6 @@ public class MongoTaskStoreTest {
     }
     
     @Test
-    public void testRegexMatchOnContentUriIsPrefixQuery() {
-        
-        Task desiredTask = createAndStoreTask(1234l, "desireduri", Status.ACCEPTED);
-        Task notDesiredTask = createAndStoreTask(1235l, "notdesireduri", Status.ACCEPTED);
-        
-        Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery
-                            .builder(selection, publisher)
-                            .withContentUri("uri")
-                            .build();
-        
-        assertFalse(store.allTasks(query).iterator().hasNext());
-        
-        TaskQuery successfulQuery = TaskQuery
-                                        .builder(selection, publisher)
-                                        .withContentUri("desireduri")
-                                        .build();
-        
-        assertEquals(desiredTask, Iterables.getOnlyElement(store.allTasks(successfulQuery)));
-        
     public void testRemovalOfOldTasks() {
         DateTime removalDate = clock.now().minusDays(1);
         

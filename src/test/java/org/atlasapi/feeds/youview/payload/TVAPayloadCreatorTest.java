@@ -151,12 +151,12 @@ public class TVAPayloadCreatorTest {
         ItemBroadcastHierarchy broadcastHierarchy = new ItemBroadcastHierarchy(item, version, broadcast, "serviceId");
         String broadcastImi = "broadcastImi";
         String programCrid = "programCrid";
-        JAXBElement<TVAMainType> bCastTva = createBroadcastTVAWithPCrid(PCRID, programCrid);
+        JAXBElement<TVAMainType> bCastTva = createBroadcastTVAWithPCrid(PCRID, programCrid, broadcastImi);
         
         when(generator.generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi)).thenReturn(bCastTva);
         when(converter.convert(bCastTva)).thenReturn(PAYLOAD);
         when(broadcast.getAliases()).thenReturn(createPCridAliases());
-        when(sentBroadcastProgramUrlStore.beenSent(programCrid, PCRID)).thenReturn(true);
+        when(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(programCrid, PCRID)).thenReturn(Optional.of("1"));
         
         Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
 
@@ -175,27 +175,27 @@ public class TVAPayloadCreatorTest {
         ItemBroadcastHierarchy broadcastHierarchy = new ItemBroadcastHierarchy(item, version, broadcast, "serviceId");
         String broadcastImi = "broadcastImi";
         String programCrid = "programCrid";
-        JAXBElement<TVAMainType> bCastTva = createBroadcastTVAWithPCrid(PCRID, programCrid);
+        JAXBElement<TVAMainType> bCastTva = createBroadcastTVAWithPCrid(PCRID, programCrid, broadcastImi);
         
         when(generator.generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi)).thenReturn(bCastTva);
         when(converter.convert(bCastTva)).thenReturn(PAYLOAD);
         when(broadcast.getAliases()).thenReturn(createPCridAliases());
-        when(sentBroadcastProgramUrlStore.beenSent(programCrid, PCRID)).thenReturn(false);
+        when(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(programCrid, PCRID)).thenReturn(Optional.<String>absent());
         
         Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
 
         verify(generator).generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi);
-        verify(sentBroadcastProgramUrlStore).recordSent(programCrid, PCRID);
+        verify(sentBroadcastProgramUrlStore).recordSent(broadcastImi, programCrid, PCRID);
         
         assertEquals(PAYLOAD, payload.get().payload());
         assertEquals(clock.now(), payload.get().created());
     }
     
-    private JAXBElement<TVAMainType> createBroadcastTVAWithPCrid(String pcrid, String crid) {
+    private JAXBElement<TVAMainType> createBroadcastTVAWithPCrid(String pcrid, String crid, String broadcastImi) {
         TVAMainType tvaMain = factory.createTVAMainType();
         
         BroadcastEventType broadcast = new BroadcastEventType();
-        
+        broadcast.setInstanceMetadataId(broadcastImi);
         InstanceDescriptionType desc = new InstanceDescriptionType();
         
         UniqueIDType otherId = new UniqueIDType();

@@ -83,7 +83,6 @@ public class NitroEpisodeNumberPrefixAddingContentTitleGeneratorTest {
     }
     
     @Test
->>>>>>> 098f2d8... Improve title logic
     public void testNonEpisodeTypesAreNotMutated() {
         Item item = new Item();
         item.setTitle(EPISODE_TITLE);

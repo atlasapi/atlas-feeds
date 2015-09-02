@@ -107,7 +107,11 @@ public class TVAPayloadCreator implements PayloadCreator {
         Optional<String> broadcastPcrid = getPcrid(broadcastEvent);
         String crid = broadcastEvent.getProgram().getCrid();
         if (broadcastPcrid.isPresent()) {
-            sentBroadcastProgramUrlStore.recordSent(crid, broadcastPcrid.get());
+            sentBroadcastProgramUrlStore.recordSent(
+                    broadcastEvent.getInstanceMetadataId(),
+                    crid, 
+                    broadcastPcrid.get()
+            );
         }
     }
 
@@ -115,8 +119,12 @@ public class TVAPayloadCreator implements PayloadCreator {
         BroadcastEventType broadcastEvent = extractBroadcastEvent(tvaElem);
         Optional<String> broadcastPcrid = getPcrid(broadcastEvent);
         String crid = broadcastEvent.getProgram().getCrid();
-        return broadcastPcrid.isPresent() 
-                && sentBroadcastProgramUrlStore.beenSent(crid, broadcastPcrid.get());
+        if (!broadcastPcrid.isPresent()) {
+            return false;
+        }
+        
+        return sentBroadcastProgramUrlStore.getSentBroadcastEventImi(crid, broadcastPcrid.get())
+                                           .isPresent();
     }
 
     private BroadcastEventType extractBroadcastEvent(JAXBElement<TVAMainType> tvaElem) {
