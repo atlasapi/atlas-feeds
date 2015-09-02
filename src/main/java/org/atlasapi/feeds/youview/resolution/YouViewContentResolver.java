@@ -9,5 +9,4 @@ import org.joda.time.DateTime;
 public interface YouViewContentResolver {
 
     Iterator<Content> updatedSince(DateTime dateTime);
-    Iterator<Content> allContent();
 }

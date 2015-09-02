@@ -10,6 +10,7 @@ import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.base.Maybe;
@@ -28,31 +29,30 @@ public final class ChannelResolvingBbcServiceIdResolver implements BbcServiceIdR
     }
 
     @Override
-    public String resolveSId(Broadcast broadcast) {
+    public Optional<String> resolveSId(Broadcast broadcast) {
         return resolveServiceId(broadcast.getBroadcastOn(), BBC_SID_NAMESPACE);
     }
 
-    private String resolveServiceId(String channelUri, String namespace) {
+    private Optional<String> resolveServiceId(String channelUri, String namespace) {
         Maybe<Channel> resolved = channelResolver.fromUri(channelUri);
         if (resolved.isNothing()) {
-            throw new NoChannelFoundException(channelUri);
+            return Optional.absent();
         }
         Channel channel = resolved.requireValue();
         Iterable<Alias> bbcSIdAliases = Iterables.filter(channel.getAliases(), hasNamespace(namespace));
         if (Iterables.isEmpty(bbcSIdAliases)) {
-            throw new NoSuchChannelAliasException(namespace);
+            return Optional.absent();
         }
-        Alias sidAlias = Iterables.getOnlyElement(bbcSIdAliases);
-        return sidAlias.getValue();
+        return Optional.of(Iterables.getOnlyElement(bbcSIdAliases).getValue());
     }
 
     @Override
-    public String resolveSId(Content content) {
+    public Optional<String> resolveSId(Content content) {
         return resolveServiceId(content.getPresentationChannel(), BBC_SID_NAMESPACE);
     }
 
     @Override
-    public String resolveMasterBrandId(Content content) {
+    public Optional<String> resolveMasterBrandId(Content content) {
         return resolveServiceId(content.getPresentationChannel(), BBC_MASTERBRAND_ID_NAMESPACE);
     }
     

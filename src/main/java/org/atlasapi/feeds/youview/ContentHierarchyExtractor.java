@@ -10,8 +10,10 @@ import com.google.common.base.Optional;
 public interface ContentHierarchyExtractor {
 
     Optional<Brand> brandFor(Item item);
-    Optional<Series> seriesFor(Item item);
     Optional<Brand> brandFor(Series series);
+    Optional<Series> seriesFor(Item item);
+    Iterable<Series> seriesFor(Brand brand);
+    Iterable<Item> itemsFor(Series series);
     Item lastItemFrom(Series series);
     Item lastItemFrom(Brand brand);
 }

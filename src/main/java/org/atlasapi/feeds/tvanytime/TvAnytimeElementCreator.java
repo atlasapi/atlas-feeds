@@ -1,6 +1,8 @@
 package org.atlasapi.feeds.tvanytime;
 
-import org.atlasapi.feeds.youview.ContentPermit;
+import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
+import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
+import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.media.entity.Content;
 
 import tva.metadata._2010.BroadcastEventType;
@@ -11,9 +13,8 @@ import tva.metadata._2010.ProgramInformationType;
 
 public interface TvAnytimeElementCreator {
 
-    ContentPermit permit();
-    Iterable<GroupInformationType> createGroupInformationElementsFor(Content content);
-    Iterable<ProgramInformationType> createProgramInformationElementFor(Content content);
-    Iterable<OnDemandProgramType> createOnDemandElementsFor(Content content);
-    Iterable<BroadcastEventType> createBroadcastEventElementsFor(Content content);
+    GroupInformationType createGroupInformationElementFor(Content content);
+    ProgramInformationType createProgramInformationElementFor(ItemAndVersion version, String versionCrid);
+    OnDemandProgramType createOnDemandElementFor(ItemOnDemandHierarchy onDemand, String onDemandImi);
+    BroadcastEventType createBroadcastEventElementFor(ItemBroadcastHierarchy broadcast, String broadcastImi);
 }

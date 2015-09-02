@@ -11,6 +11,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
+import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
@@ -31,11 +32,8 @@ import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenerator {
@@ -53,57 +51,18 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
     public LoveFilmOnDemandLocationGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
     }
-    
-    @Override
-    public Iterable<OnDemandProgramType> generate(Item item) {
-        return FluentIterable.from(item.getVersions())
-                .transformAndConcat(toOnDemandProgramType(item));
-    }
-    
-    private Function<Version, Iterable<OnDemandProgramType>> toOnDemandProgramType(final Item item) {
-        return new Function<Version, Iterable<OnDemandProgramType>>() {
-            @Override
-            public Iterable<OnDemandProgramType> apply(Version input) {
-                return toOnDemandProgramTypes(item, input, input.getManifestedAs());
-            }
-        };
-    }
-    
-    private Iterable<OnDemandProgramType> toOnDemandProgramTypes(final Item item, final Version version, 
-            Iterable<Encoding> encodings) {
-        return FluentIterable.from(encodings)
-                .transformAndConcat(toOnDemandProgramTypes(item, version));
-    }
-    
-    private Function<Encoding, Iterable<OnDemandProgramType>> toOnDemandProgramTypes(final Item item, final Version version) {
-        return new Function<Encoding, Iterable<OnDemandProgramType>>() {
-            @Override
-            public Iterable<OnDemandProgramType> apply(Encoding input) {
-                return toOnDemandProgramTypes(item, version, input, input.getAvailableAt());
-            }
-        };
-    }
-    
-    private Iterable<OnDemandProgramType> toOnDemandProgramTypes(final Item item, final Version version, 
-            final Encoding encoding, Iterable<Location> locations) {
-        return Iterables.transform(locations, new Function<Location, OnDemandProgramType>() {
-            @Override
-            public OnDemandProgramType apply(Location input) {
-                return toOnDemandProgramType(item, version, encoding, input);
-            }
-        });
-    }
 
-    private OnDemandProgramType toOnDemandProgramType(Item item, Version version, Encoding encoding, Location location) {
+    @Override
+    public OnDemandProgramType generate(ItemOnDemandHierarchy onDemandHierarchy, String onDemandImi) {
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
         
         onDemand.setServiceIDRef(LOVEFILM_ONDEMAND_SERVICE_ID);
-        onDemand.setProgram(generateProgram(item, version));
-        onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(item, version, encoding, location));
-        onDemand.setInstanceDescription(generateInstanceDescription(item, encoding));
-        onDemand.setPublishedDuration(generatePublishedDuration(version));
-        onDemand.setStartOfAvailability(generateAvailabilityStart(location));
-        onDemand.setEndOfAvailability(generateAvailabilityEnd(location));
+        onDemand.setProgram(generateProgram(onDemandHierarchy.item(), onDemandHierarchy.version()));
+        onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(onDemandHierarchy.item(), onDemandHierarchy.version(), onDemandHierarchy.encoding(), onDemandHierarchy.location()));
+        onDemand.setInstanceDescription(generateInstanceDescription(onDemandHierarchy.item(), onDemandHierarchy.encoding()));
+        onDemand.setPublishedDuration(generatePublishedDuration(onDemandHierarchy.version()));
+        onDemand.setStartOfAvailability(generateAvailabilityStart(onDemandHierarchy.location()));
+        onDemand.setEndOfAvailability(generateAvailabilityEnd(onDemandHierarchy.location()));
         onDemand.setFree(generateFree());
 
         return onDemand;

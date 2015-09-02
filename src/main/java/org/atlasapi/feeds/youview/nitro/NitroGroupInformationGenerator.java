@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
+import org.atlasapi.feeds.tvanytime.CreditsItemGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -122,16 +123,22 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
     private final BbcServiceIdResolver sIdResolver;
+    private final CreditsItemGenerator creditsGenerator;
+    private final ContentTitleGenerator titleGenerator;
     
     private Truncator truncator = new Truncator()
             .omitTrailingPunctuationWhenTruncated()
             .onlyTruncateAtAWordBoundary()
             .withOmissionMarker("...");
     
-    public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping, BbcServiceIdResolver sIdResolver) {
+    public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping,
+            BbcServiceIdResolver sIdResolver, CreditsItemGenerator creditsGenerator, 
+            ContentTitleGenerator titleGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
         this.genreMapping = checkNotNull(genreMapping);
         this.sIdResolver = checkNotNull(sIdResolver);
+        this.creditsGenerator = checkNotNull(creditsGenerator);
+        this.titleGenerator = checkNotNull(titleGenerator);
     }
     
     @Override
@@ -229,7 +236,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     }
     
     private String createMasterBrandLink(Content content) {
-        return MASTERBRAND_PREFIX + sIdResolver.resolveMasterBrandId(content);
+        return MASTERBRAND_PREFIX + sIdResolver.resolveMasterBrandId(content).get();
     }
 
     private GroupInformationType generateWithCommonFields(Content content) {
@@ -252,10 +259,12 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
         
         if (content.getTitle() != null) {
-            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, content.getTitle()));
             
-            String secondaryTitle = generateAlternateTitle(content.getTitle());
-            if (!content.getTitle().equals(secondaryTitle)) {
+            String title = titleGenerator.titleFor(content);
+            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, title));
+            
+            String secondaryTitle = generateAlternateTitle(title);
+            if (!title.equals(secondaryTitle)) {
                 basicDescription.getTitle().add(generateTitle(TITLE_TYPE_SECONDARY, secondaryTitle));
             }            
         }
@@ -280,6 +289,8 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         if (relatedMaterial.isPresent()) {
             basicDescription.getRelatedMaterial().add(relatedMaterial.get());
         }
+
+        basicDescription.setCreditsList(creditsGenerator.generate(content));
         
         return basicDescription;
     }
@@ -306,7 +317,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
 
         if (content instanceof Episode) {
             TextualType textualType = new TextualType();
-            textualType.setValue(content.getTitle());
+            textualType.setValue(titleGenerator.titleFor(content));
             relatedMaterial.getPromotionalText().add(textualType);
         }
         

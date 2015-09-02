@@ -8,8 +8,8 @@ import java.util.regex.Pattern;
 
 import javax.xml.datatype.Duration;
 
+import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.tvanytime.granular.GranularProgramInformationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Item;
@@ -33,7 +33,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.intl.Country;
 
-public final class NitroProgramInformationGenerator implements GranularProgramInformationGenerator {
+public final class NitroProgramInformationGenerator implements ProgramInformationGenerator {
 
     private static final String BBC_VERSION_PID_AUTHORITY = "vpid.bbc.co.uk";
     private static final Pattern BBC_VERSION_PID_URI_PATTERN = Pattern.compile("http://nitro.bbc.co.uk/programmes/(.*)");
@@ -51,7 +51,7 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
     };
     
     private final IdGenerator idGenerator;
-    
+
     public NitroProgramInformationGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
     }
@@ -103,12 +103,14 @@ public final class NitroProgramInformationGenerator implements GranularProgramIn
     }
 
     private List<String> generateProductLocations(Item item) {
-        return ImmutableList.copyOf(Iterables.transform(item.getCountriesOfOrigin(), new Function<Country, String>() {
-            @Override
-            public String apply(Country input) {
-                return input.code().toLowerCase();
-            }
-        }));
+        return ImmutableList.copyOf(Iterables.transform(item.getCountriesOfOrigin(),
+                new Function<Country, String>() {
+
+                    @Override
+                    public String apply(Country input) {
+                        return input.code().toLowerCase();
+                    }
+                }));
     }
 
     private TVAParentalGuidanceType generateParentalGuidance(Version version) {

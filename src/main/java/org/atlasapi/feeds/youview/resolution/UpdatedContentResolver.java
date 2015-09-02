@@ -5,6 +5,7 @@ import static org.joda.time.DateTimeConstants.APRIL;
 
 import java.util.Iterator;
 
+import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Publisher;
@@ -12,8 +13,8 @@ import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Iterators;
 import com.metabroadcast.common.time.DateTimeZones;
 
@@ -31,26 +32,33 @@ public class UpdatedContentResolver implements YouViewContentResolver {
         }
     };
     
+    private final Predicate<Content> HAS_MASTER_BRAND_MAPPING = new Predicate<Content>() {
+
+        @Override
+        public boolean apply(Content input) {
+            return bbcServiceIdResolver.resolveMasterBrandId(input).isPresent();
+        }
+        
+    };
+    
     private final LastUpdatedContentFinder contentFinder;
     private final Publisher publisher;
+    private final BbcServiceIdResolver bbcServiceIdResolver;
     
-    public UpdatedContentResolver(LastUpdatedContentFinder contentFinder, Publisher publisher) {
+    public UpdatedContentResolver(LastUpdatedContentFinder contentFinder, BbcServiceIdResolver bbcServiceIdResolver, 
+            Publisher publisher) {
         this.contentFinder = checkNotNull(contentFinder);
         this.publisher = checkNotNull(publisher);
+        this.bbcServiceIdResolver = checkNotNull(bbcServiceIdResolver);
     }
 
     @Override
     public Iterator<Content> updatedSince(DateTime dateTime) {
-        return fetchContentUpdatedSinceDate(Optional.of(dateTime));
-    }
-
-    @Override
-    public Iterator<Content> allContent() {
-        return fetchContentUpdatedSinceDate(Optional.<DateTime>absent());
+        return fetchContentUpdatedSinceDate(dateTime);
     }
     
-    private Iterator<Content> fetchContentUpdatedSinceDate(Optional<DateTime> since) {
-        DateTime start = since.isPresent() ? since.get() : START_OF_TIME;
-        return Iterators.filter(contentFinder.updatedSince(publisher, start), IS_VIDEO_CONTENT);
+    private Iterator<Content> fetchContentUpdatedSinceDate(DateTime since) {
+        return Iterators.filter(contentFinder.updatedSince(publisher, since), 
+                                Predicates.and(IS_VIDEO_CONTENT, HAS_MASTER_BRAND_MAPPING));
     }
 }

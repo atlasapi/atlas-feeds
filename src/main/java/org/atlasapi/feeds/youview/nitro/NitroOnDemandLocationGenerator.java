@@ -10,8 +10,8 @@ import java.util.regex.Pattern;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
-import org.atlasapi.feeds.tvanytime.granular.GranularOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Content;
@@ -42,7 +42,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
-public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationGenerator {
+public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
     private static final String DEFAULT_ASPECT_RATIO = "16:9";
     private static final String YOUVIEW_SERVICE = "http://nitro.bbc.co.uk/services/youview";
@@ -99,9 +99,12 @@ public class NitroOnDemandLocationGenerator implements GranularOnDemandLocationG
         }
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(createIdentifierFromPipsIdentifier(content));
-        instanceDescription.getCaptionLanguage().add(captionLanguage(language));
+        
+        if (Boolean.TRUE.equals(encoding.getSubtitled())) {
+            instanceDescription.getCaptionLanguage().add(captionLanguage(language));
+        }
 
-        if (Boolean.TRUE.equals(encoding.getSigned())) {
+        if (!Boolean.FALSE.equals(encoding.getSigned())) {
             SignLanguageType signLanguageType = new SignLanguageType();
             signLanguageType.setValue(BRITISH_SIGN_LANGUAGE);
             instanceDescription.getSignLanguage().add(signLanguageType);
