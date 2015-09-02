@@ -131,7 +131,6 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             .onlyTruncateAtAWordBoundary()
             .withOmissionMarker("...");
     
-<<<<<<< HEAD
     public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping,
             BbcServiceIdResolver sIdResolver, CreditsItemGenerator creditsGenerator, 
             ContentTitleGenerator tileGenerator) {
