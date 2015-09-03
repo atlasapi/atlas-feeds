@@ -29,10 +29,12 @@ import org.joda.time.DateTime;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
+import com.hp.hpl.jena.db.impl.DBQuery;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
 import com.metabroadcast.common.persistence.mongo.MongoSortBuilder;
 import com.metabroadcast.common.persistence.mongo.MongoUpdateBuilder;
+import com.mongodb.Bytes;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
@@ -135,7 +137,8 @@ public class MongoTaskStore implements TaskStore {
                 .fieldEquals(DESTINATION_TYPE_KEY, type.name())
                 .fieldEquals(STATUS_KEY, status.name());
         
-        DBCursor cursor = getOrderedCursor(mongoQuery.build());
+        DBCursor cursor = getOrderedCursor(mongoQuery.build())
+                                .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
         
         return FluentIterable.from(cursor)
                 .transform(TaskTranslator.fromDBObjects())
