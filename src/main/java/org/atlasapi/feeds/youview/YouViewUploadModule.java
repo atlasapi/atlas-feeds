@@ -223,6 +223,7 @@ public class YouViewUploadModule {
                         payloadCreator(), 
                         contentHierarchyExpander, 
                         revocationProcessor(), 
+                        taskProcessor(),
                         clock
                    );
     }
