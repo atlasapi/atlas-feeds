@@ -58,20 +58,20 @@ public abstract class TaskCreationTask extends ScheduledTask {
         this.payloadCreator = checkNotNull(payloadCreator);
     }
     
-    public Optional<DateTime> getLastUpdatedTime() {
+    protected Optional<DateTime> getLastUpdatedTime() {
         return lastUpdatedStore.getLastUpdated(publisher);
     }
     
-    public void setLastUpdatedTime(DateTime lastUpdated) {
+    protected void setLastUpdatedTime(DateTime lastUpdated) {
         lastUpdatedStore.setLastUpdated(lastUpdated, publisher);
     }
     
-    public boolean isActivelyPublished(Content content) {
+    protected boolean isActivelyPublished(Content content) {
         return content.isActivelyPublished();
     }
     
     // TODO write last updated time every n items
-    public YouViewContentProcessor contentProcessor(final DateTime updatedSince, final Action action) {
+    protected YouViewContentProcessor contentProcessor(final DateTime updatedSince, final Action action) {
         return new YouViewContentProcessor() {
             
             UpdateProgress progress = UpdateProgress.START;
