@@ -205,9 +205,18 @@ public class RadioPlayerProgrammeInformationOutputter extends RadioPlayerXMLOutp
             Policy policy = location.getPolicy();
             if (policy != null
                     && policy.getActualAvailabilityStart() != null) {
-                DateTime availabilityStart = policy.getActualAvailabilityStart();
+                DateTime actualAvailabilityStart = policy.getActualAvailabilityStart();
+                DateTime availabilityStart = policy.getAvailabilityStart();
                 DateTime availabilityEnd = availabilityEndOrMax(policy);
-                if (availabilityStart != null && availabilityEnd  != null) {
+                if (actualAvailabilityStart != null
+                        && availabilityStart != null
+                        && availabilityEnd  != null) {
+                    // RadioPlayer use availability start time to order content
+                    // so we provide them with the published availability start 
+                    // rather than actual availability start. The latter may
+                    // produce an incorrect ordering since it depends on when
+                    // the assets were made available rather than being when the
+                    // availability is _intended_ to begin
                     index.put(new Interval(availabilityStart, availabilityEnd), location);
                 }
             }
