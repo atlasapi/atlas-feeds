@@ -212,7 +212,7 @@ public class YouViewUploadController {
             taskStore.updateWithPayload(task.id(), payload);
         }
         
-        if (immediate) {
+        if (immediate && payload != null) {
             taskProcessor.process(taskStore.taskFor(task.id()).get());
         }
     }
