@@ -60,8 +60,10 @@ import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
+import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -146,6 +148,8 @@ public class YouViewUploadModule {
     private @Autowired ContentHierarchyExpander contentHierarchyExpander;
     private @Autowired FeedStatisticsStore feedStatsStore;
     private @Autowired ContentHierarchyExtractor contentHierarchy;
+    private @Autowired ChannelResolver channelResolver;
+    private @Autowired ScheduleResolver scheduleResolver;
     
     private @Value("${youview.upload.validation}") String performValidation;
 
@@ -224,6 +228,8 @@ public class YouViewUploadModule {
                         contentHierarchyExpander, 
                         revocationProcessor(), 
                         taskProcessor(),
+                        scheduleResolver, 
+                        channelResolver, 
                         clock
                    );
     }
