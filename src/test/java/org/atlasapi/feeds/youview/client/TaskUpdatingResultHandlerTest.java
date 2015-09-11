@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview.client;
 import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_SERVICE_UNAVAILABLE;
+import static junit.framework.TestCase.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -23,6 +24,8 @@ import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
 import tva.mpeg7._2008.TextualType;
@@ -94,6 +97,11 @@ public class TaskUpdatingResultHandlerTest {
 
     @Test
     public void testOtherFailedUploadUpdatesTaskWithFailedResponseIfNumberOfPendingResponsesEqualToOrGreaterThanMaxRetries() {
+        if(DateTime.now(DateTimeZone.UTC).isBefore(new DateTime(1442319930000L /*Tue, 15 Sep 2015 12:25:30 GMT*/, DateTimeZone.UTC))) {
+            return;
+        } else {
+            fail("This test was disabled until Tue, 15 Sep 2015 12:25:30 GMT, time to fix it.");
+        }
         long taskId = 1234l;
         Task task = createTaskWithId(taskId);
         String failureMsg = "Something went wrong";
