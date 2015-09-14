@@ -119,7 +119,9 @@ public class YouViewUploadModule {
     private static final RepetitionRule DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardHours(2));
     private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardMinutes(15));
-    private static final RepetitionRule UPLOAD = RepetitionRules.every(Duration.standardMinutes(15));
+    
+    // Uploads are being performed as part of the delta job, temporarily
+    private static final RepetitionRule UPLOAD = RepetitionRules.NEVER;
     private static final RepetitionRule DELETE = RepetitionRules.every(Duration.standardMinutes(15)).withOffset(Duration.standardMinutes(5));
     private static final RepetitionRule TASK_REMOVAL = RepetitionRules.daily(LocalTime.MIDNIGHT);
     
@@ -234,7 +236,7 @@ public class YouViewUploadModule {
                    );
     }
     
-    private ScheduledTask uploadTask() throws JAXBException, SAXException {
+    private UpdateTask uploadTask() throws JAXBException, SAXException {
         return new UpdateTask(taskStore, taskProcessor(), DESTINATION_TYPE);
     }
     
@@ -269,6 +271,7 @@ public class YouViewUploadModule {
                 taskStore, 
                 taskCreator(), 
                 payloadCreator(), 
+                uploadTask(),
                 nitroDeltaContentResolver(publisher)
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
