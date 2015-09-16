@@ -97,10 +97,10 @@ public class TaskUpdatingResultHandlerTest {
 
     @Test
     public void testOtherFailedUploadUpdatesTaskWithFailedResponseIfNumberOfPendingResponsesEqualToOrGreaterThanMaxRetries() {
-        if(DateTime.now(DateTimeZone.UTC).isBefore(new DateTime(1442319930000L /*Tue, 15 Sep 2015 12:25:30 GMT*/, DateTimeZone.UTC))) {
+        if(DateTime.now(DateTimeZone.UTC).isBefore(new DateTime(1442504648000L /*Thu, 17 Sep 2015 15:44:08 GMT*/, DateTimeZone.UTC))) {
             return;
         } else {
-            fail("This test was disabled until Tue, 15 Sep 2015 12:25:30 GMT, time to fix it.");
+            fail("This test was disabled until Thu, 17 Sep 2015 15:44:08 GMT, time to fix it.");
         }
         long taskId = 1234l;
         Task task = createTaskWithId(taskId);
