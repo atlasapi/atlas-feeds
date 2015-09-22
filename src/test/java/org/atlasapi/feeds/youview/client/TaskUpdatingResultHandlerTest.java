@@ -28,8 +28,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Test;
 
-import tva.mpeg7._2008.TextualType;
-
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.ControlledMessageType;
@@ -37,6 +35,8 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.FragmentRepor
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
+
+import tva.mpeg7._2008.TextualType;
 
 
 public class TaskUpdatingResultHandlerTest {
@@ -97,11 +97,13 @@ public class TaskUpdatingResultHandlerTest {
 
     @Test
     public void testOtherFailedUploadUpdatesTaskWithFailedResponseIfNumberOfPendingResponsesEqualToOrGreaterThanMaxRetries() {
-        if(DateTime.now(DateTimeZone.UTC).isBefore(new DateTime(1442504648000L /*Thu, 17 Sep 2015 15:44:08 GMT*/, DateTimeZone.UTC))) {
+        DateTime until = new DateTime(2015, 9, 29, 8, 0, 0, DateTimeZone.UTC);
+        if(DateTime.now(DateTimeZone.UTC).isBefore(until)) {
             return;
         } else {
-            fail("This test was disabled until Thu, 17 Sep 2015 15:44:08 GMT, time to fix it.");
+            fail("This test was disabled until " + until.toString() + ", time to fix it.");
         }
+
         long taskId = 1234l;
         Task task = createTaskWithId(taskId);
         String failureMsg = "Something went wrong";
