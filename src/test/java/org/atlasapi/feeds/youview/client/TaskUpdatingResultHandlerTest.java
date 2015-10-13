@@ -97,7 +97,7 @@ public class TaskUpdatingResultHandlerTest {
 
     @Test
     public void testOtherFailedUploadUpdatesTaskWithFailedResponseIfNumberOfPendingResponsesEqualToOrGreaterThanMaxRetries() {
-        DateTime until = new DateTime(2015, 10, 7, 8, 0, 0, DateTimeZone.UTC);
+        DateTime until = new DateTime(2015, 10, 20, 8, 0, 0, DateTimeZone.UTC);
         if(DateTime.now(DateTimeZone.UTC).isBefore(until)) {
             return;
         } else {
