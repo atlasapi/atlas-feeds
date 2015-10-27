@@ -16,7 +16,16 @@ import org.atlasapi.feeds.tvanytime.CreditsItemGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.media.entity.*;
+import org.atlasapi.media.entity.Brand;
+import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.CrewMember;
+import org.atlasapi.media.entity.Episode;
+import org.atlasapi.media.entity.Film;
+import org.atlasapi.media.entity.Image;
+import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.MediaType;
+import org.atlasapi.media.entity.Series;
+import org.atlasapi.media.entity.Specialization;
 
 import tva.metadata._2010.BaseProgramGroupTypeType;
 import tva.metadata._2010.BasicContentDescriptionType;
