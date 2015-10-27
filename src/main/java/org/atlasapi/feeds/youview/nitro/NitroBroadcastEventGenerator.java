@@ -68,7 +68,6 @@ public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
         broadcastEvent.setPublishedDuration(durationFrom(hierarchy.broadcast()));
         broadcastEvent.setFree(TvAnytimeElementFactory.flag(true));
         
-        
         return broadcastEvent;
     }
 
