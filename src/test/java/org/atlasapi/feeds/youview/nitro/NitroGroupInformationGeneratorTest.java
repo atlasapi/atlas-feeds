@@ -16,6 +16,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
 
+import com.google.common.collect.Lists;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.youview.NameComponentTypeEquivalence;
 import org.atlasapi.feeds.youview.SynopsisTypeEquivalence;
@@ -33,6 +34,7 @@ import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Person;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.ReleaseDate;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 import org.atlasapi.media.entity.Version;
