@@ -16,29 +16,17 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
 
+import com.google.common.collect.*;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.youview.NameComponentTypeEquivalence;
 import org.atlasapi.feeds.youview.SynopsisTypeEquivalence;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.media.entity.Alias;
-import org.atlasapi.media.entity.Brand;
-import org.atlasapi.media.entity.Certificate;
-import org.atlasapi.media.entity.Content;
-import org.atlasapi.media.entity.CrewMember;
-import org.atlasapi.media.entity.Episode;
-import org.atlasapi.media.entity.Film;
-import org.atlasapi.media.entity.Item;
-import org.atlasapi.media.entity.MediaType;
-import org.atlasapi.media.entity.ParentRef;
-import org.atlasapi.media.entity.Person;
-import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.media.entity.Series;
-import org.atlasapi.media.entity.Specialization;
-import org.atlasapi.media.entity.Version;
+import org.atlasapi.media.entity.*;
 import org.atlasapi.persistence.content.PeopleResolver;
 import org.hamcrest.Matchers;
 import org.joda.time.Duration;
+import org.joda.time.LocalDate;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,11 +54,6 @@ import tva.mpeg7._2008.UniqueIDType;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.common.hash.Hashing;
 import com.metabroadcast.common.intl.Countries;
 
@@ -402,8 +385,9 @@ public class NitroGroupInformationGeneratorTest {
     }
 
     @Test
-    public void testEpisodeGroupInformationGeneration() {
+    public void testEpisodeGroupInformationGenerationWithEpisodeNumber() {
         Episode episode = createEpisode();
+        episode.setEpisodeNumber(5);
         GroupInformationType groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
 
         assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b03dfd6d", groupInfo.getGroupId());
@@ -428,6 +412,42 @@ public class NitroGroupInformationGeneratorTest {
         assertEquals("Episode 1", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
         
+        ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
+        assertEquals("original", language.getType());
+        assertEquals("en", language.getValue());
+
+    }
+
+    @Test
+    public void testEpisodeGroupInformationGenerationWithoutEpisodeNumber() {
+        Episode episode = createEpisode();
+        LocalDate date = new LocalDate(1990,02,24);
+        ReleaseDate releaseDate = new ReleaseDate(date, Countries.GB, ReleaseDate.ReleaseType.FIRST_BROADCAST);
+        episode.setReleaseDates(Lists.newArrayList(releaseDate));
+        GroupInformationType groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
+
+        assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b03dfd6d", groupInfo.getGroupId());
+
+        UniqueIDType idType = Iterables.getOnlyElement(groupInfo.getOtherIdentifier());
+        assertEquals("epid.bbc.co.uk", idType.getAuthority());
+        assertEquals("b03dfd6d", idType.getValue());
+
+        BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
+        assertEquals("crid://nitro.bbc.co.uk/iplayer/youview/b020tm1g", memberOf.getCrid());
+        assertEquals(Long.valueOf(19900224), memberOf.getIndex());
+
+        ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
+        assertEquals("programConcept", groupType.getValue());
+
+        BasicContentDescriptionType desc = groupInfo.getBasicDescription();
+        RelatedMaterialType relatedMaterial = Iterables.getOnlyElement(desc.getRelatedMaterial());
+        TextualType textualType = Iterables.getOnlyElement(relatedMaterial.getPromotionalText());
+        assertEquals(episode.getTitle(), textualType.getValue());
+
+        TitleType title = Iterables.getOnlyElement(desc.getTitle());
+        assertEquals("Episode 1", title.getValue());
+        assertEquals("main", Iterables.getOnlyElement(title.getType()));
+
         ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
         assertEquals("original", language.getType());
         assertEquals("en", language.getValue());
@@ -718,8 +738,6 @@ public class NitroGroupInformationGeneratorTest {
         
         ParentRef seriesRef = new ParentRef("http://nitro.bbc.co.uk/programmes/b020tm1g");
         episode.setSeriesRef(seriesRef);
-        
-        episode.setEpisodeNumber(5);
         episode.setSeriesNumber(2);
         
         return episode;
