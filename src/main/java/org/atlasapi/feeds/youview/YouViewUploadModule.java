@@ -60,8 +60,10 @@ import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
+import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -114,10 +116,12 @@ public class YouViewUploadModule {
             "unbox", Publisher.AMAZON_UNBOX
     );
     
-    private static final RepetitionRule DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(30));
+    private static final RepetitionRule DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardHours(2));
     private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
-    private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardMinutes(15));
-    private static final RepetitionRule UPLOAD = RepetitionRules.every(Duration.standardMinutes(15));
+    private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
+    
+    // Uploads are being performed as part of the delta job, temporarily
+    private static final RepetitionRule UPLOAD = RepetitionRules.NEVER;
     private static final RepetitionRule DELETE = RepetitionRules.every(Duration.standardMinutes(15)).withOffset(Duration.standardMinutes(5));
     private static final RepetitionRule TASK_REMOVAL = RepetitionRules.daily(LocalTime.MIDNIGHT);
     
@@ -146,6 +150,8 @@ public class YouViewUploadModule {
     private @Autowired ContentHierarchyExpander contentHierarchyExpander;
     private @Autowired FeedStatisticsStore feedStatsStore;
     private @Autowired ContentHierarchyExtractor contentHierarchy;
+    private @Autowired ChannelResolver channelResolver;
+    private @Autowired ScheduleResolver scheduleResolver;
     
     private @Value("${youview.upload.validation}") String performValidation;
 
@@ -224,11 +230,13 @@ public class YouViewUploadModule {
                         contentHierarchyExpander, 
                         revocationProcessor(), 
                         taskProcessor(),
+                        scheduleResolver, 
+                        channelResolver, 
                         clock
                    );
     }
     
-    private ScheduledTask uploadTask() throws JAXBException, SAXException {
+    private UpdateTask uploadTask() throws JAXBException, SAXException {
         return new UpdateTask(taskStore, taskProcessor(), DESTINATION_TYPE);
     }
     
@@ -263,6 +271,7 @@ public class YouViewUploadModule {
                 taskStore, 
                 taskCreator(), 
                 payloadCreator(), 
+                uploadTask(),
                 nitroDeltaContentResolver(publisher)
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
