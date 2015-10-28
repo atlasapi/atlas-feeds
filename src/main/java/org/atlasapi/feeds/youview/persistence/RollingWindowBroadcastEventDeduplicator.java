@@ -39,8 +39,6 @@ public class RollingWindowBroadcastEventDeduplicator implements BroadcastEventDe
                 return true;
             }
         }
-
-
         return false;
     }
 
