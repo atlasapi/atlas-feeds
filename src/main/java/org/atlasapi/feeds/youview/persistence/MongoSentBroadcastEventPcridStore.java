@@ -52,7 +52,7 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
         if (found == null) {
             return Optional.absent();
         }
-        return Optional.of(TranslatorUtils.toString(found,  BROADCAST_EVENT_IMI_KEY));
+        return Optional.of(TranslatorUtils.toString(found, BROADCAST_EVENT_IMI_KEY));
     }
 
     @Override
@@ -61,18 +61,7 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
         if(found == null){
             return Optional.absent();
         }
-        return Optional.of(toDate(found, BROADCAST_EVENT_TRANSMISSION_TIME));
-    }
-
-    //common.persistence.translator.TranslatorUtils does not have toDate yet so this can be moved there.
-    public static LocalDate toDate(DBObject object, String name) {
-        if(object.containsField(name)) {
-            Object result = object.get(name);
-            if(result instanceof LocalDate) {
-                return (LocalDate)object.get(name);
-            }
-        }
-        return null;
+        return Optional.of(TranslatorUtils.toLocalDate(found, BROADCAST_EVENT_TRANSMISSION_TIME));
     }
 
     private DBObject find(String itemCrid, String programmeCrid) {
