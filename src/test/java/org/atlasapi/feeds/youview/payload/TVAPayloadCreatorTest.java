@@ -17,6 +17,7 @@ import org.atlasapi.feeds.tvanytime.TvaGenerationException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
+import org.atlasapi.feeds.youview.persistence.RollingWindowBroadcastEventDeduplicator;
 import org.atlasapi.feeds.youview.persistence.SentBroadcastEventPcridStore;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
@@ -25,6 +26,7 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
+import org.joda.time.LocalDate;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -50,6 +52,7 @@ public class TVAPayloadCreatorTest {
     private TvAnytimeGenerator generator = mock(TvAnytimeGenerator.class);
     private Converter<JAXBElement<TVAMainType>, String> converter = mock(TVAnytimeStringConverter.class);
     private SentBroadcastEventPcridStore sentBroadcastProgramUrlStore = mock(SentBroadcastEventPcridStore.class);
+    private RollingWindowBroadcastEventDeduplicator rollingWindowBroadcastEventDeduplicator = mock(RollingWindowBroadcastEventDeduplicator.class);
     private Clock clock = new TimeMachine();
     private ObjectFactory factory = new ObjectFactory();
     private JAXBElement<TVAMainType> tvaMain = createTvaMain();
@@ -57,7 +60,7 @@ public class TVAPayloadCreatorTest {
     private final PayloadCreator payloadCreator;
     
     public TVAPayloadCreatorTest() throws JAXBException {
-        this.payloadCreator = new TVAPayloadCreator(generator, converter, sentBroadcastProgramUrlStore, clock);
+        this.payloadCreator = new TVAPayloadCreator(generator, converter, rollingWindowBroadcastEventDeduplicator, clock);
     }
     
     private JAXBElement<TVAMainType> createTvaMain() {
@@ -166,7 +169,7 @@ public class TVAPayloadCreatorTest {
     }
 
     @Test
-    public void testBroadcastNotGeneratedWhereBroadcastHasPCridButHasNotBeenSeenPreviously() 
+    public void testBroadcastNotGeneratedWhereBroadcastHasPCridButHasNotBeenSeenPreviously()
             throws TvaGenerationException, PayloadGenerationException {
         
         Item item = mock(Item.class);
@@ -175,18 +178,20 @@ public class TVAPayloadCreatorTest {
         ItemBroadcastHierarchy broadcastHierarchy = new ItemBroadcastHierarchy(item, version, broadcast, "serviceId");
         String broadcastImi = "broadcastImi";
         String programCrid = "programCrid";
+        LocalDate transmissionDate = LocalDate.now();
         JAXBElement<TVAMainType> bCastTva = createBroadcastTVAWithPCrid(PCRID, programCrid, broadcastImi);
         
         when(generator.generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi)).thenReturn(bCastTva);
         when(converter.convert(bCastTva)).thenReturn(PAYLOAD);
         when(broadcast.getAliases()).thenReturn(createPCridAliases());
+        when(rollingWindowBroadcastEventDeduplicator.shouldUpload(bCastTva)).thenReturn(true);
         when(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(programCrid, PCRID)).thenReturn(Optional.<String>absent());
         
         Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
 
         verify(generator).generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi);
-        verify(sentBroadcastProgramUrlStore).recordSent(broadcastImi, programCrid, PCRID);
-        
+        verify(rollingWindowBroadcastEventDeduplicator).recordUpload(bCastTva, broadcast);
+
         assertEquals(PAYLOAD, payload.get().payload());
         assertEquals(clock.now(), payload.get().created());
     }

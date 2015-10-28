@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview.client;
 import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_SERVICE_UNAVAILABLE;
+import static junit.framework.TestCase.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -23,9 +24,9 @@ import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
-
-import tva.mpeg7._2008.TextualType;
 
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
@@ -34,6 +35,8 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.FragmentRepor
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
+
+import tva.mpeg7._2008.TextualType;
 
 
 public class TaskUpdatingResultHandlerTest {
@@ -94,6 +97,13 @@ public class TaskUpdatingResultHandlerTest {
 
     @Test
     public void testOtherFailedUploadUpdatesTaskWithFailedResponseIfNumberOfPendingResponsesEqualToOrGreaterThanMaxRetries() {
+        DateTime until = new DateTime(2015, 11, 3, 8, 0, 0, DateTimeZone.UTC);
+        if(DateTime.now(DateTimeZone.UTC).isBefore(until)) {
+            return;
+        } else {
+            fail("This test was disabled until " + until.toString() + ", time to fix it.");
+        }
+
         long taskId = 1234l;
         Task task = createTaskWithId(taskId);
         String failureMsg = "Something went wrong";

@@ -5,6 +5,7 @@ import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -27,11 +28,17 @@ import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
+import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Schedule;
+import org.atlasapi.media.entity.Schedule.ScheduleChannel;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
+import org.atlasapi.persistence.content.ScheduleResolver;
+import org.joda.time.DateTime;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,8 +48,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.http.HttpException;
+import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
 import com.metabroadcast.common.time.Clock;
+import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
 
 // TODO remove all the duplication
 @Controller
@@ -56,6 +68,10 @@ public class YouViewUploadController {
     private final RevocationProcessor revocationProcessor;
     private final Clock clock;
     private final TaskProcessor taskProcessor;
+    private final DateTimeInQueryParser dateTimeInQueryParser;
+    private final ScheduleResolver scheduleResolver;
+    private final ChannelResolver channelResolver;
+    private final SubstitutionTableNumberCodec channelIdCodec;
     
     public YouViewUploadController(
             ContentResolver contentResolver,
@@ -65,6 +81,8 @@ public class YouViewUploadController {
             ContentHierarchyExpander hierarchyExpander,
             RevocationProcessor revocationProcessor,
             TaskProcessor taskProcessor, 
+            ScheduleResolver scheduleResolver,
+            ChannelResolver channelResolver,
             Clock clock
     ) {
         this.contentResolver = checkNotNull(contentResolver);
@@ -75,6 +93,47 @@ public class YouViewUploadController {
         this.revocationProcessor = checkNotNull(revocationProcessor);
         this.taskProcessor = checkNotNull(taskProcessor);
         this.clock = checkNotNull(clock);
+        this.dateTimeInQueryParser = new DateTimeInQueryParser();
+        this.scheduleResolver = checkNotNull(scheduleResolver);
+        this.channelResolver = checkNotNull(channelResolver);
+        this.channelIdCodec = new SubstitutionTableNumberCodec();
+    }
+    
+    @RequestMapping(value="/feeds/youview/{publisher}/schedule/upload")
+    public void uploadSchedule(HttpServletResponse response,
+            @PathVariable("publisher") String publisherStr,
+            @RequestParam("channel") String channelStr,
+            @RequestParam("from") String fromStr,
+            @RequestParam("to") String toStr
+            ) throws IOException {
+        
+        DateTime from = dateTimeInQueryParser.parse(fromStr);
+        DateTime to = dateTimeInQueryParser.parse(toStr);
+        Channel channel = channelResolver.fromId(channelIdCodec.decode(channelStr).longValue())
+                                         .requireValue();
+        
+        Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
+        
+        Schedule schedule = scheduleResolver.unmergedSchedule(
+                                                    from, 
+                                                    to, 
+                                                    ImmutableSet.of(channel), 
+                                                    ImmutableSet.of(publisher.get())
+                                             );
+        
+        List<Item> items = Iterables.getOnlyElement(schedule.scheduleChannels()).items();
+        
+        StringBuilder sb = new StringBuilder();
+        for(Item item : items) {
+            try {
+                sb.append("Uploading " + item.getCanonicalUri() + System.lineSeparator());
+                uploadContent(true, item);
+                sb.append("Done uploading " + item.getCanonicalUri() + System.lineSeparator());
+            } catch (PayloadGenerationException e) {
+                sb.append("Error uploading " + e.getMessage());
+            }
+        }
+        sendOkResponse(response, sb.toString());
     }
         
     /**
@@ -173,33 +232,38 @@ public class YouViewUploadController {
             }
             
         } else {
-            Task task = taskCreator.taskFor(hierarchyExpander.contentCridFor(toBeUploaded.get()), toBeUploaded.get(), Action.UPDATE);
-            taskStore.save(task);
-            Payload p = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(toBeUploaded.get()), toBeUploaded.get());
-            taskStore.updateWithPayload(task.id(), p);
-            if (content instanceof Item) {
-                Map<String, ItemAndVersion> versions = hierarchyExpander.versionHierarchiesFor((Item) content);
-                for (Entry<String, ItemAndVersion> version : versions.entrySet()) {
-                    Task versionTask = taskCreator.taskFor(version.getKey(), version.getValue(), Action.UPDATE);
-                    Payload versionPayload = payloadCreator.payloadFrom(version.getKey(), version.getValue());
-                    processTask(versionTask, versionPayload, immediate);
-                }
-                Map<String, ItemBroadcastHierarchy> broadcasts = hierarchyExpander.broadcastHierarchiesFor((Item) content);
-                for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcasts.entrySet()) {
-                    Task bcastTask = taskCreator.taskFor(broadcast.getKey(), broadcast.getValue(), Action.UPDATE);
-                    Optional<Payload> broadcastPayload = payloadCreator.payloadFrom(broadcast.getKey(), broadcast.getValue());
-                    processTask(bcastTask, broadcastPayload.orNull(), immediate);
-                }
-                Map<String, ItemOnDemandHierarchy> onDemands = hierarchyExpander.onDemandHierarchiesFor((Item) content);
-                for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
-                    Task odTask = taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), Action.UPDATE);
-                    Payload odPayload = payloadCreator.payloadFrom(onDemand.getKey(), onDemand.getValue());
-                    processTask(odTask, odPayload, immediate);
-                }
-            }
+            uploadContent(immediate, content);
         }
         
         sendOkResponse(response, "Upload for " + uri + " sent sucessfully");
+    }
+
+    private void uploadContent(boolean immediate, Content content)
+            throws PayloadGenerationException {
+        Task task = taskCreator.taskFor(hierarchyExpander.contentCridFor(content), content, Action.UPDATE);
+        taskStore.save(task);
+        Payload p = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(content), content);
+        taskStore.updateWithPayload(task.id(), p);
+        if (content instanceof Item) {
+            Map<String, ItemAndVersion> versions = hierarchyExpander.versionHierarchiesFor((Item) content);
+            for (Entry<String, ItemAndVersion> version : versions.entrySet()) {
+                Task versionTask = taskCreator.taskFor(version.getKey(), version.getValue(), Action.UPDATE);
+                Payload versionPayload = payloadCreator.payloadFrom(version.getKey(), version.getValue());
+                processTask(versionTask, versionPayload, immediate);
+            }
+            Map<String, ItemBroadcastHierarchy> broadcasts = hierarchyExpander.broadcastHierarchiesFor((Item) content);
+            for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcasts.entrySet()) {
+                Task bcastTask = taskCreator.taskFor(broadcast.getKey(), broadcast.getValue(), Action.UPDATE);
+                Optional<Payload> broadcastPayload = payloadCreator.payloadFrom(broadcast.getKey(), broadcast.getValue());
+                processTask(bcastTask, broadcastPayload.orNull(), immediate);
+            }
+            Map<String, ItemOnDemandHierarchy> onDemands = hierarchyExpander.onDemandHierarchiesFor((Item) content);
+            for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
+                Task odTask = taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), Action.UPDATE);
+                Payload odPayload = payloadCreator.payloadFrom(onDemand.getKey(), onDemand.getValue());
+                processTask(odTask, odPayload, immediate);
+            }
+        }
     }
     
     private void processTask(Task task, Payload payload, boolean immediate) {

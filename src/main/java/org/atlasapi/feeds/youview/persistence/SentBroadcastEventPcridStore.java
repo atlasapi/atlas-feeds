@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview.persistence;
 
 import com.google.common.base.Optional;
+import org.joda.time.LocalDate;
 
 /**
  * A store to record that a programUrl reference has been sent to YouView 
@@ -16,9 +17,10 @@ import com.google.common.base.Optional;
 public interface SentBroadcastEventPcridStore {
 
     Optional<String> getSentBroadcastEventImi(String itemCrid, String pcrid);
+
+    Optional<LocalDate> getSentBroadcastEventTransmissionDate(String itemCrid, String pcrid);
     
     void removeSentRecord(String crid, String pcrid);
 
-    void recordSent(String broadcasteEventImi, String contentCrid, String programmeCrid);
-
+    void recordSent(String broadcasteEventImi, LocalDate transmissionDate, String contentCrid, String programmeCrid);
 }
