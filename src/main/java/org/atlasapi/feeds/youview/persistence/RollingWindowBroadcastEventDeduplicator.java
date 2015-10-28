@@ -1,9 +1,9 @@
 package org.atlasapi.feeds.youview.persistence;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import org.atlasapi.media.entity.Broadcast;
-import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import tva.metadata._2010.BroadcastEventType;
 import tva.metadata._2010.InstanceDescriptionType;
@@ -11,7 +11,6 @@ import tva.metadata._2010.TVAMainType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import javax.xml.bind.JAXBElement;
-import java.util.Date;
 import java.util.List;
 
 public class RollingWindowBroadcastEventDeduplicator implements BroadcastEventDeduplicator {
@@ -29,7 +28,6 @@ public class RollingWindowBroadcastEventDeduplicator implements BroadcastEventDe
         String crid = broadcastEvent.getProgram().getCrid();
         String broadcastImi = broadcastEvent.getInstanceMetadataId();
 
-        //If broadcast pc
         if (!broadcastPcrid.isPresent()) {
             return true;
         }
@@ -42,7 +40,8 @@ public class RollingWindowBroadcastEventDeduplicator implements BroadcastEventDe
             }
         }
 
-        return !sentBroadcastProgramUrlStore.getSentBroadcastEventImi(crid, broadcastPcrid.get()).isPresent();
+
+        return false;
     }
 
     @Override
@@ -60,6 +59,7 @@ public class RollingWindowBroadcastEventDeduplicator implements BroadcastEventDe
             );
         }
     }
+
     private BroadcastEventType extractBroadcastEvent(JAXBElement<TVAMainType> tvaElem) {
         return Iterables.getOnlyElement(
                 tvaElem.getValue()

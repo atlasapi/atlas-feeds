@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventPcridStore;
+import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,10 +29,11 @@ public class MongoSentBroadcastEventProgramUrlStoreTest {
         String itemCrid = "crid1";
         String programmeCrid = "http://example.org/1";
         String broadcastEventImi = "imi:example.org/1234";
+        LocalDate localDate = LocalDate.now();
         
         assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(itemCrid, programmeCrid).isPresent());
             
-        sentBroadcastProgramUrlStore.recordSent(broadcastEventImi, itemCrid, programmeCrid);
+        sentBroadcastProgramUrlStore.recordSent(broadcastEventImi, localDate, itemCrid, programmeCrid);
         assertEquals(broadcastEventImi, sentBroadcastProgramUrlStore.getSentBroadcastEventImi(itemCrid, programmeCrid).get());
         
         sentBroadcastProgramUrlStore.removeSentRecord(itemCrid, programmeCrid);

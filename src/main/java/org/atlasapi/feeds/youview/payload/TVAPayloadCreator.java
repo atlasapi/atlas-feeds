@@ -2,8 +2,6 @@ package org.atlasapi.feeds.youview.payload;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.List;
-
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 

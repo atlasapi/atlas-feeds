@@ -169,7 +169,7 @@ public class TVAPayloadCreatorTest {
     }
 
     @Test
-    public void testBroadcastNotGeneratedWhereBroadcastHasPCridButHasNotBeenSeenPreviously() 
+    public void testBroadcastNotGeneratedWhereBroadcastHasPCridButHasNotBeenSeenPreviously()
             throws TvaGenerationException, PayloadGenerationException {
         
         Item item = mock(Item.class);
@@ -184,13 +184,14 @@ public class TVAPayloadCreatorTest {
         when(generator.generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi)).thenReturn(bCastTva);
         when(converter.convert(bCastTva)).thenReturn(PAYLOAD);
         when(broadcast.getAliases()).thenReturn(createPCridAliases());
+        when(rollingWindowBroadcastEventDeduplicator.shouldUpload(bCastTva)).thenReturn(true);
         when(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(programCrid, PCRID)).thenReturn(Optional.<String>absent());
         
         Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
 
         verify(generator).generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi);
-        verify(sentBroadcastProgramUrlStore).recordSent(broadcastImi, transmissionDate, programCrid, PCRID);
-        
+        verify(rollingWindowBroadcastEventDeduplicator).recordUpload(bCastTva, broadcast);
+
         assertEquals(PAYLOAD, payload.get().payload());
         assertEquals(clock.now(), payload.get().created());
     }

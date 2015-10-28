@@ -19,7 +19,6 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
 
     private static final String BROADCAST_EVENT_IMI_KEY = "broadcastEventImi";
 
-    //We are using this to record the time we last sent
     private static final String BROADCAST_EVENT_TRANSMISSION_TIME = "transmissionTime";
         
     private final DBCollection collection;
@@ -65,7 +64,7 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
         return Optional.of(toDate(found, BROADCAST_EVENT_TRANSMISSION_TIME));
     }
 
-    //commom.persistence.translator.TranslatorUtils does not have toDate yet so this can be moved there.
+    //common.persistence.translator.TranslatorUtils does not have toDate yet so this can be moved there.
     public static LocalDate toDate(DBObject object, String name) {
         if(object.containsField(name)) {
             Object result = object.get(name);

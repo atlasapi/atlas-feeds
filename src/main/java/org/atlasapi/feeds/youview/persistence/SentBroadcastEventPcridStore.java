@@ -23,5 +23,4 @@ public interface SentBroadcastEventPcridStore {
     void removeSentRecord(String crid, String pcrid);
 
     void recordSent(String broadcasteEventImi, LocalDate transmissionDate, String contentCrid, String programmeCrid);
-
 }
