@@ -27,11 +27,6 @@ public class RollingWindowBroadcastEventDeduplicatorTest {
         this.deduplicator = new RollingWindowBroadcastEventDeduplicator(sentBroadcastProgramUrlStore);
     }
 
-    @Before
-    public void setUp() throws Exception{
-
-    }
-
     @Test
     public void testShouldUploadWhen52DaysHavePassed() throws Exception {
         BroadcastEventType broadcastEvent = mock(BroadcastEventType.class);
