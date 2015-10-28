@@ -9,7 +9,7 @@ import com.metabroadcast.common.persistence.translator.TranslatorUtils;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-
+import org.joda.time.LocalDate;
 
 public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcridStore {
 
@@ -18,6 +18,8 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
     private static final String COLLECTION = "sentBroadcastProgramUrls";
 
     private static final String BROADCAST_EVENT_IMI_KEY = "broadcastEventImi";
+
+    private static final String BROADCAST_EVENT_TRANSMISSION_TIME = "transmissionTime";
         
     private final DBCollection collection;
     
@@ -26,21 +28,22 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
     }
     
     @Override
-    public void recordSent(String broadcasteEventImi, String itemCrid, String programmeCrid) {
+    public void recordSent(String broadcasteEventImi, LocalDate broadcastTransmissionTime, String itemCrid, String programmeCrid) {
         if (find(itemCrid, programmeCrid) != null) {
             return;
         }
         collection.save(BasicDBObjectBuilder
-                            .start(MongoConstants.ID, keyFrom(itemCrid, programmeCrid))
-                            .add(BROADCAST_EVENT_IMI_KEY, broadcasteEventImi)
-                            .get());
+                .start(MongoConstants.ID, keyFrom(itemCrid, programmeCrid))
+                .add(BROADCAST_EVENT_IMI_KEY, broadcasteEventImi)
+                .add(BROADCAST_EVENT_TRANSMISSION_TIME, broadcastTransmissionTime)
+                .get());
     }
     
     @Override
     public void removeSentRecord(String crid, String programUrl) {
         collection.remove(new MongoQueryBuilder()
-                                .idEquals(keyFrom(crid, programUrl))
-                                .build());
+                .idEquals(keyFrom(crid, programUrl))
+                .build());
     }
     
     @Override
@@ -49,9 +52,18 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
         if (found == null) {
             return Optional.absent();
         }
-        return Optional.of(TranslatorUtils.toString(found,  BROADCAST_EVENT_IMI_KEY));
+        return Optional.of(TranslatorUtils.toString(found, BROADCAST_EVENT_IMI_KEY));
     }
-    
+
+    @Override
+    public Optional<LocalDate> getSentBroadcastEventTransmissionDate(String itemCrid, String programmeCrid) {
+        DBObject found = find(itemCrid, programmeCrid);
+        if(found == null){
+            return Optional.absent();
+        }
+        return Optional.of(TranslatorUtils.toLocalDate(found, BROADCAST_EVENT_TRANSMISSION_TIME));
+    }
+
     private DBObject find(String itemCrid, String programmeCrid) {
         return collection.findOne(keyFrom(itemCrid, programmeCrid));
     }

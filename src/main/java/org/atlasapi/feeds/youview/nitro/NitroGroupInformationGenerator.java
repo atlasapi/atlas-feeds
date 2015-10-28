@@ -5,6 +5,7 @@ import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,6 +24,7 @@ import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
+import org.atlasapi.media.entity.ReleaseDate;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 
@@ -180,20 +182,14 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(idGenerator.generateContentCrid(series.get()));
             if (item instanceof Episode) {
-                Episode episode = (Episode) item;
-                if (episode.getEpisodeNumber() != null) {
-                    memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
-                }
+                setEpisodeIndex(memberOf, item);
             }
             groupInfo.getMemberOf().add(memberOf);
         } else if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(idGenerator.generateContentCrid(brand.get()));
             if (item instanceof Episode) {
-                Episode episode = (Episode) item;
-                if (episode.getEpisodeNumber() != null) {
-                    memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
-                }
+                setEpisodeIndex(memberOf, item);
             }
             groupInfo.getMemberOf().add(memberOf);
         }
@@ -209,7 +205,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));
         groupInfo.setOrdered(true);
-        
+
         if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(idGenerator.generateContentCrid(brand.get()));
@@ -484,5 +480,29 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         title.setValue(contentTitle);
         
         return title;
+    }
+
+    private void setEpisodeIndex(MemberOfType memberOf, Item item) {
+        Episode episode = (Episode) item;
+        Integer episodeNumber = episode.getEpisodeNumber();
+        if (episodeNumber != null) {
+            memberOf.setIndex(Long.valueOf(episodeNumber));
+        } else if (!item.getReleaseDates().isEmpty()) {
+            int index = generateIndexFromReleaseDate(item.getReleaseDates());
+            memberOf.setIndex(Long.valueOf(index));
+        }
+    }
+
+    private int generateIndexFromReleaseDate(Set<ReleaseDate> dates) {
+        int index = 0;
+        for(ReleaseDate releaseDate: dates) {
+            if (releaseDate.type().equals(ReleaseDate.ReleaseType.FIRST_BROADCAST)) {
+                int year = releaseDate.date().getYear();
+                int month = releaseDate.date().getMonthOfYear();
+                int day = releaseDate.date().getDayOfMonth();
+                index = year*10000 + month*100 + day;
+            }
+        }
+        return index;
     }
 }
