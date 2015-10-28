@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.youview.persistence;
 
 import com.google.common.base.Optional;
-import com.google.common.collect.Iterables;
 import org.atlasapi.media.entity.Broadcast;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -12,8 +11,6 @@ import tva.mpeg7._2008.UniqueIDType;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
-
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
