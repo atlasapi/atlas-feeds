@@ -49,7 +49,7 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
     }
     
     @Override
-    public Optional<BroadcastEventRecords> getSentBroadcastEventImi(String itemCrid, String programmeCrid) {
+    public Optional<BroadcastEventRecords> getSentBroadcastEventRecords(String itemCrid, String programmeCrid) {
         DBObject found = find(itemCrid, programmeCrid);
         if (found == null) {
             return Optional.absent();

@@ -17,6 +17,7 @@ import org.atlasapi.feeds.tvanytime.TvaGenerationException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
+import org.atlasapi.feeds.youview.persistence.BroadcastEventRecords;
 import org.atlasapi.feeds.youview.persistence.RollingWindowBroadcastEventDeduplicator;
 import org.atlasapi.feeds.youview.persistence.SentBroadcastEventPcridStore;
 import org.atlasapi.media.entity.Alias;
@@ -154,12 +155,13 @@ public class TVAPayloadCreatorTest {
         ItemBroadcastHierarchy broadcastHierarchy = new ItemBroadcastHierarchy(item, version, broadcast, "serviceId");
         String broadcastImi = "broadcastImi";
         String programCrid = "programCrid";
+        BroadcastEventRecords broadcastEventRecords = mock(BroadcastEventRecords.class);
         JAXBElement<TVAMainType> bCastTva = createBroadcastTVAWithPCrid(PCRID, programCrid, broadcastImi);
         
         when(generator.generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi)).thenReturn(bCastTva);
         when(converter.convert(bCastTva)).thenReturn(PAYLOAD);
         when(broadcast.getAliases()).thenReturn(createPCridAliases());
-        when(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(programCrid, PCRID)).thenReturn(Optional.of("1"));
+        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.of(broadcastEventRecords));
         
         Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
 
@@ -185,7 +187,7 @@ public class TVAPayloadCreatorTest {
         when(converter.convert(bCastTva)).thenReturn(PAYLOAD);
         when(broadcast.getAliases()).thenReturn(createPCridAliases());
         when(rollingWindowBroadcastEventDeduplicator.shouldUpload(bCastTva)).thenReturn(true);
-        when(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(programCrid, PCRID)).thenReturn(Optional.<String>absent());
+        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.<BroadcastEventRecords>absent());
         
         Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
 

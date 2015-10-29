@@ -35,7 +35,7 @@ public class RollingWindowBroadcastEventDeduplicator implements BroadcastEventDe
         String crid = broadcastEvent.getProgram().getCrid();
         String broadcastImi = broadcastEvent.getInstanceMetadataId();
         Optional<BroadcastEventRecords> broadcastEventRecords = sentBroadcastProgramUrlStore
-                                                                    .getSentBroadcastEventImi(crid, broadcastPcrid.get());
+                                                                    .getSentBroadcastEventRecords(crid, broadcastPcrid.get());
 
         if (!broadcastPcrid.isPresent()) {
             return true;
