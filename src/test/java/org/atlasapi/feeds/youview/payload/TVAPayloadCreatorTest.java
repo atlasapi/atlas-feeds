@@ -17,7 +17,7 @@ import org.atlasapi.feeds.tvanytime.TvaGenerationException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
-import org.atlasapi.feeds.youview.persistence.BroadcastEventRecords;
+import org.atlasapi.feeds.youview.persistence.BroadcastEventRecord;
 import org.atlasapi.feeds.youview.persistence.RollingWindowBroadcastEventDeduplicator;
 import org.atlasapi.feeds.youview.persistence.SentBroadcastEventPcridStore;
 import org.atlasapi.media.entity.Alias;
@@ -44,7 +44,6 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
-
 
 public class TVAPayloadCreatorTest {
 
@@ -155,13 +154,13 @@ public class TVAPayloadCreatorTest {
         ItemBroadcastHierarchy broadcastHierarchy = new ItemBroadcastHierarchy(item, version, broadcast, "serviceId");
         String broadcastImi = "broadcastImi";
         String programCrid = "programCrid";
-        BroadcastEventRecords broadcastEventRecords = mock(BroadcastEventRecords.class);
+        BroadcastEventRecord broadcastEventRecord = mock(BroadcastEventRecord.class);
         JAXBElement<TVAMainType> bCastTva = createBroadcastTVAWithPCrid(PCRID, programCrid, broadcastImi);
         
         when(generator.generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi)).thenReturn(bCastTva);
         when(converter.convert(bCastTva)).thenReturn(PAYLOAD);
         when(broadcast.getAliases()).thenReturn(createPCridAliases());
-        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.of(broadcastEventRecords));
+        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.of(broadcastEventRecord));
         
         Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
 
@@ -187,7 +186,7 @@ public class TVAPayloadCreatorTest {
         when(converter.convert(bCastTva)).thenReturn(PAYLOAD);
         when(broadcast.getAliases()).thenReturn(createPCridAliases());
         when(rollingWindowBroadcastEventDeduplicator.shouldUpload(bCastTva)).thenReturn(true);
-        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.<BroadcastEventRecords>absent());
+        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.<BroadcastEventRecord>absent());
         
         Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
 

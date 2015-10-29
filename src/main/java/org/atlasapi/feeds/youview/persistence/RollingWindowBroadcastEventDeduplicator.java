@@ -15,7 +15,10 @@ import javax.xml.bind.JAXBElement;
 import java.util.List;
 
 /**
- * This class is used to
+ * This class is used to test whether a BroadcastEvent should be sent to YouView while taking into account YouView expiring old associations periodically.
+ * BroadcastEvent is used by YouView to link items in the backwards EPG to on-demands.
+ * Since YouView key on programme crid, instead of uploading per-broadcast, we're able to only send a single BroadcastEvent per pcrid.
+ * The class records when we last uploaded a BroadcastEvent and only suppress if it was sent recently (where recently will be defined).
  */
 public class RollingWindowBroadcastEventDeduplicator implements BroadcastEventDeduplicator {
     private static final String PCRID_AUTHORITY = "pcrid.dmol.co.uk";
@@ -34,21 +37,27 @@ public class RollingWindowBroadcastEventDeduplicator implements BroadcastEventDe
         Optional<String> broadcastPcrid = getPcrid(broadcastEvent);
         String crid = broadcastEvent.getProgram().getCrid();
         String broadcastImi = broadcastEvent.getInstanceMetadataId();
-        Optional<BroadcastEventRecords> broadcastEventRecords = sentBroadcastProgramUrlStore
+        Optional<BroadcastEventRecord> broadcastEventRecords = sentBroadcastProgramUrlStore
                                                                     .getSentBroadcastEventRecords(crid, broadcastPcrid.get());
 
-        if (!broadcastPcrid.isPresent()) {
+        if(!broadcastPcrid.isPresent()) {
             return true;
         }
 
-        if(broadcastImi.equals(broadcastEventRecords.get().getBroadcastEventImi())){
+        if(broadcastImi.equals(broadcastEventRecords.get().getBroadcastEventImi())) {
             return true;
         }
 
-        if(broadcastEventRecords.get().getBroadcastTransmissionDate().isBefore(LocalDate.now().minusDays(DAYS_BROADCAST_LAST_SENT))) {
+        if(broadcastEventRecords.get()
+                .getBroadcastTransmissionDate()
+                .isBefore(LocalDate.now().minusDays(DAYS_BROADCAST_LAST_SENT))) {
             return true;
         }
-        LOGGER.trace("Broadcast is not uploaded, since it has been last sent for less than 52 days or its ProgramURL has already been associated with this service ID and item");
+
+        if(!broadcastEventRecords.isPresent()) {
+            return false;
+        }
+        LOGGER.trace("Broadcast is not uploaded, since it has been last sent for less than " + DAYS_BROADCAST_LAST_SENT + " days or its ProgramURL has already been associated with this service ID and item");
         return false;
     }
 
