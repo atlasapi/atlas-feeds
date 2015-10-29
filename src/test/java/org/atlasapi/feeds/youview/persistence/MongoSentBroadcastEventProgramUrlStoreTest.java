@@ -12,7 +12,6 @@ import org.junit.Test;
 import com.metabroadcast.common.persistence.MongoTestHelper;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 
-
 public class MongoSentBroadcastEventProgramUrlStoreTest {
 
     private DatabasedMongo mongo;

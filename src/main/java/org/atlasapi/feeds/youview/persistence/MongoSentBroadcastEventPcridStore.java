@@ -5,7 +5,6 @@ import com.google.common.base.Optional;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoConstants;
 import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
-import com.metabroadcast.common.persistence.translator.TranslatorUtils;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -31,7 +30,7 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
             return;
         }
 
-        BroadcastEventRecords eventRecords = new BroadcastEventRecords.Builder()
+        BroadcastEventRecord eventRecords = new BroadcastEventRecord.Builder()
                                                             .broadcastEventImi(broadcastEventImi)
                                                             .broadcastTransmissionDate(broadcastTransmissionDate)
                                                             .build();
@@ -49,7 +48,7 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
     }
     
     @Override
-    public Optional<BroadcastEventRecords> getSentBroadcastEventRecords(String itemCrid, String programmeCrid) {
+    public Optional<BroadcastEventRecord> getSentBroadcastEventRecords(String itemCrid, String programmeCrid) {
         DBObject found = find(itemCrid, programmeCrid);
         if (found == null) {
             return Optional.absent();
@@ -57,9 +56,9 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
         return Optional.of(toBroadcastEventRecords(found, BROADCAST_EVENT_IMI_KEY));
     }
 
-    public static BroadcastEventRecords toBroadcastEventRecords(DBObject dbObject, String name){
+    public static BroadcastEventRecord toBroadcastEventRecords(DBObject dbObject, String name){
         if(dbObject.containsField(name)){
-            return (BroadcastEventRecords) dbObject.get(name);
+            return (BroadcastEventRecord) dbObject.get(name);
         }
         return null;
     }

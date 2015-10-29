@@ -5,7 +5,13 @@ import org.atlasapi.media.entity.Broadcast;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.junit.Test;
-import tva.metadata._2010.*;
+import tva.metadata._2010.BroadcastEventType;
+import tva.metadata._2010.CRIDRefType;
+import tva.metadata._2010.InstanceDescriptionType;
+import tva.metadata._2010.ObjectFactory;
+import tva.metadata._2010.ProgramDescriptionType;
+import tva.metadata._2010.ProgramLocationTableType;
+import tva.metadata._2010.TVAMainType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import javax.xml.bind.JAXBElement;
@@ -32,21 +38,21 @@ public class RollingWindowBroadcastEventDeduplicatorTest {
         String broadcastImi = "broadcastImi";
         String nonMatchingBroadcastImi = "nonMatchingBroadcastImi";
         String programCrid = "programCrid";
-        BroadcastEventRecords broadcastEventRecords = mock(BroadcastEventRecords.class);
+        BroadcastEventRecord broadcastEventRecord = mock(BroadcastEventRecord.class);
         JAXBElement<TVAMainType> bCastTva = createBroadcastTVAWithPCrid(PCRID, programCrid, broadcastImi);
 
         when(broadcastEvent.getProgram()).thenReturn(program);
         when(program.getCrid()).thenReturn(programCrid);
         when(broadcastEvent.getInstanceMetadataId()).thenReturn(broadcastImi);
-        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.of(broadcastEventRecords));
-        when(broadcastEventRecords.getBroadcastEventImi()).thenReturn(nonMatchingBroadcastImi);
-        when(broadcastEventRecords.getBroadcastTransmissionDate()).thenReturn(LocalDate.now().minusDays(52));
+        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.of(broadcastEventRecord));
+        when(broadcastEventRecord.getBroadcastEventImi()).thenReturn(nonMatchingBroadcastImi);
+        when(broadcastEventRecord.getBroadcastTransmissionDate()).thenReturn(LocalDate.now().minusDays(52));
 
         boolean shouldUpload = deduplicator.shouldUpload(bCastTva);
 
         verify(sentBroadcastProgramUrlStore).getSentBroadcastEventRecords(programCrid, PCRID);
-        verify(broadcastEventRecords).getBroadcastEventImi();
-        verify(broadcastEventRecords).getBroadcastTransmissionDate();
+        verify(broadcastEventRecord).getBroadcastEventImi();
+        verify(broadcastEventRecord).getBroadcastTransmissionDate();
         verifyNoMoreInteractions(sentBroadcastProgramUrlStore);
 
         assertEquals(true, shouldUpload);
@@ -60,21 +66,21 @@ public class RollingWindowBroadcastEventDeduplicatorTest {
         String broadcastImi = "broadcastImi";
         String nonMatchingBroadcastImi = "nonMatchingBroadcastImi";
         String programCrid = "programCrid";
-        BroadcastEventRecords broadcastEventRecords = mock(BroadcastEventRecords.class);
+        BroadcastEventRecord broadcastEventRecord = mock(BroadcastEventRecord.class);
         JAXBElement<TVAMainType> bCastTva = createBroadcastTVAWithPCrid(PCRID, programCrid, broadcastImi);
 
         when(broadcastEvent.getProgram()).thenReturn(program);
         when(program.getCrid()).thenReturn(programCrid);
         when(broadcastEvent.getInstanceMetadataId()).thenReturn(broadcastImi);
-        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.of(broadcastEventRecords));
-        when(broadcastEventRecords.getBroadcastEventImi()).thenReturn(nonMatchingBroadcastImi);
-        when(broadcastEventRecords.getBroadcastTransmissionDate()).thenReturn(LocalDate.now().minusDays(51));
+        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.of(broadcastEventRecord));
+        when(broadcastEventRecord.getBroadcastEventImi()).thenReturn(nonMatchingBroadcastImi);
+        when(broadcastEventRecord.getBroadcastTransmissionDate()).thenReturn(LocalDate.now().minusDays(51));
 
         boolean shouldUpload = deduplicator.shouldUpload(bCastTva);
 
         verify(sentBroadcastProgramUrlStore).getSentBroadcastEventRecords(programCrid, PCRID);
-        verify(broadcastEventRecords).getBroadcastEventImi();
-        verify(broadcastEventRecords).getBroadcastTransmissionDate();
+        verify(broadcastEventRecord).getBroadcastEventImi();
+        verify(broadcastEventRecord).getBroadcastTransmissionDate();
         verifyNoMoreInteractions(sentBroadcastProgramUrlStore);
 
         assertEquals(false, shouldUpload);
@@ -86,20 +92,20 @@ public class RollingWindowBroadcastEventDeduplicatorTest {
         CRIDRefType program = mock(CRIDRefType.class);
         String broadcastImi = "broadcastImi";
         String programCrid = "programCrid";
-        BroadcastEventRecords broadcastEventRecords = mock(BroadcastEventRecords.class);
+        BroadcastEventRecord broadcastEventRecord = mock(BroadcastEventRecord.class);
         JAXBElement<TVAMainType> bCastTva = createBroadcastTVAWithPCrid(PCRID, programCrid, broadcastImi);
 
         when(broadcastEvent.getProgram()).thenReturn(program);
         when(program.getCrid()).thenReturn(programCrid);
         when(broadcastEvent.getInstanceMetadataId()).thenReturn(broadcastImi);
-        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.of(broadcastEventRecords));
-        when(broadcastEventRecords.getBroadcastEventImi()).thenReturn(broadcastImi);
-        when(broadcastEventRecords.getBroadcastTransmissionDate()).thenReturn(LocalDate.now().minusDays(51));
+        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.of(broadcastEventRecord));
+        when(broadcastEventRecord.getBroadcastEventImi()).thenReturn(broadcastImi);
+        when(broadcastEventRecord.getBroadcastTransmissionDate()).thenReturn(LocalDate.now().minusDays(51));
 
         boolean shouldUpload = deduplicator.shouldUpload(bCastTva);
 
         verify(sentBroadcastProgramUrlStore).getSentBroadcastEventRecords(programCrid, PCRID);
-        verify(broadcastEventRecords).getBroadcastEventImi();
+        verify(broadcastEventRecord).getBroadcastEventImi();
         verifyNoMoreInteractions(sentBroadcastProgramUrlStore);
 
         assertEquals(true, shouldUpload);
@@ -112,20 +118,20 @@ public class RollingWindowBroadcastEventDeduplicatorTest {
         String broadcastImi = "broadcastImi";
         String nonMatchingBroadcastImi = "nonMatchingBroadcastImi";
         String programCrid = "programCrid";
-        BroadcastEventRecords broadcastEventRecords = mock(BroadcastEventRecords.class);
+        BroadcastEventRecord broadcastEventRecord = mock(BroadcastEventRecord.class);
         JAXBElement<TVAMainType> bCastTva = createBroadcastTVAWithPCrid(PCRID, programCrid, broadcastImi);
 
         when(broadcastEvent.getProgram()).thenReturn(program);
         when(program.getCrid()).thenReturn(programCrid);
         when(broadcastEvent.getInstanceMetadataId()).thenReturn(broadcastImi);
-        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.of(broadcastEventRecords));
-        when(broadcastEventRecords.getBroadcastEventImi()).thenReturn(nonMatchingBroadcastImi);
-        when(broadcastEventRecords.getBroadcastTransmissionDate()).thenReturn(LocalDate.now().minusDays(51));
+        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.of(broadcastEventRecord));
+        when(broadcastEventRecord.getBroadcastEventImi()).thenReturn(nonMatchingBroadcastImi);
+        when(broadcastEventRecord.getBroadcastTransmissionDate()).thenReturn(LocalDate.now().minusDays(51));
 
         boolean shouldUpload = deduplicator.shouldUpload(bCastTva);
 
         verify(sentBroadcastProgramUrlStore).getSentBroadcastEventRecords(programCrid, PCRID);
-        verify(broadcastEventRecords).getBroadcastEventImi();
+        verify(broadcastEventRecord).getBroadcastEventImi();
         verifyNoMoreInteractions(sentBroadcastProgramUrlStore);
 
         assertEquals(false, shouldUpload);

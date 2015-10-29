@@ -1,15 +1,15 @@
 package org.atlasapi.feeds.youview.persistence;
 
-import org.atlasapi.media.entity.simple.Broadcast;
+import com.google.common.base.Preconditions;
 import org.joda.time.LocalDate;
 
-public class BroadcastEventRecords {
+public class BroadcastEventRecord {
     private final String broadcastEventImi;
     private final LocalDate broadcastTransmissionDate;
 
-    private BroadcastEventRecords(Builder builder){
-        this.broadcastEventImi = builder.broadcastEventImi;
-        this.broadcastTransmissionDate = builder.broadcastTransmissionDate;
+    private BroadcastEventRecord(Builder builder){
+        this.broadcastEventImi = Preconditions.checkNotNull(builder.broadcastEventImi);
+        this.broadcastTransmissionDate = Preconditions.checkNotNull(builder.broadcastTransmissionDate);
     }
 
     public String getBroadcastEventImi() {
@@ -34,8 +34,8 @@ public class BroadcastEventRecords {
             return this;
         }
 
-        public BroadcastEventRecords build(){
-            return new BroadcastEventRecords(this);
+        public BroadcastEventRecord build(){
+            return new BroadcastEventRecord(this);
         }
     }
 }
