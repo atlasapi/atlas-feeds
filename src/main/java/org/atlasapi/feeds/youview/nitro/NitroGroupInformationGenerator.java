@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
+import com.metabroadcast.common.intl.Countries;
 import org.atlasapi.feeds.tvanytime.CreditsItemGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
@@ -25,9 +26,12 @@ import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ReleaseDate;
+import org.atlasapi.media.entity.ReleaseDate.ReleaseType;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 
+import org.joda.time.LocalDate;
+import scala.collection.parallel.ParIterableLike;
 import tva.metadata._2010.BaseProgramGroupTypeType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ControlledTermType;
@@ -495,14 +499,12 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
 
     private int generateIndexFromReleaseDate(Set<ReleaseDate> dates) {
         int index = 0;
-        for(ReleaseDate releaseDate: dates) {
-            if (releaseDate.type().equals(ReleaseDate.ReleaseType.FIRST_BROADCAST)) {
-                int year = releaseDate.date().getYear();
-                int month = releaseDate.date().getMonthOfYear();
-                int day = releaseDate.date().getDayOfMonth();
-                index = year*10000 + month*100 + day;
-            }
+        ReleaseDate releaseDate = Iterables.getFirst(dates, new ReleaseDate(LocalDate.now(), Countries.GB, ReleaseType.FIRST_BROADCAST));
+        if (releaseDate.type().equals(ReleaseType.FIRST_BROADCAST)) {
+            String date = releaseDate.date().toString("yyyyMMdd");
+            index = Integer.parseInt(date);
         }
+
         return index;
     }
 }
