@@ -31,12 +31,12 @@ public class MongoSentBroadcastEventProgramUrlStoreTest {
         String broadcastEventImi = "imi:example.org/1234";
         LocalDate localDate = LocalDate.now();
         
-        assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(itemCrid, programmeCrid).isPresent());
+        assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(itemCrid, programmeCrid).isPresent());
             
         sentBroadcastProgramUrlStore.recordSent(broadcastEventImi, localDate, itemCrid, programmeCrid);
-        assertEquals(broadcastEventImi, sentBroadcastProgramUrlStore.getSentBroadcastEventImi(itemCrid, programmeCrid).get());
+        assertEquals(broadcastEventImi, sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(itemCrid, programmeCrid).get());
         
         sentBroadcastProgramUrlStore.removeSentRecord(itemCrid, programmeCrid);
-        assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(itemCrid, programmeCrid).isPresent());
+        assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(itemCrid, programmeCrid).isPresent());
     }
 }
