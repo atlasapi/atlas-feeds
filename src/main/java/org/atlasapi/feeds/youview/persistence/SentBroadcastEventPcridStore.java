@@ -16,9 +16,7 @@ import org.joda.time.LocalDate;
  */
 public interface SentBroadcastEventPcridStore {
 
-    Optional<String> getSentBroadcastEventImi(String itemCrid, String pcrid);
-
-    Optional<LocalDate> getSentBroadcastEventTransmissionDate(String itemCrid, String pcrid);
+    Optional<BroadcastEventRecords> getSentBroadcastEventImi(String itemCrid, String pcrid);
     
     void removeSentRecord(String crid, String pcrid);
 

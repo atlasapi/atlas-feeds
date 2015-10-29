@@ -4,7 +4,6 @@ import com.google.common.base.Optional;
 import org.atlasapi.media.entity.Broadcast;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.junit.Before;
 import org.junit.Test;
 import tva.metadata._2010.*;
 import tva.mpeg7._2008.UniqueIDType;
@@ -19,7 +18,7 @@ public class RollingWindowBroadcastEventDeduplicatorTest {
     private static final String PCRID = "pcrid";
     private static final String PCRID_AUTHORITY = "pcrid.dmol.co.uk";
     private SentBroadcastEventPcridStore sentBroadcastProgramUrlStore = mock(SentBroadcastEventPcridStore.class);
-    private RollingWindowBroadcastEventDeduplicator deduplicator;
+    private BroadcastEventDeduplicator deduplicator;
     private ObjectFactory factory = new ObjectFactory();
     private JAXBElement<TVAMainType> tvaMain = createTvaMain();
 
@@ -39,12 +38,12 @@ public class RollingWindowBroadcastEventDeduplicatorTest {
         when(program.getCrid()).thenReturn(programCrid);
         when(broadcastEvent.getInstanceMetadataId()).thenReturn(broadcastImi);
         when(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(programCrid, PCRID)).thenReturn(Optional.of(broadcastImi));
-        when(sentBroadcastProgramUrlStore.getSentBroadcastEventTransmissionDate(programCrid, PCRID)).thenReturn(Optional.of(LocalDate.now().minusDays(53)));
+        //when(sentBroadcastProgramUrlStore.getSentBroadcastEventTransmissionDate(programCrid, PCRID)).thenReturn(Optional.of(LocalDate.now().minusDays(52)));
 
         boolean shouldUpload = deduplicator.shouldUpload(bCastTva);
 
         verify(sentBroadcastProgramUrlStore).getSentBroadcastEventImi(programCrid, PCRID);
-        verify(sentBroadcastProgramUrlStore).getSentBroadcastEventTransmissionDate(programCrid, PCRID);
+        //verify(sentBroadcastProgramUrlStore).getSentBroadcastEventTransmissionDate(programCrid, PCRID);
         verifyNoMoreInteractions(sentBroadcastProgramUrlStore);
 
         assertEquals(true, shouldUpload);
@@ -61,13 +60,13 @@ public class RollingWindowBroadcastEventDeduplicatorTest {
 
         when(broadcastEvent.getProgram()).thenReturn(program);
         when(program.getCrid()).thenReturn(programCrid);
-        when(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(programCrid, PCRID)).thenReturn(Optional.of(broadcastImi));
-        when(sentBroadcastProgramUrlStore.getSentBroadcastEventTransmissionDate(programCrid, PCRID)).thenReturn(Optional.of(LocalDate.now()));
+        when(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(programCrid, PCRID)).thenReturn(Optional.<String>absent());
+        //when(sentBroadcastProgramUrlStore.getSentBroadcastEventTransmissionDate(programCrid, PCRID)).thenReturn(Optional.of(LocalDate.now()));
 
         boolean shouldUpload = deduplicator.shouldUpload(bCastTva);
 
         verify(sentBroadcastProgramUrlStore).getSentBroadcastEventImi(programCrid, PCRID);
-        verify(sentBroadcastProgramUrlStore).getSentBroadcastEventTransmissionDate(programCrid, PCRID);
+        //verify(sentBroadcastProgramUrlStore).getSentBroadcastEventTransmissionDate(programCrid, PCRID);
         verifyNoMoreInteractions(sentBroadcastProgramUrlStore);
 
         assertEquals(false, shouldUpload);

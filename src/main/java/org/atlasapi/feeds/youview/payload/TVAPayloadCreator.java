@@ -11,7 +11,7 @@ import org.atlasapi.feeds.tvanytime.TvaGenerationException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
-import org.atlasapi.feeds.youview.persistence.RollingWindowBroadcastEventDeduplicator;
+import org.atlasapi.feeds.youview.persistence.BroadcastEventDeduplicator;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
@@ -32,17 +32,17 @@ public class TVAPayloadCreator implements PayloadCreator {
     private final Logger log = LoggerFactory.getLogger(TVAPayloadCreator.class);
     private final TvAnytimeGenerator generator;
     private final Converter<JAXBElement<TVAMainType>, String> converter;
-    private final RollingWindowBroadcastEventDeduplicator rollingWindowBroadcastEventDeduplicator;
+    private final BroadcastEventDeduplicator broadcastEventDeduplicator;
     private final Clock clock;
     
     public TVAPayloadCreator(TvAnytimeGenerator generator, 
             Converter<JAXBElement<TVAMainType>, String> converter, 
-            RollingWindowBroadcastEventDeduplicator rollingWindowBroadcastEventDeduplicator, Clock clock)
+            BroadcastEventDeduplicator broadcastEventDeduplicator, Clock clock)
                     throws JAXBException {
         
         this.generator = checkNotNull(generator);
         this.converter = checkNotNull(converter);
-        this.rollingWindowBroadcastEventDeduplicator = checkNotNull(rollingWindowBroadcastEventDeduplicator);
+        this.broadcastEventDeduplicator = checkNotNull(broadcastEventDeduplicator);
         this.clock = checkNotNull(clock);
     }
 
@@ -72,10 +72,9 @@ public class TVAPayloadCreator implements PayloadCreator {
             JAXBElement<TVAMainType> tvaElem = generator.generateBroadcastTVAFrom(broadcastHierarchy, broadcastImi);
             
             if (hasPCrid(broadcastHierarchy.broadcast())) {
-                if (rollingWindowBroadcastEventDeduplicator.shouldUpload(tvaElem)) {
-                    rollingWindowBroadcastEventDeduplicator.recordUpload(tvaElem, broadcastHierarchy.broadcast());
+                if (broadcastEventDeduplicator.shouldUpload(tvaElem)) {
+                    broadcastEventDeduplicator.recordUpload(tvaElem, broadcastHierarchy.broadcast());
                 } else {
-                    log.trace("Not uploading broadcast, since its ProgramURL has already been associated with this service ID and item");
                     return Optional.absent();
                 }
             }

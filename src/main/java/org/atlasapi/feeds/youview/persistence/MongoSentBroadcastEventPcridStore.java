@@ -18,8 +18,6 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
     private static final String COLLECTION = "sentBroadcastProgramUrls";
 
     private static final String BROADCAST_EVENT_IMI_KEY = "broadcastEventImi";
-
-    private static final String BROADCAST_EVENT_TRANSMISSION_TIME = "transmissionTime";
         
     private final DBCollection collection;
     
@@ -28,40 +26,42 @@ public class MongoSentBroadcastEventPcridStore implements SentBroadcastEventPcri
     }
     
     @Override
-    public void recordSent(String broadcasteEventImi, LocalDate broadcastTransmissionTime, String itemCrid, String programmeCrid) {
+    public void recordSent(String broadcastEventImi, LocalDate broadcastTransmissionDate, String itemCrid, String programmeCrid) {
         if (find(itemCrid, programmeCrid) != null) {
             return;
         }
+
+        BroadcastEventRecords eventRecords = new BroadcastEventRecords.Builder()
+                                                            .broadcastEventImi(broadcastEventImi)
+                                                            .broadcastTransmissionDate(broadcastTransmissionDate)
+                                                            .build();
         collection.save(BasicDBObjectBuilder
                 .start(MongoConstants.ID, keyFrom(itemCrid, programmeCrid))
-                .add(BROADCAST_EVENT_IMI_KEY, broadcasteEventImi)
-                .add(BROADCAST_EVENT_TRANSMISSION_TIME, broadcastTransmissionTime)
+                .add(BROADCAST_EVENT_IMI_KEY, eventRecords)
                 .get());
     }
     
     @Override
     public void removeSentRecord(String crid, String programUrl) {
         collection.remove(new MongoQueryBuilder()
-                .idEquals(keyFrom(crid, programUrl))
-                .build());
+                                .idEquals(keyFrom(crid, programUrl))
+                                .build());
     }
     
     @Override
-    public Optional<String> getSentBroadcastEventImi(String itemCrid, String programmeCrid) {
+    public Optional<BroadcastEventRecords> getSentBroadcastEventImi(String itemCrid, String programmeCrid) {
         DBObject found = find(itemCrid, programmeCrid);
         if (found == null) {
             return Optional.absent();
         }
-        return Optional.of(TranslatorUtils.toString(found, BROADCAST_EVENT_IMI_KEY));
+        return Optional.of(toBroadcastEventRecords(found, BROADCAST_EVENT_IMI_KEY));
     }
 
-    @Override
-    public Optional<LocalDate> getSentBroadcastEventTransmissionDate(String itemCrid, String programmeCrid) {
-        DBObject found = find(itemCrid, programmeCrid);
-        if(found == null){
-            return Optional.absent();
+    public static BroadcastEventRecords toBroadcastEventRecords(DBObject dbObject, String name){
+        if(dbObject.containsField(name)){
+            return (BroadcastEventRecords) dbObject.get(name);
         }
-        return Optional.of(TranslatorUtils.toLocalDate(found, BROADCAST_EVENT_TRANSMISSION_TIME));
+        return null;
     }
 
     private DBObject find(String itemCrid, String programmeCrid) {
