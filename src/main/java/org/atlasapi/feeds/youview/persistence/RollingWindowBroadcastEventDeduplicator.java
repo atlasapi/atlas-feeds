@@ -37,8 +37,14 @@ public class RollingWindowBroadcastEventDeduplicator implements BroadcastEventDe
         Optional<String> broadcastPcrid = getPcrid(broadcastEvent);
         String crid = broadcastEvent.getProgram().getCrid();
         String broadcastImi = broadcastEvent.getInstanceMetadataId();
-        Optional<BroadcastEventRecord> broadcastEventRecords = sentBroadcastProgramUrlStore
-                                                                    .getSentBroadcastEventRecords(crid, broadcastPcrid.get());
+        Optional<BroadcastEventRecord> broadcastEventRecords = Optional.absent();
+
+        if(broadcastEventRecords.isPresent()) {
+            broadcastEventRecords = sentBroadcastProgramUrlStore
+                                        .getSentBroadcastEventRecords(crid, broadcastPcrid.get());
+        } else {
+            return false;
+        }
 
         if(!broadcastPcrid.isPresent()) {
             return true;
@@ -54,9 +60,6 @@ public class RollingWindowBroadcastEventDeduplicator implements BroadcastEventDe
             return true;
         }
 
-        if(!broadcastEventRecords.isPresent()) {
-            return false;
-        }
         LOGGER.trace("Broadcast is not uploaded, since it has been last sent for less than " + DAYS_BROADCAST_LAST_SENT + " days or its ProgramURL has already been associated with this service ID and item");
         return false;
     }
