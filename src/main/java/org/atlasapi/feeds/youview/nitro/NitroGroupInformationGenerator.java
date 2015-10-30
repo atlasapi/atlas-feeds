@@ -83,6 +83,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private static final String TITLE_TYPE_SECONDARY = "secondary";
     private static final String CHILDREN_GENRE = "urn:tva:metadata:cs:IntendedAudienceCS:2010:4.2.1";
     private static final String OTHER_IDENTIFIER_AUTHORITY = "epid.bbc.co.uk";
+    private static final String DATE_FORMAT = "yyyyMMdd";
     private static final Pattern NITRO_URI_PATTERN = Pattern.compile("^http://nitro.bbc.co.uk/programmes/([a-zA-Z0-9]+)$");
 
     private static final Map<MediaType, String> YOUVIEW_MEDIATYPE_GENRE_MAPPING = ImmutableMap.<MediaType, String>builder()
@@ -501,10 +502,9 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         int index = 0;
         ReleaseDate releaseDate = Iterables.getFirst(dates, new ReleaseDate(LocalDate.now(), Countries.GB, ReleaseType.FIRST_BROADCAST));
         if (releaseDate.type().equals(ReleaseType.FIRST_BROADCAST)) {
-            String date = releaseDate.date().toString("yyyyMMdd");
+            String date = releaseDate.date().toString(DATE_FORMAT);
             index = Integer.parseInt(date);
         }
-
         return index;
     }
 }
