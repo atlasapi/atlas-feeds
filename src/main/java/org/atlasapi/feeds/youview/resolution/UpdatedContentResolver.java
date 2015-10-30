@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview.resolution;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.joda.time.DateTimeConstants.APRIL;
+import static org.joda.time.DateTimeConstants.SEPTEMBER;
 
 import java.util.Iterator;
 
@@ -23,7 +23,7 @@ public class UpdatedContentResolver implements YouViewContentResolver {
 
     @VisibleForTesting
     // TODO update this to point back to the genuine start of time once testing is complete
-    static final DateTime START_OF_TIME = new DateTime(2015, APRIL, 26, 0, 0, 0, 0, DateTimeZones.UTC);
+    static final DateTime START_OF_TIME = new DateTime(2015, SEPTEMBER, 30, 0, 0, 0, 0, DateTimeZones.UTC);
 
     private static final Predicate<Content> IS_VIDEO_CONTENT = new Predicate<Content>() {
         @Override
