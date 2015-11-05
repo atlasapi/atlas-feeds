@@ -21,7 +21,6 @@ import org.atlasapi.feeds.youview.nitro.NitroGroupInformationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroProgramInformationGenerator;
 import org.atlasapi.feeds.youview.statistics.FeedStatisticsResolver;
-import org.atlasapi.feeds.youview.statistics.FeedStatisticsStore;
 import org.atlasapi.feeds.youview.statistics.MongoFeedStatisticsStore;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxGroupInformationGenerator;
@@ -67,19 +66,15 @@ public class TVAnytimeFeedsModule {
         return new SystemClock(DateTimeZone.UTC);
     }
     
-    private Lock latencyLock() {
-        return new ReentrantLock();
-    }
-    
     @Bean
     public FeedStatisticsResolver feedStatsResolver() {
         return feedStatsStore();
     }
     
     @Bean 
-    public FeedStatisticsStore feedStatsStore() {
+    public FeedStatisticsResolver feedStatsStore() {
         // hardcoded to YOUVIEW as there are no other implementations at present
-        return new MongoFeedStatisticsStore(mongo, taskStore(), clock(), DestinationType.YOUVIEW, latencyLock());
+        return new MongoFeedStatisticsStore(mongo, taskStore(), clock(), DestinationType.YOUVIEW);
     }
     
     @Bean 
