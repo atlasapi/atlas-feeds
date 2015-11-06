@@ -1,9 +1,6 @@
 package org.atlasapi.feeds.tasks.persistence;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.regex.Pattern;
-
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.ACTION_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.CONTENT_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.CREATED_KEY;
@@ -18,18 +15,19 @@ import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.UPLOAD_TIME_KE
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.fromDBObject;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.toDBObject;
 
+import java.util.regex.Pattern;
+
+import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
-import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
-import com.hp.hpl.jena.db.impl.DBQuery;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
 import com.metabroadcast.common.persistence.mongo.MongoSortBuilder;
