@@ -34,6 +34,7 @@ import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
 import com.metabroadcast.common.persistence.mongo.MongoSortBuilder;
 import com.metabroadcast.common.persistence.mongo.MongoUpdateBuilder;
+import com.metabroadcast.common.query.Selection;
 import com.mongodb.Bytes;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -171,11 +172,16 @@ public class MongoTaskStore implements TaskStore {
             mongoQuery.fieldEquals(ELEMENT_ID_KEY, transformToPrefixRegexPattern(query.elementId().get()));
         }
 
+        Selection selection = query.selection();
         DBCursor cursor = getOrderedCursor(mongoQuery.build())
-                .skip(query.selection().getOffset());
+                .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 
-        if (query.selection().getLimit() != null) {
-            cursor.limit(query.selection().getLimit());
+        if (selection.getOffset() != 0) {
+            cursor.skip(selection.getOffset());
+        }
+
+        if (selection.getLimit() != null) {
+            cursor.limit(selection.getLimit());
         }
 
         return FluentIterable.from(cursor)
