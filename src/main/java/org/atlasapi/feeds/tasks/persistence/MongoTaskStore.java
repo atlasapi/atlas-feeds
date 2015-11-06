@@ -170,11 +170,14 @@ public class MongoTaskStore implements TaskStore {
         if (query.elementId().isPresent()) {
             mongoQuery.fieldEquals(ELEMENT_ID_KEY, transformToPrefixRegexPattern(query.elementId().get()));
         }
-        
+
         DBCursor cursor = getOrderedCursor(mongoQuery.build())
-                .skip(query.selection().getOffset())
-                .limit(query.selection().getLimit());
-        
+                .skip(query.selection().getOffset());
+
+        if (query.selection().getLimit() != null) {
+            cursor.limit(query.selection().getLimit());
+        }
+
         return FluentIterable.from(cursor)
                 .transform(TaskTranslator.fromDBObjects())
                 .filter(Predicates.notNull());
