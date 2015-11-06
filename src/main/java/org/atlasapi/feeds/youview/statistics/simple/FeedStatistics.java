@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview.statistics.simple;
 
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.Duration;
+import org.joda.time.format.PeriodFormat;
 
 import com.google.common.base.Objects;
 
@@ -11,6 +12,7 @@ public class FeedStatistics {
     private Publisher publisher;
     private int queueSize;
     private Duration updateLatency;
+    private String updateLatencyString;
     
     public FeedStatistics() {
     }
@@ -37,8 +39,13 @@ public class FeedStatistics {
     
     public void setUpdateLatency(Duration updateLatency) {
         this.updateLatency = updateLatency;
+        this.updateLatencyString = PeriodFormat.getDefault().print(updateLatency.toPeriod());
     }
-    
+
+    public String getUpdateLatencyString() {
+        return updateLatencyString;
+    }
+
     @Override
     public String toString() {
         return Objects.toStringHelper(FeedStatistics.class)
