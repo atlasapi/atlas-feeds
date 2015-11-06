@@ -53,6 +53,7 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
     private int calculateCurrentQueueSize(Publisher publisher) {
         return Iterables.size(taskStore.allTasks(
                 TaskQuery.builder(Selection.all(), publisher, destinationType)
+                        .withTaskStatus(Status.NEW)
                         .build()));
     }
 
