@@ -20,7 +20,6 @@ import org.joda.time.DateTime;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.metabroadcast.common.scheduling.ScheduledTask;
 
 
 public class DeltaTaskCreationTask extends TaskCreationTask {
