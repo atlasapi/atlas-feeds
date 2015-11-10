@@ -69,7 +69,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
         this.taskStore = checkNotNull(taskStore);
         this.taskCreator = checkNotNull(taskCreator);
         this.payloadCreator = checkNotNull(payloadCreator);
-        this.payloadHashStore = payloadHashStore;
+        this.payloadHashStore = checkNotNull(payloadHashStore);
         this.hashCheckMode = hashCheckMode;
     }
     
