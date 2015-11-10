@@ -33,4 +33,10 @@ public class MongoYouViewPayloadHashStoreTest {
         assertThat(storedHash.isPresent(), is(true));
         assertThat(storedHash.get(), is(hash));
     }
+
+    @Test
+    public void missingHashReturnsOptionalAbsent() {
+        Optional<String> storedHash = store.getHash(HashType.ON_DEMAND, "derp derp");
+        assertThat(storedHash.isPresent(), is(false));
+    }
 }
