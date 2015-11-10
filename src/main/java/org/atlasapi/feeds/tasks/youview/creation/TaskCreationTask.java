@@ -19,7 +19,9 @@ import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
+import org.atlasapi.feeds.youview.persistence.HashType;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
@@ -37,18 +39,29 @@ public abstract class TaskCreationTask extends ScheduledTask {
     
     private final Logger log = LoggerFactory.getLogger(TaskCreationTask.class);
 
+    private final HashCheck hashCheckMode;
     private final YouViewLastUpdatedStore lastUpdatedStore;
+    private final YouViewPayloadHashStore payloadHashStore;
     private final Publisher publisher;
     private final ContentHierarchyExpander hierarchyExpander;
     private final IdGenerator idGenerator;
     private final TaskStore taskStore;
     private final TaskCreator taskCreator;
     private final PayloadCreator payloadCreator;
-    
-    public TaskCreationTask(YouViewLastUpdatedStore lastUpdatedStore, 
-            Publisher publisher, ContentHierarchyExpander hierarchyExpander, 
+
+    public TaskCreationTask(YouViewLastUpdatedStore lastUpdatedStore,
+            Publisher publisher, ContentHierarchyExpander hierarchyExpander,
             IdGenerator idGenerator, TaskStore taskStore, TaskCreator taskCreator,
-            PayloadCreator payloadCreator) {
+            PayloadCreator payloadCreator, YouViewPayloadHashStore payloadHashStore) {
+        this(lastUpdatedStore, publisher, hierarchyExpander, idGenerator, taskStore, taskCreator,
+                payloadCreator, payloadHashStore, HashCheck.CHECK);
+    }
+
+    public TaskCreationTask(YouViewLastUpdatedStore lastUpdatedStore,
+            Publisher publisher, ContentHierarchyExpander hierarchyExpander,
+            IdGenerator idGenerator, TaskStore taskStore, TaskCreator taskCreator,
+            PayloadCreator payloadCreator, YouViewPayloadHashStore payloadHashStore,
+            HashCheck hashCheckMode) {
         this.lastUpdatedStore = checkNotNull(lastUpdatedStore);
         this.publisher = checkNotNull(publisher);
         this.hierarchyExpander = checkNotNull(hierarchyExpander);
@@ -56,6 +69,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
         this.taskStore = checkNotNull(taskStore);
         this.taskCreator = checkNotNull(taskCreator);
         this.payloadCreator = checkNotNull(payloadCreator);
+        this.payloadHashStore = checkNotNull(payloadHashStore);
+        this.hashCheckMode = hashCheckMode;
     }
     
     protected Optional<DateTime> getLastUpdatedTime() {
@@ -125,18 +140,25 @@ public abstract class TaskCreationTask extends ScheduledTask {
         }
         return progress;
     }
-    
+
     private UpdateProgress processContent(Content content, Action action) {
-        Task task = taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, action));
+        String contentCrid = idGenerator.generateContentCrid(content);
         try {
             // not strictly necessary, but will save space
             if (!Action.DELETE.equals(action)) {
-                Payload p = payloadCreator.payloadFrom(idGenerator.generateContentCrid(content), content);
-                taskStore.updateWithPayload(task.id(), p);
+                Payload p = payloadCreator.payloadFrom(contentCrid, content);
+
+                if (shouldSave(HashType.CONTENT, contentCrid, p)) {
+                    Task task = taskStore.save(taskCreator.taskFor(contentCrid, content, action));
+                    taskStore.updateWithPayload(task.id(), p);
+                    payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
+                }
             }
+
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error("Failed to create payload for content {}", content.getCanonicalUri(), e);
+            Task task = taskStore.save(taskCreator.taskFor(contentCrid, content, action));
             taskStore.updateWithStatus(task.id(), Status.FAILED);
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
@@ -144,10 +166,15 @@ public abstract class TaskCreationTask extends ScheduledTask {
     }
     
     private UpdateProgress processVersion(String versionCrid, ItemAndVersion versionHierarchy, Action action) {
-        Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action));
         try {
-            Payload p = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
-            taskStore.updateWithPayload(task.id(), p);
+            Payload payload = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
+
+            if (shouldSave(HashType.VERSION, versionCrid, payload)) {
+                Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action));
+                taskStore.updateWithPayload(task.id(), payload);
+                payloadHashStore.saveHash(HashType.VERSION, versionCrid, payload.hash());
+            }
+
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
@@ -157,6 +184,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     ), 
                     e
             );
+            Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action));
             taskStore.updateWithStatus(task.id(), Status.FAILED);
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
@@ -169,8 +197,13 @@ public abstract class TaskCreationTask extends ScheduledTask {
             if (!p.isPresent()) {
                 return UpdateProgress.START;
             }
-            Task task = taskStore.save(taskCreator.taskFor(broadcastImi, broadcastHierarchy, action));
-            taskStore.updateWithPayload(task.id(), p.get());
+
+            if (shouldSave(HashType.BROADCAST, broadcastImi, p.get())) {
+                Task task = taskStore.save(taskCreator.taskFor(broadcastImi, broadcastHierarchy, action));
+                taskStore.updateWithPayload(task.id(), p.get());
+                payloadHashStore.saveHash(HashType.BROADCAST, broadcastImi, p.get().hash());
+            }
+
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
@@ -196,10 +229,15 @@ public abstract class TaskCreationTask extends ScheduledTask {
     }
     
     private UpdateProgress processOnDemand(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) {
-        Task task = taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, action));
         try {
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
-            taskStore.updateWithPayload(task.id(), p);
+
+            if (shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
+                Task task = taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, action));
+                taskStore.updateWithPayload(task.id(), p);
+                payloadHashStore.saveHash(HashType.ON_DEMAND, onDemandImi, p.hash());
+            }
+
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
@@ -211,9 +249,23 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     ),
                     e
             );
+            Task task = taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, action));
             taskStore.updateWithStatus(task.id(), Status.FAILED);
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
+    }
+
+    private boolean shouldSave(HashType type, String imi, Payload payload) {
+        Optional<String> hash = payloadHashStore.getHash(type, imi);
+        return hashCheckMode == HashCheck.IGNORE
+                || (hashCheckMode == HashCheck.CHECK
+                && hash.isPresent()
+                && payload.hasChanged(hash.get()));
+    }
+
+    protected enum HashCheck {
+        CHECK,
+        IGNORE
     }
 }
