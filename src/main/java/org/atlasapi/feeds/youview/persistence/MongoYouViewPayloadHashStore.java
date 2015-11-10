@@ -32,7 +32,11 @@ public class MongoYouViewPayloadHashStore implements YouViewPayloadHashStore {
     public Optional<String> getHash(HashType payloadType, String objectKey) {
         DBObject dbObject = collection.findOne(key(payloadType, objectKey));
 
-        return Optional.of(TranslatorUtils.toString(dbObject, HASH_FIELD));
+        if (dbObject != null) {
+            return Optional.fromNullable(TranslatorUtils.toString(dbObject, HASH_FIELD));
+        } else {
+            return Optional.absent();
+        }
     }
 
     private String key(HashType payloadType, String imi) {
