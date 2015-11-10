@@ -29,8 +29,8 @@ public class MongoYouViewPayloadHashStore implements YouViewPayloadHashStore {
     }
 
     @Override
-    public Optional<String> getHash(HashType payloadType, String imi) {
-        DBObject dbObject = collection.findOne(key(payloadType, imi));
+    public Optional<String> getHash(HashType payloadType, String objectKey) {
+        DBObject dbObject = collection.findOne(key(payloadType, objectKey));
 
         return Optional.of(TranslatorUtils.toString(dbObject, HASH_FIELD));
     }
