@@ -10,6 +10,7 @@ import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
@@ -24,10 +25,10 @@ public class BootstrapTaskCreationTask extends TaskCreationTask {
     public BootstrapTaskCreationTask(YouViewLastUpdatedStore lastUpdatedStore, Publisher publisher,
             ContentHierarchyExpander hierarchyExpander, IdGenerator idGenerator,
             TaskStore taskStore, TaskCreator taskCreator, PayloadCreator payloadCreator, 
-            YouViewContentResolver contentResolver, DateTime startOfTime) {
-        
+            YouViewContentResolver contentResolver, YouViewPayloadHashStore payloadHashStore,
+            DateTime startOfTime) {
         super(lastUpdatedStore, publisher, hierarchyExpander, idGenerator, taskStore, taskCreator,
-                payloadCreator);
+                payloadCreator, payloadHashStore, HashCheck.IGNORE);
         this.contentResolver = checkNotNull(contentResolver);
         this.startOfTime = checkNotNull(startOfTime);
     }
