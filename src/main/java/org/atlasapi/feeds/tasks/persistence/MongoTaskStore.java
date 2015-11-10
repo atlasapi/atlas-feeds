@@ -50,7 +50,12 @@ public class MongoTaskStore implements TaskStore {
     }
 
     private DBCursor getOrderedCursor(DBObject query) {
-        return collection.find(query).sort(new MongoSortBuilder().descending(UPLOAD_TIME_KEY).build());
+        return collection
+                .find(query)
+                .sort(new MongoSortBuilder()
+                        .descending(CREATED_KEY)
+                        .descending(UPLOAD_TIME_KEY)
+                        .build());
     }
 
     @Override
