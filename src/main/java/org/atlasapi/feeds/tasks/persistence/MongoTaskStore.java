@@ -53,8 +53,8 @@ public class MongoTaskStore implements TaskStore {
         return collection
                 .find(query)
                 .sort(new MongoSortBuilder()
-                        .descending(CREATED_KEY)
-                        .descending(UPLOAD_TIME_KEY)
+                        .ascending(CREATED_KEY)
+                        .ascending(UPLOAD_TIME_KEY)
                         .build());
     }
 
