@@ -125,6 +125,47 @@ public class DeltaTaskCreationTaskTest {
     }
 
     @Test
+    public void createUpdateTaskForItemsIfHashNotFound() throws PayloadGenerationException {
+        DateTime updatedSince = DateTime.now().minusDays(1);
+        DateTime created = DateTime.now();
+        String contentCrid = "foobar crid";
+        String payloadBody = "foobar body";
+        long taskId = 42L;
+        Action action = Action.UPDATE;
+        Payload payload = new Payload(payloadBody, created);
+
+        Task.Builder taskBuilder = Task.builder()
+                .withAction(action)
+                .withDestination(new YouViewDestination("", TVAElementType.ITEM, ""))
+                .withCreated(created)
+                .withStatus(Status.NEW)
+                .withPublisher(PUBLISHER);
+        Task withoutId = taskBuilder.build();
+        Task withId = taskBuilder.withId(taskId).build();
+
+        when(lastUpdatedStore.getLastUpdated(PUBLISHER)).thenReturn(
+                Optional.of(updatedSince));
+
+        Content content = mock(Content.class);
+        when(contentResolver.updatedSince(updatedSince))
+                .thenReturn(Lists.newArrayList(content)
+                        .iterator());
+        when(content.isActivelyPublished()).thenReturn(true);
+        when(idGenerator.generateContentCrid(content)).thenReturn(contentCrid);
+        when(payloadHashStore.getHash(HashType.CONTENT, contentCrid))
+                .thenReturn(Optional.<String>absent());
+        when(taskCreator.taskFor(contentCrid, content, action)).thenReturn(withoutId);
+        when(taskStore.save(withoutId)).thenReturn(withId);
+        when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(payload);
+
+        task.runTask();
+
+        verify(taskStore).updateWithPayload(taskId, payload);
+        verify(updateTask).run();
+        verify(payloadHashStore).saveHash(HashType.CONTENT, contentCrid, payload.hash());
+    }
+
+    @Test
     public void doesNotCreateTaskIfPayloadHashesMatch() throws PayloadGenerationException {
         DateTime updatedSince = DateTime.now().minusDays(1);
         DateTime created = DateTime.now();
