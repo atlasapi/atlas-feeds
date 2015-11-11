@@ -52,7 +52,7 @@ public class OnDemandBasedRevocationProcessorTest {
 
     @Test
     public void testRevokeStoresRevokedContentUriAndSendsOnDemandDeletes() {
-        when(taskCreator.taskFor(ON_DEMAND_IMI, HIERARCHY, Action.DELETE)).thenReturn(task);
+        when(taskCreator.deleteFor(ON_DEMAND_IMI, HIERARCHY)).thenReturn(task);
         
         processor.revoke(HIERARCHY.item());
         
@@ -62,14 +62,13 @@ public class OnDemandBasedRevocationProcessorTest {
 
     @Test
     public void testUnrevokeRemovesRevokedContentUriAndSendsOnDemandUploads() {
-        when(taskCreator.taskFor(ON_DEMAND_IMI, HIERARCHY, Action.UPDATE)).thenReturn(task);
+        when(taskCreator.taskFor(ON_DEMAND_IMI, HIERARCHY, payload, Action.UPDATE)).thenReturn(task);
         when(taskStore.save(task)).thenReturn(task);
         
         processor.unrevoke(HIERARCHY.item());
         
         verify(revocationStore).unrevoke(HIERARCHY.item().getCanonicalUri());
         verify(taskStore).save(task);
-        verify(taskStore).updateWithPayload(TASK_ID, payload);
     }
 
     private static ItemOnDemandHierarchy createItemOnDemandHierarchy() {

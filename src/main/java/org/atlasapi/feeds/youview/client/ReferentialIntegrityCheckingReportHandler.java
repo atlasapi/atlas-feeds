@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.atlasapi.feeds.tasks.Action;
+import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
@@ -27,8 +28,6 @@ import org.atlasapi.persistence.content.ResolvedContent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import tva.mpeg7._2008.TextualType;
-
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -36,6 +35,8 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.ControlledMes
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.FragmentReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
+
+import tva.mpeg7._2008.TextualType;
 
 
 public class ReferentialIntegrityCheckingReportHandler implements YouViewReportHandler {
@@ -162,8 +163,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
 
     private void createAndWriteTaskFor(Content content) throws PayloadGenerationException {
         String contentCrid = idGenerator.generateContentCrid(content);
-        Task task = taskStore.save(taskCreator.taskFor(contentCrid, content, Action.UPDATE));
-        taskStore.updateWithPayload(task.id(), payloadCreator.payloadFrom(contentCrid, content));
+        taskStore.save(taskCreator.taskFor(contentCrid, content, payloadCreator.payloadFrom(contentCrid, content), Action.UPDATE));
     }
 
     private void handleMissingVersion(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
@@ -176,8 +176,8 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         if (versionHierarchy == null) {
             throw new RuntimeException("Missing version crid " + versionCrid + " is not a valid version crid for content " + contentUri);
         }
-        Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, Action.UPDATE));
-        taskStore.updateWithPayload(task.id(), payloadCreator.payloadFrom(versionCrid, versionHierarchy));
+        Payload payload = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
+        taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, payload, Action.UPDATE));
     }
 
     private String resolveVersionId(TextualType comment) {
