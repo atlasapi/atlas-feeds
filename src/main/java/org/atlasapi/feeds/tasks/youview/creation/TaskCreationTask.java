@@ -258,10 +258,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     private boolean shouldSave(HashType type, String imi, Payload payload) {
         Optional<String> hash = payloadHashStore.getHash(type, imi);
-        return hashCheckMode == HashCheck.IGNORE
-                || (hashCheckMode == HashCheck.CHECK
-                && hash.isPresent()
-                && payload.hasChanged(hash.get()));
+        return (hashCheckMode == HashCheck.IGNORE || !hash.isPresent())
+                || (hashCheckMode == HashCheck.CHECK && payload.hasChanged(hash.get()));
     }
 
     protected enum HashCheck {
