@@ -1,9 +1,11 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Destination;
+import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
@@ -30,36 +32,97 @@ public class YouViewEntityTaskCreator implements TaskCreator {
     }
 
     @Override
-    public Task taskFor(String contentCrid, Content content, Action action) {
+    public Task deleteFor(String contentCrid, Content content) {
+        return taskFor(contentCrid, content, null, Action.DELETE, Status.NEW);
+    }
+
+    @Override
+    public Task deleteFor(String versionCrid, ItemAndVersion versionHierarchy) {
+        return taskFor(versionCrid, versionHierarchy, null, Action.DELETE, Status.NEW);
+    }
+
+    @Override
+    public Task deleteFor(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy) {
+        return taskFor(broadcastImi, broadcastHierarchy, null, Action.DELETE, Status.NEW);
+    }
+
+    @Override
+    public Task deleteFor(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy) {
+        return taskFor(onDemandImi, onDemandHierarchy, null, Action.DELETE, Status.NEW);
+    }
+
+    @Override
+    public Task taskFor(String contentCrid, Content content, Action action, Status status) {
+        checkArgument(status != Status.NEW, "Can't create status=NEW without payload");
+        return taskFor(contentCrid, content, null, action, status);
+    }
+
+    @Override
+    public Task taskFor(String versionCrid, ItemAndVersion versionHierarchy, Action action, Status status) {
+        checkArgument(status != Status.NEW, "Can't create status=NEW without payload");
+        return taskFor(versionCrid, versionHierarchy, null, action, status);
+    }
+
+    @Override
+    public Task taskFor(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Action action, Status status) {
+        checkArgument(status != Status.NEW, "Can't create status=NEW without payload");
+        return taskFor(broadcastImi, broadcastHierarchy, null, action, status);
+    }
+
+    @Override
+    public Task taskFor(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action, Status status) {
+        checkArgument(status != Status.NEW, "Can't create status=NEW without payload");
+        return taskFor(onDemandImi, onDemandHierarchy, null, action, status);
+    }
+
+    @Override
+    public Task taskFor(String contentCrid, Content content, Payload payload, Action action) {
+        return taskFor(contentCrid, content, checkNotNull(payload), action, Status.NEW);
+    }
+
+    @Override
+    public Task taskFor(String versionCrid, ItemAndVersion versionHierarchy, Payload payload, Action action) {
+        return taskFor(versionCrid, versionHierarchy, checkNotNull(payload), action, Status.NEW);
+    }
+
+    @Override
+    public Task taskFor(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Payload payload, Action action) {
+        return taskFor(broadcastImi, broadcastHierarchy, checkNotNull(payload), action, Status.NEW);
+    }
+
+    @Override
+    public Task taskFor(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Payload payload, Action action) {
+        return taskFor(onDemandImi, onDemandHierarchy, checkNotNull(payload), action, Status.NEW);
+    }
+
+    private Task taskFor(String contentCrid, Content content, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(content.getCanonicalUri(), contentTypeFrom(content), contentCrid);
-        return createTask(content.getPublisher(), action, destination);
+        return createTask(content.getPublisher(), payload, action, destination, status);
     }
 
-    @Override
-    public Task taskFor(String versionCrid, ItemAndVersion versionHierarchy, Action action) {
+    private Task taskFor(String versionCrid, ItemAndVersion versionHierarchy, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(versionHierarchy.item().getCanonicalUri(), TVAElementType.VERSION, versionCrid);
-        return createTask(versionHierarchy.item().getPublisher(), action, destination);
+        return createTask(versionHierarchy.item().getPublisher(), payload, action, destination, status);
     }
 
-    @Override
-    public Task taskFor(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Action action) {
+    private Task taskFor(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(broadcastHierarchy.item().getCanonicalUri(), TVAElementType.BROADCAST, broadcastImi);
-        return createTask(broadcastHierarchy.item().getPublisher(), action, destination);
+        return createTask(broadcastHierarchy.item().getPublisher(), payload, action, destination, status);
     }
 
-    @Override
-    public Task taskFor(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) {
+    private Task taskFor(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(onDemandHierarchy.item().getCanonicalUri(), TVAElementType.ONDEMAND, onDemandImi);
-        return createTask(onDemandHierarchy.item().getPublisher(), action, destination);
+        return createTask(onDemandHierarchy.item().getPublisher(), payload, action, destination, status);
     }
 
-    private Task createTask(Publisher publisher, Action action, Destination destination) {
+    private Task createTask(Publisher publisher, Payload payload, Action action, Destination destination, Status status) {
         return Task.builder()
                 .withAction(action)
                 .withCreated(clock.now())
                 .withDestination(destination)
                 .withPublisher(publisher)
-                .withStatus(Status.NEW)
+                .withStatus(status)
+                .withPayload(payload)
                 .build();
     }
 

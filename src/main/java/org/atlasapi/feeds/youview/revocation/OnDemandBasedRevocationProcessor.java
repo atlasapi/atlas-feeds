@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.atlasapi.feeds.tasks.Action;
-import org.atlasapi.feeds.tasks.Task;
+import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
@@ -48,7 +48,7 @@ public class OnDemandBasedRevocationProcessor implements RevocationProcessor {
         Map<String, ItemOnDemandHierarchy> onDemands = onDemandHierarchyExpander.expandHierarchy(item);
 
         for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
-            taskStore.save(taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), Action.DELETE));
+            taskStore.save(taskCreator.deleteFor(onDemand.getKey(), onDemand.getValue()));
         }
         revocationStore.revoke(content.getCanonicalUri());
     }
@@ -64,8 +64,8 @@ public class OnDemandBasedRevocationProcessor implements RevocationProcessor {
         
         for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
             try {
-                Task task = taskStore.save(taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), Action.UPDATE));
-                taskStore.updateWithPayload(task.id(), payloadCreator.payloadFrom(onDemand.getKey(), onDemand.getValue()));
+                Payload payload = payloadCreator.payloadFrom(onDemand.getKey(), onDemand.getValue());
+                taskStore.save(taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), payload, Action.UPDATE));
             } catch (PayloadGenerationException e) {
                 log.error("unable to upload ondemand " + onDemand.getKey());
             }

@@ -34,7 +34,6 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
-import org.atlasapi.media.entity.Schedule.ScheduleChannel;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
@@ -50,7 +49,6 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
 import com.metabroadcast.common.time.Clock;
@@ -181,11 +179,14 @@ public class YouViewUploadController {
                 sendError(response, SC_BAD_REQUEST, "Invalid type provided");
                 return;
             }
+
+            Payload payload = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(content), content);
+
             switch(type) {
             case BRAND:
             case ITEM:
             case SERIES:
-                processTask(taskCreator.taskFor(elementId, toBeUploaded.get(), Action.UPDATE), null, immediate);
+                processTask(taskCreator.taskFor(elementId, toBeUploaded.get(), payload, Action.UPDATE), immediate);
                 break;
             case BROADCAST:
                 if (!(content instanceof Item)) {
@@ -198,7 +199,7 @@ public class YouViewUploadController {
                     sendError(response, SC_BAD_REQUEST, "No Broadcast found with the provided elementId");
                     return;
                 }
-                processTask(taskCreator.taskFor(elementId, broadcastHierarchy.get(), Action.UPDATE), null, immediate);
+                processTask(taskCreator.taskFor(elementId, broadcastHierarchy.get(), payload, Action.UPDATE), immediate);
                 break;
             case ONDEMAND:
                 if (!(content instanceof Item)) {
@@ -211,7 +212,7 @@ public class YouViewUploadController {
                     sendError(response, SC_BAD_REQUEST, "No OnDemand found with the provided elementId");
                     return;
                 }
-                processTask(taskCreator.taskFor(elementId, onDemandHierarchy.get(), Action.UPDATE), null, immediate);
+                processTask(taskCreator.taskFor(elementId, onDemandHierarchy.get(), payload, Action.UPDATE), immediate);
                 break;
             case VERSION:
                 if (!(content instanceof Item)) {
@@ -224,7 +225,7 @@ public class YouViewUploadController {
                     sendError(response, SC_BAD_REQUEST, "No Version found with the provided elementId");
                     return;
                 }
-                processTask(taskCreator.taskFor(elementId, versionHierarchy.get(), Action.UPDATE), null, immediate);
+                processTask(taskCreator.taskFor(elementId, versionHierarchy.get(), payload, Action.UPDATE), immediate);
                 break;
             default:
                 sendError(response, SC_BAD_REQUEST, "Invalid type provided");
@@ -240,44 +241,40 @@ public class YouViewUploadController {
 
     private void uploadContent(boolean immediate, Content content)
             throws PayloadGenerationException {
-        Task task = taskCreator.taskFor(hierarchyExpander.contentCridFor(content), content, Action.UPDATE);
-        taskStore.save(task);
         Payload p = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(content), content);
-        taskStore.updateWithPayload(task.id(), p);
+        Task task = taskCreator.taskFor(hierarchyExpander.contentCridFor(content), content, p, Action.UPDATE);
+        taskStore.save(task);
+
         if (content instanceof Item) {
             Map<String, ItemAndVersion> versions = hierarchyExpander.versionHierarchiesFor((Item) content);
             for (Entry<String, ItemAndVersion> version : versions.entrySet()) {
-                Task versionTask = taskCreator.taskFor(version.getKey(), version.getValue(), Action.UPDATE);
                 Payload versionPayload = payloadCreator.payloadFrom(version.getKey(), version.getValue());
-                processTask(versionTask, versionPayload, immediate);
+                Task versionTask = taskCreator.taskFor(version.getKey(), version.getValue(), versionPayload, Action.UPDATE);
+                processTask(versionTask, immediate);
             }
             Map<String, ItemBroadcastHierarchy> broadcasts = hierarchyExpander.broadcastHierarchiesFor((Item) content);
             for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcasts.entrySet()) {
-                Task bcastTask = taskCreator.taskFor(broadcast.getKey(), broadcast.getValue(), Action.UPDATE);
                 Optional<Payload> broadcastPayload = payloadCreator.payloadFrom(broadcast.getKey(), broadcast.getValue());
-                processTask(bcastTask, broadcastPayload.orNull(), immediate);
+                Task bcastTask = taskCreator.taskFor(broadcast.getKey(), broadcast.getValue(), broadcastPayload.orNull(), Action.UPDATE);
+                processTask(bcastTask, immediate);
             }
             Map<String, ItemOnDemandHierarchy> onDemands = hierarchyExpander.onDemandHierarchiesFor((Item) content);
             for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
-                Task odTask = taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), Action.UPDATE);
                 Payload odPayload = payloadCreator.payloadFrom(onDemand.getKey(), onDemand.getValue());
-                processTask(odTask, odPayload, immediate);
+                Task odTask = taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), odPayload, Action.UPDATE);
+                processTask(odTask, immediate);
             }
         }
     }
     
-    private void processTask(Task task, Payload payload, boolean immediate) {
+    private void processTask(Task task, boolean immediate) {
         if (task == null) {
             return;
         }
-        taskStore.save(task);
-        
-        if (payload != null) {
-            taskStore.updateWithPayload(task.id(), payload);
-        }
-        
-        if (immediate && payload != null) {
-            taskProcessor.process(taskStore.taskFor(task.id()).get());
+        Task savedTask = taskStore.save(task);
+
+        if (immediate) {
+            taskProcessor.process(savedTask);
         }
     }
     
