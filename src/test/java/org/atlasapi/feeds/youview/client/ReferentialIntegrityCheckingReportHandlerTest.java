@@ -34,8 +34,6 @@ import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
-import tva.mpeg7._2008.TextualType;
-
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -44,6 +42,8 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.ControlledMes
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.FragmentReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
+
+import tva.mpeg7._2008.TextualType;
 
 
 public class ReferentialIntegrityCheckingReportHandlerTest {
@@ -105,15 +105,14 @@ public class ReferentialIntegrityCheckingReportHandlerTest {
         
         when(hierarchyExtractor.brandFor(series)).thenReturn(Optional.of(brand));
         when(idGenerator.generateContentCrid(brand)).thenReturn(missingCrid);
-        when(taskCreator.taskFor(missingCrid, brand, Action.UPDATE)).thenReturn(task);
+        when(taskCreator.taskFor(missingCrid, brand, payload, Action.UPDATE)).thenReturn(task);
         when(payloadCreator.payloadFrom(missingCrid, brand)).thenReturn(payload);
         
         handler.handle(report, createTaskFor(series, TVAElementType.SERIES));
         
-        verify(taskCreator).taskFor(missingCrid, brand, Action.UPDATE);
+        verify(taskCreator).taskFor(missingCrid, brand, payload, Action.UPDATE);
         verify(taskStore).save(task);
         verify(payloadCreator).payloadFrom(missingCrid, brand);
-        verify(taskStore).updateWithPayload(task.id(), payload);
     }
 
     @Test
@@ -155,15 +154,14 @@ public class ReferentialIntegrityCheckingReportHandlerTest {
         when(hierarchyExtractor.seriesFor(item)).thenReturn(Optional.of(series));
         when(hierarchyExtractor.brandFor(item)).thenReturn(Optional.<Brand>absent());
         when(idGenerator.generateContentCrid(series)).thenReturn(missingCrid);
-        when(taskCreator.taskFor(missingCrid, series, Action.UPDATE)).thenReturn(task);
+        when(taskCreator.taskFor(missingCrid, series, payload, Action.UPDATE)).thenReturn(task);
         when(payloadCreator.payloadFrom(missingCrid, series)).thenReturn(payload);
-        
+
         handler.handle(report, createTaskFor(item, TVAElementType.ITEM));
         
-        verify(taskCreator).taskFor(missingCrid, series, Action.UPDATE);
+        verify(taskCreator).taskFor(missingCrid, series, payload, Action.UPDATE);
         verify(taskStore).save(task);
         verify(payloadCreator).payloadFrom(missingCrid, series);
-        verify(taskStore).updateWithPayload(task.id(), payload);
     }
 
     @Test
@@ -176,15 +174,14 @@ public class ReferentialIntegrityCheckingReportHandlerTest {
         when(hierarchyExtractor.seriesFor(item)).thenReturn(Optional.<Series>absent());
         when(hierarchyExtractor.brandFor(item)).thenReturn(Optional.of(brand));
         when(idGenerator.generateContentCrid(brand)).thenReturn(missingCrid);
-        when(taskCreator.taskFor(missingCrid, brand, Action.UPDATE)).thenReturn(task);
+        when(taskCreator.taskFor(missingCrid, brand, payload, Action.UPDATE)).thenReturn(task);
         when(payloadCreator.payloadFrom(missingCrid, brand)).thenReturn(payload);
-        
+
         handler.handle(report, createTaskFor(item, TVAElementType.ITEM));
-        
-        verify(taskCreator).taskFor(missingCrid, brand, Action.UPDATE);
+
+        verify(taskCreator).taskFor(missingCrid, brand, payload, Action.UPDATE);
         verify(taskStore).save(task);
         verify(payloadCreator).payloadFrom(missingCrid, brand);
-        verify(taskStore).updateWithPayload(task.id(), payload);
     }
 
     @Test
@@ -198,16 +195,15 @@ public class ReferentialIntegrityCheckingReportHandlerTest {
         when(hierarchyExtractor.seriesFor(item)).thenReturn(Optional.of(series));
         when(hierarchyExtractor.brandFor(item)).thenReturn(Optional.of(brand));
         when(idGenerator.generateContentCrid(series)).thenReturn(missingCrid);
-        when(taskCreator.taskFor(missingCrid, series, Action.UPDATE)).thenReturn(task);
+        when(taskCreator.taskFor(missingCrid, series, payload, Action.UPDATE)).thenReturn(task);
         when(payloadCreator.payloadFrom(missingCrid, series)).thenReturn(payload);
         
         
         handler.handle(report, createTaskFor(item, TVAElementType.ITEM));
         
-        verify(taskCreator).taskFor(missingCrid, series, Action.UPDATE);
+        verify(taskCreator).taskFor(missingCrid, series, payload, Action.UPDATE);
         verify(taskStore).save(task);
         verify(payloadCreator).payloadFrom(missingCrid, series);
-        verify(taskStore).updateWithPayload(task.id(), payload);
     }
     
     @Test
@@ -217,15 +213,14 @@ public class ReferentialIntegrityCheckingReportHandlerTest {
         Item item = createItem();
         
         when(idGenerator.generateContentCrid(item)).thenReturn(missingCrid);
-        when(taskCreator.taskFor(missingCrid, item, Action.UPDATE)).thenReturn(task);
+        when(taskCreator.taskFor(missingCrid, item, payload, Action.UPDATE)).thenReturn(task);
         when(payloadCreator.payloadFrom(missingCrid, item)).thenReturn(payload);
         
         handler.handle(report, createTaskFor(item, TVAElementType.VERSION));
         
-        verify(taskCreator).taskFor(missingCrid, item, Action.UPDATE);
+        verify(taskCreator).taskFor(missingCrid, item, payload, Action.UPDATE);
         verify(taskStore).save(task);
         verify(payloadCreator).payloadFrom(missingCrid, item);
-        verify(taskStore).updateWithPayload(task.id(), payload);
     }
     
     @Test
@@ -239,15 +234,14 @@ public class ReferentialIntegrityCheckingReportHandlerTest {
         returnContentFromResolver(item);
         when(idGenerator.generateVersionCrid(item, version)).thenReturn(versionCrid);
         ItemAndVersion versionHierarchy = versionExpander.expandHierarchy(item).get(versionCrid);
-        when(taskCreator.taskFor(versionCrid, versionHierarchy, Action.UPDATE)).thenReturn(task);
+        when(taskCreator.taskFor(versionCrid, versionHierarchy, payload, Action.UPDATE)).thenReturn(task);
         when(payloadCreator.payloadFrom(versionCrid, versionHierarchy)).thenReturn(payload);
         
         handler.handle(report, createTaskFor(item, TVAElementType.ONDEMAND));
         
-        verify(taskCreator).taskFor(versionCrid, versionHierarchy, Action.UPDATE);
+        verify(taskCreator).taskFor(versionCrid, versionHierarchy, payload, Action.UPDATE);
         verify(taskStore).save(task);
         verify(payloadCreator).payloadFrom(versionCrid, versionHierarchy);
-        verify(taskStore).updateWithPayload(task.id(), payload);
     }
 
     @Test
@@ -295,16 +289,15 @@ public class ReferentialIntegrityCheckingReportHandlerTest {
         returnContentFromResolver(item);
         when(idGenerator.generateVersionCrid(item, version)).thenReturn(versionCrid);
         ItemAndVersion versionHierarchy = versionExpander.expandHierarchy(item).get(versionCrid);
-        when(taskCreator.taskFor(versionCrid, versionHierarchy, Action.UPDATE)).thenReturn(task);
+        when(taskCreator.taskFor(versionCrid, versionHierarchy, payload, Action.UPDATE)).thenReturn(task);
         when(payloadCreator.payloadFrom(versionCrid, versionHierarchy)).thenReturn(payload);
         
         handler.handle(report, createTaskFor(item, TVAElementType.BROADCAST));
         
         
-        verify(taskCreator).taskFor(versionCrid, versionHierarchy, Action.UPDATE);
+        verify(taskCreator).taskFor(versionCrid, versionHierarchy, payload, Action.UPDATE);
         verify(taskStore).save(task);
         verify(payloadCreator).payloadFrom(versionCrid, versionHierarchy);
-        verify(taskStore).updateWithPayload(task.id(), payload);
     }
 
     private void returnContentFromResolver(Item item) {
