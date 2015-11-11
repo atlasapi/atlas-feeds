@@ -4,8 +4,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
 
+import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
+import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewResult;
@@ -20,11 +22,14 @@ public class YouViewTaskProcessor implements TaskProcessor {
     private final YouViewClient client;
     private final RevokedContentStore revocationStore;
     private final ResultHandler resultHandler;
+    private final TaskStore taskStore;
     
-    public YouViewTaskProcessor(YouViewClient client, ResultHandler resultHandler, RevokedContentStore revocationStore) {
+    public YouViewTaskProcessor(YouViewClient client, ResultHandler resultHandler,
+            RevokedContentStore revocationStore, TaskStore taskStore) {
         this.client = checkNotNull(client);
         this.resultHandler = checkNotNull(resultHandler);
         this.revocationStore = checkNotNull(revocationStore);
+        this.taskStore = checkNotNull(taskStore);
     }
 
     @Override
@@ -50,14 +55,24 @@ public class YouViewTaskProcessor implements TaskProcessor {
     }
 
     private void processUpdate(Task task) {
-        checkArgument(task.payload().isPresent(), "no payload present for task " + task.id() + ", cannot upload");
+        if (!task.payload().isPresent()) {
+            setFailed(task);
+            return;
+        }
+
         YouViewDestination destination = (YouViewDestination) task.destination();
         if (isRevoked(destination.contentUri())) {
             log.info("content {} is revoked, not {}ing", destination.contentUri(), task.action().name());
+            setFailed(task);
             return;
         }
+
         YouViewResult uploadResult = client.upload(task.payload().get());
         resultHandler.handleTransactionResult(task, uploadResult);
+    }
+
+    private void setFailed(Task task) {
+        taskStore.updateWithStatus(task.id(), Status.FAILED);
     }
 
     // No need to check for revocation for deletes, as deleting revoked content doesn't really matter
