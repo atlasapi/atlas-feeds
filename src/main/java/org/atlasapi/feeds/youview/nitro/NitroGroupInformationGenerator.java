@@ -493,18 +493,17 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         if (episodeNumber != null) {
             memberOf.setIndex(Long.valueOf(episodeNumber));
         } else if (!item.getReleaseDates().isEmpty()) {
-            int index = generateIndexFromReleaseDate(item.getReleaseDates());
-            memberOf.setIndex(Long.valueOf(index));
+            for (ReleaseDate releaseDate : item.getReleaseDates()) {
+                if (releaseDate.type().equals(ReleaseType.FIRST_BROADCAST)) {
+                    int index = generateIndexFromReleaseDate(releaseDate);
+                    memberOf.setIndex(Long.valueOf(index));
+                }
+            }
         }
     }
 
-    private int generateIndexFromReleaseDate(Set<ReleaseDate> dates) {
-        int index = 0;
-        ReleaseDate releaseDate = Iterables.getFirst(dates, new ReleaseDate(LocalDate.now(), Countries.GB, ReleaseType.FIRST_BROADCAST));
-        if (releaseDate.type().equals(ReleaseType.FIRST_BROADCAST)) {
-            String date = releaseDate.date().toString(DATE_FORMAT);
-            index = Integer.parseInt(date);
-        }
-        return index;
+    private int generateIndexFromReleaseDate(ReleaseDate releaseDate) {
+        String date = releaseDate.date().toString(DATE_FORMAT);
+        return Integer.parseInt(date);
     }
 }
