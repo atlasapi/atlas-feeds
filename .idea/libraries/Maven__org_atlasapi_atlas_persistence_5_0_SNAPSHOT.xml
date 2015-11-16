@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.atlasapi:atlas-persistence:5.0-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/atlasapi/atlas-persistence/5.0-SNAPSHOT/atlas-persistence-5.0-20151112.161933-162.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/atlasapi/atlas-persistence/5.0-SNAPSHOT/atlas-persistence-5.0-20151112.161933-162-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/atlasapi/atlas-persistence/5.0-SNAPSHOT/atlas-persistence-5.0-20151112.161933-162-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
