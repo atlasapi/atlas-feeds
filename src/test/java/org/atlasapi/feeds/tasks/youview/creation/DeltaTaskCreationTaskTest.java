@@ -120,7 +120,6 @@ public class DeltaTaskCreationTaskTest {
         task.runTask();
 
         verify(taskStore).updateWithPayload(taskId, payload);
-        verify(updateTask).run();
         verify(payloadHashStore).saveHash(HashType.CONTENT, contentCrid, payload.hash());
     }
 
@@ -161,7 +160,6 @@ public class DeltaTaskCreationTaskTest {
         task.runTask();
 
         verify(taskStore).updateWithPayload(taskId, payload);
-        verify(updateTask).run();
         verify(payloadHashStore).saveHash(HashType.CONTENT, contentCrid, payload.hash());
     }
 
@@ -201,7 +199,6 @@ public class DeltaTaskCreationTaskTest {
         verify(taskCreator, never()).taskFor(contentCrid, content, action);
         verify(taskStore, never()).save(withoutId);
         verify(taskStore, never()).updateWithPayload(taskId, payload);
-        verify(updateTask).run();
         verify(payloadHashStore, never()).saveHash(HashType.CONTENT, contentCrid, payload.hash());
     }
 
@@ -234,7 +231,5 @@ public class DeltaTaskCreationTaskTest {
         when(taskStore.save(withoutId)).thenReturn(withId);
 
         task.runTask();
-
-        verify(updateTask).run();
     }
 }
