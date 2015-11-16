@@ -32,6 +32,26 @@ public class RollingWindowBroadcastEventDeduplicatorTest {
     }
 
     @Test
+    public void testShouldUploadWhenBroadcastEventRecordIsPresent() {
+        BroadcastEventType broadcastEvent = mock(BroadcastEventType.class);
+        CRIDRefType program = mock(CRIDRefType.class);
+        String broadcastImi = "broadcastImi";
+        String programCrid = "programCrid";
+        BroadcastEventRecord broadcastEventRecord = mock(BroadcastEventRecord.class);
+        JAXBElement<TVAMainType> bCastTva = createBroadcastTVAWithPCrid(PCRID, programCrid, broadcastImi);
+
+        when(broadcastEvent.getProgram()).thenReturn(program);
+        when(program.getCrid()).thenReturn(programCrid);
+        when(broadcastEvent.getInstanceMetadataId()).thenReturn(broadcastImi);
+        when(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(programCrid, PCRID)).thenReturn(Optional.of(broadcastEventRecord));
+        when(broadcastEventRecord.getBroadcastTransmissionDate()).thenReturn(LocalDate.now().minusDays(52));
+
+        boolean shouldUpload = deduplicator.shouldUpload(bCastTva);
+
+        assertEquals(shouldUpload, true);
+    }
+
+    @Test
     public void testShouldUploadWhen52DaysHavePassed() throws Exception {
         BroadcastEventType broadcastEvent = mock(BroadcastEventType.class);
         CRIDRefType program = mock(CRIDRefType.class);

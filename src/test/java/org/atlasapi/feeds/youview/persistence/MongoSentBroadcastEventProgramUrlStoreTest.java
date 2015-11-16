@@ -33,7 +33,7 @@ public class MongoSentBroadcastEventProgramUrlStoreTest {
         assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(itemCrid, programmeCrid).isPresent());
             
         sentBroadcastProgramUrlStore.recordSent(broadcastEventImi, localDate, itemCrid, programmeCrid);
-        assertEquals(broadcastEventImi, sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(itemCrid, programmeCrid).get());
+        assertEquals(broadcastEventImi, sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(itemCrid, programmeCrid).get().getBroadcastEventImi());
         
         sentBroadcastProgramUrlStore.removeSentRecord(itemCrid, programmeCrid);
         assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(itemCrid, programmeCrid).isPresent());
