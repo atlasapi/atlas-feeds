@@ -1,5 +1,9 @@
 package org.atlasapi.feeds.youview.www;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -27,25 +31,12 @@ import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
-import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
-import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
-
-import com.metabroadcast.common.http.HttpException;
-import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
-import com.metabroadcast.common.time.Clock;
-import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
-
-import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -53,9 +44,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.metabroadcast.common.http.HttpException;
+import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
+import com.metabroadcast.common.time.Clock;
+import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
 
 // TODO remove all the duplication
 @Controller
@@ -145,15 +143,12 @@ public class YouViewUploadController {
      */
     // TODO this method does far too much right now
     @RequestMapping(value="/feeds/youview/{publisher}/upload", method = RequestMethod.POST)
-    public void uploadContent(
-            HttpServletResponse response,
+    public void uploadContent(HttpServletResponse response,
             @PathVariable("publisher") String publisherStr,
-            @RequestParam(value = "uri") String uri,
+            @RequestParam(value = "uri", required = true) String uri,
             @RequestParam(value = "element_id", required = false) String elementId,
             @RequestParam(value = "type", required = false) String typeStr,
-            @RequestParam(value = "immediate", required = false, defaultValue = "false")
-                    boolean immediate
-    ) throws IOException, HttpException, PayloadGenerationException {
+            @RequestParam(value = "immediate", required = false, defaultValue = "false") boolean immediate) throws IOException, HttpException, PayloadGenerationException {
         
         Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
         if (!publisher.isPresent()) {
@@ -165,7 +160,7 @@ public class YouViewUploadController {
             return;
         }
         
-        Optional<Content> toBeUploaded = getContent(uri);
+        Optional<Content> toBeUploaded = getContent(publisher.get(), uri);
         if (!toBeUploaded.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
@@ -174,11 +169,6 @@ public class YouViewUploadController {
         Content content = toBeUploaded.get();
         
         if (typeStr != null) {
-            if (elementId == null) {
-                sendError(response, SC_BAD_REQUEST, "required parameter 'element_id' not specified when uploading an individual TVAnytime element");
-                return;
-            }
-
             TVAElementType type = parseTypeFrom(typeStr);
             
             if (type == null) {
@@ -192,6 +182,10 @@ public class YouViewUploadController {
             case BRAND:
             case ITEM:
             case SERIES:
+                if (elementId == null) {
+                    sendError(response, SC_BAD_REQUEST, "required parameter 'element_id' not specified when uploading an individual TVAnytime element");
+                    return;
+                }
                 processTask(taskCreator.taskFor(elementId, toBeUploaded.get(), payload, Action.UPDATE), immediate);
                 break;
             case BROADCAST:
@@ -200,14 +194,25 @@ public class YouViewUploadController {
                     return;
                 }
                 Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor((Item) content);
-                Optional<ItemBroadcastHierarchy> broadcastHierarchy = Optional.fromNullable(broadcastHierarchies.get(elementId));
-                if (!broadcastHierarchy.isPresent()) {
-                    sendError(response, SC_BAD_REQUEST, "No Broadcast found with the provided elementId");
-                    return;
+                
+                if (!Strings.isNullOrEmpty(elementId)) {
+                    ItemBroadcastHierarchy broadcastHierarchy = broadcastHierarchies.get(elementId);
+                    if (broadcastHierarchy == null) {
+                        sendError(response, SC_BAD_REQUEST, "No element found with ID " + elementId);
+                        return;
+                    }
+                    uploadBroadcast(elementId, broadcastHierarchy, immediate);
+                } else {
+                    for (Entry<String, ItemBroadcastHierarchy> broadcastHierarchy : broadcastHierarchies.entrySet()) {
+                        uploadBroadcast(broadcastHierarchy.getKey(), broadcastHierarchy.getValue(), immediate);
+                    }
                 }
-                processTask(taskCreator.taskFor(elementId, broadcastHierarchy.get(), payload, Action.UPDATE), immediate);
                 break;
             case ONDEMAND:
+                if (elementId == null) {
+                    sendError(response, SC_BAD_REQUEST, "required parameter 'element_id' not specified when uploading an individual TVAnytime element");
+                    return;
+                }
                 if (!(content instanceof Item)) {
                     sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a OnDemand");
                     return;
@@ -221,6 +226,10 @@ public class YouViewUploadController {
                 processTask(taskCreator.taskFor(elementId, onDemandHierarchy.get(), payload, Action.UPDATE), immediate);
                 break;
             case VERSION:
+                if (elementId == null) {
+                    sendError(response, SC_BAD_REQUEST, "required parameter 'element_id' not specified when uploading an individual TVAnytime element");
+                    return;
+                }
                 if (!(content instanceof Item)) {
                     sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Version");
                     return;
@@ -245,6 +254,20 @@ public class YouViewUploadController {
         sendOkResponse(response, "Upload for " + uri + " sent sucessfully");
     }
 
+    private void uploadBroadcast(String elementId, ItemBroadcastHierarchy broadcastHierarchy, boolean immediate) throws PayloadGenerationException {
+        Optional<Payload> bcastPayload = payloadCreator.payloadFrom(elementId, broadcastHierarchy);
+        if (!bcastPayload.isPresent()) {
+            // a lack of payload is because no BroadcastEvent should be generated,
+            // likely because of BroadcastEvent deduplication
+            return;
+        }
+        processTask(taskCreator.taskFor(elementId, 
+                                        broadcastHierarchy,
+                                        bcastPayload.get(),
+                                        Action.UPDATE),
+                                        immediate);
+     }
+    
     private void uploadContent(boolean immediate, Content content)
             throws PayloadGenerationException {
         Payload p = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(content), content);
@@ -272,42 +295,14 @@ public class YouViewUploadController {
                 Task odTask = taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), odPayload, Action.UPDATE);
                 processTask(odTask, immediate);
             }
-
-            if (immediate) {
-                Item item = (Item) content;
-                resolveAndUploadParent(item.getContainer(), true);
-
-                if (item instanceof Episode) {
-                    Episode episode = (Episode) item;
-                    resolveAndUploadParent(episode.getSeriesRef(), true);
-                }
-            }
         }
     }
-
-    private void resolveAndUploadParent(ParentRef ref, boolean immediate) throws PayloadGenerationException {
-        if (ref == null) {
-            return;
-        }
-
-        Optional<Content> series = getContent(ref.getUri());
-        if (series.isPresent()) {
-            String contentCrid = hierarchyExpander.contentCridFor(series.get());
-            Task parentTask = taskCreator.taskFor(
-                    contentCrid,
-                    series.get(),
-                    payloadCreator.payloadFrom(contentCrid, series.get()),
-                    Action.UPDATE
-            );
-            processTask(parentTask, immediate);
-        }
-    }
-
+    
     private void processTask(Task task, boolean immediate) {
         if (task == null) {
             return;
         }
-        Task savedTask = taskStore.save(Task.copy(task).withManuallyCreated(true).build());
+        Task savedTask = taskStore.save(task);
 
         if (immediate) {
             taskProcessor.process(savedTask);
@@ -352,7 +347,7 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "required parameter 'type' not specified");
             return;
         }
-        Optional<Content> toBeDeleted = getContent(uri);
+        Optional<Content> toBeDeleted = getContent(publisher.get(), uri);
         if (!toBeDeleted.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
@@ -399,7 +394,7 @@ public class YouViewUploadController {
             return;
         }
 
-        Optional<Content> toBeRevoked = getContent(uri);
+        Optional<Content> toBeRevoked = getContent(publisher.get(), uri);
         if (!toBeRevoked.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
@@ -432,7 +427,7 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
             return;
         }
-        Optional<Content> toBeUnrevoked = getContent(uri);
+        Optional<Content> toBeUnrevoked = getContent(publisher.get(), uri);
         if (!toBeUnrevoked.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
@@ -460,7 +455,7 @@ public class YouViewUploadController {
         response.setContentLength(0);
     }
     
-    private Optional<Content> getContent(String contentUri) {
+    private Optional<Content> getContent(Publisher publisher, String contentUri) {
         ResolvedContent resolvedContent = contentResolver.findByCanonicalUris(ImmutableList.of(contentUri));
         return Optional.fromNullable((Content) resolvedContent.getFirstValue().valueOrNull());
     }
