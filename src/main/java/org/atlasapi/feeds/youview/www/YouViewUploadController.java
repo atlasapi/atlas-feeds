@@ -46,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -168,11 +169,6 @@ public class YouViewUploadController {
         Content content = toBeUploaded.get();
         
         if (typeStr != null) {
-            if (elementId == null) {
-                sendError(response, SC_BAD_REQUEST, "required parameter 'element_id' not specified when uploading an individual TVAnytime element");
-                return;
-            }
-
             TVAElementType type = parseTypeFrom(typeStr);
             
             if (type == null) {
@@ -194,14 +190,25 @@ public class YouViewUploadController {
                     return;
                 }
                 Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor((Item) content);
-                Optional<ItemBroadcastHierarchy> broadcastHierarchy = Optional.fromNullable(broadcastHierarchies.get(elementId));
-                if (!broadcastHierarchy.isPresent()) {
-                    sendError(response, SC_BAD_REQUEST, "No Broadcast found with the provided elementId");
-                    return;
+                
+                if (!Strings.isNullOrEmpty(elementId)) {
+                    ItemBroadcastHierarchy broadcastHierarchy = broadcastHierarchies.get(elementId);
+                    if (broadcastHierarchy == null) {
+                        sendError(response, SC_BAD_REQUEST, "No element found with ID " + elementId);
+                        return;
+                    }
+                    uploadBroadcast(elementId, broadcastHierarchy, immediate);
+                } else {
+                    for (Entry<String, ItemBroadcastHierarchy> broadcastHierarchy : broadcastHierarchies.entrySet()) {
+                        uploadBroadcast(broadcastHierarchy.getKey(), broadcastHierarchy.getValue(), immediate);
+                    }
                 }
-                processTask(taskCreator.taskFor(elementId, broadcastHierarchy.get(), payload, Action.UPDATE), immediate);
                 break;
             case ONDEMAND:
+                if (elementId == null) {
+                    sendError(response, SC_BAD_REQUEST, "required parameter 'element_id' not specified when uploading an individual TVAnytime element");
+                    return;
+                }
                 if (!(content instanceof Item)) {
                     sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a OnDemand");
                     return;
@@ -215,6 +222,10 @@ public class YouViewUploadController {
                 processTask(taskCreator.taskFor(elementId, onDemandHierarchy.get(), payload, Action.UPDATE), immediate);
                 break;
             case VERSION:
+                if (elementId == null) {
+                    sendError(response, SC_BAD_REQUEST, "required parameter 'element_id' not specified when uploading an individual TVAnytime element");
+                    return;
+                }
                 if (!(content instanceof Item)) {
                     sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Version");
                     return;
@@ -239,6 +250,20 @@ public class YouViewUploadController {
         sendOkResponse(response, "Upload for " + uri + " sent sucessfully");
     }
 
+    private void uploadBroadcast(String elementId, ItemBroadcastHierarchy broadcastHierarchy, boolean immediate) throws PayloadGenerationException {
+        Optional<Payload> bcastPayload = payloadCreator.payloadFrom(elementId, broadcastHierarchy);
+        if (!bcastPayload.isPresent()) {
+            // a lack of payload is because no BroadcastEvent should be generated,
+            // likely because of BroadcastEvent deduplication
+            return;
+        }
+        processTask(taskCreator.taskFor(elementId, 
+                                        broadcastHierarchy, 
+                                        bcastPayload.get(), 
+                                        Action.UPDATE), 
+                                        immediate);
+     }
+    
     private void uploadContent(boolean immediate, Content content)
             throws PayloadGenerationException {
         Payload p = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(content), content);
