@@ -439,7 +439,7 @@ public class NitroGroupInformationGeneratorTest {
     }
 
     @Test
-    public void testEpisodeGroupInformationGenerationWithoutEpisodeNumber() {
+    public void testEpisodeGroupInformationParsesWithoutEpisodeNumber() {
         Episode episode = createEpisode();
         LocalDate date = new LocalDate(1990,02,24);
         ReleaseDate releaseDate = new ReleaseDate(date, Countries.GB, ReleaseDate.ReleaseType.FIRST_BROADCAST);
