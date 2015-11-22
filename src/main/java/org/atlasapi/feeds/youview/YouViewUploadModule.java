@@ -47,8 +47,10 @@ import org.atlasapi.feeds.youview.payload.TVAPayloadCreator;
 import org.atlasapi.feeds.youview.payload.TVAnytimeStringConverter;
 import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventPcridStore;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.persistence.MongoYouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.persistence.SentBroadcastEventPcridStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.FullHierarchyResolvingContentResolver;
 import org.atlasapi.feeds.youview.resolution.UpdatedContentResolver;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
@@ -235,7 +237,12 @@ public class YouViewUploadModule {
                         clock
                    );
     }
-    
+
+    @Bean
+    public YouViewPayloadHashStore payloadHashStore() {
+        return new MongoYouViewPayloadHashStore(mongo);
+    }
+
     private UpdateTask uploadTask() throws JAXBException, SAXException {
         return new UpdateTask(taskStore, taskProcessor(), DESTINATION_TYPE);
     }
@@ -255,7 +262,8 @@ public class YouViewUploadModule {
                 taskStore, 
                 taskCreator(), 
                 payloadCreator(), 
-                nitroBootstrapContentResolver(publisher), 
+                nitroBootstrapContentResolver(publisher),
+                payloadHashStore(),
                 BOOTSTRAP_START_DATE
         )
         .withName(String.format(TASK_NAME_PATTERN, "Bootstrap", publisher.title()));
@@ -272,7 +280,8 @@ public class YouViewUploadModule {
                 taskCreator(), 
                 payloadCreator(), 
                 uploadTask(),
-                nitroDeltaContentResolver(publisher)
+                nitroDeltaContentResolver(publisher),
+                payloadHashStore()
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
