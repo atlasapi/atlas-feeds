@@ -10,7 +10,7 @@ import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import com.google.common.collect.ImmutableSet;
 
 
-public final class UpdateTask extends TaskProcessingTask {
+public class UpdateTask extends TaskProcessingTask {
     
     public UpdateTask(TaskStore taskStore, TaskProcessor processor, 
             DestinationType destinationType) {

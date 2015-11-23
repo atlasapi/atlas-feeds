@@ -12,6 +12,7 @@ import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
@@ -20,7 +21,6 @@ import org.joda.time.DateTime;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.metabroadcast.common.scheduling.ScheduledTask;
 
 
 public class DeltaTaskCreationTask extends TaskCreationTask {
@@ -32,9 +32,11 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
     public DeltaTaskCreationTask(YouViewLastUpdatedStore lastUpdatedStore, Publisher publisher,
             ContentHierarchyExpander hierarchyExpander, IdGenerator idGenerator,
-            TaskStore taskStore, TaskCreator taskCreator, PayloadCreator payloadCreator, UpdateTask updateTask, YouViewContentResolver contentResolver) {
+            TaskStore taskStore, TaskCreator taskCreator, PayloadCreator payloadCreator,
+            UpdateTask updateTask, YouViewContentResolver contentResolver,
+            YouViewPayloadHashStore payloadHashStore) {
         super(lastUpdatedStore, publisher, hierarchyExpander, idGenerator, taskStore, taskCreator,
-                payloadCreator);
+                payloadCreator, payloadHashStore);
         this.contentResolver = checkNotNull(contentResolver);
         this.updateTask = checkNotNull(updateTask);
     }
