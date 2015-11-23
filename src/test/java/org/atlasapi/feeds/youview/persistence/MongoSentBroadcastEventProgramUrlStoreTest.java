@@ -5,12 +5,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventPcridStore;
+import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.metabroadcast.common.persistence.MongoTestHelper;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
-
 
 public class MongoSentBroadcastEventProgramUrlStoreTest {
 
@@ -28,13 +28,14 @@ public class MongoSentBroadcastEventProgramUrlStoreTest {
         String itemCrid = "crid1";
         String programmeCrid = "http://example.org/1";
         String broadcastEventImi = "imi:example.org/1234";
+        LocalDate localDate = LocalDate.now();
         
-        assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(itemCrid, programmeCrid).isPresent());
+        assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(itemCrid, programmeCrid).isPresent());
             
-        sentBroadcastProgramUrlStore.recordSent(broadcastEventImi, itemCrid, programmeCrid);
-        assertEquals(broadcastEventImi, sentBroadcastProgramUrlStore.getSentBroadcastEventImi(itemCrid, programmeCrid).get());
+        sentBroadcastProgramUrlStore.recordSent(broadcastEventImi, localDate, itemCrid, programmeCrid);
+        assertEquals(broadcastEventImi, sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(itemCrid, programmeCrid).get().getBroadcastEventImi());
         
         sentBroadcastProgramUrlStore.removeSentRecord(itemCrid, programmeCrid);
-        assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventImi(itemCrid, programmeCrid).isPresent());
+        assertFalse(sentBroadcastProgramUrlStore.getSentBroadcastEventRecords(itemCrid, programmeCrid).isPresent());
     }
 }

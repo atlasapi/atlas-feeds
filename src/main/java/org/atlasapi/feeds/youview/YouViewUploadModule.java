@@ -47,6 +47,7 @@ import org.atlasapi.feeds.youview.payload.TVAPayloadCreator;
 import org.atlasapi.feeds.youview.payload.TVAnytimeStringConverter;
 import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventPcridStore;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
+import org.atlasapi.feeds.youview.persistence.RollingWindowBroadcastEventDeduplicator;
 import org.atlasapi.feeds.youview.persistence.SentBroadcastEventPcridStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.resolution.FullHierarchyResolvingContentResolver;
@@ -280,7 +281,7 @@ public class YouViewUploadModule {
     private PayloadCreator payloadCreator() throws JAXBException, SAXException {
         Converter<JAXBElement<TVAMainType>, String> outputConverter = new TVAnytimeStringConverter();
         TvAnytimeGenerator tvaGenerator = enableValidationIfAppropriate(generator);
-        return new TVAPayloadCreator(tvaGenerator, outputConverter, sentBroadcastProgramUrlStore(), clock);
+        return new TVAPayloadCreator(tvaGenerator, outputConverter, rollingWindowBroadcastEventDeduplicator(), clock);
     }
     
     private TvAnytimeGenerator enableValidationIfAppropriate(TvAnytimeGenerator generator) 
@@ -338,6 +339,11 @@ public class YouViewUploadModule {
     @Bean
     public SentBroadcastEventPcridStore sentBroadcastProgramUrlStore() {
         return new MongoSentBroadcastEventPcridStore(mongo);
+    }
+
+    @Bean
+    public RollingWindowBroadcastEventDeduplicator rollingWindowBroadcastEventDeduplicator(){
+        return new RollingWindowBroadcastEventDeduplicator(sentBroadcastProgramUrlStore());
     }
     
     @Bean

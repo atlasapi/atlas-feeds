@@ -2,3 +2,28 @@
 /.project
 /target
 /.settings
+
+
+
+
+
+.classpath
+.settings
+out/
+.DS_Store
+target/
+*.iml
+nb-configuration.xml
+.project
+.settings/
+
+# IntelliJ
+*.iml
+.idea
+
+# Maven
+target
+dependency-reduced-pom.xml/.classpath
+/.project
+/target
+/.settings
