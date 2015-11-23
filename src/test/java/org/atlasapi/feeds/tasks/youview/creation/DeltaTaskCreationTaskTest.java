@@ -113,13 +113,12 @@ public class DeltaTaskCreationTaskTest {
         when(idGenerator.generateContentCrid(content)).thenReturn(contentCrid);
         when(payloadHashStore.getHash(HashType.CONTENT, contentCrid))
                 .thenReturn(Optional.of(payload.hash() + "nope"));
-        when(taskCreator.taskFor(contentCrid, content, action)).thenReturn(withoutId);
+        when(taskCreator.taskFor(contentCrid, content, payload, action)).thenReturn(withoutId);
         when(taskStore.save(withoutId)).thenReturn(withId);
         when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(payload);
 
         task.runTask();
 
-        verify(taskStore).updateWithPayload(taskId, payload);
         verify(payloadHashStore).saveHash(HashType.CONTENT, contentCrid, payload.hash());
     }
 
@@ -153,13 +152,12 @@ public class DeltaTaskCreationTaskTest {
         when(idGenerator.generateContentCrid(content)).thenReturn(contentCrid);
         when(payloadHashStore.getHash(HashType.CONTENT, contentCrid))
                 .thenReturn(Optional.<String>absent());
-        when(taskCreator.taskFor(contentCrid, content, action)).thenReturn(withoutId);
+        when(taskCreator.taskFor(contentCrid, content, payload, action)).thenReturn(withoutId);
         when(taskStore.save(withoutId)).thenReturn(withId);
         when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(payload);
 
         task.runTask();
 
-        verify(taskStore).updateWithPayload(taskId, payload);
         verify(payloadHashStore).saveHash(HashType.CONTENT, contentCrid, payload.hash());
     }
 
@@ -196,9 +194,8 @@ public class DeltaTaskCreationTaskTest {
 
         task.runTask();
 
-        verify(taskCreator, never()).taskFor(contentCrid, content, action);
+        verify(taskCreator, never()).taskFor(contentCrid, content, payload, action);
         verify(taskStore, never()).save(withoutId);
-        verify(taskStore, never()).updateWithPayload(taskId, payload);
         verify(payloadHashStore, never()).saveHash(HashType.CONTENT, contentCrid, payload.hash());
     }
 
@@ -227,7 +224,7 @@ public class DeltaTaskCreationTaskTest {
                         .iterator());
         when(content.isActivelyPublished()).thenReturn(false);
         when(idGenerator.generateContentCrid(content)).thenReturn(contentCrid);
-        when(taskCreator.taskFor(contentCrid, content, action)).thenReturn(withoutId);
+        when(taskCreator.taskFor(contentCrid, content, action, Status.NEW)).thenReturn(withoutId);
         when(taskStore.save(withoutId)).thenReturn(withId);
 
         task.runTask();

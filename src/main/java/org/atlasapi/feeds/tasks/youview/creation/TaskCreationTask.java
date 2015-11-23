@@ -150,8 +150,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 Payload p = payloadCreator.payloadFrom(contentCrid, content);
 
                 if (shouldSave(HashType.CONTENT, contentCrid, p)) {
-                    Task task = taskStore.save(taskCreator.taskFor(contentCrid, content, action));
-                    taskStore.updateWithPayload(task.id(), p);
+                    taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, p, action));
                     payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
                 } else {
                     log.debug("Existing hash found for Content {}, not updating", contentCrid);
@@ -161,8 +160,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error("Failed to create payload for content {}", content.getCanonicalUri(), e);
-            Task task = taskStore.save(taskCreator.taskFor(contentCrid, content, action));
-            taskStore.updateWithStatus(task.id(), Status.FAILED);
+            Task task = taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
@@ -175,8 +173,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             Payload payload = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
 
             if (shouldSave(HashType.VERSION, versionCrid, payload)) {
-                Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action));
-                taskStore.updateWithPayload(task.id(), payload);
+                taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, payload, action));
                 payloadHashStore.saveHash(HashType.VERSION, versionCrid, payload.hash());
             } else {
                 log.debug("Existing hash found for Version {}, not updating", versionCrid);
@@ -191,8 +188,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     ), 
                     e
             );
-            Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action));
-            taskStore.updateWithStatus(task.id(), Status.FAILED);
+            Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
@@ -208,8 +204,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
             }
 
             if (shouldSave(HashType.BROADCAST, broadcastImi, p.get())) {
-                Task task = taskStore.save(taskCreator.taskFor(broadcastImi, broadcastHierarchy, action));
-                taskStore.updateWithPayload(task.id(), p.get());
+                Task unsavedTask = taskCreator.taskFor(broadcastImi, broadcastHierarchy, p.get(), action);
+                taskStore.save(unsavedTask);
                 payloadHashStore.saveHash(HashType.BROADCAST, broadcastImi, p.get().hash());
             } else {
                 log.debug("Existing hash found for Broadcast {}, not updating", broadcastImi);
@@ -245,8 +241,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
             if (shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
-                Task task = taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, action));
-                taskStore.updateWithPayload(task.id(), p);
+                taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, p, action));
                 payloadHashStore.saveHash(HashType.ON_DEMAND, onDemandImi, p.hash());
             } else {
                 log.debug("Existing hash found for OnDemand {}, not updating", onDemandImi);
@@ -263,8 +258,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     ),
                     e
             );
-            Task task = taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, action));
-            taskStore.updateWithStatus(task.id(), Status.FAILED);
+            Task task = taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
