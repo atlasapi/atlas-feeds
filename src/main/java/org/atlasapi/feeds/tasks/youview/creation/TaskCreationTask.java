@@ -127,27 +127,25 @@ public abstract class TaskCreationTask extends ScheduledTask {
     }
     
     private UpdateProgress processContent(Content content, Action action) {
-        Task task = taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, action));
         try {
             // not strictly necessary, but will save space
             if (!Action.DELETE.equals(action)) {
                 Payload p = payloadCreator.payloadFrom(idGenerator.generateContentCrid(content), content);
-                taskStore.updateWithPayload(task.id(), p);
+                taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, p, action));
             }
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error("Failed to create payload for content {}", content.getCanonicalUri(), e);
-            taskStore.updateWithStatus(task.id(), Status.FAILED);
+            Task task = taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
     }
     
     private UpdateProgress processVersion(String versionCrid, ItemAndVersion versionHierarchy, Action action) {
-        Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action));
         try {
             Payload p = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
-            taskStore.updateWithPayload(task.id(), p);
+            taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, p, action));
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
@@ -157,7 +155,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     ), 
                     e
             );
-            taskStore.updateWithStatus(task.id(), Status.FAILED);
+            Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
@@ -169,8 +167,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
             if (!p.isPresent()) {
                 return UpdateProgress.START;
             }
-            Task task = taskStore.save(taskCreator.taskFor(broadcastImi, broadcastHierarchy, action));
-            taskStore.updateWithPayload(task.id(), p.get());
+            Task unsavedTask = taskCreator.taskFor(broadcastImi, broadcastHierarchy, p.get(), action);
+            Task task = taskStore.save(unsavedTask);
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
@@ -181,8 +179,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     ),
                     e
             );
-            Task task = taskStore.save(taskCreator.taskFor(broadcastImi, broadcastHierarchy, action));
-            taskStore.updateWithStatus(task.id(), Status.FAILED);
+            Task task = taskStore.save(taskCreator.taskFor(broadcastImi, broadcastHierarchy, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
@@ -196,10 +193,9 @@ public abstract class TaskCreationTask extends ScheduledTask {
     }
     
     private UpdateProgress processOnDemand(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) {
-        Task task = taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, action));
         try {
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
-            taskStore.updateWithPayload(task.id(), p);
+            taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, p, action));
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
@@ -211,7 +207,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     ),
                     e
             );
-            taskStore.updateWithStatus(task.id(), Status.FAILED);
+            Task task = taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }

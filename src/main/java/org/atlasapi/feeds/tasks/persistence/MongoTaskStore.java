@@ -1,9 +1,6 @@
 package org.atlasapi.feeds.tasks.persistence;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.regex.Pattern;
-
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.ACTION_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.CONTENT_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.CREATED_KEY;
@@ -18,22 +15,24 @@ import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.UPLOAD_TIME_KE
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.fromDBObject;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.toDBObject;
 
+import java.util.regex.Pattern;
+
+import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
-import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
 import com.google.common.collect.FluentIterable;
-import com.hp.hpl.jena.db.impl.DBQuery;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
 import com.metabroadcast.common.persistence.mongo.MongoSortBuilder;
 import com.metabroadcast.common.persistence.mongo.MongoUpdateBuilder;
+import com.metabroadcast.common.query.Selection;
 import com.mongodb.Bytes;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -51,7 +50,12 @@ public class MongoTaskStore implements TaskStore {
     }
 
     private DBCursor getOrderedCursor(DBObject query) {
-        return collection.find(query).sort(new MongoSortBuilder().descending(UPLOAD_TIME_KEY).build());
+        return collection
+                .find(query)
+                .sort(new MongoSortBuilder()
+                        .ascending(CREATED_KEY)
+                        .ascending(UPLOAD_TIME_KEY)
+                        .build());
     }
 
     @Override
@@ -170,11 +174,19 @@ public class MongoTaskStore implements TaskStore {
         if (query.elementId().isPresent()) {
             mongoQuery.fieldEquals(ELEMENT_ID_KEY, transformToPrefixRegexPattern(query.elementId().get()));
         }
-        
+
+        Selection selection = query.selection();
         DBCursor cursor = getOrderedCursor(mongoQuery.build())
-                .skip(query.selection().getOffset())
-                .limit(query.selection().getLimit());
-        
+                .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+
+        if (selection.getOffset() != 0) {
+            cursor.skip(selection.getOffset());
+        }
+
+        if (selection.getLimit() != null) {
+            cursor.limit(selection.getLimit());
+        }
+
         return FluentIterable.from(cursor)
                 .transform(TaskTranslator.fromDBObjects())
                 .filter(Predicates.notNull());

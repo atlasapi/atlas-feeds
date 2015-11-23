@@ -4,8 +4,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
+import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
+import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewResult;
@@ -13,18 +18,20 @@ import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class YouViewTaskProcessor implements TaskProcessor {
     
     private final Logger log = LoggerFactory.getLogger(YouViewTaskProcessor.class);
     private final YouViewClient client;
     private final RevokedContentStore revocationStore;
     private final ResultHandler resultHandler;
+    private final TaskStore taskStore;
     
-    public YouViewTaskProcessor(YouViewClient client, ResultHandler resultHandler, RevokedContentStore revocationStore) {
+    public YouViewTaskProcessor(YouViewClient client, ResultHandler resultHandler,
+            RevokedContentStore revocationStore, TaskStore taskStore) {
         this.client = checkNotNull(client);
         this.resultHandler = checkNotNull(resultHandler);
         this.revocationStore = checkNotNull(revocationStore);
+        this.taskStore = checkNotNull(taskStore);
     }
 
     @Override
@@ -33,15 +40,20 @@ public class YouViewTaskProcessor implements TaskProcessor {
                 YOUVIEW.equals(task.destination().type()), 
                 "task type " + task.destination().type() + " invalid, expected " + YOUVIEW.name()
         );
-        switch(task.action()) {
-        case UPDATE:
-            processUpdate(task);
-            break;
-        case DELETE:
-            processDelete(task);
-            break;
-        default:
-            throw new RuntimeException("action " + task.action().name() + " not recognised for task " + task.id());
+        try {
+            switch(task.action()) {
+            case UPDATE:
+                processUpdate(task);
+                break;
+            case DELETE:
+                processDelete(task);
+                break;
+            default:
+                throw new RuntimeException("action " + task.action().name() + " not recognised for task " + task.id());
+            }
+        } catch (Exception e) {
+            log.error("Error processing Task {}", task.id(), e);
+            setFailed(task, e);
         }
     }
     
@@ -50,14 +62,38 @@ public class YouViewTaskProcessor implements TaskProcessor {
     }
 
     private void processUpdate(Task task) {
-        checkArgument(task.payload().isPresent(), "no payload present for task " + task.id() + ", cannot upload");
+        if (!task.payload().isPresent()) {
+            setFailed(task);
+            return;
+        }
+
         YouViewDestination destination = (YouViewDestination) task.destination();
         if (isRevoked(destination.contentUri())) {
             log.info("content {} is revoked, not {}ing", destination.contentUri(), task.action().name());
+            setFailed(task);
             return;
         }
+
         YouViewResult uploadResult = client.upload(task.payload().get());
         resultHandler.handleTransactionResult(task, uploadResult);
+    }
+
+    private void setFailed(Task task) {
+        setFailed(task, null);
+    }
+
+    private void setFailed(Task task, Exception e) {
+        taskStore.updateWithStatus(task.id(), Status.FAILED);
+        if (e != null) {
+            taskStore.updateWithLastError(task.id(), exceptionToString(e));
+        }
+    }
+
+    private String exceptionToString(Exception e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        return e.getMessage() + " " + sw.toString();
     }
 
     // No need to check for revocation for deletes, as deleting revoked content doesn't really matter
