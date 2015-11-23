@@ -5,12 +5,14 @@ import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
+import com.metabroadcast.common.intl.Countries;
 import org.atlasapi.feeds.tvanytime.CreditsItemGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
@@ -23,9 +25,13 @@ import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
+import org.atlasapi.media.entity.ReleaseDate;
+import org.atlasapi.media.entity.ReleaseDate.ReleaseType;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 
+import org.joda.time.LocalDate;
+import scala.collection.parallel.ParIterableLike;
 import tva.metadata._2010.BaseProgramGroupTypeType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ControlledTermType;
@@ -77,6 +83,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private static final String TITLE_TYPE_SECONDARY = "secondary";
     private static final String CHILDREN_GENRE = "urn:tva:metadata:cs:IntendedAudienceCS:2010:4.2.1";
     private static final String OTHER_IDENTIFIER_AUTHORITY = "epid.bbc.co.uk";
+    private static final String DATE_FORMAT = "yyyyMMdd";
     private static final Pattern NITRO_URI_PATTERN = Pattern.compile("^http://nitro.bbc.co.uk/programmes/([a-zA-Z0-9]+)$");
 
     private static final Map<MediaType, String> YOUVIEW_MEDIATYPE_GENRE_MAPPING = ImmutableMap.<MediaType, String>builder()
@@ -180,20 +187,14 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(idGenerator.generateContentCrid(series.get()));
             if (item instanceof Episode) {
-                Episode episode = (Episode) item;
-                if (episode.getEpisodeNumber() != null) {
-                    memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
-                }
+                setEpisodeIndex(memberOf, item);
             }
             groupInfo.getMemberOf().add(memberOf);
         } else if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(idGenerator.generateContentCrid(brand.get()));
             if (item instanceof Episode) {
-                Episode episode = (Episode) item;
-                if (episode.getEpisodeNumber() != null) {
-                    memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
-                }
+                setEpisodeIndex(memberOf, item);
             }
             groupInfo.getMemberOf().add(memberOf);
         }
@@ -209,7 +210,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));
         groupInfo.setOrdered(true);
-        
+
         if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(idGenerator.generateContentCrid(brand.get()));
@@ -484,5 +485,25 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         title.setValue(contentTitle);
         
         return title;
+    }
+
+    private void setEpisodeIndex(MemberOfType memberOf, Item item) {
+        Episode episode = (Episode) item;
+        Integer episodeNumber = episode.getEpisodeNumber();
+        if (episodeNumber != null) {
+            memberOf.setIndex(Long.valueOf(episodeNumber));
+        } else if (!item.getReleaseDates().isEmpty()) {
+            for (ReleaseDate releaseDate : item.getReleaseDates()) {
+                if (releaseDate.type().equals(ReleaseType.FIRST_BROADCAST)) {
+                    int index = generateIndexFromReleaseDate(releaseDate);
+                    memberOf.setIndex(Long.valueOf(index));
+                }
+            }
+        }
+    }
+
+    private int generateIndexFromReleaseDate(ReleaseDate releaseDate) {
+        String date = releaseDate.date().toString(DATE_FORMAT);
+        return Integer.parseInt(date);
     }
 }
