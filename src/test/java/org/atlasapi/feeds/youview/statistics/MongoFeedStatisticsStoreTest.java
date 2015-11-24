@@ -33,9 +33,11 @@ public class MongoFeedStatisticsStoreTest {
     private final MongoFeedStatisticsStore store = new MongoFeedStatisticsStore(mongo, taskStore, clock, YOUVIEW);
 
     @Test
-    public void testFetchOfAbsentDayAndPublisherReturnsAbsent() {
-        Optional<FeedStatistics> stats = store.resolveFor(Publisher.BT_BLACKOUT);
-        assertFalse("Feed stats should not be returned if no record exists for the provided publisher and day", stats.isPresent());
+    public void testFetchOfAbsentDayAndPublisherReturnsZeroLatencyAndSize() {
+        Optional<FeedStatistics> statsOptional = store.resolveFor(Publisher.BT_BLACKOUT);
+        FeedStatistics stats = statsOptional.get();
+        assertEquals(0, stats.queueSize());
+        assertEquals(Duration.ZERO, stats.updateLatency());
     }
 
     @Test

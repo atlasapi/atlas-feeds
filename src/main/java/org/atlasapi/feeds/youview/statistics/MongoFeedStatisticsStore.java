@@ -42,7 +42,7 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
     public Optional<FeedStatistics> resolveFor(Publisher publisher) {
         Optional<Duration> latency = calculateLatency(publisher);
         if (!latency.isPresent()) {
-            return Optional.absent();
+            return Optional.of(new FeedStatistics(publisher, 0, Duration.ZERO));
         }
 
         int queueSize = calculateCurrentQueueSize(publisher);
