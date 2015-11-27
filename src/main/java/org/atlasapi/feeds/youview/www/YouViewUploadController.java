@@ -255,7 +255,7 @@ public class YouViewUploadController {
             Map<String, ItemBroadcastHierarchy> broadcasts = hierarchyExpander.broadcastHierarchiesFor((Item) content);
             for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcasts.entrySet()) {
                 Optional<Payload> broadcastPayload = payloadCreator.payloadFrom(broadcast.getKey(), broadcast.getValue());
-                if (!broadcastPayload.isPresent()) {
+                if (broadcastPayload.isPresent()) {
                     Task bcastTask = taskCreator.taskFor(broadcast.getKey(), broadcast.getValue(), broadcastPayload.get(), Action.UPDATE);
                     processTask(bcastTask, immediate);
                 }
