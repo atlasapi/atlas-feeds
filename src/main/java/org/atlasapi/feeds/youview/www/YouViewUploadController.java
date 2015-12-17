@@ -370,7 +370,11 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
         }
-        revocationProcessor.revoke(toBeRevoked.get());
+
+        ImmutableList<Task> revocationTasks = revocationProcessor.revoke(toBeRevoked.get());
+        for (Task revocationTask : revocationTasks) {
+            processTask(revocationTask, true);
+        }
 
         sendOkResponse(response, "Revoke for " + uri + " sent sucessfully");
     }
@@ -399,7 +403,11 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
         }
-        revocationProcessor.unrevoke(toBeUnrevoked.get());
+
+        ImmutableList<Task> revocationTasks = revocationProcessor.unrevoke(toBeUnrevoked.get());
+        for (Task revocationTask : revocationTasks) {
+            processTask(revocationTask, true);
+        }
 
         sendOkResponse(response, "Unrevoke for " + uri + " sent sucessfully");
     }
