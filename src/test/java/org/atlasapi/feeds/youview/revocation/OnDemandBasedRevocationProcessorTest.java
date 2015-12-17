@@ -52,6 +52,7 @@ public class OnDemandBasedRevocationProcessorTest {
 
     @Test
     public void testRevokeStoresRevokedContentUriAndSendsOnDemandDeletes() {
+        when(taskStore.save(task)).thenReturn(task);
         when(taskCreator.deleteFor(ON_DEMAND_IMI, HIERARCHY)).thenReturn(task);
         
         processor.revoke(HIERARCHY.item());
