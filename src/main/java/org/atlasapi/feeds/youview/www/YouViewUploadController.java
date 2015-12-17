@@ -243,7 +243,7 @@ public class YouViewUploadController {
             throws PayloadGenerationException {
         Payload p = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(content), content);
         Task task = taskCreator.taskFor(hierarchyExpander.contentCridFor(content), content, p, Action.UPDATE);
-        taskStore.save(task);
+        processTask(task, immediate);
 
         if (content instanceof Item) {
             Map<String, ItemAndVersion> versions = hierarchyExpander.versionHierarchiesFor((Item) content);
