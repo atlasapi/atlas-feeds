@@ -219,7 +219,7 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
 
     private XMLGregorianCalendar generateAvailabilityStart(Location location) {
         Policy policy = location.getPolicy();
-        if (policy == null) {
+        if (policy == null || policy.getAvailabilityStart() == null) {
             return null;
         }
         return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityStart());
@@ -227,7 +227,7 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
 
     private XMLGregorianCalendar generateAvailabilityEnd(Location location) {
         Policy policy = location.getPolicy();
-        if (policy == null) {
+        if (policy == null || policy.getAvailabilityEnd() == null) {
             return null;
         }
         return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityEnd());
