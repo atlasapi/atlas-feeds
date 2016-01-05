@@ -61,8 +61,6 @@ public class NitroOnDemandLocationGeneratorTest {
             return input.getType();
         }
     };
-    
-    private static final DateTime DEFAULT_AVAILABILITY_END = new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC);
 
     private IdGenerator idGenerator = new NitroIdGenerator(Hashing.md5());
 
@@ -70,7 +68,7 @@ public class NitroOnDemandLocationGeneratorTest {
 
     @Test
     public void testNonPublisherSpecificFields() {
-        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm(true, DEFAULT_AVAILABILITY_END));
+        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm(true));
         
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
 
@@ -111,7 +109,7 @@ public class NitroOnDemandLocationGeneratorTest {
     
     @Test
     public void testNitroSpecificFields() {
-        Film film = createNitroFilm(false, DEFAULT_AVAILABILITY_END);
+        Film film = createNitroFilm(false);
         ItemOnDemandHierarchy hierarchy = hierarchyFrom(film);
         String versionCrid = idGenerator.generateVersionCrid(hierarchy.item(), hierarchy.version());
         String onDemandImi = idGenerator.generateOnDemandImi(hierarchy.item(), hierarchy.version(), hierarchy.encoding(), hierarchy.location());
@@ -151,7 +149,7 @@ public class NitroOnDemandLocationGeneratorTest {
     public void testSubtitledFlag() {
         CaptionLanguageType captionLanguage = 
                 Iterables.getOnlyElement(
-                        onDemandFor(createNitroFilm(true, DEFAULT_AVAILABILITY_END))
+                        onDemandFor(createNitroFilm(true))
                             .getInstanceDescription()
                             .getCaptionLanguage()
                         );
@@ -159,7 +157,7 @@ public class NitroOnDemandLocationGeneratorTest {
         assertTrue(captionLanguage.isClosed());
         assertEquals("en", captionLanguage.getValue());
         
-        assertTrue(onDemandFor(createNitroFilm(false, DEFAULT_AVAILABILITY_END))
+        assertTrue(onDemandFor(createNitroFilm(false))
                          .getInstanceDescription()
                          .getCaptionLanguage()
                          .isEmpty());
@@ -173,7 +171,7 @@ public class NitroOnDemandLocationGeneratorTest {
     
     @Test
     public void testIfNoActualAvailabilityThenContentNotMarkedAsAvailable() {
-        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm(false, DEFAULT_AVAILABILITY_END));
+        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm(false));
         
         onDemandHierarchy.location().getPolicy().setActualAvailabilityStart(null);
         
@@ -190,7 +188,7 @@ public class NitroOnDemandLocationGeneratorTest {
 
     @Test
     public void testIfActualAvailabilityPresentThenContentMarkedAsAvailable() {
-        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm(false, DEFAULT_AVAILABILITY_END));
+        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm(false));
 
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
 
@@ -205,14 +203,6 @@ public class NitroOnDemandLocationGeneratorTest {
         assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
     }
     
-    @Test
-    public void testIfNoEndOfAvailabilityNullAvailabilityEnd() {
-        ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm(false, null));
-        
-        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
-        assertNull(onDemand.getEndOfAvailability());
-    }
-    
     private ItemOnDemandHierarchy hierarchyFrom(Item item) {
         Version version = Iterables.getOnlyElement(item.getVersions());
         Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
@@ -220,32 +210,32 @@ public class NitroOnDemandLocationGeneratorTest {
         return new ItemOnDemandHierarchy(item, version, encoding, location);
     }
 
-    private Film createNitroFilm(boolean subtitled, DateTime availabilityEnd) {
+    private Film createNitroFilm(boolean subtitled) {
         Film film = new Film();
 
         film.setCanonicalUri("http://nitro.bbc.co.uk/programmes/b020tm1g");
         film.setPublisher(Publisher.BBC_NITRO);
         film.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));
         film.setYear(1963);
-        film.addVersion(createVersion(subtitled, availabilityEnd));
+        film.addVersion(createVersion(subtitled));
 
         return film;
     }
 
     private Film createAlbaNitroFilm() {
-        Film film = createNitroFilm(true, DEFAULT_AVAILABILITY_END);
+        Film film = createNitroFilm(true);
         film.setPresentationChannel("http://ref.atlasapi.org/channels/bbcalba");
         
         return film;
     }
 
-    private Version createVersion(boolean subtitled, DateTime availabilityEnd) {
+    private Version createVersion(boolean subtitled) {
         Version version = new Version();
 
         Restriction restriction = new Restriction();
         restriction.setRestricted(true);
         
-        version.setManifestedAs(Sets.newHashSet(createEncoding(subtitled, availabilityEnd)));
+        version.setManifestedAs(Sets.newHashSet(createEncoding(subtitled)));
         
         version.setDuration(Duration.standardMinutes(90));
         version.setCanonicalUri("http://nitro.bbc.co.uk/programmes/b00gszl0");
@@ -254,7 +244,7 @@ public class NitroOnDemandLocationGeneratorTest {
         return version;
     }
 
-    private Encoding createEncoding(boolean subtitled, DateTime availabilityEnd) {
+    private Encoding createEncoding(boolean subtitled) {
         Encoding encoding = new Encoding();
         encoding.setVideoHorizontalSize(1280);
         encoding.setVideoVerticalSize(720);
@@ -263,19 +253,19 @@ public class NitroOnDemandLocationGeneratorTest {
         encoding.setAudioDescribed(true);
         encoding.setSigned(true);
         encoding.setSubtitled(subtitled);
-        encoding.addAvailableAt(createLocation(availabilityEnd));
+        encoding.addAvailableAt(createLocation());
         
         return encoding;
     }
 
-    private Location createLocation(DateTime availabilityEnd) {
+    private Location createLocation() {
         Location location = new Location();
 
         Policy policy = new Policy();
 
         policy.setActualAvailabilityStart(new DateTime(2012, 7, 3, 0, 10, 0, DateTimeZone.UTC));
         policy.setAvailabilityStart(new DateTime(2012, 7, 3, 0, 0, 0, DateTimeZone.UTC));
-        policy.setAvailabilityEnd(availabilityEnd);
+        policy.setAvailabilityEnd(new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC));
 
         location.setPolicy(policy);
 
