@@ -46,4 +46,15 @@ public class MongoIdMappingStore implements IdMappingStore {
 
         return Optional.of(TranslatorUtils.toString(found, VALUE));
     }
+
+    @Override
+    public Optional<String> getKeyFor(String value) {
+        DBObject found = collection.findOne(new BasicDBObject(VALUE, value));
+        
+        if (found == null) {
+            return Optional.absent();
+        }
+
+        return Optional.of(TranslatorUtils.toString(found, MongoConstants.ID));
+    }
 }

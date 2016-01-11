@@ -30,6 +30,8 @@ import com.metabroadcast.common.webapp.json.GsonFactory;
 @Controller
 public class NitroYouViewResolutionController {
 
+    private static final String YOUVIEW_CRID_TYPE = "youview_crid";
+    private static final String VERSION_PID_TYPE = "version_pid";
     private static final String NITRO_URI_PREFIX = "http://nitro.bbc.co.uk/programmes/";
     private static final Duration CACHE_DURATION = Duration.standardMinutes(16);
     private static final Gson GSON = GsonFactory.defaultGsonBuilder()
@@ -44,18 +46,20 @@ public class NitroYouViewResolutionController {
 
     @RequestMapping(value = "/feeds/nitro-youview/version.json", method = RequestMethod.GET)
     public void getYouViewVersionCridJson(HttpServletRequest request, HttpServletResponse response,
-            @RequestParam(value = "pid", required = true) String pid)
+            @RequestParam(value = "pid", required = false) String pid,
+            @RequestParam(value = "crid", required = false) String crid)
             throws IOException {
         setHeaders(request, response, MimeType.APPLICATION_JSON.toString());
-        serializeJson(response, outputForPid(pid));
+        serializeJson(response, outputFor(pid, crid));
     }
 
     @RequestMapping(value = "/feeds/nitro-youview/version.xml", method = RequestMethod.GET)
     public void getYouViewVersionCridXml(HttpServletRequest request, HttpServletResponse response,
-            @RequestParam(value = "pid", required = true) String pid)
+            @RequestParam(value = "pid", required = false) String pid,
+            @RequestParam(value = "crid", required = false) String crid)
             throws JAXBException, IOException {
         setHeaders(request, response, MimeType.APPLICATION_XML.toString());
-        serializeXml(response, outputForPid(pid));
+        serializeXml(response, outputFor(pid, crid));
     }
 
     private void setHeaders(HttpServletRequest request, HttpServletResponse response, String contentType) {
@@ -69,13 +73,19 @@ public class NitroYouViewResolutionController {
                 .plus(CACHE_DURATION);
     }
 
-    private ResolutionApiOutput outputForPid(String pid) {
-        Optional<String> versionCrid = mappingStore.getValueFor(canonicalUriFor(pid));
-        if (versionCrid.isPresent()) {
-            return outputFor(pid, versionCrid.get());
-        } else {
-            return emptyOutput();
+    private ResolutionApiOutput outputFor(String pid, String crid) {
+        if (pid == null && crid == null) {
+            throw new IllegalArgumentException("Must specify pid or crid");
         }
+        if (pid != null && crid != null) {
+            throw new IllegalArgumentException("Must not specify both pid and crid");
+        }
+        
+        if (pid != null) {
+            return outputFor(VERSION_PID_TYPE, pid, YOUVIEW_CRID_TYPE, mappingStore.getValueFor(canonicalUriFor(pid)));
+        } 
+        
+        return outputFor(YOUVIEW_CRID_TYPE, crid, VERSION_PID_TYPE, mappingStore.getKeyFor(crid));
     }
 
     private void serializeJson(HttpServletResponse response,
@@ -96,13 +106,17 @@ public class NitroYouViewResolutionController {
         return NITRO_URI_PREFIX + pid;
     }
 
-    private ResolutionApiOutput outputFor(String versionPid, String versionCrid) {
+    private ResolutionApiOutput outputFor(String inputType, String inputValue, String outputType, Optional<String> outputValue) {
+        if (!outputValue.isPresent()) {
+            return emptyOutput();
+        }
+        
         ResolutionApiOutput.Resolution.Builder builder = ResolutionApiOutput.Resolution.builder();
 
-        ResolutionApiOutput.Resolution resolution = builder.withInputId(versionPid)
-                .withInputType("version_pid")
-                .withResolvedAs(versionCrid)
-                .withResolvedType("youview_crid")
+        ResolutionApiOutput.Resolution resolution = builder.withInputId(inputValue)
+                .withInputType(inputType)
+                .withResolvedAs(outputValue.get())
+                .withResolvedType(outputType)
                 .build();
 
         return ResolutionApiOutput.from(resolution);
