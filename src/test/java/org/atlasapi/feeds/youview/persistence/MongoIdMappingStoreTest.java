@@ -56,6 +56,18 @@ public class MongoIdMappingStoreTest {
 
         assertFalse(retrievedValue.isPresent());
     }
+    
+    @Test
+    public void testReturnsKeyForValueLookupOrAbsentIfNotPresent() {
+        String key = "thisisthekey";
+        String value = "thisisthevalue";
+
+        store.storeMapping(key, value);
+        String retrievedKey = store.getKeyFor(value).get();
+                
+        assertEquals(key, retrievedKey);
+        assertFalse(store.getKeyFor("not_present").isPresent());
+    }
 
 
 }

@@ -6,5 +6,6 @@ public interface IdMappingStore {
 
     void storeMapping(String key, String value);
     Optional<String> getValueFor(String key);
+    Optional<String> getKeyFor(String value);
 
 }
