@@ -75,7 +75,7 @@ public class NitroYouViewResolutionController {
     }
 
     private ResolutionApiOutput outputFor(String pid, String crid) {
-        checkArgument(pid == null && crid == null, "Must specify pid or crid");
+        checkArgument(!(pid == null && crid == null), "Must specify pid or crid");
         checkArgument(pid != null && crid != null, "Must not specify both pid and crid");
         
         if (pid != null) {
