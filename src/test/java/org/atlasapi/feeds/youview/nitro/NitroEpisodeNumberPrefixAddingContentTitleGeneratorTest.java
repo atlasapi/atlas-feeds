@@ -50,6 +50,16 @@ public class NitroEpisodeNumberPrefixAddingContentTitleGeneratorTest {
     }
     
     @Test
+    public void testEpisodeWithDatePrefixIsNotMutated() {
+        Brand brand = createBrand("Brand");
+        Episode episode = createEpisode(brand, null);
+        String episodeTitle = "01/02/2014 Test";
+        episode.setTitle(episodeTitle);
+        
+        assertEquals("01/02/2014 Test", generator.titleFor(episode));
+    }
+    
+    @Test
     public void testNullEpisodeNumbersAreNotMutated() {
         Brand brand = createBrand("Brand");
         Episode episode = createEpisode(brand, null);
@@ -66,6 +76,17 @@ public class NitroEpisodeNumberPrefixAddingContentTitleGeneratorTest {
         Episode episode = createEpisode(brand, null);
         episode.setEpisodeNumber(1);
         String episodeTitle = "Pennod 33";
+        episode.setTitle(episodeTitle);
+        
+        assertEquals(episodeTitle, generator.titleFor(episode));
+    }
+    
+    @Test
+    public void testEpisodePrefixedWithPennodWithSuffixIsNotMutated() {
+        Brand brand = createBrand("Brand");
+        Episode episode = createEpisode(brand, null);
+        episode.setEpisodeNumber(1);
+        String episodeTitle = "Pennod 33 suffix";
         episode.setTitle(episodeTitle);
         
         assertEquals(episodeTitle, generator.titleFor(episode));
