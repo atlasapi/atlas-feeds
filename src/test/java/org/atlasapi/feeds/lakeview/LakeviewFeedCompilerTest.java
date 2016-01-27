@@ -172,8 +172,7 @@ public class LakeviewFeedCompilerTest {
     public void testGeneratesCorrectIdsForProgrammeIdUri() {
         
         Episode episode = new Episode();
-        Alias alias = new Alias("gb:channel4:programmeId", "555/555");
-        episode.addAlias(alias);
+        episode.addAlias(new Alias("gb:channel4:prod:pmlsd:programmeId", "555/555"));
         episode.setCanonicalUri("http://www.channel4.com/programmes/55103/175");
         episode.addAliasUrl("tag:http://www.channel4.com/programmes/hollyoaks/episode-guide/series-22/episode-175");
         episode.setTitle("Title");

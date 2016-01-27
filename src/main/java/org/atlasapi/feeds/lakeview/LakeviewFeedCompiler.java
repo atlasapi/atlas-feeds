@@ -463,7 +463,7 @@ public class LakeviewFeedCompiler {
 
     private String extractProgrammedId(Episode episode) {
         for (Alias alias : episode.getAliases()) {
-            if (alias.getNamespace().equals("gb:channel4:programmeId")) {
+            if (alias.getNamespace().equals("gb:channel4:prod:pmlsd:programmeId")) {
                 return alias.getValue();
             }
         }
