@@ -18,6 +18,7 @@ import nu.xom.Element;
 import org.atlasapi.feeds.xml.XMLNamespace;
 import org.atlasapi.media.TransportType;
 import org.atlasapi.media.channel.ChannelResolver;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.ChildRef;
@@ -310,9 +311,10 @@ public class LakeviewFeedCompiler {
         
         Comment comment = new Comment("Atlas ID: " + episode.getCanonicalUri());
         element.appendChild(comment);
-        
+
         String assetId = extractAssetId(episode);
-        String applicationSpecificData = episodeAtomUri(brandAtomUri(findTagAlias(container)), assetId);
+        String programmedId = extractProgrammedId(episode);
+        String applicationSpecificData = episodeAtomUri(brandAtomUri(findTagAlias(container)), programmedId);
         
         String providerMediaId;
         if (series != null) {
@@ -459,6 +461,15 @@ public class LakeviewFeedCompiler {
         return "NONE";
     }
 
+    private String extractProgrammedId(Episode episode) {
+        for (Alias alias : episode.getAliases()) {
+            if (alias.getNamespace().equals("gb:channel4:prod:pmlsd:programmeId")) {
+                return alias.getValue();
+            }
+        }
+        return "NONE";
+    }
+
     private void appendCommonElements(Element element, Content content, DateTime originalPublicationDate, 
             String lastModified, String applicationSpecificData, Iterable<String> genres,
     		Element instances) {
@@ -563,8 +574,8 @@ public class LakeviewFeedCompiler {
     }
     
     @VisibleForTesting
-    public String episodeAtomUri(String episodeUri, String assetId) {
-    	return String.format("%s#%s", episodeUri.replaceAll("/episode-guide.*", ""), assetId);
+    public String episodeAtomUri(String episodeUri, String programmeId) {
+        return String.format("%s?%s#%s", episodeUri.replaceAll("/episode-guide.*", ""), "schema=2", programmeId);
     }
     
     private static String findTagAlias(Identified id) {
