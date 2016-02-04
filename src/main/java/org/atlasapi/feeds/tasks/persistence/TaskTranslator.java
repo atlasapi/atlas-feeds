@@ -2,27 +2,28 @@ package org.atlasapi.feeds.tasks.persistence;
 
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Destination;
+import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
-import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.media.entity.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.metabroadcast.common.persistence.mongo.MongoConstants;
+import com.metabroadcast.common.persistence.translator.TranslatorUtils;
 
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.metabroadcast.common.persistence.mongo.MongoConstants;
-import com.metabroadcast.common.persistence.translator.TranslatorUtils;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class TaskTranslator {
-    
+
     private static final Logger log = LoggerFactory.getLogger(TaskTranslator.class);
     
     static final String PUBLISHER_KEY = "publisher";
@@ -38,7 +39,8 @@ public class TaskTranslator {
     static final String LAST_ERROR_KEY = "lastError";
     static final String ELEMENT_TYPE_KEY = "elementType";
     static final String ELEMENT_ID_KEY = "elementId";
-    
+    static final String MANUALLY_CREATED = "manuallyCreated";
+
     public static DBObject toDBObject(Task task) {
         DBObject dbo = new BasicDBObject();
         
@@ -55,7 +57,8 @@ public class TaskTranslator {
         TranslatorUtils.from(dbo, LAST_ERROR_KEY, task.lastError().orNull());
         
         TranslatorUtils.fromIterable(dbo, REMOTE_STATUSES_KEY, task.remoteResponses(), ResponseTranslator.toDBObject());
-        
+        TranslatorUtils.from(dbo, MANUALLY_CREATED, task.isManuallyCreated());
+
         return dbo;
     }
 
@@ -94,6 +97,7 @@ public class TaskTranslator {
                 .withPayload(PayloadTranslator.fromDBObject(TranslatorUtils.toDBObject(dbo, PAYLOAD_KEY)))
                 .withRemoteResponses(TranslatorUtils.toIterable(dbo, REMOTE_STATUSES_KEY, ResponseTranslator.fromDBObject()).or(ImmutableList.<Response>of()))
                 .withLastError(TranslatorUtils.toString(dbo, LAST_ERROR_KEY))
+                .withManuallyCreated(TranslatorUtils.toBoolean(dbo, MANUALLY_CREATED))
                 .build();
     }
     

@@ -1,16 +1,15 @@
 package org.atlasapi.feeds.tasks;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Set;
 
 import org.atlasapi.media.entity.Publisher;
-import org.joda.time.DateTime;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+import org.joda.time.DateTime;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Task {
 
@@ -23,16 +22,41 @@ public class Task {
     private final Optional<DateTime> uploadTime;
     private final Optional<String> remoteId;
     private final Optional<Payload> payload;
-    private final Set<Response> remoteResponses;
+    private final ImmutableSet<Response> remoteResponses;
     private final Optional<String> lastError;
+    private final Boolean manuallyCreated;
     
     public static Builder builder() {
         return new Builder();
     }
-    
-    private Task(Long id, DateTime created, Publisher publisher, Action action, Destination destination, Status status, 
-            Optional<DateTime> uploadTime, Optional<String> remoteId, Optional<Payload> payload, 
-            Iterable<Response> remoteResponses, Optional<String> lastError) {
+
+    public static Builder copy(Task task) {
+        Builder builder = builder()
+                .withCreated(task.created)
+                .withPublisher(task.publisher)
+                .withAction(task.action)
+                .withDestination(task.destination)
+                .withStatus(task.status)
+                .withUploadTime(task.uploadTime.orNull())
+                .withRemoteId(task.remoteId.orNull())
+                .withPayload(task.payload.orNull())
+                .withLastError(task.lastError.orNull())
+                .withManuallyCreated(task.manuallyCreated);
+        for (Response remoteResponse : task.remoteResponses) {
+            builder.withRemoteResponse(remoteResponse);
+        }
+        return builder;
+    }
+
+    private Task(
+            Long id, DateTime created, Publisher publisher, Action action,
+            Destination destination, Status status,
+            Optional<DateTime> uploadTime, Optional<String> remoteId,
+            Optional<Payload> payload,
+            Iterable<Response> remoteResponses,
+            Optional<String> lastError,
+            Boolean manuallyCreated
+    ) {
         this.id = id;
         this.created = checkNotNull(created);
         this.publisher = checkNotNull(publisher);
@@ -44,8 +68,9 @@ public class Task {
         this.payload = checkNotNull(payload);
         this.remoteResponses = ImmutableSet.copyOf(remoteResponses);
         this.lastError = checkNotNull(lastError);
+        this.manuallyCreated = manuallyCreated;
     }
-    
+
     public Long id() {
         return id;
     }
@@ -94,6 +119,10 @@ public class Task {
         return remoteResponses;
     }
 
+    public Boolean isManuallyCreated() {
+        return manuallyCreated;
+    }
+
     @Override
     public String toString() {
         return Objects.toStringHelper(getClass())
@@ -108,6 +137,7 @@ public class Task {
                 .add("payload", payload)
                 .add("remoteResponses", remoteResponses)
                 .add("lastError", lastError)
+                .add("manuallyCreated", manuallyCreated)
                 .toString();
     }
     
@@ -143,12 +173,13 @@ public class Task {
         private Optional<Payload> payload = Optional.absent();
         private Optional<String> lastError = Optional.absent();
         private ImmutableSet.Builder<Response> remoteResponses = ImmutableSet.builder();
+        private Boolean manuallyCreated = Boolean.FALSE;
         
         private Builder() { }
         
         public Task build() {
             return new Task(id, created, publisher, action, destination, status, uploadTime, 
-                    remoteId, payload, remoteResponses.build(), lastError);
+                    remoteId, payload, remoteResponses.build(), lastError, manuallyCreated);
         }
         
         public Builder withId(Long id) {
@@ -208,6 +239,11 @@ public class Task {
         
         public Builder withRemoteResponses(Iterable<Response> responses) {
             this.remoteResponses.addAll(responses);
+            return this;
+        }
+
+        public Builder withManuallyCreated(Boolean manuallyCreated) {
+            this.manuallyCreated = manuallyCreated != null && manuallyCreated;
             return this;
         }
     }
