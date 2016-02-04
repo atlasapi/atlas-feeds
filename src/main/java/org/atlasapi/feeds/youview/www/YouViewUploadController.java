@@ -1,9 +1,5 @@
 package org.atlasapi.feeds.youview.www;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +33,17 @@ import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
+
+import com.metabroadcast.common.http.HttpException;
+import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
+import com.metabroadcast.common.time.Clock;
+import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
+
+import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,15 +51,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.metabroadcast.common.http.HttpException;
-import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
-import com.metabroadcast.common.time.Clock;
-import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 
 // TODO remove all the duplication
 @Controller
@@ -142,12 +143,15 @@ public class YouViewUploadController {
      */
     // TODO this method does far too much right now
     @RequestMapping(value="/feeds/youview/{publisher}/upload", method = RequestMethod.POST)
-    public void uploadContent(HttpServletResponse response,
+    public void uploadContent(
+            HttpServletResponse response,
             @PathVariable("publisher") String publisherStr,
-            @RequestParam(value = "uri", required = true) String uri,
+            @RequestParam(value = "uri") String uri,
             @RequestParam(value = "element_id", required = false) String elementId,
             @RequestParam(value = "type", required = false) String typeStr,
-            @RequestParam(value = "immediate", required = false, defaultValue = "false") boolean immediate) throws IOException, HttpException, PayloadGenerationException {
+            @RequestParam(value = "immediate", required = false, defaultValue = "false")
+                    boolean immediate
+    ) throws IOException, HttpException, PayloadGenerationException {
         
         Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
         if (!publisher.isPresent()) {
@@ -273,7 +277,7 @@ public class YouViewUploadController {
         if (task == null) {
             return;
         }
-        Task savedTask = taskStore.save(task);
+        Task savedTask = taskStore.save(Task.copy(task).withManuallyCreated(true).build());
 
         if (immediate) {
             taskProcessor.process(savedTask);

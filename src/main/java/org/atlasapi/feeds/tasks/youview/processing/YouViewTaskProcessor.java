@@ -1,9 +1,5 @@
 package org.atlasapi.feeds.tasks.youview.processing;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -15,8 +11,13 @@ import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
 
 public class YouViewTaskProcessor implements TaskProcessor {
     
@@ -69,9 +70,17 @@ public class YouViewTaskProcessor implements TaskProcessor {
 
         YouViewDestination destination = (YouViewDestination) task.destination();
         if (isRevoked(destination.contentUri())) {
-            log.info("content {} is revoked, not {}ing", destination.contentUri(), task.action().name());
-            setFailed(task);
-            return;
+            if (task.isManuallyCreated()) {
+                revocationStore.unrevoke(destination.contentUri());
+            } else {
+                log.info(
+                        "content {} is revoked, not {}ing",
+                        destination.contentUri(),
+                        task.action().name()
+                );
+                setFailed(task);
+                return;
+            }
         }
 
         YouViewResult uploadResult = client.upload(task.payload().get());
