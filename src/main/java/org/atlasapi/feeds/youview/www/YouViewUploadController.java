@@ -27,7 +27,9 @@ import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.persistence.content.ContentResolver;
@@ -163,7 +165,7 @@ public class YouViewUploadController {
             return;
         }
         
-        Optional<Content> toBeUploaded = getContent(publisher.get(), uri);
+        Optional<Content> toBeUploaded = getContent(uri);
         if (!toBeUploaded.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
@@ -270,9 +272,37 @@ public class YouViewUploadController {
                 Task odTask = taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), odPayload, Action.UPDATE);
                 processTask(odTask, immediate);
             }
+
+            if (immediate) {
+                Item item = (Item) content;
+                resolveAndUploadParent(item.getContainer(), true);
+
+                if (item instanceof Episode) {
+                    Episode episode = (Episode) item;
+                    resolveAndUploadParent(episode.getSeriesRef(), true);
+                }
+            }
         }
     }
-    
+
+    private void resolveAndUploadParent(ParentRef ref, boolean immediate) throws PayloadGenerationException {
+        if (ref == null) {
+            return;
+        }
+
+        Optional<Content> series = getContent(ref.getUri());
+        if (series.isPresent()) {
+            String contentCrid = hierarchyExpander.contentCridFor(series.get());
+            Task parentTask = taskCreator.taskFor(
+                    contentCrid,
+                    series.get(),
+                    payloadCreator.payloadFrom(contentCrid, series.get()),
+                    Action.UPDATE
+            );
+            processTask(parentTask, immediate);
+        }
+    }
+
     private void processTask(Task task, boolean immediate) {
         if (task == null) {
             return;
@@ -322,7 +352,7 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "required parameter 'type' not specified");
             return;
         }
-        Optional<Content> toBeDeleted = getContent(publisher.get(), uri);
+        Optional<Content> toBeDeleted = getContent(uri);
         if (!toBeDeleted.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
@@ -369,7 +399,7 @@ public class YouViewUploadController {
             return;
         }
 
-        Optional<Content> toBeRevoked = getContent(publisher.get(), uri);
+        Optional<Content> toBeRevoked = getContent(uri);
         if (!toBeRevoked.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
@@ -402,7 +432,7 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
             return;
         }
-        Optional<Content> toBeUnrevoked = getContent(publisher.get(), uri);
+        Optional<Content> toBeUnrevoked = getContent(uri);
         if (!toBeUnrevoked.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
@@ -430,7 +460,7 @@ public class YouViewUploadController {
         response.setContentLength(0);
     }
     
-    private Optional<Content> getContent(Publisher publisher, String contentUri) {
+    private Optional<Content> getContent(String contentUri) {
         ResolvedContent resolvedContent = contentResolver.findByCanonicalUris(ImmutableList.of(contentUri));
         return Optional.fromNullable((Content) resolvedContent.getFirstValue().valueOrNull());
     }
