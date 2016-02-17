@@ -1,5 +1,29 @@
 package org.atlasapi.feeds.tasks.persistence;
 
+import java.util.regex.Pattern;
+
+import org.atlasapi.feeds.tasks.Destination.DestinationType;
+import org.atlasapi.feeds.tasks.Payload;
+import org.atlasapi.feeds.tasks.Response;
+import org.atlasapi.feeds.tasks.Status;
+import org.atlasapi.feeds.tasks.Task;
+import org.atlasapi.feeds.tasks.TaskQuery;
+
+import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
+import com.metabroadcast.common.persistence.mongo.MongoSortBuilder;
+import com.metabroadcast.common.persistence.mongo.MongoUpdateBuilder;
+import com.metabroadcast.common.query.Selection;
+
+import com.google.common.base.Optional;
+import com.google.common.base.Predicates;
+import com.google.common.collect.FluentIterable;
+import com.mongodb.Bytes;
+import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+import org.joda.time.DateTime;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.ACTION_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.CONTENT_KEY;
@@ -15,29 +39,6 @@ import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.UPLOAD_TIME_KE
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.fromDBObject;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.toDBObject;
 
-import java.util.regex.Pattern;
-
-import org.atlasapi.feeds.tasks.Destination.DestinationType;
-import org.atlasapi.feeds.tasks.Payload;
-import org.atlasapi.feeds.tasks.Response;
-import org.atlasapi.feeds.tasks.Status;
-import org.atlasapi.feeds.tasks.Task;
-import org.atlasapi.feeds.tasks.TaskQuery;
-import org.joda.time.DateTime;
-
-import com.google.common.base.Optional;
-import com.google.common.base.Predicates;
-import com.google.common.collect.FluentIterable;
-import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
-import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
-import com.metabroadcast.common.persistence.mongo.MongoSortBuilder;
-import com.metabroadcast.common.persistence.mongo.MongoUpdateBuilder;
-import com.metabroadcast.common.query.Selection;
-import com.mongodb.Bytes;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
-
 
 public class MongoTaskStore implements TaskStore {
     
@@ -49,13 +50,18 @@ public class MongoTaskStore implements TaskStore {
         this.collection = checkNotNull(mongo).collection(COLLECTION_NAME);
     }
 
-    private DBCursor getOrderedCursor(DBObject query) {
+    private DBCursor getOrderedCursor(DBObject query, TaskQuery.Sort sort) {
+        MongoSortBuilder orderBy = new MongoSortBuilder();
+
+        if (sort == TaskQuery.Sort.ASC) {
+            orderBy.ascending(CREATED_KEY).ascending(UPLOAD_TIME_KEY);
+        } else {
+            orderBy.descending(CREATED_KEY).descending(UPLOAD_TIME_KEY);
+        }
+
         return collection
                 .find(query)
-                .sort(new MongoSortBuilder()
-                        .ascending(CREATED_KEY)
-                        .ascending(UPLOAD_TIME_KEY)
-                        .build());
+                .sort(orderBy.build());
     }
 
     @Override
@@ -141,7 +147,7 @@ public class MongoTaskStore implements TaskStore {
                 .fieldEquals(DESTINATION_TYPE_KEY, type.name())
                 .fieldEquals(STATUS_KEY, status.name());
         
-        DBCursor cursor = getOrderedCursor(mongoQuery.build())
+        DBCursor cursor = getOrderedCursor(mongoQuery.build(), TaskQuery.Sort.ASC)
                                 .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
         
         return FluentIterable.from(cursor)
@@ -176,7 +182,7 @@ public class MongoTaskStore implements TaskStore {
         }
 
         Selection selection = query.selection();
-        DBCursor cursor = getOrderedCursor(mongoQuery.build())
+        DBCursor cursor = getOrderedCursor(mongoQuery.build(), query.sort())
                 .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
 
         if (selection.getOffset() != 0) {
