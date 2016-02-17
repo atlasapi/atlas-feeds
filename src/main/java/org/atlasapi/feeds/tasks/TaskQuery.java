@@ -1,16 +1,22 @@
 package org.atlasapi.feeds.tasks;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.media.entity.Publisher;
 
+import com.metabroadcast.common.query.Selection;
+
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
-import com.metabroadcast.common.query.Selection;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class TaskQuery {
+
+    public enum Sort {
+        ASC,
+        DESC
+    }
 
     private final Selection selection;
     private final Publisher publisher;
@@ -21,14 +27,24 @@ public class TaskQuery {
     private final Optional<Action> action;
     private final Optional<TVAElementType> elementType;
     private final Optional<String> elementId;
+    private final Sort sort;
     
     public static Builder builder(Selection selection, Publisher publisher, DestinationType destinationType) {
         return new Builder(selection, publisher, destinationType);
     }
     
-    private TaskQuery(Selection selection, Publisher publisher, DestinationType destinationType, 
-            Optional<String> contentUri, Optional<String> remoteId, Optional<Status> status, 
-            Optional<Action> action, Optional<TVAElementType> elementType, Optional<String> elementId) {
+    private TaskQuery(
+            Selection selection,
+            Publisher publisher,
+            DestinationType destinationType,
+            Optional<String> contentUri,
+            Optional<String> remoteId,
+            Optional<Status> status,
+            Optional<Action> action,
+            Optional<TVAElementType> elementType,
+            Optional<String> elementId,
+            Sort sort
+    ) {
         this.selection = checkNotNull(selection);
         this.publisher = checkNotNull(publisher);
         this.destinationType = checkNotNull(destinationType);
@@ -38,6 +54,7 @@ public class TaskQuery {
         this.action = checkNotNull(action);
         this.elementType = checkNotNull(elementType);
         this.elementId = checkNotNull(elementId);
+        this.sort = checkNotNull(sort);
     }
     
     public Selection selection() {
@@ -75,7 +92,11 @@ public class TaskQuery {
     public Optional<String> elementId() {
         return elementId;
     }
-    
+
+    public Sort sort() {
+        return sort;
+    }
+
     @Override
     public String toString() {
         return Objects.toStringHelper(TaskQuery.class)
@@ -88,6 +109,7 @@ public class TaskQuery {
                 .add("action", action)
                 .add("elementType", elementType)
                 .add("elementId", elementId)
+                .add("sort", sort)
                 .toString();
     }
     
@@ -102,6 +124,7 @@ public class TaskQuery {
         private Optional<Action> action = Optional.absent();
         private Optional<TVAElementType> elementType = Optional.absent();
         private Optional<String> elementId = Optional.absent();
+        private Sort sort = Sort.ASC;
 
         private Builder(Selection selection, Publisher publisher, DestinationType destinationType) {
             this.selection = selection;
@@ -111,7 +134,7 @@ public class TaskQuery {
         
         public TaskQuery build() {
             return new TaskQuery(selection, publisher, destinationType, contentUri, remoteId, 
-                    status, action, elementType, elementId);
+                    status, action, elementType, elementId, sort);
         }
         
         public Builder withContentUri(String contentUri) {
@@ -141,6 +164,11 @@ public class TaskQuery {
         
         public Builder withElementId(String elementId) {
             this.elementId = Optional.fromNullable(elementId);
+            return this;
+        }
+
+        public Builder withSort(Sort sort) {
+            this.sort = sort;
             return this;
         }
     }
