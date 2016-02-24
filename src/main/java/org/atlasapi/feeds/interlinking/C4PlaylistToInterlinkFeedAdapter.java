@@ -9,6 +9,7 @@ import org.atlasapi.feeds.interlinking.InterlinkFeed.InterlinkFeedAuthor;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Identified;
+import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
@@ -136,7 +137,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
     protected String linkFrom(Identified identified) {
         
         Pattern aliasPattern = null;
-        if (identified instanceof Episode) {
+        if (identified instanceof Item) {
             aliasPattern = EPISODE_LINK_ALIAS_PATTERN;
         } else {
             aliasPattern = BRAND_SERIES_LINK_ALIAS_PATTERN;
