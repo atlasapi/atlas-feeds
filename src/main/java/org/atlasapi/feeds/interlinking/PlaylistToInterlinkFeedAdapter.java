@@ -104,8 +104,12 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
     
     private InterlinkFeed feed(String id, Publisher publisher) {
         InterlinkFeed feed = new InterlinkFeed(id);
-        feed.withAuthor(new InterlinkFeedAuthor(toPublisherName(publisher), toPublisherName(publisher)));
+        feed.withAuthor(feedAuthor(publisher));
         return feed;
+    }
+    
+    protected InterlinkFeedAuthor feedAuthor(Publisher publisher) {
+        return new InterlinkFeedAuthor(toPublisherName(publisher), toPublisherName(publisher));
     }
 
 	private String toPublisherName(Publisher publisher) {
@@ -146,7 +150,7 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 		String parentId = parentFromItem(item);
 		
 		Location availableLocation = firstAvailableLocation(item);
-		String link = availableLocation == null ? linkFrom(item.getCanonicalUri()) : availableLocation.getUri();
+		String link = availableLocation == null ? linkFrom(item) : availableLocation.getUri();
 		
         InterlinkEpisode episode = new InterlinkEpisode(episodeId, operationFor(item, from, to), itemIndexFrom(item), link, parentId)
             .withTitle(extractItemTitle(item))
@@ -187,8 +191,8 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
 	    return null;
     }
 
-    protected String linkFrom(String canonicalUri) {
-	    return canonicalUri;
+    protected String linkFrom(Identified identified) {
+	    return identified.getCanonicalUri();
     }
 
     private String extractItemTitle(Item item) {

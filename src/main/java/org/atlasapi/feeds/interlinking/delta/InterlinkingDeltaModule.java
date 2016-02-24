@@ -4,6 +4,7 @@ import javax.annotation.PostConstruct;
 
 import org.atlasapi.feeds.interlinking.C4PlaylistToInterlinkFeedAdapter;
 import org.atlasapi.feeds.interlinking.outputting.InterlinkFeedOutputter;
+import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.jets3t.service.security.AWSCredentials;
 import org.joda.time.Duration;
@@ -29,10 +30,12 @@ public class InterlinkingDeltaModule {
     @Autowired private LastUpdatedContentFinder contentFinder;
     @Autowired private SimpleScheduler scheduler;
     @Autowired private DatabasedMongo mongo;
+    @Autowired private ContentResolver contentResolver;
 
     @Bean
     public InterlinkingDeltaUpdater interlinkingDeltaUpdater() {
-        return new InterlinkingDeltaUpdater(contentFinder, new InterlinkFeedOutputter(), new C4PlaylistToInterlinkFeedAdapter());
+        return new InterlinkingDeltaUpdater(contentFinder, new InterlinkFeedOutputter(), 
+                new C4PlaylistToInterlinkFeedAdapter(contentResolver));
     }
     
     @Bean 

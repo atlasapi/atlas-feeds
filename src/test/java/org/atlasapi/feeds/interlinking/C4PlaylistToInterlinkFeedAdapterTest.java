@@ -1,20 +1,37 @@
 package org.atlasapi.feeds.interlinking;
 
+import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
+import org.atlasapi.media.entity.Episode;
+import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.testing.BrandTestDataBuilder;
+import org.atlasapi.media.entity.testing.ComplexItemTestDataBuilder;
+import org.atlasapi.persistence.content.ContentResolver;
+import org.atlasapi.persistence.content.ResolvedContent;
 import org.joda.time.DateTime;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
 
+import com.google.common.collect.ImmutableList;
 import com.metabroadcast.common.time.DateTimeZones;
 
+@RunWith( MockitoJUnitRunner.class )
 public class C4PlaylistToInterlinkFeedAdapterTest {
 
+    private static final String BRAND_URI = "http://pmlsc.channel4.com/pmlsd/hollyoaks";
+    private final ContentResolver contentResolver = mock(ContentResolver.class);
+    private final C4PlaylistToInterlinkFeedAdapter adapter = new C4PlaylistToInterlinkFeedAdapter(contentResolver);
+    
     @Test
     public void testBroadcastId() {
         
-        C4PlaylistToInterlinkFeedAdapter adapter = new C4PlaylistToInterlinkFeedAdapter();
         
         DateTime start = new DateTime(DateTimeZones.UTC);
         DateTime end = new DateTime(DateTimeZones.UTC);
@@ -35,6 +52,30 @@ public class C4PlaylistToInterlinkFeedAdapterTest {
         
         assertThat(adapter.broadcastId(b3), is("tag:www.channel4.com,2009:slot/4S27945505"));
         
+    }
+    
+    @Test
+    public void testLink() {
+        Item item = ComplexItemTestDataBuilder
+                           .complexItem()
+                           .withAliasUrls("http://pmlsc.channel4.com/pmlsd/hollyoaks/episode-guide/series-23/episode-214")
+                           .build(); 
+        
+        assertThat(adapter.linkFrom(item), is("http://www.channel4.com/programmes/hollyoaks/episode-guide/series-23/episode-214"));
+    }
+    
+    @Test
+    public void testLinkNoAliasUri() {
+        Brand brand = BrandTestDataBuilder
+                           .brand()
+                           .withCanonicalUri(BRAND_URI)
+                           .build();
+
+        Episode episode =  new Episode();
+        Episode.copyTo(ComplexItemTestDataBuilder.complexItem().build(), episode);
+        episode.setContainer(brand);
+        
+        assertThat(adapter.linkFrom(episode), is("http://www.channel4.com/programmes/hollyoaks"));
     }
 
 }
