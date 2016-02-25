@@ -36,7 +36,7 @@ public class InterlinkingDeltaUpdater {
     }
     
     public InterlinkingDelta updateFeed(InterlinkingDelta delta, DateTime from, DateTime to) {
-        Iterator<Content> newContent = contentFinder.updatedSince(Publisher.C4, from);
+        Iterator<Content> newContent = contentFinder.updatedSince(Publisher.C4_PMLSD, from);
         InterlinkFeed interlinkFeed = adapter.fromContent(InterlinkController.FEED_ID + getDateString(from), Publisher.C4, from, to, newContent);
 
         Document document;
