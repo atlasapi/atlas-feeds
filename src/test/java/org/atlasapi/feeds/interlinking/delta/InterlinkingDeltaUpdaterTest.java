@@ -40,22 +40,22 @@ public class InterlinkingDeltaUpdaterTest {
         final DateTime startOfDay = now.withTime(0, 0, 0, 0);
         DateTime endOfDay = startOfDay.plusDays(1);
         
-        final Item item1 = new Item("http://www.channel4.com/programmes/wildfire/episode-guide/series-1/episode-1", "c4:wildfire-20663895", Publisher.C4);
+        final Item item1 = new Item("http://www.channel4.com/programmes/wildfire/episode-guide/series-1/episode-1", "c4:wildfire-20663895", Publisher.C4_PMLSD);
         item1.setTitle("Wildfire Series 1 Episode 1");
         item1.setLastUpdated(now.minusHours(5));
         item1.addAliasUrl("http://pmlsc.channel4.com/pmlsd/wildfire/episode-guide/series-1/episode-1");
         item1.setThisOrChildLastUpdated(item1.getLastUpdated());
 
-        final Item item2 = new Item("http://www.channel4.com/programmes/wildfire/episode-guide/series-1/episode-2", "c4:wildfire-20663444", Publisher.C4);
+        final Item item2 = new Item("http://www.channel4.com/programmes/wildfire/episode-guide/series-1/episode-2", "c4:wildfire-20663444", Publisher.C4_PMLSD);
         item2.setTitle("Wildfire Series 1 Episode 2");
         item2.setLastUpdated(now.minusHours(1));
         item2.setThisOrChildLastUpdated(item2.getLastUpdated());
         item2.addAliasUrl("http://pmlsc.channel4.com/pmlsd/wildfire/episode-guide/series-1/episode-2");
         
         context.checking(new Expectations(){{
-            oneOf(contentFinder).updatedSince(Publisher.C4, startOfDay);
+            oneOf(contentFinder).updatedSince(Publisher.C4_PMLSD, startOfDay);
                 will(returnValue(Iterators.forArray(item1)));
-            oneOf(contentFinder).updatedSince(Publisher.C4, item1.getLastUpdated());
+            oneOf(contentFinder).updatedSince(Publisher.C4_PMLSD, item1.getLastUpdated());
                 will(returnValue(Iterators.forArray(item2)));
         }});
         
