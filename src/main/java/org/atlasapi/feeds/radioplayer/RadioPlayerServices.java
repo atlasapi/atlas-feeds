@@ -54,7 +54,8 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(317, "leeds")).
 			add(new RadioPlayerService(318, "leicester")).
 			add(new RadioPlayerService(319, "lincolnshire")).
-			add(new RadioPlayerService(320, "manchester")).
+			add(new RadioPlayerService(320, "manchester")
+					.withScheduleUri("http://ref.atlasapi.org/channels/pressassociation.com/1870")).
 			add(new RadioPlayerService(321, "merseyside")).
 			add(new RadioPlayerService(322, "newcastle")).
 			add(new RadioPlayerService(323, "norfolk")).
@@ -63,7 +64,8 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(326, "oxford")).
 			add(new RadioPlayerService(327, "sheffield")).
 			add(new RadioPlayerService(328, "shropshire")).
-			add(new RadioPlayerService(329, "solent")).
+			add(new RadioPlayerService(329, "solent")
+					.withScheduleUri("http://ref.atlasapi.org/channels/solent961fm")).
 			add(new RadioPlayerService(330, "somerset")
 					.withIonServiceId("bbc_radio_somerset_sound")).
 			add(new RadioPlayerService(331, "stoke")).
