@@ -4,11 +4,12 @@ import com.google.common.primitives.Ints;
 
 public class RadioPlayerService {
 
+    public static final String SERVICE_URI_PREFIX = "http://www.bbc.co.uk/services/";
+
     private final int radioplayerId;
     private final String name;
     private String serviceUri;
     private String dabServiceId = "00.0000.0000.0";
-    private String scheduleUri;
     private String ionId;
     private String masterBrandId;
 
@@ -57,21 +58,20 @@ public class RadioPlayerService {
     }
 
     public RadioPlayerService withServiceUriSuffix(String serviceUri) {
+        this.serviceUri = SERVICE_URI_PREFIX + serviceUri;
+        return this;
+    }
+
+    public RadioPlayerService withServiceUri(String serviceUri) {
         this.serviceUri = serviceUri;
         return this;
     }
 
     public String getServiceUri() {
-        return "http://www.bbc.co.uk/services/" + (serviceUri != null ? serviceUri : name);
-    }
-
-    public RadioPlayerService withScheduleUri(String scheduleUri) {
-        this.scheduleUri = scheduleUri;
-        return this;
-    }
-
-    public String getScheduleUri() {
-        return (scheduleUri != null) ? scheduleUri : String.format("http://www.bbc.co.uk/%s/programmes/schedules", name);
+        if (serviceUri != null) {
+            return serviceUri;
+        }
+        return SERVICE_URI_PREFIX + name;
     }
 
     @Override

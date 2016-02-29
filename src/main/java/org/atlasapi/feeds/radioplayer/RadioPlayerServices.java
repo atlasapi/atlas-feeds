@@ -55,7 +55,7 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(318, "leicester")).
 			add(new RadioPlayerService(319, "lincolnshire")).
 			add(new RadioPlayerService(320, "manchester")
-					.withScheduleUri("http://ref.atlasapi.org/channels/pressassociation.com/1870")).
+					.withServiceUri("http://ref.atlasapi.org/channels/pressassociation.com/1870")).
 			add(new RadioPlayerService(321, "merseyside")).
 			add(new RadioPlayerService(322, "newcastle")).
 			add(new RadioPlayerService(323, "norfolk")).
@@ -65,7 +65,7 @@ public class RadioPlayerServices {
 			add(new RadioPlayerService(327, "sheffield")).
 			add(new RadioPlayerService(328, "shropshire")).
 			add(new RadioPlayerService(329, "solent")
-					.withScheduleUri("http://ref.atlasapi.org/channels/solent961fm")).
+					.withServiceUri("http://ref.atlasapi.org/channels/solent961fm")).
 			add(new RadioPlayerService(330, "somerset")
 					.withIonServiceId("bbc_radio_somerset_sound")).
 			add(new RadioPlayerService(331, "stoke")).
@@ -82,7 +82,6 @@ public class RadioPlayerServices {
 					.withIonServiceId("bbc_wm")).
 			add(new RadioPlayerService(340, "radio1")
 					.withServiceUriSuffix("radio1/england")
-					.withScheduleUri("http://www.bbc.co.uk/radio1/programmes/schedules/england")
 					.withIonServiceId("bbc_radio_one")).
 			add(new RadioPlayerService(341, "1xtra")
 					.withIonServiceId("bbc_1xtra")).
@@ -92,7 +91,6 @@ public class RadioPlayerServices {
 					.withIonServiceId("bbc_radio_three")).
 			add(new RadioPlayerService(344, "radio4")
 					.withServiceUriSuffix("radio4/fm")
-					.withScheduleUri("http://www.bbc.co.uk/radio4/programmes/schedules/fm")
 					.withIonServiceId("bbc_radio_fourfm")
 					.withMasterBrandId("bbc_radio_four")).
 			add(new RadioPlayerService(345, "5live")
@@ -107,7 +105,6 @@ public class RadioPlayerServices {
 					.withIonServiceId("bbc_world_service")).
 			add(new RadioPlayerService(351, "radioscotland")
 					.withServiceUriSuffix("radioscotland/fm")
-					.withScheduleUri("http://www.bbc.co.uk/radioscotland/programmes/schedules/fm")
 					.withIonServiceId("bbc_radio_scotland_fm")
 					.withMasterBrandId("bbc_radio_scotland")).
 			add(new RadioPlayerService(352, "radionangaidheal")
@@ -118,7 +115,6 @@ public class RadioPlayerServices {
 					.withIonServiceId("bbc_radio_foyle")).
 			add(new RadioPlayerService(355, "radiowales")
 					.withServiceUriSuffix("radiowales/fm")
-					.withScheduleUri("http://www.bbc.co.uk/radiowales/programmes/schedules/fm")
 					.withIonServiceId("bbc_radio_wales_fm")).
 			add(new RadioPlayerService(356, "radiocymru")
 					.withIonServiceId("bbc_radio_cymru")).
