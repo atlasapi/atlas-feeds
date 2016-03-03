@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.client;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -14,30 +12,23 @@ import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 
-import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 
 public class TaskUpdatingResultHandler implements ResultHandler {
 
-    private static final Predicate<Response> IS_PENDING = new Predicate<Response>() {
-        @Override
-        public boolean apply(Response input) {
-            return Status.PENDING.equals(input.status());
-        }
-    };
     private final TaskStore taskStore;
-    private final int maxRetries;
     private final JAXBContext context;
     
     private YouViewReportHandler reportHandler;
     
-    public TaskUpdatingResultHandler(TaskStore taskStore, Integer maxRetries) throws JAXBException {
+    public TaskUpdatingResultHandler(TaskStore taskStore) throws JAXBException {
         this.taskStore = checkNotNull(taskStore);
-        this.maxRetries = checkNotNull(maxRetries);
         this.context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
     }
     
@@ -62,22 +53,11 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         if (result.isSuccess()) {
             taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, result.result(), result.uploadTime());
         } else {
-            if (result.responseCode() != 400) {
-                if (pendingResponses(task) < maxRetries) {
-                    Response response = new Response(Status.PENDING, result.result(), result.uploadTime());
-                    taskStore.updateWithResponse(task.id(), response);
-                    return;
-                }
-            }
             Response response = new Response(Status.REJECTED, result.result(), result.uploadTime());
             taskStore.updateWithResponse(task.id(), response);
         }
     }
 
-    private int pendingResponses(Task task) {
-        return Iterables.size(Iterables.filter(task.remoteResponses(), IS_PENDING));
-    }
-    
     @Override
     public void handleRemoteCheckResult(Task task, YouViewResult result) {
         Status status;

@@ -1,12 +1,5 @@
 package org.atlasapi.feeds.youview.client;
 
-import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_SERVICE_UNAVAILABLE;
-import static junit.framework.TestCase.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
 import java.io.ByteArrayOutputStream;
 
 import javax.xml.bind.JAXBContext;
@@ -24,19 +17,22 @@ import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.junit.Test;
 
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
+
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.ControlledMessageType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.FragmentReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
-
+import org.junit.Test;
 import tva.mpeg7._2008.TextualType;
+
+import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 
 public class TaskUpdatingResultHandlerTest {
@@ -44,14 +40,13 @@ public class TaskUpdatingResultHandlerTest {
     private static final String CONTENT_URI = "contentUri";
     private static final Publisher PUBLISHER = Publisher.METABROADCAST;
     private static final String ELEMENT_ID = "element_id";
-    private static final Integer MAX_RETRIES = 2;
     
     private Clock clock = new TimeMachine();
     private TaskStore taskStore = mock(TaskStore.class);
     private YouViewReportHandler reportHandler = mock(YouViewReportHandler.class);
     private JAXBContext context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
     
-    private final ResultHandler handler = new TaskUpdatingResultHandler(taskStore, MAX_RETRIES);
+    private final ResultHandler handler = new TaskUpdatingResultHandler(taskStore);
     
     public TaskUpdatingResultHandlerTest() throws JAXBException {
         handler.registerReportHandler(reportHandler);
@@ -75,40 +70,6 @@ public class TaskUpdatingResultHandlerTest {
         Task task = createTaskWithId(taskId);
         String failureMsg = "Something went wrong";
         YouViewResult result = YouViewResult.failure(failureMsg, clock.now(), SC_BAD_REQUEST);
-        
-        handler.handleTransactionResult(task, result);
-        
-        Response response = new Response(Status.REJECTED, failureMsg, clock.now());
-        verify(taskStore).updateWithResponse(taskId, response);
-    }
-    
-    @Test
-    public void testOtherFailedUploadUpdatesTaskWithPendingResponse() {
-        long taskId = 1234l;
-        Task task = createTaskWithId(taskId);
-        String failureMsg = "Something went wrong";
-        YouViewResult result = YouViewResult.failure(failureMsg, clock.now(), SC_SERVICE_UNAVAILABLE);
-        
-        handler.handleTransactionResult(task, result);
-        
-        Response response = new Response(Status.PENDING, failureMsg, clock.now());
-        verify(taskStore).updateWithResponse(taskId, response);
-    }
-
-    @Test
-    public void testOtherFailedUploadUpdatesTaskWithFailedResponseIfNumberOfPendingResponsesEqualToOrGreaterThanMaxRetries() {
-        DateTime until = new DateTime(2016, 12, 14, 8, 0, 0, DateTimeZone.UTC);
-        if(DateTime.now(DateTimeZone.UTC).isBefore(until)) {
-            return;
-        } else {
-            fail("This test was disabled until " + until.toString() + ", time to fix it.");
-        }
-
-        long taskId = 1234l;
-        Task task = createTaskWithId(taskId);
-        String failureMsg = "Something went wrong";
-        YouViewResult result = YouViewResult.failure(failureMsg, clock.now(), SC_SERVICE_UNAVAILABLE);
-        task = copyWithNResponses(task, MAX_RETRIES, Status.PENDING);
         
         handler.handleTransactionResult(task, result);
         
@@ -162,25 +123,6 @@ public class TaskUpdatingResultHandlerTest {
     
     private Destination createDestination() {
         return new YouViewDestination(CONTENT_URI, TVAElementType.VERSION, ELEMENT_ID);
-    }
-
-    /**
-     * Copies a task, adding a number of remote responses with the provided status 
-     */
-    private Task copyWithNResponses(Task task, Integer numResponses, Status status) {
-        Task.Builder newTask = Task.builder()
-                .withId(task.id())
-                .withAction(task.action())
-                .withStatus(status)
-                .withCreated(task.created())
-                .withDestination(task.destination())
-                .withPublisher(task.publisher());
-        
-        for (int i = 0; i < numResponses; i++) {
-            newTask.withRemoteResponse(new Response(status, "a message", clock.now().minusMinutes(i)));
-        }
-        
-        return newTask.build();
     }
 
     private JAXBElement<StatusReport> createStatusReport() {
