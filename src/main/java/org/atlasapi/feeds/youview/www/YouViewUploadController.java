@@ -43,6 +43,7 @@ import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -174,11 +175,6 @@ public class YouViewUploadController {
         Content content = toBeUploaded.get();
         
         if (typeStr != null) {
-            if (elementId == null) {
-                sendError(response, SC_BAD_REQUEST, "required parameter 'element_id' not specified when uploading an individual TVAnytime element");
-                return;
-            }
-
             TVAElementType type = parseTypeFrom(typeStr);
             
             if (type == null) {
@@ -192,21 +188,35 @@ public class YouViewUploadController {
             case BRAND:
             case ITEM:
             case SERIES:
+                if (elementId == null) {
+                    sendError(response, SC_BAD_REQUEST, "required parameter 'element_id' not specified when uploading an individual TVAnytime element");
+                    return;
+                }
+
                 processTask(taskCreator.taskFor(elementId, toBeUploaded.get(), payload, Action.UPDATE), immediate);
                 break;
+
             case BROADCAST:
                 if (!(content instanceof Item)) {
                     sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Broadcast");
                     return;
                 }
                 Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor((Item) content);
-                Optional<ItemBroadcastHierarchy> broadcastHierarchy = Optional.fromNullable(broadcastHierarchies.get(elementId));
-                if (!broadcastHierarchy.isPresent()) {
-                    sendError(response, SC_BAD_REQUEST, "No Broadcast found with the provided elementId");
-                    return;
+
+                if (!Strings.isNullOrEmpty(elementId)) {
+                    ItemBroadcastHierarchy broadcastHierarchy = broadcastHierarchies.get(elementId);
+                    if (broadcastHierarchy == null) {
+                        sendError(response, SC_BAD_REQUEST, "No element found with ID " + elementId);
+                        return;
+                    }
+                    uploadBroadcast(elementId, broadcastHierarchy, immediate);
+                } else {
+                    for (Entry<String, ItemBroadcastHierarchy> broadcastHierarchy : broadcastHierarchies.entrySet()) {
+                        uploadBroadcast(broadcastHierarchy.getKey(), broadcastHierarchy.getValue(), immediate);
+                    }
                 }
-                processTask(taskCreator.taskFor(elementId, broadcastHierarchy.get(), payload, Action.UPDATE), immediate);
                 break;
+
             case ONDEMAND:
                 if (!(content instanceof Item)) {
                     sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a OnDemand");
@@ -220,6 +230,7 @@ public class YouViewUploadController {
                 }
                 processTask(taskCreator.taskFor(elementId, onDemandHierarchy.get(), payload, Action.UPDATE), immediate);
                 break;
+
             case VERSION:
                 if (!(content instanceof Item)) {
                     sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Version");
@@ -233,6 +244,7 @@ public class YouViewUploadController {
                 }
                 processTask(taskCreator.taskFor(elementId, versionHierarchy.get(), payload, Action.UPDATE), immediate);
                 break;
+
             default:
                 sendError(response, SC_BAD_REQUEST, "Invalid type provided");
                 return;
@@ -444,6 +456,21 @@ public class YouViewUploadController {
         }
 
         sendOkResponse(response, "Unrevoke for " + uri + " sent sucessfully");
+    }
+
+    private void uploadBroadcast(String elementId, ItemBroadcastHierarchy broadcastHierarchy, boolean immediate) throws PayloadGenerationException {
+        Optional<Payload> bcastPayload = payloadCreator.payloadFrom(elementId, broadcastHierarchy);
+        if (!bcastPayload.isPresent()) {
+            // a lack of payload is because no BroadcastEvent should be generated,
+            // likely because of BroadcastEvent deduplication
+            return;
+        }
+        processTask(taskCreator.taskFor(
+                elementId,
+                broadcastHierarchy,
+                bcastPayload.get(),
+                Action.UPDATE),
+                immediate);
     }
 
     private Optional<Publisher> findPublisher(String publisherStr) {

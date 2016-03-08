@@ -13,10 +13,105 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TaskQuery {
 
-    public enum Sort {
-        ASC,
-        DESC
+    public static class Sort {
+
+        public static final Sort DEFAULT = Sort.of(Field.CREATED_TIME, Direction.ASC);
+
+        private final Direction direction;
+        private final Field field;
+
+        private Sort(Field field, Direction direction) {
+            this.direction = direction;
+            this.field = field;
+        }
+
+        public static Sort of(Field field) {
+            return of(field, Direction.ASC);
+        }
+
+        public static Sort of(Field field, Direction direction) {
+            return new Sort(field, direction);
+        }
+
+        public Direction getDirection() {
+            return direction;
+        }
+
+        public Field getField() {
+            return field;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            Sort sort = (Sort) o;
+            return direction == sort.direction &&
+                    field == sort.field;
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(direction, field);
+        }
+
+        @Override
+        public String toString() {
+            return Objects.toStringHelper(this)
+                    .add("direction", direction)
+                    .add("field", field)
+                    .toString();
+        }
+
+        public enum Direction {
+            ASC,
+            DESC,
+        }
+
+        public enum Field {
+            CREATED_TIME("created"),
+            TX_TYPE("type", "action"),
+            CONTENT_URI("content_uri", "content"),
+            YOUVIEW_TX_ID("youview_id", "remoteId"),
+            UPLOAD_TIME("uploaded", "uploadTime"),
+            STATUS("status"),
+            ;
+
+            private final String key;
+            private final String dbField;
+
+            Field(String dbField) {
+                this(dbField, dbField);
+            }
+
+            Field(String key, String dbField) {
+                this.key = key;
+                this.dbField = dbField;
+            }
+
+            public static Field fromKey(String key) {
+                for (Field field : values()) {
+                    if (key.equals(field.key)) {
+                        return field;
+                    }
+                }
+                throw new IllegalArgumentException(String.format("No Field for key %s", key));
+            }
+
+            public String getKey() {
+                return key;
+            }
+
+            public String getDbField() {
+                return dbField;
+            }
+        }
     }
+
 
     private final Selection selection;
     private final Publisher publisher;
@@ -28,7 +123,7 @@ public class TaskQuery {
     private final Optional<TVAElementType> elementType;
     private final Optional<String> elementId;
     private final Sort sort;
-    
+
     public static Builder builder(Selection selection, Publisher publisher, DestinationType destinationType) {
         return new Builder(selection, publisher, destinationType);
     }
@@ -124,7 +219,7 @@ public class TaskQuery {
         private Optional<Action> action = Optional.absent();
         private Optional<TVAElementType> elementType = Optional.absent();
         private Optional<String> elementId = Optional.absent();
-        private Sort sort = Sort.ASC;
+        private Sort sort = Sort.DEFAULT;
 
         private Builder(Selection selection, Publisher publisher, DestinationType destinationType) {
             this.selection = selection;
@@ -134,7 +229,8 @@ public class TaskQuery {
         
         public TaskQuery build() {
             return new TaskQuery(selection, publisher, destinationType, contentUri, remoteId, 
-                    status, action, elementType, elementId, sort);
+                    status, action, elementType, elementId, sort
+            );
         }
         
         public Builder withContentUri(String contentUri) {
@@ -167,8 +263,8 @@ public class TaskQuery {
             return this;
         }
 
-        public Builder withSort(Sort sort) {
-            this.sort = sort;
+        public Builder withSort(Sort sortDirection) {
+            this.sort = sortDirection;
             return this;
         }
     }

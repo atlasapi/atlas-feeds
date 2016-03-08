@@ -35,7 +35,6 @@ import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.LAST_ERROR_KEY
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.PUBLISHER_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.REMOTE_ID_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.STATUS_KEY;
-import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.UPLOAD_TIME_KEY;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.fromDBObject;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.toDBObject;
 
@@ -53,10 +52,10 @@ public class MongoTaskStore implements TaskStore {
     private DBCursor getOrderedCursor(DBObject query, TaskQuery.Sort sort) {
         MongoSortBuilder orderBy = new MongoSortBuilder();
 
-        if (sort == TaskQuery.Sort.ASC) {
-            orderBy.ascending(CREATED_KEY).ascending(UPLOAD_TIME_KEY);
+        if (sort.getDirection() == TaskQuery.Sort.Direction.ASC) {
+            orderBy.ascending(sort.getField().getDbField());
         } else {
-            orderBy.descending(CREATED_KEY).descending(UPLOAD_TIME_KEY);
+            orderBy.descending(sort.getField().getDbField());
         }
 
         return collection
@@ -147,7 +146,7 @@ public class MongoTaskStore implements TaskStore {
                 .fieldEquals(DESTINATION_TYPE_KEY, type.name())
                 .fieldEquals(STATUS_KEY, status.name());
         
-        DBCursor cursor = getOrderedCursor(mongoQuery.build(), TaskQuery.Sort.ASC)
+        DBCursor cursor = getOrderedCursor(mongoQuery.build(), TaskQuery.Sort.DEFAULT)
                                 .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
         
         return FluentIterable.from(cursor)
