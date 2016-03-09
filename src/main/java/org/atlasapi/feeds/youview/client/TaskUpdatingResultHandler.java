@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.client;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -20,6 +18,8 @@ import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 
 public class TaskUpdatingResultHandler implements ResultHandler {
 
@@ -30,14 +30,12 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         }
     };
     private final TaskStore taskStore;
-    private final int maxRetries;
     private final JAXBContext context;
     
     private YouViewReportHandler reportHandler;
     
-    public TaskUpdatingResultHandler(TaskStore taskStore, Integer maxRetries) throws JAXBException {
+    public TaskUpdatingResultHandler(TaskStore taskStore) throws JAXBException {
         this.taskStore = checkNotNull(taskStore);
-        this.maxRetries = checkNotNull(maxRetries);
         this.context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
     }
     
@@ -62,13 +60,6 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         if (result.isSuccess()) {
             taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, result.result(), result.uploadTime());
         } else {
-            if (result.responseCode() != 400) {
-                if (pendingResponses(task) < maxRetries) {
-                    Response response = new Response(Status.PENDING, result.result(), result.uploadTime());
-                    taskStore.updateWithResponse(task.id(), response);
-                    return;
-                }
-            }
             Response response = new Response(Status.REJECTED, result.result(), result.uploadTime());
             taskStore.updateWithResponse(task.id(), response);
         }

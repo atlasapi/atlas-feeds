@@ -1,22 +1,7 @@
 package org.atlasapi.feeds.youview.client;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import org.atlasapi.feeds.tasks.Payload;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 
-import com.google.common.collect.ImmutableMap;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.http.HttpResponse;
 import com.metabroadcast.common.http.SimpleHttpClient;
@@ -24,6 +9,22 @@ import com.metabroadcast.common.http.SimpleHttpRequest;
 import com.metabroadcast.common.http.StringPayload;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
+
+import com.google.common.collect.ImmutableMap;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 public class HttpYouViewClientTest {
@@ -129,6 +130,25 @@ public class HttpYouViewClientTest {
         assertEquals(baseUrl + "/transaction/" + "txnId", requestCaptor.getValue().getUrl());
         assertFalse("Non-202 response should yield failed result", result.isSuccess());
         assertEquals(error, result.result());
+    }
+
+    @Test
+    public void testRetryLogicWhenYouViewHttpResponseCodeIs500AndAfterThat200()
+            throws HttpException {
+        String txnUrl = "transactionUrl";
+        HttpResponse unsuccessfulResponse = createUnsuccessfulResponseWithTransaction(txnUrl);
+        HttpResponse successfulResponse = createSuccessfulResponseWithTransaction(txnUrl);
+        when(httpClient.post(eq(baseUrl + "/transaction"), any(StringPayload.class)))
+                .thenReturn(unsuccessfulResponse, successfulResponse);
+
+        YouViewResult result = client.upload(payload);
+
+        assertTrue("202 response should yield successful result", result.isSuccess());
+        assertEquals(txnUrl, result.result());
+    }
+
+    private HttpResponse createUnsuccessfulResponseWithTransaction(String transactionUrl) {
+        return new HttpResponse("", 500, "INTERNAL SERVER ERROR", ImmutableMap.of("Location", transactionUrl));
     }
 
     private HttpResponse createSuccessfulResponseWithTransaction(String transactionUrl) {
