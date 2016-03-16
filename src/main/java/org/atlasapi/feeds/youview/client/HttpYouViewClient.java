@@ -28,6 +28,9 @@ import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.base.Predicate;
 import org.apache.commons.io.IOUtils;
+import org.joda.time.DurationFieldType;
+import org.joda.time.Minutes;
+import org.joda.time.Seconds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +43,9 @@ public class HttpYouViewClient implements YouViewClient {
 
     private static final String TRANSACTION_URL_STEM = "/transaction";
     private static final String DELETION_URL_SUFFIX = "/fragment";
-    private static final Duration SLEEP_DURATION = Duration.ofMillis(60000);
-    
+    private static final Minutes SLEEP_DURATION = Minutes.minutes(1);
+    public static final int RETRY_MULTIPLIER = 100;
+
     private final Logger log = LoggerFactory.getLogger(HttpYouViewClient.class);
     
     private final SimpleHttpClient httpClient;
@@ -102,7 +106,9 @@ public class HttpYouViewClient implements YouViewClient {
         return RetryerBuilder.<HttpResponse>newBuilder()
                 .retryIfExceptionOfType(IOException.class)
                 .retryIfRuntimeException()
-                .withWaitStrategy(WaitStrategies.exponentialWait(100, SLEEP_DURATION.toMillis(),
+                .withWaitStrategy(WaitStrategies.exponentialWait(
+                        RETRY_MULTIPLIER,
+                        SLEEP_DURATION.get(DurationFieldType.millis()),
                         TimeUnit.MILLISECONDS))
                 .withStopStrategy(StopStrategies.neverStop())
                 .retryIfResult(responseCodeIsEqualOrHigherThan500)
