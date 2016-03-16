@@ -320,7 +320,7 @@ public class YouViewUploadModule {
     
     @Bean
     public ResultHandler resultHandler() throws JAXBException, SAXException {
-        return new TaskUpdatingResultHandler(taskStore, Configurer.get("youview.upload.maxRetries").toInt());
+        return new TaskUpdatingResultHandler(taskStore);
     }
 
     @Bean
