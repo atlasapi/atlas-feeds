@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,6 +14,13 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Restriction;
 import org.atlasapi.media.entity.Version;
 
+import com.metabroadcast.common.intl.Country;
+
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.DerivedFromType;
 import tva.metadata._2010.ExplanationLengthType;
@@ -26,12 +31,7 @@ import tva.metadata._2010.TVATimeType;
 import tva.mpeg7._2008.ControlledTermUseType;
 import tva.mpeg7._2008.UniqueIDType;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.metabroadcast.common.intl.Country;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class NitroProgramInformationGenerator implements ProgramInformationGenerator {
 
@@ -94,6 +94,7 @@ public final class NitroProgramInformationGenerator implements ProgramInformatio
         }
         basicDescription.getProductionLocation().addAll(generateProductLocations(item));
         Duration versionDuration = generateDuration(version);
+        // YouView *requires* durations on versions, so throw up if we don't have one
         if (versionDuration == null) {
             throw new RuntimeException("null version for item " + item.getCanonicalUri());
         }
