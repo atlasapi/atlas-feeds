@@ -2,7 +2,6 @@ package org.atlasapi.feeds.youview.client;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +29,6 @@ import com.google.common.base.Predicate;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.DurationFieldType;
 import org.joda.time.Minutes;
-import org.joda.time.Seconds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
