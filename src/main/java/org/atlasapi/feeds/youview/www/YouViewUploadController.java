@@ -32,6 +32,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
+import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
@@ -265,9 +266,17 @@ public class YouViewUploadController {
 
         if (content instanceof Item) {
             Map<String, ItemAndVersion> versions = hierarchyExpander.versionHierarchiesFor((Item) content);
-            for (Entry<String, ItemAndVersion> version : versions.entrySet()) {
-                Payload versionPayload = payloadCreator.payloadFrom(version.getKey(), version.getValue());
-                Task versionTask = taskCreator.taskFor(version.getKey(), version.getValue(), versionPayload, Action.UPDATE);
+            for (Entry<String, ItemAndVersion> entry : versions.entrySet()) {
+                ItemAndVersion itemAndVersion = entry.getValue();
+                Version version = itemAndVersion.version();
+                if (version.getDuration() == null) {
+                    // YouView don't like versions without durations, the payload gen will explode
+                    continue;
+                }
+
+                String key = entry.getKey();
+                Payload versionPayload = payloadCreator.payloadFrom(key, itemAndVersion);
+                Task versionTask = taskCreator.taskFor(key, itemAndVersion, versionPayload, Action.UPDATE);
                 processTask(versionTask, immediate);
             }
             Map<String, ItemBroadcastHierarchy> broadcasts = hierarchyExpander.broadcastHierarchiesFor((Item) content);
