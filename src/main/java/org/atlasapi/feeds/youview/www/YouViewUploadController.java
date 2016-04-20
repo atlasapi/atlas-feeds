@@ -571,14 +571,6 @@ public class YouViewUploadController {
         private final Optional<Exception> exception;
         private final String data;
 
-        public static Try exception(Exception e) {
-            return new Try(e);
-        }
-
-        public static Try success(String data) {
-            return new Try(data);
-        }
-
         private Try(@Nullable String data) {
             this.exception = Optional.absent();
             this.data = data;
@@ -587,6 +579,14 @@ public class YouViewUploadController {
         private Try(Exception e) {
             this.exception = Optional.fromNullable(e);
             this.data = null;
+        }
+        
+        public static Try exception(Exception e) {
+            return new Try(e);
+        }
+
+        public static Try success(String data) {
+            return new Try(data);
         }
 
         public boolean isException() {
