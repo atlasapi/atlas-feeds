@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.youview.client;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -10,13 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.tasks.Payload;
 
-import com.metabroadcast.common.http.HttpException;
-import com.metabroadcast.common.http.HttpResponse;
-import com.metabroadcast.common.http.HttpResponsePrologue;
-import com.metabroadcast.common.http.HttpResponseTransformer;
-import com.metabroadcast.common.http.SimpleHttpClient;
-import com.metabroadcast.common.http.SimpleHttpRequest;
-import com.metabroadcast.common.http.StringPayload;
+import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.url.QueryStringParameters;
 
@@ -25,8 +18,14 @@ import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
+import com.google.api.client.http.ByteArrayContent;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.repackaged.com.google.common.base.Throwables;
 import com.google.common.base.Predicate;
-import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,20 +41,22 @@ public class HttpYouViewClient implements YouViewClient {
     private static final String DELETION_URL_SUFFIX = "/fragment";
     private static final Duration SLEEP_DURATION = Duration.standardMinutes(1);
 
-    private final Logger log = LoggerFactory.getLogger(HttpYouViewClient.class);
+    private static final Logger log = LoggerFactory.getLogger(HttpYouViewClient.class);
     
-    private final SimpleHttpClient httpClient;
+    private final HttpRequestFactory httpRequestFactory;
     private final String urlBase;
     private final Clock clock;
-    private final YouViewResultTransformer resultTransformer;
     private int deleteRetryCount = 0;
     private int uploadRetryCount = 0;
     
-    public HttpYouViewClient(SimpleHttpClient httpClient, String urlBase, Clock clock) {
-        this.httpClient = checkNotNull(httpClient);
+    public HttpYouViewClient(
+            HttpRequestFactory httpRequestFactory,
+            String urlBase,
+            Clock clock
+    ) {
+        this.httpRequestFactory = checkNotNull(httpRequestFactory);
         this.urlBase = checkNotNull(urlBase);
         this.clock = checkNotNull(clock);
-        this.resultTransformer = new YouViewResultTransformer(clock);
     }
 
     @Override
@@ -71,19 +72,33 @@ public class HttpYouViewClient implements YouViewClient {
                 if (deleteRetryCount > 1) {
                     log.warn("YouView delete retry count - {}", deleteRetryCount);
                 }
-                return httpClient.delete(queryUrl);
+
+                try {
+                    HttpRequest deleteRequest = httpRequestFactory.buildDeleteRequest(
+                            new GenericUrl(queryUrl));
+
+                    return deleteRequest.execute();
+                } catch (IOException e) {
+                    log.error("Exception executing YV request", e);
+                    throw e;
+                }
             }
         };
 
         try {
             HttpResponse response = retryer.call(deleteCall);
             deleteRetryCount = 0;
-            if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
-                String transactionUrl = parseIdFrom(response.header("Location"));
+            if (response.getStatusCode() == HttpServletResponse.SC_ACCEPTED) {
+                HttpHeaders headers = response.getHeaders();
+                String transactionUrl = parseIdFrom(headers.getLocation());
                 log.trace("Delete successful. Transaction url: " + transactionUrl);
-                return success(transactionUrl, clock.now(), response.statusCode());
+                return success(transactionUrl, clock.now(), response.getStatusCode());
             } else {
-                return failure(response.body(), clock.now(), response.statusCode());
+                try {
+                    return failure(response.parseAsString(), clock.now(), response.getStatusCode());
+                } catch (IOException e) {
+                    throw Throwables.propagate(e);
+                }
             }
         } catch (ExecutionException e) {
             throw new YouViewClientException("Error deleting id " + elementId, e);
@@ -95,7 +110,7 @@ public class HttpYouViewClient implements YouViewClient {
     public static Retryer<HttpResponse> getHttpRequestRetryer() {
         Predicate<HttpResponse> responseCodeIsEqualOrHigherThan500 = new Predicate<HttpResponse>() {
             public boolean apply(HttpResponse response) {
-                return response.statusCode() >= 500;
+                return response.getStatusCode() >= 500;
             }
         };
 
@@ -118,7 +133,7 @@ public class HttpYouViewClient implements YouViewClient {
     }
 
     @Override
-    public YouViewResult upload(Payload payload) {
+    public YouViewResult upload(final Payload payload) {
         final String queryUrl = urlBase + TRANSACTION_URL_STEM;
         final String payloadString = payload.payload();
         log.trace("POSTing YouView output xml to {}", queryUrl);
@@ -131,19 +146,38 @@ public class HttpYouViewClient implements YouViewClient {
                 if (uploadRetryCount > 1) {
                     log.warn("YouView upload retry count - {}", uploadRetryCount);
                 }
-                return httpClient.post(queryUrl, new StringPayload(payloadString));
+
+                try {
+                    HttpRequest postRequest = httpRequestFactory.buildPostRequest(
+                            new GenericUrl(queryUrl),
+                            new ByteArrayContent(
+                                    MimeType.APPLICATION_XML.toString(),
+                                    payloadString.getBytes("UTF-8")
+                            )
+                    );
+
+                    return postRequest.execute();
+                } catch (IOException e) {
+                    log.error("Exception executing YV request", e);
+                    throw e;
+                }
             }
         };
 
         try {
             HttpResponse response = retryer.call(uploadCall);
             uploadRetryCount = 0;
-            if (response.statusCode() == HttpServletResponse.SC_ACCEPTED) {
-                String transactionUrl = parseIdFrom(response.header("Location"));
+            if (response.getStatusCode() == HttpServletResponse.SC_ACCEPTED) {
+                HttpHeaders headers = response.getHeaders();
+                String transactionUrl = parseIdFrom(headers.getLocation());
                 log.trace("Upload successful. Transaction url: " + transactionUrl);
-                return success(transactionUrl, clock.now(), response.statusCode());
+                return success(transactionUrl, clock.now(), response.getStatusCode());
             } else {
-                return failure(response.body(), clock.now(), response.statusCode());
+                try {
+                    return failure(response.parseAsString(), clock.now(), response.getStatusCode());
+                } catch (IOException e) {
+                    throw Throwables.propagate(e);
+                }
             }
         } catch (ExecutionException e) {
             throw new YouViewClientException("Error uploading " + payload, e);
@@ -155,29 +189,19 @@ public class HttpYouViewClient implements YouViewClient {
     @Override
     public YouViewResult checkRemoteStatus(String transactionId) {
         try {
-            return httpClient.get(new SimpleHttpRequest<>(buildTransactionUrl(transactionId), resultTransformer));
+            GenericUrl txUrl = new GenericUrl(buildTransactionUrl(transactionId));
+            HttpRequest getRequest = httpRequestFactory.buildGetRequest(txUrl);
+            HttpResponse response = getRequest.execute();
+
+            String bodyStr = response.parseAsString();
+            if (response.getStatusCode() == HttpServletResponse.SC_OK) {
+                return success(bodyStr, clock.now(), response.getStatusCode());
+            } else {
+                return failure(bodyStr, clock.now(), response.getStatusCode());
+            }
+
         } catch (Exception e) {
             throw new YouViewClientException("error polling status for " + transactionId, e);
-        }
-    }
-    
-    public static final class YouViewResultTransformer implements HttpResponseTransformer<YouViewResult> {
-        
-        private final Clock clock;
-        
-        public YouViewResultTransformer(Clock clock) {
-            this.clock = checkNotNull(clock);
-        }
-        
-        @Override
-        public YouViewResult transform(HttpResponsePrologue response, InputStream body)
-                throws HttpException, Exception {
-            String bodyStr = IOUtils.toString(body, "UTF-8");
-
-            if (response.statusCode() == HttpServletResponse.SC_OK) {
-                return success(bodyStr, clock.now(), response.statusCode());
-            }
-            return failure(bodyStr, clock.now(), response.statusCode());
         }
     }
 
