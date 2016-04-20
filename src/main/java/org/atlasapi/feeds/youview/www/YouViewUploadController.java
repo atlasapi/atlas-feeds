@@ -7,7 +7,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Nullable;
@@ -63,6 +62,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -77,6 +78,7 @@ import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 @Controller
 public class YouViewUploadController {
 
+    private static final Logger log = LoggerFactory.getLogger(YouViewUploadController.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
     static {
         MAPPER.registerModule(new GuavaModule());
@@ -200,7 +202,7 @@ public class YouViewUploadController {
         }
 
         ListenableFuture<List<Try>> allTasks = Futures.allAsList(responses);
-        List<Try> allResponses = allTasks.get(10, TimeUnit.MINUTES);
+        List<Try> allResponses = allTasks.get();
 
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json");
@@ -328,6 +330,9 @@ public class YouViewUploadController {
 
     private void uploadContent(boolean immediate, Content content)
             throws PayloadGenerationException {
+        if (immediate) {
+            log.info("Force uploading content {}", content.getCanonicalUri());
+        }
         Payload p = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(content), content);
         Task task = taskCreator.taskFor(hierarchyExpander.contentCridFor(content), content, p, Action.UPDATE);
         processTask(task, immediate);
@@ -580,7 +585,7 @@ public class YouViewUploadController {
             this.exception = Optional.fromNullable(e);
             this.data = null;
         }
-        
+
         public static Try exception(Exception e) {
             return new Try(e);
         }
