@@ -4,7 +4,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.atlasapi.feeds.tasks.Action;
@@ -41,12 +48,20 @@ import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -62,6 +77,13 @@ import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 @Controller
 public class YouViewUploadController {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    static {
+        MAPPER.registerModule(new GuavaModule());
+    }
+    private static final JavaType STRING_LIST = MAPPER.getTypeFactory()
+            .constructCollectionType(List.class, String.class);
+
     private final ContentResolver contentResolver;
     private final TaskCreator taskCreator;
     private final TaskStore taskStore;
@@ -74,6 +96,7 @@ public class YouViewUploadController {
     private final ScheduleResolver scheduleResolver;
     private final ChannelResolver channelResolver;
     private final SubstitutionTableNumberCodec channelIdCodec;
+    private final ListeningExecutorService executor;
     
     public YouViewUploadController(
             ContentResolver contentResolver,
@@ -99,6 +122,8 @@ public class YouViewUploadController {
         this.scheduleResolver = checkNotNull(scheduleResolver);
         this.channelResolver = checkNotNull(channelResolver);
         this.channelIdCodec = new SubstitutionTableNumberCodec();
+
+        this.executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
     }
     
     @RequestMapping(value="/feeds/youview/{publisher}/schedule/upload")
@@ -137,7 +162,51 @@ public class YouViewUploadController {
         }
         sendOkResponse(response, sb.toString());
     }
-        
+
+    @RequestMapping(value="/feeds/youview/bbc_nitro/upload/multi")
+    public void uploadMultipleContent(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, InterruptedException, ExecutionException, TimeoutException {
+        List<String> uris = MAPPER.readValue(request.getInputStream(), STRING_LIST);
+
+        if (uris.isEmpty()) {
+            sendError(response, SC_BAD_REQUEST, "URI list is empty");
+            return;
+        }
+
+        List<ListenableFuture<Try>> responses = Lists.newArrayList();
+        for (final String uri : uris) {
+            ListenableFuture<Try> task = executor.submit(new Callable<Try>() {
+
+                @Override
+                public Try call() throws Exception {
+                    try {
+                        Optional<Content> content = getContent(uri);
+                        if (!content.isPresent()) {
+                            return Try.exception(new IllegalArgumentException(String.format(
+                                    "Content %s not found",
+                                    uri
+                            )));
+                        } else {
+                            uploadContent(true, content.get());
+                            return Try.success(uri);
+                        }
+                    } catch (Exception e) {
+                        return Try.exception(e);
+                    }
+                }
+            });
+
+            responses.add(task);
+        }
+
+        ListenableFuture<List<Try>> allTasks = Futures.allAsList(responses);
+        List<Try> allResponses = allTasks.get(10, TimeUnit.MINUTES);
+
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/json");
+        MAPPER.writeValue(response.getOutputStream(), allResponses);
+    }
+
     /**
      * Uploads the XML for a particular piece of content to YouView
      * @param uri the canonical uri for the item to upload
@@ -495,5 +564,41 @@ public class YouViewUploadController {
     private void sendOkResponse(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_OK);
         response.getOutputStream().write(message.getBytes(Charsets.UTF_8));
+    }
+
+    private static class Try {
+
+        private final Optional<Exception> exception;
+        private final String data;
+
+        public static Try exception(Exception e) {
+            return new Try(e);
+        }
+
+        public static Try success(String data) {
+            return new Try(data);
+        }
+
+        private Try(@Nullable String data) {
+            this.exception = Optional.absent();
+            this.data = data;
+        }
+
+        private Try(Exception e) {
+            this.exception = Optional.fromNullable(e);
+            this.data = null;
+        }
+
+        public boolean isException() {
+            return exception.isPresent();
+        }
+
+        public Exception getException() {
+            return exception.get();
+        }
+
+        public String getData() {
+            return data;
+        }
     }
 }
