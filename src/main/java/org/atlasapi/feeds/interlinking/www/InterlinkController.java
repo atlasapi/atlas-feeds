@@ -46,8 +46,8 @@ public class InterlinkController {
 
         // NB We don't include the 'to' datetime in the query to
         // avoid newer brand updates masking older item updates 
-        Iterator<Content> content = executor.updatedSince(Publisher.C4, from);
-		outputter.output(adapter.fromContent(FEED_ID+date, Publisher.C4, from, to, content), response.getOutputStream(), false, from);
+        Iterator<Content> content = executor.updatedSince(Publisher.C4_PMLSD, from);
+		outputter.output(adapter.fromContent(FEED_ID+date, Publisher.C4_PMLSD, from, to, content), response.getOutputStream(), false, from);
     }
     
     @RequestMapping("/feeds/bbc-interlinking/bootstrap")
@@ -58,7 +58,7 @@ public class InterlinkController {
     	DateTime from = new DateTime(2000, 1, 1, 0, 0, 0, 0, DateTimeZones.LONDON);
     	DateTime to = new DateTime(DateTimeZones.LONDON);
 
-    	Iterator<Content> content = executor.updatedSince(Publisher.C4, from);
-    	outputter.output(adapter.fromContent(FEED_ID + "bootstrap", Publisher.C4, from, to, content), response.getOutputStream(), true, from);
+    	Iterator<Content> content = executor.updatedSince(Publisher.C4_PMLSD, from);
+    	outputter.output(adapter.fromContent(FEED_ID + "bootstrap", Publisher.C4_PMLSD, from, to, content), response.getOutputStream(), true, from);
     }
 }
