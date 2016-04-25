@@ -16,10 +16,8 @@ import com.metabroadcast.common.http.HttpResponseTransformer;
 import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.SimpleHttpRequest;
 
-
 public class HttpFetchingC4FlashPlayerVersionSupplier implements Supplier<String> {
-
-    private static final Pattern VERSION_NUMBER_PATTERN = Pattern.compile("^.*'(.*)'.*");
+    private static final Pattern VERSION_NUMBER_PATTERN = Pattern.compile(".*flashVersion\\s*=\\s*'(\\d+(\\.\\d+)*)'.*", Pattern.DOTALL);
     
     private final String uri;
     private final SimpleHttpClient httpClient;
@@ -43,7 +41,7 @@ public class HttpFetchingC4FlashPlayerVersionSupplier implements Supplier<String
                     if (matcher.matches()) {
                         return matcher.group(1);
                     }
-                    throw new RuntimeException("Failed to parse return value of " + content);
+                    throw new RuntimeException("Failed to parse return result of " + uri + " with value of '" + content + "'");
                 }
             }));
         } catch (Exception e) {
