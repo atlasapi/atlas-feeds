@@ -35,6 +35,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
 
     private final static Pattern CHANNEL_SPECIFIC_ID_PATTERN = Pattern.compile(
             "tag:([^,]+),(\\d{4}):slot/(C4|M4|F4|E4|4M|4S)(\\d+)");
+    public static final String DEFAULT_LINK = "http://www.channel4.com/tv-guide";
 
     private static Set<String> BROADCAST_SERVICES = ImmutableSet.of(
             "http://www.channel4.com", 
@@ -151,7 +152,7 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
         if (identified instanceof Episode) {
             return brandUriFromBrandCanonicalUri(((Episode)identified).getContainer().getUri());
         }
-        throw new RuntimeException("Failed to extract link URI for " + identified);
+        return DEFAULT_LINK;
     }
 
     private String brandUriFromBrandCanonicalUri(String uri) {
