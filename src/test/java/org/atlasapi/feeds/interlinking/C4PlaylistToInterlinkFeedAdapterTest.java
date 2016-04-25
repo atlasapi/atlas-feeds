@@ -1,10 +1,8 @@
 package org.atlasapi.feeds.interlinking;
 
-import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
@@ -13,13 +11,11 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.testing.BrandTestDataBuilder;
 import org.atlasapi.media.entity.testing.ComplexItemTestDataBuilder;
 import org.atlasapi.persistence.content.ContentResolver;
-import org.atlasapi.persistence.content.ResolvedContent;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.google.common.collect.ImmutableList;
 import com.metabroadcast.common.time.DateTimeZones;
 
 @RunWith( MockitoJUnitRunner.class )
@@ -63,7 +59,28 @@ public class C4PlaylistToInterlinkFeedAdapterTest {
         
         assertThat(adapter.linkFrom(item), is("http://www.channel4.com/programmes/hollyoaks/episode-guide/series-23/episode-214"));
     }
-    
+
+    @Test
+    public void testId() {
+        Item item = ComplexItemTestDataBuilder
+                .complexItem()
+                .withAliasUrls("http://pmlsc.channel4.com/pmlsd/hollyoaks/episode-guide/series-23/episode-214")
+                .build();
+
+        assertThat(adapter.idFrom(item), is("tag:www.channel4.com,2009:/programmes/hollyoaks/episode-guide/series-23/episode-214"));
+
+    }
+
+    @Test
+    public void testIdWithoutAliasUrl() {
+        Item item = ComplexItemTestDataBuilder
+                .complexItem()
+                .withUri("http://pmlsc.channel4.com/pmlsd/58191/001")
+                .build();
+
+        assertThat(adapter.idFrom(item), is("tag:www.channel4.com,2009:/programmes/58191/001"));
+
+    }
     @Test
     public void testLinkNoAliasUri() {
         Brand brand = BrandTestDataBuilder
