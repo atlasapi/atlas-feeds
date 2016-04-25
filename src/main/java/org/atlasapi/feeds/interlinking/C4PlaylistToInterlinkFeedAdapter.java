@@ -15,6 +15,7 @@ import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -51,16 +52,20 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
     private final LoadingCache<ParentRef, String> parentRefToTagUriCache;
 
     public C4PlaylistToInterlinkFeedAdapter(final ContentResolver contentResolver) {
-        parentRefToTagUriCache = CacheBuilder.newBuilder().maximumSize(200).build(new CacheLoader<ParentRef, String>() {
+        parentRefToTagUriCache = CacheBuilder
+                .newBuilder()
+                .maximumSize(200)
+                .build(new CacheLoader<ParentRef, String>() {
 
-            @Override
-            public String load(ParentRef parentRef) throws Exception {
-                Maybe<Identified> firstValue = contentResolver.findByCanonicalUris(ImmutableSet.of(parentRef.getUri())).getFirstValue();
-                if (!firstValue.hasValue()) {
-                    throw new RuntimeException("Could not find URI " + parentRef.getUri());
-                }
-                return extractTagUri(firstValue.requireValue());
-            }
+                    @Override
+                    public String load(ParentRef parentRef) throws Exception {
+                        Maybe<Identified> firstValue = contentResolver
+                                .findByCanonicalUris(ImmutableSet.of(parentRef.getUri())).getFirstValue();
+                        if (!firstValue.hasValue()) {
+                            throw new RuntimeException("Could not find URI " + parentRef.getUri());
+                        }
+                        return extractTagUri(firstValue.requireValue());
+                    }
         });
 
     }
@@ -131,13 +136,29 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
     }
 
     private String extractTagUri(Identified identified) {
-        return identified.getCanonicalUri().replace(CANONICAL_URI_PREFIX, C4_TAG_PREFIX);
+        Optional<String> contentLink = contentLinkFrom(identified);
+        if (contentLink.isPresent()) {
+            return contentLink.get().replace(WWW_CHANNEL4_PROGRAMMES_PREFIX, C4_TAG_PREFIX);
+        }
+        return identified
+                .getCanonicalUri()
+                .replace(CANONICAL_URI_PREFIX, C4_TAG_PREFIX);
     }
 
     @Override
     protected String linkFrom(Identified identified) {
-        
-        Pattern aliasPattern = null;
+
+        Optional<String> contentLink = contentLinkFrom(identified);
+        if (contentLink.isPresent())
+            return contentLink.get();
+        if (identified instanceof Episode) {
+            return brandUriFromBrandCanonicalUri(((Episode)identified).getContainer().getUri());
+        }
+        return DEFAULT_LINK;
+    }
+
+    private Optional<String> contentLinkFrom(Identified identified) {
+        Pattern aliasPattern;
         if (identified instanceof Item) {
             aliasPattern = EPISODE_LINK_ALIAS_PATTERN;
         } else {
@@ -146,13 +167,10 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
         for (String alias : identified.getAliasUrls()) {
             Matcher matcher = aliasPattern.matcher(alias);
             if (matcher.matches()) {
-                return WWW_CHANNEL4_PROGRAMMES_PREFIX + matcher.group(1);
+                return Optional.of(WWW_CHANNEL4_PROGRAMMES_PREFIX + matcher.group(1));
             }
         }
-        if (identified instanceof Episode) {
-            return brandUriFromBrandCanonicalUri(((Episode)identified).getContainer().getUri());
-        }
-        return DEFAULT_LINK;
+        return Optional.absent();
     }
 
     private String brandUriFromBrandCanonicalUri(String uri) {
