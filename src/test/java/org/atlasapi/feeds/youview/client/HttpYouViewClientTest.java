@@ -1,119 +1,157 @@
 package org.atlasapi.feeds.youview.client;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.Queue;
+
 import org.atlasapi.feeds.tasks.Payload;
 
 import com.metabroadcast.common.http.HttpException;
-import com.metabroadcast.common.http.HttpResponse;
-import com.metabroadcast.common.http.SimpleHttpClient;
 import com.metabroadcast.common.http.SimpleHttpRequest;
-import com.metabroadcast.common.http.StringPayload;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.LowLevelHttpRequest;
+import com.google.api.client.http.LowLevelHttpResponse;
+import com.google.api.client.testing.http.MockHttpTransport;
+import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.runners.MockitoJUnitRunner;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-
+@RunWith(MockitoJUnitRunner.class)
 public class HttpYouViewClientTest {
-    
+
     @Captor
-    private ArgumentCaptor<SimpleHttpRequest<YouViewResult>> requestCaptor;    
-    private SimpleHttpClient httpClient = mock(SimpleHttpClient.class);
-    private String baseUrl = "youviewUrl";
+    private ArgumentCaptor<SimpleHttpRequest<YouViewResult>> requestCaptor;
+
+    private Queue<LowLevelHttpResponse> responses;
+    private LowLevelHttpRequest request;
+    private String methodUsed;
+    private String urlUsed;
+
+    private String baseUrl = "http://youviewUrl.nope";
     private Clock clock = new TimeMachine();
     private Payload payload = createPayload();
-    
-    private final YouViewClient client = new HttpYouViewClient(httpClient, baseUrl, clock);
-    
+
+    private YouViewClient client;
+
     @Before
-    public void init() {
-        MockitoAnnotations.initMocks(this);
+    public void setUp() throws IOException {
+        responses = new LinkedList<>();
+        methodUsed = null;
+        urlUsed = null;
+
+        request = new MockLowLevelHttpRequest() {
+            @Override
+            public LowLevelHttpResponse execute() throws IOException {
+                return responses.poll();
+            }
+        };
+
+        HttpTransport transport = new MockHttpTransport() {
+            @Override
+            public LowLevelHttpRequest buildRequest(String method, String url) throws IOException {
+                methodUsed = method;
+                urlUsed = url;
+
+                return request;
+            }
+        };
+
+        client = new HttpYouViewClient(transport.createRequestFactory(new HttpRequestInitializer() {
+            @Override
+            public void initialize(HttpRequest request) throws IOException {
+                request.setThrowExceptionOnExecuteError(false);
+            }
+        }), baseUrl, clock);
     }
 
     @Test
-    public void testThatUploadingSuccessfullyReturnsSuccessfulResult() throws HttpException {
+    public void testThatUploadingSuccessfullyReturnsSuccessfulResult()
+            throws IOException {
         String txnUrl = "transactionUrl";
-        HttpResponse response = createSuccessfulResponseWithTransaction(txnUrl);
-        when(httpClient.post(eq(baseUrl + "/transaction"), any(StringPayload.class))).thenReturn(response);
-        
+        responses.add(createSuccessfulResponseWithTransaction(txnUrl));
+
         YouViewResult result = client.upload(payload);
-        
-        Mockito.verify(httpClient).post(Mockito.eq(baseUrl + "/transaction"), any(StringPayload.class));
-        
-        
+
+        assertThat(urlUsed, is(baseUrl + "/transaction"));
         assertTrue("202 response should yield successful result", result.isSuccess());
+        assertThat(methodUsed, is("POST"));
         assertEquals(txnUrl, result.result());
     }
 
     @Test
     public void testRetryLogicWhenYouViewHttpResponseCodeIs500AndAfterThat200()
-            throws HttpException {
+            throws HttpException, IOException {
         String txnUrl = "transactionUrl";
-        HttpResponse unsuccessfulResponse = createUnsuccessfulResponseWithTransaction(txnUrl);
-        HttpResponse successfulResponse = createSuccessfulResponseWithTransaction(txnUrl);
-        when(httpClient.post(eq(baseUrl + "/transaction"), any(StringPayload.class)))
-                .thenReturn(unsuccessfulResponse, successfulResponse);
+
+        responses.add(createUnsuccessfulResponseWithTransaction(txnUrl));
+        responses.add(createSuccessfulResponseWithTransaction(txnUrl));
 
         YouViewResult result = client.upload(payload);
 
+        assertThat(urlUsed, is(baseUrl + "/transaction"));
         assertTrue("202 response should yield successful result", result.isSuccess());
+        assertThat(methodUsed, is("POST"));
         assertEquals(txnUrl, result.result());
     }
 
     @Test
-    public void testThatAFailedUploadReturnsFailedResult() throws HttpException {
+    public void testThatAFailedUploadReturnsFailedResult() throws HttpException, IOException {
         String error = "something went wrong";
-        HttpResponse response = createResponse(error, 400);
-        when(httpClient.post(eq(baseUrl + "/transaction"), any(StringPayload.class))).thenReturn(response);
-        
+        responses.add(createResponse(error, 400));
+
         YouViewResult result = client.upload(payload);
-        
-        Mockito.verify(httpClient).post(Mockito.eq(baseUrl + "/transaction"), any(StringPayload.class));
-        
-        
+
+        assertThat(urlUsed, is(baseUrl + "/transaction"));
+        assertThat(methodUsed, is("POST"));
         assertFalse("Non-202 response should yield failed result", result.isSuccess());
         assertEquals(error, result.result());
     }
 
     @Test
-    public void testThatDeletingSuccessfullyReturnsSuccessfulResult() throws HttpException {
+    public void testThatDeletingSuccessfullyReturnsSuccessfulResult()
+            throws HttpException, IOException {
         String txnUrl = "transactionUrl";
-        HttpResponse response = createSuccessfulResponseWithTransaction(txnUrl);
+        responses.add(createSuccessfulResponseWithTransaction(txnUrl));
+
         String deletedId = "anId";
-        when(httpClient.delete(eq(baseUrl + "/fragment?id=" + deletedId))).thenReturn(response);
-        
+
         YouViewResult result = client.delete(deletedId);
-        
-        Mockito.verify(httpClient).delete(Mockito.eq(baseUrl + "/fragment?id=" + deletedId));
-        
+
+        assertThat(urlUsed, is(baseUrl + "/fragment?id=" + deletedId));
+        assertThat(methodUsed, is("DELETE"));
         assertTrue("202 response should yield successful result", result.isSuccess());
         assertEquals(txnUrl, result.result());
     }
 
     @Test
-    public void testThatAFailedDeleteReturnsFailedResult() throws HttpException {
+    public void testThatAFailedDeleteReturnsFailedResult() throws HttpException, IOException {
         String error = "something went wrong";
-        HttpResponse response = createResponse(error, 400);
+        responses.add(createResponse(error, 400));
+
         String deletedId = "anId";
-        when(httpClient.delete(eq(baseUrl + "/fragment?id=" + deletedId))).thenReturn(response);
-        
+
         YouViewResult result = client.delete(deletedId);
-        
-        Mockito.verify(httpClient).delete(Mockito.eq(baseUrl + "/fragment?id=" + deletedId));
-        
+
+        assertThat(urlUsed, is(baseUrl + "/fragment?id=" + deletedId));
+        assertThat(methodUsed, is("DELETE"));
         assertFalse("Non-202 response should yield failed result", result.isSuccess());
         assertEquals(error, result.result());
     }
@@ -121,44 +159,75 @@ public class HttpYouViewClientTest {
     @Test
     public void testThatCheckingStatusSuccessfullyReturnsSuccessfulResult() throws Exception {
         String report = "status report";
-        when(httpClient.get(Mockito.<SimpleHttpRequest<YouViewResult>>any())).thenReturn(YouViewResult.success(report, clock.now(), 202));
-        
+
+        LowLevelHttpResponse response = mock(LowLevelHttpResponse.class);
+
+        when(response.getContent()).thenReturn(new ByteArrayInputStream(report.getBytes("UTF-8")));
+        when(response.getStatusCode()).thenReturn(200);
+
+        responses.add(createResponse(report, 200));
+
         YouViewResult result = client.checkRemoteStatus("txnId");
-        
-        Mockito.verify(httpClient).get(requestCaptor.capture());
-        
-        
-        assertEquals(baseUrl + "/transaction/" + "txnId", requestCaptor.getValue().getUrl());
-        assertTrue("202 response should yield successful result", result.isSuccess());
+
+        assertThat(result.uploadTime(), is(clock.now()));
+        assertThat(urlUsed, is(baseUrl + "/transaction/" + "txnId"));
+        assertThat(methodUsed, is("GET"));
+        assertThat(result.isSuccess(), is(true));
         assertEquals(report, result.result());
     }
 
     @Test
     public void testThatAFailedStatusCheckReturnsFailedResult() throws Exception {
         String error = "something went wrong";
-        when(httpClient.get(Mockito.<SimpleHttpRequest<YouViewResult>>any())).thenReturn(YouViewResult.failure(error, clock.now(), 503));
-        
+
+        responses.add(createResponse(error, 503));
+
         YouViewResult result = client.checkRemoteStatus("txnId");
-        
-        Mockito.verify(httpClient).get(requestCaptor.capture());
-        
-        assertEquals(baseUrl + "/transaction/" + "txnId", requestCaptor.getValue().getUrl());
-        assertFalse("Non-202 response should yield failed result", result.isSuccess());
+
+        assertThat(result.uploadTime(), is(clock.now()));
+        assertThat(urlUsed, is(baseUrl + "/transaction/" + "txnId"));
+        assertThat(methodUsed, is("GET"));
+        assertThat(result.isSuccess(), is(false));
         assertEquals(error, result.result());
     }
 
-    private HttpResponse createSuccessfulResponseWithTransaction(String transactionUrl) {
-        return new HttpResponse("", 202, "SUCCESSED", ImmutableMap.of("Location", transactionUrl));
+    private LowLevelHttpResponse createSuccessfulResponseWithTransaction(String transactionUrl) throws IOException {
+        LowLevelHttpResponse response = mock(LowLevelHttpResponse.class);
+
+        when(response.getStatusCode()).thenReturn(202);
+        when(response.getStatusLine()).thenReturn("SUCCESSED");
+        when(response.getContent()).thenReturn(new ByteArrayInputStream("".getBytes("UTF-8")));
+        when(response.getHeaderCount()).thenReturn(1);
+        when(response.getHeaderName(0)).thenReturn("Location");
+        when(response.getHeaderValue(0)).thenReturn(transactionUrl);
+
+        return response;
     }
 
-    private HttpResponse createUnsuccessfulResponseWithTransaction(String transactionUrl) {
-        return new HttpResponse("", 500, "INTERNAL SERVER ERROR", ImmutableMap.of("Location", transactionUrl));
+    private LowLevelHttpResponse createUnsuccessfulResponseWithTransaction(String transactionUrl)
+            throws IOException {
+        LowLevelHttpResponse response = mock(LowLevelHttpResponse.class);
+
+        when(response.getStatusCode()).thenReturn(500);
+        when(response.getStatusLine()).thenReturn("INTERNAL SERVER ERROR");
+        when(response.getContent()).thenReturn(new ByteArrayInputStream("".getBytes("UTF-8")));
+        when(response.getHeaderCount()).thenReturn(1);
+        when(response.getHeaderName(0)).thenReturn("Location");
+        when(response.getHeaderValue(0)).thenReturn(transactionUrl);
+
+        return response;
     }
 
-    private HttpResponse createResponse(String body, int statusCode) {
-        return new HttpResponse(body, statusCode);
+    private LowLevelHttpResponse createResponse(String body, int statusCode) throws IOException {
+        LowLevelHttpResponse response = mock(LowLevelHttpResponse.class);
+
+        when(response.getStatusCode()).thenReturn(statusCode);
+        when(response.getStatusLine()).thenReturn("INTERNAL SERVER ERROR");
+        when(response.getContent()).thenReturn(new ByteArrayInputStream(body.getBytes("UTF-8")));
+
+        return response;
     }
-    
+
     private Payload createPayload() {
         return new Payload("payload", clock.now());
     }

@@ -1,11 +1,8 @@
 package org.atlasapi.feeds.youview;
 
-import static com.metabroadcast.common.time.DateTimeZones.UTC;
-import static org.joda.time.DateTimeConstants.AUGUST;
-
+import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBElement;
@@ -32,23 +29,19 @@ import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewReportHandler;
-import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastServiceMapping;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
-import org.atlasapi.feeds.youview.nitro.NitroBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.payload.Converter;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.TVAPayloadCreator;
 import org.atlasapi.feeds.youview.payload.TVAnytimeStringConverter;
 import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventPcridStore;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
-import org.atlasapi.feeds.youview.persistence.RollingWindowBroadcastEventDeduplicator;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewPayloadHashStore;
+import org.atlasapi.feeds.youview.persistence.RollingWindowBroadcastEventDeduplicator;
 import org.atlasapi.feeds.youview.persistence.SentBroadcastEventPcridStore;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
@@ -59,15 +52,31 @@ import org.atlasapi.feeds.youview.revocation.MongoRevokedContentStore;
 import org.atlasapi.feeds.youview.revocation.OnDemandBasedRevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
-import org.atlasapi.feeds.youview.statistics.FeedStatisticsResolver;
-import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
-import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+
+import com.metabroadcast.common.media.MimeType;
+import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.metabroadcast.common.properties.Configurer;
+import com.metabroadcast.common.scheduling.RepetitionRule;
+import com.metabroadcast.common.scheduling.RepetitionRules;
+import com.metabroadcast.common.scheduling.ScheduledTask;
+import com.metabroadcast.common.scheduling.SimpleScheduler;
+import com.metabroadcast.common.security.UsernameAndPassword;
+import com.metabroadcast.common.time.Clock;
+import com.metabroadcast.common.time.SystemClock;
+
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
@@ -78,22 +87,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.xml.sax.SAXException;
-
 import tva.metadata._2010.TVAMainType;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableMap;
-import com.metabroadcast.common.http.SimpleHttpClient;
-import com.metabroadcast.common.http.SimpleHttpClientBuilder;
-import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
-import com.metabroadcast.common.properties.Configurer;
-import com.metabroadcast.common.scheduling.RepetitionRule;
-import com.metabroadcast.common.scheduling.RepetitionRules;
-import com.metabroadcast.common.scheduling.ScheduledTask;
-import com.metabroadcast.common.scheduling.SimpleScheduler;
-import com.metabroadcast.common.security.UsernameAndPassword;
-import com.metabroadcast.common.time.Clock;
-import com.metabroadcast.common.time.SystemClock;
+import static com.metabroadcast.common.time.DateTimeZones.UTC;
+import static org.joda.time.DateTimeConstants.AUGUST;
 
 
 /**
@@ -142,16 +139,9 @@ public class YouViewUploadModule {
     private @Autowired TaskStore taskStore;
     private @Autowired BbcServiceIdResolver bbcServiceIdResolver;
     private @Autowired IdGenerator nitroIdGenerator;
-    private @Autowired NitroBroadcastServiceMapping nitroBroadcastServiceMapping;
-    private @Autowired LoveFilmIdGenerator loveFilmIdGenerator;
-    private @Autowired LoveFilmBroadcastServiceMapping loveFilmServiceMapping;
-    private @Autowired UnboxIdGenerator unboxIdGenerator;
-    private @Autowired UnboxBroadcastServiceMapping unboxServiceMapping;
-    private @Autowired BroadcastHierarchyExpander broadcastHierarchyExpander;
     private @Autowired OnDemandHierarchyExpander onDemandHierarchyExpander;
     private @Autowired VersionHierarchyExpander versionHierarchyExpander;
     private @Autowired ContentHierarchyExpander contentHierarchyExpander;
-    private @Autowired FeedStatisticsResolver feedStatsStore;
     private @Autowired ContentHierarchyExtractor contentHierarchy;
     private @Autowired ChannelResolver channelResolver;
     private @Autowired ScheduleResolver scheduleResolver;
@@ -216,9 +206,27 @@ public class YouViewUploadModule {
             Optional.absent();
         }
         String baseUrl = parseUrl(publisherPrefix);
-        UsernameAndPassword credentials = parseCredentials(publisherPrefix);
-        
-        YouViewClient client = new HttpYouViewClient(httpClient(credentials.username(), credentials.password()), baseUrl, clock);
+        final UsernameAndPassword credentials = parseCredentials(publisherPrefix);
+
+        HttpTransport transport = new NetHttpTransport();
+        HttpRequestFactory requestFactory = transport.createRequestFactory(
+                new HttpRequestInitializer() {
+                    @Override
+                    public void initialize(HttpRequest request) throws IOException {
+                        request.setThrowExceptionOnExecuteError(false)
+                                .getHeaders()
+                                .setBasicAuthentication(
+                                        credentials.username(),
+                                        credentials.password()
+                                ).setContentType(MimeType.TEXT_XML.toString());
+                    }
+                });
+
+        YouViewClient client = new HttpYouViewClient(
+                requestFactory,
+                baseUrl,
+                clock
+        );
         
         return Optional.<TaskProcessor>of(new YouViewTaskProcessor(client, resultHandler(), revokedContentStore(), taskStore));
     }
@@ -373,13 +381,5 @@ public class YouViewUploadModule {
                 Configurer.get(publisherPrefix + ".username").get(), 
                 Configurer.get(publisherPrefix + ".password").get()
         );
-    }
-    
-    private SimpleHttpClient httpClient(String username, String password) {
-        return new SimpleHttpClientBuilder()
-            .withHeader("Content-Type", "text/xml")
-            .withSocketTimeout(1, TimeUnit.MINUTES)
-            .withPreemptiveBasicAuth(new UsernameAndPassword(username, password))
-            .build();
     }
 }
