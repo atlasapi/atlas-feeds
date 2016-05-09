@@ -22,6 +22,7 @@ import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.persistence.HashType;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
+import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
@@ -111,6 +112,29 @@ public abstract class TaskCreationTask extends ScheduledTask {
             }
         };
     }
+
+    protected YouViewChannelProcessor channelProcessor(final DateTime updatedSicne, final Action action) {
+        return new YouViewChannelProcessor() {
+
+            UpdateProgress progress = UpdateProgress.START;
+
+            @Override
+            public boolean process(Channel content) {
+                try {
+                    progress = progress.reduce(processChannel(content, action));
+                } catch (Exception e) {
+                    log.error("error on upload for " + content.getCanonicalUri(), e);
+                    progress = progress.reduce(UpdateProgress.FAILURE);
+                }
+                return shouldContinue();
+            }
+
+            @Override
+            public UpdateProgress getResult() {
+                return progress;
+            }
+        };
+    }
     
     // TODO tidy this up, ideally simplify/streamline it
     private UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
@@ -161,6 +185,31 @@ public abstract class TaskCreationTask extends ScheduledTask {
         } catch (Exception e) {
             log.error("Failed to create payload for content {}", content.getCanonicalUri(), e);
             Task task = taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, action, Status.FAILED));
+            taskStore.updateWithLastError(task.id(), exceptionToString(e));
+            return UpdateProgress.FAILURE;
+        }
+    }
+
+    private UpdateProgress processChannel(Channel channel, Action action) {
+        String channelCrid = idGenerator.generateChannelCrid(channel);
+        log.debug("Processing Channel {}", channelCrid);
+        try {
+            // not strictly necessary, but will save space
+            if (!Action.DELETE.equals(action)) {
+                Payload p = payloadCreator.payloadFrom(channel);
+
+                if (shouldSave(HashType.CHANNEL, channelCrid, p)) {
+                    taskStore.save(taskCreator.taskFor(idGenerator.generateChannelCrid(channel), channel, p, action));
+                    payloadHashStore.saveHash(HashType.CHANNEL, channelCrid, p.hash());
+                } else {
+                    log.debug("Existing hash found for Content {}, not updating", channelCrid);
+                }
+            }
+
+            return UpdateProgress.SUCCESS;
+        } catch (Exception e) {
+            log.error("Failed to create payload for channel {}", channel.getCanonicalUri(), e);
+            Task task = taskStore.save(taskCreator.taskFor(idGenerator.generateChannelCrid(channel), channel, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
