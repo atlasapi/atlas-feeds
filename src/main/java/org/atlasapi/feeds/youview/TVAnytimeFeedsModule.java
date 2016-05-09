@@ -11,16 +11,19 @@ import org.atlasapi.feeds.tvanytime.JaxbTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.PublisherSpecificTVAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastEventGenerator;
+import org.atlasapi.feeds.youview.lovefilm.LoveFilmChannelGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmGroupInformationGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmProgramInformationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastEventGenerator;
+import org.atlasapi.feeds.youview.nitro.NitroChannelInformationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroGroupInformationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroProgramInformationGenerator;
 import org.atlasapi.feeds.youview.statistics.FeedStatisticsResolver;
 import org.atlasapi.feeds.youview.statistics.MongoFeedStatisticsStore;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastEventGenerator;
+import org.atlasapi.feeds.youview.unbox.UnboxChannelGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxGroupInformationGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxProgramInformationGenerator;
@@ -49,16 +52,19 @@ public class TVAnytimeFeedsModule {
     private @Autowired LoveFilmGroupInformationGenerator loveFilmGroupInfoGenerator;
     private @Autowired LoveFilmOnDemandLocationGenerator loveFilmOnDemandGenerator;
     private @Autowired LoveFilmBroadcastEventGenerator loveFilmBroadcastGenerator;
-    
+    private @Autowired LoveFilmChannelGenerator loveFilmChannelGenerator;
+
     private @Autowired UnboxProgramInformationGenerator unboxProgInfoGenerator;
     private @Autowired UnboxGroupInformationGenerator unboxGroupInfoGenerator;
     private @Autowired UnboxOnDemandLocationGenerator unboxOnDemandGenerator;
     private @Autowired UnboxBroadcastEventGenerator unboxBroadcastGenerator;
+    private @Autowired UnboxChannelGenerator unboxChannelGenerator;
     
     private @Autowired NitroProgramInformationGenerator nitroProgInfoGenerator;
     private @Autowired NitroGroupInformationGenerator nitroGroupInfoGenerator;
     private @Autowired NitroOnDemandLocationGenerator nitroOnDemandGenerator;
     private @Autowired NitroBroadcastEventGenerator nitroBroadcastGenerator;
+    private @Autowired NitroChannelInformationGenerator nitroChannelInformationGenerator;
     
     private Clock clock() {
         return new SystemClock(DateTimeZone.UTC);
@@ -97,7 +103,8 @@ public class TVAnytimeFeedsModule {
                 loveFilmProgInfoGenerator, 
                 loveFilmGroupInfoGenerator, 
                 loveFilmOnDemandGenerator, 
-                loveFilmBroadcastGenerator, 
+                loveFilmBroadcastGenerator,
+                loveFilmChannelGenerator,
                 contentHierarchy()
         ));
     }
@@ -107,7 +114,8 @@ public class TVAnytimeFeedsModule {
                 unboxProgInfoGenerator, 
                 unboxGroupInfoGenerator, 
                 unboxOnDemandGenerator, 
-                unboxBroadcastGenerator, 
+                unboxBroadcastGenerator,
+                unboxChannelGenerator,
                 contentHierarchy()
         ));
     }
@@ -117,7 +125,8 @@ public class TVAnytimeFeedsModule {
                 nitroProgInfoGenerator, 
                 nitroGroupInfoGenerator, 
                 nitroOnDemandGenerator, 
-                nitroBroadcastGenerator, 
+                nitroBroadcastGenerator,
+                nitroChannelInformationGenerator,
                 contentHierarchy()
         ));
     }

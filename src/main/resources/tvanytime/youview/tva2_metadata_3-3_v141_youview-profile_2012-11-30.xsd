@@ -1,0 +1,621 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+=======================================================
+YouView B2B Metadata Contribution Interface Schema: Profile of TV-Anytime Extended Metadata Schema
+Copyright (c) 2009, 2010, 2011, 2012 YouView TV Limited
+======================================================= 
+10/09/2012, Michael Sullivan
+- Updated import for profiled TV-Anytime Metadata schema (SPECWIP-3322)
+======================================================= 
+25/10/2011, Michael Sullivan. CANTEC-339:
+- reinstated TargetingInformationType\TerminalInformation
+- reinstated TerminalInformationType
+- reinstated SystemInformationType
+- reinstated CPUType
+- reinstated RAMType
+- reinstated VersionType
+- adjusted namespaces for revised dates
+- added this history block
+=======================================================
+-->
+<schema xmlns:tva2="urn:tva:metadata:extended:2010" xmlns:tva="urn:tva:metadata:2010" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:xml="http://www.w3.org/XML/1998/namespace" targetNamespace="urn:tva:metadata:extended:2010" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<!-- NRIYP 	
+	xmlns:int="urn:tva:metadata:interstitial:2010"
+	xmlns:rmpi="urn:tva:rmpi:2010"
+	xmlns:mpeg21="urn:tva:mpeg21:2010" 
+	-->
+	<annotation>
+		<documentation xml:lang="en">This schema consists of datatypes that are normatively defined in ETSI TS 102 822-3-3 v1.4.1</documentation>
+	</annotation>
+	<import namespace="urn:tva:metadata:2010" schemaLocation="tva_metadata_3-1_v161_youview-profile_2012-11-30.xsd"/>
+	<!-- NRIYP <import namespace="urn:tva:metadata:interstitial:2010" schemaLocation="tva_interstitial_3-4_v141.xsd"/> -->
+	<!-- NRIYP <import namespace="urn:tva:rmpi:2010" schemaLocation="tva_rmpi_5-1_v151.xsd"/> -->
+	<!-- NRIYP <import namespace="urn:tva:mpeg21:2010" schemaLocation="tva_mpeg21.xsd"/> -->
+	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7_2008.xsd"/>
+	<import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
+	<annotation>
+		<documentation xml:lang="en">6. Phase 2 Basic Types</documentation>
+	</annotation>
+	<annotation>
+		<documentation xml:lang="en">6.1 New Content Types</documentation>
+	</annotation>
+	<annotation>
+		<documentation xml:lang="en">6.1.1 Content Attributes Base Type</documentation>
+	</annotation>
+	<complexType name="ContentAttributesType" abstract="true"/>
+	<annotation>
+		<documentation xml:lang="en">6.1.1.1 Audio Attributes</documentation>
+	</annotation>
+	<complexType name="AudioAttributesType">
+		<complexContent>
+			<extension base="tva2:ContentAttributesType">
+				<sequence>
+					<element name="Coding" type="tva:ControlledTermType" minOccurs="0"/>
+					<element name="NumOfChannels" type="unsignedShort" minOccurs="0"/>
+					<element name="MixType" type="tva:ControlledTermType" minOccurs="0"/>
+					<element name="AudioLanguage" type="tva:AudioLanguageType" minOccurs="0"/>
+					<!-- NRIYP <element name="BitRate" type="tva:BitRateType" minOccurs="0"/> -->
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">6.1.1.2 Video Attributes</documentation>
+	</annotation>
+	<complexType name="VideoAttributesType">
+		<complexContent>
+			<extension base="tva2:ContentAttributesType">
+				<sequence>
+					<element name="Coding" type="tva:ControlledTermType" minOccurs="0"/>
+					<element name="Scan" type="tva:ScanType" minOccurs="0"/>
+					<element name="HorizontalSize" type="unsignedShort" minOccurs="0"/>
+					<element name="VerticalSize" type="unsignedShort" minOccurs="0"/>
+					<element name="AspectRatio" type="tva:AspectRatioType" minOccurs="0" maxOccurs="2"/>
+					<element name="Color" type="tva:ColorType" minOccurs="0"/>
+					<!-- NRIYP <element name="BitRate" type="tva:BitRateType" minOccurs="0"/> -->
+					<!-- NRIYP <element name="FrameRate" type="tva:FrameRateType" minOccurs="0"/> -->
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">6.1.1.3 Still Image Content Attributes</documentation>
+	</annotation>
+	<simpleType name="OrientationType">
+		<restriction base="nonNegativeInteger">
+			<minInclusive value="0"/>
+			<maxInclusive value="360"/>
+		</restriction>
+	</simpleType>
+	<complexType name="StillImageContentAttributesType">
+		<complexContent>
+			<extension base="tva2:ContentAttributesType">
+				<sequence>
+					<element name="Width" type="unsignedShort" minOccurs="0"/>
+					<element name="Height" type="unsignedShort" minOccurs="0"/>
+					<element name="Orientation" type="tva2:OrientationType" minOccurs="0"/>
+					<element name="IntendedUse" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">6.1.2 Context-dependent properties of content</documentation>
+	</annotation>
+	<complexType name="ContextAttributesType" abstract="true"/>
+	<annotation>
+		<documentation xml:lang="en">6.1.2.1 Data Broadcasting Context</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="RenderingStyleType"> ...
+	<complexType name="DataBroadcastingContextAttributesType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.1.2.2 Interstitial Context</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="InterstitialContextAttributesType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.1.2.3 Educational Context</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="EducationalContextAttributesType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.1.2.4 Application Context</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="ApplicationContextAttributesType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.1.2.5 Game Context Attributes</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="GameContextAttributesType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.1.3 Content Properties Datatype</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="ChecksumType"> ...
+	<complexType name="FilePropertiesType"> ...
+	-->
+	<complexType name="ContentPropertiesType">
+		<sequence>
+			<element name="ContentType" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRIYP <element name="FileProperties" type="tva2:FilePropertiesType" minOccurs="0"/> -->
+			<element name="ContentAttributes" type="tva2:ContentAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ContextAttributes" type="tva2:ContextAttributesType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">6.2 Targeting Information</documentation>
+	</annotation>
+	<annotation>
+		<documentation xml:lang="en">6.2.1 Biographic Information</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="AgeRangeType"> ...
+	<complexType name="LanguageType"> ...
+	<complexType name="BiographicInformationType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.2.2 Accessibility Information</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="AccessibilityInformationType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.2.3 User Information</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="UserInformationType"> ...
+	<complexType name="UserInformationTableType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.2.4 Terminal Information</documentation>
+	</annotation>
+	<simpleType name="VersionType">
+		<restriction base="string">
+			<whiteSpace value="collapse"/>
+			<pattern value="[0-9]+(.[0-9]+)*"/>
+		</restriction>
+	</simpleType>
+	<!-- reinstated VersionType, michaels 2011-10-25 -->
+	<complexType name="CPUType">
+		<complexContent>
+			<extension base="tva:ControlledTermType">
+				<attribute name="clockSpeed" type="nonNegativeInteger" use="required"/>
+				<attribute name="unit" use="required">
+					<simpleType>
+						<restriction base="string">
+							<enumeration value="Hz"/>
+							<enumeration value="KHz"/>
+							<enumeration value="MHz"/>
+							<enumeration value="GHz"/>
+							<enumeration value="THz"/>
+							<enumeration value="PHz"/>
+						</restriction>
+					</simpleType>
+				</attribute>
+			</extension>
+		</complexContent>
+	</complexType>
+	<!-- reinstated CPUType, michaels 2011-10-25 -->
+	<complexType name="RAMType">
+		<attribute name="size" type="nonNegativeInteger" use="required"/>
+		<attribute name="unit" use="required">
+			<simpleType>
+				<restriction base="string">
+					<enumeration value="Bit"/>
+					<enumeration value="KBit"/>
+					<enumeration value="MBit"/>
+					<enumeration value="GBit"/>
+					<enumeration value="Byte"/>
+					<enumeration value="KByte"/>
+					<enumeration value="MByte"/>
+					<enumeration value="GByte"/>
+					<enumeration value="TByte"/>
+					<enumeration value="PByte"/>
+				</restriction>
+			</simpleType>
+		</attribute>
+	</complexType>
+	<!-- reinstated RAMType, michaels 2011-10-25 -->
+	<complexType name="SystemInformationType">
+		<sequence minOccurs="0" maxOccurs="unbounded">
+			<element name="SupportingOS" type="tva:ControlledTermType" minOccurs="0"/>
+			<element name="MiddleWare" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="VirtualMachine" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="OtherSystemSW" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="CPU" type="tva2:CPUType" minOccurs="0"/>
+			<element name="RAM" type="tva2:RAMType" minOccurs="0"/>
+		</sequence>
+	</complexType>
+	<!-- reinstated SystemInformationType, michaels 2011-10-25 -->
+	<!-- NRIYP
+	<complexType name="HardwareManufacturerType"> ...
+	-->
+	<complexType name="TerminalInformationType">
+		<sequence>
+			<!-- NRIYP
+			<element name="DecoderInformation" type="mpeg21:CodecCapabilityBaseType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="EncoderInformation" type="mpeg21:CodecCapabilityBaseType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="DisplayInformation" type="mpeg21:DisplayType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="AudioInformation" type="mpeg21:AudioOutputType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="InteractionInputInformation" type="mpeg21:UserInteractionInputType"
+				minOccurs="0" maxOccurs="unbounded"/>
+			<element name="StorageInformation" type="mpeg21:StorageType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			-->
+			<element name="SystemInformation" type="tva2:SystemInformationType" minOccurs="0"/>
+			<!-- NRIYP
+			<element name="HardwareManufacturer" type="tva2:HardwareManufacturerType" minOccurs="0"/>
+			-->
+			<element name="TerminalType" type="tva:ControlledTermType" minOccurs="0"/>
+		</sequence>
+		<attribute name="terminalInformationId" type="tva:TVAIDType" use="optional"/>
+	</complexType>
+	<!-- reinstated TerminalInformationType, but requiring only the elements SystemInformation and TerminalType, michaels 2011-10-24 -->
+	<!-- NRIYP
+	<complexType name="TerminalInformationTableType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.2.5 Network Information</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="NetworkInformationType"> ...
+	<complexType name="NetworkInformationTableType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.2.6 Natural Environment Information</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="TemperatureType"> ...
+	<complexType name="HumidityType"> ...
+	<complexType name="NaturalEnvironmentInformationType"> ...
+	<complexType name="NaturalEnvironmentInformationTableType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.2.7 Usage Environment Description Table</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="UsageEnvironmentDescriptionType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.2.8 targeting Information Type</documentation>
+	</annotation>
+	<complexType name="TargetingInformationType">
+		<sequence>
+			<!-- NRIYP 		
+			<element name="TargetUserPreferencesIdRef" type="tva:TVAIDRefType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="TargetUserPreferences" type="mpeg7:UserPreferencesType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="TargetUsageHistoryIdRef" type="tva:TVAIDRefType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="TargetUsageHistory" type="mpeg7:UsageHistoryType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="UserInformationIdRef" type="tva:TVAIDRefType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="UserInformation" type="tva2:UserInformationType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="TerminalInformationIdRef" type="tva:TVAIDRefType" minOccurs="0"
+				maxOccurs="unbounded"/>
+		-->
+			<element name="TerminalInformation" type="tva2:TerminalInformationType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRIYP 				
+			<element name="NetworkInformationIdRef" type="tva:TVAIDRefType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="NetworkInformation" type="mpeg21:NetworkCharacteristicBaseType"
+				minOccurs="0" maxOccurs="unbounded"/>
+			<element name="NaturalEnvironmentInformationIdRef" type="tva:TVAIDRefType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="NaturalEnvironmentInformation"
+				type="tva2:NaturalEnvironmentInformationType" minOccurs="0" maxOccurs="unbounded"/>
+		-->
+		</sequence>
+		<attribute name="TargetingId" type="tva:TVAIDType" use="optional"/>
+		<!-- -->
+		<!-- reinstated TargetingInformationType (extended in YouView schema elsewhere), michaels 2010-08-19 -->
+		<!-- reinstated TerminalInformation element, michaels 2011-10-24 -->
+		<!-- -->
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">6.3 Coupon Description</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="NonTVACouponRefType"> ...
+	<complexType name="RequiredCouponType"> ...
+	<complexType name="CouponValueType"> ...
+	-->
+	<complexType name="ContentTargetType">
+		<sequence>
+			<element name="Genre" type="tva:GenreType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Program" type="tva:CRIDRefType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ServiceIdRef" type="tva:TVAIDRefsType" minOccurs="0"/>
+		</sequence>
+	</complexType>
+	<!-- NRIYP
+	<complexType name="CouponDescriptionType"> ...
+	<complexType name="CouponRefType"> ...
+	<complexType name="RewardCouponType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">6.4 Extended Purchase Item Description</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="NonTVARightsInformationRefType"> ...
+	<complexType name="ExtendedPurchaseItemType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">7. Extensions to Programme Description
+		Datatypes</documentation>
+	</annotation>
+	<annotation>
+		<documentation xml:lang="en">7.1 Extended Basic Content Description Datatype</documentation>
+	</annotation>
+	<complexType name="ExtendedContentDescriptionType">
+		<complexContent>
+			<extension base="tva:BasicContentDescriptionType">
+				<sequence>
+					<element name="ContentProperties" type="tva2:ContentPropertiesType" minOccurs="0"/>
+					<element name="SourceLocation" minOccurs="0">
+						<complexType>
+							<sequence>
+								<choice>
+									<element name="BroadcastEvent" type="tva:BroadcastEventType" minOccurs="0" maxOccurs="unbounded"/>
+									<element name="OnDemandProgram" type="tva:OnDemandProgramType" minOccurs="0" maxOccurs="unbounded"/>
+									<sequence>
+										<element name="ContentIdRef" type="tva:CRIDRefType" minOccurs="0"/>
+										<element name="imi" type="tva2:InstanceMetadataIdListType" minOccurs="0"/>
+									</sequence>
+								</choice>
+								<element name="ServiceInformation" type="tva:ServiceInformationType" minOccurs="0" maxOccurs="unbounded"/>
+							</sequence>
+						</complexType>
+					</element>
+					<choice minOccurs="0" maxOccurs="unbounded">
+						<element name="TargetingInformation" type="tva2:TargetingInformationType"/>
+						<element name="TargetingInformationRef" type="tva:TVAIDRefType"/>
+					</choice>
+					<!-- Reinstated TargetingInformation; michaels 2010-08-19 -->
+					<!-- NRIYP
+					<element name="MaterialForPrinting" minOccurs="0"> ...
+					-->
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">7.2 EXTENDED BASIC SEGMENT DESCRIPTION</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="ExtendedSegmentDescriptionType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">7.3 Extended Related Material Datatype</documentation>
+	</annotation>
+	<complexType name="ExtendedRelatedMaterialType" mixed="false">
+		<complexContent mixed="false">
+			<extension base="tva:RelatedMaterialType">
+				<sequence>
+					<element name="ContentProperties" type="tva2:ContentPropertiesType" minOccurs="0"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">8 CONTENT PACKAGE DESCRIPTION</documentation>
+	</annotation>
+	<annotation>
+		<documentation xml:lang="en">8.2 DECLARATIONS</documentation>
+	</annotation>
+	<!-- NRICP <complexType name="DeclarationsType"> ... -->
+	<annotation>
+		<documentation xml:lang="en">8.3 DESCRIPTOR</documentation>
+	</annotation>
+	<complexType name="ObjectDescriptionType">
+		<sequence>
+			<element name="Description" type="mpeg7:TextualType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="ContentDescription" type="tva2:ExtendedContentDescriptionType" minOccurs="0"/>
+		</sequence>
+	</complexType>
+	<complexType name="ConditionType">
+		<attribute name="require" type="tva:TVAIDRefsType"/>
+		<attribute name="except" type="tva:TVAIDRefsType"/>
+	</complexType>
+	<complexType name="ReferenceType">
+		<attribute name="target" type="tva:TVAIDRefType" use="required"/>
+	</complexType>
+	<complexType name="DescriptorType">
+		<sequence>
+			<element name="Condition" type="tva2:ConditionType" minOccurs="0" maxOccurs="unbounded"/>
+			<choice maxOccurs="unbounded">
+				<element name="ObjectDescription" type="tva2:ObjectDescriptionType"/>
+				<!-- NRICP <element name="Reference" type="tva2:ReferenceType"/> -->
+			</choice>
+		</sequence>
+		<attribute name="descriptor_id" type="tva:TVAIDType" use="optional"/>
+		<attribute ref="xml:lang" use="optional"/>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">8.4 ITEM</documentation>
+	</annotation>
+	<complexType name="SelectionType">
+		<sequence>
+			<element name="Condition" type="tva2:ConditionType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Descriptor" type="tva2:DescriptorType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute name="select_id" type="tva:TVAIDType" use="required"/>
+	</complexType>
+	<complexType name="ChoiceType">
+		<sequence>
+			<element name="Condition" type="tva2:ConditionType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Descriptor" type="tva2:DescriptorType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Selection" type="tva2:SelectionType" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute name="minSelections" type="nonNegativeInteger"/>
+		<attribute name="maxSelections" type="positiveInteger"/>
+		<attribute name="default" type="tva:TVAIDRefsType"/>
+		<attribute name="choice_id" type="tva:TVAIDType"/>
+	</complexType>
+	<complexType name="TemporalIntervalType">
+		<choice>
+			<element name="MediaDuration" type="mpeg7:mediaDurationType"/>
+			<element name="MediaIncrDuration" type="mpeg7:MediaIncrDurationType"/>
+		</choice>
+	</complexType>
+	<simpleType name="SpatialRelIntervalType">
+		<restriction base="string">
+			<pattern value="\-?S((\d+N)(\d+F))?"/>
+		</restriction>
+	</simpleType>
+	<complexType name="SpatialIntervalType">
+		<sequence>
+			<element name="XSpatialInterval" type="nonNegativeInteger" minOccurs="0"/>
+			<element name="YSpatialInterval" type="nonNegativeInteger" minOccurs="0"/>
+		</sequence>
+		<attribute name="spatialIntervalUnit" type="tva2:SpatialRelIntervalType"/>
+	</complexType>
+	<complexType name="RelationType">
+		<complexContent>
+			<extension base="tva:ControlledTermType">
+				<choice minOccurs="0">
+					<element name="TemporalInterval" type="tva2:TemporalIntervalType" minOccurs="0"/>
+					<element name="SpatialInterval" type="tva2:SpatialIntervalType" minOccurs="0"/>
+				</choice>
+				<attribute name="source" type="tva:TVAIDRefsType" use="optional"/>
+				<attribute name="target" type="tva:TVAIDRefsType" use="optional"/>
+			</extension>
+		</complexContent>
+	</complexType>
+	<complexType name="ItemType">
+		<sequence>
+			<!--NRICP <element name="Condition" type="tva2:ConditionType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<element name="Descriptor" type="tva2:DescriptorType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRICP <element name="Choice" type="tva2:ChoiceType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<!-- NRICP <element name="Relation" type="tva2:RelationType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<!-- NRICP <choice>
+				<element name="Reference" type="tva2:ReferenceType"/> -->
+			<choice minOccurs="0" maxOccurs="unbounded">
+				<!-- NRICP <element name="Item" type="tva2:ItemType"/> -->
+				<element name="Component" type="tva2:ComponentType"/>
+			</choice>
+			<!-- NRICP </choice> -->
+		</sequence>
+		<attribute name="item_id" type="tva:TVAIDType" use="required"/>
+		<attribute name="primaryComponent" type="tva:TVAIDRefType" use="optional"/>
+		<attribute ref="xml:lang" use="optional"/>
+		<!-- 2010-11-12 richardb: Made item_id a mandatory attribute. -->
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">8.5 COMPONENT</documentation>
+	</annotation>
+	<simpleType name="InstanceMetadataIdListType">
+		<list itemType="tva:InstanceMetadataIdType"/>
+	</simpleType>
+	<complexType name="ResourceTypeType">
+		<sequence>
+			<element name="ResourceType" type="tva:ControlledTermType" minOccurs="0"/>
+		</sequence>
+		<attribute name="crid" type="tva:CRIDType" use="required"/>
+		<attribute name="imi" type="tva2:InstanceMetadataIdListType" use="optional"/>
+	</complexType>
+	<!-- NRICP <complexType name="AnchorType"> ... -->
+	<complexType name="ComponentType">
+		<sequence>
+			<!-- NRICP <element name="Condition" type="tva2:ConditionType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<element name="Descriptor" type="tva2:DescriptorType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRICP <element name="Relation" type="tva2:RelationType" minOccurs="0" maxOccurs="unbounded"/> -->
+			<choice>
+				<!-- NRICP <element name="Reference" type="tva2:ReferenceType"/> -->
+				<element name="Resource" type="tva2:ResourceTypeType"/>
+			</choice>
+			<!-- NRICP <element name="Anchor" type="tva2:AnchorType" minOccurs="0" maxOccurs="unbounded"/> -->
+		</sequence>
+		<attribute name="component_id" type="tva:TVAIDType" use="optional"/>
+		<attribute ref="xml:lang" use="optional"/>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">8.6 PACKAGE</documentation>
+	</annotation>
+	<complexType name="PackageType">
+		<sequence>
+			<!-- NRICP <element name="Declarations" type="tva2:DeclarationsType" minOccurs="0"/> -->
+			<element name="Descriptor" type="tva2:DescriptorType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="Item" type="tva2:ItemType" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute name="crid" type="tva:CRIDType" use="required"/>
+		<attributeGroup ref="tva:fragmentIdentification"/>
+		<attribute ref="xml:lang" use="optional"/>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">9. Extended User Description</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="ExtendedUserDescriptionType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">10. INFORMATION TABLES</documentation>
+	</annotation>
+	<annotation>
+		<documentation xml:lang="en">10.1 Package Table</documentation>
+	</annotation>
+	<complexType name="PackageTableType">
+		<sequence>
+			<element name="Package" type="tva2:PackageType" minOccurs="0" maxOccurs="unbounded"/>
+		</sequence>
+		<attribute ref="xml:lang" use="optional"/>
+		<attribute name="copyrightNotice" type="string" use="optional"/>
+	</complexType>
+	<annotation>
+		<documentation xml:lang="en">10.2 Interstitial Campaign Table</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="CampaignDescriptionType"> ...
+	<complexType name="InterstitialCampaignTableType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">10.3 Rights Management and Protection Information (RMPI)
+		Table</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="RMPIDescriptionType"> ...
+	<complexType name="RMPITableType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">10.4 Coupon Table</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="CouponTableType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">10.5 Targeting Information Table</documentation>
+	</annotation>
+	<!-- NRIYP
+	<complexType name="TargetingInformationTableType"> ...
+	-->
+	<annotation>
+		<documentation xml:lang="en">11 EXTENDED TV-ANYTIME INFORMATION DOCUMENT</documentation>
+	</annotation>
+	<complexType name="ExtendedTVAMainType">
+		<complexContent>
+			<extension base="tva:TVAMainType">
+				<sequence>
+					<element name="PackageTable" type="tva2:PackageTableType" minOccurs="0"/>
+					<!-- NRIP <element name="InterstitialCampaignTable" type="tva2:InterstitialCampaignTableType" minOccurs="0"/> -->
+					<!-- NRIP <element name="RMPITable" type="tva2:RMPITableType" minOccurs="0"/> -->
+					<!-- NRIP <element name="CouponTable" type="tva2:CouponTableType" minOccurs="0"/> -->
+					<!-- NRIP <element name="TargetingInformationTable" type="tva2:TargetingInformationTableType" minOccurs="0"/> -->
+					<!-- NRIP <element name="InterstitialTargetingTable" type="int:TargetingTableType" minOccurs="0"/> -->
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+</schema>

@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.ids;
 
+import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
@@ -14,5 +15,6 @@ public interface IdGenerator {
     String generateContentCrid(Content content);
     String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location);
     String generateBroadcastImi(String youViewServiceId, Broadcast broadcast);
+    String generateChannelCrid(Channel channel);
     
 }

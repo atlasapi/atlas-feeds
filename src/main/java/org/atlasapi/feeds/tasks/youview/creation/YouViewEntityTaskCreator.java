@@ -14,6 +14,7 @@ import org.atlasapi.feeds.youview.UnexpectedContentTypeException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
+import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -52,6 +53,11 @@ public class YouViewEntityTaskCreator implements TaskCreator {
     }
 
     @Override
+    public Task deleteFor(String channelCrid, Channel channel) {
+        return taskFor(channelCrid, channel, null, Action.DELETE, Status.NEW);
+    }
+
+    @Override
     public Task taskFor(String contentCrid, Content content, Action action, Status status) {
         checkArgument(status != Status.NEW, "Can't create status=NEW without payload");
         return taskFor(contentCrid, content, null, action, status);
@@ -76,6 +82,12 @@ public class YouViewEntityTaskCreator implements TaskCreator {
     }
 
     @Override
+    public Task taskFor(String channelCrid, Channel channel, Action action, Status status) {
+        checkArgument(status != Status.NEW, "Can't create status=NEW without payload");
+        return taskFor(channelCrid, channel, null, action, status);
+    }
+
+    @Override
     public Task taskFor(String contentCrid, Content content, Payload payload, Action action) {
         return taskFor(contentCrid, content, checkNotNull(payload), action, Status.NEW);
     }
@@ -93,6 +105,11 @@ public class YouViewEntityTaskCreator implements TaskCreator {
     @Override
     public Task taskFor(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Payload payload, Action action) {
         return taskFor(onDemandImi, onDemandHierarchy, checkNotNull(payload), action, Status.NEW);
+    }
+
+    @Override
+    public Task taskFor(String channelCrid, Channel channel, Payload payload, Action action) {
+        return taskFor(channelCrid, channel, checkNotNull(payload), action, Status.NEW);
     }
 
     private Task taskFor(String contentCrid, Content content, Payload payload, Action action, Status status) {
@@ -113,6 +130,11 @@ public class YouViewEntityTaskCreator implements TaskCreator {
     private Task taskFor(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(onDemandHierarchy.item().getCanonicalUri(), TVAElementType.ONDEMAND, onDemandImi);
         return createTask(onDemandHierarchy.item().getPublisher(), payload, action, destination, status);
+    }
+
+    private Task taskFor(String channelCrid, Channel channel, Payload payload, Action action, Status status) {
+        Destination destination = new YouViewDestination(channel.getCanonicalUri(), TVAElementType.CHANNEL, channelCrid);
+        return createTask(channel.getBroadcaster(), payload, action, destination, status);
     }
 
     private Task createTask(Publisher publisher, Payload payload, Action action, Destination destination, Status status) {

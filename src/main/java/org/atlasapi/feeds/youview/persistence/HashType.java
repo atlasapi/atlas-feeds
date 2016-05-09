@@ -5,5 +5,6 @@ public enum HashType {
     VERSION,
     BROADCAST,
     ON_DEMAND,
-    DELETE
+    DELETE,
+    CHANNEL
 }
