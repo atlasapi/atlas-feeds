@@ -40,8 +40,8 @@ public class RadioPlayerPiUploadTask extends RadioPlayerUploadTask {
     }
 
     private void log(AdapterLogEntry adapterLogEntry) {
-        if (log != null) {
-            log.record(adapterLogEntry);
+        if (adapterLog != null) {
+            adapterLog.record(adapterLogEntry);
         }
     }
 }

@@ -12,36 +12,51 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-//TODO: Make this extend AbstractExecutorService or similar?
 public class RadioPlayerRecordingExecutor {
 
     private static final int MAX_CONNECTIONS = 5;
-    private static final long MAX_RUN_TIME = 2*60*1000;//2 mins
+    private static final long MAX_RUN_TIME = 2 * 60 * 1_000; //2 mins
 
     private final RadioPlayerUploadResultStore recorder;
     private final ExecutorService executor;
     private final TaskCanceller canceller;
 
-
     public RadioPlayerRecordingExecutor(RadioPlayerUploadResultStore recorder) {
-        this(recorder, Executors.newFixedThreadPool(MAX_CONNECTIONS, new ThreadFactoryBuilder().setNameFormat("RadioPlayerUploader: %s").build()));
+        this(
+                recorder,
+                Executors.newFixedThreadPool(
+                        MAX_CONNECTIONS,
+                        new ThreadFactoryBuilder().setNameFormat("RadioPlayerUploader: %s").build()
+                )
+        );
     }
     
-    public RadioPlayerRecordingExecutor(RadioPlayerUploadResultStore recorder, ExecutorService service) {
+    public RadioPlayerRecordingExecutor(
+            RadioPlayerUploadResultStore recorder,
+            ExecutorService service
+    ) {
         this(recorder, service, new TaskCanceller(MAX_RUN_TIME, TimeUnit.MILLISECONDS));
     }
     
-    public RadioPlayerRecordingExecutor(RadioPlayerUploadResultStore recorder, ExecutorService service, TaskCanceller canceller) {
+    public RadioPlayerRecordingExecutor(
+            RadioPlayerUploadResultStore recorder,
+            ExecutorService service,
+            TaskCanceller canceller
+    ) {
         this.recorder = recorder;
         this.executor = service;
         this.canceller = canceller;
     }
 
-    public <T extends RadioPlayerUploadResult> LinkedBlockingQueue<Future<Iterable<T>>> submit(final Iterable<Callable<Iterable<T>>> callables) {
+    public <T extends RadioPlayerUploadResult> LinkedBlockingQueue<Future<Iterable<T>>> submit(
+            Iterable<Callable<Iterable<T>>> callables) {
+
         final LinkedBlockingQueue<Future<Iterable<T>>> results = new LinkedBlockingQueue<Future<Iterable<T>>>();
 
         for (final Callable<Iterable<T>> callable : callables) {
-            final FutureTask<Iterable<T>> task = canceller.scheduleCancellation(new RecordingCallable<T>(recorder, callable));
+            final FutureTask<Iterable<T>> task = canceller.scheduleCancellation(
+                    new RecordingCallable<>(recorder, callable)
+            );
             executor.execute(new FutureTask<Iterable<T>>(task, null) {
                 @Override
                 protected void done() {
@@ -53,11 +68,16 @@ public class RadioPlayerRecordingExecutor {
         return results;
     }
     
-    private static class RecordingCallable<T extends RadioPlayerUploadResult> implements Callable<Iterable<T>> {
+    private static class RecordingCallable<T extends RadioPlayerUploadResult>
+            implements Callable<Iterable<T>> {
+
         private final Callable<Iterable<T>> callable;
         private final RadioPlayerUploadResultStore recorder;
 
-        public RecordingCallable(RadioPlayerUploadResultStore recorder, Callable<Iterable<T>> callable) {
+        public RecordingCallable(
+                RadioPlayerUploadResultStore recorder,
+                Callable<Iterable<T>> callable
+        ) {
             this.recorder = recorder;
             this.callable = callable;
         }
@@ -79,26 +99,37 @@ public class RadioPlayerRecordingExecutor {
         private final ScheduledExecutorService canceller;
         
         public TaskCanceller(long delay, TimeUnit unit) {
-            this(delay, unit, Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("RadioPlayerUploaderCanceller: %s").build()));
+            this(
+                    delay,
+                    unit,
+                    Executors.newSingleThreadScheduledExecutor(
+                            new ThreadFactoryBuilder()
+                                    .setNameFormat("RadioPlayerUploaderCanceller: %s")
+                                    .build()
+                    )
+            );
         }
 
         public TaskCanceller(long delay, TimeUnit unit, ScheduledExecutorService executor) {
             this.delay = delay;
             this.unit = unit;
-            canceller = executor;
+            this.canceller = executor;
         }
         
-        private ScheduledFuture<Void> submitCancellationCallable(final CancellingTask<?> cancellingTask) {
-            return canceller.schedule(new Callable<Void>(){
-                public Void call(){
+        private ScheduledFuture<Void> submitCancellationCallable(
+                final CancellingTask<?> cancellingTask) {
+            Callable<Void> callable = new Callable<Void>() {
+
+                public Void call() {
                     cancellingTask.cancel(true);
                     return null;
                 }
-            }, delay, unit);
+            };
+            return canceller.schedule(callable, delay, unit);
         }
         
         public <T> FutureTask<T> scheduleCancellation(Callable<T> callable) {
-            return new CancellingTask<T>(callable);
+            return new CancellingTask<>(callable);
         }
         
         private class CancellingTask<T> extends FutureTask<T> {
@@ -113,8 +144,6 @@ public class RadioPlayerRecordingExecutor {
                 super.run();
                 cancellationFuture.cancel(true);
             }
-            
         }
     }
-    
 }
