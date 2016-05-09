@@ -18,59 +18,69 @@ import com.metabroadcast.common.media.MimeType;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.atlasapi.feeds.upload.FileUploadResult.failedUpload;
 import static org.atlasapi.feeds.upload.FileUploadResult.successfulUpload;
-import static org.atlasapi.persistence.logging.AdapterLogEntry.errorEntry;
 
 public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPlayerUploadResult>> {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(RadioPlayerUploadTask.class);
+
     private final Iterable<FileUploadService> remoteTargets;
-    protected final AdapterLog log;
+    protected final AdapterLog adapterLog;
     protected final RadioPlayerFeedSpec spec;
     private final FileType type;
     private final Publisher publisher;
 
-    public RadioPlayerUploadTask(FileType type, Iterable<FileUploadService> remoteTargets, RadioPlayerFeedSpec spec, AdapterLog log, Publisher publisher) {
+    public RadioPlayerUploadTask(
+            FileType type,
+            Iterable<FileUploadService> remoteTargets,
+            RadioPlayerFeedSpec spec,
+            AdapterLog adapterLog,
+            Publisher publisher
+    ) {
         this.type = type;
         this.remoteTargets = remoteTargets;
         this.spec = spec;
-        this.log = log;
+        this.adapterLog = adapterLog;
         this.publisher = publisher;
     }
 
     @Override
     public Iterable<RadioPlayerUploadResult> call() throws Exception {
         
-        log.record(AdapterLogEntry.infoEntry().withDescription("Starting upload task for %s", spec).withSource(getClass()));
+        logInfo("Starting upload task for %s", spec);
         
         try {
-            byte[] filebytes = getFileContent();
-            FileUpload upload = new FileUpload.Builder(spec.filename(), filebytes)
+            byte[] fileBytes = getFileContent();
+
+            FileUpload upload = new FileUpload.Builder(spec.filename(), fileBytes)
                     .withContentType(MimeType.TEXT_XML)
                     .build();
-            
-            log.record(AdapterLogEntry.infoEntry().withDescription("Compiled file for uploading for %s", spec).withSource(getClass()));
-            
+
+            logInfo("Compiled file for uploading for %s", spec);
+
             Iterable<RadioPlayerUploadResult> results = doUploads(upload);
-            
-            log.record(AdapterLogEntry.infoEntry().withDescription("Successfully completed upload task for %s", spec).withSource(getClass()));
-            
+
+            logInfo("Successfully completed upload task for %s", spec);
+
             return results;
-        } catch (NoItemsException e) {
-            return failedUploads(e);
         } catch (Exception e) {
-            log.record(AdapterLogEntry.errorEntry().withCause(e).withDescription("Failed upload task for %s", spec).withSource(getClass()));
+            logError(e, "Failed upload task for %s", spec);
             return failedUploads(e);
         }
     }
+
+    protected abstract boolean isFailure(NoItemsException e);
 
     private byte[] getFileContent() throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         RadioPlayerFeedCompiler.valueOf(publisher, type).compileFeedFor(spec, out);
         return out.toByteArray();
     }
-    
+
     private Iterable<RadioPlayerUploadResult> doUploads(final FileUpload upload) {
         ImmutableList.Builder<RadioPlayerUploadResult> results = ImmutableList.builder();
         for (FileUploadService target : remoteTargets) {
@@ -83,7 +93,7 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
                 results.add(nothingToUpload(target));
             }
             catch (InterruptedException e) {
-                log.record(errorEntry().withCause(e).withDescription("Upload of " + spec + " was interrupted").withSource(getClass()));
+                logError(e, "Upload of %s was interrupted", spec);
                 results.add(failure(target, e));
                 break;
             }
@@ -92,21 +102,37 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
     }
 
     private Iterable<RadioPlayerUploadResult> failedUploads(final Exception e) {
-        return Iterables.transform(remoteTargets, new Function<FileUploadService, RadioPlayerUploadResult>() {
-            @Override
-            public RadioPlayerUploadResult apply(FileUploadService input) {
-                return failure(input, e);
-            }
+        return Iterables.transform(
+                remoteTargets,
+                new Function<FileUploadService, RadioPlayerUploadResult>() {
+                        @Override
+                    public RadioPlayerUploadResult apply(FileUploadService input) {
+                        return failure(input, e);
+                    }
+                }
+        );
+    }
 
-        });
+    private RadioPlayerUploadResult uploadTo(FileUploadService uploadService, FileUpload upload)
+            throws InterruptedException {
+        return new RadioPlayerUploadResult(
+                type,
+                spec.getService(),
+                spec.getDay(),
+                uploadService.upload(upload)
+        );
     }
-    
-    private RadioPlayerUploadResult uploadTo(FileUploadService uploadService, FileUpload upload) throws InterruptedException {
-        return new RadioPlayerUploadResult(type, spec.getService(), spec.getDay(), uploadService.upload(upload));
-    }
-    
+
     private RadioPlayerUploadResult failure(FileUploadService input, Exception e) {
-        return new RadioPlayerUploadResult(type, spec.getService(), spec.getDay(), failedUpload(input.serviceIdentifier(), spec.filename()).withCause(e).copyWithMessage(e.getMessage()));
+        return new RadioPlayerUploadResult(
+                type,
+                spec.getService(),
+                spec.getDay(),
+                failedUpload(
+                        input.serviceIdentifier(),
+                        spec.filename()).withCause(e).copyWithMessage(e.getMessage()
+                )
+        );
     }
 
     private RadioPlayerUploadResult nothingToUpload(FileUploadService input) {
@@ -117,6 +143,23 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
                 successfulUpload(input.serviceIdentifier(), spec.filename())
         );
     }
-    
-    protected abstract boolean isFailure(NoItemsException e);
+
+    private void logInfo(String message, RadioPlayerFeedSpec spec) {
+        adapterLog.record(
+                AdapterLogEntry.infoEntry()
+                        .withDescription(message, spec)
+                        .withSource(getClass())
+        );
+        log.info(String.format(message, spec));
+    }
+
+    private void logError(Exception e, String message, RadioPlayerFeedSpec spec) {
+        adapterLog.record(
+                AdapterLogEntry.errorEntry()
+                        .withCause(e)
+                        .withDescription(message, spec)
+                        .withSource(getClass())
+        );
+        log.error(String.format(message, spec), e);
+    }
 }
