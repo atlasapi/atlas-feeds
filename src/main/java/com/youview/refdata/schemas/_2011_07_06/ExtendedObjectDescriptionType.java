@@ -29,7 +29,7 @@ import tva.mpeg7._2008.UniqueIDType;
  *     &lt;extension base="{urn:tva:metadata:extended:2010}ObjectDescriptionType">
  *       &lt;sequence>
  *         &lt;element name="OtherIdentifier" type="{urn:tva:mpeg7:2008}UniqueIDType" maxOccurs="unbounded" minOccurs="0"/>
- *         &lt;element name="ServiceEndpoint" type="{http://refdata.youview.com/schemas/2011-07-06}ServiceEndpointType" maxOccurs="unbounded" minOccurs="0"/>
+ *         &lt;element name="ServiceEndpoint" type="{http://refdata.youview.com/schemas/Metadata/2012-11-19}ServiceEndpointType" maxOccurs="unbounded" minOccurs="0"/>
  *       &lt;/sequence>
  *     &lt;/extension>
  *   &lt;/complexContent>

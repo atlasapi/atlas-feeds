@@ -5,5 +5,5 @@
 // Generated on: 2013.02.25 at 10:09:26 AM GMT 
 //
 
-@javax.xml.bind.annotation.XmlSchema(namespace = "http://refdata.youview.com/schemas/2011-07-06", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
+@javax.xml.bind.annotation.XmlSchema(namespace = "http://refdata.youview.com/schemas/Metadata/2012-11-19", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED)
 package com.youview.refdata.schemas._2011_07_06;

@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview.nitro;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
@@ -23,6 +24,7 @@ public final class NitroIdGenerator implements IdGenerator {
     private static final Joiner JOIN_ON_COLON = Joiner.on(":").useForNull("");
     private static final String CRID_PREFIX = "crid://nitro.bbc.co.uk/iplayer/youview/";
     private static final String IMI_PREFIX = "imi:www.nitro.bbc.co.uk/";
+    private static final String CHANNEL_CRID_PREFIX = "crid://nitro.bbc.co.uk/services";
     
     private final HashFunction hasher;
 
@@ -49,7 +51,12 @@ public final class NitroIdGenerator implements IdGenerator {
     public String generateBroadcastImi(String youViewServiceId, Broadcast broadcast) {
         return IMI_PREFIX + hasher.hashString(generateBroadcastIdFor(youViewServiceId, broadcast), Charsets.UTF_8);
     }
-    
+
+    @Override
+    public String generateChannelCrid(Channel channel) {
+        return CHANNEL_CRID_PREFIX + pidFrom(channel);
+    }
+
     private String generateOnDemandIdFor(Item item, Version version, Encoding encoding, Location location) {
 //      scheduled_start
 //      scheduled_end
