@@ -12,6 +12,7 @@ import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.persistence.BroadcastEventDeduplicator;
+import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
@@ -44,6 +45,17 @@ public class TVAPayloadCreator implements PayloadCreator {
         this.converter = checkNotNull(converter);
         this.broadcastEventDeduplicator = checkNotNull(broadcastEventDeduplicator);
         this.clock = checkNotNull(clock);
+    }
+
+    @Override
+    public Payload payloadFrom(Channel channel)
+            throws PayloadGenerationException {
+        try {
+            JAXBElement<TVAMainType> tvaElem = generator.generateChannelTVAFrom(channel);
+            return new Payload(converter.convert(tvaElem), clock.now());
+        } catch (TvaGenerationException e) {
+            throw new PayloadGenerationException(e);
+        }
     }
 
     @Override

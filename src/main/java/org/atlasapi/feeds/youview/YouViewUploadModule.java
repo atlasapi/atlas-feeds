@@ -242,7 +242,8 @@ public class YouViewUploadModule {
                         revocationProcessor(), 
                         taskProcessor(),
                         scheduleResolver, 
-                        channelResolver, 
+                        channelResolver,
+                        nitroIdGenerator,
                         clock
                    );
     }

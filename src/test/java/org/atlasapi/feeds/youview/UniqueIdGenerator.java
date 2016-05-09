@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview;
 import java.util.UUID;
 
 import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
@@ -31,6 +32,11 @@ public class UniqueIdGenerator implements IdGenerator {
 
     @Override
     public String generateBroadcastImi(String youViewServiceId, Broadcast broadcast) {
+        return randomString();
+    }
+
+    @Override
+    public String generateChannelCrid(Channel channel) {
         return randomString();
     }
 

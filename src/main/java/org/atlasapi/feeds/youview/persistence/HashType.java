@@ -4,5 +4,6 @@ public enum HashType {
     CONTENT,
     VERSION,
     BROADCAST,
-    ON_DEMAND
+    ON_DEMAND,
+    CHANNEL
 }

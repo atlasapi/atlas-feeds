@@ -27,6 +27,7 @@ import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
@@ -99,6 +100,7 @@ public class YouViewUploadController {
     private final ChannelResolver channelResolver;
     private final SubstitutionTableNumberCodec channelIdCodec;
     private final ListeningExecutorService executor;
+    private final IdGenerator idGenerator;
     
     public YouViewUploadController(
             ContentResolver contentResolver,
@@ -110,6 +112,7 @@ public class YouViewUploadController {
             TaskProcessor taskProcessor, 
             ScheduleResolver scheduleResolver,
             ChannelResolver channelResolver,
+            IdGenerator idGenerator,
             Clock clock
     ) {
         this.contentResolver = checkNotNull(contentResolver);
@@ -124,10 +127,31 @@ public class YouViewUploadController {
         this.scheduleResolver = checkNotNull(scheduleResolver);
         this.channelResolver = checkNotNull(channelResolver);
         this.channelIdCodec = new SubstitutionTableNumberCodec();
-
+        this.idGenerator = idGenerator;
         this.executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
     }
-    
+
+
+    @RequestMapping(value="/feeds/youview/{publisher}/channel/upload")
+    public void uploadSchedule(HttpServletResponse response,
+            @PathVariable("publisher") String publisherStr,
+            @RequestParam("channel") String channelStr
+    ) throws IOException {
+
+        Channel channel = channelResolver.fromId(channelIdCodec.decode(channelStr).longValue())
+                .requireValue();
+
+        StringBuilder sb = new StringBuilder();
+        try {
+            sb.append("Uploading " + channel.getCanonicalUri() + System.lineSeparator());
+            uploadChannel(true, channel);
+            sb.append("Done uploading " + channel.getCanonicalUri() + System.lineSeparator());
+        } catch (PayloadGenerationException e) {
+            sb.append("Error uploading " + e.getMessage());
+        }
+        sendOkResponse(response, sb.toString());
+    }
+
     @RequestMapping(value="/feeds/youview/{publisher}/schedule/upload")
     public void uploadSchedule(HttpServletResponse response,
             @PathVariable("publisher") String publisherStr,
@@ -370,6 +394,13 @@ public class YouViewUploadController {
             }
         }
     }
+
+    private void uploadChannel(boolean immediate, Channel channel)
+            throws PayloadGenerationException {
+        Payload p = payloadCreator.payloadFrom(channel);
+        Task task = taskCreator.taskFor(idGenerator.generateChannelCrid(channel), channel, p, Action.UPDATE);
+        processTask(task, immediate);
+     }
 
     private void resolveAndUploadParent(ParentRef ref, boolean immediate) throws PayloadGenerationException {
         if (ref == null) {
