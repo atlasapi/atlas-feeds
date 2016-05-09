@@ -58,6 +58,23 @@ public class JaxbTvAnytimeGenerator implements TvAnytimeGenerator {
     }
 
     @Override
+    public JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel, Channel parentChannel)
+            throws TvaGenerationException {
+        try {
+            ServiceInformationType serviceInformationElem = elementCreator.createChannelElementFor(channel, parentChannel);
+            return createTVAMainFrom(
+                    ImmutableSet.<GroupInformationType>of(),
+                    ImmutableSet.<ProgramInformationType>of(),
+                    ImmutableSet.<BroadcastEventType>of(),
+                    ImmutableSet.<OnDemandProgramType>of(),
+                    ImmutableSet.of(serviceInformationElem)
+            );
+        } catch (Exception e) {
+            throw new TvaGenerationException("Exception occurred while processing " + channel.getCanonicalUri(), e);
+        }
+    }
+
+    @Override
     public JAXBElement<TVAMainType> generateContentTVAFrom(Content content)
             throws TvaGenerationException {
         try {

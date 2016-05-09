@@ -1,12 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- TV-Anytime extension schema -->
 <!-- Richard Bradbury, BBC Research & Development -->
-<!-- [29.March.2010, 23.September.2010, 12.November.2010, 7.December.2010, 18.February.2011, 6.July.2011] -->
-<!-- Copyright (c) 2010, 2011 YouView TV Limited -->
-<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2010" xmlns:tva2="urn:tva:metadata:extended:2010" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:yv="http://refdata.youview.com/schemas/2011-07-06" targetNamespace="http://refdata.youview.com/schemas/2011-07-06" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<!-- [29.March.2010, 23.September.2010, 12.November.2010, 7.December.2010, 18.February.2011, 6.July.2011, 25.October.2011, 7.July.2012, 28.August.2012, 26.September.2012, 16.October.2012, 19.November.2012] -->
+<!-- Copyright (c) 2010, 2011, 2012 YouView TV Limited -->
+<!--
+=======================================================
+YouView B2B Metadata Supply Schema: Profile of TV-Anytime Extended Schema
+======================================================= 
+25/10/2011, Michael Sullivan. CANTEC-339:
+- added VersionedControlledTermType
+- adjusted namespaces for revised dates
+- added this history block
+12/12/2011, Richard Bradbury
+- added UserGroupTypeType and TargetUserGroupType
+11/07/2012, Richard Bradbury
+- added ContentReferencingInformation to ServiceInformationType for IP Channels
+- added ActualStartTime/ActualEndTime/ActualDuration to ScheduleEventType for IP Channels
+28/08/2012, Richard Bradbury
+- added bit rate attributes to Locator
+- added mandatory Free flag to ExtendedServiceInformationType
+26/09/2012, Richard Bradbury
+- corrected capitalisation of Locator[@bitrate] to Locator[@bitRate]
+16/10/2012, Richard Bradbury
+- added <ParentalGuidance> to ExtendedInstanceDescriptionType
+23/10/2012, Michael Sullivan
+- made Locator[@bitrate] optional
+19/11/2012, Richard Bradbury
+- added <ParentalGuidance> to ExtendedServiceInformationType [SPECWIP-3501]
+- added <OtherIdentifier> to ExtendedServiceInformationType [SPECWIP-3502]
+=======================================================
+-->
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns:tva="urn:tva:metadata:2010" xmlns:tva2="urn:tva:metadata:extended:2010" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:yv="http://refdata.youview.com/schemas/Metadata/2012-11-19" targetNamespace="http://refdata.youview.com/schemas/Metadata/2012-11-19" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<!-- -->
-	<import namespace="urn:tva:metadata:extended:2010" schemaLocation="tva2_metadata_3-3_v141_youview-profile_2011-07-06.xsd"/>
-	<import namespace="urn:tva:metadata:2010" schemaLocation="tva_metadata_3-1_v161_youview-profile_2011-07-06.xsd"/>
+	<import namespace="urn:tva:metadata:extended:2010" schemaLocation="tva2_metadata_3-3_v141_youview-profile_2012-11-30.xsd"/>
+	<import namespace="urn:tva:metadata:2010" schemaLocation="tva_metadata_3-1_v161_youview-profile_2012-11-30.xsd"/>
 	<import namespace="urn:tva:mpeg7:2008" schemaLocation="tva_mpeg7_2008.xsd"/>
 	<!-- -->
 	<!-- -->
@@ -35,13 +62,55 @@
 		</complexContent>
 	</complexType>
 	<!-- -->
+	<!-- User Group targeting -->
+	<simpleType name="UserGroupTypeType">
+		<restriction base="string">
+			<enumeration value="discovery"/>
+			<enumeration value="acquisition"/>
+			<!-- Limit the discoverability of a Content item or of an Application. -->
+			<!-- For trialling of Applications a different Version is acquired and installed. -->
+		</restriction>
+	</simpleType>
+	<!-- -->
+	<complexType name="TargetUserGroupType">
+		<complexContent>
+			<extension base="tva:ControlledTermType">
+				<attribute name="type" type="yv:UserGroupTypeType" use="optional" default="discovery"/>
+			</extension>
+		</complexContent>
+	</complexType>
+	<!-- -->
 	<!-- Extended targeting -->
 	<complexType name="ExtendedTargetingInformationType">
 		<complexContent>
 			<extension base="tva2:TargetingInformationType">
 				<sequence>
 					<element name="TargetPlace" type="yv:TargetPlaceType" minOccurs="0" maxOccurs="unbounded"/>
-					<element name="TargetUserGroup" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
+					<element name="TargetUserGroup" type="yv:TargetUserGroupType" minOccurs="0" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<!-- -->
+	<!-- Add versioning controlled terms -->
+	<complexType name="VersionedControlledTermType">
+		<complexContent>
+			<extension base="tva:ControlledTermType">
+				<sequence>
+					<element name="Version" type="tva2:VersionType" minOccurs="0" maxOccurs="unbounded"/>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	<!-- -->
+	<!-- Add additional elements to ScheduleEvent -->
+	<complexType name="ExtendedScheduleEventType">
+		<complexContent>
+			<extension base="tva:ScheduleEventType">
+				<sequence>
+					<element name="ActualStartTime" type="dateTime" minOccurs="0"/>
+					<element name="ActualEndTime" type="dateTime" minOccurs="0"/>
+					<element name="ActualDuration" type="duration" minOccurs="0"/>
 				</sequence>
 			</extension>
 		</complexContent>
@@ -61,6 +130,9 @@
 		<simpleContent>
 			<extension base="anyURI">
 				<attribute name="contentDistributionNetwork" type="mpeg7:termReferenceType" use="required"/>
+				<attribute name="bitRate" type="positiveInteger" use="optional"/>
+				<attribute name="minimumBitRate" type="positiveInteger" use="optional"/>
+				<attribute name="maximumBitRate" type="positiveInteger" use="optional"/>
 			</extension>
 		</simpleContent>
 	</complexType>
@@ -90,6 +162,7 @@
 		<complexContent>
 			<extension base="tva:InstanceDescriptionType">
 				<sequence>
+					<element name="ParentalGuidance" type="tva:TVAParentalGuidanceType" minOccurs="0" maxOccurs="unbounded"/>
 					<element name="TargetingInformation" type="tva2:TargetingInformationType" minOccurs="0"/>
 				</sequence>
 			</extension>
@@ -101,7 +174,12 @@
 		<complexContent>
 			<extension base="tva:ServiceInformationType">
 				<sequence>
+					<element name="ParentalGuidance" type="tva:TVAParentalGuidanceType" minOccurs="0"/>
+					<element name="AVAttributes" type="tva:AVAttributesType" minOccurs="0"/>
+					<element name="Free" type="tva:FlagType" minOccurs="0"/>
+					<element name="OtherIdentifier" type="mpeg7:UniqueIDType" minOccurs="0" maxOccurs="unbounded"/>
 					<element name="TargetingInformation" type="tva2:TargetingInformationType" minOccurs="0"/>
+					<element name="ContentReferencingInformation" type="yv:ContentReferencingInformationType" minOccurs="0"/>
 				</sequence>
 			</extension>
 		</complexContent>

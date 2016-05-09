@@ -27,7 +27,7 @@ import tva.metadata.extended._2010.PackageTableType;
  *   &lt;complexContent>
  *     &lt;extension base="{urn:tva:metadata:extended:2010}PackageTableType">
  *       &lt;sequence>
- *         &lt;element name="PackageMembership" type="{http://refdata.youview.com/schemas/2011-07-06}PackageMembershipType" maxOccurs="unbounded" minOccurs="0"/>
+ *         &lt;element name="PackageMembership" type="{http://refdata.youview.com/schemas/Metadata/2012-11-19}PackageMembershipType" maxOccurs="unbounded" minOccurs="0"/>
  *       &lt;/sequence>
  *     &lt;/extension>
  *   &lt;/complexContent>

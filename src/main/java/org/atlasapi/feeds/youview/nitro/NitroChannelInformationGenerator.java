@@ -1,25 +1,31 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import org.atlasapi.feeds.tvanytime.ChannelElementGenerator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Image;
+import org.atlasapi.media.entity.Publisher;
 
 import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas._2011_07_06.ExtendedServiceInformationType;
+import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
+import com.youview.refdata.schemas._2011_07_06.TargetPlaceType;
+import org.apache.commons.lang.StringUtils;
 import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.GenreType;
-import tva.metadata._2010.RelatedMaterialType;
 import tva.metadata._2010.ServiceInformationNameType;
 import tva.metadata._2010.ServiceInformationType;
 import tva.metadata._2010.SynopsisLengthType;
 import tva.metadata._2010.SynopsisType;
-import tva.metadata.extended._2010.ContentAttributesType;
 import tva.metadata.extended._2010.ContentPropertiesType;
 import tva.metadata.extended._2010.ExtendedRelatedMaterialType;
 import tva.metadata.extended._2010.StillImageContentAttributesType;
-import tva.metadata.extended._2010.TargetingInformationType;
 import tva.mpeg7._2008.MediaLocatorType;
 import tva.mpeg7._2008.TextualType;
+import tva.mpeg7._2008.UniqueIDType;
 
 public class NitroChannelInformationGenerator implements ChannelElementGenerator {
 
@@ -30,10 +36,12 @@ public class NitroChannelInformationGenerator implements ChannelElementGenerator
     private final static String MAIN_GENRE_HREF = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
     private final static String OTHER_GENRE_HREF_1 = "http://refdata.youview.com/mpeg7cs/YouViewServiceTypeCS/2010-10-25#linear_service-broadcast_channel";
     private final static String OTHER_GENRE_HREF_2 = "http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-bbc";
-    private final static String IMAGE_INTENDED_USE_1 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary";
+    private final static String IMAGE_INTENDED_USE_MAIN = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary";
+    private final static String IMAGE_INTENDED_USE_1 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-ident";
     private final static String IMAGE_INTENDED_USE_2 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog";
-    public static final String HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
-    public static final String FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS2001:1";
+    private final static String HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
+    private final static String FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS2001:1";
+    private final static String AUTHORITY = "applicationPublisher.youview.com";
 
     @Override
     public ServiceInformationType generate(Channel channel) {
@@ -44,15 +52,57 @@ public class NitroChannelInformationGenerator implements ChannelElementGenerator
         setDescriptions(channel, serviceInformationType);
         setGenres(serviceInformationType);
 
-        //temporary solution, will be changed soon (09.05.2016)
-        for (int i = 0; i < 2; i++) {
-            setRelatedMaterial(channel, serviceInformationType);
-        }
+        setRelatedMaterial(channel, serviceInformationType, IMAGE_INTENDED_USE_1);
+        setRelatedMaterial(channel, serviceInformationType, IMAGE_INTENDED_USE_2);
+
+        setOtherIdentifier(channel, serviceInformationType);
+        setTargetingInformation(serviceInformationType);
         return serviceInformationType;
     }
 
+    private void setTargetingInformation(ExtendedServiceInformationType serviceInformationType) {
+        ExtendedTargetingInformationType targetingInfo = new ExtendedTargetingInformationType();
+        TargetPlaceType targetPlace = new TargetPlaceType();
+        targetPlace.setHref(MISSING);
+        targetPlace.setExclusive(true);
+        targetingInfo.getTargetPlace().add(targetPlace);
+        serviceInformationType.setTargetingInformation(targetingInfo);
+    }
+
+    private void setOtherIdentifier(Channel channel,
+            ExtendedServiceInformationType serviceInformationType) {
+        Publisher broadcaster = channel.getBroadcaster();
+        if (broadcaster != null) {
+            UniqueIDType uniqueIDType = new UniqueIDType();
+            uniqueIDType.setAuthority(AUTHORITY);
+            uniqueIDType.setValue(invertBroadcaster(broadcaster.key()));
+            serviceInformationType.getOtherIdentifier().add(uniqueIDType);
+        }
+    }
+
+    private String invertBroadcaster(String key) {
+        List<String> keyParts = Arrays.asList(key.split("\\."));
+        Collections.reverse(keyParts);
+        return StringUtils.join(keyParts, '.');
+    }
+
+    @Override
+    public ServiceInformationType generate(Channel channel, Channel parentChannel) {
+        ServiceInformationType generated = generate(channel);
+        setShortDescriptionFromParent(parentChannel, generated);
+        return generated;
+    }
+
+    private void setShortDescriptionFromParent(Channel parentChannel,
+            ServiceInformationType generated) {
+        SynopsisType shortDescription = new SynopsisType();
+        shortDescription.setLength(SynopsisLengthType.SHORT);
+        shortDescription.setValue(parentChannel.getTitle());
+        generated.getServiceDescription().add(shortDescription);
+    }
+
     private void setRelatedMaterial(Channel channel,
-            ServiceInformationType serviceInformationType) {
+            ServiceInformationType serviceInformationType, String imageIntendedUse) {
         Image image = Iterables.getFirst(channel.getImages(), null);
         ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
         if (image != null) {
@@ -64,22 +114,23 @@ public class NitroChannelInformationGenerator implements ChannelElementGenerator
             relatedMaterial.setFormat(format);
             setMediaLocator(image, relatedMaterial);
             setPromotionalText(channel, relatedMaterial);
-            setContentProperties(image, relatedMaterial);
+            setContentProperties(image, relatedMaterial, imageIntendedUse);
             serviceInformationType.getRelatedMaterial().add(relatedMaterial);
         }
     }
 
-    private void setContentProperties(Image image, ExtendedRelatedMaterialType relatedMaterialType) {
+    private void setContentProperties(Image image, ExtendedRelatedMaterialType relatedMaterialType,
+            String imageIntendedUse) {
         ContentPropertiesType contentProperties = new ContentPropertiesType();
         StillImageContentAttributesType contentAttributes = new StillImageContentAttributesType();
         contentAttributes.setHeight(image.getHeight());
         contentAttributes.setWidth(image.getWidth());
-        ControlledTermType intendedUse1 = new ControlledTermType();
-        intendedUse1.setHref(IMAGE_INTENDED_USE_1);
-        ControlledTermType intendedUse2 = new ControlledTermType();
-        intendedUse2.setHref(IMAGE_INTENDED_USE_2);
-        contentAttributes.getIntendedUse().add(intendedUse1);
-        contentAttributes.getIntendedUse().add(intendedUse2);
+        ControlledTermType mainIntendedUse = new ControlledTermType();
+        mainIntendedUse.setHref(IMAGE_INTENDED_USE_MAIN);
+        contentAttributes.getIntendedUse().add(mainIntendedUse);
+        ControlledTermType intendedUse = new ControlledTermType();
+        intendedUse.setHref(imageIntendedUse);
+        contentAttributes.getIntendedUse().add(intendedUse);
         contentProperties.getContentAttributes().add(contentAttributes);
         relatedMaterialType.setContentProperties(contentProperties);
     }
@@ -97,10 +148,6 @@ public class NitroChannelInformationGenerator implements ChannelElementGenerator
     }
 
     private void setDescriptions(Channel channel, ServiceInformationType serviceInformationType) {
-        SynopsisType shortDescription = new SynopsisType();
-        shortDescription.setLength(SynopsisLengthType.SHORT);
-        shortDescription.setValue(channel.getTitle());
-        serviceInformationType.getServiceDescription().add(shortDescription);
         SynopsisType longDescription = new SynopsisType();
         longDescription.setLength(SynopsisLengthType.LONG);
         longDescription.setValue(channel.getTitle());
@@ -110,8 +157,11 @@ public class NitroChannelInformationGenerator implements ChannelElementGenerator
     private void setNameAndOwner(Channel channel, ServiceInformationType serviceInformationType) {
         ServiceInformationNameType name = new ServiceInformationNameType();
         name.setValue(channel.getTitle());
+        Publisher broadcaster = channel.getBroadcaster();
+        if (broadcaster != null) {
+            serviceInformationType.getOwner().add(broadcaster.title());
+        }
         serviceInformationType.getName().add(name);
-        serviceInformationType.getOwner().add(channel.getBroadcaster().title());
     }
 
     private void setGenres(ServiceInformationType serviceInformationType) {

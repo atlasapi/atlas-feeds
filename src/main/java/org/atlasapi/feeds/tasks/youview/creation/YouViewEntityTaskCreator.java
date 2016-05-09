@@ -134,7 +134,7 @@ public class YouViewEntityTaskCreator implements TaskCreator {
 
     private Task taskFor(String channelCrid, Channel channel, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(channel.getCanonicalUri(), TVAElementType.CHANNEL, channelCrid);
-        return createTask(channel.getBroadcaster(), payload, action, destination, status);
+        return createTask(channel.getSource(), payload, action, destination, status);
     }
 
     private Task createTask(Publisher publisher, Payload payload, Action action, Destination destination, Status status) {

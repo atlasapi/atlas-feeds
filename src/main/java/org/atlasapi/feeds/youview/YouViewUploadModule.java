@@ -244,7 +244,8 @@ public class YouViewUploadModule {
                         scheduleResolver, 
                         channelResolver,
                         nitroIdGenerator,
-                        clock
+                        clock,
+                        taskProcessor("nitro").get()
                    );
     }
 
@@ -299,7 +300,7 @@ public class YouViewUploadModule {
     private PayloadCreator payloadCreator() throws JAXBException, SAXException {
         Converter<JAXBElement<TVAMainType>, String> outputConverter = new TVAnytimeStringConverter();
         TvAnytimeGenerator tvaGenerator = enableValidationIfAppropriate(generator);
-        return new TVAPayloadCreator(tvaGenerator, outputConverter, rollingWindowBroadcastEventDeduplicator(), clock);
+        return new TVAPayloadCreator(tvaGenerator, channelResolver, outputConverter, rollingWindowBroadcastEventDeduplicator(), clock);
     }
     
     private TvAnytimeGenerator enableValidationIfAppropriate(TvAnytimeGenerator generator) 

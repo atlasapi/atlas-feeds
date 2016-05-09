@@ -101,6 +101,7 @@ public class YouViewUploadController {
     private final SubstitutionTableNumberCodec channelIdCodec;
     private final ListeningExecutorService executor;
     private final IdGenerator idGenerator;
+    private final TaskProcessor nitroTaskProcessor;
     
     public YouViewUploadController(
             ContentResolver contentResolver,
@@ -113,7 +114,8 @@ public class YouViewUploadController {
             ScheduleResolver scheduleResolver,
             ChannelResolver channelResolver,
             IdGenerator idGenerator,
-            Clock clock
+            Clock clock,
+            TaskProcessor nitroTaskProcessor
     ) {
         this.contentResolver = checkNotNull(contentResolver);
         this.taskCreator = checkNotNull(taskCreator);
@@ -129,17 +131,22 @@ public class YouViewUploadController {
         this.channelIdCodec = new SubstitutionTableNumberCodec();
         this.idGenerator = idGenerator;
         this.executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+        this.nitroTaskProcessor = nitroTaskProcessor;
     }
 
 
-    @RequestMapping(value="/feeds/youview/{publisher}/channel/upload")
-    public void uploadSchedule(HttpServletResponse response,
-            @PathVariable("publisher") String publisherStr,
+    @RequestMapping(value="/feeds/youview/channel/upload", method = RequestMethod.POST)
+    public void uploadChannel(HttpServletResponse response,
             @RequestParam("channel") String channelStr
     ) throws IOException {
 
         Channel channel = channelResolver.fromId(channelIdCodec.decode(channelStr).longValue())
                 .requireValue();
+
+        if (!channel.getBroadcaster().key().equals("bbc.co.uk")) {
+            sendError(response, SC_BAD_REQUEST, "Only BBC channels can be uploaded");
+            return;
+        }
 
         StringBuilder sb = new StringBuilder();
         try {
@@ -399,7 +406,7 @@ public class YouViewUploadController {
             throws PayloadGenerationException {
         Payload p = payloadCreator.payloadFrom(channel);
         Task task = taskCreator.taskFor(idGenerator.generateChannelCrid(channel), channel, p, Action.UPDATE);
-        processTask(task, immediate);
+        processChannelTask(task, immediate);
      }
 
     private void resolveAndUploadParent(ParentRef ref, boolean immediate) throws PayloadGenerationException {
@@ -428,6 +435,17 @@ public class YouViewUploadController {
 
         if (immediate) {
             taskProcessor.process(savedTask);
+        }
+    }
+
+    private void processChannelTask(Task task, boolean immediate) {
+        if (task == null) {
+            return;
+        }
+        Task savedTask = taskStore.save(Task.copy(task).withManuallyCreated(true).build());
+
+        if (immediate) {
+            nitroTaskProcessor.process(savedTask);
         }
     }
     

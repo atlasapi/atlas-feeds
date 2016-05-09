@@ -34,6 +34,13 @@ public class PublisherSpecificTVAnytimeGenerator implements TvAnytimeGenerator {
     }
 
     @Override
+    public JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel, Channel parentChannel)
+            throws TvaGenerationException {
+        TvAnytimeGenerator delegate = fetchDelegateOrThrow(channel);
+        return delegate.generateChannelTVAFrom(channel, parentChannel);
+    }
+
+    @Override
     public JAXBElement<TVAMainType> generateContentTVAFrom(Content content)
             throws TvaGenerationException {
         TvAnytimeGenerator delegate = fetchDelegateOrThrow(content);
@@ -112,7 +119,7 @@ public class PublisherSpecificTVAnytimeGenerator implements TvAnytimeGenerator {
     }
 
     private TvAnytimeGenerator fetchDelegateOrThrow(Channel channel) {
-        Publisher publisher = channel.getBroadcaster();
+        Publisher publisher = Publisher.BBC_NITRO;
         TvAnytimeGenerator delegate = generators.get(publisher);
         if (delegate == null) {
             throw new InvalidPublisherException(publisher);

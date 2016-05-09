@@ -8,6 +8,7 @@ import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.ChannelResolvingBbcServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastServiceMapping;
+import org.atlasapi.feeds.youview.nitro.NitroChannelInformationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroContentHierarchyExpander;
 import org.atlasapi.feeds.youview.nitro.NitroCreditsItemGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroEpisodeNumberPrefixAddingContentTitleGenerator;
@@ -58,6 +59,11 @@ public class NitroTVAnytimeModule {
     @Bean 
     public NitroBroadcastEventGenerator nitroBroadcastGenerator() {
         return new NitroBroadcastEventGenerator(nitroIdGenerator());
+    }
+
+    @Bean
+    public NitroChannelInformationGenerator nitroChannelGenerator() {
+        return new NitroChannelInformationGenerator();
     }
 
     @Bean

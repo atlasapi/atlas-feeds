@@ -11,4 +11,9 @@ public class LoveFilmChannelGenerator implements ChannelElementGenerator {
     public ServiceInformationType generate(Channel channel) {
         throw new UnsupportedOperationException("Channels are not supported for the LOVEFiLM publisher");
     }
+
+    @Override
+    public ServiceInformationType generate(Channel channel, Channel parentChannel) {
+        throw new UnsupportedOperationException("Channels are not supported for the LOVEFiLM publisher");
+    }
 }

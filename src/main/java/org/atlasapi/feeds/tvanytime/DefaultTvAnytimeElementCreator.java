@@ -20,7 +20,6 @@ import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.ProgramInformationType;
 
 import com.google.common.base.Optional;
-import tva.metadata._2010.ServiceInformationTableType;
 import tva.metadata._2010.ServiceInformationType;
 
 public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
@@ -88,5 +87,10 @@ public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
     @Override
     public ServiceInformationType createChannelElementFor(Channel channel) {
         return channelElementGenerator.generate(channel);
+    }
+
+    @Override
+    public ServiceInformationType createChannelElementFor(Channel channel, Channel parentChannel) {
+        return channelElementGenerator.generate(channel, parentChannel);
     }
 }

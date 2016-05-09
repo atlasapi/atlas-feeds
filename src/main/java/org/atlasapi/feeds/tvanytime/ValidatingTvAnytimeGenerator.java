@@ -47,7 +47,7 @@ public class ValidatingTvAnytimeGenerator implements TvAnytimeGenerator {
     
     private Validator createValidator() throws SAXException {
         SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        Schema schema = sf.newSchema(new File("../atlas-feeds/src/main/resources/tvanytime/youview/youview_metadata_2011-07-06.xsd"));
+        Schema schema = sf.newSchema(new File("../atlas-feeds/src/main/resources/tvanytime/youview/youview_metadata_2012-11-19.xsd"));
         return schema.newValidator();
     }
 
@@ -55,6 +55,12 @@ public class ValidatingTvAnytimeGenerator implements TvAnytimeGenerator {
     public JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel)
             throws TvaGenerationException {
         return validate(delegate.generateChannelTVAFrom(channel));
+    }
+
+    @Override
+    public JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel, Channel parentChannel)
+            throws TvaGenerationException {
+        return validate(delegate.generateChannelTVAFrom(channel, parentChannel));
     }
 
     @Override

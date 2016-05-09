@@ -28,7 +28,7 @@ import tva.metadata.extended._2010.TargetingInformationType;
  *   &lt;complexContent>
  *     &lt;extension base="{urn:tva:metadata:extended:2010}TargetingInformationType">
  *       &lt;sequence>
- *         &lt;element name="TargetPlace" type="{http://refdata.youview.com/schemas/2011-07-06}TargetPlaceType" maxOccurs="unbounded" minOccurs="0"/>
+ *         &lt;element name="TargetPlace" type="{http://refdata.youview.com/schemas/Metadata/2012-11-19}TargetPlaceType" maxOccurs="unbounded" minOccurs="0"/>
  *         &lt;element name="TargetUserGroup" type="{urn:tva:metadata:2010}ControlledTermType" maxOccurs="unbounded" minOccurs="0"/>
  *       &lt;/sequence>
  *     &lt;/extension>

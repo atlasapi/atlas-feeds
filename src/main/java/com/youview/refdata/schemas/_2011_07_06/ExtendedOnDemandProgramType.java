@@ -25,7 +25,7 @@ import tva.metadata._2010.OnDemandProgramType;
  *   &lt;complexContent>
  *     &lt;extension base="{urn:tva:metadata:2010}OnDemandProgramType">
  *       &lt;sequence>
- *         &lt;element name="ContentReferencingInformation" type="{http://refdata.youview.com/schemas/2011-07-06}ContentReferencingInformationType" minOccurs="0"/>
+ *         &lt;element name="ContentReferencingInformation" type="{http://refdata.youview.com/schemas/Metadata/2012-11-19}ContentReferencingInformationType" minOccurs="0"/>
  *       &lt;/sequence>
  *     &lt;/extension>
  *   &lt;/complexContent>

@@ -11,4 +11,9 @@ public class UnboxChannelGenerator implements ChannelElementGenerator {
     public ServiceInformationType generate(Channel channel) {
         throw new UnsupportedOperationException("Cahnnels are not supported for the Unbox publisher");
     }
+
+    @Override
+    public ServiceInformationType generate(Channel channel, Channel parentChannel) {
+        throw new UnsupportedOperationException("Cahnnels are not supported for the Unbox publisher");
+    }
 }

@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview;
 
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
+import org.atlasapi.feeds.youview.unbox.UnboxChannelGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxGenreMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxGroupInformationGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
@@ -32,6 +33,11 @@ public class UnboxTVAnytimeModule {
     @Bean
     public UnboxBroadcastEventGenerator unboxBroadcastGenerator() {
         return new UnboxBroadcastEventGenerator();
+    }
+
+    @Bean
+    public UnboxChannelGenerator unboxChannelGenerator() {
+        return new UnboxChannelGenerator();
     }
     
     @Bean

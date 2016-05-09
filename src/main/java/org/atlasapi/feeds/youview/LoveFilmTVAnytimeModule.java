@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview;
 
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastServiceMapping;
+import org.atlasapi.feeds.youview.lovefilm.LoveFilmChannelGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmGenreMapping;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmGroupInformationGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
@@ -32,6 +33,11 @@ public class LoveFilmTVAnytimeModule {
     @Bean
     public LoveFilmBroadcastEventGenerator loveFilmBroadcastGenerator() {
         return new LoveFilmBroadcastEventGenerator();
+    }
+
+    @Bean
+    public LoveFilmChannelGenerator loveFilmChannelGenerator() {
+        return new LoveFilmChannelGenerator();
     }
     
     @Bean
