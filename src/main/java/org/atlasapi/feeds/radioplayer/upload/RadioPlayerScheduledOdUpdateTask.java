@@ -5,11 +5,12 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
+
+import com.metabroadcast.common.scheduling.ScheduledTask;
+
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
-
-import com.metabroadcast.common.scheduling.ScheduledTask;
 
 public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
     
@@ -39,6 +40,16 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
         if (fullSnapshot) {
             date = date.minusDays(1);
         }
-        new RadioPlayerOdBatchUploadTask(uploadersSupplier.get(new DateTime(DateTimeZone.UTC), FileType.OD), executor, services, date, fullSnapshot, log, lastUpdatedContentFinder, contentLister, publisher).run();
+        new RadioPlayerOdBatchUploadTask(
+                uploadersSupplier.get(new DateTime(DateTimeZone.UTC), FileType.OD),
+                executor,
+                services,
+                date,
+                fullSnapshot,
+                log,
+                lastUpdatedContentFinder,
+                contentLister,
+                publisher
+        ).run();
     }
 }

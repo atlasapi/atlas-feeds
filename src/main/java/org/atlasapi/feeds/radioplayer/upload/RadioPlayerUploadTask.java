@@ -21,6 +21,7 @@ import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
 import static org.atlasapi.feeds.upload.FileUploadResult.failedUpload;
 import static org.atlasapi.feeds.upload.FileUploadResult.successfulUpload;
 
@@ -64,7 +65,7 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
 
             Iterable<RadioPlayerUploadResult> results = doUploads(upload);
 
-            logInfo("Successfully completed upload task for %s", spec);
+            logResults(results);
 
             return results;
         } catch (Exception e) {
@@ -144,22 +145,54 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
         );
     }
 
-    private void logInfo(String message, RadioPlayerFeedSpec spec) {
-        adapterLog.record(
-                AdapterLogEntry.infoEntry()
-                        .withDescription(message, spec)
-                        .withSource(getClass())
-        );
-        log.info(String.format(message, spec));
+    private void logResults(Iterable<RadioPlayerUploadResult> results) {
+        boolean allSucceeded = true;
+
+        for (RadioPlayerUploadResult result : results) {
+            if (!SUCCESS.equals(result.getUpload().type())) {
+                allSucceeded = false;
+
+                Exception exception = result.getUpload().exception();
+                if (exception != null) {
+                    logError(exception, "Failed upload task for %s, service: %s, message: %s",
+                            spec, result.getService(), result.getUpload().message());
+                } else {
+                    logError("Failed upload task for %s, service: %s, message: %s",
+                            spec, result.getService(), result.getUpload().message());
+                }
+            }
+        }
+
+        if (allSucceeded) {
+            logInfo("Successfully completed upload task for %s", spec);
+        }
     }
 
-    private void logError(Exception e, String message, RadioPlayerFeedSpec spec) {
+    private void logInfo(String message, Object... args) {
+        adapterLog.record(
+                AdapterLogEntry.infoEntry()
+                        .withDescription(message, args)
+                        .withSource(getClass())
+        );
+        log.info(String.format(message, args));
+    }
+
+    private void logError(Exception e, String message, Object... args) {
         adapterLog.record(
                 AdapterLogEntry.errorEntry()
                         .withCause(e)
-                        .withDescription(message, spec)
+                        .withDescription(message, args)
                         .withSource(getClass())
         );
-        log.error(String.format(message, spec), e);
+        log.error(String.format(message, args), e);
+    }
+
+    private void logError(String message, Object... args) {
+        adapterLog.record(
+                AdapterLogEntry.errorEntry()
+                        .withDescription(message, args)
+                        .withSource(getClass())
+        );
+        log.error(String.format(message, args));
     }
 }

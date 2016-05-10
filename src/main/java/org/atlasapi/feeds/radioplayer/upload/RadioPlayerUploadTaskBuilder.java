@@ -5,12 +5,13 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
 
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.time.DayRangeGenerator;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 
 public class RadioPlayerUploadTaskBuilder {
 
@@ -43,11 +44,29 @@ public class RadioPlayerUploadTaskBuilder {
     }
     
     public ScheduledTask newScheduledOdTask(Iterable<RadioPlayerService> services, boolean fullSnapshot) {
-        return new RadioPlayerScheduledOdUpdateTask(uploadServicesSupplier, executor, services, log, fullSnapshot, lastUpdatedContentFinder, contentLister, publisher);
+        return new RadioPlayerScheduledOdUpdateTask(
+                uploadServicesSupplier,
+                executor,
+                services,
+                log,
+                fullSnapshot,
+                lastUpdatedContentFinder,
+                contentLister,
+                publisher
+        );
     }
     
     public Runnable newBatchOdTask(Iterable<RadioPlayerService> services, LocalDate day) {
-        return new RadioPlayerOdBatchUploadTask(uploadServicesSupplier.get(new DateTime(DateTimeZone.UTC), FileType.OD), executor, services, day, false, log, lastUpdatedContentFinder, contentLister, publisher);
+        return new RadioPlayerOdBatchUploadTask(
+                uploadServicesSupplier.get(new DateTime(DateTimeZone.UTC), FileType.OD),
+                executor,
+                services,
+                day,
+                false,
+                log,
+                lastUpdatedContentFinder,
+                contentLister,
+                publisher
+        );
     }
-    
 }
