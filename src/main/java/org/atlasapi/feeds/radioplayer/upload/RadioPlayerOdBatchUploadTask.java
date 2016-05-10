@@ -109,11 +109,20 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
                 Future<Iterable<RadioPlayerUploadResult>> futureResult = futureResults.take();
                 if(!futureResult.isCancelled()) {
                     Iterable<RadioPlayerUploadResult> results = futureResult.get();
+
+                    boolean noResultsFound = true;
                     for (RadioPlayerUploadResult result : results) {
+                        noResultsFound = false;
                         if (SUCCESS.equals(result.getUpload().type())) {
                             successes++;
                         }
                     }
+
+                    if (noResultsFound) {
+                        logWarn("Radioplayer OD Batch Uploader task returned no results");
+                    }
+                } else {
+                    logWarn("Radioplayer OD Batch Uploader task interrupted");
                 }
             } catch (InterruptedException e) {
                 logWarn("Radioplayer OD Batch Uploader interrupted waiting for result.", e);
@@ -144,5 +153,12 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
                 .withCause(e)
         );
         log.warn(String.format(message, args), e);
+    }
+
+    private void logWarn(String message, Object... args) {
+        adapterLog.record(AdapterLogEntry.warnEntry()
+                .withDescription(message, args)
+        );
+        log.warn(String.format(message, args));
     }
 }
