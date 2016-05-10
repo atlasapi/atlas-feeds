@@ -1,14 +1,14 @@
 package org.atlasapi.feeds.upload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.net.ConnectException;
 
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
+
+import com.metabroadcast.common.time.DateTimeZones;
+
 import org.joda.time.DateTime;
 
-import com.google.common.base.Function;
-import com.metabroadcast.common.time.DateTimeZones;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class FileUploadService {
 
@@ -23,7 +23,13 @@ public class FileUploadService {
     public FileUploadResult upload(FileUpload upload) {
         try {
             FileUploaderResult result = uploader.upload(upload);
-            FileUploadResult fileUploadResult = new FileUploadResult(serviceIdentifier, upload.getFilename(), new DateTime(DateTimeZones.UTC), result.getStatus());
+            FileUploadResult fileUploadResult = new FileUploadResult(
+                    serviceIdentifier,
+                    upload.getFilename(),
+                    new DateTime(DateTimeZones.UTC),
+                    result.getStatus()
+            );
+
             if (result.getTransactionId().isPresent()) {
                 return fileUploadResult.withTransactionId(result.getTransactionId().get());
             }
@@ -39,17 +45,17 @@ public class FileUploadService {
     }
 
     private FileUploadResult failedUploadResult(FileUpload upload, Exception e) {
-        return new FileUploadResult(serviceIdentifier, upload.getFilename(), new DateTime(DateTimeZones.UTC), FileUploadResultType.FAILURE).withCause(e).withMessage(e.getMessage());
+        return new FileUploadResult(
+                serviceIdentifier,
+                upload.getFilename(),
+                new DateTime(DateTimeZones.UTC),
+                FileUploadResultType.FAILURE
+        )
+                .withCause(e)
+                .withMessage(e.getMessage());
     }
 
     public String serviceIdentifier() {
         return serviceIdentifier;
     }
-
-    public static Function<FileUploadService, String> TO_IDENTIFIER = new Function<FileUploadService, String>() {
-        @Override
-        public String apply(FileUploadService input) {
-            return input.serviceIdentifier;
-        }
-    };
 }

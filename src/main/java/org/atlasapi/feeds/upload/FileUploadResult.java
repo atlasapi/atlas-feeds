@@ -4,13 +4,16 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-import org.atlasapi.persistence.logging.AdapterLogEntry.ExceptionSummary;
-import org.joda.time.DateTime;
+import javax.annotation.Nullable;
 
+import org.atlasapi.persistence.logging.AdapterLogEntry.ExceptionSummary;
+
+import com.metabroadcast.common.time.DateTimeZones;
+
+import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Ordering;
-import com.google.common.base.Objects;
-import com.metabroadcast.common.time.DateTimeZones;
+import org.joda.time.DateTime;
 
 public final class FileUploadResult {
     
@@ -127,7 +130,7 @@ public final class FileUploadResult {
         return exceptionSummary;
     }
 
-    public Exception exception() {
+    public @Nullable Exception exception() {
         return exception;
     }
 
