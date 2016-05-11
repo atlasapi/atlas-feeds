@@ -57,7 +57,7 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
         DateTime start = new DateTime(DateTimeZones.UTC);
         int serviceCount = Iterables.size(services);
 
-        logInfo("Radioplayer Uploader starting for %s services for %s days",
+        logInfo("Radioplayer PI Batch Uploader starting for %s services for %s days",
                 serviceCount, Iterables.size(days));
 
         List<Callable<Iterable<RadioPlayerUploadResult>>> uploadTasks =
@@ -79,23 +79,32 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
                 Future<Iterable<RadioPlayerUploadResult>> futureResult = futureResults.take();
                 if(!futureResult.isCancelled()) {
                     Iterable<RadioPlayerUploadResult> results = futureResult.get();
+
+                    boolean noResultsFound = true;
                     for (RadioPlayerUploadResult result : results) {
+                        noResultsFound = false;
                         if (SUCCESS.equals(result.getUpload().type())) {
                             successes++;
                         }
                     }
+
+                    if (noResultsFound) {
+                        logWarn("Radioplayer PI Batch Uploader task returned no results");
+                    }
+                } else {
+                    logWarn("Radioplayer PI Batch Uploader task interrupted");
                 }
-            }catch (InterruptedException e) {
-                logWarn("Radioplayer Uploader interrupted waiting for result.",e );
+            } catch (InterruptedException e) {
+                logWarn("Radioplayer PI Batch Uploader interrupted waiting for result.",e );
             } catch (ExecutionException e) {
-                logWarn("Radioplayer Uploader exception retrieving result", e);
+                logWarn("Radioplayer PI Batch Uploader exception retrieving result", e);
             }
         }
 
         String runTime = new Period(start, new DateTime(DateTimeZones.UTC))
                 .toString(PeriodFormat.getDefault());
 
-        logInfo("Radioplayer Uploader finished in %s, %s/%s successful.",
+        logInfo("Radioplayer PI Batch Uploader finished in %s, %s/%s successful.",
                 runTime, successes, uploadTasks.size());
     }
 
@@ -114,5 +123,12 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
                 .withCause(e)
         );
         log.warn(String.format(message, args), e);
+    }
+
+    private void logWarn(String message, Object... args) {
+        adapterLog.record(AdapterLogEntry.warnEntry()
+                .withDescription(message, args)
+        );
+        log.warn(String.format(message, args));
     }
 }
