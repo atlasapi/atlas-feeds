@@ -16,9 +16,9 @@ import tva.metadata._2010.TVAMainType;
 
 public interface TvAnytimeGenerator {
 
-    JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel) throws TvaGenerationException;
-
     JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel, Channel parentChannel) throws TvaGenerationException;
+
+    JAXBElement<TVAMainType> generateMasterbrandTVAFrom(Channel channel) throws TvaGenerationException;
 
     JAXBElement<TVAMainType> generateContentTVAFrom(Content content) throws TvaGenerationException;
     

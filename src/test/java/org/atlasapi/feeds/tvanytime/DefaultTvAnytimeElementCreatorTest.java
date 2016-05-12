@@ -36,6 +36,7 @@ public class DefaultTvAnytimeElementCreatorTest {
     private BroadcastEventGenerator broadcastGenerator = Mockito.mock(BroadcastEventGenerator.class);
     private ContentHierarchyExtractor contentHierarchy = Mockito.mock(ContentHierarchyExtractor.class);
     private ChannelElementGenerator channelElementGenerator = Mockito.mock(ChannelElementGenerator.class);
+    private MasterbrandElementGenerator masterbrandElementGenerator = Mockito.mock(MasterbrandElementGenerator.class);
 
     private final TvAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
             progInfoGenerator, 
@@ -43,6 +44,7 @@ public class DefaultTvAnytimeElementCreatorTest {
             onDemandGenerator,
             broadcastGenerator,
             channelElementGenerator,
+            masterbrandElementGenerator,
             contentHierarchy
             );
     
@@ -169,11 +171,11 @@ public class DefaultTvAnytimeElementCreatorTest {
 
         ServiceInformationType serviceInformationType = Mockito.mock(ServiceInformationType.class);
 
-        Mockito.when(channelElementGenerator.generate(channel)).thenReturn(serviceInformationType);
+        Mockito.when(channelElementGenerator.generate(channel,channel)).thenReturn(serviceInformationType);
 
-        ServiceInformationType createdElem = elementCreator.createChannelElementFor(channel);
+        ServiceInformationType createdElem = elementCreator.createChannelElementFor(channel, channel);
 
-        Mockito.verify(channelElementGenerator).generate(channel);
+        Mockito.verify(channelElementGenerator).generate(channel, channel);
         assertEquals(serviceInformationType, createdElem);
     }
 

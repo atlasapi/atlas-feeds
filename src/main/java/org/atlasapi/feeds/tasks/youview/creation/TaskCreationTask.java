@@ -115,7 +115,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
         };
     }
 
-    protected YouViewChannelProcessor channelProcessor(final DateTime updatedSicne, final Action action) {
+    protected YouViewChannelProcessor channelProcessor(final Action action,
+            final boolean masterbrand) {
         return new YouViewChannelProcessor() {
 
             UpdateProgress progress = UpdateProgress.START;
@@ -123,7 +124,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             @Override
             public boolean process(Channel content) {
                 try {
-                    progress = progress.reduce(processChannel(content, action));
+                    progress = progress.reduce(processChannel(content, action, masterbrand));
                 } catch (Exception e) {
                     log.error("error on upload for " + content.getCanonicalUri(), e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
@@ -193,13 +194,14 @@ public abstract class TaskCreationTask extends ScheduledTask {
         }
     }
 
-    private UpdateProgress processChannel(Channel channel, Action action) {
+    private UpdateProgress processChannel(Channel channel, Action action, boolean masterbrand) {
         String channelCrid = idGenerator.generateChannelCrid(channel);
         log.debug("Processing Channel {}", channelCrid);
         try {
             // not strictly necessary, but will save space
             if (!Action.DELETE.equals(action)) {
-                Payload p = payloadCreator.payloadFrom(channel);
+
+                Payload p = payloadCreator.payloadFrom(channel, masterbrand);
 
                 if (shouldSave(HashType.CHANNEL, channelCrid, p)) {
                     taskStore.save(taskCreator.taskFor(idGenerator.generateChannelCrid(channel), channel, p, action));

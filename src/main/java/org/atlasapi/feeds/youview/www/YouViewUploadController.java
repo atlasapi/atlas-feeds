@@ -152,7 +152,31 @@ public class YouViewUploadController {
         StringBuilder sb = new StringBuilder();
         try {
             sb.append("Uploading " + channel.getCanonicalUri() + System.lineSeparator());
-            uploadChannel(true, channel);
+            uploadChannel(true, channel, false);
+            sb.append("Done uploading " + channel.getCanonicalUri() + System.lineSeparator());
+        } catch (PayloadGenerationException e) {
+            sb.append("Error uploading " + e.getMessage());
+        }
+        sendOkResponse(response, sb.toString());
+    }
+
+    @RequestMapping(value="/feeds/youview/masterbrand/upload", method = RequestMethod.POST)
+    public void uploadMasterbrand(HttpServletResponse response,
+            @RequestParam("channel") String channelStr
+    ) throws IOException {
+
+        Channel channel = channelResolver.fromId(channelIdCodec.decode(channelStr).longValue())
+                .requireValue();
+
+        if (!channel.getBroadcaster().key().equals("bbc.co.uk")) {
+            sendError(response, SC_BAD_REQUEST, "Only BBC channels can be uploaded");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        try {
+            sb.append("Uploading " + channel.getCanonicalUri() + System.lineSeparator());
+            uploadChannel(true, channel, true);
             sb.append("Done uploading " + channel.getCanonicalUri() + System.lineSeparator());
         } catch (PayloadGenerationException e) {
             sb.append("Error uploading " + e.getMessage());
@@ -414,12 +438,12 @@ public class YouViewUploadController {
         }
     }
 
-    private void uploadChannel(boolean immediate, Channel channel)
+    private void uploadChannel(boolean immediate, Channel channel, boolean masterbrand)
             throws PayloadGenerationException {
-        Payload p = payloadCreator.payloadFrom(channel);
+        Payload p = payloadCreator.payloadFrom(channel, masterbrand);
         Task task = taskCreator.taskFor(idGenerator.generateChannelCrid(channel), channel, p, Action.UPDATE);
         processChannelTask(task, immediate);
-     }
+    }
 
     private void resolveAndUploadParent(ParentRef ref, boolean immediate) throws PayloadGenerationException {
         if (ref == null) {
