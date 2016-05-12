@@ -52,15 +52,15 @@ public class ValidatingTvAnytimeGenerator implements TvAnytimeGenerator {
     }
 
     @Override
-    public JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel)
-            throws TvaGenerationException {
-        return validate(delegate.generateChannelTVAFrom(channel));
-    }
-
-    @Override
     public JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel, Channel parentChannel)
             throws TvaGenerationException {
         return validate(delegate.generateChannelTVAFrom(channel, parentChannel));
+    }
+
+    @Override
+    public JAXBElement<TVAMainType> generateMasterbrandTVAFrom(Channel channel)
+            throws TvaGenerationException {
+        return validate(delegate.generateMasterbrandTVAFrom(channel));
     }
 
     @Override

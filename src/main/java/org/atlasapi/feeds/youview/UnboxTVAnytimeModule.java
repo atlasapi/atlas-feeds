@@ -6,6 +6,7 @@ import org.atlasapi.feeds.youview.unbox.UnboxChannelGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxGenreMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxGroupInformationGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
+import org.atlasapi.feeds.youview.unbox.UnboxMasterbrandGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxProgramInformationGenerator;
 import org.springframework.context.annotation.Bean;
@@ -34,12 +35,15 @@ public class UnboxTVAnytimeModule {
     public UnboxBroadcastEventGenerator unboxBroadcastGenerator() {
         return new UnboxBroadcastEventGenerator();
     }
-
     @Bean
     public UnboxChannelGenerator unboxChannelGenerator() {
         return new UnboxChannelGenerator();
     }
-    
+
+    @Bean
+    public UnboxMasterbrandGenerator unboxMasterbrandGenerator() {
+        return new UnboxMasterbrandGenerator();
+    }
     @Bean
     public UnboxIdGenerator unboxIdGenerator() {
         return new UnboxIdGenerator();

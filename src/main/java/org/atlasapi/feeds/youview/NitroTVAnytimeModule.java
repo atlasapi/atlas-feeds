@@ -15,6 +15,7 @@ import org.atlasapi.feeds.youview.nitro.NitroEpisodeNumberPrefixAddingContentTit
 import org.atlasapi.feeds.youview.nitro.NitroGenreMapping;
 import org.atlasapi.feeds.youview.nitro.NitroGroupInformationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
+import org.atlasapi.feeds.youview.nitro.NitroMasterbrandInfoGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroProgramInformationGenerator;
 import org.atlasapi.feeds.youview.persistence.IdMappingStore;
@@ -64,6 +65,11 @@ public class NitroTVAnytimeModule {
     @Bean
     public NitroChannelInformationGenerator nitroChannelGenerator() {
         return new NitroChannelInformationGenerator();
+    }
+
+    @Bean
+    public NitroMasterbrandInfoGenerator nitroMasterbrandInfoGenerator() {
+        return new NitroMasterbrandInfoGenerator();
     }
 
     @Bean
