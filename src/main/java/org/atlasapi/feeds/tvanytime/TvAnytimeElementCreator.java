@@ -18,6 +18,6 @@ public interface TvAnytimeElementCreator {
     ProgramInformationType createProgramInformationElementFor(ItemAndVersion version, String versionCrid);
     OnDemandProgramType createOnDemandElementFor(ItemOnDemandHierarchy onDemand, String onDemandImi);
     BroadcastEventType createBroadcastEventElementFor(ItemBroadcastHierarchy broadcast, String broadcastImi);
-    ServiceInformationType createChannelElementFor(Channel channel);
     ServiceInformationType createChannelElementFor(Channel channel, Channel parentChannel);
+    ServiceInformationType createMasterbrandElementFor(Channel channel);
 }

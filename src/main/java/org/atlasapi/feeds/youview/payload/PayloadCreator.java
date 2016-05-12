@@ -12,7 +12,7 @@ import com.google.common.base.Optional;
 
 public interface PayloadCreator {
 
-    Payload payloadFrom(Channel channel) throws PayloadGenerationException;
+    Payload payloadFrom(Channel channel, boolean masterbrand) throws PayloadGenerationException;
 
     Payload payloadFrom(String contentCrid, Content content) throws PayloadGenerationException;
     

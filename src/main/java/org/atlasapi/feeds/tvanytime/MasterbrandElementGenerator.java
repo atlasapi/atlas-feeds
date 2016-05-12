@@ -4,6 +4,8 @@ import org.atlasapi.media.channel.Channel;
 
 import tva.metadata._2010.ServiceInformationType;
 
-public interface ChannelElementGenerator {
-    ServiceInformationType generate(Channel channel, Channel parentChannel);
+public interface MasterbrandElementGenerator {
+
+    ServiceInformationType generate(Channel channel);
+
 }

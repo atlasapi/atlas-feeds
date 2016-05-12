@@ -56,6 +56,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
         YouViewContentProcessor deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
+        YouViewChannelProcessor channelProcessor = channelProcessor(Action.UPDATE, false);
         
         while (updatedContent.hasNext()) {
             Content updated = updatedContent.next();
