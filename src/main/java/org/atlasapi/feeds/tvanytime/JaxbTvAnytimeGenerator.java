@@ -41,10 +41,10 @@ public class JaxbTvAnytimeGenerator implements TvAnytimeGenerator {
     }
 
     @Override
-    public JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel)
+    public JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel, Channel parentChannel)
             throws TvaGenerationException {
         try {
-            ServiceInformationType serviceInformationElem = elementCreator.createChannelElementFor(channel);
+            ServiceInformationType serviceInformationElem = elementCreator.createChannelElementFor(channel, parentChannel);
             return createTVAMainFrom(
                     ImmutableSet.<GroupInformationType>of(),
                     ImmutableSet.<ProgramInformationType>of(),
@@ -58,10 +58,10 @@ public class JaxbTvAnytimeGenerator implements TvAnytimeGenerator {
     }
 
     @Override
-    public JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel, Channel parentChannel)
+    public JAXBElement<TVAMainType> generateMasterbrandTVAFrom(Channel channel)
             throws TvaGenerationException {
         try {
-            ServiceInformationType serviceInformationElem = elementCreator.createChannelElementFor(channel, parentChannel);
+            ServiceInformationType serviceInformationElem = elementCreator.createMasterbrandElementFor(channel);
             return createTVAMainFrom(
                     ImmutableSet.<GroupInformationType>of(),
                     ImmutableSet.<ProgramInformationType>of(),

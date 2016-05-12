@@ -53,15 +53,15 @@ public class TVAPayloadCreator implements PayloadCreator {
     }
 
     @Override
-    public Payload payloadFrom(Channel channel)
+    public Payload payloadFrom(Channel channel, boolean masterbrand)
             throws PayloadGenerationException {
         try {
-            Maybe<Channel> channelParent = channelResolver.fromId(channel.getParent());
             JAXBElement<TVAMainType> tvaElem;
-            if (channelParent.hasValue()) {
-               tvaElem = generator.generateChannelTVAFrom(channel, channelParent.requireValue());
+            if (masterbrand) {
+                tvaElem = generator.generateMasterbrandTVAFrom(channel);
             } else {
-                tvaElem = generator.generateChannelTVAFrom(channel);
+                Maybe<Channel> channelParent = channelResolver.fromId(channel.getParent());
+                tvaElem = generator.generateChannelTVAFrom(channel, channelParent.requireValue());
             }
             return new Payload(converter.convert(tvaElem), clock.now());
         } catch (TvaGenerationException e) {

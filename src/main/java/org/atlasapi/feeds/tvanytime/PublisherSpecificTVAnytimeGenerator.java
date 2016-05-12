@@ -27,10 +27,10 @@ public class PublisherSpecificTVAnytimeGenerator implements TvAnytimeGenerator {
     }
 
     @Override
-    public JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel)
+    public JAXBElement<TVAMainType> generateMasterbrandTVAFrom(Channel channel)
             throws TvaGenerationException {
         TvAnytimeGenerator delegate = fetchDelegateOrThrow(channel);
-        return delegate.generateChannelTVAFrom(channel);
+        return delegate.generateMasterbrandTVAFrom(channel);
     }
 
     @Override

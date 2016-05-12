@@ -29,11 +29,13 @@ public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
     private final OnDemandLocationGenerator onDemandGenerator;
     private final BroadcastEventGenerator broadcastGenerator;
     private final ChannelElementGenerator channelElementGenerator;
+    private final MasterbrandElementGenerator masterbrandElementGenerator;
     private final ContentHierarchyExtractor hierarchy;
     
     public DefaultTvAnytimeElementCreator(ProgramInformationGenerator progInfoGenerator, 
             GroupInformationGenerator groupInfoGenerator, OnDemandLocationGenerator onDemandGenerator,
             BroadcastEventGenerator broadcastGenerator, ChannelElementGenerator channelElementGenerator,
+            MasterbrandElementGenerator masterbrandElementGenerator,
             ContentHierarchyExtractor hierarchy) {
         this.progInfoGenerator = checkNotNull(progInfoGenerator);
         this.groupInfoGenerator = checkNotNull(groupInfoGenerator);
@@ -41,6 +43,7 @@ public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
         this.broadcastGenerator = checkNotNull(broadcastGenerator);
         this.hierarchy = checkNotNull(hierarchy);
         this.channelElementGenerator = checkNotNull(channelElementGenerator);
+        this.masterbrandElementGenerator = checkNotNull(masterbrandElementGenerator);
     }
 
     @Override
@@ -85,12 +88,12 @@ public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
     }
 
     @Override
-    public ServiceInformationType createChannelElementFor(Channel channel) {
-        return channelElementGenerator.generate(channel);
+    public ServiceInformationType createChannelElementFor(Channel channel, Channel parentChannel) {
+        return channelElementGenerator.generate(channel, parentChannel);
     }
 
     @Override
-    public ServiceInformationType createChannelElementFor(Channel channel, Channel parentChannel) {
-        return channelElementGenerator.generate(channel, parentChannel);
+    public ServiceInformationType createMasterbrandElementFor(Channel channel) {
+        return masterbrandElementGenerator.generate(channel);
     }
 }
