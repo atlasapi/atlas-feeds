@@ -5,6 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
@@ -14,8 +16,13 @@ import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
+import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
@@ -28,17 +35,19 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     private static final Ordering<Content> HIERARCHICAL_ORDER = new HierarchicalOrdering();
     
     private final YouViewContentResolver contentResolver;
+    private final ChannelResolver channelResolver;
     private final UpdateTask updateTask;
 
     public DeltaTaskCreationTask(YouViewLastUpdatedStore lastUpdatedStore, Publisher publisher,
             ContentHierarchyExpander hierarchyExpander, IdGenerator idGenerator,
             TaskStore taskStore, TaskCreator taskCreator, PayloadCreator payloadCreator,
-            UpdateTask updateTask, YouViewContentResolver contentResolver,
+            UpdateTask updateTask, YouViewContentResolver contentResolver, ChannelResolver channelResolver,
             YouViewPayloadHashStore payloadHashStore) {
         super(lastUpdatedStore, publisher, hierarchyExpander, idGenerator, taskStore, taskCreator,
                 payloadCreator, payloadHashStore);
         this.contentResolver = checkNotNull(contentResolver);
         this.updateTask = checkNotNull(updateTask);
+        this.channelResolver = checkNotNull(channelResolver);
     }
 
     @Override
@@ -51,11 +60,14 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         Optional<DateTime> startOfTask = Optional.of(new DateTime());
         
         Iterator<Content> updatedContent = contentResolver.updatedSince(lastUpdated.get());
-        
+
+        Iterable<Channel> broadcastByBbc = Iterables.filter(channelResolver.all(), IS_BBC);
+
         List<Content> deleted = Lists.newArrayList();
         
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
         YouViewContentProcessor deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
+        YouViewChannelProcessor channelProcessor = channelProcessor(Action.UPDATE);
         
         while (updatedContent.hasNext()) {
             Content updated = updatedContent.next();
@@ -73,6 +85,10 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             deletionProcessor.process(toBeDeleted);
             reportStatus("Deletes: " + deletionProcessor.getResult());
         }
+
+        for (Channel channel : broadcastByBbc) {
+            channelProcessor.process(channel);
+        }
         
         setLastUpdatedTime(startOfTask.get());
         
@@ -86,7 +102,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         
         reportStatus("Done uploading tasks to YouView");
     }
-    
+
     private static List<Content> orderContentForDeletion(Iterable<Content> toBeDeleted) {
         return HIERARCHICAL_ORDER.immutableSortedCopy(toBeDeleted);
     }
