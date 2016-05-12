@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
+import java.util.Collections;
+
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Status;
@@ -17,6 +19,8 @@ import org.atlasapi.feeds.youview.persistence.HashType;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
+import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
@@ -58,6 +62,9 @@ public class DeltaTaskCreationTaskTest {
     @Mock private YouViewContentResolver contentResolver;
     @Mock private YouViewPayloadHashStore payloadHashStore;
 
+    @Mock
+    private ChannelResolver channelResolver;
+
     @Before
     public void setUp() {
         task = new DeltaTaskCreationTask(
@@ -70,6 +77,7 @@ public class DeltaTaskCreationTaskTest {
             payloadCreator,
             updateTask,
             contentResolver,
+            channelResolver,
             payloadHashStore
         );
     }
@@ -83,6 +91,7 @@ public class DeltaTaskCreationTaskTest {
         long taskId = 42L;
         Action action = Action.UPDATE;
         Payload payload = new Payload(payloadBody, created);
+        Channel channel = Channel.builder().withBroadcaster(Publisher.BBC).build();
 
         Task.Builder taskBuilder = Task.builder()
                 .withAction(action)
@@ -107,7 +116,7 @@ public class DeltaTaskCreationTaskTest {
         when(taskCreator.taskFor(contentCrid, content, payload, action)).thenReturn(withoutId);
         when(taskStore.save(withoutId)).thenReturn(withId);
         when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(payload);
-
+        when(channelResolver.all()).thenReturn(Collections.singleton(channel));
         task.runTask();
 
         verify(payloadHashStore).saveHash(HashType.CONTENT, contentCrid, payload.hash());
@@ -122,6 +131,7 @@ public class DeltaTaskCreationTaskTest {
         long taskId = 42L;
         Action action = Action.UPDATE;
         Payload payload = new Payload(payloadBody, created);
+        Channel channel = Channel.builder().withBroadcaster(Publisher.BBC).build();
 
         Task.Builder taskBuilder = Task.builder()
                 .withAction(action)
@@ -146,7 +156,7 @@ public class DeltaTaskCreationTaskTest {
         when(taskCreator.taskFor(contentCrid, content, payload, action)).thenReturn(withoutId);
         when(taskStore.save(withoutId)).thenReturn(withId);
         when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(payload);
-
+        when(channelResolver.all()).thenReturn(Collections.singleton(channel));
         task.runTask();
 
         verify(payloadHashStore).saveHash(HashType.CONTENT, contentCrid, payload.hash());
@@ -161,7 +171,7 @@ public class DeltaTaskCreationTaskTest {
         long taskId = 42L;
         Action action = Action.UPDATE;
         Payload payload = new Payload(payloadBody, created);
-
+        Channel channel = Channel.builder().withBroadcaster(Publisher.BBC).build();
         Task.Builder taskBuilder = Task.builder()
                 .withAction(action)
                 .withDestination(new YouViewDestination("", TVAElementType.ITEM, ""))
@@ -182,6 +192,7 @@ public class DeltaTaskCreationTaskTest {
         when(payloadHashStore.getHash(HashType.CONTENT, contentCrid))
                 .thenReturn(Optional.of(payload.hash()));
         when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(payload);
+        when(channelResolver.all()).thenReturn(Collections.singleton(channel));
 
         task.runTask();
 
@@ -205,6 +216,7 @@ public class DeltaTaskCreationTaskTest {
                 .withPublisher(PUBLISHER);
         Task withoutId = taskBuilder.build();
         Task withId = taskBuilder.withId(taskId).build();
+        Channel channel = Channel.builder().withBroadcaster(Publisher.BBC).build();
 
         when(lastUpdatedStore.getLastUpdated(PUBLISHER)).thenReturn(
                 Optional.of(updatedSince));
@@ -217,6 +229,7 @@ public class DeltaTaskCreationTaskTest {
         when(idGenerator.generateContentCrid(content)).thenReturn(contentCrid);
         when(taskCreator.taskFor(contentCrid, content, action, Status.NEW)).thenReturn(withoutId);
         when(taskStore.save(withoutId)).thenReturn(withId);
+        when(channelResolver.all()).thenReturn(Collections.singleton(channel));
 
         task.runTask();
     }
