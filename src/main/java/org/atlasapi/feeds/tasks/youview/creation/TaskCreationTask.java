@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
@@ -24,20 +22,24 @@ import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Publisher;
+
+import com.metabroadcast.common.scheduling.ScheduledTask;
+import com.metabroadcast.common.scheduling.UpdateProgress;
+
+import com.google.common.base.Optional;
+import com.google.common.collect.Maps;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.Maps;
-import com.metabroadcast.common.scheduling.ScheduledTask;
-import com.metabroadcast.common.scheduling.UpdateProgress;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public abstract class TaskCreationTask extends ScheduledTask {
     
-    private final Logger log = LoggerFactory.getLogger(TaskCreationTask.class);
+    private static final Logger log = LoggerFactory.getLogger(TaskCreationTask.class);
 
     private final HashCheck hashCheckMode;
     private final YouViewLastUpdatedStore lastUpdatedStore;
@@ -136,7 +138,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             progress = progress.reduce(processBroadcast(broadcast.getKey(), broadcast.getValue(), action));
         }
         for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
-            progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue(), action));
+            progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue()));
         }
         return progress;
     }
@@ -234,14 +236,22 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return e.getMessage() + " " + sw.toString();
     }
     
-    private UpdateProgress processOnDemand(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) {
+    private UpdateProgress processOnDemand(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy) {
+        Location location = onDemandHierarchy.location();
+        Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+
         try {
             log.debug("Processing OnDemand {}", onDemandImi);
 
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
             if (shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
-                taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, p, action));
+                taskStore.save(taskCreator.taskFor(
+                        onDemandImi,
+                        onDemandHierarchy,
+                        p,
+                        action
+                ));
                 payloadHashStore.saveHash(HashType.ON_DEMAND, onDemandImi, p.hash());
             } else {
                 log.debug("Existing hash found for OnDemand {}, not updating", onDemandImi);
@@ -254,7 +264,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                             onDemandHierarchy.item().getCanonicalUri(),
                             onDemandHierarchy.version().getCanonicalUri(),
                             onDemandHierarchy.encoding().toString(),
-                            onDemandHierarchy.location().toString()
+                            location.toString()
                     ),
                     e
             );
