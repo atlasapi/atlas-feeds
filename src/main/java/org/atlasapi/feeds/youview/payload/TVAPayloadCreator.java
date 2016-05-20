@@ -60,8 +60,7 @@ public class TVAPayloadCreator implements PayloadCreator {
             if (masterbrand) {
                 tvaElem = generator.generateMasterbrandTVAFrom(channel);
             } else {
-                Maybe<Channel> channelParent = channelResolver.fromId(channel.getParent());
-                tvaElem = generator.generateChannelTVAFrom(channel, channelParent.requireValue());
+                tvaElem = generator.generateChannelTVAFrom(channel, channel);
             }
             return new Payload(converter.convert(tvaElem), clock.now());
         } catch (TvaGenerationException e) {
