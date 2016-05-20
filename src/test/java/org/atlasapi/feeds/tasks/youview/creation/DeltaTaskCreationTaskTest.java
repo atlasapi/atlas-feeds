@@ -20,6 +20,7 @@ import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelQuery;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
@@ -29,6 +30,7 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import org.joda.time.DateTime;
@@ -80,6 +82,7 @@ public class DeltaTaskCreationTaskTest {
             payloadHashStore,
             channelResolver
         );
+        when(channelResolver.allChannels(any(ChannelQuery.class))).thenReturn(ImmutableList.<Channel>of());
     }
 
     @Test
@@ -116,7 +119,6 @@ public class DeltaTaskCreationTaskTest {
         when(taskCreator.taskFor(contentCrid, content, payload, action)).thenReturn(withoutId);
         when(taskStore.save(withoutId)).thenReturn(withId);
         when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(payload);
-        when(channelResolver.all()).thenReturn(Collections.singleton(channel));
         task.runTask();
 
         verify(payloadHashStore).saveHash(HashType.CONTENT, contentCrid, payload.hash());
