@@ -13,11 +13,13 @@ public class NitroMasterbrandInfoGenerator extends ChannelGenerator implements M
     private final static String OTHER_GENRE_HREF_2 = "http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-bbc";
     private final static String IMAGE_INTENDED_USE_1 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-ident";
     private final static String IMAGE_INTENDED_USE_2 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog";
+    private static final String HTTP_NITRO_BBC_CO_UK_MASTERBRAND = "http://nitro.bbc.co.uk/masterbrand/";
 
     @Override
     public ServiceInformationType generate(Channel channel) {
         ExtendedServiceInformationType serviceInformationType = new ExtendedServiceInformationType();
-        serviceInformationType.setServiceId(SERVICE_ID_PREFIX + "bbc_three");
+        serviceInformationType.setServiceId(SERVICE_ID_PREFIX + channel.getCanonicalUri().replace(
+                HTTP_NITRO_BBC_CO_UK_MASTERBRAND, ""));
         setNameAndOwner(channel, serviceInformationType);
         setDescriptions(channel, serviceInformationType);
         setGenres(serviceInformationType, OTHER_GENRE_HREF_1, OTHER_GENRE_HREF_2);
