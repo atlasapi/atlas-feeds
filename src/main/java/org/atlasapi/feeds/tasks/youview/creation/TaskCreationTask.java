@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
@@ -23,22 +21,26 @@ import org.atlasapi.feeds.youview.persistence.HashType;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelType;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
+
+import com.metabroadcast.common.scheduling.ScheduledTask;
+import com.metabroadcast.common.scheduling.UpdateProgress;
+
+import com.google.common.base.Optional;
+import com.google.common.collect.Maps;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.Maps;
-import com.metabroadcast.common.scheduling.ScheduledTask;
-import com.metabroadcast.common.scheduling.UpdateProgress;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public abstract class TaskCreationTask extends ScheduledTask {
-    
-    private final Logger log = LoggerFactory.getLogger(TaskCreationTask.class);
+
+    private static final Logger log = LoggerFactory.getLogger(TaskCreationTask.class);
 
     private final HashCheck hashCheckMode;
     private final YouViewLastUpdatedStore lastUpdatedStore;
@@ -50,19 +52,32 @@ public abstract class TaskCreationTask extends ScheduledTask {
     private final TaskCreator taskCreator;
     private final PayloadCreator payloadCreator;
 
-    public TaskCreationTask(YouViewLastUpdatedStore lastUpdatedStore,
-            Publisher publisher, ContentHierarchyExpander hierarchyExpander,
-            IdGenerator idGenerator, TaskStore taskStore, TaskCreator taskCreator,
-            PayloadCreator payloadCreator, YouViewPayloadHashStore payloadHashStore) {
+    public TaskCreationTask(
+            YouViewLastUpdatedStore lastUpdatedStore,
+            Publisher publisher,
+            ContentHierarchyExpander hierarchyExpander,
+            IdGenerator idGenerator,
+            TaskStore taskStore,
+            TaskCreator taskCreator,
+            PayloadCreator payloadCreator,
+            YouViewPayloadHashStore payloadHashStore
+    ) {
         this(lastUpdatedStore, publisher, hierarchyExpander, idGenerator, taskStore, taskCreator,
-                payloadCreator, payloadHashStore, HashCheck.CHECK);
+                payloadCreator, payloadHashStore, HashCheck.CHECK
+        );
     }
 
-    public TaskCreationTask(YouViewLastUpdatedStore lastUpdatedStore,
-            Publisher publisher, ContentHierarchyExpander hierarchyExpander,
-            IdGenerator idGenerator, TaskStore taskStore, TaskCreator taskCreator,
-            PayloadCreator payloadCreator, YouViewPayloadHashStore payloadHashStore,
-            HashCheck hashCheckMode) {
+    public TaskCreationTask(
+            YouViewLastUpdatedStore lastUpdatedStore,
+            Publisher publisher,
+            ContentHierarchyExpander hierarchyExpander,
+            IdGenerator idGenerator,
+            TaskStore taskStore,
+            TaskCreator taskCreator,
+            PayloadCreator payloadCreator,
+            YouViewPayloadHashStore payloadHashStore,
+            HashCheck hashCheckMode
+    ) {
         this.lastUpdatedStore = checkNotNull(lastUpdatedStore);
         this.publisher = checkNotNull(publisher);
         this.hierarchyExpander = checkNotNull(hierarchyExpander);
@@ -73,25 +88,25 @@ public abstract class TaskCreationTask extends ScheduledTask {
         this.payloadHashStore = checkNotNull(payloadHashStore);
         this.hashCheckMode = hashCheckMode;
     }
-    
+
     protected Optional<DateTime> getLastUpdatedTime() {
         return lastUpdatedStore.getLastUpdated(publisher);
     }
-    
+
     protected void setLastUpdatedTime(DateTime lastUpdated) {
         lastUpdatedStore.setLastUpdated(lastUpdated, publisher);
     }
-    
+
     protected boolean isActivelyPublished(Content content) {
         return content.isActivelyPublished();
     }
-    
+
     // TODO write last updated time every n items
     protected YouViewContentProcessor contentProcessor(final DateTime updatedSince, final Action action) {
         return new YouViewContentProcessor() {
-            
+
             UpdateProgress progress = UpdateProgress.START;
-            
+
             @Override
             public boolean process(Content content) {
                 try {
@@ -113,8 +128,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
         };
     }
 
-    protected YouViewChannelProcessor channelProcessor(final Action action,
-            final boolean masterbrand) {
+    protected YouViewChannelProcessor channelProcessor(final Action action, final ChannelType channelType) {
         return new YouViewChannelProcessor() {
 
             UpdateProgress progress = UpdateProgress.START;
@@ -122,7 +136,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             @Override
             public boolean process(Channel content) {
                 try {
-                    progress = progress.reduce(processChannel(content, action, masterbrand));
+                    progress = progress.reduce(processChannel(content, action, channelType));
                 } catch (Exception e) {
                     log.error("error on upload for " + content.getCanonicalUri(), e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
@@ -136,24 +150,24 @@ public abstract class TaskCreationTask extends ScheduledTask {
             }
         };
     }
-    
+
     // TODO tidy this up, ideally simplify/streamline it
     private UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
         Map<String, ItemAndVersion> versionHierarchies = Maps.filterValues(
-                hierarchyExpander.versionHierarchiesFor(item), 
+                hierarchyExpander.versionHierarchiesFor(item),
                 FilterFactory.versionFilter(updatedSince)
         );
         Map<String, ItemBroadcastHierarchy> broadcastHierarchies = Maps.filterValues(
-                hierarchyExpander.broadcastHierarchiesFor(item), 
+                hierarchyExpander.broadcastHierarchiesFor(item),
                 FilterFactory.broadcastFilter(updatedSince)
         );
         Map<String, ItemOnDemandHierarchy> onDemandHierarchies = Maps.filterValues(
-                hierarchyExpander.onDemandHierarchiesFor(item), 
+                hierarchyExpander.onDemandHierarchiesFor(item),
                 FilterFactory.onDemandFilter(updatedSince)
         );
-        
+
         UpdateProgress progress = UpdateProgress.START;
-        
+
         for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
             progress = progress.reduce(processVersion(version.getKey(), version.getValue(), action));
         }
@@ -191,17 +205,20 @@ public abstract class TaskCreationTask extends ScheduledTask {
         }
     }
 
-    private UpdateProgress processChannel(Channel channel, Action action, boolean masterbrand) {
+    private UpdateProgress processChannel(Channel channel, Action action, ChannelType channelType) {
         String channelCrid = idGenerator.generateChannelCrid(channel);
         log.debug("Processing Channel {}", channelCrid);
         try {
             // not strictly necessary, but will save space
             if (!Action.DELETE.equals(action)) {
 
-                Payload p = payloadCreator.payloadFrom(channel, masterbrand);
+                Payload p = payloadCreator.payloadFrom(
+                        channel,
+                        channelType == ChannelType.MASTERBRAND
+                );
 
                 if (shouldSave(HashType.CHANNEL, channelCrid, p)) {
-                    taskStore.save(taskCreator.taskFor(idGenerator.generateChannelCrid(channel), channel, p, action));
+                    taskStore.save(taskCreator.taskFor(channelCrid, channel, p, action));
                     payloadHashStore.saveHash(HashType.CHANNEL, channelCrid, p.hash());
                 } else {
                     log.debug("Existing hash found for Content {}, not updating", channelCrid);
@@ -211,12 +228,12 @@ public abstract class TaskCreationTask extends ScheduledTask {
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error("Failed to create payload for channel {}", channel.getCanonicalUri(), e);
-            Task task = taskStore.save(taskCreator.taskFor(idGenerator.generateChannelCrid(channel), channel, action, Status.FAILED));
+            Task task = taskStore.save(taskCreator.taskFor(channelCrid, channel, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
     }
-    
+
     private UpdateProgress processVersion(String versionCrid, ItemAndVersion versionHierarchy, Action action) {
         try {
             log.debug("Processing Version {}", versionCrid);
@@ -233,10 +250,10 @@ public abstract class TaskCreationTask extends ScheduledTask {
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
-                            "Failed to create payload for content %s, version %s", 
+                            "Failed to create payload for content %s, version %s",
                             versionHierarchy.item().getCanonicalUri(),
                             versionHierarchy.version().getCanonicalUri()
-                    ), 
+                    ),
                     e
             );
             Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action, Status.FAILED));
@@ -265,9 +282,9 @@ public abstract class TaskCreationTask extends ScheduledTask {
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
-                            "Failed to create payload for content %s, version %s, broadcast %s", 
+                            "Failed to create payload for content %s, version %s, broadcast %s",
                             broadcastHierarchy.item().getCanonicalUri(),
-                            broadcastHierarchy.version().getCanonicalUri(), 
+                            broadcastHierarchy.version().getCanonicalUri(),
                             broadcastHierarchy.broadcast().toString()
                     ),
                     e
@@ -277,14 +294,14 @@ public abstract class TaskCreationTask extends ScheduledTask {
             return UpdateProgress.FAILURE;
         }
     }
-    
+
     private String exceptionToString(Exception e) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         return e.getMessage() + " " + sw.toString();
     }
-    
+
     private UpdateProgress processOnDemand(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) {
         try {
             log.debug("Processing OnDemand {}", onDemandImi);
@@ -301,7 +318,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
-                            "Failed to create payload for content %s, version %s, encoding %s, location %s", 
+                            "Failed to create payload for content %s, version %s, encoding %s, location %s",
                             onDemandHierarchy.item().getCanonicalUri(),
                             onDemandHierarchy.version().getCanonicalUri(),
                             onDemandHierarchy.encoding().toString(),
