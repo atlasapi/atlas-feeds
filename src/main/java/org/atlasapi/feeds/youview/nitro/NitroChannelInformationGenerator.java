@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.atlasapi.feeds.tvanytime.ChannelElementGenerator;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Publisher;
 
@@ -36,14 +37,6 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
     private final static String IMAGE_INTENDED_USE_2 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog";
     private final static String AUTHORITY = "applicationPublisher.youview.com";
 
-    private void setTargetingInformation(ExtendedServiceInformationType serviceInformationType) {
-        ExtendedTargetingInformationType targetingInfo = new ExtendedTargetingInformationType();
-        TargetPlaceType targetPlace = new TargetPlaceType();
-        targetPlace.setHref("http://refdata.youview.com/mpeg7cs/YouViewTargetRegionCS/2010-10-26#GBR");
-        targetPlace.setExclusive(true);
-        targetingInfo.getTargetPlace().add(targetPlace);
-        serviceInformationType.setTargetingInformation(targetingInfo);
-    }
 
     private void setOtherIdentifier(Channel channel,
             ExtendedServiceInformationType serviceInformationType) {
@@ -63,10 +56,14 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
     }
 
     @Override
-    public ServiceInformationType generate(Channel channel, Channel parentChannel) {
+    public ServiceInformationType generate(Channel channel) {
         ExtendedServiceInformationType serviceInformationType = new ExtendedServiceInformationType();
-        serviceInformationType.setServiceId(SERVICE_ID_PREFIX + "bbc_three_233a_10c0");
-        serviceInformationType.setServiceURL("dvb://233a..10c0");
+        for (Alias alias : channel.getAliases()) {
+            if (alias.getNamespace().equals("bbc:service:sid")) {
+                serviceInformationType.setServiceId(SERVICE_ID_PREFIX + alias.getValue() + channel.getCanonicalUri().replace("dvb://","").replace("..", "_"));
+            }
+        }
+        serviceInformationType.setServiceURL(channel.getCanonicalUri());
         setNameAndOwner(channel, serviceInformationType);
         setDescriptions(channel, serviceInformationType);
         setGenres(serviceInformationType, OTHER_GENRE_HREF_1, OTHER_GENRE_HREF_2);
@@ -75,16 +72,32 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
         setRelatedMaterial(channel, serviceInformationType, IMAGE_INTENDED_USE_2);
 
         setOtherIdentifier(channel, serviceInformationType);
-        setTargetingInformation(serviceInformationType);
-        setShortDescriptionFromParent(parentChannel, serviceInformationType);
+        setTargetingInformation(channel, serviceInformationType);
+        setShortDescription(channel, serviceInformationType);
         return serviceInformationType;
     }
 
-    private void setShortDescriptionFromParent(Channel parentChannel,
+
+    private void setTargetingInformation(Channel channel, ExtendedServiceInformationType serviceInformationType) {
+        ExtendedTargetingInformationType targetingInfo = new ExtendedTargetingInformationType();
+        TargetPlaceType targetPlace = new TargetPlaceType();
+        for (String targets : channel.getTargetRegions()) {
+            targetPlace.setHref("http://refdata.youview.com/mpeg7cs/YouViewTargetRegionCS/" + targets);
+        }
+        targetPlace.setExclusive(true);
+        targetingInfo.getTargetPlace().add(targetPlace);
+        serviceInformationType.setTargetingInformation(targetingInfo);
+    }
+
+    private void setShortDescription(Channel channel,
             ServiceInformationType generated) {
         SynopsisType shortDescription = new SynopsisType();
         shortDescription.setLength(SynopsisLengthType.SHORT);
-        shortDescription.setValue(parentChannel.getTitle());
+        for (Alias alias : channel.getAliases()) {
+            if (alias.getNamespace().equals("bbc:service:name:short")) {
+                shortDescription.setValue(alias.getValue());
+            }
+        }
         generated.getServiceDescription().add(shortDescription);
     }
 

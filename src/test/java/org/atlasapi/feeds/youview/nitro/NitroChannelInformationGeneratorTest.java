@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview.nitro;
 
 import org.atlasapi.feeds.tvanytime.ChannelElementGenerator;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Publisher;
 
@@ -24,7 +25,7 @@ public class NitroChannelInformationGeneratorTest {
     public void testServiceInformationIsGeneratedFromChannel() {
         Channel channel = createChannel();
 
-        ExtendedServiceInformationType generated = (ExtendedServiceInformationType) generator.generate(channel, channel);
+        ExtendedServiceInformationType generated = (ExtendedServiceInformationType) generator.generate(channel);
 
         assertEquals(generated.getName().get(0).getValue(), channel.getTitle());
         assertEquals(generated.getOwner().get(0), "BBC");
@@ -70,9 +71,9 @@ public class NitroChannelInformationGeneratorTest {
     @Test
     public void testShortDescriptionIsGenerated() {
         Channel channel = createChannel();
-        Channel parentChannel = createParentChannel();
+        channel.addAlias(new Alias("bbc:service:name:short", "BBC"));
 
-        ServiceInformationType generated = generator.generate(channel, parentChannel);
+        ServiceInformationType generated = generator.generate(channel);
 
         SynopsisType synopsisType = generated.getServiceDescription().get(1);
         assertEquals(synopsisType.getValue(), "BBC");
@@ -84,7 +85,7 @@ public class NitroChannelInformationGeneratorTest {
         image.setWidth(1000);
         return Channel.builder()
                 .withBroadcaster(Publisher.BBC)
-                .withUri("canonical")
+                .withUri("dvb://233a..10c0")
                 .withImage(image)
                 .withTitle("channel")
                 .build();

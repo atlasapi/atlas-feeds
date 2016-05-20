@@ -171,11 +171,11 @@ public class DefaultTvAnytimeElementCreatorTest {
 
         ServiceInformationType serviceInformationType = Mockito.mock(ServiceInformationType.class);
 
-        Mockito.when(channelElementGenerator.generate(channel,channel)).thenReturn(serviceInformationType);
+        Mockito.when(channelElementGenerator.generate(channel)).thenReturn(serviceInformationType);
 
         ServiceInformationType createdElem = elementCreator.createChannelElementFor(channel, channel);
 
-        Mockito.verify(channelElementGenerator).generate(channel, channel);
+        Mockito.verify(channelElementGenerator).generate(channel);
         assertEquals(serviceInformationType, createdElem);
     }
 

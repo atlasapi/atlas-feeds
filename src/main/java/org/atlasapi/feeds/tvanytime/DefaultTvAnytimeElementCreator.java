@@ -89,7 +89,7 @@ public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
 
     @Override
     public ServiceInformationType createChannelElementFor(Channel channel, Channel parentChannel) {
-        return channelElementGenerator.generate(channel, parentChannel);
+        return channelElementGenerator.generate(channel);
     }
 
     @Override
