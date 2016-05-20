@@ -82,7 +82,7 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
         ExtendedTargetingInformationType targetingInfo = new ExtendedTargetingInformationType();
         TargetPlaceType targetPlace = new TargetPlaceType();
         for (String targets : channel.getTargetRegions()) {
-            targetPlace.setHref("http://refdata.youview.com/mpeg7cs/YouViewTargetRegionCS/" + targets);
+            targetPlace.setHref(targets);
         }
         targetPlace.setExclusive(true);
         targetingInfo.getTargetPlace().add(targetPlace);
