@@ -77,8 +77,8 @@ public class DeltaTaskCreationTaskTest {
             payloadCreator,
             updateTask,
             contentResolver,
-            channelResolver,
-            payloadHashStore
+            payloadHashStore,
+            channelResolver
         );
     }
 

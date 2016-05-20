@@ -274,7 +274,6 @@ public class YouViewUploadModule {
                 taskCreator(), 
                 payloadCreator(), 
                 nitroBootstrapContentResolver(publisher),
-                channelResolver,
                 payloadHashStore(),
                 BOOTSTRAP_START_DATE
         )
@@ -293,8 +292,8 @@ public class YouViewUploadModule {
                 payloadCreator(), 
                 uploadTask(),
                 nitroDeltaContentResolver(publisher),
-                channelResolver,
-                payloadHashStore()
+                payloadHashStore(),
+                channelResolver
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
