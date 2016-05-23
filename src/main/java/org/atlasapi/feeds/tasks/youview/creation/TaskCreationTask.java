@@ -245,7 +245,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
-            if (shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
+            if (action == Action.DELETE || shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
                 taskStore.save(taskCreator.taskFor(
                         onDemandImi,
                         onDemandHierarchy,
