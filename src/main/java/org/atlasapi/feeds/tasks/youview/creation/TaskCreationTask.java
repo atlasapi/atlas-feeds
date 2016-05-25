@@ -138,7 +138,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
             progress = progress.reduce(processBroadcast(broadcast.getKey(), broadcast.getValue(), action));
         }
         for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
-            progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue()));
+//            progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue()));
+            progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue(), action));
         }
         return progress;
     }
@@ -236,16 +237,17 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return e.getMessage() + " " + sw.toString();
     }
     
-    private UpdateProgress processOnDemand(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy) {
+    private UpdateProgress processOnDemand(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) {
         Location location = onDemandHierarchy.location();
-        Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+//        Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
 
         try {
             log.debug("Processing OnDemand {}", onDemandImi);
 
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
-            if (action == Action.DELETE || shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
+//            if (action == Action.DELETE || shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
+            if (shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
                 taskStore.save(taskCreator.taskFor(
                         onDemandImi,
                         onDemandHierarchy,
