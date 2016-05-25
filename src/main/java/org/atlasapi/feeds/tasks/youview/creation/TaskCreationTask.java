@@ -138,8 +138,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             progress = progress.reduce(processBroadcast(broadcast.getKey(), broadcast.getValue(), action));
         }
         for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
-//            progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue()));
-            progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue(), action));
+            progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue()));
         }
         return progress;
     }
@@ -237,31 +236,25 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return e.getMessage() + " " + sw.toString();
     }
     
-    private UpdateProgress processOnDemand(
-            String onDemandImi,
-            ItemOnDemandHierarchy onDemandHierarchy,
-            Action action
-    ) {
+    private UpdateProgress processOnDemand(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy) {
         Location location = onDemandHierarchy.location();
-//        Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+
+        Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+        HashType hashType = action == Action.UPDATE ? HashType.ON_DEMAND : HashType.DELETE;
 
         try {
             log.debug("Processing OnDemand {}", onDemandImi);
 
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
-//            if (action == Action.DELETE || shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
-
-            // because we have stale data in Mongo that has dodgy locations, from the initial
-            // Nitro deletions handling change
-            if (location.getAvailable() && shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
+            if (shouldSave(hashType, onDemandImi, p)) {
                 taskStore.save(taskCreator.taskFor(
                         onDemandImi,
                         onDemandHierarchy,
                         p,
                         action
                 ));
-                payloadHashStore.saveHash(HashType.ON_DEMAND, onDemandImi, p.hash());
+                payloadHashStore.saveHash(hashType, onDemandImi, p.hash());
             } else {
                 log.debug("Existing hash found for OnDemand {}, not updating", onDemandImi);
             }
@@ -285,8 +278,13 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     private boolean shouldSave(HashType type, String imi, Payload payload) {
         Optional<String> hash = payloadHashStore.getHash(type, imi);
-        return (hashCheckMode == HashCheck.IGNORE || !hash.isPresent())
-                || (hashCheckMode == HashCheck.CHECK && payload.hasChanged(hash.get()));
+
+        if (type == HashType.DELETE) {
+            return !hash.isPresent();
+        } else {
+            return (hashCheckMode == HashCheck.IGNORE || !hash.isPresent())
+                    || (hashCheckMode == HashCheck.CHECK && payload.hasChanged(hash.get()));
+        }
     }
 
     protected enum HashCheck {
