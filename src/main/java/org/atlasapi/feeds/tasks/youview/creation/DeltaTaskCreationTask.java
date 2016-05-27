@@ -112,7 +112,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         );
 
         ChannelQuery nitroChannelsQuery = ChannelQuery.builder()
-                .withSource(Publisher.BBC_NITRO)
+                .withPublisher(Publisher.BBC_NITRO)
                 .build();
         for (Channel channel : channelResolver.allChannels(nitroChannelsQuery)) {
             switch (channel.getChannelType()) {
