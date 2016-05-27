@@ -23,25 +23,45 @@ public abstract class ChannelGenerator {
     private final static String OTHER_GENRE_TYPE = "other";
     private final static String MAIN_GENRE_HREF = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
     private final static String IMAGE_INTENDED_USE_MAIN = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary";
-    private final static String HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
+    private final static String IMAGE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
     private final static String FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS2001:1";
 
-    protected void setRelatedMaterial(Channel channel,
+    private final static String INTERACTIVE_FORMAT = "http://refdata.youview.com/mpeg7cs/YouViewIdentifierTypeCS/2014-09-25#groupId.application.linearEnhancement";
+    private final static String INTERACTIVE_MEDIA_LOCATOR_URI = "crid://bbc.co.uk/iplayer/flash_player/1";
+    private final static String INTERACTIVE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:10.5";
+
+    protected void setRelatedMaterialForImage(Channel channel,
             ServiceInformationType serviceInformationType, String imageIntendedUse) {
         Image image = Iterables.getFirst(channel.getImages(), null);
         ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
         if (image != null) {
             ControlledTermType howRelated = new ControlledTermType();
-            howRelated.setHref(HOW_RELATED);
+            howRelated.setHref(IMAGE_HOW_RELATED);
             relatedMaterial.setHowRelated(howRelated);
             ControlledTermType format = new ControlledTermType();
             format.setHref(FORMAT);
             relatedMaterial.setFormat(format);
-            setMediaLocator(image, relatedMaterial);
+            setMediaLocatorForImage(image, relatedMaterial);
             setPromotionalText(channel, relatedMaterial);
             setContentProperties(image, relatedMaterial, imageIntendedUse);
             serviceInformationType.getRelatedMaterial().add(relatedMaterial);
         }
+    }
+
+    protected void setRelatedMaterialForInteractive(ServiceInformationType serviceInformationType) {
+        ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
+
+        ControlledTermType howRelated = new ControlledTermType();
+        howRelated.setHref(INTERACTIVE_HOW_RELATED);
+        relatedMaterial.setHowRelated(howRelated);
+
+        ControlledTermType format = new ControlledTermType();
+        format.setHref(INTERACTIVE_FORMAT);
+        relatedMaterial.setFormat(format);
+
+        setMediaLocatorForInteractive(relatedMaterial);
+
+        serviceInformationType.getRelatedMaterial().add(relatedMaterial);
     }
 
     protected void setContentProperties(Image image, ExtendedRelatedMaterialType relatedMaterialType,
@@ -67,9 +87,15 @@ public abstract class ChannelGenerator {
         relatedMaterial.getPromotionalText().add(promotionalText);
     }
 
-    protected void setMediaLocator(Image image, ExtendedRelatedMaterialType relatedMaterial) {
+    protected void setMediaLocatorForImage(Image image, ExtendedRelatedMaterialType relatedMaterial) {
         MediaLocatorType mediaLocator = new MediaLocatorType();
         mediaLocator.setMediaUri(image.getCanonicalUri());
+        relatedMaterial.setMediaLocator(mediaLocator);
+    }
+
+    protected void setMediaLocatorForInteractive(ExtendedRelatedMaterialType relatedMaterial) {
+        MediaLocatorType mediaLocator = new MediaLocatorType();
+        mediaLocator.setMediaUri(INTERACTIVE_MEDIA_LOCATOR_URI);
         relatedMaterial.setMediaLocator(mediaLocator);
     }
 

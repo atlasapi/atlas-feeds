@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import java.util.List;
+
 import org.atlasapi.feeds.tvanytime.ChannelElementGenerator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Alias;
@@ -10,12 +12,15 @@ import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas._2011_07_06.ExtendedServiceInformationType;
 import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
 import org.junit.Test;
+import tva.metadata._2010.RelatedMaterialType;
 import tva.metadata._2010.ServiceInformationType;
 import tva.metadata._2010.SynopsisType;
 import tva.metadata.extended._2010.ExtendedRelatedMaterialType;
 import tva.metadata.extended._2010.StillImageContentAttributesType;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 public class NitroChannelInformationGeneratorTest {
 
@@ -66,6 +71,18 @@ public class NitroChannelInformationGeneratorTest {
 
         assertEquals(generated.getOtherIdentifier().get(0).getAuthority(), "applicationPublisher.youview.com");
         assertEquals(generated.getOtherIdentifier().get(0).getValue(), "uk.co.bbc");
+    }
+
+    @Test
+    public void testServiceInformationIsGeneratedWithInteractiveFromChannel() {
+        Channel channel = createChannel();
+        channel.setInteractive(true);
+
+        ExtendedServiceInformationType generated = (ExtendedServiceInformationType) generator.generate(channel);
+        RelatedMaterialType interactiveRelatedMaterial = generated.getRelatedMaterial().get(2);
+        assertThat(interactiveRelatedMaterial.getHowRelated().getHref(), is("urn:tva:metadata:cs:HowRelatedCS:2010:10.5"));
+        assertThat(interactiveRelatedMaterial.getFormat().getHref(), is("http://refdata.youview.com/mpeg7cs/YouViewIdentifierTypeCS/2014-09-25#groupId.application.linearEnhancement"));
+        assertThat(interactiveRelatedMaterial.getMediaLocator().getMediaUri(), is("crid://bbc.co.uk/iplayer/flash_player/1"));
     }
 
     @Test

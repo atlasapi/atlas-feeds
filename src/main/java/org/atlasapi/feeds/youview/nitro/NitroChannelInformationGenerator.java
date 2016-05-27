@@ -7,25 +7,15 @@ import java.util.List;
 import org.atlasapi.feeds.tvanytime.ChannelElementGenerator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Alias;
-import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Publisher;
 
-import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas._2011_07_06.ExtendedServiceInformationType;
 import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
 import com.youview.refdata.schemas._2011_07_06.TargetPlaceType;
 import org.apache.commons.lang.StringUtils;
-import tva.metadata._2010.ControlledTermType;
-import tva.metadata._2010.GenreType;
-import tva.metadata._2010.ServiceInformationNameType;
 import tva.metadata._2010.ServiceInformationType;
 import tva.metadata._2010.SynopsisLengthType;
 import tva.metadata._2010.SynopsisType;
-import tva.metadata.extended._2010.ContentPropertiesType;
-import tva.metadata.extended._2010.ExtendedRelatedMaterialType;
-import tva.metadata.extended._2010.StillImageContentAttributesType;
-import tva.mpeg7._2008.MediaLocatorType;
-import tva.mpeg7._2008.TextualType;
 import tva.mpeg7._2008.UniqueIDType;
 
 public class NitroChannelInformationGenerator extends ChannelGenerator implements ChannelElementGenerator {
@@ -68,8 +58,13 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
         setDescriptions(channel, serviceInformationType);
         setGenres(serviceInformationType, OTHER_GENRE_HREF_1, OTHER_GENRE_HREF_2);
 
-        setRelatedMaterial(channel, serviceInformationType, IMAGE_INTENDED_USE_1);
-        setRelatedMaterial(channel, serviceInformationType, IMAGE_INTENDED_USE_2);
+        setRelatedMaterialForImage(channel, serviceInformationType, IMAGE_INTENDED_USE_1);
+        setRelatedMaterialForImage(channel, serviceInformationType, IMAGE_INTENDED_USE_2);
+
+        // If given channel interactive field is set to true add RelatedMaterial for Interactive.
+        if (channel.getInteractive()) {
+            setRelatedMaterialForInteractive(serviceInformationType);
+        }
 
         setOtherIdentifier(channel, serviceInformationType);
         setTargetingInformation(channel, serviceInformationType);

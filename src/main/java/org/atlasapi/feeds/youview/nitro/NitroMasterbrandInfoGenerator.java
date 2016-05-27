@@ -23,8 +23,8 @@ public class NitroMasterbrandInfoGenerator extends ChannelGenerator implements M
         setNameAndOwner(channel, serviceInformationType);
         setDescriptions(channel, serviceInformationType);
         setGenres(serviceInformationType, OTHER_GENRE_HREF_1, OTHER_GENRE_HREF_2);
-        setRelatedMaterial(channel, serviceInformationType, IMAGE_INTENDED_USE_1);
-        setRelatedMaterial(channel, serviceInformationType, IMAGE_INTENDED_USE_2);
+        setRelatedMaterialForImage(channel, serviceInformationType, IMAGE_INTENDED_USE_1);
+        setRelatedMaterialForImage(channel, serviceInformationType, IMAGE_INTENDED_USE_2);
         return serviceInformationType;
     }
 }
