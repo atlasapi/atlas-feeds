@@ -237,7 +237,11 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return e.getMessage() + " " + sw.toString();
     }
     
-    private UpdateProgress processOnDemand(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action) {
+    private UpdateProgress processOnDemand(
+            String onDemandImi,
+            ItemOnDemandHierarchy onDemandHierarchy,
+            Action action
+    ) {
         Location location = onDemandHierarchy.location();
 //        Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
 
@@ -247,7 +251,10 @@ public abstract class TaskCreationTask extends ScheduledTask {
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
 //            if (action == Action.DELETE || shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
-            if (shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
+
+            // because we have stale data in Mongo that has dodgy locations, from the initial
+            // Nitro deletions handling change
+            if (location.getAvailable() && shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
                 taskStore.save(taskCreator.taskFor(
                         onDemandImi,
                         onDemandHierarchy,
