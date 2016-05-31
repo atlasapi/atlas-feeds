@@ -36,6 +36,7 @@ import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Schedule;
@@ -409,8 +410,19 @@ public class YouViewUploadController {
             }
             Map<String, ItemOnDemandHierarchy> onDemands = hierarchyExpander.onDemandHierarchiesFor((Item) content);
             for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
-                Payload odPayload = payloadCreator.payloadFrom(onDemand.getKey(), onDemand.getValue());
-                Task odTask = taskCreator.taskFor(onDemand.getKey(), onDemand.getValue(), odPayload, Action.UPDATE);
+                ItemOnDemandHierarchy onDemandHierarchy = onDemand.getValue();
+                Location location = onDemandHierarchy.location();
+                Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+
+                Payload odPayload = payloadCreator.payloadFrom(onDemand.getKey(),
+                        onDemandHierarchy
+                );
+                Task odTask = taskCreator.taskFor(
+                        onDemand.getKey(),
+                        onDemandHierarchy,
+                        odPayload,
+                        action
+                );
                 processTask(odTask, immediate);
             }
 
