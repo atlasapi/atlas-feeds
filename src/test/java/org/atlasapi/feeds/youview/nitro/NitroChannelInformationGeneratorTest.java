@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
 import org.atlasapi.feeds.tvanytime.ChannelElementGenerator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Alias;
@@ -99,6 +100,11 @@ public class NitroChannelInformationGeneratorTest {
         Image image2 = new Image("http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png");
         image2.setHeight(169);
         image2.setWidth(1024);
+        image2.setAliases(
+                ImmutableSet.of(
+                        new Alias("bbc:imageType", "dog")
+                )
+        );
         return Channel.builder()
                 .withBroadcaster(Publisher.BBC)
                 .withUri("dvb://233a..10c0")

@@ -1,8 +1,11 @@
 package org.atlasapi.feeds.youview.nitro;
 
 import com.google.api.client.repackaged.com.google.common.base.Strings;
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Publisher;
 
@@ -32,14 +35,15 @@ public abstract class ChannelGenerator {
     private final static String INTERACTIVE_FORMAT = "http://refdata.youview.com/mpeg7cs/YouViewIdentifierTypeCS/2014-09-25#groupId.application.linearEnhancement";
     private final static String INTERACTIVE_MEDIA_LOCATOR_URI = "crid://bbc.co.uk/iplayer/flash_player/1";
     private final static String INTERACTIVE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:10.5";
-    
+
+    private static final String BBC_IMAGE_TYPE = "bbc:imageType";
+    private static final String DOG = "dog";
+
     protected void setRelatedMaterial(Channel channel,
             ServiceInformationType serviceInformationType, String imageIntendedUse) {
         Image image;
         if (NitroMasterbrandInfoGenerator.IMAGE_INTENDED_USE_2.equals(imageIntendedUse)) {
-            image = new Image("http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png");
-            image.setWidth(1024);
-            image.setHeight(169);
+            image = getBbcDogImage(channel);
         } else {
             image = Iterables.getFirst(channel.getImages(), null);
         }
@@ -56,6 +60,34 @@ public abstract class ChannelGenerator {
             setContentProperties(image, relatedMaterial, imageIntendedUse);
             serviceInformationType.getRelatedMaterial().add(relatedMaterial);
         }
+    }
+
+    private Image getBbcDogImage(Channel channel) {
+        Optional<Image> image = FluentIterable.from(channel.getImages())
+                .firstMatch(new Predicate<Image>() {
+                    public boolean apply(@Nullable Image image) {
+                        return image.getAliases() != null &&
+                                image.getAliases().contains(new Alias(BBC_IMAGE_TYPE, DOG));
+                    }
+                });
+
+        return image.isPresent() ? image.get() : null;
+    }
+
+    protected void setRelatedMaterialForInteractive(ServiceInformationType serviceInformationType) {
+        ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
+
+        ControlledTermType howRelated = new ControlledTermType();
+        howRelated.setHref(INTERACTIVE_HOW_RELATED);
+        relatedMaterial.setHowRelated(howRelated);
+
+        ControlledTermType format = new ControlledTermType();
+        format.setHref(INTERACTIVE_FORMAT);
+        relatedMaterial.setFormat(format);
+
+        setMediaLocatorForInteractive(relatedMaterial);
+
+        serviceInformationType.getRelatedMaterial().add(relatedMaterial);
     }
 
     protected void setContentProperties(Image image, ExtendedRelatedMaterialType relatedMaterialType,
