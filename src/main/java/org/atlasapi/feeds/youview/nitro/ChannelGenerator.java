@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import com.google.api.client.repackaged.com.google.common.base.Strings;
+import com.google.common.base.Predicate;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Publisher;
@@ -17,6 +19,8 @@ import tva.metadata.extended._2010.StillImageContentAttributesType;
 import tva.mpeg7._2008.MediaLocatorType;
 import tva.mpeg7._2008.TextualType;
 
+import javax.annotation.Nullable;
+
 public abstract class ChannelGenerator {
 
     private final static String MAIN_GENRE_TYPE = "main";
@@ -25,10 +29,20 @@ public abstract class ChannelGenerator {
     private final static String IMAGE_INTENDED_USE_MAIN = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary";
     private final static String HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
     private final static String FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS2001:1";
-
+    private final static String INTERACTIVE_FORMAT = "http://refdata.youview.com/mpeg7cs/YouViewIdentifierTypeCS/2014-09-25#groupId.application.linearEnhancement";
+    private final static String INTERACTIVE_MEDIA_LOCATOR_URI = "crid://bbc.co.uk/iplayer/flash_player/1";
+    private final static String INTERACTIVE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:10.5";
+    
     protected void setRelatedMaterial(Channel channel,
             ServiceInformationType serviceInformationType, String imageIntendedUse) {
-        Image image = Iterables.getFirst(channel.getImages(), null);
+        Image image;
+        if (NitroMasterbrandInfoGenerator.IMAGE_INTENDED_USE_2.equals(imageIntendedUse)) {
+            image = new Image("http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png");
+            image.setWidth(1024);
+            image.setHeight(169);
+        } else {
+            image = Iterables.getFirst(channel.getImages(), null);
+        }
         ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
         if (image != null) {
             ControlledTermType howRelated = new ControlledTermType();
@@ -48,8 +62,14 @@ public abstract class ChannelGenerator {
             String imageIntendedUse) {
         ContentPropertiesType contentProperties = new ContentPropertiesType();
         StillImageContentAttributesType contentAttributes = new StillImageContentAttributesType();
-        contentAttributes.setHeight(image.getHeight());
-        contentAttributes.setWidth(image.getWidth());
+        contentAttributes.setHeight(
+                image.getHeight() != null && image.getHeight() != 0 ?
+                        image.getHeight() : null
+        );
+        contentAttributes.setWidth(
+                image.getWidth() != null && image.getWidth() != 0 ?
+                        image.getWidth() : null
+        );
         ControlledTermType mainIntendedUse = new ControlledTermType();
         mainIntendedUse.setHref(IMAGE_INTENDED_USE_MAIN);
         contentAttributes.getIntendedUse().add(mainIntendedUse);
