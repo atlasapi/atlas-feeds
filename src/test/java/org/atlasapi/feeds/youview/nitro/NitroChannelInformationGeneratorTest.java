@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import com.google.common.base.Predicate;
 import org.atlasapi.feeds.tvanytime.ChannelElementGenerator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Alias;
@@ -14,6 +15,8 @@ import tva.metadata._2010.ServiceInformationType;
 import tva.metadata._2010.SynopsisType;
 import tva.metadata.extended._2010.ExtendedRelatedMaterialType;
 import tva.metadata.extended._2010.StillImageContentAttributesType;
+
+import javax.annotation.Nullable;
 
 import static org.junit.Assert.assertEquals;
 
@@ -39,7 +42,12 @@ public class NitroChannelInformationGeneratorTest {
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) generated.getRelatedMaterial().get(0);
         assertEquals(relatedMaterial.getHowRelated().getHref(), "urn:tva:metadata:cs:HowRelatedCS:2010:19");
         assertEquals(relatedMaterial.getFormat().getHref(), "urn:mpeg:mpeg7:cs:FileFormatCS2001:1");
-        Image image = Iterables.getOnlyElement(channel.getImages());
+        Image image = Iterables.getFirst(Iterables.filter(channel.getImages(), new Predicate<Image>() {
+            @Override
+            public boolean apply(@Nullable Image image) {
+                return image.getCanonicalUri().startsWith("imageuri");
+            }
+        }), null);
         assertEquals(relatedMaterial.getMediaLocator().getMediaUri(),  image.getCanonicalUri());
         assertEquals(relatedMaterial.getPromotionalText().get(0).getValue(), channel.getTitle());
         StillImageContentAttributesType contentAttributesType = (StillImageContentAttributesType) relatedMaterial.getContentProperties()
@@ -53,8 +61,13 @@ public class NitroChannelInformationGeneratorTest {
         ExtendedRelatedMaterialType relatedMaterial2 = (ExtendedRelatedMaterialType) generated.getRelatedMaterial().get(1);
         assertEquals(relatedMaterial2.getHowRelated().getHref(), "urn:tva:metadata:cs:HowRelatedCS:2010:19");
         assertEquals(relatedMaterial2.getFormat().getHref(), "urn:mpeg:mpeg7:cs:FileFormatCS2001:1");
-        Image image2 = Iterables.getOnlyElement(channel.getImages());
-        assertEquals(relatedMaterial2.getMediaLocator().getMediaUri(),  image.getCanonicalUri());
+        Image image2 = Iterables.getFirst(Iterables.filter(channel.getImages(), new Predicate<Image>() {
+            @Override
+            public boolean apply(@Nullable Image image) {
+                return image.getCanonicalUri().startsWith("http://www.bbc.co.uk");
+            }
+        }), null);
+        assertEquals(relatedMaterial2.getMediaLocator().getMediaUri(),  image2.getCanonicalUri());
         assertEquals(relatedMaterial2.getPromotionalText().get(0).getValue(), channel.getTitle());
         StillImageContentAttributesType contentAttributesType2 = (StillImageContentAttributesType) relatedMaterial2.getContentProperties()
                 .getContentAttributes()
@@ -83,10 +96,14 @@ public class NitroChannelInformationGeneratorTest {
         Image image = new Image("imageuri");
         image.setHeight(1000);
         image.setWidth(1000);
+        Image image2 = new Image("http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png");
+        image2.setHeight(169);
+        image2.setWidth(1024);
         return Channel.builder()
                 .withBroadcaster(Publisher.BBC)
                 .withUri("dvb://233a..10c0")
                 .withImage(image)
+                .withImage(image2)
                 .withTitle("channel")
                 .build();
     }
