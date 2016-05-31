@@ -4,13 +4,13 @@ import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.media.entity.Identified;
+import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Policy.Platform;
-import org.joda.time.DateTime;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-
+import org.joda.time.DateTime;
 
 public class FilterFactory {
 
@@ -48,10 +48,23 @@ public class FilterFactory {
                         return hasBeenUpdated(input.item(), updatedSince)
                                 || hasBeenUpdated(input.version(), updatedSince)
                                 || hasBeenUpdated(input.encoding(), updatedSince)
-                                || hasBeenUpdated(input.location(), updatedSince);
+                                || (hasBeenUpdated(input.location(), updatedSince)
+                                    && !isExpired(input.location()));
                     }
                 }
         );
+    }
+
+    private static boolean isExpired(Location location) {
+        Policy policy = location.getPolicy();
+
+        if (policy == null) {
+            return false;
+        }
+
+        DateTime end = policy.getAvailabilityEnd();
+
+        return end != null && end.isBeforeNow();
     }
 
     private static Predicate<ItemOnDemandHierarchy> platformFilter() {
