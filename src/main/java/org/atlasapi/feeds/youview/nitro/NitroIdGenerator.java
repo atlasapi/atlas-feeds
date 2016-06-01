@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
@@ -25,8 +26,9 @@ public final class NitroIdGenerator implements IdGenerator {
     private static final String CRID_PREFIX = "crid://nitro.bbc.co.uk/iplayer/youview/";
     private static final String IMI_PREFIX = "imi:www.nitro.bbc.co.uk/";
     private static final String CHANNEL_CRID_PREFIX = "crid://nitro.bbc.co.uk/services";
+    private final static String SERVICE_ID_PREFIX = "http://nitro.bbc.co.uk/services/";
     private static final String MASTERBRAND_CRID_PREFIX = "crid://nitro.bbc.co.uk/masterbrand";
-    
+
     private final HashFunction hasher;
 
     public NitroIdGenerator(HashFunction hasher) {
@@ -37,17 +39,17 @@ public final class NitroIdGenerator implements IdGenerator {
     public final String generateVersionCrid(Item item, Version version) {
         return CRID_PREFIX + hasher.hashString(generateVersionIdFor(item, version), Charsets.UTF_8);
     }
-    
+
     @Override
     public String generateContentCrid(Content content) {
         return CRID_PREFIX + pidFrom(content);
     }
-    
+
     @Override
     public String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location) {
         return IMI_PREFIX + hasher.hashString(generateOnDemandIdFor(item, version, encoding, location), Charsets.UTF_8);
     }
-    
+
     @Override
     public String generateBroadcastImi(String youViewServiceId, Broadcast broadcast) {
         return IMI_PREFIX + hasher.hashString(generateBroadcastIdFor(youViewServiceId, broadcast), Charsets.UTF_8);
@@ -56,6 +58,21 @@ public final class NitroIdGenerator implements IdGenerator {
     @Override
     public String generateChannelCrid(Channel channel) {
         return pidFrom(channel).replace("http", "crid").replace("https", "crid");
+    }
+
+    public static String generateChannelServiceId(Channel channel) {
+        for (Alias alias : channel.getAliases()) {
+            if (alias.getNamespace().equals("bbc:service:sid")) {
+                String contentUri = String.format(
+                        "%s%s%s",
+                        SERVICE_ID_PREFIX,
+                        alias.getValue(),
+                        channel.getCanonicalUri()
+                );
+                return contentUri.replace("dvb://", "").replace("..", "_");
+            }
+        }
+        return null;
     }
 
     private String generateOnDemandIdFor(Item item, Version version, Encoding encoding, Location location) {

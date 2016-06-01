@@ -3,6 +3,7 @@ package org.atlasapi.feeds.tasks.youview.creation;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.client.repackaged.com.google.common.base.Strings;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Destination;
 import org.atlasapi.feeds.tasks.Payload;
@@ -14,7 +15,9 @@ import org.atlasapi.feeds.youview.UnexpectedContentTypeException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
+import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -25,7 +28,8 @@ import com.metabroadcast.common.time.Clock;
 
 
 public class YouViewEntityTaskCreator implements TaskCreator {
-    
+
+    private final static String SERVICE_ID_PREFIX = "http://nitro.bbc.co.uk/services/";
     private final Clock clock;
 
     public YouViewEntityTaskCreator(Clock clock) {
@@ -133,8 +137,13 @@ public class YouViewEntityTaskCreator implements TaskCreator {
     }
 
     private Task taskFor(String channelCrid, Channel channel, Payload payload, Action action, Status status) {
-        Destination destination = new YouViewDestination(channel.getCanonicalUri(), TVAElementType.CHANNEL, channelCrid);
-        return createTask(channel.getBroadcaster(), payload, action, destination, status);
+        String contentUri = NitroIdGenerator.generateChannelServiceId(channel);
+        Destination destination = new YouViewDestination(
+                !Strings.isNullOrEmpty(contentUri) ? contentUri : channel.getCanonicalUri(),
+                TVAElementType.CHANNEL,
+                channelCrid
+        );
+        return createTask(channel.getSource(), payload, action, destination, status);
     }
 
     private Task createTask(Publisher publisher, Payload payload, Action action, Destination destination, Status status) {
