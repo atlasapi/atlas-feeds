@@ -44,6 +44,9 @@ public abstract class ChannelGenerator {
         Image image;
         if (NitroMasterbrandInfoGenerator.IMAGE_INTENDED_USE_2.equals(imageIntendedUse)) {
             image = getBbcDogImage(channel);
+            if (image == null) {
+                image = Iterables.getFirst(channel.getImages(), null);
+            }
         } else {
             image = Iterables.getFirst(channel.getImages(), null);
         }
