@@ -58,11 +58,7 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
     @Override
     public ServiceInformationType generate(Channel channel) {
         ExtendedServiceInformationType serviceInformationType = new ExtendedServiceInformationType();
-        for (Alias alias : channel.getAliases()) {
-            if (alias.getNamespace().equals("bbc:service:sid")) {
-                serviceInformationType.setServiceId(SERVICE_ID_PREFIX + alias.getValue() + channel.getCanonicalUri().replace("dvb://","").replace("..", "_"));
-            }
-        }
+        serviceInformationType.setServiceId(NitroIdGenerator.generateChannelServiceId(channel));
         serviceInformationType.setServiceURL(channel.getCanonicalUri());
         setNameAndOwner(channel, serviceInformationType);
         setDescriptions(channel, serviceInformationType);
