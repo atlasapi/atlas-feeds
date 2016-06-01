@@ -116,7 +116,7 @@ public class YouViewUploadModule {
             "unbox", Publisher.AMAZON_UNBOX
     );
     
-    private static final RepetitionRule DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardHours(2));
+    private static final RepetitionRule DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
     private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
     
