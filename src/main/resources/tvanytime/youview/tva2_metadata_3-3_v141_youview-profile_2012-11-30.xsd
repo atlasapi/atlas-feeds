@@ -91,8 +91,8 @@ Copyright (c) 2009, 2010, 2011, 2012 YouView TV Limited
 		<complexContent>
 			<extension base="tva2:ContentAttributesType">
 				<sequence>
-					<element name="Width" type="unsignedShort" minOccurs="0"/>
-					<element name="Height" type="unsignedShort" minOccurs="0"/>
+					<element name="Width" type="unsignedShort" minOccurs="0" nillable="true"/>
+					<element name="Height" type="unsignedShort" minOccurs="0" nillable="true"/>
 					<element name="Orientation" type="tva2:OrientationType" minOccurs="0"/>
 					<element name="IntendedUse" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
 				</sequence>

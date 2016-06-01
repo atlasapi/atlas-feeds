@@ -51,10 +51,10 @@ public class StillImageContentAttributesType
     extends ContentAttributesType
 {
 
-    @XmlElement(name = "Width")
+    @XmlElement(name = "Width", nillable = true)
     @XmlSchemaType(name = "unsignedShort")
     protected Integer width;
-    @XmlElement(name = "Height")
+    @XmlElement(name = "Height", nillable = true)
     @XmlSchemaType(name = "unsignedShort")
     protected Integer height;
     @XmlElement(name = "Orientation")
