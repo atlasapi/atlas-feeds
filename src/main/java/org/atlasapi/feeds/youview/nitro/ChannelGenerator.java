@@ -139,6 +139,12 @@ public abstract class ChannelGenerator {
         relatedMaterial.setMediaLocator(mediaLocator);
     }
 
+    protected void setMediaLocatorForInteractive(ExtendedRelatedMaterialType relatedMaterial) {
+        MediaLocatorType mediaLocator = new MediaLocatorType();
+        mediaLocator.setMediaUri(INTERACTIVE_MEDIA_LOCATOR_URI);
+        relatedMaterial.setMediaLocator(mediaLocator);
+    }
+
     protected void setDescriptions(Channel channel, ServiceInformationType serviceInformationType) {
         SynopsisType longDescription = new SynopsisType();
         longDescription.setLength(SynopsisLengthType.LONG);
