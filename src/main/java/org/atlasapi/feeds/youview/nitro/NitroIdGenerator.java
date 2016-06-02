@@ -24,8 +24,7 @@ public final class NitroIdGenerator implements IdGenerator {
     private static final Joiner JOIN_ON_COLON = Joiner.on(":").useForNull("");
     private static final String CRID_PREFIX = "crid://nitro.bbc.co.uk/iplayer/youview/";
     private static final String IMI_PREFIX = "imi:www.nitro.bbc.co.uk/";
-    private static final String CHANNEL_CRID_PREFIX = "crid://nitro.bbc.co.uk/services";
-    
+
     private final HashFunction hasher;
 
     public NitroIdGenerator(HashFunction hasher) {
@@ -54,7 +53,7 @@ public final class NitroIdGenerator implements IdGenerator {
 
     @Override
     public String generateChannelCrid(Channel channel) {
-        return CHANNEL_CRID_PREFIX + pidFrom(channel);
+        return pidFrom(channel).replace("http", "crid").replace("https", "crid");
     }
 
     private String generateOnDemandIdFor(Item item, Version version, Encoding encoding, Location location) {

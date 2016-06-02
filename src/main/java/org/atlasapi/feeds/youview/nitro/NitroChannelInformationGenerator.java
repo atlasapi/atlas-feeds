@@ -9,6 +9,7 @@ import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Publisher;
 
+import com.google.common.base.Optional;
 import com.youview.refdata.schemas._2011_07_06.ExtendedServiceInformationType;
 import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
 import com.youview.refdata.schemas._2011_07_06.TargetPlaceType;
@@ -20,13 +21,12 @@ import tva.mpeg7._2008.UniqueIDType;
 
 public class NitroChannelInformationGenerator extends ChannelGenerator implements ChannelElementGenerator {
 
-    private final static String SERVICE_ID_PREFIX = "http://nitro.bbc.co.uk/services/";
     private final static String OTHER_GENRE_HREF_1 = "http://refdata.youview.com/mpeg7cs/YouViewServiceTypeCS/2010-10-25#linear_service-broadcast_channel";
     private final static String OTHER_GENRE_HREF_2 = "http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-bbc";
     private final static String IMAGE_INTENDED_USE_1 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-ident";
     private final static String IMAGE_INTENDED_USE_2 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog";
     private final static String AUTHORITY = "applicationPublisher.youview.com";
-
+    private static final String BBC_SERVICE_LOCATOR = "bbc:service:locator";
 
     private void setOtherIdentifier(Channel channel,
             ExtendedServiceInformationType serviceInformationType) {
@@ -48,12 +48,8 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
     @Override
     public ServiceInformationType generate(Channel channel) {
         ExtendedServiceInformationType serviceInformationType = new ExtendedServiceInformationType();
-        for (Alias alias : channel.getAliases()) {
-            if (alias.getNamespace().equals("bbc:service:sid")) {
-                serviceInformationType.setServiceId(SERVICE_ID_PREFIX + alias.getValue() + channel.getCanonicalUri().replace("dvb://","").replace("..", "_"));
-            }
-        }
-        serviceInformationType.setServiceURL(channel.getCanonicalUri());
+        serviceInformationType.setServiceId(channel.getCanonicalUri());
+        serviceInformationType.setServiceURL(getDvbLocator(channel).orNull());
         setNameAndOwner(channel, serviceInformationType);
         setDescriptions(channel, serviceInformationType);
         setGenres(serviceInformationType, OTHER_GENRE_HREF_1, OTHER_GENRE_HREF_2);
@@ -72,6 +68,15 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
         return serviceInformationType;
     }
 
+
+    private static Optional<String> getDvbLocator(Channel channel) {
+        for (Alias alias : channel.getAliases()) {
+            if (BBC_SERVICE_LOCATOR.equals(alias.getNamespace())) {
+                return Optional.of(alias.getValue());
+            }
+        }
+        return Optional.absent();
+    }
 
     private void setTargetingInformation(Channel channel, ExtendedServiceInformationType serviceInformationType) {
         ExtendedTargetingInformationType targetingInfo = new ExtendedTargetingInformationType();
