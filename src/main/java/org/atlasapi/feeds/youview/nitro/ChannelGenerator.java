@@ -42,7 +42,7 @@ public abstract class ChannelGenerator {
 
     protected void setRelatedMaterial(Channel channel,
             ServiceInformationType serviceInformationType, String imageIntendedUse) {
-        Image image;
+        Image image = null;
         if (NitroMasterbrandInfoGenerator.IMAGE_INTENDED_USE_1.equals(imageIntendedUse)) {
             image = getBbcImageByAlias(channel, IDENT);
         }
