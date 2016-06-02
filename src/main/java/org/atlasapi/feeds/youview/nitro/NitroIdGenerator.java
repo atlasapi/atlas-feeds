@@ -1,10 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.channel.Channel;
-import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
@@ -17,6 +14,8 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.hash.HashFunction;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 
 public final class NitroIdGenerator implements IdGenerator {
 
@@ -25,9 +24,6 @@ public final class NitroIdGenerator implements IdGenerator {
     private static final Joiner JOIN_ON_COLON = Joiner.on(":").useForNull("");
     private static final String CRID_PREFIX = "crid://nitro.bbc.co.uk/iplayer/youview/";
     private static final String IMI_PREFIX = "imi:www.nitro.bbc.co.uk/";
-    private static final String CHANNEL_CRID_PREFIX = "crid://nitro.bbc.co.uk/services";
-    private final static String SERVICE_ID_PREFIX = "http://nitro.bbc.co.uk/services/";
-    private static final String MASTERBRAND_CRID_PREFIX = "crid://nitro.bbc.co.uk/masterbrand";
 
     private final HashFunction hasher;
 
@@ -61,18 +57,7 @@ public final class NitroIdGenerator implements IdGenerator {
     }
 
     public static String generateChannelServiceId(Channel channel) {
-        for (Alias alias : channel.getAliases()) {
-            if (alias.getNamespace().equals("bbc:service:sid")) {
-                String contentUri = String.format(
-                        "%s%s%s",
-                        SERVICE_ID_PREFIX,
-                        alias.getValue(),
-                        channel.getCanonicalUri()
-                );
-                return contentUri.replace("dvb://", "").replace("..", "_");
-            }
-        }
-        return null;
+        return channel.getCanonicalUri();
     }
 
     private String generateOnDemandIdFor(Item item, Version version, Encoding encoding, Location location) {
