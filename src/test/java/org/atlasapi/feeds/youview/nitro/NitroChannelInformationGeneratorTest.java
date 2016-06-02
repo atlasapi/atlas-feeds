@@ -10,7 +10,6 @@ import org.atlasapi.media.entity.Publisher;
 
 import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas._2011_07_06.ExtendedServiceInformationType;
-import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
 import org.junit.Test;
 import tva.metadata._2010.ServiceInformationType;
 import tva.metadata._2010.SynopsisType;
@@ -31,15 +30,23 @@ public class NitroChannelInformationGeneratorTest {
 
         ExtendedServiceInformationType generated = (ExtendedServiceInformationType) generator.generate(channel);
 
-        assertEquals(generated.getName().get(0).getValue(), channel.getTitle());
-        assertEquals(generated.getOwner().get(0), "BBC");
-        assertEquals(generated.getServiceURL(), "dvb://233a..10c0");
-        assertEquals(generated.getServiceDescription().get(0).getValue(), channel.getTitle());
-        assertEquals(generated.getServiceGenre().get(0).getHref(), "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3");
-        assertEquals(generated.getServiceGenre().get(0).getType(), "main");
-        assertEquals(generated.getServiceGenre().get(1).getType(), "other");
-        assertEquals(generated.getServiceGenre().get(1).getHref(), "http://refdata.youview.com/mpeg7cs/YouViewServiceTypeCS/2010-10-25#linear_service-broadcast_channel");
-        assertEquals(generated.getServiceGenre().get(2).getHref(), "http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-bbc");
+        assertEquals(channel.getTitle(), generated.getName().get(0).getValue());
+        assertEquals("BBC", generated.getOwner().get(0));
+        assertEquals("dvb://233a..10c0", generated.getServiceURL());
+
+        assertEquals(channel.getTitle(), generated.getServiceDescription().get(0).getValue());
+        assertEquals("urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3", generated.getServiceGenre().get(0).getHref());
+        assertEquals("main", generated.getServiceGenre().get(0).getType());
+        assertEquals("other", generated.getServiceGenre().get(1).getType());
+        assertEquals(
+                "http://refdata.youview.com/mpeg7cs/YouViewServiceTypeCS/2010-10-25#linear_service-broadcast_channel",
+                generated.getServiceGenre().get(1).getHref()
+        );
+        assertEquals(
+                "http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-bbc",
+                generated.getServiceGenre().get(2).getHref()
+        );
+
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) generated.getRelatedMaterial().get(0);
         assertEquals(relatedMaterial.getHowRelated().getHref(), "urn:tva:metadata:cs:HowRelatedCS:2010:19");
         assertEquals(relatedMaterial.getFormat().getHref(), "urn:mpeg:mpeg7:cs:FileFormatCS2001:1");
@@ -54,6 +61,7 @@ public class NitroChannelInformationGeneratorTest {
                 "http://users-images-atlas.metabroadcast.com/?source=http://imageuri&profile=monocrop&resize=512x1000"
         );
         assertEquals(relatedMaterial.getPromotionalText().get(0).getValue(), channel.getTitle());
+
         StillImageContentAttributesType contentAttributesType = (StillImageContentAttributesType) relatedMaterial.getContentProperties()
                 .getContentAttributes()
                 .get(0);
@@ -73,6 +81,7 @@ public class NitroChannelInformationGeneratorTest {
         }), null);
         assertEquals(relatedMaterial2.getMediaLocator().getMediaUri(),  "http://users-images-atlas.metabroadcast.com/?source=http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png&profile=monocrop&resize=1024x169");
         assertEquals(relatedMaterial2.getPromotionalText().get(0).getValue(), channel.getTitle());
+
         StillImageContentAttributesType contentAttributesType2 = (StillImageContentAttributesType) relatedMaterial2.getContentProperties()
                 .getContentAttributes()
                 .get(0);
@@ -110,17 +119,11 @@ public class NitroChannelInformationGeneratorTest {
         );
         return Channel.builder()
                 .withBroadcaster(Publisher.BBC)
-                .withUri("dvb://233a..10c0")
+                .withUri("http://nitro.bbc.co.uk/services/channel_233a_10c0")
+                .withAliases(ImmutableSet.of(new Alias("bbc:service:locator", "dvb://233a..10c0")))
                 .withImage(image)
                 .withImage(image2)
                 .withTitle("channel")
                 .build();
     }
-
-    private Channel createParentChannel() {
-        return Channel.builder()
-                .withTitle("BBC")
-                .build();
-    }
-
 }
