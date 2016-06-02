@@ -38,6 +38,7 @@ public abstract class ChannelGenerator {
 
     private static final String BBC_IMAGE_TYPE = "bbc:imageType";
     private static final String DOG = "dog";
+    private static final String RESIZER_FORMAT_STRING = "http://users-images-atlas.metabroadcast.com/?source=%s&profile=monocrop&resize=%dx%d";
 
     protected void setRelatedMaterial(Channel channel,
             ServiceInformationType serviceInformationType, String imageIntendedUse) {
@@ -124,7 +125,23 @@ public abstract class ChannelGenerator {
 
     protected void setMediaLocator(Image image, ExtendedRelatedMaterialType relatedMaterial) {
         MediaLocatorType mediaLocator = new MediaLocatorType();
-        mediaLocator.setMediaUri(image.getCanonicalUri());
+        String imgUrl = image.getCanonicalUri();
+        if (!imgUrl.startsWith("http")) {
+            imgUrl = String.format("http://%s", imgUrl);
+        }
+        imgUrl = String.format(
+                RESIZER_FORMAT_STRING,
+                imgUrl,
+                image.getWidth(),
+                image.getHeight()
+        );
+        mediaLocator.setMediaUri(imgUrl);
+        relatedMaterial.setMediaLocator(mediaLocator);
+    }
+
+    protected void setMediaLocatorForInteractive(ExtendedRelatedMaterialType relatedMaterial) {
+        MediaLocatorType mediaLocator = new MediaLocatorType();
+        mediaLocator.setMediaUri(INTERACTIVE_MEDIA_LOCATOR_URI);
         relatedMaterial.setMediaLocator(mediaLocator);
     }
 
