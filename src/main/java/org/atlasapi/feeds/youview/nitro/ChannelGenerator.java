@@ -1,6 +1,5 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import com.google.api.client.repackaged.com.google.common.base.Strings;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
@@ -39,16 +38,18 @@ public abstract class ChannelGenerator {
     private static final String BBC_IMAGE_TYPE = "bbc:imageType";
     private static final String DOG = "dog";
     private static final String RESIZER_FORMAT_STRING = "http://users-images-atlas.metabroadcast.com/?source=%s&profile=monocrop&resize=%dx%d";
+    private static final String IDENT = "ident";
 
     protected void setRelatedMaterial(Channel channel,
             ServiceInformationType serviceInformationType, String imageIntendedUse) {
         Image image;
+        if (NitroMasterbrandInfoGenerator.IMAGE_INTENDED_USE_1.equals(imageIntendedUse)) {
+            image = getBbcImageByAlias(channel, IDENT);
+        }
         if (NitroMasterbrandInfoGenerator.IMAGE_INTENDED_USE_2.equals(imageIntendedUse)) {
-            image = getBbcDogImage(channel);
-            if (image == null) {
-                image = Iterables.getFirst(channel.getImages(), null);
-            }
-        } else {
+            image = getBbcImageByAlias(channel, DOG);
+        }
+        if (image == null) {
             image = Iterables.getFirst(channel.getImages(), null);
         }
         ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
@@ -66,12 +67,12 @@ public abstract class ChannelGenerator {
         }
     }
 
-    private Image getBbcDogImage(Channel channel) {
+    private Image getBbcImageByAlias(Channel channel, final String aliasValue) {
         Optional<Image> image = FluentIterable.from(channel.getImages())
                 .firstMatch(new Predicate<Image>() {
                     public boolean apply(@Nullable Image image) {
                         return image.getAliases() != null &&
-                                image.getAliases().contains(new Alias(BBC_IMAGE_TYPE, DOG));
+                                image.getAliases().contains(new Alias(BBC_IMAGE_TYPE, aliasValue));
                     }
                 });
 
