@@ -47,9 +47,6 @@ public abstract class ChannelGenerator {
         if (NitroMasterbrandInfoGenerator.IMAGE_INTENDED_USE_2.equals(imageIntendedUse)) {
             image = getBbcImageByAlias(channel, IMAGE_USE_2_ALIAS);
         }
-        if (image == null) {
-            image = Iterables.getFirst(channel.getImages(), null);
-        }
         ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
         if (image != null) {
             ControlledTermType howRelated = new ControlledTermType();
