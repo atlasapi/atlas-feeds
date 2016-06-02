@@ -34,20 +34,18 @@ public abstract class ChannelGenerator {
     private final static String INTERACTIVE_FORMAT = "http://refdata.youview.com/mpeg7cs/YouViewIdentifierTypeCS/2014-09-25#groupId.application.linearEnhancement";
     private final static String INTERACTIVE_MEDIA_LOCATOR_URI = "crid://bbc.co.uk/iplayer/flash_player/1";
     private final static String INTERACTIVE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:10.5";
-
-    private static final String BBC_IMAGE_TYPE = "bbc:imageType";
-    private static final String DOG = "dog";
+    public static final Alias IMAGE_USE_1_ALIAS = new Alias("bbc:nitro:type", "ident");
+    public static final Alias IMAGE_USE_2_ALIAS = new Alias("bbc:imageType", "dog");
     private static final String RESIZER_FORMAT_STRING = "http://users-images-atlas.metabroadcast.com/?source=%s&profile=monocrop&resize=%dx%d";
-    private static final String IDENT = "ident";
 
     protected void setRelatedMaterial(Channel channel,
             ServiceInformationType serviceInformationType, String imageIntendedUse) {
         Image image = null;
         if (NitroMasterbrandInfoGenerator.IMAGE_INTENDED_USE_1.equals(imageIntendedUse)) {
-            image = getBbcImageByAlias(channel, IDENT);
+            image = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS);
         }
         if (NitroMasterbrandInfoGenerator.IMAGE_INTENDED_USE_2.equals(imageIntendedUse)) {
-            image = getBbcImageByAlias(channel, DOG);
+            image = getBbcImageByAlias(channel, IMAGE_USE_2_ALIAS);
         }
         if (image == null) {
             image = Iterables.getFirst(channel.getImages(), null);
@@ -67,12 +65,12 @@ public abstract class ChannelGenerator {
         }
     }
 
-    private Image getBbcImageByAlias(Channel channel, final String aliasValue) {
+    private Image getBbcImageByAlias(Channel channel, final Alias alias) {
         Optional<Image> image = FluentIterable.from(channel.getImages())
                 .firstMatch(new Predicate<Image>() {
                     public boolean apply(@Nullable Image image) {
                         return image.getAliases() != null &&
-                                image.getAliases().contains(new Alias(BBC_IMAGE_TYPE, aliasValue));
+                                image.getAliases().contains(alias);
                     }
                 });
 
