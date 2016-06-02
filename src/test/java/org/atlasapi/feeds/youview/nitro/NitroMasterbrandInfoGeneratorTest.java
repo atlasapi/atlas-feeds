@@ -48,7 +48,10 @@ public class NitroMasterbrandInfoGeneratorTest {
                 return image.getCanonicalUri().startsWith("imageuri");
             }
         }), null);
-        assertEquals(relatedMaterial.getMediaLocator().getMediaUri(),  image.getCanonicalUri());
+        assertEquals(
+                relatedMaterial.getMediaLocator().getMediaUri(),
+                "http://users-images-atlas.metabroadcast.com/?source=http://imageuri&profile=monocrop&resize=1000x1000"
+        );
         assertEquals(relatedMaterial.getPromotionalText().get(0).getValue(), channel.getTitle());
         StillImageContentAttributesType contentAttributesType = (StillImageContentAttributesType) relatedMaterial.getContentProperties()
                 .getContentAttributes()
@@ -67,7 +70,10 @@ public class NitroMasterbrandInfoGeneratorTest {
                 return image.getCanonicalUri().startsWith("http://www.bbc.co.uk");
             }
         }), null);
-        assertEquals(relatedMaterial2.getMediaLocator().getMediaUri(),  image2.getCanonicalUri());
+        assertEquals(
+                relatedMaterial2.getMediaLocator().getMediaUri(),
+                "http://users-images-atlas.metabroadcast.com/?source=http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png&profile=monocrop&resize=1024x169"
+        );
         assertEquals(relatedMaterial2.getPromotionalText().get(0).getValue(), channel.getTitle());
         StillImageContentAttributesType contentAttributesType2 = (StillImageContentAttributesType) relatedMaterial2.getContentProperties()
                 .getContentAttributes()
