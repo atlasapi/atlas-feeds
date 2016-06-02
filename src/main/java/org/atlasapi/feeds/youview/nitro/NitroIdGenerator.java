@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Alias;
@@ -16,6 +14,8 @@ import org.atlasapi.media.entity.Version;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.hash.HashFunction;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public final class NitroIdGenerator implements IdGenerator {
