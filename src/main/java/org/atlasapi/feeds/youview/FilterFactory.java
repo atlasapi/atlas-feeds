@@ -45,11 +45,8 @@ public class FilterFactory {
                 new Predicate<ItemOnDemandHierarchy>() {
                     @Override
                     public boolean apply(ItemOnDemandHierarchy input) {
-                        return hasBeenUpdated(input.item(), updatedSince)
-                                || hasBeenUpdated(input.version(), updatedSince)
-                                || hasBeenUpdated(input.encoding(), updatedSince)
-                                || (hasBeenUpdated(input.location(), updatedSince)
-                                    && !isExpired(input.location()));
+                        return hasBeenUpdated(input.location(), updatedSince)
+                                && !isExpired(input.location());
                     }
                 }
         );
