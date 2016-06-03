@@ -45,12 +45,12 @@ public class NitroMasterbrandInfoGeneratorTest {
         Image image = Iterables.getFirst(Iterables.filter(channel.getImages(), new Predicate<Image>() {
             @Override
             public boolean apply(@Nullable Image image) {
-                return image.getCanonicalUri().startsWith("imageuri");
+                return image.getCanonicalUri().startsWith("http://image.com");
             }
         }), null);
         assertEquals(
-                relatedMaterial.getMediaLocator().getMediaUri(),
-                "http://users-images-atlas.metabroadcast.com/?source=http://imageuri&profile=monocrop&resize=1000x1000"
+                "http://image.com",
+                relatedMaterial.getMediaLocator().getMediaUri()
         );
         assertEquals(relatedMaterial.getPromotionalText().get(0).getValue(), channel.getTitle());
         StillImageContentAttributesType contentAttributesType = (StillImageContentAttributesType) relatedMaterial.getContentProperties()
@@ -71,8 +71,8 @@ public class NitroMasterbrandInfoGeneratorTest {
             }
         }), null);
         assertEquals(
-                relatedMaterial2.getMediaLocator().getMediaUri(),
-                "http://users-images-atlas.metabroadcast.com/?source=http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png&profile=monocrop&resize=1024x169"
+                "http://users-images-atlas.metabroadcast.com/?source=http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png&profile=monocrop&resize=1024x169",
+                relatedMaterial2.getMediaLocator().getMediaUri()
         );
         assertEquals(relatedMaterial2.getPromotionalText().get(0).getValue(), channel.getTitle());
         StillImageContentAttributesType contentAttributesType2 = (StillImageContentAttributesType) relatedMaterial2.getContentProperties()
@@ -85,11 +85,12 @@ public class NitroMasterbrandInfoGeneratorTest {
     }
 
     private Channel createChannel() {
-        Image image = new Image("imageuri");
+        Image image = new Image("http://image.com");
         image.setHeight(1000);
         image.setWidth(1000);
         image.setAliases(ImmutableSet.of(
-                    new Alias("bbc:imageType", "ident")
+                    new Alias("bbc:imageType", "ident"),
+                    new Alias("bbc:imageType", "override")
                 )
         );
         Image image2 = new Image("http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png");

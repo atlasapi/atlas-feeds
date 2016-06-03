@@ -53,12 +53,12 @@ public class NitroChannelInformationGeneratorTest {
         Image image = Iterables.getFirst(Iterables.filter(channel.getImages(), new Predicate<Image>() {
             @Override
             public boolean apply(@Nullable Image image) {
-                return image.getCanonicalUri().startsWith("imageuri");
+                return image.getCanonicalUri().startsWith("http://image.com");
             }
         }), null);
         assertEquals(
-                relatedMaterial.getMediaLocator().getMediaUri(),
-                "http://users-images-atlas.metabroadcast.com/?source=http://imageuri&profile=monocrop&resize=512x1000"
+                "http://image.com",
+                relatedMaterial.getMediaLocator().getMediaUri()
         );
         assertEquals(relatedMaterial.getPromotionalText().get(0).getValue(), channel.getTitle());
 
@@ -79,7 +79,10 @@ public class NitroChannelInformationGeneratorTest {
                 return image.getCanonicalUri().startsWith("http://www.bbc.co.uk");
             }
         }), null);
-        assertEquals("http://users-images-atlas.metabroadcast.com/?source=http://imageuri&profile=monocrop&resize=512x1000", relatedMaterial2.getMediaLocator().getMediaUri());
+        assertEquals(
+                relatedMaterial2.getMediaLocator().getMediaUri(),
+                "http://image.com"
+        );
         assertEquals(relatedMaterial2.getPromotionalText().get(0).getValue(), channel.getTitle());
 
         StillImageContentAttributesType contentAttributesType2 = (StillImageContentAttributesType) relatedMaterial2.getContentProperties()
@@ -106,12 +109,13 @@ public class NitroChannelInformationGeneratorTest {
     }
 
     private Channel createChannel() {
-        Image image = new Image("imageuri");
+        Image image = new Image("http://image.com");
         image.setHeight(1000);
         image.setWidth(512);
         image.setAliases(ImmutableSet.of(
-                new Alias("bbc:imageType", "ident")
-                )
+                new Alias("bbc:imageType", "ident"),
+                new Alias("bbc:imageType", "override")
+            )
         );
         Image image2 = new Image("http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png");
         image2.setHeight(169);
