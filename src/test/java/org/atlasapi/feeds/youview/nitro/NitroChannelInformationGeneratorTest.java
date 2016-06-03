@@ -79,14 +79,14 @@ public class NitroChannelInformationGeneratorTest {
                 return image.getCanonicalUri().startsWith("http://www.bbc.co.uk");
             }
         }), null);
-        assertEquals(relatedMaterial2.getMediaLocator().getMediaUri(),  "http://users-images-atlas.metabroadcast.com/?source=http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png&profile=monocrop&resize=1024x169");
+        assertEquals("http://users-images-atlas.metabroadcast.com/?source=http://imageuri&profile=monocrop&resize=512x1000", relatedMaterial2.getMediaLocator().getMediaUri());
         assertEquals(relatedMaterial2.getPromotionalText().get(0).getValue(), channel.getTitle());
 
         StillImageContentAttributesType contentAttributesType2 = (StillImageContentAttributesType) relatedMaterial2.getContentProperties()
                 .getContentAttributes()
                 .get(0);
-        assertEquals(contentAttributesType2.getHeight(), image2.getHeight());
-        assertEquals(contentAttributesType2.getWidth(), image2.getWidth());
+        assertEquals(contentAttributesType2.getHeight(), image.getHeight());
+        assertEquals(contentAttributesType2.getWidth(), image.getWidth());
         assertEquals(contentAttributesType2.getIntendedUse().get(0).getHref(), "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary");
         assertEquals(contentAttributesType2.getIntendedUse().get(1).getHref(), "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog");
 
@@ -109,6 +109,10 @@ public class NitroChannelInformationGeneratorTest {
         Image image = new Image("imageuri");
         image.setHeight(1000);
         image.setWidth(512);
+        image.setAliases(ImmutableSet.of(
+                new Alias("bbc:imageType", "ident")
+                )
+        );
         Image image2 = new Image("http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png");
         image2.setHeight(169);
         image2.setWidth(1024);
