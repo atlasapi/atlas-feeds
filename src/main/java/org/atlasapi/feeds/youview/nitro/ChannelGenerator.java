@@ -8,7 +8,6 @@ import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Publisher;
 
-import com.google.common.collect.Iterables;
 import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.ServiceInformationNameType;
@@ -34,35 +33,19 @@ public abstract class ChannelGenerator {
     private final static String INTERACTIVE_FORMAT = "http://refdata.youview.com/mpeg7cs/YouViewIdentifierTypeCS/2014-09-25#groupId.application.linearEnhancement";
     private final static String INTERACTIVE_MEDIA_LOCATOR_URI = "crid://bbc.co.uk/iplayer/flash_player/1";
     private final static String INTERACTIVE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:10.5";
-    public static final Alias IMAGE_USE_1_ALIAS = new Alias("bbc:nitro:type", "ident");
-    public static final Alias IMAGE_USE_2_ALIAS = new Alias("bbc:imageType", "dog");
     private static final String RESIZER_FORMAT_STRING = "http://users-images-atlas.metabroadcast.com/?source=%s&profile=monocrop&resize=%dx%d";
+    private static final String BBC_IMAGE_TYPE = "bbc:imageType";
+    private static final String OVERRIDE = "override";
 
-    protected void setRelatedMaterial(Channel channel,
-            ServiceInformationType serviceInformationType, String imageIntendedUse) {
-        Image image = null;
-        if (NitroMasterbrandInfoGenerator.IMAGE_INTENDED_USE_1.equals(imageIntendedUse)) {
-            image = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS);
-        }
-        if (NitroMasterbrandInfoGenerator.IMAGE_INTENDED_USE_2.equals(imageIntendedUse)) {
-            image = getBbcImageByAlias(channel, IMAGE_USE_2_ALIAS);
-        }
-        ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
-        if (image != null) {
-            ControlledTermType howRelated = new ControlledTermType();
-            howRelated.setHref(HOW_RELATED);
-            relatedMaterial.setHowRelated(howRelated);
-            ControlledTermType format = new ControlledTermType();
-            format.setHref(FORMAT);
-            relatedMaterial.setFormat(format);
-            setMediaLocator(image, relatedMaterial);
-            setPromotionalText(channel, relatedMaterial);
-            setContentProperties(image, relatedMaterial, imageIntendedUse);
-            serviceInformationType.getRelatedMaterial().add(relatedMaterial);
-        }
-    }
+    protected final static String IMAGE_INTENDED_USE_1 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-ident";
+    protected final static String IMAGE_INTENDED_USE_2 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog";
 
-    private Image getBbcImageByAlias(Channel channel, final Alias alias) {
+    public static final Alias IMAGE_USE_1_ALIAS = new Alias("bbc:imageType", "ident");
+    public static final Alias IMAGE_USE_2_ALIAS = new Alias("bbc:imageType", "dog");
+
+    abstract void setRelatedMaterial(Channel channel, ServiceInformationType serviceInformationType);
+
+    protected Image getBbcImageByAlias(Channel channel, final Alias alias) {
         Optional<Image> image = FluentIterable.from(channel.getImages())
                 .firstMatch(new Predicate<Image>() {
                     public boolean apply(@Nullable Image image) {
@@ -125,14 +108,26 @@ public abstract class ChannelGenerator {
         if (!imgUrl.startsWith("http")) {
             imgUrl = String.format("http://%s", imgUrl);
         }
-        imgUrl = String.format(
-                RESIZER_FORMAT_STRING,
-                imgUrl,
-                image.getWidth(),
-                image.getHeight()
-        );
+        if (!isOverrideImage(image)) {
+            imgUrl = String.format(
+                    RESIZER_FORMAT_STRING,
+                    imgUrl,
+                    image.getWidth(),
+                    image.getHeight()
+            );
+        }
         mediaLocator.setMediaUri(imgUrl);
         relatedMaterial.setMediaLocator(mediaLocator);
+    }
+
+    private boolean isOverrideImage(Image image) {
+        for (Alias alias : image.getAliases()) {
+            if (BBC_IMAGE_TYPE.equals(alias.getNamespace()) &&
+                    OVERRIDE.equals(alias.getValue())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected void setMediaLocatorForInteractive(ExtendedRelatedMaterialType relatedMaterial) {
@@ -172,5 +167,23 @@ public abstract class ChannelGenerator {
         otherGengre2.setType(OTHER_GENRE_TYPE);
         otherGengre2.setHref(otherGenreHref2);
         serviceInformationType.getServiceGenre().add(otherGengre2);
+    }
+
+    protected ExtendedRelatedMaterialType createRelatedMaterial(
+            Channel channel,
+            String imageIntendedUse,
+            Image image
+    ) {
+        ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
+        ControlledTermType howRelated = new ControlledTermType();
+        howRelated.setHref(HOW_RELATED);
+        relatedMaterial.setHowRelated(howRelated);
+        ControlledTermType format = new ControlledTermType();
+        format.setHref(FORMAT);
+        relatedMaterial.setFormat(format);
+        setMediaLocator(image, relatedMaterial);
+        setPromotionalText(channel, relatedMaterial);
+        setContentProperties(image, relatedMaterial, imageIntendedUse);
+        return relatedMaterial;
     }
 }

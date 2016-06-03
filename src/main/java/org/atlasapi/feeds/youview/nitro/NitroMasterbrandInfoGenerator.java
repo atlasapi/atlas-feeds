@@ -4,7 +4,9 @@ import org.atlasapi.feeds.tvanytime.MasterbrandElementGenerator;
 import org.atlasapi.media.channel.Channel;
 
 import com.youview.refdata.schemas._2011_07_06.ExtendedServiceInformationType;
+import org.atlasapi.media.entity.Image;
 import tva.metadata._2010.ServiceInformationType;
+import tva.metadata.extended._2010.ExtendedRelatedMaterialType;
 
 public class NitroMasterbrandInfoGenerator extends ChannelGenerator implements MasterbrandElementGenerator {
 
@@ -20,8 +22,21 @@ public class NitroMasterbrandInfoGenerator extends ChannelGenerator implements M
         setNameAndOwner(channel, serviceInformationType);
         setDescriptions(channel, serviceInformationType);
         setGenres(serviceInformationType, OTHER_GENRE_HREF_1, OTHER_GENRE_HREF_2);
-        setRelatedMaterial(channel, serviceInformationType, IMAGE_INTENDED_USE_1);
-        setRelatedMaterial(channel, serviceInformationType, IMAGE_INTENDED_USE_2);
+        setRelatedMaterial(channel, serviceInformationType);
         return serviceInformationType;
+    }
+
+    @Override
+    void setRelatedMaterial(Channel channel, ServiceInformationType svcInfoType) {
+        Image identImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS);
+        Image dogImage = getBbcImageByAlias(channel, IMAGE_USE_2_ALIAS);
+        ExtendedRelatedMaterialType identMaterial = createRelatedMaterial(
+                channel, IMAGE_INTENDED_USE_1, identImage
+        );
+        ExtendedRelatedMaterialType dogMaterial = createRelatedMaterial(
+                channel, IMAGE_INTENDED_USE_2, dogImage
+        );
+        svcInfoType.getRelatedMaterial().add(identMaterial);
+        svcInfoType.getRelatedMaterial().add(dogMaterial);
     }
 }

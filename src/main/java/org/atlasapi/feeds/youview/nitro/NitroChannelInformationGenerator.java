@@ -7,6 +7,7 @@ import java.util.List;
 import org.atlasapi.feeds.tvanytime.ChannelElementGenerator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Alias;
+import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Publisher;
 
 import com.google.common.base.Optional;
@@ -14,19 +15,21 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedServiceInformationType;
 import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
 import com.youview.refdata.schemas._2011_07_06.TargetPlaceType;
 import org.apache.commons.lang.StringUtils;
+import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.ServiceInformationType;
 import tva.metadata._2010.SynopsisLengthType;
 import tva.metadata._2010.SynopsisType;
+import tva.metadata.extended._2010.ExtendedRelatedMaterialType;
 import tva.mpeg7._2008.UniqueIDType;
 
 public class NitroChannelInformationGenerator extends ChannelGenerator implements ChannelElementGenerator {
 
     private final static String OTHER_GENRE_HREF_1 = "http://refdata.youview.com/mpeg7cs/YouViewServiceTypeCS/2010-10-25#linear_service-broadcast_channel";
     private final static String OTHER_GENRE_HREF_2 = "http://refdata.youview.com/mpeg7cs/YouViewContentProviderCS/2010-09-22#GBR-bbc";
-    private final static String IMAGE_INTENDED_USE_1 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-ident";
-    private final static String IMAGE_INTENDED_USE_2 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog";
+
     private final static String AUTHORITY = "applicationPublisher.youview.com";
     private static final String BBC_SERVICE_LOCATOR = "bbc:service:locator";
+
 
     private void setOtherIdentifier(Channel channel,
             ExtendedServiceInformationType serviceInformationType) {
@@ -54,8 +57,7 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
         setDescriptions(channel, serviceInformationType);
         setGenres(serviceInformationType, OTHER_GENRE_HREF_1, OTHER_GENRE_HREF_2);
 
-        setRelatedMaterial(channel, serviceInformationType, IMAGE_INTENDED_USE_1);
-        setRelatedMaterial(channel, serviceInformationType, IMAGE_INTENDED_USE_2);
+        setRelatedMaterial(channel, serviceInformationType);
 
         setOtherIdentifier(channel, serviceInformationType);
         setTargetingInformation(channel, serviceInformationType);
@@ -96,6 +98,18 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
         generated.getServiceDescription().add(shortDescription);
     }
 
-
-
+    @Override
+    void setRelatedMaterial(Channel channel, ServiceInformationType svcInfoType) {
+        /* Services use the ident image (which is pulled from the masterbrand at ingest) as both
+            ident and dog */
+        Image identImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS);
+        ExtendedRelatedMaterialType identMaterial = createRelatedMaterial(
+                channel, IMAGE_INTENDED_USE_1, identImage
+        );
+        ExtendedRelatedMaterialType dogMaterial = createRelatedMaterial(
+                channel, IMAGE_INTENDED_USE_2, identImage
+        );
+        svcInfoType.getRelatedMaterial().add(identMaterial);
+        svcInfoType.getRelatedMaterial().add(dogMaterial);
+    }
 }
