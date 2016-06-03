@@ -88,6 +88,10 @@ public class NitroMasterbrandInfoGeneratorTest {
         Image image = new Image("imageuri");
         image.setHeight(1000);
         image.setWidth(1000);
+        image.setAliases(ImmutableSet.of(
+                    new Alias("bbc:imageType", "ident")
+                )
+        );
         Image image2 = new Image("http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png");
         image2.setHeight(169);
         image2.setWidth(1024);
