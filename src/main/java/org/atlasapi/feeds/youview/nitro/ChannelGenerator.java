@@ -41,16 +41,17 @@ public abstract class ChannelGenerator {
     protected final static String IMAGE_INTENDED_USE_2 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog";
 
     public static final Alias IMAGE_USE_1_ALIAS = new Alias("bbc:imageType", "ident");
+    public static final Alias IMAGE_USE_1_NITRO_ALIAS = new Alias("bbc:nitro:type", "ident");
     public static final Alias IMAGE_USE_2_ALIAS = new Alias("bbc:imageType", "dog");
 
     abstract void setRelatedMaterial(Channel channel, ServiceInformationType serviceInformationType);
 
-    protected Image getBbcImageByAlias(Channel channel, final Alias alias) {
+    protected Image getBbcImageByAlias(Channel channel, final Alias alias1, final Alias alias2) {
         Optional<Image> image = FluentIterable.from(channel.getImages())
                 .firstMatch(new Predicate<Image>() {
                     public boolean apply(@Nullable Image image) {
                         return image.getAliases() != null &&
-                                image.getAliases().contains(alias);
+                                (image.getAliases().contains(alias1) || image.getAliases().contains(alias2));
                     }
                 });
 

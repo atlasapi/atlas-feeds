@@ -28,8 +28,8 @@ public class NitroMasterbrandInfoGenerator extends ChannelGenerator implements M
 
     @Override
     void setRelatedMaterial(Channel channel, ServiceInformationType svcInfoType) {
-        Image identImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS);
-        Image dogImage = getBbcImageByAlias(channel, IMAGE_USE_2_ALIAS);
+        Image identImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS, IMAGE_USE_1_NITRO_ALIAS);
+        Image dogImage = getBbcImageByAlias(channel, IMAGE_USE_2_ALIAS, null);
         ExtendedRelatedMaterialType identMaterial = createRelatedMaterial(
                 channel, IMAGE_INTENDED_USE_1, identImage
         );
