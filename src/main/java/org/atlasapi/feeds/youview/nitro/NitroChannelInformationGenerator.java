@@ -102,7 +102,7 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
     void setRelatedMaterial(Channel channel, ServiceInformationType svcInfoType) {
         /* Services use the ident image (which is pulled from the masterbrand at ingest) as both
             ident and dog */
-        Image identImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS);
+        Image identImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS, IMAGE_USE_1_NITRO_ALIAS);
         ExtendedRelatedMaterialType identMaterial = createRelatedMaterial(
                 channel, IMAGE_INTENDED_USE_1, identImage
         );
