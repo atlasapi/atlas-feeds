@@ -34,10 +34,8 @@ public class NitroMasterbrandInfoGenerator extends ChannelGenerator implements M
         Optional<Image> maybeIdentImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS, IMAGE_USE_1_NITRO_ALIAS);
         if (maybeIdentImage.isPresent()) {
             Image identImage = maybeIdentImage.get();
-            if (identImage.getCanonicalUri().startsWith(HttpResizerClient.RESIZER_BASE_URL)) {
-                ImageSize identDims = resizerClient.getImageDimensions(identImage.getCanonicalUri());
-                identImage.setWidth(identDims.getWidth());
-                identImage.setHeight(identDims.getHeight());
+            if (!isOverrideImage(identImage)) {
+                identImage = resizeImage(identImage);
             }
             ExtendedRelatedMaterialType identMaterial = createRelatedMaterial(
                     channel, IMAGE_INTENDED_USE_1, identImage
@@ -48,10 +46,8 @@ public class NitroMasterbrandInfoGenerator extends ChannelGenerator implements M
         Optional<Image> maybeDogImage = getBbcImageByAlias(channel, IMAGE_USE_2_ALIAS, null);
         if (maybeDogImage.isPresent()) {
             Image dogImage = maybeDogImage.get();
-            if (dogImage.getCanonicalUri().startsWith(HttpResizerClient.RESIZER_BASE_URL)) {
-                ImageSize dogDims = resizerClient.getImageDimensions(dogImage.getCanonicalUri());
-                dogImage.setWidth(dogDims.getWidth());
-                dogImage.setHeight(dogDims.getHeight());
+            if (!isOverrideImage(dogImage)) {
+                dogImage = resizeImage(dogImage);
             }
             ExtendedRelatedMaterialType dogMaterial = createRelatedMaterial(
                     channel, IMAGE_INTENDED_USE_2, dogImage
