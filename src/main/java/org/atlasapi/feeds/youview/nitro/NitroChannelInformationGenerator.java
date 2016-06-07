@@ -15,6 +15,8 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedServiceInformationType;
 import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
 import com.youview.refdata.schemas._2011_07_06.TargetPlaceType;
 import org.apache.commons.lang.StringUtils;
+import org.atlasapi.resizer.HttpResizerClient;
+import org.atlasapi.resizer.ImageSize;
 import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.ServiceInformationType;
 import tva.metadata._2010.SynopsisLengthType;
@@ -103,6 +105,11 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
         /* Services use the ident image (which is pulled from the masterbrand at ingest) as both
             ident and dog */
         Image identImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS, IMAGE_USE_1_NITRO_ALIAS);
+        if (identImage.getCanonicalUri().startsWith(HttpResizerClient.RESIZER_BASE_URL)) {
+            ImageSize dimensions = resizerClient.getImageDimensions(identImage.getCanonicalUri());
+            identImage.setWidth(dimensions.getWidth());
+            identImage.setHeight(dimensions.getHeight());
+        }
         ExtendedRelatedMaterialType identMaterial = createRelatedMaterial(
                 channel, IMAGE_INTENDED_USE_1, identImage
         );
