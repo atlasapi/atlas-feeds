@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
@@ -8,6 +9,8 @@ import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Publisher;
 
+import org.atlasapi.resizer.HttpResizerClient;
+import org.atlasapi.resizer.ResizerClient;
 import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.ServiceInformationNameType;
@@ -43,6 +46,8 @@ public abstract class ChannelGenerator {
     public static final Alias IMAGE_USE_1_ALIAS = new Alias("bbc:imageType", "ident");
     public static final Alias IMAGE_USE_1_NITRO_ALIAS = new Alias("bbc:nitro:type", "ident");
     public static final Alias IMAGE_USE_2_ALIAS = new Alias("bbc:imageType", "dog");
+
+    protected final HttpResizerClient resizerClient = new HttpResizerClient(new NetHttpTransport());
 
     abstract void setRelatedMaterial(Channel channel, ServiceInformationType serviceInformationType);
 
