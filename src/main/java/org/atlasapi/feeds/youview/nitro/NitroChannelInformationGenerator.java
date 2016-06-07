@@ -104,19 +104,22 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
     void setRelatedMaterial(Channel channel, ServiceInformationType svcInfoType) {
         /* Services use the ident image (which is pulled from the masterbrand at ingest) as both
             ident and dog */
-        Image identImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS, IMAGE_USE_1_NITRO_ALIAS);
-        if (identImage.getCanonicalUri().startsWith(HttpResizerClient.RESIZER_BASE_URL)) {
-            ImageSize dimensions = resizerClient.getImageDimensions(identImage.getCanonicalUri());
-            identImage.setWidth(dimensions.getWidth());
-            identImage.setHeight(dimensions.getHeight());
+        Optional<Image> maybeIdentImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS, IMAGE_USE_1_NITRO_ALIAS);
+        if (maybeIdentImage.isPresent()) {
+            Image identImage = maybeIdentImage.get();
+            if (identImage.getCanonicalUri().startsWith(HttpResizerClient.RESIZER_BASE_URL)) {
+                ImageSize dimensions = resizerClient.getImageDimensions(identImage.getCanonicalUri());
+                identImage.setWidth(dimensions.getWidth());
+                identImage.setHeight(dimensions.getHeight());
+            }
+            ExtendedRelatedMaterialType identMaterial = createRelatedMaterial(
+                    channel, IMAGE_INTENDED_USE_1, identImage
+            );
+            ExtendedRelatedMaterialType dogMaterial = createRelatedMaterial(
+                    channel, IMAGE_INTENDED_USE_2, identImage
+            );
+            svcInfoType.getRelatedMaterial().add(identMaterial);
+            svcInfoType.getRelatedMaterial().add(dogMaterial);
         }
-        ExtendedRelatedMaterialType identMaterial = createRelatedMaterial(
-                channel, IMAGE_INTENDED_USE_1, identImage
-        );
-        ExtendedRelatedMaterialType dogMaterial = createRelatedMaterial(
-                channel, IMAGE_INTENDED_USE_2, identImage
-        );
-        svcInfoType.getRelatedMaterial().add(identMaterial);
-        svcInfoType.getRelatedMaterial().add(dogMaterial);
     }
 }

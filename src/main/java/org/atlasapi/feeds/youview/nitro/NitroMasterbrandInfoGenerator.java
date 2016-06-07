@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import com.google.common.base.Optional;
 import org.atlasapi.feeds.tvanytime.MasterbrandElementGenerator;
 import org.atlasapi.media.channel.Channel;
 
@@ -30,25 +31,32 @@ public class NitroMasterbrandInfoGenerator extends ChannelGenerator implements M
 
     @Override
     void setRelatedMaterial(Channel channel, ServiceInformationType svcInfoType) {
-        Image identImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS, IMAGE_USE_1_NITRO_ALIAS);
-        if (identImage.getCanonicalUri().startsWith(HttpResizerClient.RESIZER_BASE_URL)) {
-            ImageSize identDims = resizerClient.getImageDimensions(identImage.getCanonicalUri());
-            identImage.setWidth(identDims.getWidth());
-            identImage.setHeight(identDims.getHeight());
+        Optional<Image> maybeIdentImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS, IMAGE_USE_1_NITRO_ALIAS);
+        if (maybeIdentImage.isPresent()) {
+            Image identImage = maybeIdentImage.get();
+            if (identImage.getCanonicalUri().startsWith(HttpResizerClient.RESIZER_BASE_URL)) {
+                ImageSize identDims = resizerClient.getImageDimensions(identImage.getCanonicalUri());
+                identImage.setWidth(identDims.getWidth());
+                identImage.setHeight(identDims.getHeight());
+            }
+            ExtendedRelatedMaterialType identMaterial = createRelatedMaterial(
+                    channel, IMAGE_INTENDED_USE_1, identImage
+            );
+            svcInfoType.getRelatedMaterial().add(identMaterial);
         }
-        Image dogImage = getBbcImageByAlias(channel, IMAGE_USE_2_ALIAS, null);
-        if (dogImage.getCanonicalUri().startsWith(HttpResizerClient.RESIZER_BASE_URL)) {
-            ImageSize dogDims = resizerClient.getImageDimensions(dogImage.getCanonicalUri());
-            dogImage.setWidth(dogDims.getWidth());
-            dogImage.setHeight(dogDims.getHeight());
+
+        Optional<Image> maybeDogImage = getBbcImageByAlias(channel, IMAGE_USE_2_ALIAS, null);
+        if (maybeDogImage.isPresent()) {
+            Image dogImage = maybeDogImage.get();
+            if (dogImage.getCanonicalUri().startsWith(HttpResizerClient.RESIZER_BASE_URL)) {
+                ImageSize dogDims = resizerClient.getImageDimensions(dogImage.getCanonicalUri());
+                dogImage.setWidth(dogDims.getWidth());
+                dogImage.setHeight(dogDims.getHeight());
+            }
+            ExtendedRelatedMaterialType dogMaterial = createRelatedMaterial(
+                    channel, IMAGE_INTENDED_USE_2, dogImage
+            );
+            svcInfoType.getRelatedMaterial().add(dogMaterial);
         }
-        ExtendedRelatedMaterialType identMaterial = createRelatedMaterial(
-                channel, IMAGE_INTENDED_USE_1, identImage
-        );
-        ExtendedRelatedMaterialType dogMaterial = createRelatedMaterial(
-                channel, IMAGE_INTENDED_USE_2, dogImage
-        );
-        svcInfoType.getRelatedMaterial().add(identMaterial);
-        svcInfoType.getRelatedMaterial().add(dogMaterial);
     }
 }

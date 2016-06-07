@@ -51,16 +51,12 @@ public abstract class ChannelGenerator {
 
     abstract void setRelatedMaterial(Channel channel, ServiceInformationType serviceInformationType);
 
-    protected Image getBbcImageByAlias(Channel channel, final Alias alias1, final Alias alias2) {
+    protected Optional<Image> getBbcImageByAlias(Channel channel, final Alias alias1, final Alias alias2) {
         Optional<Image> image = FluentIterable.from(channel.getImages())
-                .firstMatch(new Predicate<Image>() {
-                    public boolean apply(@Nullable Image image) {
-                        return image.getAliases() != null &&
-                                (image.getAliases().contains(alias1) || image.getAliases().contains(alias2));
-                    }
-                });
+                .firstMatch(image1 -> image1.getAliases() != null &&
+                        (image1.getAliases().contains(alias1) || image1.getAliases().contains(alias2)));
 
-        return image.isPresent() ? image.get() : null;
+        return image;
     }
 
     protected void setRelatedMaterialForInteractive(ServiceInformationType serviceInformationType) {
