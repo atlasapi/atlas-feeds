@@ -10,6 +10,7 @@ import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Publisher;
 
 import org.atlasapi.resizer.HttpResizerClient;
+import org.atlasapi.resizer.ImageSize;
 import org.atlasapi.resizer.ResizerClient;
 import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.GenreType;
@@ -36,13 +37,13 @@ public abstract class ChannelGenerator {
     private final static String INTERACTIVE_FORMAT = "http://refdata.youview.com/mpeg7cs/YouViewIdentifierTypeCS/2014-09-25#groupId.application.linearEnhancement";
     private final static String INTERACTIVE_MEDIA_LOCATOR_URI = "crid://bbc.co.uk/iplayer/flash_player/1";
     private final static String INTERACTIVE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:10.5";
-    private static final String RESIZER_FORMAT_STRING = "http://users-images-atlas.metabroadcast.com/?source=%s&profile=monocrop&resize=%dx%d";
     private static final String BBC_IMAGE_TYPE = "bbc:imageType";
     private static final String OVERRIDE = "override";
 
     protected final static String IMAGE_INTENDED_USE_1 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-ident";
     protected final static String IMAGE_INTENDED_USE_2 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog";
 
+    public static final String RESIZER_FORMAT_STRING = "http://users-images-atlas.metabroadcast.com/?source=%s&profile=monocrop&resize=%dx%d";
     public static final Alias IMAGE_USE_1_ALIAS = new Alias("bbc:imageType", "ident");
     public static final Alias IMAGE_USE_1_NITRO_ALIAS = new Alias("bbc:nitro:type", "ident");
     public static final Alias IMAGE_USE_2_ALIAS = new Alias("bbc:imageType", "dog");
@@ -76,7 +77,7 @@ public abstract class ChannelGenerator {
     }
 
     protected void setContentProperties(Image image, ExtendedRelatedMaterialType relatedMaterialType,
-            String imageIntendedUse) {
+                                        String imageIntendedUse) {
         ContentPropertiesType contentProperties = new ContentPropertiesType();
         StillImageContentAttributesType contentAttributes = new StillImageContentAttributesType();
         contentAttributes.setHeight(
@@ -107,22 +108,11 @@ public abstract class ChannelGenerator {
     protected void setMediaLocator(Image image, ExtendedRelatedMaterialType relatedMaterial) {
         MediaLocatorType mediaLocator = new MediaLocatorType();
         String imgUrl = image.getCanonicalUri();
-        if (!imgUrl.startsWith("http")) {
-            imgUrl = String.format("http://%s", imgUrl);
-        }
-        if (!isOverrideImage(image)) {
-            imgUrl = String.format(
-                    RESIZER_FORMAT_STRING,
-                    imgUrl,
-                    image.getWidth(),
-                    image.getHeight()
-            );
-        }
         mediaLocator.setMediaUri(imgUrl);
         relatedMaterial.setMediaLocator(mediaLocator);
     }
 
-    private boolean isOverrideImage(Image image) {
+    protected boolean isOverrideImage(Image image) {
         for (Alias alias : image.getAliases()) {
             if (BBC_IMAGE_TYPE.equals(alias.getNamespace()) &&
                     OVERRIDE.equals(alias.getValue())) {
@@ -156,7 +146,7 @@ public abstract class ChannelGenerator {
     }
 
     protected void setGenres(ServiceInformationType serviceInformationType, String otherGenreHref1,
-            String otherGenreHref2) {
+                             String otherGenreHref2) {
         GenreType mainGenre = new GenreType();
         mainGenre.setType(MAIN_GENRE_TYPE);
         mainGenre.setHref(MAIN_GENRE_HREF);
@@ -187,5 +177,23 @@ public abstract class ChannelGenerator {
         setPromotionalText(channel, relatedMaterial);
         setContentProperties(image, relatedMaterial, imageIntendedUse);
         return relatedMaterial;
+    }
+
+    protected Image resizeImage(Image image) {
+        if (!image.getCanonicalUri().startsWith("http")) {
+            image.setCanonicalUri(String.format("http://%s", image.getCanonicalUri()));
+        }
+        image.setCanonicalUri(
+                String.format(
+                        RESIZER_FORMAT_STRING,
+                        image.getCanonicalUri(),
+                        image.getWidth(),
+                        image.getHeight()
+                )
+        );
+        ImageSize imageDimensions = resizerClient.getImageDimensions(image.getCanonicalUri());
+        image.setWidth(imageDimensions.getWidth());
+        image.setHeight(imageDimensions.getHeight());
+        return image;
     }
 }

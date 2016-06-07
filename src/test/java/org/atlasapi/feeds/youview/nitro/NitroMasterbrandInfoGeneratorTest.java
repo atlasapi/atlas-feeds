@@ -67,7 +67,7 @@ public class NitroMasterbrandInfoGeneratorTest {
         Image image2 = Iterables.getFirst(Iterables.filter(channel.getImages(), new Predicate<Image>() {
             @Override
             public boolean apply(@Nullable Image image) {
-                return image.getCanonicalUri().startsWith("http://www.bbc.co.uk");
+                return image.getCanonicalUri().startsWith("http://users-images-atlas.metabroadcast.com/");
             }
         }), null);
         assertEquals(

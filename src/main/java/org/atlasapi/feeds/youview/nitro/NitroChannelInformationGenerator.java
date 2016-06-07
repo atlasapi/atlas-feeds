@@ -107,10 +107,8 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
         Optional<Image> maybeIdentImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS, IMAGE_USE_1_NITRO_ALIAS);
         if (maybeIdentImage.isPresent()) {
             Image identImage = maybeIdentImage.get();
-            if (identImage.getCanonicalUri().startsWith(HttpResizerClient.RESIZER_BASE_URL)) {
-                ImageSize dimensions = resizerClient.getImageDimensions(identImage.getCanonicalUri());
-                identImage.setWidth(dimensions.getWidth());
-                identImage.setHeight(dimensions.getHeight());
+            if (!isOverrideImage(identImage)) {
+                identImage = resizeImage(identImage);
             }
             ExtendedRelatedMaterialType identMaterial = createRelatedMaterial(
                     channel, IMAGE_INTENDED_USE_1, identImage
