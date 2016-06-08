@@ -292,12 +292,12 @@ public class YouViewUploadController {
 
     private boolean isServiceUri(String uri) {
         String[] parts = uri.split("/");
-        return parts.length != 5 && "services".equals(parts[parts.length - 2]);
+        return parts.length == 5 && "services".equals(parts[parts.length - 2]);
     }
 
     private boolean isMasterbrandUri(String uri) {
         String[] parts = uri.split("/");
-        return parts.length != 5 && "masterbrands".equals(parts[parts.length - 2]);
+        return parts.length == 5 && "masterbrands".equals(parts[parts.length - 2]);
     }
 
     private void handleContent(
