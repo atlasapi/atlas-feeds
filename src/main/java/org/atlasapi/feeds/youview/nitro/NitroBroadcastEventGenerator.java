@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Set;
 
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -14,36 +12,30 @@ import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
-import org.joda.time.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import tva.metadata._2010.AVAttributesType;
-import tva.metadata._2010.AspectRatioType;
-import tva.metadata._2010.AudioAttributesType;
-import tva.metadata._2010.BroadcastEventType;
-import tva.metadata._2010.CRIDRefType;
-import tva.metadata._2010.ControlledTermType;
-import tva.metadata._2010.InstanceDescriptionType;
-import tva.metadata._2010.VideoAttributesType;
-import tva.mpeg7._2008.UniqueIDType;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import tva.metadata._2010.BroadcastEventType;
+import tva.metadata._2010.CRIDRefType;
+import tva.metadata._2010.InstanceDescriptionType;
+import tva.mpeg7._2008.UniqueIDType;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
 
-    private static final String DEFAULT_ASPECT_RATIO = "16:9";
-    private static final String MIX_TYPE_STEREO = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
+    private static final Logger log = LoggerFactory.getLogger(NitroBroadcastEventGenerator.class);
     private static final String BROADCAST_AUTHORITY = "pcrid.dmol.co.uk";
     private static final String BROADCAST_PID_AUTHORITY = "bpid.bbc.co.uk";
     private static final String SERVICE_ID_PREFIX = "http://nitro.bbc.co.uk/services/";
-    private final IdGenerator idGenerator;
     private static final String TERRESTRIAL_EVENT_LOCATOR_NS = "bbc:terrestrial_event_locator:teleview";
     private static final String TERRESTRIAL_PROGRAMME_CRID_NS = "bbc:terrestrial_programme_crid:teleview";
-    
-    private final Logger log = LoggerFactory.getLogger(NitroBroadcastEventGenerator.class);
+
+    private final IdGenerator idGenerator;
 
     public NitroBroadcastEventGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
@@ -96,37 +88,8 @@ public class NitroBroadcastEventGenerator implements BroadcastEventGenerator {
             description.getOtherIdentifier().add(pCridIdentifier.get());
         }
         description.getOtherIdentifier().add(createBroadcastPidIdentifier(broadcast));
-        description.setAVAttributes(createAVAttributes());
-        
+
         return description;
-    }
-
-    private AVAttributesType createAVAttributes() {
-        AVAttributesType avAttributes = new AVAttributesType();
-        
-        avAttributes.getAudioAttributes().add(createAudioAttributes());
-        avAttributes.setVideoAttributes(createVideoAttributes());
-        
-        return avAttributes;
-    }
-
-    private VideoAttributesType createVideoAttributes() {
-        VideoAttributesType videoAttributes = new VideoAttributesType();
-        
-        AspectRatioType aspectRatio = new AspectRatioType();
-        aspectRatio.setValue(DEFAULT_ASPECT_RATIO);
-        
-        videoAttributes.getAspectRatio().add(aspectRatio);
-        
-        return videoAttributes;
-    }
-
-    private AudioAttributesType createAudioAttributes() {
-        AudioAttributesType audioAttributes = new AudioAttributesType();
-        ControlledTermType mixType = new ControlledTermType();
-        mixType.setHref(MIX_TYPE_STEREO);
-        audioAttributes.setMixType(mixType);
-        return audioAttributes;
     }
 
     private Optional<UniqueIDType> createTerrestrialProgrammeCridIdentifier(Broadcast broadcast) {
