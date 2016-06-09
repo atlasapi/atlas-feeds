@@ -21,8 +21,9 @@ public class FilterFactory {
         return new Predicate<ItemAndVersion>() {
             @Override
             public boolean apply(ItemAndVersion input) {
-                return hasBeenUpdated(input.item(), updatedSince)
-                        || hasBeenUpdated(input.version(), updatedSince);
+                return input.version().getDuration() != null
+                        && (hasBeenUpdated(input.item(), updatedSince)
+                        || hasBeenUpdated(input.version(), updatedSince));
             }
         };
     }

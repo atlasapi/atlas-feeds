@@ -292,7 +292,8 @@ public class YouViewUploadModule {
                 payloadCreator(), 
                 uploadTask(),
                 nitroDeltaContentResolver(publisher),
-                payloadHashStore()
+                payloadHashStore(),
+                channelResolver
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
