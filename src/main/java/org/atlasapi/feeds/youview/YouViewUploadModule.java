@@ -233,20 +233,20 @@ public class YouViewUploadModule {
 
     @Bean
     public YouViewUploadController uploadController() throws JAXBException, SAXException {
-        return new YouViewUploadController(
-                        contentResolver, 
-                        taskCreator(), 
-                        taskStore, 
-                        payloadCreator(), 
-                        contentHierarchyExpander, 
-                        revocationProcessor(), 
-                        taskProcessor(),
-                        scheduleResolver, 
-                        channelResolver,
-                        nitroIdGenerator,
-                        clock,
-                        taskProcessor("nitro").get()
-                   );
+        return YouViewUploadController.builder()
+                .withContentResolver(contentResolver)
+                .withTaskCreator(taskCreator())
+                .withTaskStore(taskStore)
+                .withPayloadCreator(payloadCreator())
+                .withHierarchyExpander(contentHierarchyExpander)
+                .withRevocationProcessor(revocationProcessor())
+                .withTaskProcessor(taskProcessor())
+                .withScheduleResolver(scheduleResolver)
+                .withChannelResolver(channelResolver)
+                .withIdGenerator(nitroIdGenerator)
+                .withClock(clock)
+                .withNitroTaskProcessor(taskProcessor("nitro").get())
+                .build();
     }
 
     @Bean
