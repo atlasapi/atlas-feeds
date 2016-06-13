@@ -27,7 +27,8 @@ public class TVAnytimeStringConverter implements Converter<JAXBElement<TVAMainTy
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             Marshaller marshaller = context.createMarshaller();
             marshaller.marshal(input, baos);
-            return baos.toString(Charsets.UTF_8.name());
+            /* TODO FIXME This output hack was put it to support weirdness from YouView */
+            return baos.toString(Charsets.UTF_8.name()).replace(" xsi:nil=\"true\"", "");
         } catch (JAXBException | UnsupportedEncodingException e) {
             throw new TVAnytimeConverterException(e);
         }

@@ -39,7 +39,7 @@ public class BootstrapTaskCreationTask extends TaskCreationTask {
         Iterator<Content> allContent = contentResolver.updatedSince(startOfTime);
 
         YouViewContentProcessor processor = contentProcessor(startOfTime, Action.UPDATE);
-        
+        YouViewChannelProcessor channelProcessor = channelProcessor(Action.UPDATE, false);
         while (allContent.hasNext()) {
             if (!shouldContinue()) {
                 return;

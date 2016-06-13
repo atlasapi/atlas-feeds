@@ -1,8 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
@@ -15,6 +14,8 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.hash.HashFunction;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 
 public final class NitroIdGenerator implements IdGenerator {
 
@@ -23,7 +24,7 @@ public final class NitroIdGenerator implements IdGenerator {
     private static final Joiner JOIN_ON_COLON = Joiner.on(":").useForNull("");
     private static final String CRID_PREFIX = "crid://nitro.bbc.co.uk/iplayer/youview/";
     private static final String IMI_PREFIX = "imi:www.nitro.bbc.co.uk/";
-    
+
     private final HashFunction hasher;
 
     public NitroIdGenerator(HashFunction hasher) {
@@ -34,22 +35,31 @@ public final class NitroIdGenerator implements IdGenerator {
     public final String generateVersionCrid(Item item, Version version) {
         return CRID_PREFIX + hasher.hashString(generateVersionIdFor(item, version), Charsets.UTF_8);
     }
-    
+
     @Override
     public String generateContentCrid(Content content) {
         return CRID_PREFIX + pidFrom(content);
     }
-    
+
     @Override
     public String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location) {
         return IMI_PREFIX + hasher.hashString(generateOnDemandIdFor(item, version, encoding, location), Charsets.UTF_8);
     }
-    
+
     @Override
     public String generateBroadcastImi(String youViewServiceId, Broadcast broadcast) {
         return IMI_PREFIX + hasher.hashString(generateBroadcastIdFor(youViewServiceId, broadcast), Charsets.UTF_8);
     }
-    
+
+    @Override
+    public String generateChannelCrid(Channel channel) {
+        return pidFrom(channel).replace("http", "crid").replace("https", "crid");
+    }
+
+    public static String generateChannelServiceId(Channel channel) {
+        return channel.getCanonicalUri();
+    }
+
     private String generateOnDemandIdFor(Item item, Version version, Encoding encoding, Location location) {
 //      scheduled_start
 //      scheduled_end
