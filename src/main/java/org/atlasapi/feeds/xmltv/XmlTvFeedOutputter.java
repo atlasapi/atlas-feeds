@@ -46,10 +46,6 @@ public class XmlTvFeedOutputter {
     public void output(List<XmlTvBroadcastItem> items, OutputStream stream) throws IOException {
         Writer writer = new OutputStreamWriter(stream, Charsets.UTF_8);
         writer.write(XmlTvModule.FEED_PREABMLE);
-        for (XmlTvBroadcastItem broadcastItem : items) {
-            writer.write("\r\n");
-            writer.write(join(extractFields(broadcastItem)));
-        }
         writer.write("\r\n");
         writer.flush();
     }

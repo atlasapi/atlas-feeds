@@ -72,10 +72,7 @@ public class XmlTvModule {
         }
     }
 
-    static final String FEED_PREABMLE = "\t\nThis data will not be updated after 16 June 2016." +
-            "\nPlease see https://metabroadcast.com/blog/changes-to-atlas-access for more information" +
-            "\n\nIn accessing this XML feed, you agree that you will only access its contents for your own personal " +
-    		"and non-commercial use and not for any commercial or other purposes, including advertising or selling any goods or services, " +
-    		"including any third-party software applications available to the general public.";
+    static final String FEED_PREABMLE = "\t\nAfter many happy years of service, this feed has now been decommissioned."
+            + "\nMore details here: https://metabroadcast.com/blog/changes-to-atlas-access";
     
 }

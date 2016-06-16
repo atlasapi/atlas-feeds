@@ -22,9 +22,6 @@ public class XmlTvChannelsCompiler {
     public void compileChannelsFeed(OutputStream stream) throws IOException {
         Writer writer = new OutputStreamWriter(stream, Charsets.UTF_8);
         writer.write(XmlTvModule.FEED_PREABMLE);
-        for (Entry<Integer, XmlTvChannel> channelMapping : channels.entrySet()) {
-            writer.write(String.format("\n%s|%s", channelMapping.getKey(), channelMapping.getValue().title()));
-        }
         writer.write('\n');
         writer.flush();
     }
