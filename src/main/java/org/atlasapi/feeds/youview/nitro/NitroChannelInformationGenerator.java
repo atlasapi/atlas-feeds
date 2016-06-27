@@ -97,6 +97,12 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
         SynopsisType shortDescription = new SynopsisType();
         shortDescription.setLength(SynopsisLengthType.SHORT);
         for (Alias alias : channel.getAliases()) {
+            if (alias.getNamespace().equals("bbc:service:sid")) {
+                if (alias.getValue().endsWith("_hd")) {
+                    shortDescription.setValue(channel.getTitle());
+                    break;
+                }
+            }
             if (alias.getNamespace().equals("bbc:service:name:short")) {
                 shortDescription.setValue(alias.getValue());
             }

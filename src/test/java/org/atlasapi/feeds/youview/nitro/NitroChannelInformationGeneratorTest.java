@@ -26,7 +26,7 @@ public class NitroChannelInformationGeneratorTest {
 
     @Test
     public void testServiceInformationIsGeneratedFromChannel() {
-        Channel channel = createChannel();
+        Channel channel = createChannel("channel");
 
         ExtendedServiceInformationType generated = (ExtendedServiceInformationType) generator.generate(channel);
 
@@ -99,7 +99,7 @@ public class NitroChannelInformationGeneratorTest {
 
     @Test
     public void testShortDescriptionIsGenerated() {
-        Channel channel = createChannel();
+        Channel channel = createChannel("channel");
         channel.addAlias(new Alias("bbc:service:name:short", "BBC"));
 
         ServiceInformationType generated = generator.generate(channel);
@@ -108,7 +108,19 @@ public class NitroChannelInformationGeneratorTest {
         assertEquals(synopsisType.getValue(), "BBC");
     }
 
-    private Channel createChannel() {
+    @Test
+    public void testShortDescriptionIsUsingServiceNameIfHd() {
+        Channel channel = createChannel("BBC HD");
+        channel.addAlias(new Alias("bbc:service:sid", "bbc_hd"));
+        channel.addAlias(new Alias("bbc:service:name:short", "BBC"));
+
+        ServiceInformationType generated = generator.generate(channel);
+
+        SynopsisType synopsisType = generated.getServiceDescription().get(1);
+        assertEquals(synopsisType.getValue(), "BBC HD");
+    }
+
+    private Channel createChannel(String title) {
         Image image = new Image("http://image.com");
         image.setHeight(1000);
         image.setWidth(512);
@@ -131,7 +143,7 @@ public class NitroChannelInformationGeneratorTest {
                 .withAliases(ImmutableSet.of(new Alias("bbc:service:locator", "dvb://233a..10c0")))
                 .withImage(image)
                 .withImage(image2)
-                .withTitle("channel")
+                .withTitle(title)
                 .build();
     }
 }
