@@ -242,11 +242,25 @@ public class RadioPlayerModule {
     }
     
     @Bean RadioPlayerUploadTaskBuilder radioPlayerFtpUploadTaskBuilder() {
-        return new RadioPlayerUploadTaskBuilder(radioPlayerFtpUploadServices(), radioPlayerUploadTaskRunner(), lastUpdatedContentFinder, contentLister, BBC).withLog(log);
+        return new RadioPlayerUploadTaskBuilder(
+                radioPlayerFtpUploadServices(),
+                radioPlayerUploadTaskRunner(),
+                lastUpdatedContentFinder,
+                contentLister,
+                BBC,
+                uploadResultRecorder()
+        ).withLog(log);
     }
     
     @Bean RadioPlayerUploadTaskBuilder radioPlayerHttpsUploadTaskBuilder() {
-        return new RadioPlayerUploadTaskBuilder(radioPlayerHttpsUploadServices(), radioPlayerUploadTaskRunner(), lastUpdatedContentFinder, contentLister, NITRO).withLog(log);
+        return new RadioPlayerUploadTaskBuilder(
+                radioPlayerHttpsUploadServices(),
+                radioPlayerUploadTaskRunner(),
+                lastUpdatedContentFinder,
+                contentLister,
+                NITRO,
+                uploadResultRecorder()
+        ).withLog(log);
     }
     
     @Bean RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner() {

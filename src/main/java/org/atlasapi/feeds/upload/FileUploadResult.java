@@ -20,7 +20,9 @@ public final class FileUploadResult {
     public enum FileUploadResultType {
         SUCCESS("Success"), 
         FAILURE("Failure"), 
-        UNKNOWN("Unknown");
+        UNKNOWN("Unknown"),
+        NO_OP("Nothing to upload")
+        ;
 
         private final String niceName;
 

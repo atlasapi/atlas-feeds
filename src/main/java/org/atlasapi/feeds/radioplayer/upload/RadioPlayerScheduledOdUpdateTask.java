@@ -12,6 +12,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
     
     private final RadioPlayerUploadServicesSupplier uploadersSupplier;
@@ -22,8 +24,19 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
     private final LastUpdatedContentFinder lastUpdatedContentFinder;
     private final ContentLister contentLister;
     private final Publisher publisher;
+    private final RadioPlayerUploadResultStore resultStore;
 
-    public RadioPlayerScheduledOdUpdateTask(RadioPlayerUploadServicesSupplier uploadServicesSupplier, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, AdapterLog log, boolean fullSnapshot, LastUpdatedContentFinder lastUpdatedContentFinder, ContentLister contentLister, Publisher publisher) {
+    public RadioPlayerScheduledOdUpdateTask(
+            RadioPlayerUploadServicesSupplier uploadServicesSupplier,
+            RadioPlayerRecordingExecutor executor,
+            Iterable<RadioPlayerService> services,
+            AdapterLog log,
+            boolean fullSnapshot,
+            LastUpdatedContentFinder lastUpdatedContentFinder,
+            ContentLister contentLister,
+            Publisher publisher,
+            RadioPlayerUploadResultStore resultStore
+    ) {
         this.uploadersSupplier = uploadServicesSupplier;
         this.executor = executor;
         this.services = services;
@@ -32,6 +45,7 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
         this.lastUpdatedContentFinder = lastUpdatedContentFinder;
         this.contentLister = contentLister;
         this.publisher = publisher;
+        this.resultStore = checkNotNull(resultStore);
     }
     
     @Override
@@ -49,7 +63,8 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
                 log,
                 lastUpdatedContentFinder,
                 contentLister,
-                publisher
+                publisher,
+                resultStore
         ).run();
     }
 }

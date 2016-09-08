@@ -13,6 +13,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class RadioPlayerUploadTaskBuilder {
 
     private final RadioPlayerUploadServicesSupplier uploadServicesSupplier;
@@ -21,13 +23,22 @@ public class RadioPlayerUploadTaskBuilder {
     private final ContentLister contentLister;
     private final LastUpdatedContentFinder lastUpdatedContentFinder;
     private final Publisher publisher;
+    private final RadioPlayerUploadResultStore resultStore;
 
-    public RadioPlayerUploadTaskBuilder(RadioPlayerUploadServicesSupplier uploadServicesSupplier, RadioPlayerRecordingExecutor executor, LastUpdatedContentFinder lastUpdatedContentFinder, ContentLister contentLister, Publisher publisher) {
+    public RadioPlayerUploadTaskBuilder(
+            RadioPlayerUploadServicesSupplier uploadServicesSupplier,
+            RadioPlayerRecordingExecutor executor,
+            LastUpdatedContentFinder lastUpdatedContentFinder,
+            ContentLister contentLister,
+            Publisher publisher,
+            RadioPlayerUploadResultStore resultStore
+    ) {
         this.uploadServicesSupplier = uploadServicesSupplier;
         this.executor = executor;
         this.lastUpdatedContentFinder = lastUpdatedContentFinder;
         this.contentLister = contentLister;
         this.publisher = publisher;
+        this.resultStore = checkNotNull(resultStore);
     }
     
     public RadioPlayerUploadTaskBuilder withLog(AdapterLog log) {
@@ -52,7 +63,8 @@ public class RadioPlayerUploadTaskBuilder {
                 fullSnapshot,
                 lastUpdatedContentFinder,
                 contentLister,
-                publisher
+                publisher,
+                resultStore
         );
     }
     
@@ -66,7 +78,8 @@ public class RadioPlayerUploadTaskBuilder {
                 log,
                 lastUpdatedContentFinder,
                 contentLister,
-                publisher
+                publisher,
+                resultStore
         );
     }
 }
