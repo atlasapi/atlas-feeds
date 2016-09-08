@@ -47,11 +47,28 @@ public class RadioPlayerUploadTaskBuilder {
     }
     
     public ScheduledTask newScheduledPiTask(Iterable<RadioPlayerService> services, DayRangeGenerator dayGenerator) {
-        return new RadioPlayerScheduledPiUploadTask(uploadServicesSupplier, executor, services, dayGenerator, log, publisher);
+        return new RadioPlayerScheduledPiUploadTask(
+                uploadServicesSupplier,
+                executor,
+                services,
+                dayGenerator,
+                log,
+                publisher
+        );
     }
     
     public Runnable newBatchPiTask(Iterable<RadioPlayerService> services, Iterable<LocalDate> days) {
-        return new RadioPlayerPiBatchUploadTask(uploadServicesSupplier.get(new DateTime(DateTimeZone.UTC), FileType.PI), executor, services, days, log, publisher);
+        return new RadioPlayerPiBatchUploadTask(
+                uploadServicesSupplier.get(
+                        new DateTime(DateTimeZone.UTC),
+                        FileType.PI
+                ),
+                executor,
+                services,
+                days,
+                log,
+                publisher
+        );
     }
     
     public ScheduledTask newScheduledOdTask(Iterable<RadioPlayerService> services, boolean fullSnapshot) {
