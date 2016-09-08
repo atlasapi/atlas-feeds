@@ -103,24 +103,26 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
                 logInfo("No items for OD %s upload for service %s",
                         (fullSnapshot ? "snapshot" : "change"), service);
 
-                resultStore.record(
-                        new RadioPlayerUploadResult(
-                                FileType.OD,
-                                service,
-                                day,
-                                new FileUploadResult(
-                                        null,
-                                        new RadioPlayerOdFeedSpec(
-                                                service,
-                                                day,
-                                                since,
-                                                ImmutableSet.of()
-                                        ).filename(),
-                                        DateTime.now(),
-                                        NO_OP
-                                )
-                        )
-                );
+                for (FileUploadService uploader : uploaders) {
+                    resultStore.record(
+                            new RadioPlayerUploadResult(
+                                    FileType.OD,
+                                    service,
+                                    day,
+                                    new FileUploadResult(
+                                            uploader.serviceIdentifier(),
+                                            new RadioPlayerOdFeedSpec(
+                                                    service,
+                                                    day,
+                                                    since,
+                                                    ImmutableSet.of()
+                                            ).filename(),
+                                            DateTime.now(),
+                                            NO_OP
+                                    )
+                            )
+                    );
+                }
             } else {
                 uploadTasks.add(new RadioPlayerOdUploadTask(uploaders, since, day, service, uris,
                         adapterLog, publisher));
