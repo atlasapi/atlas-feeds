@@ -3,6 +3,7 @@ package org.atlasapi.feeds.radioplayer.upload;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
+import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
@@ -32,6 +33,7 @@ public class RadioPlayerOdBatchUploadTaskTest {
     private static final Publisher PUBLISHER = Publisher.BBC_NITRO;
     private static final RadioPlayerService SERVICE = RadioPlayerServices.all.get("300");
 
+    @Mock private FileUploadService uploader;
     @Mock private RadioPlayerRecordingExecutor executor;
     @Mock private AdapterLog adapterLog;
     @Mock private LastUpdatedContentFinder contentFinder;
@@ -42,8 +44,10 @@ public class RadioPlayerOdBatchUploadTaskTest {
 
     @Before
     public void setUp() throws Exception {
+        when(uploader.serviceIdentifier()).thenReturn("httpsUpload");
+
         task = new RadioPlayerOdBatchUploadTask(
-                ImmutableList.of(),
+                ImmutableList.of(uploader),
                 executor,
                 ImmutableList.of(SERVICE),
                 LocalDate.now(),
@@ -77,5 +81,6 @@ public class RadioPlayerOdBatchUploadTaskTest {
 
         FileUploadResult upload = result.getUpload();
         assertThat(upload.type(), is(FileUploadResult.FileUploadResultType.NO_OP));
+        assertThat(upload.remote(), is("httpsUpload"));
     }
 }
