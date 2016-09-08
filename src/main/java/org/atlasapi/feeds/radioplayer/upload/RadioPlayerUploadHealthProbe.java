@@ -1,12 +1,5 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.FAILURE;
-import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
-import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCESS;
-import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
-import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
-import static org.atlasapi.feeds.upload.FileUploadResult.DATE_ORDERING;
-
 import java.util.List;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
@@ -14,11 +7,7 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.media.entity.Publisher;
-import org.joda.time.Duration;
-import org.joda.time.LocalDate;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultEntry;
@@ -27,13 +16,27 @@ import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.DayRange;
 import com.metabroadcast.common.time.DayRangeGenerator;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import org.joda.time.Duration;
+import org.joda.time.LocalDate;
+
+import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.FAILURE;
+import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.INFO;
+import static com.metabroadcast.common.health.ProbeResult.ProbeResultType.SUCCESS;
+import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
+import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
+import static org.atlasapi.feeds.upload.FileUploadResult.DATE_ORDERING;
+
 public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
-    private static final Predicate<FileUploadResult> IS_REMOTE_SUCCESS = new Predicate<FileUploadResult>() {
+    private static final Predicate<FileUploadResult> IS_NOOP_OR_REMOTE_SUCCESS = new Predicate<FileUploadResult>() {
         @Override
         public boolean apply(FileUploadResult input) {
-            return FileUploadResultType.SUCCESS.equals(input.type()) 
-                    && FileUploadResultType.SUCCESS.equals(input.remoteProcessingResult());
+            boolean noop = FileUploadResultType.NO_OP == input.type();
+            boolean success = FileUploadResultType.SUCCESS == input.type()
+                    && FileUploadResultType.SUCCESS == input.remoteProcessingResult();
+            return noop || success;
         }
     };
     private static final Duration FAILURE_WINDOW = Duration.standardHours(4).plus(Duration.standardMinutes(25));
@@ -86,7 +89,11 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
     }
 
     private FileUploadResult mostRecentSuccess(List<? extends FileUploadResult> results) {
-        return Iterables.get(Iterables.filter(results, IS_REMOTE_SUCCESS), 0, null);
+        Iterable<? extends FileUploadResult> successfulResults = Iterables.filter(
+                results,
+                IS_NOOP_OR_REMOTE_SUCCESS
+        );
+        return Iterables.getFirst(successfulResults, null);
     }
 
     private List<? extends FileUploadResult> orderByDate(Iterable<? extends FileUploadResult> results) {
@@ -99,9 +106,16 @@ public class RadioPlayerUploadHealthProbe implements HealthProbe {
 
     private ProbeResultType entryResultType(FileUploadResult mostRecentSuccess, FileUploadResult mostRecent, LocalDate day, FileType type) {
         if (mostRecentSuccess != null) {
-            if (FileUploadResultType.SUCCESS.equals(mostRecent.remoteProcessingResult()) && FileType.OD == type) {
-                return SUCCESS;
+            if (FileType.OD == type) {
+                if (FileUploadResultType.NO_OP == mostRecent.type()) {
+                    return INFO;
+                }
+
+                if (FileUploadResultType.SUCCESS == mostRecent.remoteProcessingResult()) {
+                    return SUCCESS;
+                }
             }
+
             if (!isStale(mostRecentSuccess)) {
                 if (FileUploadResultType.SUCCESS.equals(mostRecent.remoteProcessingResult())) {
                     return probeResultTypeFrom(mostRecent, day, type);
