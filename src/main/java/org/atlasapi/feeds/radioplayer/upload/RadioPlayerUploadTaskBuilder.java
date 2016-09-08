@@ -13,6 +13,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDate;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class RadioPlayerUploadTaskBuilder {
 
     private final RadioPlayerUploadServicesSupplier uploadServicesSupplier;
@@ -21,13 +23,22 @@ public class RadioPlayerUploadTaskBuilder {
     private final ContentLister contentLister;
     private final LastUpdatedContentFinder lastUpdatedContentFinder;
     private final Publisher publisher;
+    private final RadioPlayerUploadResultStore resultStore;
 
-    public RadioPlayerUploadTaskBuilder(RadioPlayerUploadServicesSupplier uploadServicesSupplier, RadioPlayerRecordingExecutor executor, LastUpdatedContentFinder lastUpdatedContentFinder, ContentLister contentLister, Publisher publisher) {
+    public RadioPlayerUploadTaskBuilder(
+            RadioPlayerUploadServicesSupplier uploadServicesSupplier,
+            RadioPlayerRecordingExecutor executor,
+            LastUpdatedContentFinder lastUpdatedContentFinder,
+            ContentLister contentLister,
+            Publisher publisher,
+            RadioPlayerUploadResultStore resultStore
+    ) {
         this.uploadServicesSupplier = uploadServicesSupplier;
         this.executor = executor;
         this.lastUpdatedContentFinder = lastUpdatedContentFinder;
         this.contentLister = contentLister;
         this.publisher = publisher;
+        this.resultStore = checkNotNull(resultStore);
     }
     
     public RadioPlayerUploadTaskBuilder withLog(AdapterLog log) {
@@ -36,11 +47,28 @@ public class RadioPlayerUploadTaskBuilder {
     }
     
     public ScheduledTask newScheduledPiTask(Iterable<RadioPlayerService> services, DayRangeGenerator dayGenerator) {
-        return new RadioPlayerScheduledPiUploadTask(uploadServicesSupplier, executor, services, dayGenerator, log, publisher);
+        return new RadioPlayerScheduledPiUploadTask(
+                uploadServicesSupplier,
+                executor,
+                services,
+                dayGenerator,
+                log,
+                publisher
+        );
     }
     
     public Runnable newBatchPiTask(Iterable<RadioPlayerService> services, Iterable<LocalDate> days) {
-        return new RadioPlayerPiBatchUploadTask(uploadServicesSupplier.get(new DateTime(DateTimeZone.UTC), FileType.PI), executor, services, days, log, publisher);
+        return new RadioPlayerPiBatchUploadTask(
+                uploadServicesSupplier.get(
+                        new DateTime(DateTimeZone.UTC),
+                        FileType.PI
+                ),
+                executor,
+                services,
+                days,
+                log,
+                publisher
+        );
     }
     
     public ScheduledTask newScheduledOdTask(Iterable<RadioPlayerService> services, boolean fullSnapshot) {
@@ -52,7 +80,8 @@ public class RadioPlayerUploadTaskBuilder {
                 fullSnapshot,
                 lastUpdatedContentFinder,
                 contentLister,
-                publisher
+                publisher,
+                resultStore
         );
     }
     
@@ -66,7 +95,8 @@ public class RadioPlayerUploadTaskBuilder {
                 log,
                 lastUpdatedContentFinder,
                 contentLister,
-                publisher
+                publisher,
+                resultStore
         );
     }
 }

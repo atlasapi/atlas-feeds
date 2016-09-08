@@ -1,24 +1,14 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
-import static com.google.common.base.Functions.compose;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Iterables.concat;
-import static com.google.common.collect.Iterables.filter;
-import static com.google.common.collect.Iterables.transform;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-
-import javax.annotation.Nullable;
-
-import nu.xom.Attribute;
-import nu.xom.Element;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerOdFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
-import org.atlasapi.feeds.radioplayer.outputting.RadioPlayerXMLOutputter.ImageDimensions;
 import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Described;
@@ -28,8 +18,12 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Version;
-import org.joda.time.DateTime;
-import org.joda.time.Interval;
+
+import com.metabroadcast.common.base.MorePredicates;
+import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.intl.Country;
+import com.metabroadcast.common.stream.MoreCollectors;
+import com.metabroadcast.common.time.DateTimeZones;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
@@ -42,15 +36,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Ordering;
-import com.metabroadcast.common.base.MorePredicates;
-import com.metabroadcast.common.intl.Countries;
-import com.metabroadcast.common.intl.Country;
-import com.metabroadcast.common.time.DateTimeZones;
+import nu.xom.Attribute;
+import nu.xom.Element;
+import org.joda.time.DateTime;
+import org.joda.time.Interval;
+
+import static com.google.common.base.Functions.compose;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Iterables.filter;
 
 public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
     
     private static final String ORIGINATOR = "Metabroadcast";
-    private static final DateTime MAX_AVAILABLE_TILL = new DateTime(2037, 01, 01, 0, 0, 0, 0, DateTimeZones.UTC);
+    private static final DateTime MAX_AVAILABLE_TILL = new DateTime(2037, 1, 1, 0, 0, 0, 0, DateTimeZones.UTC);
     
     private final RadioPlayerGenreElementCreator genreElementCreator;
 
@@ -63,8 +61,17 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
         
         checkArgument(spec instanceof RadioPlayerOdFeedSpec);
         Optional<DateTime> since = ((RadioPlayerOdFeedSpec)spec).getSince();
-        Iterable<RadioPlayerBroadcastItem> validItems = filter(items, hasUpdatedAndAvailableClip(since));
-        Iterable<Clip> validClips = filter(concat(transform(items, compose(Item.TO_CLIPS, RadioPlayerBroadcastItem.TO_ITEM))), availableAndUpdatedSince(since));
+        Iterable<RadioPlayerBroadcastItem> validItems = StreamSupport
+                .stream(items.spliterator(), false)
+                .filter(hasUpdatedAndAvailableClip(since)::apply)
+                .collect(Collectors.toList());
+
+;
+
+        Iterable<Clip> validClips = StreamSupport.stream(items.spliterator(), false)
+                .flatMap(i -> compose(Item.TO_CLIPS, RadioPlayerBroadcastItem.TO_ITEM).apply(i).stream())
+                .filter(availableAndUpdatedSince(since)::apply)
+                .collect(MoreCollectors.toImmutableList());
         
         Element epgElem = createElement("epg", EPGSCHEDULE);
         EPGDATATYPES.addDeclarationTo(epgElem);
@@ -93,7 +100,10 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
     }
     
     private static Predicate<RadioPlayerBroadcastItem> hasUpdatedAndAvailableClip(Optional<DateTime> since) {
-        return MorePredicates.transformingPredicate(TO_CLIPS, MorePredicates.anyPredicate(availableAndUpdatedSince(since)));
+        return MorePredicates.transformingPredicate(
+                TO_CLIPS,
+                MorePredicates.anyPredicate(availableAndUpdatedSince(since))
+        );
     }
     
     public static Predicate<Clip> availableAndUpdatedSince(final Optional<DateTime> since) {
@@ -165,8 +175,16 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
                 String title = clipTitle(itemOrContainerTitle(broadcastItem), clip);
                 programme.appendChild(stringElement("mediumName", EPGDATATYPES, MEDIUM_TITLE.truncatePossibleNull(title)));
                 programme.appendChild(stringElement("longName", EPGDATATYPES, LONG_TITLE.truncatePossibleNull(title)));
-        
-                programme.appendChild(mediaDescription(stringElement("shortDescription", EPGDATATYPES, SHORT_DESC.truncatePossibleNull(clip.getDescription()))));
+
+                programme.appendChild(
+                        mediaDescription(
+                                stringElement(
+                                        "shortDescription",
+                                        EPGDATATYPES,
+                                        SHORT_DESC.truncatePossibleNull(clip.getDescription())
+                                )
+                        )
+                );
                 if (!Strings.isNullOrEmpty(clip.getImage())) {
                     for (ImageDimensions dimensions : imageDimensions) {
                         Element img = createImageDescriptionElem(clip, dimensions);
@@ -233,41 +251,28 @@ public class RadioPlayerUpdatedClipOutputter extends RadioPlayerXMLOutputter {
     }
     
     private static Predicate<Identified> updatedSince(final DateTime since) {
-        return new Predicate<Identified>() {
-            @Override
-            public boolean apply(Identified input) {
-                return input.getLastUpdated().isAfter(since);
-            }
-        };
+        return input -> input.getLastUpdated().isAfter(since);
     }
     
-    private static final Predicate<Described> AUDIO_MEDIA_TYPE = new Predicate<Described>() {
-        @Override
-        public boolean apply(Described input) {
-            return input.getMediaType().equals(MediaType.AUDIO);
-        }
-    };
+    private static final Predicate<Described> AUDIO_MEDIA_TYPE = input -> input.getMediaType().equals(MediaType.AUDIO);
     
-    private static final Predicate<Clip> IS_ACTUALLY_AVAILABLE = new Predicate<Clip>() {
-
-        @Override
-        public boolean apply(Clip input) {
-            for (Version version : input.getVersions()) {
-                for (Encoding encoding : version.getManifestedAs()) {
-                    for (Location location : encoding.getAvailableAt()) {
-                        if (location.getPolicy().getActualAvailabilityStart() != null
-                            && location.getPolicy().getActualAvailabilityStart().isBeforeNow()
-                            && (location.getPolicy().getAvailabilityEnd() == null || location.getPolicy()
-                                    .getAvailabilityEnd()
-                                    .isAfterNow())) {
-                            return true;
-                        }
+    private static final Predicate<Clip> IS_ACTUALLY_AVAILABLE = input -> {
+        for (Version version : input.getVersions()) {
+            for (Encoding encoding : version.getManifestedAs()) {
+                for (Location location : encoding.getAvailableAt()) {
+                    boolean startIsAvailable = location.getPolicy().getActualAvailabilityStart() != null
+                            && location.getPolicy().getActualAvailabilityStart().isBeforeNow();
+                    boolean endIsAvailable = location.getPolicy().getAvailabilityEnd() == null
+                            || location.getPolicy()
+                            .getAvailabilityEnd()
+                            .isAfterNow();
+                    if (startIsAvailable && endIsAvailable) {
+                        return true;
                     }
                 }
             }
-            return false;
         }
-
+        return false;
     };
     
     private static final Predicate<Clip> AUDIO_AND_AVAILABLE = Predicates.and(IS_ACTUALLY_AVAILABLE, AUDIO_MEDIA_TYPE);

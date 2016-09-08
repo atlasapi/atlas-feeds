@@ -7,7 +7,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.atlasapi.feeds.radioplayer.RadioPlayerOdFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
@@ -18,6 +20,7 @@ import org.atlasapi.persistence.logging.AdapterLogEntry;
 import com.metabroadcast.common.time.DateTimeZones;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.SetMultimap;
@@ -29,6 +32,8 @@ import org.joda.time.format.PeriodFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.NO_OP;
 import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
 
 public class RadioPlayerOdBatchUploadTask implements Runnable {
@@ -44,6 +49,7 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
     private final Optional<DateTime> since;
     private final RadioPlayerOdUriResolver uriResolver;
     private final Publisher publisher;
+    private final RadioPlayerUploadResultStore resultStore;
 
     public RadioPlayerOdBatchUploadTask(
             Iterable<FileUploadService> uploaders,
@@ -54,7 +60,8 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
             AdapterLog adapterLog,
             LastUpdatedContentFinder lastUpdatedContentFinder,
             ContentLister contentLister,
-            Publisher publisher
+            Publisher publisher,
+            RadioPlayerUploadResultStore resultStore
     ) {
         this.uploaders = uploaders;
         this.executor = executor;
@@ -64,11 +71,12 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
         this.adapterLog = adapterLog;
         this.publisher = publisher;
         this.since = fullSnapshot
-                     ? Optional.<DateTime>absent()
+                     ? Optional.absent()
                      : Optional.of(day.toDateTimeAtStartOfDay(DateTimeZone.UTC).minusHours(2));
         this.uriResolver = new RadioPlayerOdUriResolver(
                 contentLister, lastUpdatedContentFinder, publisher
         );
+        this.resultStore = checkNotNull(resultStore);
     }
     
     @Override
@@ -94,6 +102,25 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
             if (uris.isEmpty()) {
                 logInfo("No items for OD %s upload for service %s",
                         (fullSnapshot ? "snapshot" : "change"), service);
+
+                resultStore.record(
+                        new RadioPlayerUploadResult(
+                                FileType.OD,
+                                service,
+                                day,
+                                new FileUploadResult(
+                                        null,
+                                        new RadioPlayerOdFeedSpec(
+                                                service,
+                                                day,
+                                                since,
+                                                ImmutableSet.of()
+                                        ).filename(),
+                                        DateTime.now(),
+                                        NO_OP
+                                )
+                        )
+                );
             } else {
                 uploadTasks.add(new RadioPlayerOdUploadTask(uploaders, since, day, service, uris,
                         adapterLog, publisher));
