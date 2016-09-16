@@ -120,6 +120,8 @@ public class RadioPlayerServices {
                                 .withIonServiceId("bbc_radio_four_extra"))
                 .add(new RadioPlayerService(359, "5liveolympicsextra")
                                 .withIonServiceId("bbc_radio_five_live_olympics_extra"))
+                .add(new RadioPlayerService(371, "bbc_radio_cymru_mwy")
+                                .withIonServiceId("bbc_radio_cymru_mwy"))
                 .build();
 
         Function<RadioPlayerService, Integer> TO_ID = RadioPlayerService::getRadioplayerId;
