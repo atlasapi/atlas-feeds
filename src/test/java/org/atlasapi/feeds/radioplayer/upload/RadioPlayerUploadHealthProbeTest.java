@@ -1,24 +1,12 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
-import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.FAILURE;
-import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.media.entity.Publisher;
-import org.joda.time.DateTime;
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
-import com.google.common.collect.Iterables;
 import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.health.ProbeResult.ProbeResultType;
 import com.metabroadcast.common.persistence.MongoTestHelper;
@@ -26,8 +14,21 @@ import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.time.DateTimeZones;
 import com.metabroadcast.common.time.DayRangeGenerator;
 import com.metabroadcast.common.time.TimeMachine;
+
+import com.google.common.collect.Iterables;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
+import org.joda.time.DateTime;
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
+import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.FAILURE;
+import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 
 public class RadioPlayerUploadHealthProbeTest {
 
@@ -44,7 +45,7 @@ public class RadioPlayerUploadHealthProbeTest {
     
     @BeforeClass
     public static void setup() {
-        mongo.collection("uploads").ensureIndex(new BasicDBObjectBuilder().add("service",1).add("id", 1).add("time", -1).get());
+        mongo.collection("uploads").createIndex(new BasicDBObjectBuilder().add("service",1).add("id", 1).add("time", -1).get());
     }
     
     @After
