@@ -1,26 +1,27 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
-import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
-import org.joda.time.DateTime;
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 import com.metabroadcast.common.health.ProbeResult;
 import com.metabroadcast.common.persistence.MongoTestHelper;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.time.DateTimeZones;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
+import org.joda.time.DateTime;
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
+import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 public class RadioPlayerServerHealthProbeTest {
 
@@ -34,7 +35,7 @@ public class RadioPlayerServerHealthProbeTest {
     
     @BeforeClass
     public static void setup() {
-        mongo.collection("uploads").ensureIndex(new BasicDBObjectBuilder().add("service",1).add("id", 1).add("time", -1).get());
+        mongo.collection("uploads").createIndex(new BasicDBObjectBuilder().add("service",1).add("id", 1).add("time", -1).get());
     }
     
     @After
