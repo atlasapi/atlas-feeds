@@ -16,35 +16,13 @@ import org.atlasapi.feeds.upload.azure.AzureFileUploader;
 import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
 import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
 import org.atlasapi.feeds.xml.XMLValidator;
-import org.atlasapi.feeds.lakeview.validation.LakeviewFileValidator;
-import org.atlasapi.feeds.lakeview.validation.LakeviewServerHealthProbe;
-import org.atlasapi.feeds.lakeview.validation.rules.CompletenessValidationRule;
-import org.atlasapi.feeds.lakeview.validation.rules.HeirarchyValidationRule;
-import org.atlasapi.feeds.lakeview.validation.rules.LakeviewFeedValidationRule;
-import org.atlasapi.feeds.lakeview.validation.rules.RecentUpdateToBrandValidationRule;
-import org.atlasapi.feeds.lakeview.validation.rules.UpToDateValidationRule;
-import org.atlasapi.feeds.upload.FileUploader;
-import org.atlasapi.feeds.upload.ResultStoringFileUploader;
-import org.atlasapi.feeds.upload.azure.AzureFileUploader;
-import org.atlasapi.feeds.upload.persistence.FileUploadResultStore;
-import org.atlasapi.feeds.upload.persistence.MongoFileUploadResultStore;
-import org.atlasapi.feeds.xml.XMLValidator;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
-import org.joda.time.Duration;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Resources;
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.scheduling.RepetitionRule;
@@ -53,10 +31,22 @@ import com.metabroadcast.common.scheduling.SimpleScheduler;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Resources;
+import org.joda.time.Duration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 @Configuration
 public class LakeviewModule {
 
-	private final static RepetitionRule LAKEVIEW_UPLOAD = RepetitionRules.every(Duration.standardDays(1)).withOffset(Duration.standardHours(4));
+	private final static RepetitionRule LAKEVIEW_UPLOAD = RepetitionRules
+			.every(Duration.standardHours(12))
+			.withOffset(Duration.standardHours(4));
 	private final static String SERVICE_NAME = "lakeview";
 	private final static String REMOTE_ID = "azure";
 	
