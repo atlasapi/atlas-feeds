@@ -1,19 +1,23 @@
 package org.atlasapi.resizer;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+
+import javax.imageio.ImageIO;
+
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpBackOffUnsuccessfulResponseHandler;
+import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.repackaged.com.google.common.base.Strings;
 import com.google.api.client.repackaged.com.google.common.base.Throwables;
+import com.google.api.client.util.ExponentialBackOff;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -48,7 +52,13 @@ public class HttpResizerClient implements ResizerClient {
         if (Strings.isNullOrEmpty(url) || !url.startsWith(RESIZER_BASE_URL)) {
             throw new IllegalArgumentException(String.format("%s is not a Resizer URL", url));
         }
-        HttpResponse response = requestFactory.buildGetRequest(new GenericUrl(url)).execute();
+        HttpRequest httpRequest = requestFactory.buildGetRequest(new GenericUrl(url));
+
+        httpRequest.setUnsuccessfulResponseHandler(
+                new HttpBackOffUnsuccessfulResponseHandler(new ExponentialBackOff())
+        );
+
+        HttpResponse response = httpRequest.execute();
         BufferedImage image = ImageIO.read(response.getContent());
         return new ImageSize(image.getHeight(), image.getWidth());
     }
