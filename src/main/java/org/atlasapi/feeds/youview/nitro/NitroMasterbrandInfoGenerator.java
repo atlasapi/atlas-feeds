@@ -1,13 +1,12 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
+
 import org.atlasapi.feeds.tvanytime.MasterbrandElementGenerator;
 import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.entity.Image;
 
 import com.youview.refdata.schemas._2011_07_06.ExtendedServiceInformationType;
-import org.atlasapi.media.entity.Image;
-import org.atlasapi.resizer.HttpResizerClient;
-import org.atlasapi.resizer.ImageSize;
 import tva.metadata._2010.ServiceInformationType;
 import tva.metadata.extended._2010.ExtendedRelatedMaterialType;
 

@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview.nitro;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.atlasapi.feeds.tvanytime.ChannelElementGenerator;
 import org.atlasapi.media.channel.Channel;
@@ -10,14 +11,12 @@ import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Publisher;
 
-import com.google.common.base.Optional;
 import com.youview.refdata.schemas._2011_07_06.ExtendedServiceInformationType;
 import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
 import com.youview.refdata.schemas._2011_07_06.TargetPlaceType;
 import org.apache.commons.lang.StringUtils;
-import org.atlasapi.resizer.HttpResizerClient;
-import org.atlasapi.resizer.ImageSize;
-import tva.metadata._2010.ControlledTermType;
+import tva.metadata._2010.ServiceInformationNameLengthType;
+import tva.metadata._2010.ServiceInformationNameType;
 import tva.metadata._2010.ServiceInformationType;
 import tva.metadata._2010.SynopsisLengthType;
 import tva.metadata._2010.SynopsisType;
@@ -31,7 +30,7 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
 
     private final static String AUTHORITY = "applicationPublisher.youview.com";
     private static final String BBC_SERVICE_LOCATOR = "bbc:service:locator";
-
+    private static final String BBC_SERVICE_SHORT_NAME = "bbc:service:name:short";
 
     private void setOtherIdentifier(Channel channel,
             ExtendedServiceInformationType serviceInformationType) {
@@ -54,8 +53,10 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
     public ServiceInformationType generate(Channel channel) {
         ExtendedServiceInformationType serviceInformationType = new ExtendedServiceInformationType();
         serviceInformationType.setServiceId(channel.getCanonicalUri());
-        serviceInformationType.setServiceURL(getDvbLocator(channel).orNull());
+        serviceInformationType.setServiceURL(getDvbLocator(channel).orElse(null));
+
         setNameAndOwner(channel, serviceInformationType);
+
         setDescriptions(channel, serviceInformationType);
         setGenres(serviceInformationType, OTHER_GENRE_HREF_1, OTHER_GENRE_HREF_2);
 
@@ -63,18 +64,35 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
 
         setOtherIdentifier(channel, serviceInformationType);
         setTargetingInformation(channel, serviceInformationType);
+
         setShortDescription(channel, serviceInformationType);
+        setShortName(channel, serviceInformationType);
+
         return serviceInformationType;
     }
 
+    private void setShortName(
+            Channel channel,
+            ExtendedServiceInformationType serviceInformationType
+    ) {
+        ServiceInformationNameType name = new ServiceInformationNameType();
+        name.setLength(ServiceInformationNameLengthType.SHORT);
+
+        Optional<Alias> shortNameAlias = channel.getAliases()
+                .stream()
+                .filter(alias -> alias.getNamespace().equals(BBC_SERVICE_SHORT_NAME))
+                .findFirst();
+
+        shortNameAlias.ifPresent(alias -> name.setValue(alias.getValue()));
+
+        serviceInformationType.getName().add(name);
+    }
 
     private static Optional<String> getDvbLocator(Channel channel) {
-        for (Alias alias : channel.getAliases()) {
-            if (BBC_SERVICE_LOCATOR.equals(alias.getNamespace())) {
-                return Optional.of(alias.getValue());
-            }
-        }
-        return Optional.absent();
+        return channel.getAliases()
+                .stream()
+                .filter(alias -> BBC_SERVICE_LOCATOR.equals(alias.getNamespace()))
+                .findFirst().flatMap(alias -> Optional.of(alias.getValue()));
     }
 
     private void setTargetingInformation(Channel channel, ExtendedServiceInformationType serviceInformationType) {
@@ -92,15 +110,20 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
         return targetPlace;
     }
 
-    private void setShortDescription(Channel channel,
-            ServiceInformationType generated) {
+    private void setShortDescription(
+            Channel channel,
+            ServiceInformationType generated
+    ) {
         SynopsisType shortDescription = new SynopsisType();
         shortDescription.setLength(SynopsisLengthType.SHORT);
-        for (Alias alias : channel.getAliases()) {
-            if (alias.getNamespace().equals("bbc:service:name:short")) {
-                shortDescription.setValue(alias.getValue());
-            }
-        }
+
+        Optional<Alias> shortNameAlias = channel.getAliases()
+                .stream()
+                .filter(alias -> alias.getNamespace().equals(BBC_SERVICE_SHORT_NAME))
+                .findFirst();
+
+        shortNameAlias.ifPresent(alias -> shortDescription.setValue(alias.getValue()));
+
         generated.getServiceDescription().add(shortDescription);
     }
 
@@ -108,7 +131,11 @@ public class NitroChannelInformationGenerator extends ChannelGenerator implement
     void setRelatedMaterial(Channel channel, ServiceInformationType svcInfoType) {
         /* Services use the ident image (which is pulled from the masterbrand at ingest) as both
             ident and dog */
-        Optional<Image> maybeIdentImage = getBbcImageByAlias(channel, IMAGE_USE_1_ALIAS, IMAGE_USE_1_NITRO_ALIAS);
+        Optional<Image> maybeIdentImage = getBbcImageByAlias(
+                channel,
+                IMAGE_USE_1_ALIAS,
+                IMAGE_USE_1_NITRO_ALIAS
+        );
         if (maybeIdentImage.isPresent()) {
             Image identImage = maybeIdentImage.get();
             if (!isOverrideImage(identImage)) {
