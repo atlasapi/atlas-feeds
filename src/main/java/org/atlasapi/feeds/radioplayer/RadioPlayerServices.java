@@ -33,10 +33,10 @@ public class RadioPlayerServices {
                 .add(new RadioPlayerService(301, "berkshire"))
                 .add(new RadioPlayerService(302, "bristol"))
                 .add(new RadioPlayerService(303, "cambridgeshire")
-                        .withIonServiceId( "bbc_radio_cambridge"))
+                        .withIonServiceId("bbc_radio_cambridge"))
                 .add(new RadioPlayerService(304, "cornwall"))
                 .add(new RadioPlayerService(305, "coventry")
-                        .withIonServiceId( "bbc_radio_coventry_warwickshire"))
+                        .withIonServiceId("bbc_radio_coventry_warwickshire"))
                 .add(new RadioPlayerService(306, "cumbria"))
                 .add(new RadioPlayerService(307, "derby"))
                 .add(new RadioPlayerService(308, "devon"))
@@ -61,7 +61,9 @@ public class RadioPlayerServices {
                 .add(new RadioPlayerService(325, "nottingham"))
                 .add(new RadioPlayerService(326, "oxford"))
                 .add(new RadioPlayerService(327, "sheffield"))
-                .add(new RadioPlayerService(328, "shropshire"))
+                .add(new RadioPlayerService(328, "shropshire")
+                        .withServiceUri(
+                                "http://nitro.bbc.co.uk/services/bbc_radio_shropshire_233a_185c"))
                 .add(new RadioPlayerService(329, "solent")
                                 .withServiceUri("http://ref.atlasapi.org/channels/solent961fm"))
                 .add(new RadioPlayerService(330, "somerset")
@@ -122,13 +124,11 @@ public class RadioPlayerServices {
                                 .withIonServiceId("bbc_radio_five_live_olympics_extra"))
                 .build();
 
-        Function<RadioPlayerService, Integer> TO_ID = RadioPlayerService::getRadioplayerId;
-
         all = Maps.uniqueIndex(
                 services,
                 Functions.compose(
                         Functions.toStringFunction(),
-                        TO_ID::apply
+                        RadioPlayerService::getRadioplayerId
                 )
         );
 
@@ -143,7 +143,7 @@ public class RadioPlayerServices {
         nationalNetworks = Sets.filter(
                 services,
                 MorePredicates.transformingPredicate(
-                        TO_ID::apply,
+                        RadioPlayerService::getRadioplayerId,
                         Predicates.or(Range.closedOpen(340, 350), Predicates.equalTo(358))
                 )
         );
