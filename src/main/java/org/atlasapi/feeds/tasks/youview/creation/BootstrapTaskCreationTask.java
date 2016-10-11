@@ -12,6 +12,7 @@ import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
+import org.atlasapi.media.channel.ChannelType;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
@@ -39,7 +40,8 @@ public class BootstrapTaskCreationTask extends TaskCreationTask {
         Iterator<Content> allContent = contentResolver.updatedSince(startOfTime);
 
         YouViewContentProcessor processor = contentProcessor(startOfTime, Action.UPDATE);
-        
+        YouViewChannelProcessor channelProcessor = channelProcessor(Action.UPDATE,
+                ChannelType.CHANNEL);
         while (allContent.hasNext()) {
             if (!shouldContinue()) {
                 return;

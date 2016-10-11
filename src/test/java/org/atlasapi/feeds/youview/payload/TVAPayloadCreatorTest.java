@@ -20,6 +20,7 @@ import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.persistence.BroadcastEventRecord;
 import org.atlasapi.feeds.youview.persistence.RollingWindowBroadcastEventDeduplicator;
 import org.atlasapi.feeds.youview.persistence.SentBroadcastEventPcridStore;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
@@ -50,6 +51,7 @@ public class TVAPayloadCreatorTest {
     private static final String PAYLOAD = "payload";
     private static final String PCRID = "pcrid";
     private TvAnytimeGenerator generator = mock(TvAnytimeGenerator.class);
+    private ChannelResolver channelResolver = mock(ChannelResolver.class);
     private Converter<JAXBElement<TVAMainType>, String> converter = mock(TVAnytimeStringConverter.class);
     private SentBroadcastEventPcridStore sentBroadcastProgramUrlStore = mock(SentBroadcastEventPcridStore.class);
     private RollingWindowBroadcastEventDeduplicator rollingWindowBroadcastEventDeduplicator = mock(RollingWindowBroadcastEventDeduplicator.class);
@@ -60,7 +62,7 @@ public class TVAPayloadCreatorTest {
     private final PayloadCreator payloadCreator;
     
     public TVAPayloadCreatorTest() throws JAXBException {
-        this.payloadCreator = new TVAPayloadCreator(generator, converter, rollingWindowBroadcastEventDeduplicator, clock);
+        this.payloadCreator = new TVAPayloadCreator(generator, channelResolver, converter, rollingWindowBroadcastEventDeduplicator, clock);
     }
     
     private JAXBElement<TVAMainType> createTvaMain() {

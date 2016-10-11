@@ -7,6 +7,7 @@ import org.atlasapi.feeds.youview.UnexpectedContentTypeException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
+import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Film;
@@ -19,7 +20,7 @@ import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.ProgramInformationType;
 
 import com.google.common.base.Optional;
-
+import tva.metadata._2010.ServiceInformationType;
 
 public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
     
@@ -27,16 +28,22 @@ public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
     private final GroupInformationGenerator groupInfoGenerator;
     private final OnDemandLocationGenerator onDemandGenerator;
     private final BroadcastEventGenerator broadcastGenerator;
+    private final ChannelElementGenerator channelElementGenerator;
+    private final MasterbrandElementGenerator masterbrandElementGenerator;
     private final ContentHierarchyExtractor hierarchy;
     
     public DefaultTvAnytimeElementCreator(ProgramInformationGenerator progInfoGenerator, 
             GroupInformationGenerator groupInfoGenerator, OnDemandLocationGenerator onDemandGenerator,
-            BroadcastEventGenerator broadcastGenerator, ContentHierarchyExtractor hierarchy) {
+            BroadcastEventGenerator broadcastGenerator, ChannelElementGenerator channelElementGenerator,
+            MasterbrandElementGenerator masterbrandElementGenerator,
+            ContentHierarchyExtractor hierarchy) {
         this.progInfoGenerator = checkNotNull(progInfoGenerator);
         this.groupInfoGenerator = checkNotNull(groupInfoGenerator);
         this.onDemandGenerator = checkNotNull(onDemandGenerator);
         this.broadcastGenerator = checkNotNull(broadcastGenerator);
         this.hierarchy = checkNotNull(hierarchy);
+        this.channelElementGenerator = checkNotNull(channelElementGenerator);
+        this.masterbrandElementGenerator = checkNotNull(masterbrandElementGenerator);
     }
 
     @Override
@@ -78,5 +85,15 @@ public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
     @Override
     public BroadcastEventType createBroadcastEventElementFor(ItemBroadcastHierarchy broadcast, String broadcastImi) {
         return broadcastGenerator.generate(broadcast, broadcastImi);
+    }
+
+    @Override
+    public ServiceInformationType createChannelElementFor(Channel channel, Channel parentChannel) {
+        return channelElementGenerator.generate(channel);
+    }
+
+    @Override
+    public ServiceInformationType createMasterbrandElementFor(Channel channel) {
+        return masterbrandElementGenerator.generate(channel);
     }
 }

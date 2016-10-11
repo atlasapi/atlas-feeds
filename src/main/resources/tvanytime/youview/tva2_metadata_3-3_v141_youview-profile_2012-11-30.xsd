@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+=======================================================
+YouView B2B Metadata Contribution Interface Schema: Profile of TV-Anytime Extended Metadata Schema
+Copyright (c) 2009, 2010, 2011, 2012 YouView TV Limited
+======================================================= 
+10/09/2012, Michael Sullivan
+- Updated import for profiled TV-Anytime Metadata schema (SPECWIP-3322)
+======================================================= 
+25/10/2011, Michael Sullivan. CANTEC-339:
+- reinstated TargetingInformationType\TerminalInformation
+- reinstated TerminalInformationType
+- reinstated SystemInformationType
+- reinstated CPUType
+- reinstated RAMType
+- reinstated VersionType
+- adjusted namespaces for revised dates
+- added this history block
+=======================================================
+-->
 <schema xmlns:tva2="urn:tva:metadata:extended:2010" xmlns:tva="urn:tva:metadata:2010" xmlns:mpeg7="urn:tva:mpeg7:2008" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:xml="http://www.w3.org/XML/1998/namespace" targetNamespace="urn:tva:metadata:extended:2010" elementFormDefault="qualified" attributeFormDefault="unqualified">
 	<!-- NRIYP 	
 	xmlns:int="urn:tva:metadata:interstitial:2010"
@@ -8,7 +27,7 @@
 	<annotation>
 		<documentation xml:lang="en">This schema consists of datatypes that are normatively defined in ETSI TS 102 822-3-3 v1.4.1</documentation>
 	</annotation>
-	<import namespace="urn:tva:metadata:2010" schemaLocation="tva_metadata_3-1_v161_youview-profile_2011-07-06.xsd"/>
+	<import namespace="urn:tva:metadata:2010" schemaLocation="tva_metadata_3-1_v161_youview-profile_2012-11-30.xsd"/>
 	<!-- NRIYP <import namespace="urn:tva:metadata:interstitial:2010" schemaLocation="tva_interstitial_3-4_v141.xsd"/> -->
 	<!-- NRIYP <import namespace="urn:tva:rmpi:2010" schemaLocation="tva_rmpi_5-1_v151.xsd"/> -->
 	<!-- NRIYP <import namespace="urn:tva:mpeg21:2010" schemaLocation="tva_mpeg21.xsd"/> -->
@@ -157,13 +176,93 @@
 	<annotation>
 		<documentation xml:lang="en">6.2.4 Terminal Information</documentation>
 	</annotation>
+	<simpleType name="VersionType">
+		<restriction base="string">
+			<whiteSpace value="collapse"/>
+			<pattern value="[0-9]+(.[0-9]+)*"/>
+		</restriction>
+	</simpleType>
+	<!-- reinstated VersionType, michaels 2011-10-25 -->
+	<complexType name="CPUType">
+		<complexContent>
+			<extension base="tva:ControlledTermType">
+				<attribute name="clockSpeed" type="nonNegativeInteger" use="required"/>
+				<attribute name="unit" use="required">
+					<simpleType>
+						<restriction base="string">
+							<enumeration value="Hz"/>
+							<enumeration value="KHz"/>
+							<enumeration value="MHz"/>
+							<enumeration value="GHz"/>
+							<enumeration value="THz"/>
+							<enumeration value="PHz"/>
+						</restriction>
+					</simpleType>
+				</attribute>
+			</extension>
+		</complexContent>
+	</complexType>
+	<!-- reinstated CPUType, michaels 2011-10-25 -->
+	<complexType name="RAMType">
+		<attribute name="size" type="nonNegativeInteger" use="required"/>
+		<attribute name="unit" use="required">
+			<simpleType>
+				<restriction base="string">
+					<enumeration value="Bit"/>
+					<enumeration value="KBit"/>
+					<enumeration value="MBit"/>
+					<enumeration value="GBit"/>
+					<enumeration value="Byte"/>
+					<enumeration value="KByte"/>
+					<enumeration value="MByte"/>
+					<enumeration value="GByte"/>
+					<enumeration value="TByte"/>
+					<enumeration value="PByte"/>
+				</restriction>
+			</simpleType>
+		</attribute>
+	</complexType>
+	<!-- reinstated RAMType, michaels 2011-10-25 -->
+	<complexType name="SystemInformationType">
+		<sequence minOccurs="0" maxOccurs="unbounded">
+			<element name="SupportingOS" type="tva:ControlledTermType" minOccurs="0"/>
+			<element name="MiddleWare" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="VirtualMachine" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="OtherSystemSW" type="tva:ControlledTermType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="CPU" type="tva2:CPUType" minOccurs="0"/>
+			<element name="RAM" type="tva2:RAMType" minOccurs="0"/>
+		</sequence>
+	</complexType>
+	<!-- reinstated SystemInformationType, michaels 2011-10-25 -->
 	<!-- NRIYP
-	<simpleType name="VersionType"> ...
-	<complexType name="CPUType"> ...
-	<complexType name="RAMType"> ...
-	<complexType name="SystemInformationType"> ...
 	<complexType name="HardwareManufacturerType"> ...
-	<complexType name="TerminalInformationType"> ...
+	-->
+	<complexType name="TerminalInformationType">
+		<sequence>
+			<!-- NRIYP
+			<element name="DecoderInformation" type="mpeg21:CodecCapabilityBaseType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="EncoderInformation" type="mpeg21:CodecCapabilityBaseType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="DisplayInformation" type="mpeg21:DisplayType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="AudioInformation" type="mpeg21:AudioOutputType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			<element name="InteractionInputInformation" type="mpeg21:UserInteractionInputType"
+				minOccurs="0" maxOccurs="unbounded"/>
+			<element name="StorageInformation" type="mpeg21:StorageType" minOccurs="0"
+				maxOccurs="unbounded"/>
+			-->
+			<element name="SystemInformation" type="tva2:SystemInformationType" minOccurs="0"/>
+			<!-- NRIYP
+			<element name="HardwareManufacturer" type="tva2:HardwareManufacturerType" minOccurs="0"/>
+			-->
+			<element name="TerminalType" type="tva:ControlledTermType" minOccurs="0"/>
+		</sequence>
+		<attribute name="terminalInformationId" type="tva:TVAIDType" use="optional"/>
+	</complexType>
+	<!-- reinstated TerminalInformationType, but requiring only the elements SystemInformation and TerminalType, michaels 2011-10-24 -->
+	<!-- NRIYP
 	<complexType name="TerminalInformationTableType"> ...
 	-->
 	<annotation>
@@ -192,9 +291,8 @@
 		<documentation xml:lang="en">6.2.8 targeting Information Type</documentation>
 	</annotation>
 	<complexType name="TargetingInformationType">
-		<attribute name="TargetingId" type="tva:TVAIDType" use="optional"/>
-		<!-- NRIYP 
 		<sequence>
+			<!-- NRIYP 		
 			<element name="TargetUserPreferencesIdRef" type="tva:TVAIDRefType" minOccurs="0"
 				maxOccurs="unbounded"/>
 			<element name="TargetUserPreferences" type="mpeg7:UserPreferencesType" minOccurs="0"
@@ -209,8 +307,9 @@
 				maxOccurs="unbounded"/>
 			<element name="TerminalInformationIdRef" type="tva:TVAIDRefType" minOccurs="0"
 				maxOccurs="unbounded"/>
-			<element name="TerminalInformation" type="tva2:TerminalInformationType" minOccurs="0"
-				maxOccurs="unbounded"/>
+		-->
+			<element name="TerminalInformation" type="tva2:TerminalInformationType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- NRIYP 				
 			<element name="NetworkInformationIdRef" type="tva:TVAIDRefType" minOccurs="0"
 				maxOccurs="unbounded"/>
 			<element name="NetworkInformation" type="mpeg21:NetworkCharacteristicBaseType"
@@ -219,9 +318,13 @@
 				maxOccurs="unbounded"/>
 			<element name="NaturalEnvironmentInformation"
 				type="tva2:NaturalEnvironmentInformationType" minOccurs="0" maxOccurs="unbounded"/>
-		</sequence>
 		-->
+		</sequence>
+		<attribute name="TargetingId" type="tva:TVAIDType" use="optional"/>
+		<!-- -->
 		<!-- reinstated TargetingInformationType (extended in YouView schema elsewhere), michaels 2010-08-19 -->
+		<!-- reinstated TerminalInformation element, michaels 2011-10-24 -->
+		<!-- -->
 	</complexType>
 	<annotation>
 		<documentation xml:lang="en">6.3 Coupon Description</documentation>
