@@ -9,9 +9,11 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
+import com.google.common.base.Predicate;
 import com.metabroadcast.common.intl.Countries;
 import org.atlasapi.feeds.tvanytime.CreditsItemGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
@@ -492,15 +494,18 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         Integer episodeNumber = episode.getEpisodeNumber();
         if (episodeNumber != null) {
             memberOf.setIndex(Long.valueOf(episodeNumber));
-        } else if (!item.getReleaseDates().isEmpty()) {
-            for (ReleaseDate releaseDate : item.getReleaseDates()) {
-                if (releaseDate.type().equals(ReleaseType.FIRST_BROADCAST)) {
-                    int index = generateIndexFromReleaseDate(releaseDate);
-                    memberOf.setIndex(Long.valueOf(index));
-                }
-            }
+        } else if (!Iterables.isEmpty(Iterables.filter(item.getReleaseDates(),isFirstBroadcast))) {
+            ReleaseDate releaseDate = Iterables.getFirst(item.getReleaseDates(), null);
+            int index = generateIndexFromReleaseDate(releaseDate);
+            memberOf.setIndex(Long.valueOf(index));
         }
     }
+
+    Predicate<ReleaseDate> isFirstBroadcast = new Predicate<ReleaseDate>() {
+        @Override public boolean apply(@Nullable ReleaseDate releaseDate) {
+            return releaseDate.type().equals(ReleaseType.FIRST_BROADCAST);
+        }
+    };
 
     private int generateIndexFromReleaseDate(ReleaseDate releaseDate) {
         String date = releaseDate.date().toString(DATE_FORMAT);
