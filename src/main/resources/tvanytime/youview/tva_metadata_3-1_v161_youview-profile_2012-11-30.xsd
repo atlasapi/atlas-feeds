@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- 
 =======================================================
-YouView B2B Metadata Supply Schema: Profile of TV-Anytime Schema
+YouView B2B Metadata Contribution Interface Schema: Profile of TV-Anytime Metadata Schema
+Copyright (c) 2009, 2010, 2011, 2012 YouView TV Limited
+======================================================= 
+30/11/2012, Michael Sullivan
+- corrected order of elements BroadcastEvent and OnDemandProgram in ProgramLocationTableType,
+reversing a mis-ordering (with respect to original TV-Anytime schema) introduced 2010/07/23 
+on reintroduction there of BroadcastEvent element (SPECWIP-3506)
+======================================================= 
+10/09/2012, Michael Sullivan
+- Made <VerticalSize> element mandatory in VideoAttributes (SPECWIP-3322)
 ======================================================= 
 06/07/2011, Richard Bradbury
 - Made <Free> element mandatory again in OnDemandProgramType (CANTEC-123)
@@ -397,7 +406,8 @@ tva:TVAIDRefType (is plural tva:TVAIDRefsType in TV-Anytime)
 			<element name="Coding" type="tva:ControlledTermType" minOccurs="0"/>
 			<element name="Scan" type="tva:ScanType" minOccurs="0"/>
 			<element name="HorizontalSize" type="unsignedShort" minOccurs="0"/>
-			<element name="VerticalSize" type="unsignedShort" minOccurs="0"/>
+			<element name="VerticalSize" type="unsignedShort"/>
+			<!-- michaels 2012/09/10: made VerticalSize mandatory (inside optional VideoAttributes) -->
 			<element name="AspectRatio" type="tva:AspectRatioType" minOccurs="0" maxOccurs="2"/>
 			<element name="Color" type="tva:ColorType" minOccurs="0"/>
 			<!-- NRIYP <element name="FrameRate" type="tva:FrameRateType" minOccurs="0"/> -->
@@ -941,9 +951,10 @@ tva:TVAIDRefType (is plural tva:TVAIDRefsType in TV-Anytime)
 	<complexType name="ProgramLocationTableType">
 		<sequence>
 			<element name="Schedule" type="tva:ScheduleType" minOccurs="0" maxOccurs="unbounded"/>
-			<element name="OnDemandProgram" type="tva:OnDemandProgramType" minOccurs="0" maxOccurs="unbounded"/>
 			<!-- Restored BroadcastEvent, MichaelS 2010/07/23 -->
 			<element name="BroadcastEvent" type="tva:BroadcastEventType" minOccurs="0" maxOccurs="unbounded"/>
+			<element name="OnDemandProgram" type="tva:OnDemandProgramType" minOccurs="0" maxOccurs="unbounded"/>
+			<!-- Corrected ordering of elements BroadcastEvent and OnDemandProgram, to re-align with TV-A original schema, MichaelS 2012/11/30 -->
 			<!-- NRIYP <element name="OnDemandService" type="tva:OnDemandServiceType" minOccurs="0" maxOccurs="unbounded"/> -->
 			<!-- NRIYP <element name="PushDownloadProgram" type="tva:PushDownloadType" minOccurs="0" maxOccurs="unbounded"/> -->
 		</sequence>

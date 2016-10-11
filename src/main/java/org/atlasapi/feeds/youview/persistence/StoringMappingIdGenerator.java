@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview.persistence;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
@@ -42,5 +43,10 @@ public class StoringMappingIdGenerator implements IdGenerator {
     @Override
     public String generateBroadcastImi(String youViewServiceId, Broadcast broadcast) {
         return delegate.generateBroadcastImi(youViewServiceId, broadcast);
+    }
+
+    @Override
+    public String generateChannelCrid(Channel channel) {
+        return delegate.generateChannelCrid(channel);
     }
 }

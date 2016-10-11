@@ -116,7 +116,7 @@ public class YouViewUploadModule {
             "unbox", Publisher.AMAZON_UNBOX
     );
     
-    private static final RepetitionRule DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardHours(2));
+    private static final RepetitionRule DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
     private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
     
@@ -242,8 +242,10 @@ public class YouViewUploadModule {
                         revocationProcessor(), 
                         taskProcessor(),
                         scheduleResolver, 
-                        channelResolver, 
-                        clock
+                        channelResolver,
+                        nitroIdGenerator,
+                        clock,
+                        taskProcessor("nitro").get()
                    );
     }
 
@@ -298,7 +300,7 @@ public class YouViewUploadModule {
     private PayloadCreator payloadCreator() throws JAXBException, SAXException {
         Converter<JAXBElement<TVAMainType>, String> outputConverter = new TVAnytimeStringConverter();
         TvAnytimeGenerator tvaGenerator = enableValidationIfAppropriate(generator);
-        return new TVAPayloadCreator(tvaGenerator, outputConverter, rollingWindowBroadcastEventDeduplicator(), clock);
+        return new TVAPayloadCreator(tvaGenerator, channelResolver, outputConverter, rollingWindowBroadcastEventDeduplicator(), clock);
     }
     
     private TvAnytimeGenerator enableValidationIfAppropriate(TvAnytimeGenerator generator) 
