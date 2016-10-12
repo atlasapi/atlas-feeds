@@ -1,12 +1,14 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableSet;
+import javax.annotation.Nullable;
+
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Publisher;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas._2011_07_06.ExtendedServiceInformationType;
 import org.junit.Test;
@@ -14,8 +16,6 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 import tva.metadata.extended._2010.ExtendedRelatedMaterialType;
 import tva.metadata.extended._2010.StillImageContentAttributesType;
-
-import javax.annotation.Nullable;
 
 import static org.junit.Assert.assertEquals;
 
@@ -89,8 +89,8 @@ public class NitroMasterbrandInfoGeneratorTest {
         image.setHeight(1000);
         image.setWidth(1000);
         image.setAliases(ImmutableSet.of(
-                    new Alias("bbc:imageType", "ident"),
-                    new Alias("bbc:imageType", "override")
+                    new Alias(ChannelGenerator.BBC_IMAGE_TYPE, "ident"),
+                    new Alias(ChannelGenerator.BBC_IMAGE_TYPE, "override")
                 )
         );
         Image image2 = new Image("http://www.bbc.co.uk/iplayer/images/youview/bbc_iplayer.png");
@@ -98,7 +98,7 @@ public class NitroMasterbrandInfoGeneratorTest {
         image2.setWidth(1024);
         image2.setAliases(
                 ImmutableSet.of(
-                        new Alias("bbc:imageType", "dog")
+                        new Alias(ChannelGenerator.BBC_IMAGE_TYPE, "dog")
                 )
         );
         return Channel.builder()
