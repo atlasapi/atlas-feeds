@@ -24,6 +24,12 @@ import tva.mpeg7._2008.TextualType;
 
 public abstract class ChannelGenerator {
 
+    public static final String BBC_IMAGE_TYPE = "bbc:nitro:type";
+    public static final String RESIZER_FORMAT_STRING = "http://users-images-atlas.metabroadcast.com/?source=%s&profile=monocrop&resize=%dx%d";
+    public static final Alias IMAGE_USE_1_ALIAS = new Alias(BBC_IMAGE_TYPE, "ident");
+    public static final Alias IMAGE_USE_1_NITRO_ALIAS = new Alias(BBC_IMAGE_TYPE, "ident");
+    public static final Alias IMAGE_USE_2_ALIAS = new Alias(BBC_IMAGE_TYPE, "dog");
+
     private final static String MAIN_GENRE_TYPE = "main";
     private final static String OTHER_GENRE_TYPE = "other";
     private final static String MAIN_GENRE_HREF = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
@@ -33,16 +39,10 @@ public abstract class ChannelGenerator {
     private final static String INTERACTIVE_FORMAT = "http://refdata.youview.com/mpeg7cs/YouViewIdentifierTypeCS/2014-09-25#groupId.application.linearEnhancement";
     private final static String INTERACTIVE_MEDIA_LOCATOR_URI = "crid://bbc.co.uk/iplayer/flash_player/1";
     private final static String INTERACTIVE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:10.5";
-    private static final String BBC_IMAGE_TYPE = "bbc:imageType";
     private static final String OVERRIDE = "override";
 
     protected final static String IMAGE_INTENDED_USE_1 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-ident";
     protected final static String IMAGE_INTENDED_USE_2 = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#source-dog";
-
-    public static final String RESIZER_FORMAT_STRING = "http://users-images-atlas.metabroadcast.com/?source=%s&profile=monocrop&resize=%dx%d";
-    public static final Alias IMAGE_USE_1_ALIAS = new Alias("bbc:imageType", "ident");
-    public static final Alias IMAGE_USE_1_NITRO_ALIAS = new Alias("bbc:nitro:type", "ident");
-    public static final Alias IMAGE_USE_2_ALIAS = new Alias("bbc:imageType", "dog");
 
     protected final HttpResizerClient resizerClient = new HttpResizerClient(new NetHttpTransport());
 
