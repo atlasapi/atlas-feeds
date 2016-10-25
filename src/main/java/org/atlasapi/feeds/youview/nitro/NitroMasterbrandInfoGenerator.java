@@ -23,7 +23,7 @@ public class NitroMasterbrandInfoGenerator extends ChannelGenerator implements M
         serviceInformationType.setServiceId(channel.getCanonicalUri());
         setNameAndOwner(channel, serviceInformationType);
         setDescriptions(channel, serviceInformationType);
-        setGenres(serviceInformationType, OTHER_GENRE_HREF_1, OTHER_GENRE_HREF_2);
+        setGenres(channel, serviceInformationType, OTHER_GENRE_HREF_1, OTHER_GENRE_HREF_2);
         setRelatedMaterial(channel, serviceInformationType);
         return serviceInformationType;
     }
