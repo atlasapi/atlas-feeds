@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Image;
+import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.resizer.HttpResizerClient;
 import org.atlasapi.resizer.ImageSize;
@@ -32,7 +33,8 @@ public abstract class ChannelGenerator {
 
     private final static String MAIN_GENRE_TYPE = "main";
     private final static String OTHER_GENRE_TYPE = "other";
-    private final static String MAIN_GENRE_HREF = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
+    private final static String VIDEO_GENRE_HREF = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
+    private final static String AUDIO_GENRE_HREF = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.1";
     private final static String IMAGE_INTENDED_USE_MAIN = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary";
     private final static String HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
     private final static String FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS2001:1";
@@ -151,11 +153,21 @@ public abstract class ChannelGenerator {
         serviceInformationType.getName().add(name);
     }
 
-    protected void setGenres(ServiceInformationType serviceInformationType, String otherGenreHref1,
-            String otherGenreHref2) {
+    protected void setGenres(
+            Channel channel,
+            ServiceInformationType serviceInformationType,
+            String otherGenreHref1,
+            String otherGenreHref2
+    ) {
         GenreType mainGenre = new GenreType();
         mainGenre.setType(MAIN_GENRE_TYPE);
-        mainGenre.setHref(MAIN_GENRE_HREF);
+
+        if (channel.getMediaType() == MediaType.AUDIO) {
+            mainGenre.setHref(AUDIO_GENRE_HREF);
+        } else {
+            mainGenre.setHref(VIDEO_GENRE_HREF);
+        }
+
         serviceInformationType.getServiceGenre().add(mainGenre);
         GenreType otherGengre1 = new GenreType();
         otherGengre1.setType(OTHER_GENRE_TYPE);
