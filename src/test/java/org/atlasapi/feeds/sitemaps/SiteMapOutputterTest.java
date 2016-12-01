@@ -87,9 +87,9 @@ public class SiteMapOutputterTest extends TestCase {
 		
 		SchemaFactory schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
 		factory.setSchema(schemaFactory.newSchema(
-				new Source[] {new StreamSource("http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"), 
-							  new StreamSource("http://www.google.com/schemas/sitemap-video/1.1/sitemap-video.xsd"), 
-							  new StreamSource("http://www.sitemaps.org/schemas/sitemap/0.9/siteindex.xsd")}));
+				new Source[] {new StreamSource("https://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"),
+							  new StreamSource("https://www.google.com/schemas/sitemap-video/1.1/sitemap-video.xsd"),
+							  new StreamSource("https://www.sitemaps.org/schemas/sitemap/0.9/siteindex.xsd")}));
 		
 		SAXParser parser = factory.newSAXParser();
 		XMLReader reader = parser.getXMLReader();
