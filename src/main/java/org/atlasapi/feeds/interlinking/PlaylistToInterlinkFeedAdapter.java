@@ -24,6 +24,9 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
@@ -36,7 +39,8 @@ import com.metabroadcast.common.text.Truncator;
 import com.metabroadcast.common.time.DateTimeZones;
 
 public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
-    
+
+    private final Log log = LogFactory.getLog(getClass());
     protected static final Operation DEFAULT_OPERATION = Operation.STORE;
 	
     public static Map<String, String> CHANNEL_LOOKUP = ImmutableMap.<String, String>builder()
@@ -65,22 +69,26 @@ public class PlaylistToInterlinkFeedAdapter implements PlaylistToInterlinkFeed {
         InterlinkFeed feed = feed(id, publisher);
         while(contents.hasNext()) {
             Content content = contents.next();
-        	if (content instanceof Brand) {
-        		Brand brand = (Brand) content;
-        		if (containerQualifies(from, to, brand)) {
-        		    feed.addEntry(fromBrand(brand, from, to));
-        		}
-        	}
-        	if (content instanceof Series) {
-        	    Series series = (Series) content;
-                if (containerQualifies(from, to, series)) {
-                    feed.addEntry(fromSeries(series, from, to));
+            try {
+                if (content instanceof Brand) {
+                    Brand brand = (Brand) content;
+                    if (containerQualifies(from, to, brand)) {
+                        feed.addEntry(fromBrand(brand, from, to));
+                    }
                 }
-        	}
-        	if (content instanceof Item) {
-        	    Item item = (Item) content;
-        	    populateFeedWithItem(feed, item, from, to);
-        	}
+                if (content instanceof Series) {
+                    Series series = (Series) content;
+                    if (containerQualifies(from, to, series)) {
+                        feed.addEntry(fromSeries(series, from, to));
+                    }
+                }
+                if (content instanceof Item) {
+                    Item item = (Item) content;
+                    populateFeedWithItem(feed, item, from, to);
+                }
+            } catch (Exception e){
+                log.error("Exception when processing content " + content.getCanonicalUri(), e);
+            }
         }
         return feed;
     }
