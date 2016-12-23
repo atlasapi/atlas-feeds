@@ -170,6 +170,19 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
                 return Optional.of(WWW_CHANNEL4_PROGRAMMES_PREFIX + matcher.group(1));
             }
         }
+
+        // Items don't have an aliasUrl that would match any of the patterns above.
+        // Therefore we would fallback to using the canonical URI which in some cases was resolving
+        // to null and killing the pipeline. We need to further review where the Items URLs are
+        // being generated or why the canonical URIs are not resolving.
+
+        for (String alias : identified.getAliasUrls()) {
+            if (alias.contains(CANONICAL_URI_PREFIX)) {
+                return Optional.of(alias.replace(
+                        CANONICAL_URI_PREFIX, WWW_CHANNEL4_PROGRAMMES_PREFIX + "item/")
+                );
+            }
+        }
         return Optional.absent();
     }
 
