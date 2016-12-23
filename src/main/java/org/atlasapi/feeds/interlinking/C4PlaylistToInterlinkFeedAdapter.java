@@ -179,10 +179,17 @@ public class C4PlaylistToInterlinkFeedAdapter extends PlaylistToInterlinkFeedAda
         for (String alias : identified.getAliasUrls()) {
             if (alias.contains(CANONICAL_URI_PREFIX)) {
                 return Optional.of(alias.replace(
-                        CANONICAL_URI_PREFIX, WWW_CHANNEL4_PROGRAMMES_PREFIX + "item/")
-                );
+                        CANONICAL_URI_PREFIX, WWW_CHANNEL4_PROGRAMMES_PREFIX
+                ));
             }
         }
+
+        for (String alias : identified.getAliasUrls()) {
+            if (alias.contains(C4_TAG_PREFIX)) {
+                return Optional.of(alias);
+            }
+        }
+
         return Optional.absent();
     }
 
