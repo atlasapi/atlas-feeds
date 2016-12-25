@@ -6,6 +6,11 @@ import org.atlasapi.feeds.interlinking.C4PlaylistToInterlinkFeedAdapter;
 import org.atlasapi.feeds.interlinking.outputting.InterlinkFeedOutputter;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+
+import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.metabroadcast.common.scheduling.RepetitionRules;
+import com.metabroadcast.common.scheduling.SimpleScheduler;
+
 import org.jets3t.service.security.AWSCredentials;
 import org.joda.time.Duration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,10 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
-import com.metabroadcast.common.scheduling.RepetitionRules;
-import com.metabroadcast.common.scheduling.SimpleScheduler;
-
+@SuppressWarnings("PublicConstructor")
 @Configuration
 public class InterlinkingDeltaModule {
 
@@ -40,7 +42,11 @@ public class InterlinkingDeltaModule {
     
     @Bean 
     public InterlinkingDeltaStore interlinkingDeltaStore() {
-        InterlinkingDocumentStore documentStore = new S3DocumentStore(new AWSCredentials(s3access, s3secret), s3bucket, s3folder);
+        InterlinkingDocumentStore documentStore = new S3DocumentStore(
+                new AWSCredentials(s3access, s3secret),
+                s3bucket,
+                s3folder
+        );
         return new LastUpdatedStoringDeltaStore(documentStore, mongo);
     }
     
@@ -48,12 +54,26 @@ public class InterlinkingDeltaModule {
     public void scheduleTasks() {
         
         if(Boolean.parseBoolean(enabled)) {
-            SinceLastUpdatedInterlinkingDeltaUpdater sinceLastUpdatedUpdater = new SinceLastUpdatedInterlinkingDeltaUpdater(interlinkingDeltaStore(), interlinkingDeltaUpdater());
-            scheduler.schedule(sinceLastUpdatedUpdater.withName("Last updated interlink deltas updater"), RepetitionRules.every(Duration.standardMinutes(10)));
+            SinceLastUpdatedInterlinkingDeltaUpdater sinceLastUpdatedUpdater =
+                    new SinceLastUpdatedInterlinkingDeltaUpdater(
+                            interlinkingDeltaStore(),
+                            interlinkingDeltaUpdater()
+                    );
+            scheduler.schedule(
+                    sinceLastUpdatedUpdater.withName("Last updated interlink deltas updater"),
+                    RepetitionRules.every(Duration.standardMinutes(10))
+            );
             
-            CompleteInterlinkingDeltaUpdater completeUpdater = new CompleteInterlinkingDeltaUpdater(interlinkingDeltaStore(), interlinkingDeltaUpdater(), 30);
-            scheduler.schedule(completeUpdater.withName("Complete interlinking deltas updater"), RepetitionRules.NEVER);
+            CompleteInterlinkingDeltaUpdater completeUpdater =
+                    new CompleteInterlinkingDeltaUpdater(
+                            interlinkingDeltaStore(),
+                            interlinkingDeltaUpdater(),
+                            60
+                    );
+            scheduler.schedule(
+                    completeUpdater.withName("Complete interlinking deltas updater"),
+                    RepetitionRules.NEVER
+            );
         }
-        
     }
 }
