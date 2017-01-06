@@ -14,7 +14,7 @@ public class NoItemsException extends IllegalStateException {
 
     @Override
     public String getMessage() {
-        return String.format("No items to create feed %s", spec);
+        return String.format("No items to createDefault feed %s", spec);
     }
 
 }

@@ -22,6 +22,8 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.metabroadcast.applications.client.model.internal.Application;
+import org.atlasapi.application.v3.DefaultApplication;
 import org.atlasapi.content.criteria.AtomicQuery;
 import org.atlasapi.content.criteria.AttributeQuery;
 import org.atlasapi.content.criteria.BooleanAttributeQuery;
@@ -83,8 +85,8 @@ public class QueryStringBackedQueryBuilder {
 	private static final SelectionBuilder selectionBuilder = Selection.builder().withDefaultLimit(25).withMaxLimit(50);
 	private final ContentQuery defaults;
 
-	public QueryStringBackedQueryBuilder() {
-		this(ContentQuery.MATCHES_EVERYTHING);
+	public QueryStringBackedQueryBuilder(Application application) {
+		this(new ContentQuery(ImmutableList.of(), Selection.ALL, application));
 	}
 	
 	public QueryStringBackedQueryBuilder(ContentQuery defaults) {
@@ -150,7 +152,7 @@ public class QueryStringBackedQueryBuilder {
 			operands.add(atomicQuery);
 		}
 		
-		return new ContentQuery(operands);
+		return new ContentQuery(operands, defaults.getSelection(), defaults.getApplication());
 	}
 	
 	private class AttributeOperatorValues {
