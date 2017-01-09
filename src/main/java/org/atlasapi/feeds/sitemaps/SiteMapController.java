@@ -194,8 +194,8 @@ public class SiteMapController {
             Map<ParentRef, Container> parentLookup = Maps.<ParentRef,Container>uniqueIndex(brands, ParentRef.T0_PARENT_REF);
             Iterable<Content> contents = Iterables.concat(
                     StreamSupport.stream(brands.spliterator(), false)
-                    .map(input -> resolve(childItemsFor((Brand) input), query))
-                    .collect(Collectors.toList())
+                            .map(input -> resolve(childItemsFor((Brand) input), query))
+                            .collect(Collectors.toList())
             );
         
             response.setStatus(HttpServletResponse.SC_OK);
