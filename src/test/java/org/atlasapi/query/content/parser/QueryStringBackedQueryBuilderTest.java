@@ -22,11 +22,9 @@ import static org.atlasapi.content.criteria.attribute.Attributes.DESCRIPTION_TYP
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
 
 import java.util.Map;
 
-import com.metabroadcast.applications.client.model.internal.Application;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.ContentQueryBuilder;
 import org.atlasapi.media.entity.MediaType;
@@ -38,9 +36,8 @@ import com.google.common.collect.Maps;
 
 
 public class QueryStringBackedQueryBuilderTest  {
-
-	private Application application = mock(Application.class);
-	private final QueryStringBackedQueryBuilder builder = new QueryStringBackedQueryBuilder(mock(Application.class));
+	
+	private final QueryStringBackedQueryBuilder builder = new QueryStringBackedQueryBuilder();
 	
 	@Test
 	public void testPublisherSearch() throws Exception {
@@ -77,7 +74,7 @@ public class QueryStringBackedQueryBuilderTest  {
 		
 		params = Maps.newHashMap();
 		params.put("tag", new String[] { "bob" });
-		check(params, query().equalTo(DESCRIPTION_TAG, "http://ref.atlasapi.org/tags/bob").withApplication(application));
+		check(params, query().equalTo(DESCRIPTION_TAG, "http://ref.atlasapi.org/tags/bob"));
 	}
 	
 //	@Test
@@ -143,6 +140,6 @@ public class QueryStringBackedQueryBuilderTest  {
 	
 	private void check(Map<String, String[]> params, ContentQueryBuilder expected) {
 		ContentQuery query = builder.build(params);
-		assertEquals(expected.withApplication(application).build(), query);
+		assertEquals(expected.build(), query);
 	}
 }
