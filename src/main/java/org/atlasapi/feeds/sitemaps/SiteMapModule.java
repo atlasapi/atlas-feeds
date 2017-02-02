@@ -3,8 +3,7 @@ package org.atlasapi.feeds.sitemaps;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.atlasapi.application.query.ApplicationFetcher;
-import org.atlasapi.application.v3.DefaultApplication;
+import org.atlasapi.application.query.ApplicationConfigurationFetcher;
 import org.atlasapi.feeds.sitemaps.channel4.C4SiteMapUriGenerator;
 import org.atlasapi.feeds.sitemaps.channel4.HttpFetchingC4FlashPlayerVersionSupplier;
 import org.atlasapi.media.entity.Publisher;
@@ -31,7 +30,7 @@ public class SiteMapModule {
 	private @Autowired @Qualifier("queryExecutor") KnownTypeQueryExecutor queryExecutor;
 	private @Autowired ContentLister contentLister;
 	private @Value("${local.host.name}") String localHostName;
-	private @Autowired ApplicationFetcher configFetcher;
+	private @Autowired ApplicationConfigurationFetcher configFetcher;
 	
 	private @Value("${sitemaps.c4.brightcove.publisherId}") String c4BrightcovePublisherId;
 	private @Value("${sitemaps.c4.brightcove.playerId}")    String c4BrightcovePlayerId;
@@ -41,7 +40,7 @@ public class SiteMapModule {
 
     public @Bean ApplicationConfigurationIncludingQueryBuilder sitemapQueryBuilder() {
         return new ApplicationConfigurationIncludingQueryBuilder(
-                new QueryStringBackedQueryBuilder(DefaultApplication.createDefault()).withIgnoreParams("format", "host"),
+                new QueryStringBackedQueryBuilder().withIgnoreParams("format", "host"), 
                 configFetcher);
     }
 	

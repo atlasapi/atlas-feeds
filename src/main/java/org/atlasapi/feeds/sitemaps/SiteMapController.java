@@ -2,6 +2,7 @@ package org.atlasapi.feeds.sitemaps;
 
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterables.transform;
 import static com.metabroadcast.common.http.HttpStatusCode.BAD_REQUEST;
 import static org.atlasapi.feeds.sitemaps.SiteMapRef.transformerForBaseUri;
 import static org.atlasapi.persistence.content.ContentCategory.CHILD_ITEM;
@@ -15,35 +16,41 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
-import org.atlasapi.application.query.InvalidApiKeyException;
+import org.atlasapi.application.query.ApiKeyNotFoundException;
+import org.atlasapi.application.query.InvalidIpForApiKeyException;
+import org.atlasapi.application.query.RevokedApiKeyException;
 import org.atlasapi.content.criteria.ContentQuery;
+import org.atlasapi.media.TransportType;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Clip;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Described;
+import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.SeriesRef;
+import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.query.content.parser.ApplicationConfigurationIncludingQueryBuilder;
+import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -106,12 +113,18 @@ public class SiteMapController {
         ContentQuery query;
         try {
             query = queryBuilder.build(new SitemapHackHttpRequest(request));
-        } catch (InvalidApiKeyException e) {
+        } catch (ApiKeyNotFoundException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        } catch (RevokedApiKeyException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        } catch (InvalidIpForApiKeyException e) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }
        
-        Set<Publisher> includedPublishers = query.getApplication().getConfiguration().getEnabledReadSources();
+        Set<Publisher> includedPublishers = query.getConfiguration().getEnabledSources();
         
         Iterable<SiteMapRef> sitemapRefs;
         String baseUri = baseUriParam == null ? baseUriForHost(hostParam) : baseUriParam;
@@ -164,9 +177,8 @@ public class SiteMapController {
             }
         }
 
-        return StreamSupport.stream(resolve(brands.build(), query).spliterator(), false)
-                .map(transformerForBaseUri(baseUri)::apply)
-                .collect(Collectors.toList());
+        Iterable<SiteMapRef> sitemapRefs = transform(resolve(brands.build(), query), transformerForBaseUri(baseUri));
+        return sitemapRefs;
     }
 
     private boolean hasValidClip(Content content) {
@@ -192,17 +204,24 @@ public class SiteMapController {
             Iterable<Container> brands = Iterables.filter(resolve(URI_SPLITTER.split(brandUri),query), Container.class);
         
             Map<ParentRef, Container> parentLookup = Maps.<ParentRef,Container>uniqueIndex(brands, ParentRef.T0_PARENT_REF);
-            Iterable<Content> contents = Iterables.concat(
-                    StreamSupport.stream(brands.spliterator(), false)
-                            .map(input -> resolve(childItemsFor((Brand) input), query))
-                            .collect(Collectors.toList())
-            );
+            Iterable<Content> contents = Iterables.concat(Iterables.transform(brands, new Function<Container, Iterable<Content>>() {
+                @Override
+                public Iterable<Content> apply(Container input) {
+                    return resolve(childItemsFor((Brand)input), query);
+                }
+            }));
         
             response.setStatus(HttpServletResponse.SC_OK);
             cacheHeaderWriter.writeHeaders(request, response);
             outputter.output(parentLookup, contents, response.getOutputStream());
             return null;
-        } catch (InvalidApiKeyException e) {
+        } catch (ApiKeyNotFoundException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        } catch (RevokedApiKeyException e) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        } catch (InvalidIpForApiKeyException e) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }
@@ -210,14 +229,8 @@ public class SiteMapController {
 
     protected Iterable<String> childItemsFor(Brand brand) {
         return Iterables.concat(
-                brand.getChildRefs()
-                        .stream()
-                        .map(ChildRef.TO_URI::apply)
-                        .collect(Collectors.toList()),
-                brand.getSeriesRefs()
-                        .stream()
-                        .map(SeriesRef.TO_URI::apply)
-                        .collect(Collectors.toList())
+                Iterables.transform(brand.getChildRefs(), ChildRef.TO_URI),
+                Iterables.transform(brand.getSeriesRefs(), SeriesRef.TO_URI)
                );
     }
 

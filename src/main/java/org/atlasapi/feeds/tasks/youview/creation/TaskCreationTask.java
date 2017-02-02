@@ -185,7 +185,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
-                            "Failed to create payload for content %s, version %s",
+                            "Failed to create payload for content %s, version %s", 
                             versionHierarchy.item().getCanonicalUri(),
                             versionHierarchy.version().getCanonicalUri()
                     ), 
@@ -217,7 +217,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
-                            "Failed to create payload for content %s, version %s, broadcast %s",
+                            "Failed to create payload for content %s, version %s, broadcast %s", 
                             broadcastHierarchy.item().getCanonicalUri(),
                             broadcastHierarchy.version().getCanonicalUri(), 
                             broadcastHierarchy.broadcast().toString()
@@ -269,7 +269,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
-                            "Failed to create payload for content %s, version %s, encoding %s, location %s",
+                            "Failed to create payload for content %s, version %s, encoding %s, location %s", 
                             onDemandHierarchy.item().getCanonicalUri(),
                             onDemandHierarchy.version().getCanonicalUri(),
                             onDemandHierarchy.encoding().toString(),
