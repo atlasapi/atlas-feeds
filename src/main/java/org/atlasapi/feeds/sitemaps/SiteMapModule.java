@@ -41,8 +41,10 @@ public class SiteMapModule {
 
     public @Bean ApplicationConfigurationIncludingQueryBuilder sitemapQueryBuilder() {
         return new ApplicationConfigurationIncludingQueryBuilder(
-                new QueryStringBackedQueryBuilder(DefaultApplication.createDefault()).withIgnoreParams("format", "host"),
-                configFetcher);
+                new QueryStringBackedQueryBuilder(DefaultApplication.createDefault())
+		                .withIgnoreParams("format", "host"),
+                configFetcher
+        );
     }
 	
 	public @Bean SiteMapController siteMapController() {
@@ -62,7 +64,13 @@ public class SiteMapModule {
 	}
 	
 	private Map<Publisher, SiteMapUriGenerator> siteMapUriGenerators() {
-	    return ImmutableMap.<Publisher, SiteMapUriGenerator>of(Publisher.C4_PMLSD, 
-	            new C4SiteMapUriGenerator(c4BrightcovePublisherId, c4BrightcovePlayerId, flashPlayerVersionSupplier()));
+	    return ImmutableMap.<Publisher, SiteMapUriGenerator>of(
+	    		Publisher.C4_PMLSD,
+	            new C4SiteMapUriGenerator(
+	            		c4BrightcovePublisherId,
+			            c4BrightcovePlayerId,
+			            flashPlayerVersionSupplier()
+	            )
+	    );
 	}
 }

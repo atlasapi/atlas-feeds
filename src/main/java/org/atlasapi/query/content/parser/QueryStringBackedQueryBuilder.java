@@ -23,7 +23,6 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 
 import com.metabroadcast.applications.client.model.internal.Application;
-import org.atlasapi.application.v3.DefaultApplication;
 import org.atlasapi.content.criteria.AtomicQuery;
 import org.atlasapi.content.criteria.AttributeQuery;
 import org.atlasapi.content.criteria.BooleanAttributeQuery;
@@ -95,9 +94,20 @@ public class QueryStringBackedQueryBuilder {
 	
     @SuppressWarnings("unchecked")
     public ContentQuery build(HttpServletRequest request) {
-        ContentQuery contentQuery = build(request.getParameterMap()).copyWithSelection(selectionBuilder.build(request));
-        String annotationsParam = request.getParameter(ANNOTATIONS_PARAM) != null ? request.getParameter(ANNOTATIONS_PARAM) : "";
-        Set<Annotation> annotations = ImmutableSet.copyOf(Iterables.transform(csvSplitter.split(annotationsParam), Functions.forMap(Annotation.LOOKUP)));
+        ContentQuery contentQuery = build(request.getParameterMap())
+		        .copyWithSelection(selectionBuilder.build(request));
+
+        String annotationsParam = request.getParameter(ANNOTATIONS_PARAM) != null
+                                  ? request.getParameter(ANNOTATIONS_PARAM)
+                                  : "";
+
+        Set<Annotation> annotations = ImmutableSet.copyOf(
+        		Iterables.transform(
+        				csvSplitter.split(annotationsParam),
+				        Functions.forMap(Annotation.LOOKUP)
+		        )
+        );
+
         if (annotations.isEmpty()) {
             return contentQuery;
         } else {
@@ -137,7 +147,8 @@ public class QueryStringBackedQueryBuilder {
 				
 				AttributeQuery<?> attributeQuery = query.toAttributeQuery();
 				
-				if (attributeQuery instanceof BooleanAttributeQuery && ((BooleanAttributeQuery) attributeQuery).isUnconditionallyTrue()) {
+				if (attributeQuery instanceof BooleanAttributeQuery
+						&& ((BooleanAttributeQuery) attributeQuery).isUnconditionallyTrue()) {
 					continue;
 				}
 
@@ -146,7 +157,10 @@ public class QueryStringBackedQueryBuilder {
 		}
 		
 		for (AtomicQuery atomicQuery : defaults.operands()) {
-			if (atomicQuery instanceof AttributeQuery<?> && userSuppliedAttributes.contains(((AttributeQuery<?>) atomicQuery).getAttribute())) {
+			if (atomicQuery instanceof AttributeQuery<?>
+					&& userSuppliedAttributes.contains(
+							((AttributeQuery<?>) atomicQuery).getAttribute())
+					) {
 				continue;
 			}
 			operands.add(atomicQuery);
@@ -167,7 +181,10 @@ public class QueryStringBackedQueryBuilder {
 			this.values = values;
 		}
 		public AttributeQuery<?> toAttributeQuery() {
-			return attribute.createQuery(op, coerceListToType(values, attribute.requiresOperandOfType()));
+			return attribute.createQuery(
+					op,
+					coerceListToType(values, attribute.requiresOperandOfType())
+			);
 		}
 	}
 	
