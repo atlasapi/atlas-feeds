@@ -9,6 +9,7 @@ public enum TVAElementType {
     VERSION,
     BROADCAST,
     ONDEMAND,
+    CHANNEL
     ;
     
 }

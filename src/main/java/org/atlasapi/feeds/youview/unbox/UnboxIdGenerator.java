@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview.unbox;
 
 import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
@@ -34,6 +35,11 @@ public class UnboxIdGenerator implements IdGenerator {
     @Override
     public String generateBroadcastImi(String serviceId, Broadcast broadcast) {
         throw new UnsupportedOperationException("Broadcasts are not supported for the Amazon Unbox publisher");
+    }
+
+    @Override
+    public String generateChannelCrid(Channel channel) {
+        throw new UnsupportedOperationException("Channels are not supported for the Amazon Unbox publisher");
     }
 
     private static String baseCridFrom(Content content) {

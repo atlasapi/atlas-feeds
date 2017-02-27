@@ -7,6 +7,7 @@ import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
+import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Encoding;
@@ -25,7 +26,7 @@ import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.ProgramInformationType;
 
 import com.google.common.base.Optional;
-
+import tva.metadata._2010.ServiceInformationType;
 
 public class DefaultTvAnytimeElementCreatorTest {
     
@@ -34,13 +35,17 @@ public class DefaultTvAnytimeElementCreatorTest {
     private OnDemandLocationGenerator onDemandGenerator = Mockito.mock(OnDemandLocationGenerator.class);
     private BroadcastEventGenerator broadcastGenerator = Mockito.mock(BroadcastEventGenerator.class);
     private ContentHierarchyExtractor contentHierarchy = Mockito.mock(ContentHierarchyExtractor.class);
-    
+    private ChannelElementGenerator channelElementGenerator = Mockito.mock(ChannelElementGenerator.class);
+    private MasterbrandElementGenerator masterbrandElementGenerator = Mockito.mock(MasterbrandElementGenerator.class);
+
     private final TvAnytimeElementCreator elementCreator = new DefaultTvAnytimeElementCreator(
             progInfoGenerator, 
             groupInfoGenerator, 
             onDemandGenerator,
-            broadcastGenerator, 
-            contentHierarchy 
+            broadcastGenerator,
+            channelElementGenerator,
+            masterbrandElementGenerator,
+            contentHierarchy
             );
     
     @Test
@@ -158,6 +163,24 @@ public class DefaultTvAnytimeElementCreatorTest {
         
         Mockito.verify(broadcastGenerator).generate(broadcastHierarchy, broadcastImi);
         assertEquals(broadcastEvent, createdElem);
+    }
+
+    @Test
+    public void testChannelElementCreatedForChannel() {
+        Channel channel = createChannel("channel");
+
+        ServiceInformationType serviceInformationType = Mockito.mock(ServiceInformationType.class);
+
+        Mockito.when(channelElementGenerator.generate(channel)).thenReturn(serviceInformationType);
+
+        ServiceInformationType createdElem = elementCreator.createChannelElementFor(channel, channel);
+
+        Mockito.verify(channelElementGenerator).generate(channel);
+        assertEquals(serviceInformationType, createdElem);
+    }
+
+    private Channel createChannel(String channelUri) {
+        return Channel.builder().withUri(channelUri).withBroadcaster(Publisher.METABROADCAST).build();
     }
     
     private Series createSeries(String seriesUri) {

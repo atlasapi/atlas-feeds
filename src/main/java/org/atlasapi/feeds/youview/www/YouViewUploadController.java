@@ -27,6 +27,7 @@ import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
+import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
@@ -62,6 +63,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,8 +102,14 @@ public class YouViewUploadController {
     private final ChannelResolver channelResolver;
     private final SubstitutionTableNumberCodec channelIdCodec;
     private final ListeningExecutorService executor;
-    
-    public YouViewUploadController(
+    private final IdGenerator idGenerator;
+    private final TaskProcessor nitroTaskProcessor;
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    private YouViewUploadController(
             ContentResolver contentResolver,
             TaskCreator taskCreator,
             TaskStore taskStore,
@@ -111,7 +119,9 @@ public class YouViewUploadController {
             TaskProcessor taskProcessor, 
             ScheduleResolver scheduleResolver,
             ChannelResolver channelResolver,
-            Clock clock
+            IdGenerator idGenerator,
+            Clock clock,
+            TaskProcessor nitroTaskProcessor
     ) {
         this.contentResolver = checkNotNull(contentResolver);
         this.taskCreator = checkNotNull(taskCreator);
@@ -121,14 +131,44 @@ public class YouViewUploadController {
         this.revocationProcessor = checkNotNull(revocationProcessor);
         this.taskProcessor = checkNotNull(taskProcessor);
         this.clock = checkNotNull(clock);
-        this.dateTimeInQueryParser = new DateTimeInQueryParser();
         this.scheduleResolver = checkNotNull(scheduleResolver);
         this.channelResolver = checkNotNull(channelResolver);
-        this.channelIdCodec = new SubstitutionTableNumberCodec();
+        this.idGenerator = checkNotNull(idGenerator);
+        this.nitroTaskProcessor = checkNotNull(nitroTaskProcessor);
 
+        this.dateTimeInQueryParser = new DateTimeInQueryParser();
         this.executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+        this.channelIdCodec = new SubstitutionTableNumberCodec();
     }
-    
+
+    private void handleChannel(
+            HttpServletResponse response,
+            String channelStr
+    ) throws IOException, PayloadGenerationException {
+        Channel channel = channelResolver.fromUri(channelStr).requireValue();
+
+        if (!channel.getBroadcaster().key().equals("bbc.co.uk")) {
+            sendError(response, SC_BAD_REQUEST, "Only BBC channels can be uploaded");
+            return;
+        }
+
+        uploadChannel(true, channel, false);
+    }
+
+    private void handleMasterbrand(
+            HttpServletResponse response,
+            String channelStr
+    ) throws IOException, PayloadGenerationException {
+        Channel channel = channelResolver.fromUri(channelStr).requireValue();
+
+        if (!channel.getBroadcaster().key().equals("bbc.co.uk")) {
+            sendError(response, SC_BAD_REQUEST, "Only BBC channels can be uploaded");
+            return;
+        }
+
+        uploadChannel(true, channel, true);
+    }
+
     @RequestMapping(value="/feeds/youview/{publisher}/schedule/upload")
     public void uploadSchedule(HttpServletResponse response,
             @PathVariable("publisher") String publisherStr,
@@ -233,22 +273,51 @@ public class YouViewUploadController {
             sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
             return;
         }
-        if (uri == null) {
+
+        if (StringUtils.isEmpty(uri)) {
             sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
             return;
         }
-        
+
+        if (isMasterbrandUri(uri)) {
+            handleMasterbrand(response, uri);
+        } else if (isServiceUri(uri)) {
+            handleChannel(response, uri);
+        } else {
+            handleContent(uri, elementId, typeStr, immediate, response);
+        }
+
+        sendOkResponse(response, "Upload for " + uri + " sent sucessfully");
+    }
+
+    private boolean isServiceUri(String uri) {
+        String[] parts = uri.split("/");
+        return parts.length == 5 && "services".equals(parts[parts.length - 2]);
+    }
+
+    private boolean isMasterbrandUri(String uri) {
+        String[] parts = uri.split("/");
+        return parts.length == 5 && "masterbrands".equals(parts[parts.length - 2]);
+    }
+
+    private void handleContent(
+            String uri,
+            String elementId,
+            @Nullable String typeStr,
+            boolean immediate,
+            HttpServletResponse response
+    ) throws IOException, PayloadGenerationException {
         Optional<Content> toBeUploaded = getContent(uri);
         if (!toBeUploaded.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
         }
-        
+
         Content content = toBeUploaded.get();
-        
+
         if (typeStr != null) {
             TVAElementType type = parseTypeFrom(typeStr);
-            
+
             if (type == null) {
                 sendError(response, SC_BAD_REQUEST, "Invalid type provided");
                 return;
@@ -260,73 +329,97 @@ public class YouViewUploadController {
             case BRAND:
             case ITEM:
             case SERIES:
-                if (elementId == null) {
-                    sendError(response, SC_BAD_REQUEST, "required parameter 'element_id' not specified when uploading an individual TVAnytime element");
-                    return;
-                }
-
-                processTask(taskCreator.taskFor(elementId, toBeUploaded.get(), payload, Action.UPDATE), immediate);
+                handleContent(elementId, immediate, response, toBeUploaded, payload);
                 break;
-
             case BROADCAST:
-                if (!(content instanceof Item)) {
-                    sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Broadcast");
-                    return;
-                }
-                Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor((Item) content);
-
-                if (!Strings.isNullOrEmpty(elementId)) {
-                    ItemBroadcastHierarchy broadcastHierarchy = broadcastHierarchies.get(elementId);
-                    if (broadcastHierarchy == null) {
-                        sendError(response, SC_BAD_REQUEST, "No element found with ID " + elementId);
-                        return;
-                    }
-                    uploadBroadcast(elementId, broadcastHierarchy, immediate);
-                } else {
-                    for (Entry<String, ItemBroadcastHierarchy> broadcastHierarchy : broadcastHierarchies.entrySet()) {
-                        uploadBroadcast(broadcastHierarchy.getKey(), broadcastHierarchy.getValue(), immediate);
-                    }
-                }
+                handleBroadcast(elementId, immediate, response, content);
                 break;
-
             case ONDEMAND:
-                if (!(content instanceof Item)) {
-                    sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a OnDemand");
-                    return;
-                }
-                Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor((Item) content);
-                Optional<ItemOnDemandHierarchy> onDemandHierarchy = Optional.fromNullable(onDemandHierarchies.get(elementId));
-                if (!onDemandHierarchy.isPresent()) {
-                    sendError(response, SC_BAD_REQUEST, "No OnDemand found with the provided elementId");
-                    return;
-                }
-                processTask(taskCreator.taskFor(elementId, onDemandHierarchy.get(), payload, Action.UPDATE), immediate);
+                handleOnDemand(elementId, immediate, response, content, payload);
                 break;
-
             case VERSION:
-                if (!(content instanceof Item)) {
-                    sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Version");
-                    return;
-                }
-                Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor((Item) content);
-                Optional<ItemAndVersion> versionHierarchy = Optional.fromNullable(versionHierarchies.get(elementId));
-                if (!versionHierarchy.isPresent()) {
-                    sendError(response, SC_BAD_REQUEST, "No Version found with the provided elementId");
-                    return;
-                }
-                processTask(taskCreator.taskFor(elementId, versionHierarchy.get(), payload, Action.UPDATE), immediate);
+                handleVersion(elementId, immediate, response, content, payload);
                 break;
-
             default:
                 sendError(response, SC_BAD_REQUEST, "Invalid type provided");
-                return;
             }
-            
         } else {
             uploadContent(immediate, content);
         }
-        
-        sendOkResponse(response, "Upload for " + uri + " sent sucessfully");
+    }
+
+    private void handleContent(
+            @Nullable String elementId,
+            boolean immediate,
+            HttpServletResponse response,
+            Optional<Content> toBeUploaded,
+            Payload payload
+    ) throws IOException {
+        if (elementId == null) {
+            sendError(
+                    response,
+                    SC_BAD_REQUEST,
+                    "required parameter 'element_id' not specified when uploading an individual TVAnytime element"
+            );
+            return;
+        }
+
+        processTask(
+                taskCreator.taskFor(elementId, toBeUploaded.get(), payload, Action.UPDATE),
+                immediate
+        );
+    }
+
+    private void handleVersion(String elementId, boolean immediate, HttpServletResponse response,
+            Content content, Payload payload) throws IOException {
+        if (!(content instanceof Item)) {
+            sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Version");
+            return;
+        }
+        Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor((Item) content);
+        Optional<ItemAndVersion> versionHierarchy = Optional.fromNullable(versionHierarchies.get(elementId));
+        if (!versionHierarchy.isPresent()) {
+            sendError(response, SC_BAD_REQUEST, "No Version found with the provided elementId");
+            return;
+        }
+        processTask(taskCreator.taskFor(elementId, versionHierarchy.get(), payload, Action.UPDATE), immediate);
+    }
+
+    private void handleOnDemand(String elementId, boolean immediate, HttpServletResponse response,
+            Content content, Payload payload) throws IOException {
+        if (!(content instanceof Item)) {
+            sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a OnDemand");
+            return;
+        }
+        Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor((Item) content);
+        Optional<ItemOnDemandHierarchy> onDemandHierarchy = Optional.fromNullable(onDemandHierarchies.get(elementId));
+        if (!onDemandHierarchy.isPresent()) {
+            sendError(response, SC_BAD_REQUEST, "No OnDemand found with the provided elementId");
+            return;
+        }
+        processTask(taskCreator.taskFor(elementId, onDemandHierarchy.get(), payload, Action.UPDATE), immediate);
+    }
+
+    private void handleBroadcast(String elementId, boolean immediate, HttpServletResponse response,
+            Content content) throws IOException, PayloadGenerationException {
+        if (!(content instanceof Item)) {
+            sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Broadcast");
+            return;
+        }
+        Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor((Item) content);
+
+        if (!Strings.isNullOrEmpty(elementId)) {
+            ItemBroadcastHierarchy broadcastHierarchy = broadcastHierarchies.get(elementId);
+            if (broadcastHierarchy == null) {
+                sendError(response, SC_BAD_REQUEST, "No element found with ID " + elementId);
+                return;
+            }
+            uploadBroadcast(elementId, broadcastHierarchy, immediate);
+        } else {
+            for (Entry<String, ItemBroadcastHierarchy> broadcastHierarchy : broadcastHierarchies.entrySet()) {
+                uploadBroadcast(broadcastHierarchy.getKey(), broadcastHierarchy.getValue(), immediate);
+            }
+        }
     }
 
     private void uploadContent(boolean immediate, Content content)
@@ -383,6 +476,13 @@ public class YouViewUploadController {
         }
     }
 
+    private void uploadChannel(boolean immediate, Channel channel, boolean masterbrand)
+            throws PayloadGenerationException {
+        Payload p = payloadCreator.payloadFrom(channel, masterbrand);
+        Task task = taskCreator.taskFor(idGenerator.generateChannelCrid(channel), channel, p, Action.UPDATE);
+        processChannelTask(task, immediate);
+    }
+
     private void resolveAndUploadParent(ParentRef ref, boolean immediate) throws PayloadGenerationException {
         if (ref == null) {
             return;
@@ -401,7 +501,7 @@ public class YouViewUploadController {
         }
     }
 
-    private void processTask(Task task, boolean immediate) {
+    private void processTask(@Nullable Task task, boolean immediate) {
         if (task == null) {
             return;
         }
@@ -409,6 +509,17 @@ public class YouViewUploadController {
 
         if (immediate) {
             taskProcessor.process(savedTask);
+        }
+    }
+
+    private void processChannelTask(Task task, boolean immediate) {
+        if (task == null) {
+            return;
+        }
+        Task savedTask = taskStore.save(Task.copy(task).withManuallyCreated(true).build());
+
+        if (immediate) {
+            nitroTaskProcessor.process(savedTask);
         }
     }
     
@@ -616,6 +727,102 @@ public class YouViewUploadController {
 
         public String getData() {
             return data;
+        }
+    }
+
+    public static final class Builder {
+
+        private ContentResolver contentResolver;
+        private TaskCreator taskCreator;
+        private TaskStore taskStore;
+        private PayloadCreator payloadCreator;
+        private ContentHierarchyExpander hierarchyExpander;
+        private RevocationProcessor revocationProcessor;
+        private Clock clock;
+        private TaskProcessor taskProcessor;
+        private ScheduleResolver scheduleResolver;
+        private ChannelResolver channelResolver;
+        private IdGenerator idGenerator;
+        private TaskProcessor nitroTaskProcessor;
+
+        private Builder() {
+        }
+
+        public Builder withContentResolver(ContentResolver val) {
+            contentResolver = val;
+            return this;
+        }
+
+        public Builder withTaskCreator(TaskCreator val) {
+            taskCreator = val;
+            return this;
+        }
+
+        public Builder withTaskStore(TaskStore val) {
+            taskStore = val;
+            return this;
+        }
+
+        public Builder withPayloadCreator(PayloadCreator val) {
+            payloadCreator = val;
+            return this;
+        }
+
+        public Builder withHierarchyExpander(ContentHierarchyExpander val) {
+            hierarchyExpander = val;
+            return this;
+        }
+
+        public Builder withRevocationProcessor(RevocationProcessor val) {
+            revocationProcessor = val;
+            return this;
+        }
+
+        public Builder withClock(Clock val) {
+            clock = val;
+            return this;
+        }
+
+        public Builder withTaskProcessor(TaskProcessor val) {
+            taskProcessor = val;
+            return this;
+        }
+
+        public Builder withScheduleResolver(ScheduleResolver val) {
+            scheduleResolver = val;
+            return this;
+        }
+
+        public Builder withChannelResolver(ChannelResolver val) {
+            channelResolver = val;
+            return this;
+        }
+
+        public Builder withIdGenerator(IdGenerator val) {
+            idGenerator = val;
+            return this;
+        }
+
+        public Builder withNitroTaskProcessor(TaskProcessor val) {
+            nitroTaskProcessor = val;
+            return this;
+        }
+
+        public YouViewUploadController build() {
+            return new YouViewUploadController(
+                    contentResolver,
+                    taskCreator,
+                    taskStore,
+                    payloadCreator,
+                    hierarchyExpander,
+                    revocationProcessor,
+                    taskProcessor,
+                    scheduleResolver,
+                    channelResolver,
+                    idGenerator,
+                    clock,
+                    nitroTaskProcessor
+            );
         }
     }
 }

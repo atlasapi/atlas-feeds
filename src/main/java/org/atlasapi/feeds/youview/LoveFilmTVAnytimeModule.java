@@ -2,9 +2,11 @@ package org.atlasapi.feeds.youview;
 
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastServiceMapping;
+import org.atlasapi.feeds.youview.lovefilm.LoveFilmChannelGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmGenreMapping;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmGroupInformationGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmIdGenerator;
+import org.atlasapi.feeds.youview.lovefilm.LoveFilmMasterbrandGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.lovefilm.LoveFilmProgramInformationGenerator;
 import org.springframework.context.annotation.Bean;
@@ -33,7 +35,15 @@ public class LoveFilmTVAnytimeModule {
     public LoveFilmBroadcastEventGenerator loveFilmBroadcastGenerator() {
         return new LoveFilmBroadcastEventGenerator();
     }
-    
+    @Bean
+    public LoveFilmChannelGenerator loveFilmChannelGenerator() {
+        return new LoveFilmChannelGenerator();
+    }
+
+    @Bean
+    public LoveFilmMasterbrandGenerator loveFilmMasterbrandGenerator() {
+        return new LoveFilmMasterbrandGenerator();
+    }
     @Bean
     public LoveFilmIdGenerator loveFilmIdGenerator() {
         return new LoveFilmIdGenerator();
