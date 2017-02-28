@@ -119,7 +119,7 @@ public class PublisherSpecificTVAnytimeGenerator implements TvAnytimeGenerator {
     }
 
     private TvAnytimeGenerator fetchDelegateOrThrow(Channel channel) {
-        Publisher publisher = channel.getBroadcaster();
+        Publisher publisher = channel.getSource();
         TvAnytimeGenerator delegate = generators.get(publisher);
         if (delegate == null) {
             throw new InvalidPublisherException(publisher);
