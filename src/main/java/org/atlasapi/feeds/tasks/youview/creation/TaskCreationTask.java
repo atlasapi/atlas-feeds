@@ -235,15 +235,30 @@ public abstract class TaskCreationTask extends ScheduledTask {
         }
     }
 
-    private UpdateProgress processVersion(String versionCrid, ItemAndVersion versionHierarchy, Action action) {
+    private UpdateProgress processVersion(
+            String versionCrid,
+            ItemAndVersion versionHierarchy,
+            Action action
+    ) {
         try {
             log.debug("Processing Version {}", versionCrid);
 
             Payload payload = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
 
             if (shouldSave(HashType.VERSION, versionCrid, payload)) {
-                taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, payload, action));
+                Task savedTask = taskStore.save(taskCreator.taskFor(
+                        versionCrid,
+                        versionHierarchy,
+                        payload,
+                        action
+                ));
                 payloadHashStore.saveHash(HashType.VERSION, versionCrid, payload.hash());
+                log.debug(
+                        "Saved task {} for version {} with hash {}",
+                        savedTask.id(),
+                        versionCrid,
+                        payload.hash()
+                );
             } else {
                 log.debug("Existing hash found for Version {}, not updating", versionCrid);
             }
@@ -257,7 +272,9 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     ),
                     e
             );
-            Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action, Status.FAILED));
+            Task task = taskStore.save(
+                    taskCreator.taskFor(versionCrid, versionHierarchy, action, Status.FAILED)
+            );
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
