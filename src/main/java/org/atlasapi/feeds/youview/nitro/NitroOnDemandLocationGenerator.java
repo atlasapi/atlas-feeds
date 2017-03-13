@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.atlasapi.feeds.tasks.youview.creation.OnDemandDateFudger;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
@@ -20,6 +21,9 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
+
+import com.metabroadcast.common.time.SystemClock;
+
 import org.joda.time.DateTime;
 
 import tva.metadata._2010.AVAttributesType;
@@ -60,24 +64,33 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
     private static final String BRITISH_SIGN_LANGUAGE = "bfi";
     private static final Pattern NITRO_URI_PATTERN = Pattern.compile("^http://nitro.bbc.co.uk/programmes/([a-zA-Z0-9]+)$");
 
+    private final OnDemandDateFudger onDemandDateFudger;
     private final IdGenerator idGenerator;
     
     public NitroOnDemandLocationGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
+        onDemandDateFudger = OnDemandDateFudger.create(new SystemClock());
     }
     
     @Override
     public final OnDemandProgramType generate(ItemOnDemandHierarchy hierarchy, String imi) {
-        
+
+        ItemOnDemandHierarchy doctoredDates = onDemandDateFudger.fudgeStartDates(hierarchy);
+
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
 
         onDemand.setServiceIDRef(YOUVIEW_SERVICE);
-        onDemand.setProgram(generateProgram(hierarchy.item(), hierarchy.version()));
+        onDemand.setProgram(generateProgram(doctoredDates.item(), doctoredDates.version()));
         onDemand.setInstanceMetadataId(imi);
-        onDemand.setInstanceDescription(generateInstanceDescription(hierarchy.item(), hierarchy.encoding(), hierarchy.location(), getLanguageCodeFor(hierarchy.item())));
-        onDemand.setPublishedDuration(generatePublishedDuration(hierarchy.version()));
-        onDemand.setStartOfAvailability(generateAvailabilityStart(hierarchy.location()));
-        onDemand.setEndOfAvailability(generateAvailabilityEnd(hierarchy.location()));
+        onDemand.setInstanceDescription(generateInstanceDescription(
+                doctoredDates.item(),
+                doctoredDates.encoding(),
+                doctoredDates.location(),
+                getLanguageCodeFor(doctoredDates.item())
+        ));
+        onDemand.setPublishedDuration(generatePublishedDuration(doctoredDates.version()));
+        onDemand.setStartOfAvailability(generateAvailabilityStart(doctoredDates.location()));
+        onDemand.setEndOfAvailability(generateAvailabilityEnd(doctoredDates.location()));
         onDemand.setFree(generateFree());
         onDemand.setLang(LANGUAGE);
 

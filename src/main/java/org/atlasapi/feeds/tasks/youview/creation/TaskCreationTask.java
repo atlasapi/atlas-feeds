@@ -222,7 +222,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     taskStore.save(taskCreator.taskFor(channelCrid, channel, p, action));
                     payloadHashStore.saveHash(HashType.CHANNEL, channelCrid, p.hash());
                 } else {
-                    log.debug("Existing hash found for Content {}, not updating", channelCrid);
+                    log.debug("Existing hash found for Channel {}, not updating", channelCrid);
                 }
             }
 
@@ -319,8 +319,12 @@ public abstract class TaskCreationTask extends ScheduledTask {
         e.printStackTrace(pw);
         return e.getMessage() + " " + sw.toString();
     }
-    
-    private UpdateProgress processOnDemand(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy) {
+
+    private UpdateProgress processOnDemand(
+            String onDemandImi,
+            ItemOnDemandHierarchy onDemandHierarchy
+    ) {
+
         Location location = onDemandHierarchy.location();
 
         Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
@@ -345,16 +349,20 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
-            log.error(String.format(
-                            "Failed to create payload for content %s, version %s, encoding %s, location %s",
-                            onDemandHierarchy.item().getCanonicalUri(),
-                            onDemandHierarchy.version().getCanonicalUri(),
-                            onDemandHierarchy.encoding().toString(),
-                            location.toString()
-                    ),
+            log.error(
+                    "Failed to create payload for content {}, version {}, encoding {}, location {}",
+                    onDemandHierarchy.item().getCanonicalUri(),
+                    onDemandHierarchy.version().getCanonicalUri(),
+                    onDemandHierarchy.encoding().toString(),
+                    location.toString(),
                     e
             );
-            Task task = taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, action, Status.FAILED));
+            Task task = taskStore.save(taskCreator.taskFor(
+                    onDemandImi,
+                    onDemandHierarchy,
+                    action,
+                    Status.FAILED
+            ));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
