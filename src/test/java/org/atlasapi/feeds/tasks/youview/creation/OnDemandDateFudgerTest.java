@@ -59,6 +59,7 @@ public class OnDemandDateFudgerTest {
     @Test
     public void availabilityInFutureGetsLeftAlone() throws Exception {
         when(policy.getAvailabilityStart()).thenReturn(now.plusHours(1));
+        when(policy.getAvailabilityEnd()).thenReturn(now.plusHours(11));
 
         fudger.fudgeStartDates(hierarchy);
 
@@ -67,8 +68,9 @@ public class OnDemandDateFudgerTest {
     }
 
     @Test
-    public void availabilityInPastGetsDateFudged() throws Exception {
+    public void availabilityInProgressGetsStartDateFudged() throws Exception {
         when(policy.getAvailabilityStart()).thenReturn(now.minusHours(1));
+        when(policy.getAvailabilityEnd()).thenReturn(now.plusHours(1));
 
         Location locationCopy = mock(Location.class);
         Policy policyCopy = mock(Policy.class);
@@ -87,5 +89,16 @@ public class OnDemandDateFudgerTest {
 
         verify(locationCopy, times(1)).setPolicy(policyCopy);
         verify(policyCopy, times(1)).setAvailabilityStart(now.minusHours(6));
+    }
+
+    @Test
+    public void availabilityInPastGetsLeftAlone() throws Exception {
+        when(policy.getAvailabilityStart()).thenReturn(now.minusHours(21));
+        when(policy.getAvailabilityEnd()).thenReturn(now.minusHours(1));
+
+        fudger.fudgeStartDates(hierarchy);
+
+        verify(policy, never()).copy();
+        verify(policy, never()).setAvailabilityStart(any(DateTime.class));
     }
 }
