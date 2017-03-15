@@ -40,7 +40,12 @@ public class OnDemandDateFudger {
         DateTime now = clock.now();
 
         Policy policy = resultLocation.getPolicy();
-        if (policy != null && policy.getAvailabilityStart().isBefore(now)) {
+
+        boolean availableNow = policy != null
+                && policy.getAvailabilityStart().isBefore(now)
+                && policy.getAvailabilityEnd().isAfter(now);
+
+        if (availableNow) {
             Policy resultPolicy = policy.copy();
             resultPolicy.setAvailabilityStart(now.minusHours(6));
 
