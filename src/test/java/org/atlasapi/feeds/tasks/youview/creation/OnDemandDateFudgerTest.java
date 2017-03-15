@@ -101,4 +101,28 @@ public class OnDemandDateFudgerTest {
         verify(policy, never()).copy();
         verify(policy, never()).setAvailabilityStart(any(DateTime.class));
     }
+
+    @Test
+    public void handlesNullEndDates() throws Exception {
+        when(policy.getAvailabilityStart()).thenReturn(now.minusHours(1));
+        when(policy.getAvailabilityEnd()).thenReturn(null);
+
+        Location locationCopy = mock(Location.class);
+        Policy policyCopy = mock(Policy.class);
+
+        when(location.copy()).thenReturn(locationCopy);
+        when(policy.copy()).thenReturn(policyCopy);
+
+        when(location.copy()).thenReturn(locationCopy);
+
+        ItemOnDemandHierarchy result = fudger.fudgeStartDates(hierarchy);
+
+        assertTrue(result.item() == item);
+        assertTrue(result.version() == version);
+        assertTrue(result.encoding() == encoding);
+        assertTrue(result.location() == locationCopy);
+
+        verify(locationCopy, times(1)).setPolicy(policyCopy);
+        verify(policyCopy, times(1)).setAvailabilityStart(now.minusHours(6));
+    }
 }
