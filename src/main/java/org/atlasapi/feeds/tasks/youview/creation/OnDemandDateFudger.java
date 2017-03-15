@@ -41,9 +41,14 @@ public class OnDemandDateFudger {
 
         Policy policy = resultLocation.getPolicy();
 
-        boolean availableNow = policy != null
-                && policy.getAvailabilityStart().isBefore(now)
-                && policy.getAvailabilityEnd().isAfter(now);
+        boolean availableNow = false;
+        if (policy != null) {
+            boolean startsBefore = policy.getAvailabilityStart().isBefore(now);
+            boolean endsAfter = policy.getAvailabilityEnd() == null
+                    || policy.getAvailabilityEnd().isAfter(now);
+
+            availableNow = startsBefore && endsAfter;
+        }
 
         if (availableNow) {
             Policy resultPolicy = policy.copy();
