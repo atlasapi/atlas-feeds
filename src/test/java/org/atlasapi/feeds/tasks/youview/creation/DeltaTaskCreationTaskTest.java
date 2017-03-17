@@ -103,7 +103,7 @@ public class DeltaTaskCreationTaskTest {
                 Optional.of(updatedSince));
 
         Content content = mock(Content.class);
-        when(contentResolver.updatedSince(updatedSince))
+        when(contentResolver.updatedSince(updatedSince.minus(DeltaTaskCreationTask.UPDATE_WINDOW_GRACE_PERIOD)))
                 .thenReturn(Lists.newArrayList(content)
                 .iterator());
         when(content.isActivelyPublished()).thenReturn(true);
@@ -142,7 +142,7 @@ public class DeltaTaskCreationTaskTest {
                 Optional.of(updatedSince));
 
         Content content = mock(Content.class);
-        when(contentResolver.updatedSince(updatedSince))
+        when(contentResolver.updatedSince(updatedSince.minus(DeltaTaskCreationTask.UPDATE_WINDOW_GRACE_PERIOD)))
                 .thenReturn(Lists.newArrayList(content)
                         .iterator());
         when(content.isActivelyPublished()).thenReturn(true);
@@ -180,7 +180,7 @@ public class DeltaTaskCreationTaskTest {
                 Optional.of(updatedSince));
 
         Content content = mock(Content.class);
-        when(contentResolver.updatedSince(updatedSince))
+        when(contentResolver.updatedSince(updatedSince.minus(DeltaTaskCreationTask.UPDATE_WINDOW_GRACE_PERIOD)))
                 .thenReturn(Lists.newArrayList(content)
                 .iterator());
         when(content.isActivelyPublished()).thenReturn(true);
@@ -216,7 +216,7 @@ public class DeltaTaskCreationTaskTest {
                 Optional.of(updatedSince));
 
         Content content = mock(Content.class);
-        when(contentResolver.updatedSince(updatedSince))
+        when(contentResolver.updatedSince(updatedSince.minus(DeltaTaskCreationTask.UPDATE_WINDOW_GRACE_PERIOD)))
                 .thenReturn(Lists.newArrayList(content)
                         .iterator());
         when(content.isActivelyPublished()).thenReturn(false);
@@ -264,7 +264,7 @@ public class DeltaTaskCreationTaskTest {
         when(encoding.getAvailableAt()).thenReturn(ImmutableSet.of(location));
         when(location.getAvailable()).thenReturn(false);
 
-        when(contentResolver.updatedSince(updatedSince))
+        when(contentResolver.updatedSince(updatedSince.minus(DeltaTaskCreationTask.UPDATE_WINDOW_GRACE_PERIOD)))
                 .thenReturn(Lists.newArrayList((Content) content).iterator());
         when(content.isActivelyPublished()).thenReturn(true);
 
