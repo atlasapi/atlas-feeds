@@ -23,6 +23,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import org.joda.time.DateTime;
+import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
     private static final Logger log = LoggerFactory.getLogger(DeltaTaskCreationTask.class);
     private static final Ordering<Content> HIERARCHICAL_ORDER = new HierarchicalOrdering();
+    private static final Duration UPDATE_WINDOW_GRACE_PERIOD = Duration.standardHours(2);
 
     private final YouViewContentResolver contentResolver;
     private final ChannelResolver channelResolver;
@@ -74,8 +76,10 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         }
         
         Optional<DateTime> startOfTask = Optional.of(new DateTime());
-        
-        Iterator<Content> updatedContent = contentResolver.updatedSince(lastUpdated.get());
+
+        Iterator<Content> updatedContent = contentResolver.updatedSince(
+                lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD)
+        );
         
         List<Content> deleted = Lists.newArrayList();
         
