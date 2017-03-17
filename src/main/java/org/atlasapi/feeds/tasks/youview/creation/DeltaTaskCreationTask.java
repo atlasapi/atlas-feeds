@@ -32,9 +32,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class DeltaTaskCreationTask extends TaskCreationTask {
 
+    public static final Duration UPDATE_WINDOW_GRACE_PERIOD = Duration.standardHours(2);
+
     private static final Logger log = LoggerFactory.getLogger(DeltaTaskCreationTask.class);
     private static final Ordering<Content> HIERARCHICAL_ORDER = new HierarchicalOrdering();
-    private static final Duration UPDATE_WINDOW_GRACE_PERIOD = Duration.standardHours(2);
 
     private final YouViewContentResolver contentResolver;
     private final ChannelResolver channelResolver;
