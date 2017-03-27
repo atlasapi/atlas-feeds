@@ -91,8 +91,9 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         DBObject publishedClause = QueryBuilder.start("status").is("PUBLISHED").get();
         DBObject acceptedClause = QueryBuilder.start("status").is("ACCEPTED").get();
 
-        DBObject query = QueryBuilder.start("created").greaterThanEquals(fourHoursAgo)
+        DBObject query = QueryBuilder.start()
                 .or(publishedClause, acceptedClause)
+                .and("created").greaterThanEquals(fourHoursAgo)
                 .get();
 
         return collection.find(query).count();
@@ -101,7 +102,9 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
     private int getTasksFailedInTheLastFourHours() {
         Date fourHoursAgo = DateTime.now().minusHours(4).toDate();
 
-        DBObject query = QueryBuilder.start("created").greaterThanEquals(fourHoursAgo)
+
+        DBObject query = QueryBuilder.start()
+                .put("created").greaterThanEquals(fourHoursAgo)
                 .and("status").is("REJECTED")
                 .get();
 
