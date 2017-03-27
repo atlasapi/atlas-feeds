@@ -13,12 +13,21 @@ public class FeedStatistics {
     private final Publisher publisher;
     private final int queueSize;
     private final Duration updateLatency;
+    private final int createdTasks;
+    private final int failedTasks;
     
-    public FeedStatistics(Publisher publisher, int queueSize, 
-            Duration updateLatency) {
+    public FeedStatistics(
+            Publisher publisher,
+            int queueSize,
+            Duration updateLatency,
+            int createdTasks,
+            int failedTasks
+    ) {
         this.publisher = checkNotNull(publisher);
         this.queueSize = queueSize;
         this.updateLatency = checkNotNull(updateLatency);
+        this.createdTasks = createdTasks;
+        this.failedTasks = failedTasks;
     }
     
     public Publisher publisher() {
@@ -32,6 +41,14 @@ public class FeedStatistics {
     public Duration updateLatency() {
         return updateLatency;
     }
+
+    public int getCreatedTasks() {
+        return createdTasks;
+    }
+
+    public int getFailedTasks() {
+        return failedTasks;
+    }
     
     @Override
     public String toString() {
@@ -39,6 +56,8 @@ public class FeedStatistics {
                 .add("publisher", publisher)
                 .add("queueSize", queueSize)
                 .add("updateLatency", updateLatency)
+                .add("createdTasks", createdTasks)
+                .add("failedTasks", failedTasks)
                 .toString();
     }
     

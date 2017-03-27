@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.statistics;
 
+import java.util.Date;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
@@ -7,6 +9,8 @@ import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.TaskQuery;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
+
+import com.mongodb.QueryBuilder;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
@@ -40,14 +44,17 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
 
     @Override
     public Optional<FeedStatistics> resolveFor(Publisher publisher) {
+        int createdTasks = getTasksCreatedInTheLastFourHours();
+        int failedTasks = getTasksFailedInTheLastFourHours();
+
         Optional<Duration> latency = calculateLatency(publisher);
         if (!latency.isPresent()) {
-            return Optional.of(new FeedStatistics(publisher, 0, Duration.ZERO));
+            return Optional.of(new FeedStatistics(publisher, 0, Duration.ZERO, createdTasks, failedTasks));
         }
 
         int queueSize = calculateCurrentQueueSize(publisher);
         
-        return Optional.of(new FeedStatistics(publisher, queueSize, latency.get()));
+        return Optional.of(new FeedStatistics(publisher, queueSize, latency.get(), createdTasks, failedTasks));
     }
 
     private int calculateCurrentQueueSize(Publisher publisher) {
@@ -76,5 +83,28 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         DateTime oldestMessage = TranslatorUtils.toDateTime(stats, "created");
 
         return Optional.of(new Duration(oldestMessage, clock.now()));
+    }
+
+    private int getTasksCreatedInTheLastFourHours() {
+        Date fourHoursAgo = DateTime.now().minusHours(4).toDate();
+
+        DBObject publishedClause = QueryBuilder.start("status").is(Status.PUBLISHED).get();
+        DBObject acceptedClause = QueryBuilder.start("status").is(Status.ACCEPTED).get();
+
+        DBObject query = QueryBuilder.start("created").greaterThanEquals(fourHoursAgo)
+                .or(publishedClause, acceptedClause)
+                .get();
+
+        return collection.find(query).count();
+    }
+
+    private int getTasksFailedInTheLastFourHours() {
+        Date fourHoursAgo = DateTime.now().minusHours(4).toDate();
+
+        DBObject query = QueryBuilder.start("created").greaterThanEquals(fourHoursAgo)
+                .and("status").is(Status.REJECTED)
+                .get();
+
+        return collection.find(query).count();
     }
 }
