@@ -13,6 +13,8 @@ public class FeedStatistics {
     private int queueSize;
     private Duration updateLatency;
     private String updateLatencyString;
+    private int createdTasks;
+    private int failedTasks;
     
     public FeedStatistics() {
     }
@@ -46,12 +48,30 @@ public class FeedStatistics {
         return updateLatencyString;
     }
 
+    public int getCreatedTasks() {
+        return createdTasks;
+    }
+
+    public void setCreatedTasks(int createdTasks) {
+        this.createdTasks = createdTasks;
+    }
+
+    public int getFailedTasks() {
+        return failedTasks;
+    }
+
+    public void setFailedTasks(int failedTasks) {
+        this.failedTasks = failedTasks;
+    }
+
     @Override
     public String toString() {
         return Objects.toStringHelper(FeedStatistics.class)
                 .add("publisher", publisher)
                 .add("queueSize", queueSize)
                 .add("updateLatency", updateLatency)
+                .add("createdTasks", createdTasks)
+                .add("failedTasks", failedTasks)
                 .toString();
     }
     
