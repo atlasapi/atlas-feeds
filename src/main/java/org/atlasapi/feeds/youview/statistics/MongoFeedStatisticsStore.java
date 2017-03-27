@@ -67,7 +67,7 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         }
 
         int queueSize = calculateCurrentQueueSize(publisher);
-        
+
         return Optional.of(FeedStatistics.build()
                 .withPublisher(publisher)
                 .withQueueSize(queueSize)
@@ -105,7 +105,8 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         return Optional.of(new Duration(oldestMessage, clock.now()));
     }
 
-    private int getTasksInTheLastFourHours(java.time.Duration duration, String taskStatus1, String taskStatus2) {
+    private int getTasksInTheLastFourHours(java.time.Duration duration, String taskStatus1,
+            String taskStatus2) {
         DBObject firstClause = QueryBuilder.start("status").is(taskStatus1).get();
         DBObject secondClause = QueryBuilder.start("status").is(taskStatus2).get();
 
@@ -126,7 +127,8 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         private Clock clock;
         private Destination.DestinationType destinationType;
 
-        private Builder() {}
+        private Builder() {
+        }
 
         public Builder withMongoCollection(DatabasedMongo mongo) {
             this.mongo = mongo;
