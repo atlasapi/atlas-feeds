@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.statistics;
 
-import java.util.Date;
-
 import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
 import static org.junit.Assert.assertEquals;
 
@@ -40,7 +38,7 @@ public class MongoFeedStatisticsStoreTest {
 
     @Test
     public void testFetchOfAbsentDayAndPublisherReturnsZeroLatencyAndSize() {
-        Optional<FeedStatistics> statsOptional = store.resolveFor(Publisher.BT_BLACKOUT, new Duration(1L));
+        Optional<FeedStatistics> statsOptional = store.resolveFor(Publisher.BT_BLACKOUT, java.time.Duration.ZERO);
         FeedStatistics stats = statsOptional.get();
         assertEquals(0, stats.queueSize());
         assertEquals(Duration.ZERO, stats.updateLatency());
@@ -50,7 +48,7 @@ public class MongoFeedStatisticsStoreTest {
     public void queueSizeIsReportedCorrectly() {
         taskStore.save(getTask(42L));
         taskStore.save(getTask(43L));
-        assertEquals(2, store.resolveFor(PUBLISHER, new Duration(1L)).get().queueSize());
+        assertEquals(2, store.resolveFor(PUBLISHER, java.time.Duration.ZERO).get().queueSize());
     }
 
     @Test
@@ -61,7 +59,7 @@ public class MongoFeedStatisticsStoreTest {
 
         clock.jumpTo(now);
 
-        assertEquals(Duration.standardDays(1), store.resolveFor(PUBLISHER, new Duration(1L)).get().updateLatency());
+        assertEquals(Duration.standardDays(1), store.resolveFor(PUBLISHER, java.time.Duration.ZERO).get().updateLatency());
     }
 
     private Task getTask(Long id, DateTime created) {

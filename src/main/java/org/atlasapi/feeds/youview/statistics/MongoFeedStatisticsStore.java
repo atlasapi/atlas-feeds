@@ -25,7 +25,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 
-
 public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
 
     private static final String COLLECTION_NAME = "youviewTasks";
@@ -52,7 +51,7 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
     }
 
     @Override
-    public Optional<FeedStatistics> resolveFor(Publisher publisher, Duration duration) {
+    public Optional<FeedStatistics> resolveFor(Publisher publisher, java.time.Duration duration) {
         int successfulTasks = getTasksInTheLastFourHours(duration, "ACCEPTED", "PUBLISHED");
         int unsuccessfulTasks = getTasksInTheLastFourHours(duration, "FAILED", "REJECTED");
 
@@ -106,11 +105,12 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         return Optional.of(new Duration(oldestMessage, clock.now()));
     }
 
-    private int getTasksInTheLastFourHours(Duration duration, String taskStatus1, String taskStatus2) {
+    private int getTasksInTheLastFourHours(java.time.Duration duration, String taskStatus1, String taskStatus2) {
         DBObject firstClause = QueryBuilder.start("status").is(taskStatus1).get();
         DBObject secondClause = QueryBuilder.start("status").is(taskStatus2).get();
 
-        Date durationTimeAgo = new DateTime().minus(duration).toDate();
+        int hours = (int) duration.toHours();
+        Date durationTimeAgo = new DateTime().minusHours(hours).toDate();
         DBObject query = QueryBuilder.start()
                 .or(firstClause, secondClause)
                 .and("created").greaterThanEquals(durationTimeAgo)
