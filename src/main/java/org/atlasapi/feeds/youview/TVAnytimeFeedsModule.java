@@ -85,7 +85,7 @@ public class TVAnytimeFeedsModule {
     public FeedStatisticsResolver feedStatsStore() {
         // hardcoded to YOUVIEW as there are no other implementations at present
         return MongoFeedStatisticsStore.builder()
-                .withMongoCollection(mongo)
+                .withMongoDatabase(mongo)
                 .withTaskStore(taskStore())
                 .withClock(clock())
                 .withDestinationType(DestinationType.YOUVIEW)

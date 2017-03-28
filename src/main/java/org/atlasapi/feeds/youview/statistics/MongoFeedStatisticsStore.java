@@ -24,6 +24,7 @@ import com.metabroadcast.common.time.Clock;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
+import org.joda.time.Period;
 
 public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
 
@@ -34,16 +35,11 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
     private final Clock clock;
     private final DestinationType destinationType;
 
-    private MongoFeedStatisticsStore(
-            DatabasedMongo mongo,
-            TaskStore taskStore,
-            Clock clock,
-            DestinationType destinationType
-    ) {
-        this.collection = checkNotNull(mongo).collection(COLLECTION_NAME);
-        this.taskStore = checkNotNull(taskStore);
-        this.clock = checkNotNull(clock);
-        this.destinationType = checkNotNull(destinationType);
+    private MongoFeedStatisticsStore(Builder builder) {
+        this.collection = checkNotNull(builder.mongo).collection(COLLECTION_NAME);
+        this.taskStore = checkNotNull(builder.taskStore);
+        this.clock = checkNotNull(builder.clock);
+        this.destinationType = checkNotNull(builder.destinationType);
     }
 
     public static Builder builder() {
@@ -51,9 +47,17 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
     }
 
     @Override
-    public Optional<FeedStatistics> resolveFor(Publisher publisher, java.time.Duration duration) {
-        int successfulTasks = getTasksInTheLastFourHours(duration, "ACCEPTED", "PUBLISHED");
-        int unsuccessfulTasks = getTasksInTheLastFourHours(duration, "FAILED", "REJECTED");
+    public Optional<FeedStatistics> resolveFor(Publisher publisher, Period timeBeforeNow) {
+        int successfulTasks = getTasksCreatedInTheLastDurationByStatus(
+                timeBeforeNow,
+                Status.ACCEPTED.name(),
+                Status.PUBLISHED.name()
+        );
+        int unsuccessfulTasks = getTasksCreatedInTheLastDurationByStatus(
+                timeBeforeNow,
+                Status.FAILED.name(),
+                Status.REJECTED.name()
+        );
 
         Optional<Duration> latency = calculateLatency(publisher);
         if (!latency.isPresent()) {
@@ -63,7 +67,7 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
                     .withUpdateLatency(Duration.ZERO)
                     .withSuccessfulTasks(successfulTasks)
                     .withUnsuccessfulTasks(unsuccessfulTasks)
-                    .createFeedStatistics());
+                    .build());
         }
 
         int queueSize = calculateCurrentQueueSize(publisher);
@@ -74,7 +78,7 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
                 .withUpdateLatency(latency.get())
                 .withSuccessfulTasks(successfulTasks)
                 .withUnsuccessfulTasks(unsuccessfulTasks)
-                .createFeedStatistics());
+                .build());
     }
 
     private int calculateCurrentQueueSize(Publisher publisher) {
@@ -105,16 +109,18 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         return Optional.of(new Duration(oldestMessage, clock.now()));
     }
 
-    private int getTasksInTheLastFourHours(java.time.Duration duration, String taskStatus1,
-            String taskStatus2) {
-        DBObject firstClause = QueryBuilder.start("status").is(taskStatus1).get();
-        DBObject secondClause = QueryBuilder.start("status").is(taskStatus2).get();
+    private int getTasksCreatedInTheLastDurationByStatus(
+            Period timeBeforeNow,
+            String firstStatus,
+            String secondStatus
+    ) {
+        DBObject firstStatusClause = QueryBuilder.start("status").is(firstStatus).get();
+        DBObject secondStatusClause = QueryBuilder.start("status").is(secondStatus).get();
 
-        int hours = (int) duration.toHours();
-        Date durationTimeAgo = new DateTime().minusHours(hours).toDate();
+        Date timeBeforePeriod = new DateTime().minus(timeBeforeNow).toDate();
         DBObject query = QueryBuilder.start()
-                .or(firstClause, secondClause)
-                .and("created").greaterThanEquals(durationTimeAgo)
+                .or(firstStatusClause, secondStatusClause)
+                .and("created").greaterThanEquals(timeBeforePeriod)
                 .get();
 
         return collection.find(query).count();
@@ -127,10 +133,9 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         private Clock clock;
         private Destination.DestinationType destinationType;
 
-        private Builder() {
-        }
+        private Builder() {}
 
-        public Builder withMongoCollection(DatabasedMongo mongo) {
+        public Builder withMongoDatabase(DatabasedMongo mongo) {
             this.mongo = mongo;
             return this;
         }
@@ -152,7 +157,8 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         }
 
         public MongoFeedStatisticsStore build() {
-            return new MongoFeedStatisticsStore(mongo, taskStore, clock, destinationType);
+            return new MongoFeedStatisticsStore(this);
         }
     }
 }
+

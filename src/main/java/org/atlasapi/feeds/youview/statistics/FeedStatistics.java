@@ -15,19 +15,13 @@ public class FeedStatistics {
     private final Duration updateLatency;
     private final int successfulTasks;
     private final int unsuccessfulTasks;
-    
-    private FeedStatistics(
-            Publisher publisher,
-            int queueSize,
-            Duration updateLatency,
-            int successfulTasks,
-            int unsuccessfulTasks
-    ) {
-        this.publisher = checkNotNull(publisher);
-        this.queueSize = queueSize;
-        this.updateLatency = checkNotNull(updateLatency);
-        this.successfulTasks = successfulTasks;
-        this.unsuccessfulTasks = unsuccessfulTasks;
+
+    private FeedStatistics(Builder builder) {
+        this.publisher = checkNotNull(builder.publisher);
+        this.queueSize = builder.queueSize;
+        this.updateLatency = checkNotNull(builder.updateLatency);
+        this.successfulTasks = builder.successfulTasks;
+        this.unsuccessfulTasks = builder.unsuccessfulTasks;
     }
 
     public static Builder build() {
@@ -118,14 +112,8 @@ public class FeedStatistics {
             return this;
         }
 
-        public FeedStatistics createFeedStatistics() {
-            return new FeedStatistics(
-                    publisher,
-                    queueSize,
-                    updateLatency,
-                    successfulTasks,
-                    unsuccessfulTasks
-            );
+        public FeedStatistics build() {
+            return new FeedStatistics(this);
         }
     }
 }

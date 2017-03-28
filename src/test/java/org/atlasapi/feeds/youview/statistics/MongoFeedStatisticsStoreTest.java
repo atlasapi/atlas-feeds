@@ -13,6 +13,7 @@ import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.joda.time.Period;
 import org.junit.Test;
 
 import com.google.common.base.Optional;
@@ -30,7 +31,7 @@ public class MongoFeedStatisticsStoreTest {
     private TimeMachine clock = new TimeMachine();
 
     private final MongoFeedStatisticsStore store = MongoFeedStatisticsStore.builder()
-            .withMongoCollection(mongo)
+            .withMongoDatabase(mongo)
             .withTaskStore(taskStore)
             .withClock(clock)
             .withDestinationType(YOUVIEW)
@@ -38,7 +39,7 @@ public class MongoFeedStatisticsStoreTest {
 
     @Test
     public void testFetchOfAbsentDayAndPublisherReturnsZeroLatencyAndSize() {
-        Optional<FeedStatistics> statsOptional = store.resolveFor(Publisher.BT_BLACKOUT, java.time.Duration.ZERO);
+        Optional<FeedStatistics> statsOptional = store.resolveFor(Publisher.BT_BLACKOUT, Period.ZERO.ZERO);
         FeedStatistics stats = statsOptional.get();
         assertEquals(0, stats.queueSize());
         assertEquals(Duration.ZERO, stats.updateLatency());
@@ -48,7 +49,7 @@ public class MongoFeedStatisticsStoreTest {
     public void queueSizeIsReportedCorrectly() {
         taskStore.save(getTask(42L));
         taskStore.save(getTask(43L));
-        assertEquals(2, store.resolveFor(PUBLISHER, java.time.Duration.ZERO).get().queueSize());
+        assertEquals(2, store.resolveFor(PUBLISHER, Period.ZERO).get().queueSize());
     }
 
     @Test
@@ -59,7 +60,7 @@ public class MongoFeedStatisticsStoreTest {
 
         clock.jumpTo(now);
 
-        assertEquals(Duration.standardDays(1), store.resolveFor(PUBLISHER, java.time.Duration.ZERO).get().updateLatency());
+        assertEquals(Duration.standardDays(1), store.resolveFor(PUBLISHER, Period.ZERO.ZERO).get().updateLatency());
     }
 
     private Task getTask(Long id, DateTime created) {
