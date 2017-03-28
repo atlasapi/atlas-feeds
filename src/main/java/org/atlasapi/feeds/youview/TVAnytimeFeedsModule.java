@@ -1,8 +1,6 @@
 package org.atlasapi.feeds.youview;
 
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.persistence.IdSettingTaskStore;
@@ -74,7 +72,12 @@ public class TVAnytimeFeedsModule {
     @Bean 
     public FeedStatisticsResolver feedStatsStore() {
         // hardcoded to YOUVIEW as there are no other implementations at present
-        return new MongoFeedStatisticsStore(mongo, taskStore(), clock(), DestinationType.YOUVIEW);
+        return MongoFeedStatisticsStore.builder()
+                .withMongoDatabase(mongo)
+                .withTaskStore(taskStore())
+                .withClock(clock())
+                .withDestinationType(DestinationType.YOUVIEW)
+                .build();
     }
     
     @Bean 
