@@ -37,8 +37,8 @@ public class ServiceMappingLineProcessor implements LineProcessor<Multimap<Strin
             // TODO throw?
             return true;
         }
-        String bbcSId = values.get(0);
-        String youViewSId = values.get(2);
+        String bbcSId = values.get(0).toLowerCase();
+        String youViewSId = values.get(2).toLowerCase();
         mapping.put(bbcSId, youViewSId);
         
         return true;
