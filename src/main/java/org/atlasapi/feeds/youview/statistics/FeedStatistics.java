@@ -13,21 +13,25 @@ public class FeedStatistics {
     private final Publisher publisher;
     private final int queueSize;
     private final Duration updateLatency;
-    private final int createdTasks;
-    private final int failedTasks;
+    private final int successfulTasks;
+    private final int unsuccessfulTasks;
     
-    public FeedStatistics(
+    private FeedStatistics(
             Publisher publisher,
             int queueSize,
             Duration updateLatency,
-            int createdTasks,
-            int failedTasks
+            int successfulTasks,
+            int unsuccessfulTasks
     ) {
         this.publisher = checkNotNull(publisher);
         this.queueSize = queueSize;
         this.updateLatency = checkNotNull(updateLatency);
-        this.createdTasks = createdTasks;
-        this.failedTasks = failedTasks;
+        this.successfulTasks = successfulTasks;
+        this.unsuccessfulTasks = unsuccessfulTasks;
+    }
+
+    public static Builder build() {
+        return new Builder();
     }
     
     public Publisher publisher() {
@@ -42,12 +46,12 @@ public class FeedStatistics {
         return updateLatency;
     }
 
-    public int getCreatedTasks() {
-        return createdTasks;
+    public int successfulTasks() {
+        return successfulTasks;
     }
 
-    public int getFailedTasks() {
-        return failedTasks;
+    public int unsuccessfulTasks() {
+        return unsuccessfulTasks;
     }
     
     @Override
@@ -56,8 +60,8 @@ public class FeedStatistics {
                 .add("publisher", publisher)
                 .add("queueSize", queueSize)
                 .add("updateLatency", updateLatency)
-                .add("createdTasks", createdTasks)
-                .add("failedTasks", failedTasks)
+                .add("successfulTasks", successfulTasks)
+                .add("unsuccessfulTasks", unsuccessfulTasks)
                 .toString();
     }
     
@@ -77,5 +81,51 @@ public class FeedStatistics {
         }
         
         return false;
+    }
+
+    public static class Builder {
+
+        private Publisher publisher;
+        private int queueSize;
+        private Duration updateLatency;
+        private int successfulTasks;
+        private int unsuccessfulTasks;
+
+        private Builder() {}
+
+        public Builder withPublisher(Publisher publisher) {
+            this.publisher = publisher;
+            return this;
+        }
+
+        public Builder withQueueSize(int queueSize) {
+            this.queueSize = queueSize;
+            return this;
+        }
+
+        public Builder withUpdateLatency(Duration updateLatency) {
+            this.updateLatency = updateLatency;
+            return this;
+        }
+
+        public Builder withSuccessfulTasks(int successfulTasks) {
+            this.successfulTasks = successfulTasks;
+            return this;
+        }
+
+        public Builder withUnsuccessfulTasks(int unsuccessfulTasks) {
+            this.unsuccessfulTasks = unsuccessfulTasks;
+            return this;
+        }
+
+        public FeedStatistics createFeedStatistics() {
+            return new FeedStatistics(
+                    publisher,
+                    queueSize,
+                    updateLatency,
+                    successfulTasks,
+                    unsuccessfulTasks
+            );
+        }
     }
 }

@@ -4,6 +4,7 @@ import java.util.Date;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.atlasapi.feeds.tasks.Destination;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.TaskQuery;
@@ -34,27 +35,47 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
     private final Clock clock;
     private final DestinationType destinationType;
 
-    public MongoFeedStatisticsStore(DatabasedMongo mongo, TaskStore taskStore, 
-            Clock clock, DestinationType destinationType) {
+    private MongoFeedStatisticsStore(
+            DatabasedMongo mongo,
+            TaskStore taskStore,
+            Clock clock,
+            DestinationType destinationType
+    ) {
         this.collection = checkNotNull(mongo).collection(COLLECTION_NAME);
         this.taskStore = checkNotNull(taskStore);
         this.clock = checkNotNull(clock);
         this.destinationType = checkNotNull(destinationType);
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     @Override
-    public Optional<FeedStatistics> resolveFor(Publisher publisher) {
-        int createdTasks = getTasksCreatedInTheLastFourHours();
-        int failedTasks = getTasksFailedInTheLastFourHours();
+    public Optional<FeedStatistics> resolveFor(Publisher publisher, Duration duration) {
+        int successfulTasks = getTasksInTheLastFourHours(duration, "ACCEPTED", "PUBLISHED");
+        int unsuccessfulTasks = getTasksInTheLastFourHours(duration, "FAILED", "REJECTED");
 
         Optional<Duration> latency = calculateLatency(publisher);
         if (!latency.isPresent()) {
-            return Optional.of(new FeedStatistics(publisher, 0, Duration.ZERO, createdTasks, failedTasks));
+            return Optional.of(FeedStatistics.build()
+                    .withPublisher(publisher)
+                    .withQueueSize(0)
+                    .withUpdateLatency(Duration.ZERO)
+                    .withSuccessfulTasks(successfulTasks)
+                    .withUnsuccessfulTasks(unsuccessfulTasks)
+                    .createFeedStatistics());
         }
 
         int queueSize = calculateCurrentQueueSize(publisher);
         
-        return Optional.of(new FeedStatistics(publisher, queueSize, latency.get(), createdTasks, failedTasks));
+        return Optional.of(FeedStatistics.build()
+                .withPublisher(publisher)
+                .withQueueSize(queueSize)
+                .withUpdateLatency(latency.get())
+                .withSuccessfulTasks(successfulTasks)
+                .withUnsuccessfulTasks(unsuccessfulTasks)
+                .createFeedStatistics());
     }
 
     private int calculateCurrentQueueSize(Publisher publisher) {
@@ -85,29 +106,51 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         return Optional.of(new Duration(oldestMessage, clock.now()));
     }
 
-    private int getTasksCreatedInTheLastFourHours() {
-        Date fourHoursAgo = DateTime.now().minusHours(4).toDate();
+    private int getTasksInTheLastFourHours(Duration duration, String taskStatus1, String taskStatus2) {
+        DBObject firstClause = QueryBuilder.start("status").is(taskStatus1).get();
+        DBObject secondClause = QueryBuilder.start("status").is(taskStatus2).get();
 
-        DBObject publishedClause = QueryBuilder.start("status").is("PUBLISHED").get();
-        DBObject acceptedClause = QueryBuilder.start("status").is("ACCEPTED").get();
-
+        Date durationTimeAgo = new DateTime().minus(duration).toDate();
         DBObject query = QueryBuilder.start()
-                .or(publishedClause, acceptedClause)
-                .and("created").greaterThanEquals(fourHoursAgo)
+                .or(firstClause, secondClause)
+                .and("created").greaterThanEquals(durationTimeAgo)
                 .get();
 
         return collection.find(query).count();
     }
 
-    private int getTasksFailedInTheLastFourHours() {
-        Date fourHoursAgo = DateTime.now().minusHours(4).toDate();
+    public static class Builder {
 
+        private DatabasedMongo mongo;
+        private TaskStore taskStore;
+        private Clock clock;
+        private Destination.DestinationType destinationType;
 
-        DBObject query = QueryBuilder.start()
-                .put("created").greaterThanEquals(fourHoursAgo)
-                .and("status").is("REJECTED")
-                .get();
+        private Builder() {}
 
-        return collection.find(query).count();
+        public Builder withMongoCollection(DatabasedMongo mongo) {
+            this.mongo = mongo;
+            return this;
+        }
+
+        public Builder withTaskStore(TaskStore taskStore) {
+            this.taskStore = taskStore;
+            return this;
+        }
+
+        public Builder withClock(Clock clock) {
+            this.clock = clock;
+            return this;
+        }
+
+        public Builder withDestinationType(
+                Destination.DestinationType destinationType) {
+            this.destinationType = destinationType;
+            return this;
+        }
+
+        public MongoFeedStatisticsStore build() {
+            return new MongoFeedStatisticsStore(mongo, taskStore, clock, destinationType);
+        }
     }
 }

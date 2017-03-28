@@ -13,8 +13,8 @@ public class FeedStatistics {
     private int queueSize;
     private Duration updateLatency;
     private String updateLatencyString;
-    private int createdTasks;
-    private int failedTasks;
+    private int successfulTasks;
+    private int unsuccessfulTasks;
     
     public FeedStatistics() {
     }
@@ -48,20 +48,20 @@ public class FeedStatistics {
         return updateLatencyString;
     }
 
-    public int getCreatedTasks() {
-        return createdTasks;
+    public int successfulTasks() {
+        return successfulTasks;
     }
 
-    public void setCreatedTasks(int createdTasks) {
-        this.createdTasks = createdTasks;
+    public void setSuccessfulTasks(int successfulTasks) {
+        this.successfulTasks = successfulTasks;
     }
 
-    public int getFailedTasks() {
-        return failedTasks;
+    public int unsuccessfulTasks() {
+        return unsuccessfulTasks;
     }
 
-    public void setFailedTasks(int failedTasks) {
-        this.failedTasks = failedTasks;
+    public void setUnsuccessfulTasks(int unsuccessfulTasks) {
+        this.unsuccessfulTasks = unsuccessfulTasks;
     }
 
     @Override
@@ -70,8 +70,8 @@ public class FeedStatistics {
                 .add("publisher", publisher)
                 .add("queueSize", queueSize)
                 .add("updateLatency", updateLatency)
-                .add("createdTasks", createdTasks)
-                .add("failedTasks", failedTasks)
+                .add("successfulTasks", successfulTasks)
+                .add("unsuccessfulTasks", unsuccessfulTasks)
                 .toString();
     }
     
