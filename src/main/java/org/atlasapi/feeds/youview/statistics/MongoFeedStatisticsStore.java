@@ -118,9 +118,8 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         DBObject secondStatusClause = QueryBuilder.start("status").is(secondStatus).get();
 
         Date timeBeforePeriod = new DateTime().minus(timeBeforeNow).toDate();
-        DBObject query = QueryBuilder.start()
+        DBObject query = QueryBuilder.start("created").greaterThanEquals(timeBeforePeriod)
                 .or(firstStatusClause, secondStatusClause)
-                .and("created").greaterThanEquals(timeBeforePeriod)
                 .get();
 
         return collection.find(query).count();
