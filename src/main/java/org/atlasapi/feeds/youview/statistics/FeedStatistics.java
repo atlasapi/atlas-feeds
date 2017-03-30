@@ -13,12 +13,19 @@ public class FeedStatistics {
     private final Publisher publisher;
     private final int queueSize;
     private final Duration updateLatency;
+    private final int successfulTasks;
+    private final int unsuccessfulTasks;
     
-    public FeedStatistics(Publisher publisher, int queueSize, 
-            Duration updateLatency) {
-        this.publisher = checkNotNull(publisher);
-        this.queueSize = queueSize;
-        this.updateLatency = checkNotNull(updateLatency);
+    private FeedStatistics(Builder builder) {
+        this.publisher = checkNotNull(builder.publisher);
+        this.queueSize = builder.queueSize;
+        this.updateLatency = checkNotNull(builder.updateLatency);
+        this.successfulTasks = builder.successfulTasks;
+        this.unsuccessfulTasks = builder.unsuccessfulTasks;
+    }
+
+    public static Builder build() {
+        return new Builder();
     }
     
     public Publisher publisher() {
@@ -32,6 +39,14 @@ public class FeedStatistics {
     public Duration updateLatency() {
         return updateLatency;
     }
+
+    public int successfulTasks() {
+        return successfulTasks;
+    }
+
+    public int unsuccessfulTasks() {
+        return unsuccessfulTasks;
+    }
     
     @Override
     public String toString() {
@@ -39,6 +54,8 @@ public class FeedStatistics {
                 .add("publisher", publisher)
                 .add("queueSize", queueSize)
                 .add("updateLatency", updateLatency)
+                .add("successfulTasks", successfulTasks)
+                .add("unsuccessfulTasks", unsuccessfulTasks)
                 .toString();
     }
     
@@ -58,5 +75,45 @@ public class FeedStatistics {
         }
         
         return false;
+    }
+
+    public static class Builder {
+
+        private Publisher publisher;
+        private int queueSize;
+        private Duration updateLatency;
+        private int successfulTasks;
+        private int unsuccessfulTasks;
+
+        private Builder() {}
+
+        public Builder withPublisher(Publisher publisher) {
+            this.publisher = publisher;
+            return this;
+        }
+
+        public Builder withQueueSize(int queueSize) {
+            this.queueSize = queueSize;
+            return this;
+        }
+
+        public Builder withUpdateLatency(Duration updateLatency) {
+            this.updateLatency = updateLatency;
+            return this;
+        }
+
+        public Builder withSuccessfulTasks(int successfulTasks) {
+            this.successfulTasks = successfulTasks;
+            return this;
+        }
+
+        public Builder withUnsuccessfulTasks(int unsuccessfulTasks) {
+            this.unsuccessfulTasks = unsuccessfulTasks;
+            return this;
+        }
+
+        public FeedStatistics build() {
+            return new FeedStatistics(this);
+        }
     }
 }
