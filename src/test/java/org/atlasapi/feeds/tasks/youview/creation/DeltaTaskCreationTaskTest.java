@@ -17,6 +17,8 @@ import org.atlasapi.feeds.youview.persistence.HashType;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
+import org.atlasapi.media.channel.ChannelQuery;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
@@ -25,6 +27,7 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import org.joda.time.DateTime;
@@ -57,6 +60,7 @@ public class DeltaTaskCreationTaskTest {
     @Mock private UpdateTask updateTask;
     @Mock private YouViewContentResolver contentResolver;
     @Mock private YouViewPayloadHashStore payloadHashStore;
+    @Mock private ChannelResolver channelResolver;
 
     @Before
     public void setUp() {
@@ -70,8 +74,10 @@ public class DeltaTaskCreationTaskTest {
             payloadCreator,
             updateTask,
             contentResolver,
-            payloadHashStore
+            payloadHashStore,
+            channelResolver
         );
+        when(channelResolver.allChannels(any(ChannelQuery.class))).thenReturn(ImmutableList.of());
     }
 
     @Test
@@ -97,7 +103,7 @@ public class DeltaTaskCreationTaskTest {
                 Optional.of(updatedSince));
 
         Content content = mock(Content.class);
-        when(contentResolver.updatedSince(updatedSince))
+        when(contentResolver.updatedSince(updatedSince.minus(DeltaTaskCreationTask.UPDATE_WINDOW_GRACE_PERIOD)))
                 .thenReturn(Lists.newArrayList(content)
                 .iterator());
         when(content.isActivelyPublished()).thenReturn(true);
@@ -136,7 +142,7 @@ public class DeltaTaskCreationTaskTest {
                 Optional.of(updatedSince));
 
         Content content = mock(Content.class);
-        when(contentResolver.updatedSince(updatedSince))
+        when(contentResolver.updatedSince(updatedSince.minus(DeltaTaskCreationTask.UPDATE_WINDOW_GRACE_PERIOD)))
                 .thenReturn(Lists.newArrayList(content)
                         .iterator());
         when(content.isActivelyPublished()).thenReturn(true);
@@ -174,7 +180,7 @@ public class DeltaTaskCreationTaskTest {
                 Optional.of(updatedSince));
 
         Content content = mock(Content.class);
-        when(contentResolver.updatedSince(updatedSince))
+        when(contentResolver.updatedSince(updatedSince.minus(DeltaTaskCreationTask.UPDATE_WINDOW_GRACE_PERIOD)))
                 .thenReturn(Lists.newArrayList(content)
                 .iterator());
         when(content.isActivelyPublished()).thenReturn(true);
@@ -210,7 +216,7 @@ public class DeltaTaskCreationTaskTest {
                 Optional.of(updatedSince));
 
         Content content = mock(Content.class);
-        when(contentResolver.updatedSince(updatedSince))
+        when(contentResolver.updatedSince(updatedSince.minus(DeltaTaskCreationTask.UPDATE_WINDOW_GRACE_PERIOD)))
                 .thenReturn(Lists.newArrayList(content)
                         .iterator());
         when(content.isActivelyPublished()).thenReturn(false);
@@ -258,7 +264,7 @@ public class DeltaTaskCreationTaskTest {
         when(encoding.getAvailableAt()).thenReturn(ImmutableSet.of(location));
         when(location.getAvailable()).thenReturn(false);
 
-        when(contentResolver.updatedSince(updatedSince))
+        when(contentResolver.updatedSince(updatedSince.minus(DeltaTaskCreationTask.UPDATE_WINDOW_GRACE_PERIOD)))
                 .thenReturn(Lists.newArrayList((Content) content).iterator());
         when(content.isActivelyPublished()).thenReturn(true);
 

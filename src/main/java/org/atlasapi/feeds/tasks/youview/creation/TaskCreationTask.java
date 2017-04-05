@@ -20,6 +20,8 @@ import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.persistence.HashType;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
+import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelType;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
@@ -38,7 +40,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public abstract class TaskCreationTask extends ScheduledTask {
-    
+
     private static final Logger log = LoggerFactory.getLogger(TaskCreationTask.class);
 
     private final HashCheck hashCheckMode;
@@ -51,19 +53,32 @@ public abstract class TaskCreationTask extends ScheduledTask {
     private final TaskCreator taskCreator;
     private final PayloadCreator payloadCreator;
 
-    public TaskCreationTask(YouViewLastUpdatedStore lastUpdatedStore,
-            Publisher publisher, ContentHierarchyExpander hierarchyExpander,
-            IdGenerator idGenerator, TaskStore taskStore, TaskCreator taskCreator,
-            PayloadCreator payloadCreator, YouViewPayloadHashStore payloadHashStore) {
+    public TaskCreationTask(
+            YouViewLastUpdatedStore lastUpdatedStore,
+            Publisher publisher,
+            ContentHierarchyExpander hierarchyExpander,
+            IdGenerator idGenerator,
+            TaskStore taskStore,
+            TaskCreator taskCreator,
+            PayloadCreator payloadCreator,
+            YouViewPayloadHashStore payloadHashStore
+    ) {
         this(lastUpdatedStore, publisher, hierarchyExpander, idGenerator, taskStore, taskCreator,
-                payloadCreator, payloadHashStore, HashCheck.CHECK);
+                payloadCreator, payloadHashStore, HashCheck.CHECK
+        );
     }
 
-    public TaskCreationTask(YouViewLastUpdatedStore lastUpdatedStore,
-            Publisher publisher, ContentHierarchyExpander hierarchyExpander,
-            IdGenerator idGenerator, TaskStore taskStore, TaskCreator taskCreator,
-            PayloadCreator payloadCreator, YouViewPayloadHashStore payloadHashStore,
-            HashCheck hashCheckMode) {
+    public TaskCreationTask(
+            YouViewLastUpdatedStore lastUpdatedStore,
+            Publisher publisher,
+            ContentHierarchyExpander hierarchyExpander,
+            IdGenerator idGenerator,
+            TaskStore taskStore,
+            TaskCreator taskCreator,
+            PayloadCreator payloadCreator,
+            YouViewPayloadHashStore payloadHashStore,
+            HashCheck hashCheckMode
+    ) {
         this.lastUpdatedStore = checkNotNull(lastUpdatedStore);
         this.publisher = checkNotNull(publisher);
         this.hierarchyExpander = checkNotNull(hierarchyExpander);
@@ -74,25 +89,25 @@ public abstract class TaskCreationTask extends ScheduledTask {
         this.payloadHashStore = checkNotNull(payloadHashStore);
         this.hashCheckMode = hashCheckMode;
     }
-    
+
     protected Optional<DateTime> getLastUpdatedTime() {
         return lastUpdatedStore.getLastUpdated(publisher);
     }
-    
+
     protected void setLastUpdatedTime(DateTime lastUpdated) {
         lastUpdatedStore.setLastUpdated(lastUpdated, publisher);
     }
-    
+
     protected boolean isActivelyPublished(Content content) {
         return content.isActivelyPublished();
     }
-    
+
     // TODO write last updated time every n items
     protected YouViewContentProcessor contentProcessor(final DateTime updatedSince, final Action action) {
         return new YouViewContentProcessor() {
-            
+
             UpdateProgress progress = UpdateProgress.START;
-            
+
             @Override
             public boolean process(Content content) {
                 try {
@@ -113,24 +128,47 @@ public abstract class TaskCreationTask extends ScheduledTask {
             }
         };
     }
-    
+
+    protected YouViewChannelProcessor channelProcessor(final Action action, final ChannelType channelType) {
+        return new YouViewChannelProcessor() {
+
+            UpdateProgress progress = UpdateProgress.START;
+
+            @Override
+            public boolean process(Channel content) {
+                try {
+                    progress = progress.reduce(processChannel(content, action, channelType));
+                } catch (Exception e) {
+                    log.error("error on upload for " + content.getCanonicalUri(), e);
+                    progress = progress.reduce(UpdateProgress.FAILURE);
+                }
+                return shouldContinue();
+            }
+
+            @Override
+            public UpdateProgress getResult() {
+                return progress;
+            }
+        };
+    }
+
     // TODO tidy this up, ideally simplify/streamline it
     private UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
         Map<String, ItemAndVersion> versionHierarchies = Maps.filterValues(
-                hierarchyExpander.versionHierarchiesFor(item), 
+                hierarchyExpander.versionHierarchiesFor(item),
                 FilterFactory.versionFilter(updatedSince)
         );
         Map<String, ItemBroadcastHierarchy> broadcastHierarchies = Maps.filterValues(
-                hierarchyExpander.broadcastHierarchiesFor(item), 
+                hierarchyExpander.broadcastHierarchiesFor(item),
                 FilterFactory.broadcastFilter(updatedSince)
         );
         Map<String, ItemOnDemandHierarchy> onDemandHierarchies = Maps.filterValues(
-                hierarchyExpander.onDemandHierarchiesFor(item), 
+                hierarchyExpander.onDemandHierarchiesFor(item),
                 FilterFactory.onDemandFilter(updatedSince)
         );
-        
+
         UpdateProgress progress = UpdateProgress.START;
-        
+
         for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
             progress = progress.reduce(processVersion(version.getKey(), version.getValue(), action));
         }
@@ -138,8 +176,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             progress = progress.reduce(processBroadcast(broadcast.getKey(), broadcast.getValue(), action));
         }
         for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
-//            progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue()));
-            progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue(), action));
+            progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue()));
         }
         return progress;
     }
@@ -168,16 +205,60 @@ public abstract class TaskCreationTask extends ScheduledTask {
             return UpdateProgress.FAILURE;
         }
     }
-    
-    private UpdateProgress processVersion(String versionCrid, ItemAndVersion versionHierarchy, Action action) {
+
+    private UpdateProgress processChannel(Channel channel, Action action, ChannelType channelType) {
+        String channelCrid = idGenerator.generateChannelCrid(channel);
+        log.debug("Processing Channel {}", channelCrid);
+        try {
+            // not strictly necessary, but will save space
+            if (!Action.DELETE.equals(action)) {
+
+                Payload p = payloadCreator.payloadFrom(
+                        channel,
+                        channelType == ChannelType.MASTERBRAND
+                );
+
+                if (shouldSave(HashType.CHANNEL, channelCrid, p)) {
+                    taskStore.save(taskCreator.taskFor(channelCrid, channel, p, action));
+                    payloadHashStore.saveHash(HashType.CHANNEL, channelCrid, p.hash());
+                } else {
+                    log.debug("Existing hash found for Channel {}, not updating", channelCrid);
+                }
+            }
+
+            return UpdateProgress.SUCCESS;
+        } catch (Exception e) {
+            log.error("Failed to create payload for channel {}", channel.getCanonicalUri(), e);
+            Task task = taskStore.save(taskCreator.taskFor(channelCrid, channel, action, Status.FAILED));
+            taskStore.updateWithLastError(task.id(), exceptionToString(e));
+            return UpdateProgress.FAILURE;
+        }
+    }
+
+    private UpdateProgress processVersion(
+            String versionCrid,
+            ItemAndVersion versionHierarchy,
+            Action action
+    ) {
         try {
             log.debug("Processing Version {}", versionCrid);
 
             Payload payload = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
 
             if (shouldSave(HashType.VERSION, versionCrid, payload)) {
-                taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, payload, action));
+                Task savedTask = taskStore.save(taskCreator.taskFor(
+                        versionCrid,
+                        versionHierarchy,
+                        payload,
+                        action
+                ));
                 payloadHashStore.saveHash(HashType.VERSION, versionCrid, payload.hash());
+                log.debug(
+                        "Saved task {} for version {} with hash {}",
+                        savedTask.id(),
+                        versionCrid,
+                        payload.hash()
+                );
             } else {
                 log.debug("Existing hash found for Version {}, not updating", versionCrid);
             }
@@ -188,10 +269,12 @@ public abstract class TaskCreationTask extends ScheduledTask {
                             "Failed to create payload for content %s, version %s",
                             versionHierarchy.item().getCanonicalUri(),
                             versionHierarchy.version().getCanonicalUri()
-                    ), 
+                    ),
                     e
             );
-            Task task = taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, action, Status.FAILED));
+            Task task = taskStore.save(
+                    taskCreator.taskFor(versionCrid, versionHierarchy, action, Status.FAILED)
+            );
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
@@ -219,7 +302,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             log.error(String.format(
                             "Failed to create payload for content %s, version %s, broadcast %s",
                             broadcastHierarchy.item().getCanonicalUri(),
-                            broadcastHierarchy.version().getCanonicalUri(), 
+                            broadcastHierarchy.version().getCanonicalUri(),
                             broadcastHierarchy.broadcast().toString()
                     ),
                     e
@@ -229,55 +312,57 @@ public abstract class TaskCreationTask extends ScheduledTask {
             return UpdateProgress.FAILURE;
         }
     }
-    
+
     private String exceptionToString(Exception e) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         return e.getMessage() + " " + sw.toString();
     }
-    
+
     private UpdateProgress processOnDemand(
             String onDemandImi,
-            ItemOnDemandHierarchy onDemandHierarchy,
-            Action action
+            ItemOnDemandHierarchy onDemandHierarchy
     ) {
+
         Location location = onDemandHierarchy.location();
-//        Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+
+        Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+        HashType hashType = action == Action.UPDATE ? HashType.ON_DEMAND : HashType.DELETE;
 
         try {
             log.debug("Processing OnDemand {}", onDemandImi);
 
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
-//            if (action == Action.DELETE || shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
-
-            // because we have stale data in Mongo that has dodgy locations, from the initial
-            // Nitro deletions handling change
-            if (location.getAvailable() && shouldSave(HashType.ON_DEMAND, onDemandImi, p)) {
+            if (shouldSave(hashType, onDemandImi, p)) {
                 taskStore.save(taskCreator.taskFor(
                         onDemandImi,
                         onDemandHierarchy,
                         p,
                         action
                 ));
-                payloadHashStore.saveHash(HashType.ON_DEMAND, onDemandImi, p.hash());
+                payloadHashStore.saveHash(hashType, onDemandImi, p.hash());
             } else {
                 log.debug("Existing hash found for OnDemand {}, not updating", onDemandImi);
             }
 
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
-            log.error(String.format(
-                            "Failed to create payload for content %s, version %s, encoding %s, location %s",
-                            onDemandHierarchy.item().getCanonicalUri(),
-                            onDemandHierarchy.version().getCanonicalUri(),
-                            onDemandHierarchy.encoding().toString(),
-                            location.toString()
-                    ),
+            log.error(
+                    "Failed to create payload for content {}, version {}, encoding {}, location {}",
+                    onDemandHierarchy.item().getCanonicalUri(),
+                    onDemandHierarchy.version().getCanonicalUri(),
+                    onDemandHierarchy.encoding().toString(),
+                    location.toString(),
                     e
             );
-            Task task = taskStore.save(taskCreator.taskFor(onDemandImi, onDemandHierarchy, action, Status.FAILED));
+            Task task = taskStore.save(taskCreator.taskFor(
+                    onDemandImi,
+                    onDemandHierarchy,
+                    action,
+                    Status.FAILED
+            ));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
@@ -285,8 +370,13 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     private boolean shouldSave(HashType type, String imi, Payload payload) {
         Optional<String> hash = payloadHashStore.getHash(type, imi);
-        return (hashCheckMode == HashCheck.IGNORE || !hash.isPresent())
-                || (hashCheckMode == HashCheck.CHECK && payload.hasChanged(hash.get()));
+
+        if (type == HashType.DELETE) {
+            return !hash.isPresent();
+        } else {
+            return (hashCheckMode == HashCheck.IGNORE || !hash.isPresent())
+                    || (hashCheckMode == HashCheck.CHECK && payload.hasChanged(hash.get()));
+        }
     }
 
     protected enum HashCheck {

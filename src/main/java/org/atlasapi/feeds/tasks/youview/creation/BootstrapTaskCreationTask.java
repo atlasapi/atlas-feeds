@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Iterator;
 
 import org.atlasapi.feeds.tasks.Action;
@@ -14,7 +12,10 @@ import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
+
 import org.joda.time.DateTime;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class BootstrapTaskCreationTask extends TaskCreationTask {
@@ -39,7 +40,6 @@ public class BootstrapTaskCreationTask extends TaskCreationTask {
         Iterator<Content> allContent = contentResolver.updatedSince(startOfTime);
 
         YouViewContentProcessor processor = contentProcessor(startOfTime, Action.UPDATE);
-        
         while (allContent.hasNext()) {
             if (!shouldContinue()) {
                 return;

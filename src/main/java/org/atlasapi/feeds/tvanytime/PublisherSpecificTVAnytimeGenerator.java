@@ -8,6 +8,7 @@ import org.atlasapi.feeds.youview.InvalidPublisherException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
+import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 
@@ -23,6 +24,20 @@ public class PublisherSpecificTVAnytimeGenerator implements TvAnytimeGenerator {
 
     public PublisherSpecificTVAnytimeGenerator(Map<Publisher, TvAnytimeGenerator> generators) {
         this.generators = ImmutableMap.copyOf(generators);
+    }
+
+    @Override
+    public JAXBElement<TVAMainType> generateMasterbrandTVAFrom(Channel channel)
+            throws TvaGenerationException {
+        TvAnytimeGenerator delegate = fetchDelegateOrThrow(channel);
+        return delegate.generateMasterbrandTVAFrom(channel);
+    }
+
+    @Override
+    public JAXBElement<TVAMainType> generateChannelTVAFrom(Channel channel, Channel parentChannel)
+            throws TvaGenerationException {
+        TvAnytimeGenerator delegate = fetchDelegateOrThrow(channel);
+        return delegate.generateChannelTVAFrom(channel, parentChannel);
     }
 
     @Override
@@ -96,6 +111,15 @@ public class PublisherSpecificTVAnytimeGenerator implements TvAnytimeGenerator {
 
     private TvAnytimeGenerator fetchDelegateOrThrow(Content content) {
         Publisher publisher = content.getPublisher();
+        TvAnytimeGenerator delegate = generators.get(publisher);
+        if (delegate == null) {
+            throw new InvalidPublisherException(publisher);
+        }
+        return delegate;
+    }
+
+    private TvAnytimeGenerator fetchDelegateOrThrow(Channel channel) {
+        Publisher publisher = channel.getSource();
         TvAnytimeGenerator delegate = generators.get(publisher);
         if (delegate == null) {
             throw new InvalidPublisherException(publisher);

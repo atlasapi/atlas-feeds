@@ -38,6 +38,7 @@ import org.atlasapi.feeds.youview.payload.Converter;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.TVAPayloadCreator;
 import org.atlasapi.feeds.youview.payload.TVAnytimeStringConverter;
+import org.atlasapi.feeds.youview.persistence.BroadcastEventDeduplicator;
 import org.atlasapi.feeds.youview.persistence.MongoSentBroadcastEventPcridStore;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.MongoYouViewPayloadHashStore;
@@ -54,6 +55,7 @@ import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.channel.ChannelResolver;
+import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
@@ -116,7 +118,7 @@ public class YouViewUploadModule {
             "unbox", Publisher.AMAZON_UNBOX
     );
     
-    private static final RepetitionRule DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardHours(2));
+    private static final RepetitionRule DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
     private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
     
@@ -233,18 +235,35 @@ public class YouViewUploadModule {
 
     @Bean
     public YouViewUploadController uploadController() throws JAXBException, SAXException {
-        return new YouViewUploadController(
-                        contentResolver, 
-                        taskCreator(), 
-                        taskStore, 
-                        payloadCreator(), 
-                        contentHierarchyExpander, 
-                        revocationProcessor(), 
-                        taskProcessor(),
-                        scheduleResolver, 
-                        channelResolver, 
-                        clock
-                   );
+        return YouViewUploadController.builder()
+                .withContentResolver(contentResolver)
+                .withTaskCreator(taskCreator())
+                .withTaskStore(taskStore)
+                .withPayloadCreator(payloadCreator(new BroadcastEventDeduplicator() {
+
+                    @Override
+                    public boolean shouldUpload(JAXBElement<TVAMainType> broadcastEventTva) {
+                        // Force upload needs to always upload things, no dodgy excuses.
+                        return true;
+                    }
+
+                    @Override
+                    public void recordUpload(
+                            JAXBElement<TVAMainType> broadcastEventTva,
+                            Broadcast broadcast
+                    ) {
+                        // nope.
+                    }
+                }))
+                .withHierarchyExpander(contentHierarchyExpander)
+                .withRevocationProcessor(revocationProcessor())
+                .withTaskProcessor(taskProcessor())
+                .withScheduleResolver(scheduleResolver)
+                .withChannelResolver(channelResolver)
+                .withIdGenerator(nitroIdGenerator)
+                .withClock(clock)
+                .withNitroTaskProcessor(taskProcessor("nitro").get())
+                .build();
     }
 
     @Bean
@@ -290,18 +309,30 @@ public class YouViewUploadModule {
                 payloadCreator(), 
                 uploadTask(),
                 nitroDeltaContentResolver(publisher),
-                payloadHashStore()
+                payloadHashStore(),
+                channelResolver
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
     
     private PayloadCreator payloadCreator() throws JAXBException, SAXException {
+        return payloadCreator(rollingWindowBroadcastEventDeduplicator());
+    }
+
+    private PayloadCreator payloadCreator(BroadcastEventDeduplicator broadcastEventDeduplicator)
+            throws JAXBException, SAXException {
         Converter<JAXBElement<TVAMainType>, String> outputConverter = new TVAnytimeStringConverter();
         TvAnytimeGenerator tvaGenerator = enableValidationIfAppropriate(generator);
-        return new TVAPayloadCreator(tvaGenerator, outputConverter, rollingWindowBroadcastEventDeduplicator(), clock);
+        return new TVAPayloadCreator(
+                tvaGenerator,
+                channelResolver,
+                outputConverter,
+                broadcastEventDeduplicator,
+                clock
+        );
     }
-    
-    private TvAnytimeGenerator enableValidationIfAppropriate(TvAnytimeGenerator generator) 
+
+    private TvAnytimeGenerator enableValidationIfAppropriate(TvAnytimeGenerator generator)
             throws JAXBException, SAXException {
         
         if (Boolean.parseBoolean(performValidation)) {
