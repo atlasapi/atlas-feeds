@@ -104,33 +104,35 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             reportStatus("Deletes: " + deletionProcessor.getResult());
         }
 
-        reportStatus("Creating channel tasks");
-
-        YouViewChannelProcessor channelProcessor = channelProcessor(
-                Action.UPDATE,
-                ChannelType.CHANNEL
-        );
-
-        YouViewChannelProcessor masterBrandProcessor = channelProcessor(
-                Action.UPDATE,
-                ChannelType.MASTERBRAND
-        );
-
-        ChannelQuery nitroChannelsQuery = ChannelQuery.builder()
-                .withPublisher(Publisher.BBC_NITRO)
-                .build();
-        for (Channel channel : channelResolver.allChannels(nitroChannelsQuery)) {
-            switch (channel.getChannelType()) {
-            case CHANNEL:
-                channelProcessor.process(channel);
-                break;
-            case MASTERBRAND:
-                masterBrandProcessor.process(channel);
-                break;
-            default:
-                log.warn("Unknown channel type {}", channel.getChannelType());
-            }
-        }
+//        VOTE ROMAIN!!!
+//
+//        reportStatus("Creating channel tasks");
+//
+//        YouViewChannelProcessor channelProcessor = channelProcessor(
+//                Action.UPDATE,
+//                ChannelType.CHANNEL
+//        );
+//
+//        YouViewChannelProcessor masterBrandProcessor = channelProcessor(
+//                Action.UPDATE,
+//                ChannelType.MASTERBRAND
+//        );
+//
+//        ChannelQuery nitroChannelsQuery = ChannelQuery.builder()
+//                .withPublisher(Publisher.BBC_NITRO)
+//                .build();
+//        for (Channel channel : channelResolver.allChannels(nitroChannelsQuery)) {
+//            switch (channel.getChannelType()) {
+//            case CHANNEL:
+//                channelProcessor.process(channel);
+//                break;
+//            case MASTERBRAND:
+//                masterBrandProcessor.process(channel);
+//                break;
+//            default:
+//                log.warn("Unknown channel type {}", channel.getChannelType());
+//            }
+//        }
 
         setLastUpdatedTime(startOfTask.get());
         
