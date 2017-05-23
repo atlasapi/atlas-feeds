@@ -92,8 +92,7 @@ import org.xml.sax.SAXException;
 import tva.metadata._2010.TVAMainType;
 
 import static com.metabroadcast.common.time.DateTimeZones.UTC;
-import static org.joda.time.DateTimeConstants.AUGUST;
-
+import static org.joda.time.DateTimeConstants.JANUARY;
 
 /**
  * This Module wraps all code concerning upload of YouView TVAnytime feeds, including identification
@@ -129,7 +128,7 @@ public class YouViewUploadModule {
     
     private static final String TASK_NAME_PATTERN = "YouView %s TVAnytime %s Upload";
     private static final DestinationType DESTINATION_TYPE = DestinationType.YOUVIEW;
-    private static final DateTime BOOTSTRAP_START_DATE = new DateTime(2015, AUGUST, 5, 0, 0, 0, 0, UTC);
+    private static final DateTime BOOTSTRAP_START_DATE = new DateTime(2017, JANUARY, 1, 0, 0, 0, 0, UTC);
     
     private final Clock clock = new SystemClock(DateTimeZone.UTC);
     
