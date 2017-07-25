@@ -11,6 +11,8 @@ import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
+import org.atlasapi.telescope.TelescopeFactory;
+import org.atlasapi.telescope.TelescopeProxy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +28,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
     private final RevokedContentStore revocationStore;
     private final ResultHandler resultHandler;
     private final TaskStore taskStore;
+    private final TelescopeProxy telescope;
     
     public YouViewTaskProcessor(YouViewClient client, ResultHandler resultHandler,
             RevokedContentStore revocationStore, TaskStore taskStore) {
@@ -33,10 +36,12 @@ public class YouViewTaskProcessor implements TaskProcessor {
         this.resultHandler = checkNotNull(resultHandler);
         this.revocationStore = checkNotNull(revocationStore);
         this.taskStore = checkNotNull(taskStore);
+        this.telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_OUTPUTTER);
     }
 
     @Override
     public void process(Task task) {
+        telescope.startReporting();
         checkArgument(
                 YOUVIEW.equals(task.destination().type()), 
                 "task type " + task.destination().type() + " invalid, expected " + YOUVIEW.name()
@@ -52,10 +57,13 @@ public class YouViewTaskProcessor implements TaskProcessor {
             default:
                 throw new RuntimeException("action " + task.action().name() + " not recognised for task " + task.id());
             }
+            telescope.reportSuccessfulEvent(task.id(), null, task);
         } catch (Exception e) {
             log.error("Error processing Task {}", task.id(), e);
+            telescope.reportFailedEventWithError("Error processing Task "+task.id(), task);
             setFailed(task, e);
         }
+        telescope.endReporting();
     }
     
     private boolean isRevoked(String contentUri) {

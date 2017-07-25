@@ -61,7 +61,8 @@
                             <schemaIncludes>
                                 <schemaInclude>Lakeview_Content_Catalog_Feed.xsd</schemaInclude>
                             </schemaIncludes>
-                            <staleFile>${project.build.directory}/jaxb2/.lakeviewXjcStaleFlag</staleFile>
+                            <staleFile>${project.build.directory}/jaxb2/.lakeviewXjcStaleFlag
+                            </staleFile>
                         </configuration>
                     </execution>
                 </executions>
@@ -103,6 +104,16 @@
                     <groupId>net.sourceforge.htmlunit</groupId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.metabroadcast.columbus.telescope</groupId>
+            <artifactId>telescope-api</artifactId>
+            <version>1.0-SNAPSHOT-SHADED-0.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.metabroadcast.columbus.telescope</groupId>
+            <artifactId>telescope-client</artifactId>
+            <version>1.0-SNAPSHOT-SHADED-0.8</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
