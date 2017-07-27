@@ -11,6 +11,7 @@ import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.telescope.TelescopeProxy;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -24,14 +25,14 @@ public class TaskUpdatingResultHandler implements ResultHandler {
 
     private final TaskStore taskStore;
     private final JAXBContext context;
-    
+
     private YouViewReportHandler reportHandler;
-    
+
     public TaskUpdatingResultHandler(TaskStore taskStore) throws JAXBException {
         this.taskStore = checkNotNull(taskStore);
         this.context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
     }
-    
+
     @Override
     public void registerReportHandler(YouViewReportHandler reportHandler) {
         this.reportHandler = checkNotNull(reportHandler);
@@ -40,20 +41,22 @@ public class TaskUpdatingResultHandler implements ResultHandler {
     /**
      * This handles a couple of different cases. The simplest is success, where the task is moved forwards
      * and a remote ID and upload time are written.
-     * <p> 
+     * <p>
      * Next simplest is 400, which is YouView parlance for an error in the uploaded payload. This results in
      * the Task being failed.
      * <p>
      * Any other response is treated as an erroneous upload error, and the response is written to the task with
-     * a status of PENDING, so it will be reuploaded. The exception to this is if the retry count has been 
-     * exceeded, in which case the Task will be failed. 
+     * a status of PENDING, so it will be reuploaded. The exception to this is if the retry count has been
+     * exceeded, in which case the Task will be failed.
      */
     @Override
-    public void handleTransactionResult(Task task, YouViewResult result) {
+    public void handleTransactionResult(Task task, YouViewResult result, TelescopeProxy telescope) {
         if (result.isSuccess()) {
+            telescope.reportSuccessfulEvent(task.id(),task);
             taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, result.result(), result.uploadTime());
         } else {
             Response response = new Response(Status.REJECTED, result.result(), result.uploadTime());
+            telescope.reportFailedEventWithError("Content was rejected. ("+result.result()+")", task);
             taskStore.updateWithResponse(task.id(), response);
         }
     }
@@ -69,7 +72,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         Response response = new Response(status, result.result(), result.uploadTime());
         taskStore.updateWithResponse(task.id(), response);
     }
-    
+
     private Status parseAndHandleStatusReport(String result, Task task) {
         try {
             TransactionReportType txnReport = parseReportFrom(result);

@@ -9,6 +9,9 @@ import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.telescope.TelescopeFactory;
+import org.atlasapi.telescope.TelescopeProxy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +45,9 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
-        
+        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_ASYNC_UPLOADER);
+        telescope.startReporting();
+
         for (Status uncheckedStatus : validStatuses()) {
             Iterable<Task> tasksToCheck = taskStore.allTasks(destinationType, uncheckedStatus);
             for (Task task : tasksToCheck) {
@@ -53,15 +58,18 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                     continue;
                 }
                 try {
-                    processor.process(task);
+                    processor.process(task, telescope);
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch(Exception e) {
                     log.error("Failed to process task {}", task, e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
+                    telescope.reportFailedEventWithError("Failed to process task. ("+ e.getMessage()+")", task);
                 }
                 reportStatus(progress.toString());
             }
         }
+
+        telescope.endReporting();
     }
 
     /**

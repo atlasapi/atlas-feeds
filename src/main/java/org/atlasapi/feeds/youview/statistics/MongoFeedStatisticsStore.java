@@ -29,6 +29,8 @@ import org.joda.time.Period;
 public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
 
     private static final String COLLECTION_NAME = "youviewTasks";
+    private static final String STATUS_KEY = "status";
+    private static final String CREATED_KEY = "created";
 
     private final DBCollection collection;
     private final TaskStore taskStore;
@@ -71,7 +73,7 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         }
 
         int queueSize = calculateCurrentQueueSize(publisher);
-
+        
         return Optional.of(FeedStatistics.build()
                 .withPublisher(publisher)
                 .withQueueSize(queueSize)
@@ -90,13 +92,13 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
 
     private Optional<Duration> calculateLatency(Publisher publisher) {
         BasicDBObject query = new BasicDBObject();
-        query.put("status", Status.NEW.name());
+        query.put(STATUS_KEY, Status.NEW.name());
         query.put("publisher", publisher.key());
         query.put("destinationType", destinationType.name());
 
         DBObject stats = collection
                 .find(query)
-                .sort(new BasicDBObject("created", 1))
+                .sort(new BasicDBObject(CREATED_KEY, 1))
                 .limit(1)
                 .one();
 
@@ -104,7 +106,7 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
             return Optional.absent();
         }
 
-        DateTime oldestMessage = TranslatorUtils.toDateTime(stats, "created");
+        DateTime oldestMessage = TranslatorUtils.toDateTime(stats, CREATED_KEY);
 
         return Optional.of(new Duration(oldestMessage, clock.now()));
     }
@@ -114,13 +116,12 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
             String firstStatus,
             String secondStatus
     ) {
-        DBObject firstStatusClause = QueryBuilder.start("status").is(firstStatus).get();
-        DBObject secondStatusClause = QueryBuilder.start("status").is(secondStatus).get();
+        DBObject firstStatusClause = QueryBuilder.start(STATUS_KEY).is(firstStatus).get();
+        DBObject secondStatusClause = QueryBuilder.start(STATUS_KEY).is(secondStatus).get();
 
         Date timeBeforePeriod = new DateTime().minus(timeBeforeNow).toDate();
-        DBObject query = QueryBuilder.start()
+        DBObject query = QueryBuilder.start(CREATED_KEY).greaterThanEquals(timeBeforePeriod)
                 .or(firstStatusClause, secondStatusClause)
-                .and("created").greaterThanEquals(timeBeforePeriod)
                 .get();
 
         return collection.find(query).count();
@@ -161,4 +162,3 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         }
     }
 }
-

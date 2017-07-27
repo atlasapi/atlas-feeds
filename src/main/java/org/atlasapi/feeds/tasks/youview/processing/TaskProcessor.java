@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.tasks.youview.processing;
 
 import org.atlasapi.feeds.tasks.Task;
-
+import org.atlasapi.telescope.TelescopeProxy;
 
 public interface TaskProcessor {
 
@@ -11,7 +11,7 @@ public interface TaskProcessor {
      * @param task
      * @return UpdateProgress representing the progress through the elements processed
      */
-    void process(Task task);
+    void process(Task task, TelescopeProxy telescope);
     
     /**
      * Checks the status of the action represented by the Task on the remote system.

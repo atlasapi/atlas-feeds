@@ -15,7 +15,7 @@ public class FeedStatistics {
     private final Duration updateLatency;
     private final int successfulTasks;
     private final int unsuccessfulTasks;
-
+    
     private FeedStatistics(Builder builder) {
         this.publisher = checkNotNull(builder.publisher);
         this.queueSize = builder.queueSize;
