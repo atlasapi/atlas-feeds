@@ -17,6 +17,7 @@ import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.telescope.TelescopeProxy;
 
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
@@ -27,6 +28,9 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import tva.mpeg7._2008.TextualType;
 
 import static javax.servlet.http.HttpServletResponse.SC_ACCEPTED;
@@ -35,6 +39,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 
+@RunWith(MockitoJUnitRunner.class)
 public class TaskUpdatingResultHandlerTest {
 
     private static final String CONTENT_URI = "contentUri";
@@ -45,6 +50,8 @@ public class TaskUpdatingResultHandlerTest {
     private TaskStore taskStore = mock(TaskStore.class);
     private YouViewReportHandler reportHandler = mock(YouViewReportHandler.class);
     private JAXBContext context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
+
+    @Mock TelescopeProxy telescope;
     
     private final ResultHandler handler = new TaskUpdatingResultHandler(taskStore);
     
@@ -59,7 +66,7 @@ public class TaskUpdatingResultHandlerTest {
         String remoteId = "remoteId";
         YouViewResult result = YouViewResult.success(remoteId, clock.now(), SC_ACCEPTED);
         
-        handler.handleTransactionResult(task, result);
+        handler.handleTransactionResult(task, result, telescope);
         
         verify(taskStore).updateWithRemoteId(taskId, Status.ACCEPTED, remoteId, clock.now());
     }
@@ -71,7 +78,7 @@ public class TaskUpdatingResultHandlerTest {
         String failureMsg = "Something went wrong";
         YouViewResult result = YouViewResult.failure(failureMsg, clock.now(), SC_BAD_REQUEST);
         
-        handler.handleTransactionResult(task, result);
+        handler.handleTransactionResult(task, result, telescope);
         
         Response response = new Response(Status.REJECTED, failureMsg, clock.now());
         verify(taskStore).updateWithResponse(taskId, response);

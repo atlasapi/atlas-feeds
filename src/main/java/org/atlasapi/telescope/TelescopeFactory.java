@@ -52,7 +52,13 @@ public class TelescopeFactory {
      * Holds the pairs of Ingester Keys-Names used by atlas to report to telescope.
      */
     public enum ReporterName {
-        YOU_VIEW_OUTPUTTER("you-view-outputter","YouView Outputter")
+        YOU_VIEW_ASYNC_UPLOADER("you-view-async-uploader","YouView Async Uploader"),
+        YOU_VIEW_SCHEDULE_UPLOADER("you-view-schedule-uploader","YouView Schedule Uploader"),
+        YOU_VIEW_BBC_MULTI_UPLOADER("you-view-multi-uploader","YouView BBC Multi-uploader"),
+        YOU_VIEW_REVOKER("you-view-revoker","YouView Revoker"),
+        YOU_VIEW_UNREVOKER("you-view-unrevoker", "YouView Unrevoker"),
+        YOU_VIEW_XML_UPLOADER("you-view-xml-uploader", "YouView XML Uploader"),
+        YOU_VIEW_XML_DELETER("you-view-xml-delete","YouView XML deleter")
         ;
 
         String reporterKey;

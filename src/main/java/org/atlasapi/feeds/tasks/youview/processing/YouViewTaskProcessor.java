@@ -11,7 +11,6 @@ import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
-import org.atlasapi.telescope.TelescopeFactory;
 import org.atlasapi.telescope.TelescopeProxy;
 
 import org.slf4j.Logger;
@@ -28,7 +27,6 @@ public class YouViewTaskProcessor implements TaskProcessor {
     private final RevokedContentStore revocationStore;
     private final ResultHandler resultHandler;
     private final TaskStore taskStore;
-    private final TelescopeProxy telescope;
     
     public YouViewTaskProcessor(YouViewClient client, ResultHandler resultHandler,
             RevokedContentStore revocationStore, TaskStore taskStore) {
@@ -36,12 +34,10 @@ public class YouViewTaskProcessor implements TaskProcessor {
         this.resultHandler = checkNotNull(resultHandler);
         this.revocationStore = checkNotNull(revocationStore);
         this.taskStore = checkNotNull(taskStore);
-        this.telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_OUTPUTTER);
     }
 
     @Override
-    public void process(Task task) {
-        telescope.startReporting();
+    public void process(Task task, TelescopeProxy telescope) {
         checkArgument(
                 YOUVIEW.equals(task.destination().type()), 
                 "task type " + task.destination().type() + " invalid, expected " + YOUVIEW.name()
@@ -49,29 +45,28 @@ public class YouViewTaskProcessor implements TaskProcessor {
         try {
             switch(task.action()) {
             case UPDATE:
-                processUpdate(task);
+                processUpdate(task, telescope);
                 break;
             case DELETE:
-                processDelete(task);
+                processDelete(task, telescope);
                 break;
             default:
                 throw new RuntimeException("action " + task.action().name() + " not recognised for task " + task.id());
             }
-            telescope.reportSuccessfulEvent(task.id(), null, task);
         } catch (Exception e) {
             log.error("Error processing Task {}", task.id(), e);
-            telescope.reportFailedEventWithError("Error processing Task "+task.id(), task);
+            telescope.reportFailedEventWithError("Error processing task. ("+e.getMessage()+")", task);
             setFailed(task, e);
         }
-        telescope.endReporting();
     }
     
     private boolean isRevoked(String contentUri) {
         return revocationStore.isRevoked(contentUri);
     }
 
-    private void processUpdate(Task task) {
+    private void processUpdate(Task task, TelescopeProxy telescope) {
         if (!task.payload().isPresent()) {
+            telescope.reportFailedEventWithWarning("No payload was present.", task);
             setFailed(task);
             return;
         }
@@ -86,13 +81,14 @@ public class YouViewTaskProcessor implements TaskProcessor {
                         destination.contentUri(),
                         task.action().name()
                 );
+                telescope.reportFailedEventWithWarning("Content is revoked.", task);
                 setFailed(task);
                 return;
             }
         }
 
         YouViewResult uploadResult = client.upload(task.payload().get());
-        resultHandler.handleTransactionResult(task, uploadResult);
+        resultHandler.handleTransactionResult(task, uploadResult, telescope);
     }
 
     private void setFailed(Task task) {
@@ -115,10 +111,10 @@ public class YouViewTaskProcessor implements TaskProcessor {
 
     // No need to check for revocation for deletes, as deleting revoked content doesn't really matter
     // It also allows the deletes resulting from a revoke to go through unhindered.
-    private void processDelete(Task task) {
+    private void processDelete(Task task, TelescopeProxy telescope) {
         YouViewDestination destination = (YouViewDestination) task.destination();
         YouViewResult deleteResult = client.delete(destination.elementId());
-        resultHandler.handleTransactionResult(task, deleteResult);
+        resultHandler.handleTransactionResult(task, deleteResult, telescope);
     }
 
     @Override

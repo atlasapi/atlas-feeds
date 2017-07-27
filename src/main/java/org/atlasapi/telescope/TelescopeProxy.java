@@ -2,10 +2,7 @@ package org.atlasapi.telescope;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
 
-import com.metabroadcast.columbus.telescope.api.Alias;
 import com.metabroadcast.columbus.telescope.api.EntityState;
 import com.metabroadcast.columbus.telescope.api.Event;
 import com.metabroadcast.columbus.telescope.api.Process;
@@ -15,11 +12,11 @@ import com.metabroadcast.columbus.telescope.client.TelescopeClientImpl;
 import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
 import com.metabroadcast.common.media.MimeType;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * To use this class get a TelescopeProxy object through {@link TelescopeFactory}, then
@@ -94,8 +91,7 @@ public class TelescopeProxy {
         }
     }
 
-    public void reportSuccessfulEvent(String atlasItemId, List<Alias> aliases,
-            Object objectToSerialise) {
+    public void reportSuccessfulEvent(String atlasItemId, Object objectToSerialise) {
         if (!allowedToReport()) {
             return;
         }
@@ -105,7 +101,6 @@ public class TelescopeProxy {
                     .withType(Event.Type.INGEST)
                     .withEntityState(EntityState.builder()
                             .withAtlasId(atlasItemId)
-                            .withRemoteIds(aliases)
                             .withRaw(objectMapper.writeValueAsString(objectToSerialise))
                             .withRawMime(MimeType.APPLICATION_JSON.toString())
                             .build()
@@ -127,16 +122,8 @@ public class TelescopeProxy {
     }
 
     //convenience method for the most common reporting Format
-    public void reportSuccessfulEvent(
-            long dbId,
-            Set<org.atlasapi.media.entity.Alias> aliases,
-            Object objectToSerialise) {
-
-        reportSuccessfulEvent(
-                encode(dbId),
-                TelescopeUtilityMethods.getAliases(aliases),
-                objectToSerialise
-        );
+    public void reportSuccessfulEvent(long dbId, Object objectToSerialise) {
+        reportSuccessfulEvent(encode(dbId), objectToSerialise);
     }
 
     public void reportFailedEventWithWarning(String warningMsg, Object objectToSerialise) {

@@ -18,6 +18,8 @@ import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
+import org.atlasapi.telescope.TelescopeProxy;
+
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +38,7 @@ public class YouViewTaskProcessorTest {
     @Mock private ResultHandler resultHandler;
     @Mock private RevokedContentStore revocationStore;
     @Mock private TaskStore taskStore;
+    @Mock private TelescopeProxy telescope;
 
     @Before
     public void setUp() {
@@ -56,9 +59,9 @@ public class YouViewTaskProcessorTest {
         when(revocationStore.isRevoked(contentUri)).thenReturn(Boolean.FALSE);
         when(client.upload(payload)).thenReturn(result);
 
-        youViewTaskProcessor.process(task);
+        youViewTaskProcessor.process(task, telescope);
 
-        verify(resultHandler).handleTransactionResult(task, result);
+        verify(resultHandler).handleTransactionResult(task, result, telescope);
     }
 
     @Test
@@ -76,10 +79,10 @@ public class YouViewTaskProcessorTest {
 
         when(revocationStore.isRevoked(contentUri)).thenReturn(Boolean.TRUE);
 
-        youViewTaskProcessor.process(task);
+        youViewTaskProcessor.process(task, telescope);
 
         verify(taskStore).updateWithStatus(taskId, Status.FAILED);
         verify(client, never()).upload(payload);
-        verify(resultHandler, never()).handleTransactionResult(eq(task), any(YouViewResult.class));
+        verify(resultHandler, never()).handleTransactionResult(eq(task), any(YouViewResult.class), eq(telescope));
     }
 }

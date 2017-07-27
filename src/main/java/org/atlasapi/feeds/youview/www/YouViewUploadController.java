@@ -43,6 +43,8 @@ import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
+import org.atlasapi.telescope.TelescopeFactory;
+import org.atlasapi.telescope.TelescopeProxy;
 
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
@@ -83,9 +85,11 @@ public class YouViewUploadController {
 
     private static final Logger log = LoggerFactory.getLogger(YouViewUploadController.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
     static {
         MAPPER.registerModule(new GuavaModule());
     }
+
     private static final JavaType STRING_LIST = MAPPER.getTypeFactory()
             .constructCollectionType(List.class, String.class);
 
@@ -116,7 +120,7 @@ public class YouViewUploadController {
             PayloadCreator payloadCreator,
             ContentHierarchyExpander hierarchyExpander,
             RevocationProcessor revocationProcessor,
-            TaskProcessor taskProcessor, 
+            TaskProcessor taskProcessor,
             ScheduleResolver scheduleResolver,
             ChannelResolver channelResolver,
             IdGenerator idGenerator,
@@ -143,7 +147,8 @@ public class YouViewUploadController {
 
     private void handleChannel(
             HttpServletResponse response,
-            String channelStr
+            String channelStr,
+            TelescopeProxy telescope
     ) throws IOException, PayloadGenerationException {
         Channel channel = channelResolver.fromUri(channelStr).requireValue();
 
@@ -152,12 +157,13 @@ public class YouViewUploadController {
             return;
         }
 
-        uploadChannel(true, channel, false);
+        uploadChannel(true, channel, false, telescope);
     }
 
     private void handleMasterbrand(
             HttpServletResponse response,
-            String channelStr
+            String channelStr,
+            TelescopeProxy telescope
     ) throws IOException, PayloadGenerationException {
         Channel channel = channelResolver.fromUri(channelStr).requireValue();
 
@@ -166,47 +172,53 @@ public class YouViewUploadController {
             return;
         }
 
-        uploadChannel(true, channel, true);
+        uploadChannel(true, channel, true, telescope);
     }
 
-    @RequestMapping(value="/feeds/youview/{publisher}/schedule/upload")
+    @RequestMapping(value = "/feeds/youview/{publisher}/schedule/upload")
     public void uploadSchedule(HttpServletResponse response,
             @PathVariable("publisher") String publisherStr,
             @RequestParam("channel") String channelStr,
             @RequestParam("from") String fromStr,
             @RequestParam("to") String toStr
-            ) throws IOException {
-        
+    ) throws IOException {
+        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_SCHEDULE_UPLOADER);
+        telescope.startReporting();
+
         DateTime from = dateTimeInQueryParser.parse(fromStr);
         DateTime to = dateTimeInQueryParser.parse(toStr);
         Channel channel = channelResolver.fromId(channelIdCodec.decode(channelStr).longValue())
-                                         .requireValue();
-        
+                .requireValue();
+
         Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
-        
+
         Schedule schedule = scheduleResolver.unmergedSchedule(
-                                                    from, 
-                                                    to, 
-                                                    ImmutableSet.of(channel), 
-                                                    ImmutableSet.of(publisher.get())
-                                             );
-        
+                from,
+                to,
+                ImmutableSet.of(channel),
+                ImmutableSet.of(publisher.get())
+        );
+
         List<Item> items = Iterables.getOnlyElement(schedule.scheduleChannels()).items();
-        
+
         StringBuilder sb = new StringBuilder();
-        for(Item item : items) {
+        for (Item item : items) {
             try {
                 sb.append("Uploading " + item.getCanonicalUri() + System.lineSeparator());
-                uploadContent(true, item);
+                uploadContent(true, item, telescope);
                 sb.append("Done uploading " + item.getCanonicalUri() + System.lineSeparator());
             } catch (PayloadGenerationException e) {
+                telescope.reportFailedEventWithError(
+                        "Content failed to upload. (" + (e.getMessage() + ")"), item);
                 sb.append("Error uploading " + e.getMessage());
             }
         }
+
+        telescope.endReporting();
         sendOkResponse(response, sb.toString());
     }
 
-    @RequestMapping(value="/feeds/youview/bbc_nitro/upload/multi")
+    @RequestMapping(value = "/feeds/youview/bbc_nitro/upload/multi")
     public void uploadMultipleContent(HttpServletRequest request, HttpServletResponse response)
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
         List<String> uris = MAPPER.readValue(request.getInputStream(), STRING_LIST);
@@ -216,6 +228,8 @@ public class YouViewUploadController {
             return;
         }
 
+        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_BBC_MULTI_UPLOADER);
+        telescope.startReporting(); // we always start the reporting, because we always call uploadContent with the upload flag to true. Since we are uploading, we are reporting.
         List<ListenableFuture<Try>> responses = Lists.newArrayList();
         for (final String uri : uris) {
             ListenableFuture<Try> task = executor.submit(new Callable<Try>() {
@@ -225,15 +239,20 @@ public class YouViewUploadController {
                     try {
                         Optional<Content> content = getContent(uri);
                         if (!content.isPresent()) {
+                            telescope.reportFailedEventWithWarning("No content was found", uri);
                             return Try.exception(new IllegalArgumentException(String.format(
                                     "Content %s not found",
                                     uri
                             )));
                         } else {
-                            uploadContent(true, content.get());
+                            uploadContent(true, content.get(), telescope);
                             return Try.success(uri);
                         }
                     } catch (Exception e) {
+                        telescope.reportFailedEventWithError(
+                                "There was an unknown error while trying to upload.",
+                                uri
+                        );
                         return Try.exception(e);
                     }
                 }
@@ -241,6 +260,7 @@ public class YouViewUploadController {
 
             responses.add(task);
         }
+        telescope.endReporting();
 
         ListenableFuture<List<Try>> allTasks = Futures.allAsList(responses);
         List<Try> allResponses = allTasks.get();
@@ -252,12 +272,13 @@ public class YouViewUploadController {
 
     /**
      * Uploads the XML for a particular piece of content to YouView
+     *
      * @param uri the canonical uri for the item to upload
      * @throws IOException
-     * @throws HttpException 
+     * @throws HttpException
      */
     // TODO this method does far too much right now
-    @RequestMapping(value="/feeds/youview/{publisher}/upload", method = RequestMethod.POST)
+    @RequestMapping(value = "/feeds/youview/{publisher}/upload", method = RequestMethod.POST)
     public void uploadContent(
             HttpServletResponse response,
             @PathVariable("publisher") String publisherStr,
@@ -267,7 +288,7 @@ public class YouViewUploadController {
             @RequestParam(value = "immediate", required = false, defaultValue = "false")
                     boolean immediate
     ) throws IOException, HttpException, PayloadGenerationException {
-        
+
         Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
         if (!publisher.isPresent()) {
             sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
@@ -279,15 +300,23 @@ public class YouViewUploadController {
             return;
         }
 
-        if (isMasterbrandUri(uri)) {
-            handleMasterbrand(response, uri);
-        } else if (isServiceUri(uri)) {
-            handleChannel(response, uri);
-        } else {
-            handleContent(uri, elementId, typeStr, immediate, response);
+        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_XML_UPLOADER);
+        if(immediate){ //only start reporting if we will actually upload stuff as well.
+            telescope.startReporting();
         }
 
-        sendOkResponse(response, "Upload for " + uri + " sent sucessfully");
+        if (isMasterbrandUri(uri)) {
+            handleMasterbrand(response, uri, telescope);
+        } else if (isServiceUri(uri)) {
+            handleChannel(response, uri, telescope);
+        } else {
+            handleContent(uri, elementId, typeStr, immediate, response, telescope);
+        }
+
+        if(immediate){ //only start reporting if we will actually upload stuff.
+            telescope.endReporting();
+        }
+        sendOkResponse(response, "Upload for " + uri + " sent successfully");
     }
 
     private boolean isServiceUri(String uri) {
@@ -305,7 +334,8 @@ public class YouViewUploadController {
             String elementId,
             @Nullable String typeStr,
             boolean immediate,
-            HttpServletResponse response
+            HttpServletResponse response,
+            TelescopeProxy telescope
     ) throws IOException, PayloadGenerationException {
         Optional<Content> toBeUploaded = getContent(uri);
         if (!toBeUploaded.isPresent()) {
@@ -323,28 +353,31 @@ public class YouViewUploadController {
                 return;
             }
 
-            Payload payload = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(content), content);
+            Payload payload = payloadCreator.payloadFrom(
+                    hierarchyExpander.contentCridFor(content),
+                    content
+            );
 
-            switch(type) {
+            switch (type) {
             case BRAND:
             case ITEM:
             case SERIES:
-                handleContent(elementId, immediate, response, toBeUploaded, payload);
+                handleContent(elementId, immediate, response, toBeUploaded, payload, telescope);
                 break;
             case BROADCAST:
-                handleBroadcast(elementId, immediate, response, content);
+                handleBroadcast(elementId, immediate, response, content, telescope);
                 break;
             case ONDEMAND:
-                handleOnDemand(elementId, immediate, response, content, payload);
+                handleOnDemand(elementId, immediate, response, content, payload, telescope);
                 break;
             case VERSION:
-                handleVersion(elementId, immediate, response, content, payload);
+                handleVersion(elementId, immediate, response, content, payload, telescope);
                 break;
             default:
                 sendError(response, SC_BAD_REQUEST, "Invalid type provided");
             }
         } else {
-            uploadContent(immediate, content);
+            uploadContent(immediate, content, telescope);
         }
     }
 
@@ -353,7 +386,8 @@ public class YouViewUploadController {
             boolean immediate,
             HttpServletResponse response,
             Optional<Content> toBeUploaded,
-            Payload payload
+            Payload payload,
+            TelescopeProxy telescope
     ) throws IOException {
         if (elementId == null) {
             sendError(
@@ -366,47 +400,57 @@ public class YouViewUploadController {
 
         processTask(
                 taskCreator.taskFor(elementId, toBeUploaded.get(), payload, Action.UPDATE),
-                immediate
+                immediate, telescope
         );
     }
 
     private void handleVersion(String elementId, boolean immediate, HttpServletResponse response,
-            Content content, Payload payload) throws IOException {
+            Content content, Payload payload, TelescopeProxy telescope) throws IOException {
         if (!(content instanceof Item)) {
             sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Version");
             return;
         }
         Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor((Item) content);
-        Optional<ItemAndVersion> versionHierarchy = Optional.fromNullable(versionHierarchies.get(elementId));
+        Optional<ItemAndVersion> versionHierarchy = Optional.fromNullable(versionHierarchies.get(
+                elementId));
         if (!versionHierarchy.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "No Version found with the provided elementId");
             return;
         }
-        processTask(taskCreator.taskFor(elementId, versionHierarchy.get(), payload, Action.UPDATE), immediate);
+        processTask(
+                taskCreator.taskFor(elementId, versionHierarchy.get(), payload, Action.UPDATE),
+                immediate, telescope
+        );
     }
 
     private void handleOnDemand(String elementId, boolean immediate, HttpServletResponse response,
-            Content content, Payload payload) throws IOException {
+            Content content, Payload payload, TelescopeProxy telescope) throws IOException {
         if (!(content instanceof Item)) {
             sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a OnDemand");
             return;
         }
-        Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor((Item) content);
-        Optional<ItemOnDemandHierarchy> onDemandHierarchy = Optional.fromNullable(onDemandHierarchies.get(elementId));
+        Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor(
+                (Item) content);
+        Optional<ItemOnDemandHierarchy> onDemandHierarchy = Optional.fromNullable(
+                onDemandHierarchies.get(elementId));
         if (!onDemandHierarchy.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "No OnDemand found with the provided elementId");
             return;
         }
-        processTask(taskCreator.taskFor(elementId, onDemandHierarchy.get(), payload, Action.UPDATE), immediate);
+        processTask(
+                taskCreator.taskFor(elementId, onDemandHierarchy.get(), payload, Action.UPDATE),
+                immediate, telescope
+        );
     }
 
     private void handleBroadcast(String elementId, boolean immediate, HttpServletResponse response,
-            Content content) throws IOException, PayloadGenerationException {
+            Content content, TelescopeProxy telescope) throws IOException, PayloadGenerationException {
         if (!(content instanceof Item)) {
             sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Broadcast");
             return;
         }
-        Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor((Item) content);
+        Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor(
+                (Item) content);
 
         if (!Strings.isNullOrEmpty(elementId)) {
             ItemBroadcastHierarchy broadcastHierarchy = broadcastHierarchies.get(elementId);
@@ -414,45 +458,74 @@ public class YouViewUploadController {
                 sendError(response, SC_BAD_REQUEST, "No element found with ID " + elementId);
                 return;
             }
-            uploadBroadcast(elementId, broadcastHierarchy, immediate);
+            uploadBroadcast(elementId, broadcastHierarchy, immediate, telescope);
         } else {
             for (Entry<String, ItemBroadcastHierarchy> broadcastHierarchy : broadcastHierarchies.entrySet()) {
-                uploadBroadcast(broadcastHierarchy.getKey(), broadcastHierarchy.getValue(), immediate);
+                uploadBroadcast(
+                        broadcastHierarchy.getKey(),
+                        broadcastHierarchy.getValue(),
+                        immediate,
+                        telescope
+                );
             }
         }
     }
 
-    private void uploadContent(boolean immediate, Content content)
+    private void uploadContent(boolean immediate, Content content, TelescopeProxy telescope)
             throws PayloadGenerationException {
         if (immediate) {
             log.info("Force uploading content {}", content.getCanonicalUri());
         }
         Payload p = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(content), content);
-        Task task = taskCreator.taskFor(hierarchyExpander.contentCridFor(content), content, p, Action.UPDATE);
-        processTask(task, immediate);
+        Task task = taskCreator.taskFor(
+                hierarchyExpander.contentCridFor(content),
+                content,
+                p,
+                Action.UPDATE
+        );
+        processTask(task, immediate, telescope);
 
         if (content instanceof Item) {
             Map<String, ItemAndVersion> versions = hierarchyExpander.versionHierarchiesFor((Item) content);
             for (Entry<String, ItemAndVersion> version : versions.entrySet()) {
-                Payload versionPayload = payloadCreator.payloadFrom(version.getKey(), version.getValue());
-                Task versionTask = taskCreator.taskFor(version.getKey(), version.getValue(), versionPayload, Action.UPDATE);
-                processTask(versionTask, immediate);
+                Payload versionPayload = payloadCreator.payloadFrom(
+                        version.getKey(),
+                        version.getValue()
+                );
+                Task versionTask = taskCreator.taskFor(
+                        version.getKey(),
+                        version.getValue(),
+                        versionPayload,
+                        Action.UPDATE
+                );
+                processTask(versionTask, immediate, telescope);
             }
-            Map<String, ItemBroadcastHierarchy> broadcasts = hierarchyExpander.broadcastHierarchiesFor((Item) content);
+            Map<String, ItemBroadcastHierarchy> broadcasts = hierarchyExpander.broadcastHierarchiesFor(
+                    (Item) content);
             for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcasts.entrySet()) {
-                Optional<Payload> broadcastPayload = payloadCreator.payloadFrom(broadcast.getKey(), broadcast.getValue());
+                Optional<Payload> broadcastPayload = payloadCreator.payloadFrom(
+                        broadcast.getKey(),
+                        broadcast.getValue()
+                );
                 if (broadcastPayload.isPresent()) {
-                    Task bcastTask = taskCreator.taskFor(broadcast.getKey(), broadcast.getValue(), broadcastPayload.get(), Action.UPDATE);
-                    processTask(bcastTask, immediate);
+                    Task bcastTask = taskCreator.taskFor(
+                            broadcast.getKey(),
+                            broadcast.getValue(),
+                            broadcastPayload.get(),
+                            Action.UPDATE
+                    );
+                    processTask(bcastTask, immediate, telescope);
                 }
             }
-            Map<String, ItemOnDemandHierarchy> onDemands = hierarchyExpander.onDemandHierarchiesFor((Item) content);
+            Map<String, ItemOnDemandHierarchy> onDemands = hierarchyExpander.onDemandHierarchiesFor(
+                    (Item) content);
             for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
                 ItemOnDemandHierarchy onDemandHierarchy = onDemand.getValue();
                 Location location = onDemandHierarchy.location();
                 Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
 
-                Payload odPayload = payloadCreator.payloadFrom(onDemand.getKey(),
+                Payload odPayload = payloadCreator.payloadFrom(
+                        onDemand.getKey(),
                         onDemandHierarchy
                 );
                 Task odTask = taskCreator.taskFor(
@@ -461,29 +534,35 @@ public class YouViewUploadController {
                         odPayload,
                         action
                 );
-                processTask(odTask, immediate);
+                processTask(odTask, immediate, telescope);
             }
 
             if (immediate) {
                 Item item = (Item) content;
-                resolveAndUploadParent(item.getContainer(), true);
+                resolveAndUploadParent(item.getContainer(), true, telescope);
 
                 if (item instanceof Episode) {
                     Episode episode = (Episode) item;
-                    resolveAndUploadParent(episode.getSeriesRef(), true);
+                    resolveAndUploadParent(episode.getSeriesRef(), true, telescope);
                 }
             }
         }
     }
 
-    private void uploadChannel(boolean immediate, Channel channel, boolean masterbrand)
+    private void uploadChannel(boolean immediate, Channel channel, boolean masterbrand, TelescopeProxy telescope)
             throws PayloadGenerationException {
         Payload p = payloadCreator.payloadFrom(channel, masterbrand);
-        Task task = taskCreator.taskFor(idGenerator.generateChannelCrid(channel), channel, p, Action.UPDATE);
-        processChannelTask(task, immediate);
+        Task task = taskCreator.taskFor(
+                idGenerator.generateChannelCrid(channel),
+                channel,
+                p,
+                Action.UPDATE
+        );
+        processChannelTask(task, immediate, telescope);
     }
 
-    private void resolveAndUploadParent(ParentRef ref, boolean immediate) throws PayloadGenerationException {
+    private void resolveAndUploadParent(ParentRef ref, boolean immediate, TelescopeProxy telescope)
+            throws PayloadGenerationException {
         if (ref == null) {
             return;
         }
@@ -497,32 +576,32 @@ public class YouViewUploadController {
                     payloadCreator.payloadFrom(contentCrid, series.get()),
                     Action.UPDATE
             );
-            processTask(parentTask, immediate);
+            processTask(parentTask, immediate, telescope);
         }
     }
 
-    private void processTask(@Nullable Task task, boolean immediate) {
+    private void processTask(@Nullable Task task, boolean immediate, TelescopeProxy telescope) {
         if (task == null) {
             return;
         }
         Task savedTask = taskStore.save(Task.copy(task).withManuallyCreated(true).build());
 
         if (immediate) {
-            taskProcessor.process(savedTask);
+            taskProcessor.process(savedTask, telescope);
         }
     }
 
-    private void processChannelTask(Task task, boolean immediate) {
+    private void processChannelTask(Task task, boolean immediate, TelescopeProxy telescope) {
         if (task == null) {
             return;
         }
         Task savedTask = taskStore.save(Task.copy(task).withManuallyCreated(true).build());
 
         if (immediate) {
-            nitroTaskProcessor.process(savedTask);
+            nitroTaskProcessor.process(savedTask, telescope);
         }
     }
-    
+
     private TVAElementType parseTypeFrom(String typeStr) {
         for (TVAElementType type : TVAElementType.values()) {
             if (type.name().equalsIgnoreCase(typeStr.trim())) {
@@ -534,10 +613,11 @@ public class YouViewUploadController {
 
     /**
      * Sends deletes for the XML elements representing a particular piece of content to YouView
+     *
      * @param uri the canonical uri for the item to delete
-     * @throws IOException 
-     */    
-    @RequestMapping(value="/feeds/youview/{publisher}/delete", method = RequestMethod.POST)
+     * @throws IOException
+     */
+    @RequestMapping(value = "/feeds/youview/{publisher}/delete", method = RequestMethod.POST)
     public void deleteContent(HttpServletResponse response,
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri", required = true) String uri,
@@ -566,16 +646,20 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
         }
-        
+
         TVAElementType type = parseTypeFrom(typeStr);
         if (type == null) {
             sendError(response, SC_BAD_REQUEST, "Invalid type provided");
             return;
         }
-        
+
         // TODO ideally this would go via the TaskCreator, but that would require resolving 
         // the hierarchies for each type of element
-        Destination destination = new YouViewDestination(toBeDeleted.get().getCanonicalUri(), type, elementId);
+        Destination destination = new YouViewDestination(
+                toBeDeleted.get().getCanonicalUri(),
+                type,
+                elementId
+        );
         Task task = Task.builder()
                 .withAction(Action.DELETE)
                 .withDestination(destination)
@@ -587,13 +671,14 @@ public class YouViewUploadController {
 
         sendOkResponse(response, "Delete for " + uri + " sent sucessfully");
     }
-    
+
     /**
-    * Revokes a particular piece of content from the YouView system.
-    * @param uri the canonical uri for the item to revoke
-    * @throws IOException 
-    */ 
-    @RequestMapping(value="/feeds/youview/{publisher}/revoke", method = RequestMethod.POST)
+     * Revokes a particular piece of content from the YouView system.
+     *
+     * @param uri the canonical uri for the item to revoke
+     * @throws IOException
+     */
+    @RequestMapping(value = "/feeds/youview/{publisher}/revoke", method = RequestMethod.POST)
     public void revokeContent(HttpServletResponse response,
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri", required = true) String uri) throws IOException {
@@ -607,31 +692,36 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
             return;
         }
-
         Optional<Content> toBeRevoked = getContent(uri);
         if (!toBeRevoked.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
         }
 
+
+        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_REVOKER);
+        telescope.startReporting();
+
         ImmutableList<Task> revocationTasks = revocationProcessor.revoke(toBeRevoked.get());
         for (Task revocationTask : revocationTasks) {
-            processTask(revocationTask, true);
+            processTask(revocationTask, true, telescope);
         }
 
+        telescope.endReporting();
         sendOkResponse(response, "Revoke for " + uri + " sent sucessfully");
     }
-    
+
     /**
      * Unrevokes a particular piece of content from the YouView system.
+     *
      * @param uri the canonical uri for the item to unrevoke
-     * @throws IOException 
-     */ 
-    @RequestMapping(value="/feeds/youview/{publisher}/unrevoke", method = RequestMethod.POST)
+     * @throws IOException
+     */
+    @RequestMapping(value = "/feeds/youview/{publisher}/unrevoke", method = RequestMethod.POST)
     public void unrevokeContent(HttpServletResponse response,
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri", required = true) String uri) throws IOException {
-        
+
         Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
         if (!publisher.isPresent()) {
             sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
@@ -647,27 +737,36 @@ public class YouViewUploadController {
             return;
         }
 
+        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_UNREVOKER);
+        telescope.startReporting();
+
         ImmutableList<Task> revocationTasks = revocationProcessor.unrevoke(toBeUnrevoked.get());
         for (Task revocationTask : revocationTasks) {
-            processTask(revocationTask, true);
+            processTask(revocationTask, true, telescope);
         }
 
+        telescope.endReporting();
         sendOkResponse(response, "Unrevoke for " + uri + " sent sucessfully");
     }
 
-    private void uploadBroadcast(String elementId, ItemBroadcastHierarchy broadcastHierarchy, boolean immediate) throws PayloadGenerationException {
+    private void uploadBroadcast(String elementId, ItemBroadcastHierarchy broadcastHierarchy,
+            boolean immediate, TelescopeProxy telescope) throws PayloadGenerationException {
         Optional<Payload> bcastPayload = payloadCreator.payloadFrom(elementId, broadcastHierarchy);
         if (!bcastPayload.isPresent()) {
             // a lack of payload is because no BroadcastEvent should be generated,
             // likely because of BroadcastEvent deduplication
             return;
         }
-        processTask(taskCreator.taskFor(
-                elementId,
-                broadcastHierarchy,
-                bcastPayload.get(),
-                Action.UPDATE),
-                immediate);
+        processTask(
+                taskCreator.taskFor(
+                        elementId,
+                        broadcastHierarchy,
+                        bcastPayload.get(),
+                        Action.UPDATE
+                ),
+                immediate,
+                telescope
+        );
     }
 
     private Optional<Publisher> findPublisher(String publisherStr) {
@@ -679,16 +778,18 @@ public class YouViewUploadController {
         return Optional.absent();
     }
 
-    private void sendError(HttpServletResponse response, int responseCode, String message) throws IOException {
+    private void sendError(HttpServletResponse response, int responseCode, String message)
+            throws IOException {
         response.sendError(responseCode, message);
         response.setContentLength(0);
     }
-    
+
     private Optional<Content> getContent(String contentUri) {
-        ResolvedContent resolvedContent = contentResolver.findByCanonicalUris(ImmutableList.of(contentUri));
+        ResolvedContent resolvedContent = contentResolver.findByCanonicalUris(ImmutableList.of(
+                contentUri));
         return Optional.fromNullable((Content) resolvedContent.getFirstValue().valueOrNull());
     }
-    
+
     private void sendOkResponse(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_OK);
         response.getOutputStream().write(message.getBytes(Charsets.UTF_8));

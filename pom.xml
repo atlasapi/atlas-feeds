@@ -61,8 +61,7 @@
                             <schemaIncludes>
                                 <schemaInclude>Lakeview_Content_Catalog_Feed.xsd</schemaInclude>
                             </schemaIncludes>
-                            <staleFile>${project.build.directory}/jaxb2/.lakeviewXjcStaleFlag
-                            </staleFile>
+                            <staleFile>${project.build.directory}/jaxb2/.lakeviewXjcStaleFlag</staleFile>
                         </configuration>
                     </execution>
                 </executions>
