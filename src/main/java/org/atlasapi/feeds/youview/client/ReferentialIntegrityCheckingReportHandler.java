@@ -163,8 +163,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
 
     private void createAndWriteTaskFor(Content content) throws PayloadGenerationException {
         String contentCrid = idGenerator.generateContentCrid(content);
-        taskStore.save(taskCreator.taskFor(contentCrid, content, payloadCreator.payloadFrom(contentCrid, content), Action.UPDATE
-        ));
+        taskStore.save(taskCreator.taskFor(contentCrid, content, payloadCreator.payloadFrom(contentCrid, content), Action.UPDATE));
     }
 
     private void handleMissingVersion(ControlledMessageType message, String contentUri) throws PayloadGenerationException {

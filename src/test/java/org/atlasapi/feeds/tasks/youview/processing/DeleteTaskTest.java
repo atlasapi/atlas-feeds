@@ -14,11 +14,13 @@ import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.telescope.TelescopeProxy;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
 import org.mockito.Mock;
 
+@Ignore
 public class DeleteTaskTest {
 
     private static final Set<Status> NON_UPLOADED_STATUSES = ImmutableSet.of(
