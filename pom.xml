@@ -103,32 +103,42 @@
                     <groupId>net.sourceforge.htmlunit</groupId>
                 </exclusion>
             </exclusions>
-		</dependency>
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>javax.servlet-api</artifactId>
-			<version>${javax.servlet-api.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.sun.xml.bind</groupId>
-			<artifactId>jaxb-impl</artifactId>
-			<version>2.1.9</version>
-		</dependency>
-		<dependency>
-			<groupId>rome</groupId>
-			<artifactId>rome</artifactId>
-			<version>0.9</version>
-		</dependency>
-		<dependency>
-			<groupId>rome</groupId>
-			<artifactId>opml</artifactId>
-			<version>0.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.hp.hpl.jena</groupId>
-			<artifactId>jena</artifactId>
-			<version>2.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.metabroadcast.columbus.telescope</groupId>
+            <artifactId>telescope-api</artifactId>
+            <version>1.0-SNAPSHOT-SHADED-0.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.metabroadcast.columbus.telescope</groupId>
+            <artifactId>telescope-client</artifactId>
+            <version>1.0-SNAPSHOT-SHADED-0.8</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>${javax.servlet-api.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-impl</artifactId>
+            <version>2.1.9</version>
+        </dependency>
+        <dependency>
+            <groupId>rome</groupId>
+            <artifactId>rome</artifactId>
+            <version>0.9</version>
+        </dependency>
+        <dependency>
+            <groupId>rome</groupId>
+            <artifactId>opml</artifactId>
+            <version>0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.hp.hpl.jena</groupId>
+            <artifactId>jena</artifactId>
+            <version>2.6.2</version>
             <exclusions>
                 <exclusion>
                     <groupId>xerces</groupId>
