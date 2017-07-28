@@ -71,6 +71,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
     @Override
     protected void runTask() {
+        log.info("A new 'Delta task creation has began.");
         Optional<DateTime> lastUpdated = getLastUpdatedTime();
         if (!lastUpdated.isPresent()) {
             throw new RuntimeException("The bootstrap has not successfully run. Please run the bootstrap upload and ensure that it succeeds before running the delta upload.");
