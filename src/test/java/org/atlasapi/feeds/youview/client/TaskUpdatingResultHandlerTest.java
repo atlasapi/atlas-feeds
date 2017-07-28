@@ -17,7 +17,7 @@ import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.telescope.TelescopeProxy;
+import org.atlasapi.telescope.TelescopeProxy1;
 
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
@@ -51,7 +51,7 @@ public class TaskUpdatingResultHandlerTest {
     private YouViewReportHandler reportHandler = mock(YouViewReportHandler.class);
     private JAXBContext context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
 
-    @Mock TelescopeProxy telescope;
+    @Mock TelescopeProxy1 telescope;
     
     private final ResultHandler handler = new TaskUpdatingResultHandler(taskStore);
     

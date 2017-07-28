@@ -2,7 +2,6 @@ package org.atlasapi.telescope;
 
 import com.metabroadcast.columbus.telescope.api.Environment;
 import com.metabroadcast.columbus.telescope.api.Process;
-import com.metabroadcast.common.properties.Configurer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,27 +10,27 @@ import org.slf4j.LoggerFactory;
  * Creates proxies to telescopeClients that can be used for reporting to telescope.
  * <p>
  * If you need to extend this class to accommodate more Processes (i.e. add more owl ingesters),
- * extend the {@link ReporterName} enum accordingly.
+ * extend the {@link ReporterName1} enum accordingly.
  */
-public class TelescopeFactory {
+public class TelescopeFactory1 {
 
     public static final String TELESCOPE_HOST = "columbus-telescope.stage.svc.cluster.local";//Configurer.get("telescope.host").get();
     public static final String ENVIRONMENT ="STAGE";//Configurer.get("telescope.environment").get();
-    private static final Logger log = LoggerFactory.getLogger(TelescopeFactory.class);
+    private static final Logger log = LoggerFactory.getLogger(TelescopeFactory1.class);
 
     /**
      * This factory will always give you a telescope (never null). If there are initialization
      * errors the telescope you will get might be unable to report.
      */
-    public static TelescopeProxy make(ReporterName reporterName) {
+    public static TelescopeProxy1 make(ReporterName1 reporterName) {
         Process process = getProcess(reporterName);
-        TelescopeProxy telescopeProxy = new TelescopeProxy(process);
+        TelescopeProxy1 telescopeProxy = new TelescopeProxy1(process);
 
         return telescopeProxy;
     }
 
     //create and return a telescope.api.Process.
-    private static Process getProcess(ReporterName name) {
+    private static Process getProcess(ReporterName1 name) {
         Environment environment;
         try {
             environment = Environment.valueOf(ENVIRONMENT);
@@ -51,7 +50,7 @@ public class TelescopeFactory {
     /**
      * Holds the pairs of Ingester Keys-Names used by atlas to report to telescope.
      */
-    public enum ReporterName {
+    public enum ReporterName1 {
         YOU_VIEW_ASYNC_UPLOADER("you-view-async-uploader","YouView Async Uploader"),
         YOU_VIEW_SCHEDULE_UPLOADER("you-view-schedule-uploader","YouView Schedule Uploader"),
         YOU_VIEW_CONTENT_PROCESSOR("you-view-content-processor","YouView Content Processor"),
@@ -65,7 +64,7 @@ public class TelescopeFactory {
         String reporterKey;
         String reporterName;
 
-        ReporterName(String reporterKey, String reporterName) {
+        ReporterName1(String reporterKey, String reporterName) {
             this.reporterKey = reporterKey;
             this.reporterName = reporterName;
         }

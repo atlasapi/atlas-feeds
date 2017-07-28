@@ -11,7 +11,7 @@ import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
-import org.atlasapi.telescope.TelescopeProxy;
+import org.atlasapi.telescope.TelescopeProxy1;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -50,7 +50,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
      * exceeded, in which case the Task will be failed.
      */
     @Override
-    public void handleTransactionResult(Task task, YouViewResult result, TelescopeProxy telescope) {
+    public void handleTransactionResult(Task task, YouViewResult result, TelescopeProxy1 telescope) {
         if (result.isSuccess()) {
             telescope.reportSuccessfulEvent(task.id(),task);
             taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, result.result(), result.uploadTime());

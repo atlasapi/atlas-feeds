@@ -12,7 +12,7 @@ import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
-import org.atlasapi.telescope.TelescopeProxy;
+import org.atlasapi.telescope.TelescopeProxy1;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -27,7 +27,7 @@ public class UpdateTaskTest {
             Status.NEW,
             Status.PENDING
     );
-    @Mock private TelescopeProxy telescope;
+    @Mock private TelescopeProxy1 telescope;
     
     private Task task = mock(Task.class);
     private TaskStore taskStore = mock(TaskStore.class);
