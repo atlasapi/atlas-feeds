@@ -11,7 +11,7 @@ import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
-import org.atlasapi.telescope.TelescopeProxy1;
+import org.atlasapi.reporting.telescope.TelescopeProxy;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -19,7 +19,6 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
 
 public class TaskUpdatingResultHandler implements ResultHandler {
 
@@ -30,7 +29,8 @@ public class TaskUpdatingResultHandler implements ResultHandler {
 
     public TaskUpdatingResultHandler(TaskStore taskStore) throws JAXBException {
         this.taskStore = checkNotNull(taskStore);
-        this.context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
+        this.context = JAXBContext.newInstance(
+                "com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
     }
 
     @Override
@@ -39,24 +39,37 @@ public class TaskUpdatingResultHandler implements ResultHandler {
     }
 
     /**
-     * This handles a couple of different cases. The simplest is success, where the task is moved forwards
-     * and a remote ID and upload time are written.
+     * This handles a couple of different cases. The simplest is success, where the task is moved
+     * forwards and a remote ID and upload time are written.
      * <p>
-     * Next simplest is 400, which is YouView parlance for an error in the uploaded payload. This results in
-     * the Task being failed.
+     * Next simplest is 400, which is YouView parlance for an error in the uploaded payload. This
+     * results in the Task being failed.
      * <p>
-     * Any other response is treated as an erroneous upload error, and the response is written to the task with
-     * a status of PENDING, so it will be reuploaded. The exception to this is if the retry count has been
-     * exceeded, in which case the Task will be failed.
+     * Any other response is treated as an erroneous upload error, and the response is written to
+     * the task with a status of PENDING, so it will be reuploaded. The exception to this is if the
+     * retry count has been exceeded, in which case the Task will be failed.
      */
     @Override
-    public void handleTransactionResult(Task task, YouViewResult result, TelescopeProxy1 telescope) {
+    public void handleTransactionResult(Task task, YouViewResult result, TelescopeProxy telescope) {
+        //get the payload so we can report it to telescope
+        String payload = task.payload().isPresent()
+                         ? task.payload().get().payload()
+                         : "No Payload";
+
         if (result.isSuccess()) {
-            telescope.reportSuccessfulEvent(task.id(),task);
-            taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, result.result(), result.uploadTime());
+            telescope.reportSuccessfulEvent(task.id(), payload);
+            taskStore.updateWithRemoteId(
+                    task.id(),
+                    Status.ACCEPTED,
+                    result.result(),
+                    result.uploadTime()
+            );
         } else {
             Response response = new Response(Status.REJECTED, result.result(), result.uploadTime());
-            telescope.reportFailedEventWithError("Content was rejected. ("+result.result()+")", task);
+            telescope.reportFailedEventWithError(
+                    "Content was rejected. (" + result.result() + ")",
+                    payload
+            );
             taskStore.updateWithResponse(task.id(), response);
         }
     }
@@ -106,7 +119,8 @@ public class TaskUpdatingResultHandler implements ResultHandler {
 
     private TransactionReportType parseReportFrom(String result) throws JAXBException {
         Unmarshaller unmarshaller = context.createUnmarshaller();
-        StatusReport report = (StatusReport) unmarshaller.unmarshal(new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8)));
+        StatusReport report = (StatusReport) unmarshaller.unmarshal(new ByteArrayInputStream(result.getBytes(
+                StandardCharsets.UTF_8)));
         TransactionReportType txnReport = Iterables.getOnlyElement(report.getTransactionReport());
         return txnReport;
     }

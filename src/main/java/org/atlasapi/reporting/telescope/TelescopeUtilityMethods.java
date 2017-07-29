@@ -1,4 +1,4 @@
-package org.atlasapi.telescope;
+package org.atlasapi.reporting.telescope;
 
 import com.google.common.collect.ImmutableList;
 import com.metabroadcast.columbus.telescope.api.Alias;

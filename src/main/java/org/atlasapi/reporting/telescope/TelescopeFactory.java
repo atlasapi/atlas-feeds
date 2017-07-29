@@ -1,4 +1,4 @@
-package org.atlasapi.telescope;
+package org.atlasapi.reporting.telescope;
 
 import com.metabroadcast.columbus.telescope.api.Environment;
 import com.metabroadcast.columbus.telescope.api.Process;
@@ -12,19 +12,19 @@ import org.slf4j.LoggerFactory;
  * If you need to extend this class to accommodate more Processes (i.e. add more owl ingesters),
  * extend the {@link ReporterName1} enum accordingly.
  */
-public class TelescopeFactory1 {
+public class TelescopeFactory {
 
     public static final String TELESCOPE_HOST = "columbus-telescope.stage.svc.cluster.local";//Configurer.get("telescope.host").get();
     public static final String ENVIRONMENT ="STAGE";//Configurer.get("telescope.environment").get();
-    private static final Logger log = LoggerFactory.getLogger(TelescopeFactory1.class);
+    private static final Logger log = LoggerFactory.getLogger(TelescopeFactory.class);
 
     /**
      * This factory will always give you a telescope (never null). If there are initialization
      * errors the telescope you will get might be unable to report.
      */
-    public static TelescopeProxy1 make(ReporterName1 reporterName) {
+    public static TelescopeProxy make(ReporterName1 reporterName) {
         Process process = getProcess(reporterName);
-        TelescopeProxy1 telescopeProxy = new TelescopeProxy1(process);
+        TelescopeProxy telescopeProxy = new TelescopeProxy(process);
 
         return telescopeProxy;
     }

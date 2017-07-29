@@ -1,4 +1,4 @@
-package org.atlasapi.telescope;
+package org.atlasapi.reporting.telescope;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
@@ -19,14 +19,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * To use this class get a TelescopeProxy1 object through {@link TelescopeFactory1}, then
+ * To use this class get a TelescopeProxy object through {@link TelescopeFactory}, then
  * startReporting, then report various events, and finally endReporting. If you do stuff in the
  * wrong order they will silently fail (log errors only). If the proxy fails to connect to telescope
  * it will silently fail (i.e. it will pretend to be reporting, but will report nothing).
  */
-public class TelescopeProxy1 {
+public class TelescopeProxy {
 
-    private static final Logger log = LoggerFactory.getLogger(TelescopeProxy1.class);
+    private static final Logger log = LoggerFactory.getLogger(TelescopeProxy.class);
 
     //check for null before use, as it might fail to initialize
     private IngestTelescopeClientImpl telescopeClient;
@@ -39,18 +39,18 @@ public class TelescopeProxy1 {
     private SubstitutionTableNumberCodec idCodec; //used to create atlasIDs
 
     /**
-     * The client always reports to {@link TelescopeFactory1#TELESCOPE_HOST}
+     * The client always reports to {@link TelescopeFactory#TELESCOPE_HOST}
      */
-    TelescopeProxy1(Process process) {
+    TelescopeProxy(Process process) {
         this.process = process;
 
         //the telescope client might fail to initialize, in which case it will remain null,
         // and thus and we'll have to check for that in further operations.
-        TelescopeClientImpl client = TelescopeClientImpl.create(TelescopeFactory1.TELESCOPE_HOST);
+        TelescopeClientImpl client = TelescopeClientImpl.create(TelescopeFactory.TELESCOPE_HOST);
         if (client == null) { //precaution, not sure if it can actually happen.
             log.error(
                     "Could not get a TelescopeClientImpl object with the given TELESCOPE_HOST={}",
-                    TelescopeFactory1.TELESCOPE_HOST
+                    TelescopeFactory.TELESCOPE_HOST
             );
             log.error(
                     "This telescope proxy will not report to telescope, and will not print any further messages.");

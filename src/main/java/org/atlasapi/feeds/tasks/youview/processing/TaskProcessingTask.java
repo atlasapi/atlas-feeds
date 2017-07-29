@@ -9,8 +9,8 @@ import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
-import org.atlasapi.telescope.TelescopeFactory1;
-import org.atlasapi.telescope.TelescopeProxy1;
+import org.atlasapi.reporting.telescope.TelescopeFactory;
+import org.atlasapi.reporting.telescope.TelescopeProxy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     protected void runTask() {
         log.info("new processing task has began");
         UpdateProgress progress = UpdateProgress.START;
-        TelescopeProxy1 telescope = TelescopeFactory1.make(TelescopeFactory1.ReporterName1.YOU_VIEW_ASYNC_UPLOADER);
+        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName1.YOU_VIEW_ASYNC_UPLOADER);
         telescope.startReporting();
 
         for (Status uncheckedStatus : validStatuses()) {

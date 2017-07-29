@@ -11,7 +11,7 @@ import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
-import org.atlasapi.telescope.TelescopeProxy1;
+import org.atlasapi.reporting.telescope.TelescopeProxy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +37,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
     }
 
     @Override
-    public void process(Task task, TelescopeProxy1 telescope) {
+    public void process(Task task, TelescopeProxy telescope) {
         checkArgument(
                 YOUVIEW.equals(task.destination().type()), 
                 "task type " + task.destination().type() + " invalid, expected " + YOUVIEW.name()
@@ -64,7 +64,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
         return revocationStore.isRevoked(contentUri);
     }
 
-    private void processUpdate(Task task, TelescopeProxy1 telescope) {
+    private void processUpdate(Task task, TelescopeProxy telescope) {
         if (!task.payload().isPresent()) {
             telescope.reportFailedEventWithWarning("No payload was present.", task);
             setFailed(task);
@@ -111,7 +111,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
 
     // No need to check for revocation for deletes, as deleting revoked content doesn't really matter
     // It also allows the deletes resulting from a revoke to go through unhindered.
-    private void processDelete(Task task, TelescopeProxy1 telescope) {
+    private void processDelete(Task task, TelescopeProxy telescope) {
         YouViewDestination destination = (YouViewDestination) task.destination();
         YouViewResult deleteResult = client.delete(destination.elementId());
         resultHandler.handleTransactionResult(task, deleteResult, telescope);
