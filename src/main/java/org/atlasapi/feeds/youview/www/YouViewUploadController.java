@@ -313,7 +313,7 @@ public class YouViewUploadController {
             handleContent(uri, elementId, typeStr, immediate, response, telescope);
         }
 
-        if(immediate){ //only start reporting if we will actually upload stuff.
+        if(immediate){ //This requires that `immediate` does not change since .startReporting().
             telescope.endReporting();
         }
         sendOkResponse(response, "Upload for " + uri + " sent successfully");

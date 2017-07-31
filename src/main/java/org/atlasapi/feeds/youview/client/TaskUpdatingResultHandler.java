@@ -11,12 +11,15 @@ import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.tasks.youview.processing.YouViewTaskProcessor;
 import org.atlasapi.reporting.telescope.TelescopeProxy;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -24,6 +27,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
 
     private final TaskStore taskStore;
     private final JAXBContext context;
+    private final Logger log = LoggerFactory.getLogger(TaskUpdatingResultHandler.class);
 
     private YouViewReportHandler reportHandler;
 
@@ -53,8 +57,9 @@ public class TaskUpdatingResultHandler implements ResultHandler {
     public void handleTransactionResult(Task task, YouViewResult result, TelescopeProxy telescope) {
         //get the payload so we can report it to telescope
         String payload = task.payload().isPresent()
-                         ? task.payload().get().payload().toString()
+                         ? "DEMO:"+task.payload().get().payload().toString()
                          : "No Payload";
+        //log.info("payload\">> {}",payload);
 
         if (result.isSuccess()) {
             telescope.reportSuccessfulEvent(task.id(), payload);
