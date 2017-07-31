@@ -1,24 +1,23 @@
 package org.atlasapi.feeds.tasks.youview.processing;
 
-import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.util.Set;
 
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
-import org.atlasapi.reporting.telescope.TelescopeProxy;
-
-import org.junit.Ignore;
-import org.junit.Test;
+import org.atlasapi.reporting.telescope.AtlasFeedsTelescopeProxy;
 
 import com.google.common.collect.ImmutableSet;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.mockito.Mock;
+
+import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @Ignore
 public class UpdateTaskTest {
@@ -27,7 +26,7 @@ public class UpdateTaskTest {
             Status.NEW,
             Status.PENDING
     );
-    @Mock private TelescopeProxy telescope;
+    @Mock private AtlasFeedsTelescopeProxy telescope;
     
     private Task task = mock(Task.class);
     private TaskStore taskStore = mock(TaskStore.class);
