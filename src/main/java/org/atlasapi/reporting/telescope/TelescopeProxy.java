@@ -29,19 +29,19 @@ public class TelescopeProxy {
     private static final Logger log = LoggerFactory.getLogger(TelescopeProxy.class);
 
     //check for null before use, as it might fail to initialize
-    private IngestTelescopeClientImpl telescopeClient;
+    protected IngestTelescopeClientImpl telescopeClient;
 
-    private String taskId;
-    private Process process;
-    private ObjectMapper objectMapper;
-    private boolean startedReporting = false; //safeguard flags
-    private boolean stoppedReporting = false;
-    private SubstitutionTableNumberCodec idCodec; //used to create atlasIDs
+    protected String taskId;
+    protected Process process;
+    protected ObjectMapper objectMapper;
+    protected boolean startedReporting = false; //safeguard flags
+    protected boolean stoppedReporting = false;
+    protected SubstitutionTableNumberCodec idCodec; //used to create atlasIDs
 
     /**
      * The client always reports to {@link TelescopeFactory#TELESCOPE_HOST}
      */
-    TelescopeProxy(Process process) {
+    protected TelescopeProxy(Process process) {
         this.process = process;
 
         //the telescope client might fail to initialize, in which case it will remain null,

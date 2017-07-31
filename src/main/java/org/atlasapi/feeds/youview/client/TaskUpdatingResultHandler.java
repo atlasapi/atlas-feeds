@@ -59,7 +59,6 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         String payload = task.payload().isPresent()
                          ? task.payload().get().payload().toString()
                          : "No Payload";
-        log.info("payload\">> {}",payload);
 
         if (result.isSuccess()) {
             telescope.reportSuccessfulEvent(task.id(), payload);

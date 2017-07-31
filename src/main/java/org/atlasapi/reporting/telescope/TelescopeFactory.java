@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
  * Creates proxies to telescopeClients that can be used for reporting to telescope.
  * <p>
  * If you need to extend this class to accommodate more Processes (i.e. add more owl ingesters),
- * extend the {@link ReporterName} enum accordingly.
+ * extend the {@link atlasFeedsReporters.ReporterName} enum accordingly.
  */
 public class TelescopeFactory {
 
@@ -20,9 +20,9 @@ public class TelescopeFactory {
 
     /**
      * This factory will always give you a telescope (never null). If there are initialization
-     * errors the telescope you will get might be unable to report.
+     * errors the telescope you will get might be unable to report, and fail graciously.
      */
-    public static TelescopeProxy make(ReporterName reporterName) {
+    public static TelescopeProxy make(TelescopeReporter reporterName) {
         Process process = getProcess(reporterName);
         TelescopeProxy telescopeProxy = new TelescopeProxy(process);
 
@@ -30,7 +30,7 @@ public class TelescopeFactory {
     }
 
     //create and return a telescope.api.Process.
-    private static Process getProcess(ReporterName name) {
+    private static Process getProcess(TelescopeReporter name) {
         Environment environment;
         try {
             environment = Environment.valueOf(ENVIRONMENT);
@@ -45,37 +45,6 @@ public class TelescopeFactory {
         }
 
         return Process.create(name.getReporterKey(), name.getReporterName(), environment);
-    }
-
-    /**
-     * Holds the pairs of Ingester Keys-Names used by atlas to report to telescope.
-     */
-    public enum ReporterName {
-        YOU_VIEW_ASYNC_UPLOADER("you-view-async-uploader","YouView Async Uploader"),
-        YOU_VIEW_SCHEDULE_UPLOADER("you-view-schedule-uploader","YouView Schedule Uploader"),
-        YOU_VIEW_CONTENT_PROCESSOR("you-view-content-processor","YouView Content Processor"),
-        YOU_VIEW_BBC_MULTI_UPLOADER("you-view-multi-uploader","YouView BBC Multi-uploader"),
-        YOU_VIEW_REVOKER("you-view-revoker","YouView Revoker"),
-        YOU_VIEW_UNREVOKER("you-view-unrevoker", "YouView Unrevoker"),
-        YOU_VIEW_XML_UPLOADER("you-view-xml-uploader", "YouView XML Uploader"),
-        YOU_VIEW_XML_DELETER("you-view-xml-delete","YouView XML deleter")
-        ;
-
-        String reporterKey;
-        String reporterName;
-
-        ReporterName(String reporterKey, String reporterName) {
-            this.reporterKey = reporterKey;
-            this.reporterName = reporterName;
-        }
-
-        public String getReporterKey() {
-            return reporterKey;
-        }
-
-        public String getReporterName() {
-            return reporterName;
-        }
     }
 
 }

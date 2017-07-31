@@ -43,6 +43,7 @@ import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
+import org.atlasapi.reporting.telescope.atlasFeedsReporters;
 import org.atlasapi.reporting.telescope.TelescopeFactory;
 import org.atlasapi.reporting.telescope.TelescopeProxy;
 
@@ -182,7 +183,7 @@ public class YouViewUploadController {
             @RequestParam("from") String fromStr,
             @RequestParam("to") String toStr
     ) throws IOException {
-        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_SCHEDULE_UPLOADER);
+        TelescopeProxy telescope = TelescopeFactory.make(atlasFeedsReporters.YOU_VIEW_SCHEDULE_UPLOADER);
         telescope.startReporting();
 
         DateTime from = dateTimeInQueryParser.parse(fromStr);
@@ -228,7 +229,7 @@ public class YouViewUploadController {
             return;
         }
 
-        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_BBC_MULTI_UPLOADER);
+        TelescopeProxy telescope = TelescopeFactory.make(atlasFeedsReporters.YOU_VIEW_BBC_MULTI_UPLOADER);
         telescope.startReporting(); // we always start the reporting, because we always call uploadContent with the upload flag to true. Since we are uploading, we are reporting.
         List<ListenableFuture<Try>> responses = Lists.newArrayList();
         for (final String uri : uris) {
@@ -300,7 +301,7 @@ public class YouViewUploadController {
             return;
         }
 
-        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_XML_UPLOADER);
+        TelescopeProxy telescope = TelescopeFactory.make(atlasFeedsReporters.YOU_VIEW_XML_UPLOADER);
         if(immediate){ //only start reporting if we will actually upload stuff as well.
             telescope.startReporting();
         }
@@ -699,7 +700,7 @@ public class YouViewUploadController {
         }
 
 
-        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_REVOKER);
+        TelescopeProxy telescope = TelescopeFactory.make(atlasFeedsReporters.YOU_VIEW_REVOKER);
         telescope.startReporting();
 
         ImmutableList<Task> revocationTasks = revocationProcessor.revoke(toBeRevoked.get());
@@ -737,7 +738,7 @@ public class YouViewUploadController {
             return;
         }
 
-        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_UNREVOKER);
+        TelescopeProxy telescope = TelescopeFactory.make(atlasFeedsReporters.YOU_VIEW_UNREVOKER);
         telescope.startReporting();
 
         ImmutableList<Task> revocationTasks = revocationProcessor.unrevoke(toBeUnrevoked.get());
