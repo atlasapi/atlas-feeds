@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Creates proxies to telescopeClients that can be used for reporting to telescope.
  * <p>
- * If you need to extend this class to accommodate more Processes (i.e. add more owl ingesters),
- * extend the {@link atlasFeedsReporters.ReporterName} enum accordingly.
+ * If you need to amend this class to accommodate more Processes (i.e. add more reporters),
+ * extend {@link atlasFeedsReporters} enum accordingly.
  */
 public class TelescopeFactory {
 
@@ -30,7 +30,7 @@ public class TelescopeFactory {
     }
 
     //create and return a telescope.api.Process.
-    private static Process getProcess(TelescopeReporter name) {
+    protected static Process getProcess(TelescopeReporter name) {
         Environment environment;
         try {
             environment = Environment.valueOf(ENVIRONMENT);
