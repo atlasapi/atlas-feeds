@@ -57,9 +57,9 @@ public class TaskUpdatingResultHandler implements ResultHandler {
     public void handleTransactionResult(Task task, YouViewResult result, TelescopeProxy telescope) {
         //get the payload so we can report it to telescope
         String payload = task.payload().isPresent()
-                         ? "DEMO:"+task.payload().get().payload().toString()
+                         ? task.payload().get().payload().toString()
                          : "No Payload";
-        //log.info("payload\">> {}",payload);
+        log.info("payload\">> {}",payload);
 
         if (result.isSuccess()) {
             telescope.reportSuccessfulEvent(task.id(), payload);

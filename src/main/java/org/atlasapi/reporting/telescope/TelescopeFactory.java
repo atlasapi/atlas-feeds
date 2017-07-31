@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
  * Creates proxies to telescopeClients that can be used for reporting to telescope.
  * <p>
  * If you need to extend this class to accommodate more Processes (i.e. add more owl ingesters),
- * extend the {@link ReporterName1} enum accordingly.
+ * extend the {@link ReporterName} enum accordingly.
  */
 public class TelescopeFactory {
 
@@ -22,7 +22,7 @@ public class TelescopeFactory {
      * This factory will always give you a telescope (never null). If there are initialization
      * errors the telescope you will get might be unable to report.
      */
-    public static TelescopeProxy make(ReporterName1 reporterName) {
+    public static TelescopeProxy make(ReporterName reporterName) {
         Process process = getProcess(reporterName);
         TelescopeProxy telescopeProxy = new TelescopeProxy(process);
 
@@ -30,7 +30,7 @@ public class TelescopeFactory {
     }
 
     //create and return a telescope.api.Process.
-    private static Process getProcess(ReporterName1 name) {
+    private static Process getProcess(ReporterName name) {
         Environment environment;
         try {
             environment = Environment.valueOf(ENVIRONMENT);
@@ -50,7 +50,7 @@ public class TelescopeFactory {
     /**
      * Holds the pairs of Ingester Keys-Names used by atlas to report to telescope.
      */
-    public enum ReporterName1 {
+    public enum ReporterName {
         YOU_VIEW_ASYNC_UPLOADER("you-view-async-uploader","YouView Async Uploader"),
         YOU_VIEW_SCHEDULE_UPLOADER("you-view-schedule-uploader","YouView Schedule Uploader"),
         YOU_VIEW_CONTENT_PROCESSOR("you-view-content-processor","YouView Content Processor"),
@@ -64,7 +64,7 @@ public class TelescopeFactory {
         String reporterKey;
         String reporterName;
 
-        ReporterName1(String reporterKey, String reporterName) {
+        ReporterName(String reporterKey, String reporterName) {
             this.reporterKey = reporterKey;
             this.reporterName = reporterName;
         }

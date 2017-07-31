@@ -66,7 +66,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
 
     private void processUpdate(Task task, TelescopeProxy telescope) {
         if (!task.payload().isPresent()) {
-            telescope.reportFailedEventWithWarning("No payload was present.", task);
+            telescope.reportFailedEventWithError("No payload was present.", task);
             setFailed(task);
             return;
         }
@@ -81,7 +81,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
                         destination.contentUri(),
                         task.action().name()
                 );
-                telescope.reportFailedEventWithWarning("Content is revoked.", task);
+                telescope.reportFailedEventWithWarning(task.id(), "Content is revoked.", task);
                 setFailed(task);
                 return;
             }

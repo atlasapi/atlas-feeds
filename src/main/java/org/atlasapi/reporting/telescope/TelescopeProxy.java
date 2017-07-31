@@ -91,42 +91,40 @@ public class TelescopeProxy {
         }
     }
 
-    public void reportSuccessfulEvent(String atlasItemId, Object objectToSerialise) {
+    public void reportSuccessfulEvent(String atlasItemId, String payload) {
         if (!allowedToReport()) {
             return;
         }
-        try {
-            Event reportEvent = Event.builder()
-                    .withStatus(Event.Status.SUCCESS)
-                    .withType(Event.Type.INGEST)
-                    .withEntityState(EntityState.builder()
-                            .withAtlasId(atlasItemId)
-                            .withRaw(objectMapper.writeValueAsString(objectToSerialise))
-                            .withRawMime(MimeType.APPLICATION_JSON.toString())
-                            .build()
-                    )
-                    .withTaskId(taskId)
-                    .withTimestamp(LocalDateTime.now())
-                    .build();
+        Event reportEvent = Event.builder()
+                .withStatus(Event.Status.SUCCESS)
+                .withType(Event.Type.INGEST)
+                .withEntityState(EntityState.builder()
+                        .withAtlasId(atlasItemId)
+                        .withRaw(payload)
+                        .withRawMime(MimeType.APPLICATION_JSON.toString())
+                        .build()
+                )
+                .withTaskId(taskId)
+                .withTimestamp(LocalDateTime.now())
+                .build();
 
-            telescopeClient.createEvents(ImmutableList.of(reportEvent));
+        telescopeClient.createEvents(ImmutableList.of(reportEvent));
 
-            log.debug(
-                    "Reported successfully event with taskId={}, eventId={}",
-                    taskId,
-                    reportEvent.getId().orElse("null")
-            );
-        } catch (JsonProcessingException e) {
-            log.error("Couldn't convert the given object to a JSON string.", e);
-        }
+        log.debug(
+                "Reported successfully event with taskId={}, eventId={}",
+                taskId,
+                reportEvent.getId().orElse("null")
+        );
+
     }
 
     //convenience method for the most common reporting Format
-    public void reportSuccessfulEvent(long dbId, Object objectToSerialise) {
-        reportSuccessfulEvent(encode(dbId), objectToSerialise);
+    public void reportSuccessfulEvent(long dbId, String payload) {
+        reportSuccessfulEvent(encode(dbId), payload);
     }
 
-    public void reportFailedEventWithWarning(String warningMsg, Object objectToSerialise) {
+    public void reportFailedEventWithWarning(String atlasItemId, String warningMsg,
+            Object objectToSerialise) {
         if (!allowedToReport()) {
             return;
         }
@@ -135,6 +133,7 @@ public class TelescopeProxy {
                     .withStatus(Event.Status.FAILURE)
                     .withType(Event.Type.INGEST)
                     .withEntityState(EntityState.builder()
+                            .withAtlasId(atlasItemId)
                             .withWarning(warningMsg)
                             .withRaw(objectMapper.writeValueAsString(objectToSerialise))
                             .withRawMime(MimeType.APPLICATION_JSON.toString())
@@ -153,6 +152,12 @@ public class TelescopeProxy {
         } catch (JsonProcessingException e) {
             log.error("Couldn't convert the given object to a JSON string.", e);
         }
+    }
+
+    //convenience method for the most common reporting Format
+    public void reportFailedEventWithWarning(
+            long dbId, String warningMsg, Object objectToSerialise) {
+        reportFailedEventWithWarning(encode(dbId), warningMsg, objectToSerialise);
     }
 
     public void reportFailedEventWithError(String errorMsg, Object objectToSerialise) {

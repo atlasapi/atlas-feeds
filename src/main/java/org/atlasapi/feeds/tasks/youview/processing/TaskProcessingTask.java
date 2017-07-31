@@ -45,7 +45,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
-        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName1.YOU_VIEW_ASYNC_UPLOADER);
+        TelescopeProxy telescope = TelescopeFactory.make(TelescopeFactory.ReporterName.YOU_VIEW_ASYNC_UPLOADER);
         telescope.startReporting();
 
         for (Status uncheckedStatus : validStatuses()) {
