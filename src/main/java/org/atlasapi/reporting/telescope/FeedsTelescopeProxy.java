@@ -46,6 +46,11 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
                     taskId
             );
         }
+        //fail graciously by reporting nothing.
+        if(atlasItemId == null){
+            log.error("Cannot report a successful event without an atlasId. payload={}", payload);
+            return;
+        }
 
         Event reportEvent = Event.builder()
                 .withStatus(Event.Status.SUCCESS)
@@ -71,7 +76,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
     }
 
     //convenience method for the most common reporting Format
-    public void reportSuccessfulEvent(long dbId, String payload) {
+    public void reportSuccessfulEvent(Long dbId, String payload) {
         reportSuccessfulEvent(encode(dbId), payload);
     }
 
@@ -90,6 +95,11 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
                     atlasItemId,
                     taskId
             );
+        }
+        //fail graciously by reporting nothing.
+        if(atlasItemId == null){
+            log.error("Cannot report an atlas event without an atlasId. This report already had a warning message={}", warningMsg);
+            return;
         }
         try {
             Event reportEvent = Event.builder()

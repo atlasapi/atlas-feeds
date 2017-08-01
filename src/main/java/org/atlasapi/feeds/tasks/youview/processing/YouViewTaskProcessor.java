@@ -88,7 +88,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
                         task.action().name()
                 );
                 telescope.reportFailedEventWithWarning(
-                        task.id(),
+                        task.atlasDbId(),
                         "Content "
                                 + destination.contentUri()
                                 + " is revoked. Cannot "

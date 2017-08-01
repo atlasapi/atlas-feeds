@@ -60,7 +60,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
                          : "No Payload";
 
         if (result.isSuccess()) {
-            telescope.reportSuccessfulEvent(task.id(), payload);
+            telescope.reportSuccessfulEvent(task.atlasDbId(), payload);
             taskStore.updateWithRemoteId(
                     task.id(),
                     Status.ACCEPTED,

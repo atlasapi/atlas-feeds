@@ -14,6 +14,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Task {
 
     private Long id;
+    private final Long atlasDbId;
     private final DateTime created;
     private final Publisher publisher;
     private final Action action;
@@ -33,6 +34,7 @@ public class Task {
     public static Builder copy(Task task) {
         Builder builder = builder()
                 .withCreated(task.created)
+                .withAtlasDbId(task.atlasDbId)
                 .withPublisher(task.publisher)
                 .withAction(task.action)
                 .withDestination(task.destination)
@@ -49,7 +51,7 @@ public class Task {
     }
 
     private Task(
-            Long id, DateTime created, Publisher publisher, Action action,
+            Long id, Long atlasDbId, DateTime created, Publisher publisher, Action action,
             Destination destination, Status status,
             Optional<DateTime> uploadTime, Optional<String> remoteId,
             Optional<Payload> payload,
@@ -58,6 +60,7 @@ public class Task {
             Boolean manuallyCreated
     ) {
         this.id = id;
+        this.atlasDbId = atlasDbId;
         this.created = checkNotNull(created);
         this.publisher = checkNotNull(publisher);
         this.action = checkNotNull(action);
@@ -82,6 +85,8 @@ public class Task {
     public void setId(Long id) {
         this.id = checkNotNull(id);
     }
+
+    public Long atlasDbId() { return atlasDbId; }
     
     public Action action() {
         return action;
@@ -163,6 +168,7 @@ public class Task {
     public static class Builder {
         
         private Long id;
+        private Long atlasDbId;
         private DateTime created;
         private Publisher publisher;
         private Action action;
@@ -178,12 +184,18 @@ public class Task {
         private Builder() { }
         
         public Task build() {
-            return new Task(id, created, publisher, action, destination, status, uploadTime, 
+            return new Task(id,
+                    atlasDbId, created, publisher, action, destination, status, uploadTime,
                     remoteId, payload, remoteResponses.build(), lastError, manuallyCreated);
         }
-        
+
         public Builder withId(Long id) {
             this.id = id;
+            return this;
+        }
+
+        public Builder withAtlasDbId(Long atlasDbId){
+            this.atlasDbId = atlasDbId;
             return this;
         }
         

@@ -114,12 +114,19 @@ public abstract class TelescopeProxy {
     // This allows us to work with db id's instead of atlas ids,
     // without forcing each caller to create his own encoder.
     // This is here and not in the utility class so we dont recreate the codec object all the time.
-    protected String encode(long id) {
+    protected String encode(Long id) {
+        try{
+        if (id == null) {
+            throw new IllegalArgumentException();
+        }}
+        catch(IllegalArgumentException e){
+            log.error("Someone attempted to convert a null into an atlas id. We returned null and went on with our lives.", e);
+        }
+
         //lazy initialize
         if (this.idCodec == null) {
             this.idCodec = SubstitutionTableNumberCodec.lowerCaseOnly();
         }
-
         return idCodec.encode(BigInteger.valueOf(id));
     }
 

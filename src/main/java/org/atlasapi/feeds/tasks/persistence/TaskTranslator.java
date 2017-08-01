@@ -25,7 +25,8 @@ import org.slf4j.LoggerFactory;
 public class TaskTranslator {
 
     private static final Logger log = LoggerFactory.getLogger(TaskTranslator.class);
-    
+
+    static final String ATLAS_DB_ID = "atlasDbId";
     static final String PUBLISHER_KEY = "publisher";
     static final String CREATED_KEY = "created";
     static final String ACTION_KEY = "action";
@@ -45,6 +46,7 @@ public class TaskTranslator {
         DBObject dbo = new BasicDBObject();
         
         TranslatorUtils.from(dbo, MongoConstants.ID, task.id());
+        TranslatorUtils.from(dbo, ATLAS_DB_ID, task.atlasDbId());
         TranslatorUtils.fromDateTime(dbo, CREATED_KEY, task.created());
         TranslatorUtils.from(dbo, PUBLISHER_KEY, task.publisher().key());
         TranslatorUtils.from(dbo, ACTION_KEY, task.action().name());
@@ -87,6 +89,7 @@ public class TaskTranslator {
         
         return Task.builder()
                 .withId(TranslatorUtils.toLong(dbo, MongoConstants.ID))
+                .withAtlasDbId(TranslatorUtils.toLong(dbo, ATLAS_DB_ID))
                 .withCreated(TranslatorUtils.toDateTime(dbo, CREATED_KEY))
                 .withPublisher(Publisher.fromKey(TranslatorUtils.toString(dbo, PUBLISHER_KEY)).requireValue())
                 .withAction(Action.valueOf(TranslatorUtils.toString(dbo, ACTION_KEY)))

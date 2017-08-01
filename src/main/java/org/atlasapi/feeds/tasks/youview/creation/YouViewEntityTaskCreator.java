@@ -17,7 +17,6 @@ import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
 import org.atlasapi.media.channel.Channel;
-import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -118,7 +117,7 @@ public class YouViewEntityTaskCreator implements TaskCreator {
 
     private Task taskFor(String contentCrid, Content content, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(content.getCanonicalUri(), contentTypeFrom(content), contentCrid);
-        return createTask(content.getPublisher(), payload, action, destination, status);
+        return createTask(content.getId(), content.getPublisher(), payload, action, destination, status);
     }
 
     private Task taskFor(String versionCrid, ItemAndVersion versionHierarchy, Payload payload, Action action, Status status) {
@@ -145,9 +144,12 @@ public class YouViewEntityTaskCreator implements TaskCreator {
         );
         return createTask(channel.getSource(), payload, action, destination, status);
     }
-
     private Task createTask(Publisher publisher, Payload payload, Action action, Destination destination, Status status) {
+        return createTask(null, publisher, payload, action, destination, status);
+    }
+    private Task createTask(Long atlasDbId, Publisher publisher, Payload payload, Action action, Destination destination, Status status) {
         return Task.builder()
+                .withAtlasDbId(atlasDbId)
                 .withAction(action)
                 .withCreated(clock.now())
                 .withDestination(destination)

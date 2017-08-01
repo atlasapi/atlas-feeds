@@ -232,29 +232,25 @@ public class YouViewUploadController {
         telescope.startReporting(); // we always start the reporting, because we always call uploadContent with the upload flag to true. Since we are uploading, we are reporting.
         List<ListenableFuture<Try>> responses = Lists.newArrayList();
         for (final String uri : uris) {
-            ListenableFuture<Try> task = executor.submit(new Callable<Try>() {
-
-                @Override
-                public Try call() throws Exception {
-                    try {
-                        Optional<Content> content = getContent(uri);
-                        if (!content.isPresent()) {
-                            telescope.reportFailedEventWithError("No content was found", uri);
-                            return Try.exception(new IllegalArgumentException(String.format(
-                                    "Content %s not found",
-                                    uri
-                            )));
-                        } else {
-                            uploadContent(true, content.get(), telescope);
-                            return Try.success(uri);
-                        }
-                    } catch (Exception e) {
-                        telescope.reportFailedEventWithError(
-                                "There was an unknown error while trying to upload.",
+            ListenableFuture<Try> task = executor.submit(() -> {
+                try {
+                    Optional<Content> content = getContent(uri);
+                    if (!content.isPresent()) {
+                        telescope.reportFailedEventWithError("No content was found", uri);
+                        return Try.exception(new IllegalArgumentException(String.format(
+                                "Content %s not found",
                                 uri
-                        );
-                        return Try.exception(e);
+                        )));
+                    } else {
+                        uploadContent(true, content.get(), telescope);
+                        return Try.success(uri);
                     }
+                } catch (Exception e) {
+                    telescope.reportFailedEventWithError(
+                            "There was an unknown error while trying to upload.",
+                            uri
+                    );
+                    return Try.exception(e);
                 }
             });
 
