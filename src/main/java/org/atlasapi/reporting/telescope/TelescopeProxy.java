@@ -12,12 +12,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * To use this class get a TelescopeProxy object through {@link TelescopeConfiguration}, then
- * startReporting, then report various events, and finally endReporting. If you do stuff in the
- * wrong order they will silently fail (log errors only). If the proxy fails to connect to telescope
- * it will silently fail (i.e. it will pretend to be reporting, but will report nothing).
- */
 public abstract class TelescopeProxy {
 
     private static final Logger log = LoggerFactory.getLogger(TelescopeProxy.class);

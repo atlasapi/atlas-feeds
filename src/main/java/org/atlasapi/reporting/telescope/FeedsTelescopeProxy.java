@@ -12,11 +12,11 @@ import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AtlasFeedsTelescopeProxy extends TelescopeProxy {
+public class FeedsTelescopeProxy extends TelescopeProxy {
 
-    private static final Logger log = LoggerFactory.getLogger(AtlasFeedsTelescopeProxy.class);
+    private static final Logger log = LoggerFactory.getLogger(FeedsTelescopeProxy.class);
 
-    protected AtlasFeedsTelescopeProxy(Process process) {
+    protected FeedsTelescopeProxy(Process process) {
         super(process);
     }
 
@@ -24,9 +24,9 @@ public class AtlasFeedsTelescopeProxy extends TelescopeProxy {
      * This factory will always give you a telescope (never null). If there are initialization
      * errors the telescope you will get might be unable to report, and fail graciously.
      */
-    public static AtlasFeedsTelescopeProxy create(TelescopeReporter reporterName) {
+    public static FeedsTelescopeProxy create(TelescopeReporter reporterName) {
         Process process = TelescopeUtilityMethods.getProcess(reporterName);
-        AtlasFeedsTelescopeProxy telescopeProxy = new AtlasFeedsTelescopeProxy(process);
+        FeedsTelescopeProxy telescopeProxy = new FeedsTelescopeProxy(process);
 
         return telescopeProxy;
     }

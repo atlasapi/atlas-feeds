@@ -43,7 +43,7 @@ import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
-import org.atlasapi.reporting.telescope.AtlasFeedsTelescopeProxy;
+import org.atlasapi.reporting.telescope.FeedsTelescopeProxy;
 import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
 
 import com.metabroadcast.common.http.HttpException;
@@ -148,7 +148,7 @@ public class YouViewUploadController {
     private void handleChannel(
             HttpServletResponse response,
             String channelStr,
-            AtlasFeedsTelescopeProxy telescope
+            FeedsTelescopeProxy telescope
     ) throws IOException, PayloadGenerationException {
         Channel channel = channelResolver.fromUri(channelStr).requireValue();
 
@@ -163,7 +163,7 @@ public class YouViewUploadController {
     private void handleMasterbrand(
             HttpServletResponse response,
             String channelStr,
-            AtlasFeedsTelescopeProxy telescope
+            FeedsTelescopeProxy telescope
     ) throws IOException, PayloadGenerationException {
         Channel channel = channelResolver.fromUri(channelStr).requireValue();
 
@@ -182,7 +182,7 @@ public class YouViewUploadController {
             @RequestParam("from") String fromStr,
             @RequestParam("to") String toStr
     ) throws IOException {
-        AtlasFeedsTelescopeProxy telescope = AtlasFeedsTelescopeProxy.create(AtlasFeedsReporters.YOU_VIEW_SCHEDULE_UPLOADER);
+        FeedsTelescopeProxy telescope = FeedsTelescopeProxy.create(AtlasFeedsReporters.YOU_VIEW_SCHEDULE_UPLOADER);
         telescope.startReporting();
 
         DateTime from = dateTimeInQueryParser.parse(fromStr);
@@ -228,7 +228,7 @@ public class YouViewUploadController {
             return;
         }
 
-        AtlasFeedsTelescopeProxy telescope = AtlasFeedsTelescopeProxy.create(AtlasFeedsReporters.YOU_VIEW_BBC_MULTI_UPLOADER);
+        FeedsTelescopeProxy telescope = FeedsTelescopeProxy.create(AtlasFeedsReporters.YOU_VIEW_BBC_MULTI_UPLOADER);
         telescope.startReporting(); // we always start the reporting, because we always call uploadContent with the upload flag to true. Since we are uploading, we are reporting.
         List<ListenableFuture<Try>> responses = Lists.newArrayList();
         for (final String uri : uris) {
@@ -300,7 +300,7 @@ public class YouViewUploadController {
             return;
         }
 
-        AtlasFeedsTelescopeProxy telescope = AtlasFeedsTelescopeProxy.create(AtlasFeedsReporters.YOU_VIEW_XML_UPLOADER);
+        FeedsTelescopeProxy telescope = FeedsTelescopeProxy.create(AtlasFeedsReporters.YOU_VIEW_XML_UPLOADER);
         if(immediate){ //only start reporting if we will actually upload stuff as well.
             telescope.startReporting();
         }
@@ -313,7 +313,7 @@ public class YouViewUploadController {
             handleContent(uri, elementId, typeStr, immediate, response, telescope);
         }
 
-        if(immediate){ //This requires that `immediate` does not change since .startReporting().
+        if(immediate){ //This requires that `immediate` does not change in between
             telescope.endReporting();
         }
         sendOkResponse(response, "Upload for " + uri + " sent successfully");
@@ -335,7 +335,7 @@ public class YouViewUploadController {
             @Nullable String typeStr,
             boolean immediate,
             HttpServletResponse response,
-            AtlasFeedsTelescopeProxy telescope
+            FeedsTelescopeProxy telescope
     ) throws IOException, PayloadGenerationException {
         Optional<Content> toBeUploaded = getContent(uri);
         if (!toBeUploaded.isPresent()) {
@@ -387,7 +387,7 @@ public class YouViewUploadController {
             HttpServletResponse response,
             Optional<Content> toBeUploaded,
             Payload payload,
-            AtlasFeedsTelescopeProxy telescope
+            FeedsTelescopeProxy telescope
     ) throws IOException {
         if (elementId == null) {
             sendError(
@@ -405,7 +405,7 @@ public class YouViewUploadController {
     }
 
     private void handleVersion(String elementId, boolean immediate, HttpServletResponse response,
-            Content content, Payload payload, AtlasFeedsTelescopeProxy telescope) throws IOException {
+            Content content, Payload payload, FeedsTelescopeProxy telescope) throws IOException {
         if (!(content instanceof Item)) {
             sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Version");
             return;
@@ -424,7 +424,7 @@ public class YouViewUploadController {
     }
 
     private void handleOnDemand(String elementId, boolean immediate, HttpServletResponse response,
-            Content content, Payload payload, AtlasFeedsTelescopeProxy telescope) throws IOException {
+            Content content, Payload payload, FeedsTelescopeProxy telescope) throws IOException {
         if (!(content instanceof Item)) {
             sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a OnDemand");
             return;
@@ -444,7 +444,7 @@ public class YouViewUploadController {
     }
 
     private void handleBroadcast(String elementId, boolean immediate, HttpServletResponse response,
-            Content content, AtlasFeedsTelescopeProxy telescope) throws IOException, PayloadGenerationException {
+            Content content, FeedsTelescopeProxy telescope) throws IOException, PayloadGenerationException {
         if (!(content instanceof Item)) {
             sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Broadcast");
             return;
@@ -471,7 +471,7 @@ public class YouViewUploadController {
         }
     }
 
-    private void uploadContent(boolean immediate, Content content, AtlasFeedsTelescopeProxy telescope)
+    private void uploadContent(boolean immediate, Content content, FeedsTelescopeProxy telescope)
             throws PayloadGenerationException {
         if (immediate) {
             log.info("Force uploading content {}", content.getCanonicalUri());
@@ -549,7 +549,7 @@ public class YouViewUploadController {
         }
     }
 
-    private void uploadChannel(boolean immediate, Channel channel, boolean masterbrand, AtlasFeedsTelescopeProxy telescope)
+    private void uploadChannel(boolean immediate, Channel channel, boolean masterbrand, FeedsTelescopeProxy telescope)
             throws PayloadGenerationException {
         Payload p = payloadCreator.payloadFrom(channel, masterbrand);
         Task task = taskCreator.taskFor(
@@ -561,7 +561,7 @@ public class YouViewUploadController {
         processChannelTask(task, immediate, telescope);
     }
 
-    private void resolveAndUploadParent(ParentRef ref, boolean immediate, AtlasFeedsTelescopeProxy telescope)
+    private void resolveAndUploadParent(ParentRef ref, boolean immediate, FeedsTelescopeProxy telescope)
             throws PayloadGenerationException {
         if (ref == null) {
             return;
@@ -580,7 +580,7 @@ public class YouViewUploadController {
         }
     }
 
-    private void processTask(@Nullable Task task, boolean immediate, AtlasFeedsTelescopeProxy telescope) {
+    private void processTask(@Nullable Task task, boolean immediate, FeedsTelescopeProxy telescope) {
         if (task == null) {
             return;
         }
@@ -591,7 +591,7 @@ public class YouViewUploadController {
         }
     }
 
-    private void processChannelTask(Task task, boolean immediate, AtlasFeedsTelescopeProxy telescope) {
+    private void processChannelTask(Task task, boolean immediate, FeedsTelescopeProxy telescope) {
         if (task == null) {
             return;
         }
@@ -699,7 +699,7 @@ public class YouViewUploadController {
         }
 
 
-        AtlasFeedsTelescopeProxy telescope = AtlasFeedsTelescopeProxy.create(AtlasFeedsReporters.YOU_VIEW_REVOKER);
+        FeedsTelescopeProxy telescope = FeedsTelescopeProxy.create(AtlasFeedsReporters.YOU_VIEW_REVOKER);
         telescope.startReporting();
 
         ImmutableList<Task> revocationTasks = revocationProcessor.revoke(toBeRevoked.get());
@@ -737,7 +737,7 @@ public class YouViewUploadController {
             return;
         }
 
-        AtlasFeedsTelescopeProxy telescope = AtlasFeedsTelescopeProxy.create(AtlasFeedsReporters.YOU_VIEW_UNREVOKER);
+        FeedsTelescopeProxy telescope = FeedsTelescopeProxy.create(AtlasFeedsReporters.YOU_VIEW_UNREVOKER);
         telescope.startReporting();
 
         ImmutableList<Task> revocationTasks = revocationProcessor.unrevoke(toBeUnrevoked.get());
@@ -750,7 +750,7 @@ public class YouViewUploadController {
     }
 
     private void uploadBroadcast(String elementId, ItemBroadcastHierarchy broadcastHierarchy,
-            boolean immediate, AtlasFeedsTelescopeProxy telescope) throws PayloadGenerationException {
+            boolean immediate, FeedsTelescopeProxy telescope) throws PayloadGenerationException {
         Optional<Payload> bcastPayload = payloadCreator.payloadFrom(elementId, broadcastHierarchy);
         if (!bcastPayload.isPresent()) {
             // a lack of payload is because no BroadcastEvent should be generated,
