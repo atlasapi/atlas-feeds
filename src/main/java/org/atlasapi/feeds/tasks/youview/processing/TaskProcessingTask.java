@@ -10,7 +10,7 @@ import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.reporting.telescope.AtlasFeedsTelescopeProxy;
-import org.atlasapi.reporting.telescope.atlasFeedsReporters;
+import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
-        AtlasFeedsTelescopeProxy telescope = AtlasFeedsTelescopeProxy.create(atlasFeedsReporters.YOU_VIEW_ASYNC_UPLOADER);
+        AtlasFeedsTelescopeProxy telescope = AtlasFeedsTelescopeProxy.create(AtlasFeedsReporters.YOU_VIEW_ASYNC_UPLOADER);
         telescope.startReporting();
 
         for (Status uncheckedStatus : validStatuses()) {

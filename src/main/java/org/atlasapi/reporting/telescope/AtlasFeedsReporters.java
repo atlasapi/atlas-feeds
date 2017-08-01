@@ -1,6 +1,6 @@
 package org.atlasapi.reporting.telescope;
 
-public enum atlasFeedsReporters implements TelescopeReporter {
+public enum AtlasFeedsReporters implements TelescopeReporter {
     YOU_VIEW_ASYNC_UPLOADER("you-view-async-uploader", "YouView Async Uploader"),
     YOU_VIEW_SCHEDULE_UPLOADER("you-view-schedule-uploader", "YouView Schedule Uploader"),
     YOU_VIEW_CONTENT_PROCESSOR("you-view-content-processor", "YouView Content Processor"),
@@ -13,7 +13,7 @@ public enum atlasFeedsReporters implements TelescopeReporter {
     String reporterKey;
     String reporterName;
 
-    atlasFeedsReporters(String reporterKey, String reporterName) {
+    AtlasFeedsReporters(String reporterKey, String reporterName) {
         this.reporterKey = reporterKey;
         this.reporterName = reporterName;
     }
