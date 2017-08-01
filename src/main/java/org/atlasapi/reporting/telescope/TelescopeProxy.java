@@ -61,13 +61,15 @@ public abstract class TelescopeProxy {
      */
     public boolean startReporting() {
         //do we have a telescope client?
-        if (!initialized()) {
+        if (!isInitialized()) {
             return false;
         }
-        //create sure we have not already done that
+        //make sure we have not already done that
         if (startedReporting) {
             log.warn(
-                    "Someone tried to start a telescope report through a proxy that had already started reporting.");
+                    "Someone tried to start a telescope report through a proxy that had already started reporting., taskId={}",
+                    taskId
+            );
             return false;
         }
 
@@ -85,14 +87,12 @@ public abstract class TelescopeProxy {
         }
     }
 
-
-
     /**
      * Let telescope know we are finished reporting through this proxy. Once finished this object is
      * useless.
      */
     public void endReporting() {
-        if (!initialized()) {
+        if (!isInitialized()) {
             return;
         }
         if (startedReporting) {
@@ -113,25 +113,7 @@ public abstract class TelescopeProxy {
         return this.process.getKey();
     }
 
-    //======= HELPER METHODS ========
-    protected boolean allowedToReport() {
-        if (!initialized()) {
-            return false;
-        }
-        if (!startedReporting) {
-            log.warn(
-                    "Someone tried to report a telescope event before the process has started reporting");
-            return false;
-        }
-        if (stoppedReporting) {
-            log.warn(
-                    "Someone tried to report a telescope event after the process finished reporting");
-            return false;
-        }
-        return true;
-    }
-
-    protected boolean initialized() {
+    protected boolean isInitialized() {
         return (telescopeClient != null);
     }
 

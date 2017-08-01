@@ -1,5 +1,8 @@
 package org.atlasapi.reporting.telescope;
 
+/**
+ * Add more elements as needed if more uploaders need to report to telescope.
+ */
 public enum AtlasFeedsReporters implements TelescopeReporter {
     YOU_VIEW_ASYNC_UPLOADER("you-view-async-uploader", "YouView Async Uploader"),
     YOU_VIEW_SCHEDULE_UPLOADER("you-view-schedule-uploader", "YouView Schedule Uploader"),

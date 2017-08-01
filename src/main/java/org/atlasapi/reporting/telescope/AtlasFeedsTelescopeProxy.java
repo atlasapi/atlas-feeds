@@ -32,9 +32,21 @@ public class AtlasFeedsTelescopeProxy extends TelescopeProxy {
     }
 
     public void reportSuccessfulEvent(String atlasItemId, String payload) {
-        if (!allowedToReport()) {
+        if (!startedReporting) {
+            log.error(
+                    "It was attempted to report atlasItem={}, but the telescope client was not started.",
+                    atlasItemId
+            );
             return;
         }
+        if (stoppedReporting) {
+            log.warn(
+                    "atlasItem={} was reported to telescope client={} after it has finished reporting.",
+                    atlasItemId,
+                    taskId
+            );
+        }
+
         Event reportEvent = Event.builder()
                 .withStatus(Event.Status.SUCCESS)
                 .withType(Event.Type.INGEST)
@@ -65,8 +77,19 @@ public class AtlasFeedsTelescopeProxy extends TelescopeProxy {
 
     public void reportFailedEventWithWarning(String atlasItemId, String warningMsg,
             Object objectToSerialise) {
-        if (!allowedToReport()) {
+        if (!startedReporting) {
+            log.error(
+                    "It was attempted to report atlasItem={}, but the telescope client was not started.",
+                    atlasItemId
+            );
             return;
+        }
+        if (stoppedReporting) {
+            log.warn(
+                    "atlasItem={} was reported to telescope client={} after it has finished reporting.",
+                    atlasItemId,
+                    taskId
+            );
         }
         try {
             Event reportEvent = Event.builder()
@@ -101,8 +124,17 @@ public class AtlasFeedsTelescopeProxy extends TelescopeProxy {
     }
 
     public void reportFailedEventWithError(String errorMsg, Object objectToSerialise) {
-        if (!allowedToReport()) {
+        if (!startedReporting) {
+            log.error(
+                    "It was attempted to report an error to telescope, but the client was not started."
+            );
             return;
+        }
+        if (stoppedReporting) {
+            log.warn(
+                    "An error was reported to telescope after the telescope client={} has finished reporting.",
+                    taskId
+            );
         }
         try {
             Event reportEvent = Event.builder()
