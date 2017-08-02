@@ -8,6 +8,7 @@ import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
+import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
 
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
@@ -145,6 +146,7 @@ public class MongoTaskStore implements TaskStore {
 
     @Override
     public Iterable<Task> allTasks(DestinationType type, Status status) {
+        log.info("retrieving tasks");
         MongoQueryBuilder mongoQuery = new MongoQueryBuilder()
                 .fieldEquals(DESTINATION_TYPE_KEY, type.name())
                 .fieldEquals(STATUS_KEY, status.name());

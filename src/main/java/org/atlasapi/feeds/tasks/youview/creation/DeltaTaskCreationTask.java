@@ -83,7 +83,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         );
         
         List<Content> deleted = Lists.newArrayList();
-        
+//        Logger log = LoggerFactory.getLogger(BootstrapTaskCreationTask.class);
+        log.info("Delta creation task just run an upload and a delete processor.");
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
         YouViewContentProcessor deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
 
@@ -137,6 +138,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         setLastUpdatedTime(startOfTask.get());
         
         reportStatus("Uploading tasks to YouView");
+        log.info("Uploading tasks to YouView");
         
         // temporary fix; too many txns are being generated, due to the separation of 
         // task generation and upload. Moving the upload to happen in sequence after
@@ -145,6 +147,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         updateTask.run();
         
         reportStatus("Done uploading tasks to YouView");
+        log.info("Done uploading tasks to YouView");
     }
     
     private static List<Content> orderContentForDeletion(Iterable<Content> toBeDeleted) {
