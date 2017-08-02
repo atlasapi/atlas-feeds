@@ -183,7 +183,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     private UpdateProgress processContent(Content content, Action action) {
         String contentCrid = idGenerator.generateContentCrid(content);
-        log.info("Processing Content {} for {}", content.getId(), action.name());
+        log.info("Processing Content atlasid= {} for {}.", content.getId(), action.name());
         try {
             // not strictly necessary, but will save space
             if (!Action.DELETE.equals(action)) {
@@ -194,13 +194,13 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, p, action));
                     payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
                 } else {
-                    log.debug("Existing hash found for Content {}, not updating", contentCrid);
+                    log.info("Existing hash found for Content {}, not updating", contentCrid);
                 }
             }
 
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
-            log.error("Failed to create payload for content {}", content.getCanonicalUri(), e);
+            log.info("Failed to create payload for content {}", content.getCanonicalUri(), e);
             Task task = taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;

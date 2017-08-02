@@ -42,6 +42,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
                 YOUVIEW.equals(task.destination().type()),
                 "task type " + task.destination().type() + " invalid, expected " + YOUVIEW.name()
         );
+
         try {
             switch (task.action()) {
             case UPDATE:
@@ -71,6 +72,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
     }
 
     private void processUpdate(Task task, FeedsTelescopeProxy telescope) {
+        log.info("proccessing an update for atlasid={}", task.atlasDbId());
         if (!task.payload().isPresent()) {
             telescope.reportFailedEventWithError("No payload was present.", task);
             setFailed(task);
