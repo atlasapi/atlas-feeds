@@ -51,17 +51,21 @@ public class YouViewTaskProcessor implements TaskProcessor {
                 processDelete(task, telescope);
                 break;
             default:
-                throw new RuntimeException("action "
-                        + task.action().name()
-                        + " not recognised for task "
-                        + task.id());
+                throw new RuntimeException("action " + task.action().name() + " not recognised for task " + task.id());
             }
         } catch (Exception e) {
             log.error("Error processing Task {}", task.id(), e);
+            //report to telescope
+            String payloadError = task.payload().isPresent() ? "" : " No Payload was present.";
+            String payload = task.payload().isPresent() ? task.payload().get().payload() : "";
             telescope.reportFailedEventWithError(
-                    "Error processing task. (" + e.getMessage() + ")",
-                    task
+                    "Failed to process Task=" + task.id()
+                    + ". AtlasId=" + task.atlasDbId()
+                    + payloadError
+                    + " (" + e.getMessage() + ")",
+                    payload
             );
+
             setFailed(task, e);
         }
     }
@@ -72,11 +76,10 @@ public class YouViewTaskProcessor implements TaskProcessor {
 
     private void processUpdate(Task task, FeedsTelescopeProxy telescope) {
         if (!task.payload().isPresent()) {
-            telescope.reportFailedEventWithError("No payload was present.", task);
+            telescope.reportFailedEventWithError("No payload was present.", "");
             setFailed(task);
             return;
         }
-
         YouViewDestination destination = (YouViewDestination) task.destination();
         if (isRevoked(destination.contentUri())) {
             if (task.isManuallyCreated()) {
@@ -93,7 +96,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
                                 + destination.contentUri()
                                 + " is revoked. Cannot "
                                 + task.action().name(),
-                        task
+                        task.payload().get().payload() //.isPresent() checked at method entry
                 );
                 setFailed(task);
                 return;
@@ -132,10 +135,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
 
     @Override
     public void checkRemoteStatusOf(Task task) {
-        checkArgument(
-                task.remoteId().isPresent(),
-                "no transaction id present for task " + task.id() + ", cannot check status"
-        );
+        checkArgument(task.remoteId().isPresent(), "no transaction id present for task " + task.id() + ", cannot check status");
         YouViewResult result = client.checkRemoteStatus(task.remoteId().get());
         resultHandler.handleRemoteCheckResult(task, result);
     }

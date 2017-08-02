@@ -107,7 +107,6 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return new YouViewContentProcessor() {
 
             UpdateProgress progress = UpdateProgress.START;
-
             @Override
             public boolean process(Content content) {
                 try {

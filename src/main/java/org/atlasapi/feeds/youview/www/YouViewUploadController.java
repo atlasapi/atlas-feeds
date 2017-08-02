@@ -209,7 +209,7 @@ public class YouViewUploadController {
                 sb.append("Done uploading " + item.getCanonicalUri() + System.lineSeparator());
             } catch (PayloadGenerationException e) {
                 telescope.reportFailedEventWithError(
-                        "Content failed to upload. (" + (e.getMessage() + ")"), item);
+                        "Content failed to upload. (" + (e.getMessage() + ")"), new ObjectMapper().writeValueAsString(item));
                 sb.append("Error uploading " + e.getMessage());
             }
         }
@@ -393,7 +393,6 @@ public class YouViewUploadController {
             );
             return;
         }
-
         processTask(
                 taskCreator.taskFor(elementId, toBeUploaded.get(), payload, Action.UPDATE),
                 immediate, telescope

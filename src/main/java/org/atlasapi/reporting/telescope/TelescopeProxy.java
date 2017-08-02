@@ -8,10 +8,24 @@ import com.metabroadcast.columbus.telescope.client.IngestTelescopeClientImpl;
 import com.metabroadcast.columbus.telescope.client.TelescopeClientImpl;
 import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class is just a more convenient interface for reporting to telescope. It groups together the
+ * initialization of the telescope client and offers some safeguards for order events can happen.
+ * The object is self contained, so you can pass it around and just call the reporting methods when
+ * appropriate. More specific implementations should extend this class to offer methods for the
+ * reporting of events, as this abstract class only deals with starting and ending a new reporting
+ * process.
+ * <p>
+ * The order of things should be create a proxy, startReporting, report with any methods offered by
+ * the particular implementation, end reporting.
+ * <p>
+ * Implementations should always check against {@link #isStarted()} before using the
+ * telescopeClient. Apparently things can be reported even after the telescope has stopped
+ * reporting, but warnings will be logged.
+ */
 public abstract class TelescopeProxy {
 
     private static final Logger log = LoggerFactory.getLogger(TelescopeProxy.class);
@@ -19,16 +33,12 @@ public abstract class TelescopeProxy {
     //check for null before use, as it might fail to initialize
     protected IngestTelescopeClientImpl telescopeClient;
 
-    protected String taskId;
-    protected Process process;
-    protected ObjectMapper objectMapper;
-    protected boolean startedReporting = false; //safeguard flags
-    protected boolean stoppedReporting = false;
-    protected SubstitutionTableNumberCodec idCodec; //used to create atlasIDs
+    private String taskId;
+    private Process process;
+    private boolean startedReporting = false; //safeguard flags
+    private boolean finishedReporting = false;
+    protected SubstitutionTableNumberCodec idCodec; //used to create an atlasId from DBid
 
-    /**
-     * The client always reports to {@link TelescopeConfiguration#TELESCOPE_HOST}
-     */
     protected TelescopeProxy(Process process) {
         this.process = process;
 
@@ -37,34 +47,25 @@ public abstract class TelescopeProxy {
         TelescopeClientImpl client = TelescopeClientImpl.create(TelescopeConfiguration.TELESCOPE_HOST);
         if (client == null) { //precaution, not sure if it can actually happen.
             log.error(
-                    "Could not get a TelescopeClientImpl object with the given TELESCOPE_HOST={}",
+                    "Could not get a TelescopeClientImpl object with the given TELESCOPE_HOST={}" +
+                    "This telescope proxy will not report to telescope, and will not print any further messages.",
                     TelescopeConfiguration.TELESCOPE_HOST
             );
-            log.error(
-                    "This telescope proxy will not report to telescope, and will not print any further messages.");
         } else {
             this.telescopeClient = IngestTelescopeClientImpl.create(client);
-            this.objectMapper = new ObjectMapper();
         }
     }
 
     /**
      * Make the telescope aware that a new process has started reporting.
-     *
-     * @return Returns true on success, and false on failure.
      */
-    public boolean startReporting() {
-        //do we have a telescope client?
+    public void startReporting() {
         if (!isInitialized()) {
-            return false;
+            return; //an error message was printed when initialization failed.
         }
-        //make sure we have not already done that
-        if (startedReporting) {
-            log.warn(
-                    "Someone tried to start a telescope report through a proxy that had already started reporting., taskId={}",
-                    taskId
-            );
-            return false;
+        if (isStarted()) {
+            log.warn( "This telescope proxy has already been started. It was not started again. taskId={}", taskId );
+            return;
         }
 
         Task task = telescopeClient.startIngest(process);
@@ -72,12 +73,10 @@ public abstract class TelescopeProxy {
             taskId = task.getId().get();
             startedReporting = true;
             log.debug("Started reporting to Telescope, taskId={}", taskId);
-            return true;
         } else {
             //this log might be meaningless, because I might not be understanding under
-            // which circumstances this id might be null.
+            // which circumstances this id might be null, if any.
             log.error("Reporting a Process to telescope did not respond with a taskId");
-            return false;
         }
     }
 
@@ -89,9 +88,9 @@ public abstract class TelescopeProxy {
         if (!isInitialized()) {
             return;
         }
-        if (startedReporting) {
+        if (isStarted()) {
             telescopeClient.endIngest(taskId);
-            stoppedReporting = true;
+            finishedReporting = true;
             log.debug("Finished reporting to Telescope, taskId={}", taskId);
         } else {
             log.warn("Someone tried to stop a telescope report that has never started");
@@ -107,6 +106,20 @@ public abstract class TelescopeProxy {
         return this.process.getKey();
     }
 
+    /**
+     * If it has started reporting, then it is initialized. Since this is the first step, all
+     * methods should check against this before doing anything.
+     *
+     * @return
+     */
+    protected boolean isStarted() {
+        return startedReporting;
+    }
+
+    protected boolean isFinished() {
+        return finishedReporting;
+    }
+
     protected boolean isInitialized() {
         return (telescopeClient != null);
     }
@@ -115,18 +128,15 @@ public abstract class TelescopeProxy {
     // without forcing each caller to create his own encoder.
     // This is here and not in the utility class so we dont recreate the codec object all the time.
     protected String encode(Long id) {
-        try{
         if (id == null) {
-            throw new IllegalArgumentException();
-        }}
-        catch(IllegalArgumentException e){
-            log.error("Someone attempted to convert a null into an atlas id. We returned null and went on with our lives.", e);
+            return null;
         }
 
         //lazy initialize
         if (this.idCodec == null) {
             this.idCodec = SubstitutionTableNumberCodec.lowerCaseOnly();
         }
+
         return idCodec.encode(BigInteger.valueOf(id));
     }
 

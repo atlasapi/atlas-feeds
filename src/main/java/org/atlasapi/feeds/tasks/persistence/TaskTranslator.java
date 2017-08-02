@@ -86,7 +86,6 @@ public class TaskTranslator {
         if (dbo == null) {
             return null;
         }
-        
         return Task.builder()
                 .withId(TranslatorUtils.toLong(dbo, MongoConstants.ID))
                 .withAtlasDbId(TranslatorUtils.toLong(dbo, ATLAS_DB_ID))

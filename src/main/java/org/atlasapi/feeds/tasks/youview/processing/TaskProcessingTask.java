@@ -63,7 +63,16 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                 } catch(Exception e) {
                     log.error("Failed to process task {}", task, e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
-                    telescope.reportFailedEventWithError("Failed to process task. ("+ e.getMessage()+")", task);
+                    //report to telescope
+                    String payloadError = task.payload().isPresent() ? "" : " No Payload was present.";
+                    String payload = task.payload().isPresent() ? task.payload().get().payload() : "";
+                    telescope.reportFailedEventWithError(
+                            "Failed to process task=" + task.id()
+                            + ". AtlasId=" + task.atlasDbId()
+                            + payloadError
+                            + " (" + e.getMessage() + ")",
+                            payload
+                    );
                 }
                 reportStatus(progress.toString());
             }
