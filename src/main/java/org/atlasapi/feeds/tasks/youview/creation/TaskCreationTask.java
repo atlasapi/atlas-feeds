@@ -183,7 +183,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     private UpdateProgress processContent(Content content, Action action) {
         String contentCrid = idGenerator.generateContentCrid(content);
-        log.info("Processing Content {}", contentCrid);
+        log.info("Processing Content {} for {}", content.getId(), action.name());
         try {
             // not strictly necessary, but will save space
             if (!Action.DELETE.equals(action)) {

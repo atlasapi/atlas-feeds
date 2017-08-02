@@ -1,6 +1,7 @@
 package org.atlasapi.reporting.telescope;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.metabroadcast.columbus.telescope.api.EntityState;
 import com.metabroadcast.columbus.telescope.api.Event;
@@ -65,13 +66,16 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
                 .withTimestamp(LocalDateTime.now())
                 .build();
 
-        telescopeClient.createEvents(ImmutableList.of(reportEvent));
+        List<Event> events = telescopeClient.createEvents(ImmutableList.of(reportEvent));
 
-        log.info(
-                "Reported successfully event with taskId={}, eventId={}",
-                taskId,
-                reportEvent.getId().orElse("null")
-        );
+        for (Event event : events) {
+            log.info(
+                    "Reported successfully event with taskId={}, eventId={}",
+                    taskId,
+                    event.getId().orElse("null")
+            );
+        }
+
 
     }
 
