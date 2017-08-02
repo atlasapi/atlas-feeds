@@ -67,7 +67,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
 
         telescopeClient.createEvents(ImmutableList.of(reportEvent));
 
-        log.debug(
+        log.info(
                 "Reported successfully event with taskId={}, eventId={}",
                 taskId,
                 reportEvent.getId().orElse("null")
@@ -117,7 +117,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
                     .build();
             telescopeClient.createEvents(ImmutableList.of(reportEvent));
 
-            log.debug(
+            log.info(
                     "Reported successfully a FAILED event, taskId={}, warning={}",
                     taskId,
                     warningMsg
@@ -161,7 +161,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
                     .build();
             telescopeClient.createEvents(ImmutableList.of(reportEvent));
 
-            log.debug(
+            log.info(
                     "Reported successfully a FAILED event with taskId={}, error={}",
                     taskId,
                     errorMsg

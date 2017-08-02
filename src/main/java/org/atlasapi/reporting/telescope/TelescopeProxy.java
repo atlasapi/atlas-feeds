@@ -71,7 +71,7 @@ public abstract class TelescopeProxy {
         if (task.getId().isPresent()) {
             taskId = task.getId().get();
             startedReporting = true;
-            log.debug("Started reporting to Telescope, taskId={}", taskId);
+            log.info("Started reporting to Telescope, taskId={}", taskId);
             return true;
         } else {
             //this log might be meaningless, because I might not be understanding under
@@ -92,7 +92,7 @@ public abstract class TelescopeProxy {
         if (startedReporting) {
             telescopeClient.endIngest(taskId);
             stoppedReporting = true;
-            log.debug("Finished reporting to Telescope, taskId={}", taskId);
+            log.info("Finished reporting to Telescope, taskId={}", taskId);
         } else {
             log.warn("Someone tried to stop a telescope report that has never started");
         }
@@ -115,12 +115,16 @@ public abstract class TelescopeProxy {
     // without forcing each caller to create his own encoder.
     // This is here and not in the utility class so we dont recreate the codec object all the time.
     protected String encode(Long id) {
-        try{
-        if (id == null) {
-            throw new IllegalArgumentException();
-        }}
-        catch(IllegalArgumentException e){
-            log.error("Someone attempted to convert a null into an atlas id. We returned null and went on with our lives.", e);
+        try { //we do this because we want to print a proper stack, so we can find who caused this error.
+            if (id == null) {
+                throw new IllegalArgumentException();
+            }
+        } catch (IllegalArgumentException e) {
+            log.error(
+                    "Someone attempted to convert a null into an atlas id. We returned null and went on with our lives.",
+                    e
+            );
+            return null;
         }
 
         //lazy initialize

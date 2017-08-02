@@ -104,10 +104,10 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     // TODO write last updated time every n items
     protected YouViewContentProcessor contentProcessor(final DateTime updatedSince, final Action action) {
+        log.info("new youview Content Processor created. action={}", action.name());
         return new YouViewContentProcessor() {
 
             UpdateProgress progress = UpdateProgress.START;
-
             @Override
             public boolean process(Content content) {
                 try {
@@ -183,13 +183,14 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     private UpdateProgress processContent(Content content, Action action) {
         String contentCrid = idGenerator.generateContentCrid(content);
-        log.debug("Processing Content {}", contentCrid);
+        log.info("Processing Content {}", contentCrid);
         try {
             // not strictly necessary, but will save space
             if (!Action.DELETE.equals(action)) {
                 Payload p = payloadCreator.payloadFrom(contentCrid, content);
 
                 if (shouldSave(HashType.CONTENT, contentCrid, p)) {
+                    log.info("Storing content that with id {}", content.getId());
                     taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, p, action));
                     payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
                 } else {
