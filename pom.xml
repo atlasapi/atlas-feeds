@@ -74,6 +74,30 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <relocations>
+                                <relocation>
+                                    <!--We'll shade the version of telescope we need here, because atlas
+                                    depends on us, ,and he needs a different version. Why? Not sure, but
+                                    dependencies get messed up.-->
+                                    <pattern>com.metabroadcast.columbus.telescope</pattern>
+                                    <shadedPattern>atlas_feeds_shaded.com.metabroadcast.columbus.telescope</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
         <extensions>
             <extension>
@@ -107,12 +131,12 @@
         <dependency>
             <groupId>com.metabroadcast.columbus.telescope</groupId>
             <artifactId>telescope-api</artifactId>
-            <version>1.0-SNAPSHOT-SHADED-0.8</version>
+            <version>1.0-SNAPSHOT-SHADED-0.10</version>
         </dependency>
         <dependency>
             <groupId>com.metabroadcast.columbus.telescope</groupId>
             <artifactId>telescope-client</artifactId>
-            <version>1.0-SNAPSHOT-SHADED-0.8</version>
+            <version>1.0-SNAPSHOT-SHADED-0.10</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
