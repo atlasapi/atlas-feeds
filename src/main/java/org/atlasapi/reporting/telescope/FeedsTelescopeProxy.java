@@ -53,7 +53,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
         //if all went well
         Event reportEvent = Event.builder()
                 .withStatus(Event.Status.SUCCESS)
-                .withType(Event.Type.UPLOAD)
+                .withType(Event.Type.INGEST)
                 .withEntityState(EntityState.builder()
                         .withAtlasId(atlasItemId)
                         .withRaw(payload)
@@ -91,7 +91,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
 
         Event reportEvent = Event.builder()
                 .withStatus(Event.Status.FAILURE)
-                .withType(Event.Type.UPLOAD)
+                .withType(Event.Type.INGEST)
                 .withEntityState(
                         EntityState.builder()
                         .withAtlasId(atlasItemId)
@@ -122,7 +122,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
 
         Event reportEvent = Event.builder()
                 .withStatus(Event.Status.FAILURE)
-                .withType(Event.Type.UPLOAD)
+                .withType(Event.Type.INGEST)
                 .withEntityState(EntityState.builder()
                         .withError(errorMsg)
                         .withRaw(payload)
