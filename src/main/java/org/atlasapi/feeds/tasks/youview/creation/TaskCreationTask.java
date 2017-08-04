@@ -104,7 +104,6 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     // TODO write last updated time every n items
     protected YouViewContentProcessor contentProcessor(final DateTime updatedSince, final Action action) {
-        log.info("new youview Content Processor created. action={}", action.name());
         return new YouViewContentProcessor() {
 
             UpdateProgress progress = UpdateProgress.START;
@@ -183,24 +182,21 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     private UpdateProgress processContent(Content content, Action action) {
         String contentCrid = idGenerator.generateContentCrid(content);
-        log.info("Processing Content atlasid= {} for {}.", content.getId(), action.name());
         try {
             // not strictly necessary, but will save space
             if (!Action.DELETE.equals(action)) {
                 Payload p = payloadCreator.payloadFrom(contentCrid, content);
 
                 if (shouldSave(HashType.CONTENT, contentCrid, p)) {
-                    log.info("Storing content that with id {}", content.getId());
                     taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, p, action));
                     payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
                 } else {
-                    log.info("Existing hash found for Content {}, not updating", contentCrid);
+                    log.debug("Existing hash found for Content {}, not updating", contentCrid);
                 }
             }
 
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
-            log.info("Failed to create payload for content {}", content.getCanonicalUri(), e);
             Task task = taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
