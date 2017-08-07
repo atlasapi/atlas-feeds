@@ -2,9 +2,9 @@ package org.atlasapi.reporting.telescope;
 
 import java.time.LocalDateTime;
 
-import com.metabroadcast.columbus.telescope.api.EntityState;
-import com.metabroadcast.columbus.telescope.api.Event;
-import com.metabroadcast.columbus.telescope.api.Process;
+import telescope_client_shaded.com.metabroadcast.columbus.telescope.api.EntityState;
+import telescope_client_shaded.com.metabroadcast.columbus.telescope.api.Event;
+import telescope_client_shaded.com.metabroadcast.columbus.telescope.api.Process;
 import com.metabroadcast.common.media.MimeType;
 
 import com.google.common.collect.ImmutableList;

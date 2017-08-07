@@ -1,25 +1,16 @@
 package org.atlasapi.reporting.telescope;
 
-import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.metabroadcast.columbus.telescope.api.Alias;
-import com.metabroadcast.columbus.telescope.api.Environment;
-import com.metabroadcast.columbus.telescope.api.Process;
-import com.metabroadcast.common.stream.MoreCollectors;
+import telescope_client_shaded.com.metabroadcast.columbus.telescope.api.Environment;
+import telescope_client_shaded.com.metabroadcast.columbus.telescope.api.Process;
 
 import java.util.Set;
 
 public class TelescopeUtilityMethods {
 
     private static final Logger log = LoggerFactory.getLogger(TelescopeUtilityMethods.class);
-
-    public static ImmutableList<Alias> getAliases(Set<org.atlasapi.media.entity.Alias> aliases) {
-        return aliases.stream()
-                .map(alias -> Alias.create(alias.getNamespace(), alias.getValue()))
-                .collect(MoreCollectors.toImmutableList());
-    }
 
     //create and return a telescope.api.Process.
     protected static Process getProcess(TelescopeReporter name) {
