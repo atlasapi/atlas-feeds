@@ -2,10 +2,10 @@ package org.atlasapi.reporting.telescope;
 
 import java.math.BigInteger;
 
-import telescope_client_shaded.com.metabroadcast.columbus.telescope.api.Process;
-import telescope_client_shaded.com.metabroadcast.columbus.telescope.api.Task;
-import telescope_client_shaded.com.metabroadcast.columbus.telescope.client.IngestTelescopeClientImpl;
-import telescope_client_shaded.com.metabroadcast.columbus.telescope.client.TelescopeClientImpl;
+import com.metabroadcast.columbus.telescope.api.Process;
+import com.metabroadcast.columbus.telescope.api.Task;
+import com.metabroadcast.columbus.telescope.client.IngestTelescopeClientImpl;
+import com.metabroadcast.columbus.telescope.client.TelescopeClientImpl;
 import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
 
 import org.slf4j.Logger;

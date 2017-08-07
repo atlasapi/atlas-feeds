@@ -1,12 +1,11 @@
 package org.atlasapi.reporting.telescope;
 
+import com.metabroadcast.columbus.telescope.api.Environment;
+import com.metabroadcast.columbus.telescope.api.Process;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import telescope_client_shaded.com.metabroadcast.columbus.telescope.api.Environment;
-import telescope_client_shaded.com.metabroadcast.columbus.telescope.api.Process;
-
-import java.util.Set;
 
 public class TelescopeUtilityMethods {
 

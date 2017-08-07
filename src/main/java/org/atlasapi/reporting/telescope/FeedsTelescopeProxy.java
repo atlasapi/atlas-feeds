@@ -2,9 +2,9 @@ package org.atlasapi.reporting.telescope;
 
 import java.time.LocalDateTime;
 
-import telescope_client_shaded.com.metabroadcast.columbus.telescope.api.EntityState;
-import telescope_client_shaded.com.metabroadcast.columbus.telescope.api.Event;
-import telescope_client_shaded.com.metabroadcast.columbus.telescope.api.Process;
+import com.metabroadcast.columbus.telescope.api.EntityState;
+import com.metabroadcast.columbus.telescope.api.Event;
+import com.metabroadcast.columbus.telescope.api.Process;
 import com.metabroadcast.common.media.MimeType;
 
 import com.google.common.collect.ImmutableList;
@@ -53,7 +53,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
         //if all went well
         Event reportEvent = Event.builder()
                 .withStatus(Event.Status.SUCCESS)
-                .withType(Event.Type.INGEST)
+                .withType(Event.Type.UPLOAD)
                 .withEntityState(EntityState.builder()
                         .withAtlasId(atlasItemId)
                         .withRaw(payload)
@@ -91,7 +91,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
 
         Event reportEvent = Event.builder()
                 .withStatus(Event.Status.FAILURE)
-                .withType(Event.Type.INGEST)
+                .withType(Event.Type.UPLOAD)
                 .withEntityState(
                         EntityState.builder()
                         .withAtlasId(atlasItemId)
@@ -122,7 +122,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
 
         Event reportEvent = Event.builder()
                 .withStatus(Event.Status.FAILURE)
-                .withType(Event.Type.INGEST)
+                .withType(Event.Type.UPLOAD)
                 .withEntityState(EntityState.builder()
                         .withError(errorMsg)
                         .withRaw(payload)
