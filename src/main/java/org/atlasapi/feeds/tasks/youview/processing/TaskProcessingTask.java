@@ -12,6 +12,7 @@ import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.reporting.telescope.FeedsTelescopeProxy;
 import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +59,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                     continue;
                 }
                 try {
+                    log.info("task processor for atlasid={}", task.atlasDbId());
                     processor.process(task, telescope);
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch(Exception e) {
@@ -67,10 +69,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                     String payloadError = task.payload().isPresent() ? "" : " No Payload was present.";
                     String payload = task.payload().isPresent() ? task.payload().get().payload() : "";
                     telescope.reportFailedEventWithError(
-                            "Failed to process task=" + task.id()
-                            + ". AtlasId=" + task.atlasDbId()
-                            + payloadError
-                            + " (" + e.getMessage() + ")",
+                            "Failed to process task=" + task.id() + ". AtlasId=" + task.atlasDbId() + payloadError + " (" + e.getMessage() + ")",
                             payload
                     );
                 }

@@ -42,6 +42,7 @@ public class BootstrapTaskCreationTask extends TaskCreationTask {
         DateTime lastUpdated = new DateTime();
         Iterator<Content> allContent = contentResolver.updatedSince(startOfTime);
         Logger log = LoggerFactory.getLogger(BootstrapTaskCreationTask.class);
+        log.info("BootstrapTaskCreationTask just run ");
         YouViewContentProcessor processor = contentProcessor(startOfTime, Action.UPDATE);
         while (allContent.hasNext()) {
             if (!shouldContinue()) {

@@ -393,6 +393,7 @@ public class YouViewUploadController {
             );
             return;
         }
+        log.info("Creating task to process (series?). Atlasid should be {} ",toBeUploaded.get().getId());
         processTask(
                 taskCreator.taskFor(elementId, toBeUploaded.get(), payload, Action.UPDATE),
                 immediate, telescope
@@ -412,6 +413,7 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "No Version found with the provided elementId");
             return;
         }
+        log.info("Creating task to process (version?). Atlasid should be {} ",versionHierarchy.get().item().getId());
         processTask(
                 taskCreator.taskFor(elementId, versionHierarchy.get(), payload, Action.UPDATE),
                 immediate, telescope
@@ -432,6 +434,8 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "No OnDemand found with the provided elementId");
             return;
         }
+        log.info("Creating task to process (hierarcy?). Atlasid should be {} ",onDemandHierarchy.get().item().getId());
+
         processTask(
                 taskCreator.taskFor(elementId, onDemandHierarchy.get(), payload, Action.UPDATE),
                 immediate, telescope
@@ -576,11 +580,13 @@ public class YouViewUploadController {
     }
 
     private void processTask(@Nullable Task task, boolean immediate, FeedsTelescopeProxy telescope) {
+        log.info("Upload controller is processing task atlasID={}", task.atlasDbId());
         if (task == null) {
             return;
         }
         Task savedTask = taskStore.save(Task.copy(task).withManuallyCreated(true).build());
 
+        log.info("the saved task had atlasid={}", task.atlasDbId());
         if (immediate) {
             taskProcessor.process(savedTask, telescope);
         }

@@ -146,6 +146,7 @@ public class MongoTaskStore implements TaskStore {
 
     @Override
     public Iterable<Task> allTasks(DestinationType type, Status status) {
+        log.info("retrieving tasks");
         MongoQueryBuilder mongoQuery = new MongoQueryBuilder()
                 .fieldEquals(DESTINATION_TYPE_KEY, type.name())
                 .fieldEquals(STATUS_KEY, status.name());

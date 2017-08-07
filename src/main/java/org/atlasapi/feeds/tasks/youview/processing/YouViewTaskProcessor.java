@@ -56,17 +56,13 @@ public class YouViewTaskProcessor implements TaskProcessor {
             }
         } catch (Exception e) {
             log.error("Error processing Task {}", task.id(), e);
-            //report to telescope
-            String payloadError = task.payload().isPresent() ? "" : " No Payload was present.";
-            String payload = task.payload().isPresent() ? task.payload().get().payload() : "";
-            telescope.reportFailedEventWithError(
-                    "Failed to process Task=" + task.id()
-                    + ". AtlasId=" + task.atlasDbId()
-                    + payloadError
-                    + " (" + e.getMessage() + ")",
-                    payload
-            );
-
+          //report to telescope
+          String payloadError = task.payload().isPresent() ? "" : " No Payload was present.";
+          String payload = task.payload().isPresent() ? task.payload().get().payload() : "";
+          telescope.reportFailedEventWithError(
+                  "Error processing task (" + e.getMessage() + "). " + task + "Failed to process Task=" + task.id() + ". AtlasId=" + task.atlasDbId() + payloadError + " (" + e.getMessage() + ")",
+                  payload
+          );
             setFailed(task, e);
         }
     }
@@ -76,11 +72,13 @@ public class YouViewTaskProcessor implements TaskProcessor {
     }
 
     private void processUpdate(Task task, FeedsTelescopeProxy telescope) {
+        log.info("proccessing an update for atlasid={}", task.atlasDbId());
         if (!task.payload().isPresent()) {
             telescope.reportFailedEventWithError("No payload was present.", "");
             setFailed(task);
             return;
         }
+
         YouViewDestination destination = (YouViewDestination) task.destination();
         if (isRevoked(destination.contentUri())) {
             if (task.isManuallyCreated()) {
@@ -93,10 +91,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
                 );
                 telescope.reportFailedEventWithWarning(
                         task.atlasDbId(),
-                        "Content "
-                                + destination.contentUri()
-                                + " is revoked. Cannot "
-                                + task.action().name(),
+                        "Content " + destination.contentUri() + " is revoked. Cannot " + task.action().name(),
                         task.payload().get().payload() //.isPresent() checked at method entry
                 );
                 setFailed(task);
@@ -136,7 +131,10 @@ public class YouViewTaskProcessor implements TaskProcessor {
 
     @Override
     public void checkRemoteStatusOf(Task task) {
-        checkArgument(task.remoteId().isPresent(), "no transaction id present for task " + task.id() + ", cannot check status");
+        checkArgument(
+                task.remoteId().isPresent(),
+                "no transaction id present for task " + task.id() + ", cannot check status"
+        );
         YouViewResult result = client.checkRemoteStatus(task.remoteId().get());
         resultHandler.handleRemoteCheckResult(task, result);
     }
