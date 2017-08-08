@@ -70,10 +70,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
             );
         } else {
             Response response = new Response(Status.REJECTED, result.result(), result.uploadTime());
-            telescope.reportFailedEventWithError(
-                    "Content was rejected. (" + result.result() + ")",
-                    payload
-            );
+            telescope.reportFailedEventWithError( "Content was rejected. (" + result.result() + ")", payload );
             taskStore.updateWithResponse(task.id(), response);
         }
     }

@@ -73,7 +73,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
 
     private void processUpdate(Task task, FeedsTelescopeProxy telescope) {
         log.info("proccessing an update for atlasid={}", task.atlasDbId());
-        if (!task.payload().isPresent()) {
+        if (!task.payload().isPresent()) { //If you want remote this, check for other .get() down the line.
             telescope.reportFailedEventWithError("No payload was present.", "");
             setFailed(task);
             return;

@@ -2,12 +2,14 @@ package org.atlasapi.reporting.telescope;
 
 import java.math.BigInteger;
 
+import com.metabroadcast.columbus.telescope.api.Event;
 import com.metabroadcast.columbus.telescope.api.Process;
 import com.metabroadcast.columbus.telescope.api.Task;
 import com.metabroadcast.columbus.telescope.client.IngestTelescopeClientImpl;
 import com.metabroadcast.columbus.telescope.client.TelescopeClientImpl;
 import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
 
+import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,22 +18,18 @@ import org.slf4j.LoggerFactory;
  * initialization of the telescope client and offers some safeguards for order events can happen.
  * The object is self contained, so you can pass it around and just call the reporting methods when
  * appropriate. More specific implementations should extend this class to offer methods for the
- * reporting of events, as this abstract class only deals with starting and ending a new reporting
- * process.
+ * actual reporting of events, as this abstract class only deals with starting and ending a new
+ * reporting process.
  * <p>
- * The order of things should be create a proxy, startReporting, report with any methods offered by
- * the particular implementation, end reporting.
- * <p>
- * Implementations should always check against {@link #isStarted()} before using the
- * telescopeClient. Apparently things can be reported even after the telescope has stopped
- * reporting, but warnings will be logged.
+ * The order of things should be create a proxy, startReporting, reportEvent (through any methods offered by
+ * the particular implementation), and finally endReporting.
  */
 public abstract class TelescopeProxy {
 
     private static final Logger log = LoggerFactory.getLogger(TelescopeProxy.class);
 
-    //check for null before use, as it might fail to initialize
-    protected IngestTelescopeClientImpl telescopeClient;
+    //check with .isInitialized() before use, as it might have failed to initialize
+    private IngestTelescopeClientImpl telescopeClient;
 
     private String taskId;
     private Process process;
@@ -57,7 +55,8 @@ public abstract class TelescopeProxy {
     }
 
     /**
-     * Make the telescope aware that a new process has started reporting.
+     * Make the telescope aware that a new process has started reporting. The only reason this block
+     * is here and not in the constructor, is to make consumers aware that they should endReporting.
      */
     public void startReporting() {
         if (!isInitialized()) {
@@ -80,9 +79,19 @@ public abstract class TelescopeProxy {
         }
     }
 
+    public void reportEvent(Event event){
+        if(isInitialized()){
+            telescopeClient.createEvents(ImmutableList.of(event));
+        }
+        else{
+//            log.debug("It was attempted to report an event to telescope through a client that is not initialized. Reporter name:{}", getReporterName());
+        }
+    }
+
+
     /**
-     * Let telescope know we are finished reporting through this proxy. Once finished this object is
-     * useless.
+     * Let telescope know we are finished reporting through this proxy. Surprisingly, telescope
+     * seems to accept events even after it is notified that reporting has finished.
      */
     public void endReporting() {
         if (!isInitialized()) {
@@ -102,7 +111,7 @@ public abstract class TelescopeProxy {
         return taskId;
     }
 
-    public String getIngesterName() {
+    public String getReporterName() {
         return this.process.getKey();
     }
 

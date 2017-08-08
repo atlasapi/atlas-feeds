@@ -7,7 +7,6 @@ import com.metabroadcast.columbus.telescope.api.Event;
 import com.metabroadcast.columbus.telescope.api.Process;
 import com.metabroadcast.common.media.MimeType;
 
-import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,13 +32,6 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
     }
 
     public void reportSuccessfulEvent(String atlasItemId, String payload) {
-        if (!isStarted()) {
-            log.error("It was attempted to report atlasItem={}, but the telescope client was not started.", atlasItemId );
-            return;
-        }
-        if (isFinished()) { //we can still report, but it shouldn't happen
-            log.warn("atlasItem={} was reported to telescope client={} after it has finished reporting.", atlasItemId, getTaskId() );
-        }
         try { //fail graciously by reporting nothing, but print a full stack so we know who caused this
             if (atlasItemId == null) {
                 throw new IllegalArgumentException("No atlasId was given");
@@ -50,8 +42,16 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
             return;
         }
 
+        if (!isStarted()) {
+            log.error("It was attempted to report atlasItem={}, but the telescope client was not started.", atlasItemId );
+            return;
+        }
+        if (isFinished()) { //we can still report, but it shouldn't happen
+            log.warn("atlasItem={} was reported to telescope client={} after it has finished reporting.", atlasItemId, getTaskId() );
+        }
+
         //if all went well
-        Event reportEvent = Event.builder()
+        Event event = Event.builder()
                 .withStatus(Event.Status.SUCCESS)
                 .withType(Event.Type.UPLOAD)
                 .withEntityState(EntityState.builder()
@@ -63,7 +63,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
                 .withTaskId(getTaskId())
                 .withTimestamp(LocalDateTime.now())
                 .build();
-       telescopeClient.createEvents(ImmutableList.of(reportEvent));
+       reportEvent(event);
     }
 
     //convenience method for the most common reporting Format
@@ -72,13 +72,6 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
     }
 
     public void reportFailedEventWithWarning(String atlasItemId, String warningMsg, String payload) {
-        if (!isStarted()) {
-            log.error("It was attempted to report atlasId={}, but the telescope client was not started.", atlasItemId);
-            return;
-        }
-        if (isFinished()) { //we can still report, but it shouldn't happen
-            log.warn( "atlasId={} was reported to telescope client={} after it had finished reporting.", atlasItemId, getTaskId());
-        }
         try { //fail graciously by reporting nothing, but print a full stack so we know who caused this
             if (atlasItemId == null) {
                 throw new IllegalArgumentException("No atlasId was given");
@@ -89,7 +82,15 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
             return;
         }
 
-        Event reportEvent = Event.builder()
+        if (!isStarted()) {
+            log.error("It was attempted to report atlasId={}, but the telescope client was not started.", atlasItemId);
+            return;
+        }
+        if (isFinished()) { //we can still report, but it shouldn't happen
+            log.warn( "atlasId={} was reported to telescope client={} after it had finished reporting.", atlasItemId, getTaskId());
+        }
+
+        Event event = Event.builder()
                 .withStatus(Event.Status.FAILURE)
                 .withType(Event.Type.UPLOAD)
                 .withEntityState(
@@ -103,7 +104,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
                 .withTaskId(getTaskId())
                 .withTimestamp(LocalDateTime.now())
                 .build();
-        telescopeClient.createEvents(ImmutableList.of(reportEvent));
+        reportEvent(event);
     }
 
     //convenience method for the most common reporting Format
@@ -129,7 +130,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
             log.warn("An error was reported to telescope after the telescope client={} has finished reporting.", getTaskId() );
         }
 
-        Event reportEvent = Event.builder()
+        Event event = Event.builder()
                 .withStatus(Event.Status.FAILURE)
                 .withType(Event.Type.UPLOAD)
                 .withEntityState(EntityState.builder()
@@ -141,6 +142,6 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
                 .withTaskId(getTaskId())
                 .withTimestamp(LocalDateTime.now())
                 .build();
-        telescopeClient.createEvents(ImmutableList.of(reportEvent));
+        reportEvent(event);
     }
 }
