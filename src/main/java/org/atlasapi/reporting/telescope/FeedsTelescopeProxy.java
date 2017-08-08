@@ -57,7 +57,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
                 .withEntityState(EntityState.builder()
                         .withAtlasId(atlasItemId)
                         .withRaw(payload)
-                        .withRawMime(MimeType.APPLICATION_JSON.toString())
+                        .withRawMime(MimeType.APPLICATION_XML.toString())
                         .build()
                 )
                 .withTaskId(getTaskId())
@@ -97,7 +97,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
                         .withAtlasId(atlasItemId)
                         .withWarning(warningMsg)
                         .withRaw(payload)
-                        .withRawMime(MimeType.APPLICATION_JSON.toString())
+                        .withRawMime(MimeType.APPLICATION_XML.toString())
                         .build()
                 )
                 .withTaskId(getTaskId())
@@ -111,7 +111,16 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
         reportFailedEventWithWarning(encode(dbId), warningMsg, payload);
     }
 
+    /**
+     * Convenience method for {@link #reportFailedEventWithError(String, String, MimeType)}
+     * @param errorMsg
+     * @param payload Default payload is XML
+     */
     public void reportFailedEventWithError(String errorMsg, String payload) {
+        reportFailedEventWithError(errorMsg,payload,MimeType.APPLICATION_XML);
+    }
+
+    public void reportFailedEventWithError(String errorMsg, String payload, MimeType mimeType) {
         if (!isStarted()) {
             log.error( "It was attempted to report an error to telescope, but the client was not started." );
             return;
@@ -126,7 +135,7 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
                 .withEntityState(EntityState.builder()
                         .withError(errorMsg)
                         .withRaw(payload)
-                        .withRawMime(MimeType.APPLICATION_JSON.toString())
+                        .withRawMime(mimeType.toString())
                         .build()
                 )
                 .withTaskId(getTaskId())

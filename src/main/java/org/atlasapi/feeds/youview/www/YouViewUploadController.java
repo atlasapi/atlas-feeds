@@ -48,6 +48,7 @@ import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
 
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
+import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
 
@@ -208,8 +209,7 @@ public class YouViewUploadController {
                 uploadContent(true, item, telescope);
                 sb.append("Done uploading " + item.getCanonicalUri() + System.lineSeparator());
             } catch (PayloadGenerationException e) {
-                telescope.reportFailedEventWithError(
-                        "Content failed to upload. (" + (e.getMessage() + ")"), new ObjectMapper().writeValueAsString(item));
+                telescope.reportFailedEventWithError("Content failed to upload. (" + (e.getMessage() + ")"), new ObjectMapper().writeValueAsString(item), MimeType.APPLICATION_JSON);
                 sb.append("Error uploading " + e.getMessage());
             }
         }
