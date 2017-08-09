@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import com.metabroadcast.columbus.telescope.api.EntityState;
 import com.metabroadcast.columbus.telescope.api.Event;
 import com.metabroadcast.columbus.telescope.client.TelescopeReporter;
-import com.metabroadcast.columbus.telescope.client.TelescopeReporterNames;
+import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
 import com.metabroadcast.common.media.MimeType;
 
 import org.slf4j.Logger;
@@ -15,7 +15,7 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
 
     private static final Logger log = LoggerFactory.getLogger(FeedsTelescopeReporter.class);
 
-    protected FeedsTelescopeReporter(TelescopeReporterNames reporterName) {
+    protected FeedsTelescopeReporter(TelescopeReporterName reporterName) {
         super(reporterName, TelescopeConfiguration.ENVIRONMENT, TelescopeConfiguration.TELESCOPE_HOST);
     }
 
@@ -25,7 +25,7 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
      * <p>
      * Use by .startReporting() first, then report any events, then finally .endReporting()
      */
-    public static FeedsTelescopeReporter create(TelescopeReporterNames reporterName) {
+    public static FeedsTelescopeReporter create(TelescopeReporterName reporterName) {
 
         FeedsTelescopeReporter telescopeProxy = new FeedsTelescopeReporter(reporterName);
 

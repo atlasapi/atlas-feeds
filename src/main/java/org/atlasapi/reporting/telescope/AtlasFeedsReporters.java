@@ -1,11 +1,11 @@
 package org.atlasapi.reporting.telescope;
 
-import com.metabroadcast.columbus.telescope.client.TelescopeReporterNames;
+import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
 
 /**
  * Add more elements as needed if more uploaders need to report to telescope.
  */
-public enum AtlasFeedsReporters implements TelescopeReporterNames {
+public enum AtlasFeedsReporters implements TelescopeReporterName {
     YOU_VIEW_ASYNC_UPLOADER("you-view-async-uploader", "YouView Async Uploader"),
     YOU_VIEW_SCHEDULE_UPLOADER("you-view-schedule-uploader", "YouView Schedule Uploader"),
     YOU_VIEW_CONTENT_PROCESSOR("you-view-content-processor", "YouView Content Processor"),
