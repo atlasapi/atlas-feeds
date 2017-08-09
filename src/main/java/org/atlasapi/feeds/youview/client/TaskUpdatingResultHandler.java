@@ -11,7 +11,7 @@ import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
-import org.atlasapi.reporting.telescope.FeedsTelescopeProxy;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -53,7 +53,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
      * retry count has been exceeded, in which case the Task will be failed.
      */
     @Override
-    public void handleTransactionResult(Task task, YouViewResult result, FeedsTelescopeProxy telescope) {
+    public void handleTransactionResult(Task task, YouViewResult result, FeedsTelescopeReporter telescope) {
         //get the payload so we can report it to telescope
         String payload = task.payload().isPresent()
                          ? task.payload().get().payload().toString()

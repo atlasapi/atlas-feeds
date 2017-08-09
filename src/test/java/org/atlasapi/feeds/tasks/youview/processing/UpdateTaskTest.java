@@ -6,7 +6,7 @@ import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
-import org.atlasapi.reporting.telescope.FeedsTelescopeProxy;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
 import com.google.common.collect.ImmutableSet;
 import org.junit.Ignore;
@@ -26,7 +26,7 @@ public class UpdateTaskTest {
             Status.NEW,
             Status.PENDING
     );
-    @Mock private FeedsTelescopeProxy telescope;
+    @Mock private FeedsTelescopeReporter telescope;
     
     private Task task = mock(Task.class);
     private TaskStore taskStore = mock(TaskStore.class);

@@ -11,7 +11,7 @@ import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
-import org.atlasapi.reporting.telescope.FeedsTelescopeProxy;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +37,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
     }
 
     @Override
-    public void process(Task task, FeedsTelescopeProxy telescope) {
+    public void process(Task task, FeedsTelescopeReporter telescope) {
         checkArgument(
                 YOUVIEW.equals(task.destination().type()),
                 "task type " + task.destination().type() + " invalid, expected " + YOUVIEW.name()
@@ -71,7 +71,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
         return revocationStore.isRevoked(contentUri);
     }
 
-    private void processUpdate(Task task, FeedsTelescopeProxy telescope) {
+    private void processUpdate(Task task, FeedsTelescopeReporter telescope) {
         log.info("proccessing an update for atlasid={}", task.atlasDbId());
         if (!task.payload().isPresent()) { //If you want remote this, check for other .get() down the line.
             telescope.reportFailedEventWithError("No payload was present.", "");
@@ -123,7 +123,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
 
     // No need to check for revocation for deletes, as deleting revoked content doesn't really matter
     // It also allows the deletes resulting from a revoke to go through unhindered.
-    private void processDelete(Task task, FeedsTelescopeProxy telescope) {
+    private void processDelete(Task task, FeedsTelescopeReporter telescope) {
         YouViewDestination destination = (YouViewDestination) task.destination();
         YouViewResult deleteResult = client.delete(destination.elementId());
         resultHandler.handleTransactionResult(task, deleteResult, telescope);

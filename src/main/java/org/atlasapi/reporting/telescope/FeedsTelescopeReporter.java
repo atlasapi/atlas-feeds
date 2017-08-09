@@ -4,18 +4,19 @@ import java.time.LocalDateTime;
 
 import com.metabroadcast.columbus.telescope.api.EntityState;
 import com.metabroadcast.columbus.telescope.api.Event;
-import com.metabroadcast.columbus.telescope.api.Process;
+import com.metabroadcast.columbus.telescope.client.TelescopeReporter;
+import com.metabroadcast.columbus.telescope.client.TelescopeReporterNames;
 import com.metabroadcast.common.media.MimeType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FeedsTelescopeProxy extends TelescopeProxy {
+public class FeedsTelescopeReporter extends TelescopeReporter {
 
-    private static final Logger log = LoggerFactory.getLogger(FeedsTelescopeProxy.class);
+    private static final Logger log = LoggerFactory.getLogger(FeedsTelescopeReporter.class);
 
-    protected FeedsTelescopeProxy(Process process) {
-        super(process);
+    protected FeedsTelescopeReporter(TelescopeReporterNames reporterName) {
+        super(reporterName, TelescopeConfiguration.ENVIRONMENT, TelescopeConfiguration.TELESCOPE_HOST);
     }
 
     /**
@@ -24,9 +25,9 @@ public class FeedsTelescopeProxy extends TelescopeProxy {
      * <p>
      * Use by .startReporting() first, then report any events, then finally .endReporting()
      */
-    public static FeedsTelescopeProxy create(TelescopeReporter reporterName) {
-        Process process = TelescopeUtilityMethods.getProcess(reporterName);
-        FeedsTelescopeProxy telescopeProxy = new FeedsTelescopeProxy(process);
+    public static FeedsTelescopeReporter create(TelescopeReporterNames reporterName) {
+
+        FeedsTelescopeReporter telescopeProxy = new FeedsTelescopeReporter(reporterName);
 
         return telescopeProxy;
     }

@@ -11,7 +11,7 @@ import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
-import org.atlasapi.reporting.telescope.FeedsTelescopeProxy;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
@@ -37,7 +37,7 @@ public class YouViewTaskProcessorTest {
     @Mock private ResultHandler resultHandler;
     @Mock private RevokedContentStore revocationStore;
     @Mock private TaskStore taskStore;
-    @Mock private FeedsTelescopeProxy telescope;
+    @Mock private FeedsTelescopeReporter telescope;
 
     @Before
     public void setUp() {
