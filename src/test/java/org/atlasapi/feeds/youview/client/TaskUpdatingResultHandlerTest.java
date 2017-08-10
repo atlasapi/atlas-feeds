@@ -53,9 +53,8 @@ public class TaskUpdatingResultHandlerTest {
     private JAXBContext context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
 
     @Mock FeedsTelescopeReporter telescope;
-    @Mock MetricRegistry metricRegistry;
-    
-    private final ResultHandler handler = new TaskUpdatingResultHandler(taskStore, metricRegistry);
+
+    private final ResultHandler handler = new TaskUpdatingResultHandler(taskStore, new MetricRegistry());
     
     public TaskUpdatingResultHandlerTest() throws JAXBException {
         handler.registerReportHandler(reportHandler);
