@@ -22,6 +22,7 @@ import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
 
+import com.codahale.metrics.MetricRegistry;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.ControlledMessageType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.FragmentReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
@@ -52,8 +53,9 @@ public class TaskUpdatingResultHandlerTest {
     private JAXBContext context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
 
     @Mock FeedsTelescopeReporter telescope;
+    @Mock MetricRegistry metricRegistry;
     
-    private final ResultHandler handler = new TaskUpdatingResultHandler(taskStore);
+    private final ResultHandler handler = new TaskUpdatingResultHandler(taskStore, metricRegistry);
     
     public TaskUpdatingResultHandlerTest() throws JAXBException {
         handler.registerReportHandler(reportHandler);
