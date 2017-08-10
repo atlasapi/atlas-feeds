@@ -13,6 +13,8 @@ import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
@@ -20,20 +22,42 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionRe
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TaskUpdatingResultHandler implements ResultHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(TaskUpdatingResultHandler.class);
+
     private final TaskStore taskStore;
     private final JAXBContext context;
-    private final Logger log = LoggerFactory.getLogger(TaskUpdatingResultHandler.class);
 
     private YouViewReportHandler reportHandler;
+    private Counter successfulCounter;
+    private Counter unsuccessfulCounter;
+    private long startTime = System.currentTimeMillis();
 
-    public TaskUpdatingResultHandler(TaskStore taskStore) throws JAXBException {
+    public TaskUpdatingResultHandler(TaskStore taskStore, MetricRegistry metricRegistry)
+            throws JAXBException {
         this.taskStore = checkNotNull(taskStore);
         this.context = JAXBContext.newInstance(
                 "com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
+        successfulCounter = metricRegistry.register(
+                name(
+                        TaskUpdatingResultHandler.class,
+                        "YouviewSuccessfullTasks",
+                        "size"
+                ),
+                new Counter()
+        );
+        unsuccessfulCounter = metricRegistry.register(
+                name(
+                        TaskUpdatingResultHandler.class,
+                        "YouviewUnsuccessfullTasks",
+                        "size"
+                ),
+                new Counter()
+        );
     }
 
     @Override
@@ -53,10 +77,14 @@ public class TaskUpdatingResultHandler implements ResultHandler {
      * retry count has been exceeded, in which case the Task will be failed.
      */
     @Override
-    public void handleTransactionResult(Task task, YouViewResult result, FeedsTelescopeReporter telescope) {
+    public void handleTransactionResult(
+            Task task,
+            YouViewResult result,
+            FeedsTelescopeReporter telescope
+    ) {
         //get the payload so we can report it to telescope
         String payload = task.payload().isPresent()
-                         ? task.payload().get().payload().toString()
+                         ? task.payload().get().payload()
                          : "No Payload";
         log.info("handling transaction result for {}"+task.atlasDbId());
 
@@ -68,10 +96,25 @@ public class TaskUpdatingResultHandler implements ResultHandler {
                     result.result(),
                     result.uploadTime()
             );
+            updateYouviewTransactionMetric(successfulCounter);
         } else {
             Response response = new Response(Status.REJECTED, result.result(), result.uploadTime());
-            telescope.reportFailedEventWithError( "Content was rejected. (" + result.result() + ")", payload );
+            telescope.reportFailedEventWithError(
+                    String.format("Content was rejected. (%s)", result.result()),
+                    payload
+            );
             taskStore.updateWithResponse(task.id(), response);
+            updateYouviewTransactionMetric(unsuccessfulCounter);
+        }
+    }
+
+    private void updateYouviewTransactionMetric(Counter counter) {
+        if (System.currentTimeMillis() - startTime < 14400000){
+            counter.inc();
+        } else {
+            startTime = System.currentTimeMillis();
+            counter.dec(counter.getCount());
+            counter.inc();
         }
     }
 
@@ -120,9 +163,11 @@ public class TaskUpdatingResultHandler implements ResultHandler {
 
     private TransactionReportType parseReportFrom(String result) throws JAXBException {
         Unmarshaller unmarshaller = context.createUnmarshaller();
-        StatusReport report = (StatusReport) unmarshaller.unmarshal(new ByteArrayInputStream(result.getBytes(
-                StandardCharsets.UTF_8)));
-        TransactionReportType txnReport = Iterables.getOnlyElement(report.getTransactionReport());
-        return txnReport;
+        StatusReport report = (StatusReport) unmarshaller.unmarshal(
+                new ByteArrayInputStream(
+                        result.getBytes(StandardCharsets.UTF_8)
+                )
+        );
+        return Iterables.getOnlyElement(report.getTransactionReport());
     }
 }
