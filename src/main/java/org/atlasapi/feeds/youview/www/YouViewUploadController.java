@@ -110,8 +110,6 @@ public class YouViewUploadController {
     private final IdGenerator idGenerator;
     private final TaskProcessor nitroTaskProcessor;
 
-    private MetricRegistry metricRegistry;
-
     public static Builder builder() {
         return new Builder();
     }
@@ -128,8 +126,7 @@ public class YouViewUploadController {
             ChannelResolver channelResolver,
             IdGenerator idGenerator,
             Clock clock,
-            TaskProcessor nitroTaskProcessor,
-            MetricRegistry metricRegistry
+            TaskProcessor nitroTaskProcessor
     ) {
         this.contentResolver = checkNotNull(contentResolver);
         this.taskCreator = checkNotNull(taskCreator);
@@ -147,7 +144,6 @@ public class YouViewUploadController {
         this.dateTimeInQueryParser = new DateTimeInQueryParser();
         this.executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
         this.channelIdCodec = new SubstitutionTableNumberCodec();
-        this.metricRegistry = metricRegistry;
     }
 
     private void handleChannel(
@@ -583,17 +579,12 @@ public class YouViewUploadController {
         }
     }
 
-<<<<<<< ffc028b0a86ef53de964a6789474e1c6391ae5ab
-    private void processTask(@Nullable Task task, boolean immediate, FeedsTelescopeReporter telescope) {
+    private void processTask(
+            @Nullable Task task,
+            boolean immediate,
+            FeedsTelescopeReporter telescope
+    ) {
         log.info("Upload controller is processing task atlasID={}", task.atlasDbId());
-=======
-<<<<<<< Updated upstream
-    private void processTask(@Nullable Task task, boolean immediate) {
-=======
-    private void processTask(@Nullable Task task, boolean immediate, FeedsTelescopeReporter telescope, MetricRegistry metricRegistry) {
-        log.info("Upload controller is processing task atlasID={}", task.atlasDbId());
->>>>>>> Stashed changes
->>>>>>> WIP
         if (task == null) {
             return;
         }
@@ -601,15 +592,7 @@ public class YouViewUploadController {
 
         log.info("the saved task had atlasid={}", task.atlasDbId());
         if (immediate) {
-<<<<<<< ffc028b0a86ef53de964a6789474e1c6391ae5ab
             taskProcessor.process(savedTask, telescope);
-=======
-<<<<<<< Updated upstream
-            taskProcessor.process(savedTask);
-=======
-            taskProcessor.process(savedTask, telescope, metricRegistry);
->>>>>>> Stashed changes
->>>>>>> WIP
         }
     }
 

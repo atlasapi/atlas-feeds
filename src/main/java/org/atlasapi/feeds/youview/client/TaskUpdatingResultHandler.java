@@ -60,11 +60,6 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         );
     }
 
-    @Override
-    public void registerReportHandler(YouViewReportHandler reportHandler) {
-        this.reportHandler = checkNotNull(reportHandler);
-    }
-
     /**
      * This handles a couple of different cases. The simplest is success, where the task is moved
      * forwards and a remote ID and upload time are written.
@@ -86,7 +81,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         String payload = task.payload().isPresent()
                          ? task.payload().get().payload()
                          : "No Payload";
-        log.info("handling transaction result for {}"+task.atlasDbId());
+        log.info("handling transaction result for {}" + task.atlasDbId());
 
         if (result.isSuccess()) {
             telescope.reportSuccessfulEvent(task.atlasDbId(), payload);
@@ -109,7 +104,8 @@ public class TaskUpdatingResultHandler implements ResultHandler {
     }
 
     private void updateYouviewTransactionMetric(Counter counter) {
-        if (System.currentTimeMillis() - startTime < 14400000){
+        // we want to count the YV transactions every 4h
+        if (System.currentTimeMillis() - startTime < 14400000) {
             counter.inc();
         } else {
             startTime = System.currentTimeMillis();
@@ -128,6 +124,11 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         }
         Response response = new Response(status, result.result(), result.uploadTime());
         taskStore.updateWithResponse(task.id(), response);
+    }
+
+    @Override
+    public void registerReportHandler(YouViewReportHandler reportHandler) {
+        this.reportHandler = checkNotNull(reportHandler);
     }
 
     private Status parseAndHandleStatusReport(String result, Task task) {

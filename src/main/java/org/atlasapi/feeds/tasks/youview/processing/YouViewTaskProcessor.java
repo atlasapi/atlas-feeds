@@ -30,8 +30,12 @@ public class YouViewTaskProcessor implements TaskProcessor {
     private final ResultHandler resultHandler;
     private final TaskStore taskStore;
 
-    public YouViewTaskProcessor(YouViewClient client, ResultHandler resultHandler,
-            RevokedContentStore revocationStore, TaskStore taskStore) {
+    public YouViewTaskProcessor(
+            YouViewClient client,
+            ResultHandler resultHandler,
+            RevokedContentStore revocationStore,
+            TaskStore taskStore
+    ) {
         this.client = checkNotNull(client);
         this.resultHandler = checkNotNull(resultHandler);
         this.revocationStore = checkNotNull(revocationStore);

@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.youview;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -55,6 +54,7 @@ import org.atlasapi.feeds.youview.revocation.OnDemandBasedRevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
+import org.atlasapi.feeds.youview.www.YouviewMetricsController;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Publisher;
@@ -369,7 +369,7 @@ public class YouViewUploadModule {
     
     @Bean
     public ResultHandler resultHandler() throws JAXBException, SAXException {
-        return new TaskUpdatingResultHandler(taskStore);
+        return new TaskUpdatingResultHandler(taskStore, metrics);
     }
 
     @Bean

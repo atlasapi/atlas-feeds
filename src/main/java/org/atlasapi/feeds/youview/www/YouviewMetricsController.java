@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview.www;
 
 import java.io.IOException;
 
