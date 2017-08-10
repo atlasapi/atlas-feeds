@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview.client;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -14,7 +15,9 @@ import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SlidingTimeWindowReservoir;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
@@ -33,8 +36,8 @@ public class TaskUpdatingResultHandler implements ResultHandler {
     private final JAXBContext context;
 
     private YouViewReportHandler reportHandler;
-    private Counter successfulCounter;
-    private Counter unsuccessfulCounter;
+    private Histogram successfulCounter;
+    private Histogram unsuccessfulCounter;
     private long startTime = System.currentTimeMillis();
 
     public TaskUpdatingResultHandler(TaskStore taskStore, MetricRegistry metricRegistry)
@@ -48,7 +51,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
                         "YouviewSuccessfullTasks",
                         "size"
                 ),
-                new Counter()
+                new Histogram(new SlidingTimeWindowReservoir(4, TimeUnit.HOURS))
         );
         unsuccessfulCounter = metricRegistry.register(
                 name(
@@ -56,7 +59,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
                         "YouviewUnsuccessfullTasks",
                         "size"
                 ),
-                new Counter()
+                new Histogram(new SlidingTimeWindowReservoir(4, TimeUnit.HOURS))
         );
     }
 
@@ -91,7 +94,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
                     result.result(),
                     result.uploadTime()
             );
-            updateYouviewTransactionMetric(successfulCounter);
+            successfulCounter.update(1);
         } else {
             Response response = new Response(Status.REJECTED, result.result(), result.uploadTime());
             telescope.reportFailedEventWithError(
@@ -99,7 +102,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
                     payload
             );
             taskStore.updateWithResponse(task.id(), response);
-            updateYouviewTransactionMetric(unsuccessfulCounter);
+            unsuccessfulCounter.update(1);
         }
     }
 
