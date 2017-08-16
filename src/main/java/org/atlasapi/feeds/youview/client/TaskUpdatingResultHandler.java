@@ -47,9 +47,15 @@ public class TaskUpdatingResultHandler implements ResultHandler {
                 "YouviewSuccessfullTasks",
                 new TimeCounter(4, TimeUnit.HOURS)
         );
+        log.info("Created successfull counter");
         this.unsuccessfulCounter = metricRegistry.register(
                 "YouviewUnsuccessfullTasks",
                 new TimeCounter(4, TimeUnit.HOURS)
+        );
+        log.info("Created unsuccessfull counter");
+        log.info("Metric registry contains {} metrics: {}",
+                metricRegistry.getMetrics().size(),
+                metricRegistry.getMetrics().keySet()
         );
     }
 
