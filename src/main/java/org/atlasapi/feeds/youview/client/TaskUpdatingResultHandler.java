@@ -15,6 +15,7 @@ import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
 import com.codahale.metrics.Counting;
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
@@ -160,7 +161,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         return Iterables.getOnlyElement(report.getTransactionReport());
     }
 
-    public static class TimeCounter implements Metric, Counting {
+    public static class TimeCounter implements Metric, Gauge<Long>, Counting {
 
         private final Histogram histogram;
 
@@ -175,6 +176,11 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         @Override
         public long getCount() {
             return histogram.getSnapshot().size();
+        }
+
+        @Override
+        public Long getValue() {
+            return getCount();
         }
     }
 }
