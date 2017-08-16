@@ -14,8 +14,9 @@ import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
-import com.codahale.metrics.Counter;
+import com.codahale.metrics.Counting;
 import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SlidingTimeWindowReservoir;
 import com.google.common.base.Throwables;
@@ -25,7 +26,6 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionRe
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.codahale.metrics.MetricRegistry.name;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TaskUpdatingResultHandler implements ResultHandler {
@@ -36,31 +36,17 @@ public class TaskUpdatingResultHandler implements ResultHandler {
     private final JAXBContext context;
 
     private YouViewReportHandler reportHandler;
-    private Histogram successfulCounter;
-    private Histogram unsuccessfulCounter;
-    private long startTime = System.currentTimeMillis();
+    private TimeCounter successfullCounter;
+    private TimeCounter unsuccessfulCounter;
 
     public TaskUpdatingResultHandler(TaskStore taskStore, MetricRegistry metricRegistry)
             throws JAXBException {
         this.taskStore = checkNotNull(taskStore);
-        this.context = JAXBContext.newInstance(
-                "com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
-        successfulCounter = metricRegistry.register(
-                name(
-                        TaskUpdatingResultHandler.class,
-                        "YouviewSuccessfullTasks",
-                        "size"
-                ),
-                new Histogram(new SlidingTimeWindowReservoir(4, TimeUnit.HOURS))
-        );
-        unsuccessfulCounter = metricRegistry.register(
-                name(
-                        TaskUpdatingResultHandler.class,
-                        "YouviewUnsuccessfullTasks",
-                        "size"
-                ),
-                new Histogram(new SlidingTimeWindowReservoir(4, TimeUnit.HOURS))
-        );
+        this.context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
+        this.successfullCounter = new TimeCounter(4, TimeUnit.HOURS);
+        metricRegistry.register("YouviewSuccessfullTasks", successfullCounter);
+        this.unsuccessfulCounter = new TimeCounter(4, TimeUnit.HOURS);
+        metricRegistry.register("YouviewUnsuccessfullTasks", unsuccessfulCounter);
     }
 
     /**
@@ -94,7 +80,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
                     result.result(),
                     result.uploadTime()
             );
-            successfulCounter.update(1);
+            successfullCounter.inc();
         } else {
             Response response = new Response(Status.REJECTED, result.result(), result.uploadTime());
             telescope.reportFailedEventWithError(
@@ -102,18 +88,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
                     payload
             );
             taskStore.updateWithResponse(task.id(), response);
-            unsuccessfulCounter.update(1);
-        }
-    }
-
-    private void updateYouviewTransactionMetric(Counter counter) {
-        // we want to count the YV transactions every 4h
-        if (System.currentTimeMillis() - startTime < 14400000) {
-            counter.inc();
-        } else {
-            startTime = System.currentTimeMillis();
-            counter.dec(counter.getCount());
-            counter.inc();
+            unsuccessfulCounter.inc();
         }
     }
 
@@ -173,5 +148,23 @@ public class TaskUpdatingResultHandler implements ResultHandler {
                 )
         );
         return Iterables.getOnlyElement(report.getTransactionReport());
+    }
+
+    private static class TimeCounter implements Metric, Counting {
+
+        private final Histogram histogram;
+
+        public TimeCounter(long time, TimeUnit unit) {
+            histogram = new Histogram(new SlidingTimeWindowReservoir(time, unit));
+        }
+
+        public void inc() {
+            histogram.update(1L);
+        }
+
+        @Override
+        public long getCount() {
+            return histogram.getSnapshot().size();
+        }
     }
 }
