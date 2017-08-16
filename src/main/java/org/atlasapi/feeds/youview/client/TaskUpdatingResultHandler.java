@@ -43,10 +43,14 @@ public class TaskUpdatingResultHandler implements ResultHandler {
             throws JAXBException {
         this.taskStore = checkNotNull(taskStore);
         this.context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
-        this.successfullCounter = new TimeCounter(4, TimeUnit.HOURS);
-        metricRegistry.register("YouviewSuccessfullTasks", successfullCounter);
-        this.unsuccessfulCounter = new TimeCounter(4, TimeUnit.HOURS);
-        metricRegistry.register("YouviewUnsuccessfullTasks", unsuccessfulCounter);
+        this.successfullCounter = metricRegistry.register(
+                "YouviewSuccessfullTasks",
+                new TimeCounter(4, TimeUnit.HOURS)
+        );
+        this.unsuccessfulCounter = metricRegistry.register(
+                "YouviewUnsuccessfullTasks",
+                new TimeCounter(4, TimeUnit.HOURS)
+        );
     }
 
     /**
