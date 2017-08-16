@@ -177,4 +177,27 @@ public class TaskUpdatingResultHandler implements ResultHandler {
             return getCount();
         }
     }
+
+    public static class TimedTaskCounter implements Metric, Gauge<Long>, Counting {
+
+        private final Histogram histogram;
+
+        public TimedTaskCounter(long time, TimeUnit unit) {
+            histogram = new Histogram(new SlidingTimeWindowReservoir(time, unit));
+        }
+
+        public void inc() {
+            histogram.update(1L);
+        }
+
+        @Override
+        public long getCount() {
+            return histogram.getSnapshot().size();
+        }
+
+        @Override
+        public Long getValue() {
+            return getCount();
+        }
+    }
 }
