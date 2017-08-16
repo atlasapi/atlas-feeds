@@ -91,6 +91,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.joda.time.LocalTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -117,7 +119,9 @@ import static org.joda.time.DateTimeConstants.JANUARY;
 @Configuration
 @Import(TVAnytimeFeedsModule.class)
 public class YouViewUploadModule {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(TaskUpdatingResultHandler.class);
+
     private static final String CONFIG_PREFIX = "youview.upload.";
     
     private static final Map<String, Publisher> PUBLISHER_MAPPING = ImmutableMap.of(
@@ -428,6 +432,7 @@ public class YouViewUploadModule {
     public YouviewMetricsController youviewMetricsController() {
         CollectorRegistry collectorRegistry = new CollectorRegistry();
 
+        log.info("{} metrics registered before standard ones: {}", metrics.getMetrics().size(), metrics.getMetrics().keySet());
         metrics.registerAll(
                 new GarbageCollectorMetricSet(
                         getGarbageCollectorMXBeans()
@@ -436,6 +441,8 @@ public class YouViewUploadModule {
         metrics.registerAll(new MemoryUsageGaugeSet());
         metrics.registerAll(new ThreadStatesGaugeSet());
         metrics.registerAll(new JvmAttributeGaugeSet());
+
+        log.info("{} final metrics registered: {}", metrics.getMetrics().size(), metrics.getMetrics().keySet());
 
         collectorRegistry.register(new DropwizardExports(metrics));
 
