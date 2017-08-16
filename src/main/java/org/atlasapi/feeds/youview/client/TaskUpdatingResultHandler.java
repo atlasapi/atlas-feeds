@@ -154,7 +154,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         return Iterables.getOnlyElement(report.getTransactionReport());
     }
 
-    private static class TimeCounter implements Metric, Counting {
+    public static class TimeCounter implements Metric, Counting {
 
         private final Histogram histogram;
 
