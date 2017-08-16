@@ -51,16 +51,10 @@ public class TaskUpdatingResultHandlerTest {
     private TaskStore taskStore = mock(TaskStore.class);
     private YouViewReportHandler reportHandler = mock(YouViewReportHandler.class);
     private JAXBContext context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
-<<<<<<< HEAD
 
     @Mock FeedsTelescopeReporter telescope;
 
     private final ResultHandler handler = new TaskUpdatingResultHandler(taskStore, new MetricRegistry());
-=======
-    private MetricRegistry metricRegistry = new MetricRegistry();
-    
-    private final ResultHandler handler = new TaskUpdatingResultHandler(taskStore, metricRegistry);
->>>>>>> a384150... Added new metrics for YV task alerts
     
     public TaskUpdatingResultHandlerTest() throws JAXBException {
         handler.registerReportHandler(reportHandler);

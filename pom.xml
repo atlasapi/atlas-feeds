@@ -244,20 +244,12 @@
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
-<<<<<<< HEAD
             <artifactId>simpleclient_dropwizard</artifactId>
-=======
-            <artifactId>simpleclient_servlet</artifactId>
->>>>>>> a384150... Added new metrics for YV task alerts
             <version>${prometheus.version}</version>
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
-<<<<<<< HEAD
             <artifactId>simpleclient_servlet</artifactId>
-=======
-            <artifactId>simpleclient_dropwizard</artifactId>
->>>>>>> a384150... Added new metrics for YV task alerts
             <version>${prometheus.version}</version>
         </dependency>
         <dependency>
@@ -300,10 +292,7 @@
         <spring.version>4.0.9.RELEASE</spring.version>
         <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
         <prometheus.version>0.0.19</prometheus.version>
-<<<<<<< HEAD
-=======
 
->>>>>>> a384150... Added new metrics for YV task alerts
         <jacoco.version>0.7.5.201505241946</jacoco.version>
 
         <sonar.jacoco.itReportPath>${project.basedir}/target/jacoco-it.exec

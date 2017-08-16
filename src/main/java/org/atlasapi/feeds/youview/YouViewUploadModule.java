@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.youview;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -55,7 +54,7 @@ import org.atlasapi.feeds.youview.revocation.OnDemandBasedRevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
-import org.atlasapi.feeds.youview.www.YouviewMetricsController;
+import org.atlasapi.feeds.youview.www.MetricsController;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Publisher;
@@ -428,7 +427,7 @@ public class YouViewUploadModule {
     }
 
     @Bean
-    public YouviewMetricsController youviewMetricsController() {
+    public MetricsController metricsController() {
         CollectorRegistry collectorRegistry = new CollectorRegistry();
 
         metrics.registerAll(
@@ -442,6 +441,6 @@ public class YouViewUploadModule {
 
         collectorRegistry.register(new DropwizardExports(metrics));
 
-        return YouviewMetricsController.create(collectorRegistry);
+        return MetricsController.create(collectorRegistry);
     }
 }
