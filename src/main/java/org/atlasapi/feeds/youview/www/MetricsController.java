@@ -13,14 +13,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 @Controller
-public class YouviewMetricsController extends MetricsServlet {
+public class MetricsController extends MetricsServlet {
 
-    private YouviewMetricsController(CollectorRegistry registry) {
+    private MetricsController(CollectorRegistry registry) {
         super(registry);
     }
 
-    public static YouviewMetricsController create(CollectorRegistry registry) {
-        return new YouviewMetricsController(registry);
+    public static MetricsController create(CollectorRegistry registry) {
+        return new MetricsController(registry);
     }
 
     @RequestMapping(value = "/system/prometheusMetrics", method = RequestMethod.GET)
