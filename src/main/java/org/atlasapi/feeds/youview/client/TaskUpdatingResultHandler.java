@@ -41,11 +41,11 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         this.context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
         this.successfullCounter = metricRegistry.register(
                 "YouviewSuccessfullTasks",
-                new TimedTaskCounter(4, TimeUnit.HOURS)
+                new TimedTaskCounter(2, TimeUnit.MINUTES)
         );
         this.unsuccessfulCounter = metricRegistry.register(
                 "YouviewUnsuccessfullTasks",
-                new TimedTaskCounter(4, TimeUnit.HOURS)
+                new TimedTaskCounter(2, TimeUnit.MINUTES)
         );
     }
     
