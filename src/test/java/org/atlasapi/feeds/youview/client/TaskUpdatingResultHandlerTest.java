@@ -21,6 +21,7 @@ import org.atlasapi.media.entity.Publisher;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
 
+import com.codahale.metrics.MetricRegistry;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.ControlledMessageType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.FragmentReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
@@ -45,8 +46,9 @@ public class TaskUpdatingResultHandlerTest {
     private TaskStore taskStore = mock(TaskStore.class);
     private YouViewReportHandler reportHandler = mock(YouViewReportHandler.class);
     private JAXBContext context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
+    private MetricRegistry metricRegistry = new MetricRegistry();
     
-    private final ResultHandler handler = new TaskUpdatingResultHandler(taskStore);
+    private final ResultHandler handler = new TaskUpdatingResultHandler(taskStore, metricRegistry);
     
     public TaskUpdatingResultHandlerTest() throws JAXBException {
         handler.registerReportHandler(reportHandler);

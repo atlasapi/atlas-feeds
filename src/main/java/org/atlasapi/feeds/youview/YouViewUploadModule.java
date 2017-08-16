@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -54,6 +55,7 @@ import org.atlasapi.feeds.youview.revocation.OnDemandBasedRevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.feeds.youview.www.YouViewUploadController;
+import org.atlasapi.feeds.youview.www.YouviewMetricsController;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Publisher;
@@ -72,6 +74,11 @@ import com.metabroadcast.common.security.UsernameAndPassword;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.SystemClock;
 
+import com.codahale.metrics.JvmAttributeGaugeSet;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
+import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpRequestInitializer;
@@ -79,6 +86,8 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.dropwizard.DropwizardExports;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
@@ -92,6 +101,7 @@ import org.xml.sax.SAXException;
 import tva.metadata._2010.TVAMainType;
 
 import static com.metabroadcast.common.time.DateTimeZones.UTC;
+import static java.lang.management.ManagementFactory.*;
 import static org.joda.time.DateTimeConstants.JANUARY;
 
 /**
@@ -131,6 +141,8 @@ public class YouViewUploadModule {
     private static final DateTime BOOTSTRAP_START_DATE = new DateTime(2017, JANUARY, 1, 0, 0, 0, 0, UTC);
     
     private final Clock clock = new SystemClock(DateTimeZone.UTC);
+
+    private MetricRegistry metrics = new MetricRegistry();
     
     private @Autowired DatabasedMongo mongo;
     private @Autowired LastUpdatedContentFinder contentFinder;
@@ -358,7 +370,7 @@ public class YouViewUploadModule {
     
     @Bean
     public ResultHandler resultHandler() throws JAXBException, SAXException {
-        return new TaskUpdatingResultHandler(taskStore);
+        return new TaskUpdatingResultHandler(taskStore, metrics);
     }
 
     @Bean
@@ -411,5 +423,23 @@ public class YouViewUploadModule {
                 Configurer.get(publisherPrefix + ".username").get(), 
                 Configurer.get(publisherPrefix + ".password").get()
         );
+    }
+
+    @Bean
+    public YouviewMetricsController youviewMetricsController() {
+        CollectorRegistry collectorRegistry = new CollectorRegistry();
+
+        metrics.registerAll(
+                new GarbageCollectorMetricSet(
+                        getGarbageCollectorMXBeans()
+                )
+        );
+        metrics.registerAll(new MemoryUsageGaugeSet());
+        metrics.registerAll(new ThreadStatesGaugeSet());
+        metrics.registerAll(new JvmAttributeGaugeSet());
+
+        collectorRegistry.register(new DropwizardExports(metrics));
+
+        return YouviewMetricsController.create(collectorRegistry);
     }
 }
