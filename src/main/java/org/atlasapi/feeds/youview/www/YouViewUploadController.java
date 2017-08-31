@@ -42,12 +42,11 @@ import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
-import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
-import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
 
@@ -210,10 +209,8 @@ public class YouViewUploadController {
                     sb.append("Done uploading " + item.getCanonicalUri() + System.lineSeparator());
                 } catch (PayloadGenerationException e) {
                     telescope.reportFailedEvent(
-                            "Content failed to upload. (" + (e.getMessage()
-                                                             + ")"),
-                            new ObjectMapper().writeValueAsString(item),
-                            MimeType.APPLICATION_JSON
+                            MAPPER.writeValueAsString(item) +" failed to upload. "
+                            + "(" + (e.toString() + ")" )
                     );
                     sb.append("Error uploading " + e.getMessage());
                 }
@@ -222,59 +219,70 @@ public class YouViewUploadController {
         } catch (Exception e) {
             telescope.reportFailedEvent(
                     "The call to /feeds/youview/"+publisherStr+"/schedule/upload"
-                    + "?channel"+channelStr+"&from="+fromStr+"&to="+toStr
-                    + " failed. (" + e.toString() + ")"
-                    , null);
+                    + " Params: channel="+channelStr+", from="+fromStr+", to="+toStr
+                    + " failed. (" + e.toString() + ")");
             telescope.endReporting();
+            throw e;
         }
     }
 
     @RequestMapping(value = "/feeds/youview/bbc_nitro/upload/multi")
     public void uploadMultipleContent(HttpServletRequest request, HttpServletResponse response)
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        List<String> uris = MAPPER.readValue(request.getInputStream(), STRING_LIST);
-
-        if (uris.isEmpty()) {
-            sendError(response, SC_BAD_REQUEST, "URI list is empty");
-            return;
-        }
 
         FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_BBC_MULTI_UPLOADER);
-        telescope.startReporting(); // we always start the reporting, because we always call uploadContent with the upload flag to true. Since we are uploading, we are reporting.
-        List<ListenableFuture<Try>> responses = Lists.newArrayList();
-        for (final String uri : uris) {
-            ListenableFuture<Try> task = executor.submit(() -> {
-                try {
-                    Optional<Content> content = getContent(uri);
-                    if (!content.isPresent()) {
-                        telescope.reportFailedEvent("No content was found", uri);
-                        return Try.exception(new IllegalArgumentException(String.format(
-                                "Content %s not found",
-                                uri
-                        )));
-                    } else {
-                        uploadContent(true, content.get(), telescope);
-                        return Try.success(uri);
+        telescope.startReporting();
+
+        try{
+            List<String> uris = MAPPER.readValue(request.getInputStream(), STRING_LIST);
+
+            if (uris.isEmpty()) {
+                sendError(response, SC_BAD_REQUEST, "URI list is empty");
+
+                telescope.reportFailedEvent(
+                        "The call to " + request.getRequestURL() + " failed. The URI list is empty.");
+                return;
+            }
+
+            List<ListenableFuture<Try>> responses = Lists.newArrayList();
+            for (final String uri : uris) {
+                ListenableFuture<Try> task = executor.submit(() -> {
+                    try {
+                        Optional<Content> content = getContent(uri);
+                        if (!content.isPresent()) {
+                            telescope.reportFailedEvent("No content was found at uri " + uri);
+                            return Try.exception(new IllegalArgumentException(String.format(
+                                    "Content %s not found",
+                                    uri
+                            )));
+                        } else {
+                            uploadContent(true, content.get(), telescope);
+                            return Try.success(uri);
+                        }
+                    } catch (Exception e) {
+                        telescope.reportFailedEvent(
+                                "Content at uri " + uri + " failed to upload. "
+                                + "(" + (e.toString() + ")" )
+                        );
+                        return Try.exception(e);
                     }
-                } catch (Exception e) {
-                    telescope.reportFailedEvent(
-                            "There was an unknown error while trying to upload.",
-                            uri
-                    );
-                    return Try.exception(e);
-                }
-            });
+                });
 
-            responses.add(task);
+                responses.add(task);
+            }
+            ListenableFuture<List<Try>> allTasks = Futures.allAsList(responses);
+            List<Try> allResponses = allTasks.get();
+
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentType("application/json");
+            MAPPER.writeValue(response.getOutputStream(), allResponses);
+        } catch (Exception e) {
+            telescope.reportFailedEvent(
+                    "The call to " + request.getRequestURL() + " failed. "
+                    + "(" + e.toString() + ")");
+            telescope.endReporting();
+            throw e;
         }
-        telescope.endReporting();
-
-        ListenableFuture<List<Try>> allTasks = Futures.allAsList(responses);
-        List<Try> allResponses = allTasks.get();
-
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.setContentType("application/json");
-        MAPPER.writeValue(response.getOutputStream(), allResponses);
     }
 
     /**
@@ -284,7 +292,8 @@ public class YouViewUploadController {
      * @throws IOException
      * @throws HttpException
      */
-    // TODO this method does far too much right now
+    // TODO this method does far too much right now.
+    // I'd argue its not just this method, its the whole class.
     @RequestMapping(value = "/feeds/youview/{publisher}/upload", method = RequestMethod.POST)
     public void uploadContent(
             HttpServletResponse response,
@@ -296,34 +305,44 @@ public class YouViewUploadController {
                     boolean immediate
     ) throws IOException, HttpException, PayloadGenerationException {
 
-        Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
-        if (!publisher.isPresent()) {
-            sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
-            return;
-        }
-
-        if (StringUtils.isEmpty(uri)) {
-            sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
-            return;
-        }
-
         FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_XML_UPLOADER);
         if(immediate){ //only start reporting if we will actually upload stuff as well.
+            //I believe if this is not immediate it will schedule a task, and things will be
+            //reported when the task is executed.
             telescope.startReporting();
         }
+        try {
+            Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
+            if (!publisher.isPresent()) {
+                sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
+                return;
+            }
 
-        if (isMasterbrandUri(uri)) {
-            handleMasterbrand(response, uri, telescope);
-        } else if (isServiceUri(uri)) {
-            handleChannel(response, uri, telescope);
-        } else {
-            handleContent(uri, elementId, typeStr, immediate, response, telescope);
-        }
+            if (StringUtils.isEmpty(uri)) {
+                sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
+                return;
+            }
 
-        if(immediate){ //This requires that `immediate` does not change in between
-            telescope.endReporting();
+            if (isMasterbrandUri(uri)) {
+                handleMasterbrand(response, uri, telescope);
+            } else if (isServiceUri(uri)) {
+                handleChannel(response, uri, telescope);
+            } else {
+                handleContent(uri, elementId, typeStr, immediate, response, telescope);
+            }
+
+
+            sendOkResponse(response, "Upload for " + uri + " sent successfully");
+        } catch (Exception e){
+            if (immediate) { //to prevent logging an error message if it is not started.
+                telescope.reportFailedEvent(
+                        "The call to /feeds/youview/"+publisherStr+"/upload"
+                        + " Params: uri="+uri+", element_id="+elementId+", type="+typeStr+", immediate="+immediate
+                        + " failed. (" + e.toString() + ")");
+                telescope.endReporting();
+            }
+            throw e;
         }
-        sendOkResponse(response, "Upload for " + uri + " sent successfully");
     }
 
     private boolean isServiceUri(String uri) {
@@ -697,32 +716,50 @@ public class YouViewUploadController {
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri", required = true) String uri) throws IOException {
 
-        Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
-        if (!publisher.isPresent()) {
-            sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
-            return;
-        }
-        if (uri == null) {
-            sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
-            return;
-        }
-        Optional<Content> toBeRevoked = getContent(uri);
-        if (!toBeRevoked.isPresent()) {
-            sendError(response, SC_BAD_REQUEST, "content does not exist");
-            return;
-        }
-
-
         FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_REVOKER);
         telescope.startReporting();
+        String url = "/feeds/youview/" + publisherStr + "/revoke/" + "?uri" + uri;
 
-        ImmutableList<Task> revocationTasks = revocationProcessor.revoke(toBeRevoked.get());
-        for (Task revocationTask : revocationTasks) {
-            processTask(revocationTask, true, telescope);
+        try {
+            Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
+            if (!publisher.isPresent()) {
+                telescope.reportFailedEvent(
+                        "The call to " + url
+                        + " failed because publisher "+ publisherStr+" was not found.");
+                telescope.endReporting();
+                sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
+                return;
+            }
+            if (uri == null) {
+                telescope.reportFailedEvent(
+                        "The call to " + url
+                        + " failed because the uri was not specified.");
+                telescope.endReporting();
+                sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
+                return;
+            }
+            Optional<Content> toBeRevoked = getContent(uri);
+            if (!toBeRevoked.isPresent()) {
+                telescope.reportFailedEvent(
+                        "The call to " + url
+                        + " failed because the content does not exist.");
+                telescope.endReporting();
+                sendError(response, SC_BAD_REQUEST, "content does not exist");
+                return;
+            }
+
+            ImmutableList<Task> revocationTasks = revocationProcessor.revoke(toBeRevoked.get());
+            for (Task revocationTask : revocationTasks) {
+                processTask(revocationTask, true, telescope);
+            }
+
+            sendOkResponse(response, "Revoke for " + uri + " sent sucessfully");
+        } catch(Exception e) { telescope.reportFailedEvent(
+                "The call to " + url
+                + " failed. (" + e.toString() + ")");
+            telescope.endReporting();
+            throw e;
         }
-
-        telescope.endReporting();
-        sendOkResponse(response, "Revoke for " + uri + " sent sucessfully");
     }
 
     /**
@@ -736,31 +773,49 @@ public class YouViewUploadController {
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri", required = true) String uri) throws IOException {
 
-        Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
-        if (!publisher.isPresent()) {
-            sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
-            return;
-        }
-        if (uri == null) {
-            sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
-            return;
-        }
-        Optional<Content> toBeUnrevoked = getContent(uri);
-        if (!toBeUnrevoked.isPresent()) {
-            sendError(response, SC_BAD_REQUEST, "content does not exist");
-            return;
-        }
-
         FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_UNREVOKER);
         telescope.startReporting();
+        String url = "/feeds/youview/" + publisherStr + "/unrevoke/" + "?uri" + uri;
 
-        ImmutableList<Task> revocationTasks = revocationProcessor.unrevoke(toBeUnrevoked.get());
-        for (Task revocationTask : revocationTasks) {
-            processTask(revocationTask, true, telescope);
+        try {
+            Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
+            if (!publisher.isPresent()) {
+                telescope.reportFailedEvent(
+                    "The call to " + url
+                    + " failed because publisher "+ publisherStr+" was not found.");
+                telescope.endReporting();
+                sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
+                return;
+            }
+            if (uri == null) {
+                telescope.reportFailedEvent(
+                        "The call to " + url
+                        + " failed because the uri was not specified.");
+                telescope.endReporting();
+                sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
+                return;
+            }
+            Optional<Content> toBeUnrevoked = getContent(uri);
+            if (!toBeUnrevoked.isPresent()) {
+                telescope.reportFailedEvent(
+                        "The call to " + url
+                        + " failed because the content does not exist.");
+                sendError(response, SC_BAD_REQUEST, "content does not exist");
+                return;
+            }
+
+            ImmutableList<Task> revocationTasks = revocationProcessor.unrevoke(toBeUnrevoked.get());
+            for (Task revocationTask : revocationTasks) {
+                processTask(revocationTask, true, telescope);
+            }
+
+            sendOkResponse(response, "Unrevoke for " + uri + " sent sucessfully");
+        } catch(Exception e) {
+            telescope.reportFailedEvent(
+                    "The call to " + url + " failed. (" + e.toString() + ")");
+            telescope.endReporting();
+            throw e;
         }
-
-        telescope.endReporting();
-        sendOkResponse(response, "Unrevoke for " + uri + " sent sucessfully");
     }
 
     private void uploadBroadcast(String elementId, ItemBroadcastHierarchy broadcastHierarchy,

@@ -91,6 +91,10 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         reportFailedEvent(errorMsg,payload,MimeType.APPLICATION_XML);
     }
 
+    public void reportFailedEvent(String errorMsg) {
+        reportFailedEvent(errorMsg, null);
+    }
+
     public void reportFailedEvent(String errorMsg, String payload, MimeType mimeType) {
         Event event = Event.builder()
                 .withStatus(Event.Status.FAILURE)
