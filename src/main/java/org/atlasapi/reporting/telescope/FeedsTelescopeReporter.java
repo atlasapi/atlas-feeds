@@ -83,15 +83,15 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
     }
 
     /**
-     * Convenience method for {@link #reportFailedEventWithError(String, String, MimeType)}
+     * Convenience method for {@link #reportFailedEvent(String, String, MimeType)}
      * @param errorMsg
      * @param payload Default payload is XML
      */
-    public void reportFailedEventWithError(String errorMsg, String payload) {
-        reportFailedEventWithError(errorMsg,payload,MimeType.APPLICATION_XML);
+    public void reportFailedEvent(String errorMsg, String payload) {
+        reportFailedEvent(errorMsg,payload,MimeType.APPLICATION_XML);
     }
 
-    public void reportFailedEventWithError(String errorMsg, String payload, MimeType mimeType) {
+    public void reportFailedEvent(String errorMsg, String payload, MimeType mimeType) {
         Event event = Event.builder()
                 .withStatus(Event.Status.FAILURE)
                 .withType(Event.Type.UPLOAD)

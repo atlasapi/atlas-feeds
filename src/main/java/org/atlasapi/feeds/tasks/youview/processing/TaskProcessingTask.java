@@ -1,22 +1,22 @@
 package org.atlasapi.feeds.tasks.youview.processing;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Set;
 
 import org.atlasapi.feeds.tasks.Action;
+import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
-import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
-import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
+
+import com.metabroadcast.common.scheduling.ScheduledTask;
+import com.metabroadcast.common.scheduling.UpdateProgress;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.metabroadcast.common.scheduling.ScheduledTask;
-import com.metabroadcast.common.scheduling.UpdateProgress;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An abstract base for classes to perform various actions upon a remote
@@ -65,10 +65,15 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                     log.error("Failed to process task {}", task, e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
                     //report to telescope
-                    String payloadError = task.payload().isPresent() ? "" : " No Payload was present.";
-                    String payload = task.payload().isPresent() ? task.payload().get().payload() : "";
-                    telescope.reportFailedEventWithError(
-                            "Failed to process task=" + task.id() + ". AtlasId=" + task.atlasDbId() + payloadError + " (" + e.getMessage() + ")",
+                    String payload = task.payload().isPresent()
+                                     ? task.payload().get().payload()
+                                     : "";
+                    telescope.reportFailedEvent(
+                            "Failed to process taskId=" + task.id()
+                            + ". destination " + task.destination()
+                            + ". atlasId=" + task.atlasDbId()
+                            + ". payload present=" + task.payload().isPresent()
+                            + " (" + e.toString() + ")",
                             payload
                     );
                 }

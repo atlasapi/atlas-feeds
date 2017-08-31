@@ -51,7 +51,6 @@ import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
 
-import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
@@ -209,7 +208,7 @@ public class YouViewUploadController {
                 uploadContent(true, item, telescope);
                 sb.append("Done uploading " + item.getCanonicalUri() + System.lineSeparator());
             } catch (PayloadGenerationException e) {
-                telescope.reportFailedEventWithError("Content failed to upload. (" + (e.getMessage() + ")"), new ObjectMapper().writeValueAsString(item), MimeType.APPLICATION_JSON);
+                telescope.reportFailedEvent("Content failed to upload. (" + (e.getMessage() + ")"), new ObjectMapper().writeValueAsString(item), MimeType.APPLICATION_JSON);
                 sb.append("Error uploading " + e.getMessage());
             }
         }
@@ -236,7 +235,7 @@ public class YouViewUploadController {
                 try {
                     Optional<Content> content = getContent(uri);
                     if (!content.isPresent()) {
-                        telescope.reportFailedEventWithError("No content was found", uri);
+                        telescope.reportFailedEvent("No content was found", uri);
                         return Try.exception(new IllegalArgumentException(String.format(
                                 "Content %s not found",
                                 uri
@@ -246,7 +245,7 @@ public class YouViewUploadController {
                         return Try.success(uri);
                     }
                 } catch (Exception e) {
-                    telescope.reportFailedEventWithError(
+                    telescope.reportFailedEvent(
                             "There was an unknown error while trying to upload.",
                             uri
                     );

@@ -60,13 +60,16 @@ public class YouViewTaskProcessor implements TaskProcessor {
             }
         } catch (Exception e) {
             log.error("Error processing Task {}", task.id(), e);
-          //report to telescope
-          String payloadError = task.payload().isPresent() ? "" : "No Payload was present";
-          String payload = task.payload().isPresent() ? task.payload().get().payload() : "";
-          telescope.reportFailedEventWithError(
-                  "Failed to process Task=" + task.id() + ". AtlasId=" + task.atlasDbId() + " (" + e.getMessage() + ") " + payloadError,
-                  payload
-          );
+            //report to telescope
+            String payload = task.payload().isPresent() ? task.payload().get().payload() : "";
+            telescope.reportFailedEvent(
+                    "Failed to process taskId=" + task.id()
+                    + ". destination " + task.destination()
+                    + ". atlasId=" + task.atlasDbId()
+                    + ". payload present=" + task.payload().isPresent()
+                    + " (" + e.getMessage() + ") ",
+                    payload
+            );
             setFailed(task, e);
         }
     }
@@ -77,8 +80,14 @@ public class YouViewTaskProcessor implements TaskProcessor {
 
     private void processUpdate(Task task, FeedsTelescopeReporter telescope) {
         log.info("proccessing an update for atlasid={}", task.atlasDbId());
-        if (!task.payload().isPresent()) { //If you want remote this, check for other .get() down the line.
-            telescope.reportFailedEventWithError("No payload was present.", "");
+        if (!task.payload().isPresent()) { //If you want remove this, check for any .get() down the line.
+            telescope.reportFailedEvent(
+                    "Failed to " + task.action().name() + " taskId=" + task.id()
+                    + ". destination " + task.destination()
+                    + ". atlasId=" + task.atlasDbId()
+                    + ". There was no payload.",
+                    ""
+            );
             setFailed(task);
             return;
         }
