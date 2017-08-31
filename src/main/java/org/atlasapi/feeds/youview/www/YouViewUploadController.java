@@ -185,36 +185,48 @@ public class YouViewUploadController {
         FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_SCHEDULE_UPLOADER);
         telescope.startReporting();
 
-        DateTime from = dateTimeInQueryParser.parse(fromStr);
-        DateTime to = dateTimeInQueryParser.parse(toStr);
-        Channel channel = channelResolver.fromId(channelIdCodec.decode(channelStr).longValue())
-                .requireValue();
+        try {
+            DateTime from = dateTimeInQueryParser.parse(fromStr);
+            DateTime to = dateTimeInQueryParser.parse(toStr);
+            Channel channel = channelResolver.fromId(channelIdCodec.decode(channelStr).longValue())
+                    .requireValue();
 
-        Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
+            Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
 
-        Schedule schedule = scheduleResolver.unmergedSchedule(
-                from,
-                to,
-                ImmutableSet.of(channel),
-                ImmutableSet.of(publisher.get())
-        );
+            Schedule schedule = scheduleResolver.unmergedSchedule(
+                    from,
+                    to,
+                    ImmutableSet.of(channel),
+                    ImmutableSet.of(publisher.get())
+            );
 
-        List<Item> items = Iterables.getOnlyElement(schedule.scheduleChannels()).items();
+            List<Item> items = Iterables.getOnlyElement(schedule.scheduleChannels()).items();
 
-        StringBuilder sb = new StringBuilder();
-        for (Item item : items) {
-            try {
-                sb.append("Uploading " + item.getCanonicalUri() + System.lineSeparator());
-                uploadContent(true, item, telescope);
-                sb.append("Done uploading " + item.getCanonicalUri() + System.lineSeparator());
-            } catch (PayloadGenerationException e) {
-                telescope.reportFailedEvent("Content failed to upload. (" + (e.getMessage() + ")"), new ObjectMapper().writeValueAsString(item), MimeType.APPLICATION_JSON);
-                sb.append("Error uploading " + e.getMessage());
+            StringBuilder sb = new StringBuilder();
+            for (Item item : items) {
+                try {
+                    sb.append("Uploading " + item.getCanonicalUri() + System.lineSeparator());
+                    uploadContent(true, item, telescope);
+                    sb.append("Done uploading " + item.getCanonicalUri() + System.lineSeparator());
+                } catch (PayloadGenerationException e) {
+                    telescope.reportFailedEvent(
+                            "Content failed to upload. (" + (e.getMessage()
+                                                             + ")"),
+                            new ObjectMapper().writeValueAsString(item),
+                            MimeType.APPLICATION_JSON
+                    );
+                    sb.append("Error uploading " + e.getMessage());
+                }
             }
+            sendOkResponse(response, sb.toString());
+        } catch (Exception e) {
+            telescope.reportFailedEvent(
+                    "The call to /feeds/youview/"+publisherStr+"/schedule/upload"
+                    + "?channel"+channelStr+"&from="+fromStr+"&to="+toStr
+                    + " failed. (" + e.toString() + ")"
+                    , null);
+            telescope.endReporting();
         }
-
-        telescope.endReporting();
-        sendOkResponse(response, sb.toString());
     }
 
     @RequestMapping(value = "/feeds/youview/bbc_nitro/upload/multi")
@@ -583,13 +595,11 @@ public class YouViewUploadController {
             boolean immediate,
             FeedsTelescopeReporter telescope
     ) {
-        log.info("Upload controller is processing task atlasID={}", task.atlasDbId());
         if (task == null) {
             return;
         }
         Task savedTask = taskStore.save(Task.copy(task).withManuallyCreated(true).build());
 
-        log.info("the saved task had atlasid={}", task.atlasDbId());
         if (immediate) {
             taskProcessor.process(savedTask, telescope);
         }
