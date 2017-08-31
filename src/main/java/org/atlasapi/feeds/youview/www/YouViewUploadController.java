@@ -51,6 +51,7 @@ import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
 
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
@@ -578,7 +579,11 @@ public class YouViewUploadController {
         }
     }
 
-    private void processTask(@Nullable Task task, boolean immediate, FeedsTelescopeReporter telescope) {
+    private void processTask(
+            @Nullable Task task,
+            boolean immediate,
+            FeedsTelescopeReporter telescope
+    ) {
         log.info("Upload controller is processing task atlasID={}", task.atlasDbId());
         if (task == null) {
             return;

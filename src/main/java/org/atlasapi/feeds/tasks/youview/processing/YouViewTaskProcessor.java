@@ -28,8 +28,12 @@ public class YouViewTaskProcessor implements TaskProcessor {
     private final ResultHandler resultHandler;
     private final TaskStore taskStore;
 
-    public YouViewTaskProcessor(YouViewClient client, ResultHandler resultHandler,
-            RevokedContentStore revocationStore, TaskStore taskStore) {
+    public YouViewTaskProcessor(
+            YouViewClient client,
+            ResultHandler resultHandler,
+            RevokedContentStore revocationStore,
+            TaskStore taskStore
+    ) {
         this.client = checkNotNull(client);
         this.resultHandler = checkNotNull(resultHandler);
         this.revocationStore = checkNotNull(revocationStore);
@@ -89,7 +93,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
                         destination.contentUri(),
                         task.action().name()
                 );
-                telescope.reportFailedEventWithWarning(
+                telescope.reportSuccessfulEventWithWarning(
                         task.atlasDbId(),
                         "Content " + destination.contentUri() + " is revoked. Cannot " + task.action().name(),
                         task.payload().get().payload() //.isPresent() checked at method entry

@@ -237,6 +237,26 @@
             <artifactId>commons-io</artifactId>
             <version>1.3.2</version>
         </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient</artifactId>
+            <version>${prometheus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_dropwizard</artifactId>
+            <version>${prometheus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>simpleclient_servlet</artifactId>
+            <version>${prometheus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-jvm</artifactId>
+            <version>3.1.4</version>
+        </dependency>
     </dependencies>
     <scm>
         <connection>scm:git:git://github.com/atlas/atlas-feeds.git</connection>
@@ -271,6 +291,7 @@
 
         <spring.version>4.0.9.RELEASE</spring.version>
         <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
+        <prometheus.version>0.0.19</prometheus.version>
 
         <jacoco.version>0.7.5.201505241946</jacoco.version>
 

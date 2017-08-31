@@ -7,6 +7,7 @@ import com.metabroadcast.columbus.telescope.api.Event;
 import com.metabroadcast.columbus.telescope.client.TelescopeReporter;
 import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
 import com.metabroadcast.common.media.MimeType;
+import com.metabroadcast.common.properties.Configurer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +17,8 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
     private static final Logger log = LoggerFactory.getLogger(FeedsTelescopeReporter.class);
 
     protected FeedsTelescopeReporter(TelescopeReporterName reporterName) {
-        super(reporterName, TelescopeConfiguration.ENVIRONMENT, TelescopeConfiguration.TELESCOPE_HOST);
+        //Surprisingly, this will draw the actual configuration from atlas.
+        super(reporterName, Configurer.get("telescope.environment").get(), Configurer.get("telescope.host").get());
     }
 
     /**
@@ -26,45 +28,44 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
      * Use by .startReporting() first, then report any events, then finally .endReporting()
      */
     public static FeedsTelescopeReporter create(TelescopeReporterName reporterName) {
-
-        FeedsTelescopeReporter telescopeProxy = new FeedsTelescopeReporter(reporterName);
-
-        return telescopeProxy;
+        return new FeedsTelescopeReporter(reporterName);
     }
 
-    public void reportSuccessfulEvent(String atlasItemId, String payload) {
+    private void reportSuccessfulEventGeneric(
+            String atlasItemId,
+            String warningMsg,
+            String payload
+    ) {
         try { //fail graciously by reporting nothing, but print a full stack so we know who caused this
             if (atlasItemId == null) {
                 throw new IllegalArgumentException("No atlasId was given");
             }
         }
         catch(IllegalArgumentException e){
-            log.error( "Cannot report an atlas event without an atlasId", e);
+            log.error( "Cannot report a successful event to telescope, without an atlasId", e);
             return;
         }
 
-        if (!isStarted()) {
-            log.error("It was attempted to report atlasItem={}, but the telescope client was not started.", atlasItemId );
-            return;
-        }
-        if (isFinished()) { //we can still report, but it shouldn't happen
-            log.warn("atlasItem={} was reported to telescope client={} after it has finished reporting.", atlasItemId, getTaskId() );
+        EntityState.Builder entityState = EntityState.builder()
+                .withAtlasId(atlasItemId)
+                .withRaw(payload)
+                .withRawMime(MimeType.APPLICATION_JSON.toString());
+
+        if (warningMsg != null) {
+            entityState.withWarning(warningMsg);
         }
 
-        //if all went well
-        Event event = Event.builder()
-                .withStatus(Event.Status.SUCCESS)
+        Event event = super.getEventBuilder()
                 .withType(Event.Type.UPLOAD)
-                .withEntityState(EntityState.builder()
-                        .withAtlasId(atlasItemId)
-                        .withRaw(payload)
-                        .withRawMime(MimeType.APPLICATION_XML.toString())
-                        .build()
-                )
-                .withTaskId(getTaskId())
-                .withTimestamp(LocalDateTime.now())
+                .withStatus(Event.Status.SUCCESS)
+                .withEntityState(entityState.build())
                 .build();
-       reportEvent(event);
+
+        reportEvent(event);
+    }
+
+    public void reportSuccessfulEvent(String atlasItemId, String payload) {
+       reportSuccessfulEventGeneric(atlasItemId, null, payload);
     }
 
     //convenience method for the most common reporting Format
@@ -72,45 +73,13 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         reportSuccessfulEvent(encode(dbId), payload);
     }
 
-    public void reportFailedEventWithWarning(String atlasItemId, String warningMsg, String payload) {
-        try { //fail graciously by reporting nothing, but print a full stack so we know who caused this
-            if (atlasItemId == null) {
-                throw new IllegalArgumentException("No atlasId was given");
-            }
-        }
-        catch(IllegalArgumentException e){
-            log.error( "Cannot report an atlas event without an atlasId. This report already had a warning message={}",warningMsg, e);
-            return;
-        }
-
-        if (!isStarted()) {
-            log.error("It was attempted to report atlasId={}, but the telescope client was not started.", atlasItemId);
-            return;
-        }
-        if (isFinished()) { //we can still report, but it shouldn't happen
-            log.warn( "atlasId={} was reported to telescope client={} after it had finished reporting.", atlasItemId, getTaskId());
-        }
-
-        Event event = Event.builder()
-                .withStatus(Event.Status.FAILURE)
-                .withType(Event.Type.UPLOAD)
-                .withEntityState(
-                        EntityState.builder()
-                        .withAtlasId(atlasItemId)
-                        .withWarning(warningMsg)
-                        .withRaw(payload)
-                        .withRawMime(MimeType.APPLICATION_XML.toString())
-                        .build()
-                )
-                .withTaskId(getTaskId())
-                .withTimestamp(LocalDateTime.now())
-                .build();
-        reportEvent(event);
+    public void reportSuccessfulEventWithWarning(String atlasItemId, String warningMsg, String payload) {
+        reportSuccessfulEventGeneric(atlasItemId, warningMsg, payload);
     }
 
     //convenience method for the most common reporting Format
-    public void reportFailedEventWithWarning(long dbId, String warningMsg, String payload) {
-        reportFailedEventWithWarning(encode(dbId), warningMsg, payload);
+    public void reportSuccessfulEventWithWarning(long dbId, String warningMsg, String payload) {
+        reportSuccessfulEventWithWarning(encode(dbId), warningMsg, payload);
     }
 
     /**
@@ -123,14 +92,6 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
     }
 
     public void reportFailedEventWithError(String errorMsg, String payload, MimeType mimeType) {
-        if (!isStarted()) {
-            log.error( "It was attempted to report an error to telescope, but the client was not started." );
-            return;
-        }
-        if (isFinished()) { //we can still report, but it shouldn't happen
-            log.warn("An error was reported to telescope after the telescope client={} has finished reporting.", getTaskId() );
-        }
-
         Event event = Event.builder()
                 .withStatus(Event.Status.FAILURE)
                 .withType(Event.Type.UPLOAD)
