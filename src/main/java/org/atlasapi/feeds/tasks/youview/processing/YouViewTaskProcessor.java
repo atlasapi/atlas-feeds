@@ -57,10 +57,10 @@ public class YouViewTaskProcessor implements TaskProcessor {
         } catch (Exception e) {
             log.error("Error processing Task {}", task.id(), e);
           //report to telescope
-          String payloadError = task.payload().isPresent() ? "" : " No Payload was present.";
+          String payloadError = task.payload().isPresent() ? "" : "No Payload was present";
           String payload = task.payload().isPresent() ? task.payload().get().payload() : "";
           telescope.reportFailedEventWithError(
-                  "Error processing task (" + e.getMessage() + "). " + task + "Failed to process Task=" + task.id() + ". AtlasId=" + task.atlasDbId() + payloadError + " (" + e.getMessage() + ")",
+                  "Failed to process Task=" + task.id() + ". AtlasId=" + task.atlasDbId() + " (" + e.getMessage() + ") " + payloadError,
                   payload
           );
             setFailed(task, e);
