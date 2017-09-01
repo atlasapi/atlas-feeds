@@ -856,7 +856,6 @@ public class YouViewUploadController {
     private void sendError(HttpServletResponse response, int responseCode, String message)
             throws IOException {
         response.sendError(responseCode, message);
-        response.setContentLength(0);
     }
 
     private Optional<Content> getContent(String contentUri) {
