@@ -182,7 +182,7 @@ public class YouViewUploadController {
             @RequestParam("from") String fromStr,
             @RequestParam("to") String toStr
     ) throws IOException {
-        FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_SCHEDULE_UPLOADER);
+        FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_MANUAL_SCHEDULE_UPLOADER);
         telescope.startReporting();
 
         try {
@@ -236,7 +236,7 @@ public class YouViewUploadController {
     public void uploadMultipleContent(HttpServletRequest request, HttpServletResponse response)
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
-        FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_BBC_MULTI_UPLOADER);
+        FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_MANUAL_UPLOADER);
         telescope.startReporting();
 
         try{
@@ -265,9 +265,11 @@ public class YouViewUploadController {
                             return Try.success(uri);
                         }
                     } catch (Exception e) {
-                        telescope.reportFailedEvent(
+                        telescope.reportFailedEventWithAtlasId(
+                                "fw9fkw",
                                 "Content at uri " + uri + " failed to upload. "
-                                + "(" + (e.toString() + ")" )
+                                + "(" + e.toString() + ")"
+                                , ""
                         );
                         return Try.exception(e);
                     }
@@ -310,7 +312,7 @@ public class YouViewUploadController {
                     boolean immediate
     ) throws IOException, HttpException, PayloadGenerationException {
 
-        FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_XML_UPLOADER);
+        FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_MANUAL_UPLOADER);
 
         if(immediate){ //only start reporting if we will actually upload stuff as well.
             //I believe if this is not immediate it will schedule a task, and things will be
@@ -407,7 +409,7 @@ public class YouViewUploadController {
                 handleVersion(elementId, immediate, response, content, payload, telescope);
                 break;
             default:
-                sendError(response, SC_BAD_REQUEST, "Invalid type provided");
+                throw new IllegalArgumentException("Invalid type provided");
             }
         } else {
             uploadContent(immediate, content, telescope);

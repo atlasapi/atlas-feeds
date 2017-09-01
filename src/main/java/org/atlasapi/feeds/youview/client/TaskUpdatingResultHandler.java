@@ -88,7 +88,8 @@ public class TaskUpdatingResultHandler implements ResultHandler {
             successfullCounter.inc();
         } else {
             Response response = new Response(Status.REJECTED, result.result(), result.uploadTime());
-            telescope.reportFailedEvent(
+            telescope.reportFailedEventWithAtlasId(
+                    task.atlasDbId(),
                     String.format("Content was rejected. Result=%s", result.result())+". Task="+task,
                     payload
             );

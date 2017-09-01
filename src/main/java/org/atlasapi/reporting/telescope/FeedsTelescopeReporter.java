@@ -31,6 +31,14 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         return new FeedsTelescopeReporter(reporterName);
     }
 
+    public void reportSuccessfulEvent(Long dbId, String payload) {
+        reportSuccessfulEventGeneric(encode(dbId), null, payload);
+    }
+
+    public void reportSuccessfulEventWithWarning(long dbId, String warningMsg, String payload) {
+        reportSuccessfulEventGeneric(encode(dbId), warningMsg, payload);
+    }
+
     private void reportSuccessfulEventGeneric(
             String atlasItemId,
             String warningMsg,
@@ -64,51 +72,44 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         reportEvent(event);
     }
 
-    public void reportSuccessfulEvent(String atlasItemId, String payload) {
-       reportSuccessfulEventGeneric(atlasItemId, null, payload);
+    public void reportFailedEvent(String errorMsg) {
+        //cant have null, telescope requires either an atlasId, or error+raw.
+        reportFailedEventWithAtlasId("", errorMsg, "");
     }
 
-    //convenience method for the most common reporting Format
-    public void reportSuccessfulEvent(Long dbId, String payload) {
-        reportSuccessfulEvent(encode(dbId), payload);
+    public void reportFailedEvent(String errorMsg, String payload) {
+        reportFailedEventWithAtlasId("", errorMsg, payload);
     }
 
-    public void reportSuccessfulEventWithWarning(String atlasItemId, String warningMsg, String payload) {
-        reportSuccessfulEventGeneric(atlasItemId, warningMsg, payload);
+    public void reportFailedEventWithAtlasId(long dbId, String errorMsg, String payload) {
+        reportFailedEventWithAtlasId(encode(dbId), errorMsg, payload);
     }
 
-    //convenience method for the most common reporting Format
-    public void reportSuccessfulEventWithWarning(long dbId, String warningMsg, String payload) {
-        reportSuccessfulEventWithWarning(encode(dbId), warningMsg, payload);
+    public void reportFailedEventWithAtlasId(long dbId, String errorMsg) {
+        reportFailedEventWithAtlasId(encode(dbId), errorMsg, "");
     }
 
     /**
-     * Convenience method for {@link #reportFailedEvent(String, String, MimeType)}
+     * At least (atlasId || ( errorMsg && payload )) must be defined, otherwise telescope with throw exceptions.
+     * @param atlasId
      * @param errorMsg
-     * @param payload Default payload is XML
+     * @param payload
      */
-    public void reportFailedEvent(String errorMsg, String payload) {
-        reportFailedEvent(errorMsg, payload, MimeType.APPLICATION_XML);
-    }
-
-    public void reportFailedEvent(String errorMsg) {
-        //cant have null, telescope requires either an atlasId, or error+raw.
-        reportFailedEvent(errorMsg, "");
-    }
-
-    public void reportFailedEvent(String errorMsg, String payload, MimeType mimeType) {
+    public void reportFailedEventWithAtlasId(String atlasId, String errorMsg, String payload) {
         Event event = Event.builder()
                 .withStatus(Event.Status.FAILURE)
                 .withType(Event.Type.UPLOAD)
                 .withEntityState(EntityState.builder()
+                        .withAtlasId(atlasId)
                         .withError(errorMsg)
                         .withRaw(payload)
-                        .withRawMime(mimeType.toString())
+                        .withRawMime(MimeType.APPLICATION_XML.toString())
                         .build()
                 )
                 .withTaskId(getTaskId())
                 .withTimestamp(LocalDateTime.now())
                 .build();
+
         reportEvent(event);
     }
 }

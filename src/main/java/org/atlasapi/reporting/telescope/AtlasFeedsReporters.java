@@ -9,14 +9,14 @@ public enum AtlasFeedsReporters implements TelescopeReporterName {
     // naming the key with dot namespacing allows for grouping permissions when it comes to
     // viewing events, so be mindful of your names.
     // Other names might exist in different projects so make some effort to avoid collisions.
-    YOU_VIEW_ASYNC_UPLOADER("youview.uploader", "YouView Async Uploader"),
-    YOU_VIEW_SCHEDULE_UPLOADER("youview.schedule-uploader", "YouView Schedule Uploader"),
-    YOU_VIEW_CONTENT_PROCESSOR("youview.content-processor", "YouView Content Processor"),
-    YOU_VIEW_BBC_MULTI_UPLOADER("youview.multi-uploader", "YouView BBC Multi-uploader"),
+    YOU_VIEW_MANUAL_UPLOADER("youview.manual-uploader", "YouView Manual Uploader"),
+    YOU_VIEW_MANUAL_SCHEDULE_UPLOADER("youview.manual-schedule-uploader", "YouView Manual Schedule Uploader"),
+    YOU_VIEW_AUTOMATIC_UPLOADER("youview.automatic-uploader", "YouView Automatic Uploader"),
+    YOU_VIEW_AUTOMATIC_SCHEDULE_UPLOADER("youview.automatic-schedule-uploader", "YouView Automatic Schedule Uploader"),
+
     YOU_VIEW_REVOKER("youview.revoker", "YouView Revoker"),
-    YOU_VIEW_UNREVOKER("youview.unrevoker", "YouView Unrevoker"),
-    YOU_VIEW_XML_UPLOADER("youview.xml-uploader", "YouView XML Uploader"),
-    YOU_VIEW_XML_DELETER("youview.xml-deleter", "YouView XML deleter");
+    YOU_VIEW_UNREVOKER("youview.unrevoker", "YouView Unrevoker")
+    ;
 
     String reporterKey;
     String reporterName;

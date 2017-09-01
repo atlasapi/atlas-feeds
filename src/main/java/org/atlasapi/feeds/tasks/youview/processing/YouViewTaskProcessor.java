@@ -85,8 +85,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
                     "Failed to " + task.action().name() + " taskId=" + task.id()
                     + ". destination " + task.destination()
                     + ". atlasId=" + task.atlasDbId()
-                    + ". There was no payload.",
-                    ""
+                    + ". There was no payload."
             );
             setFailed(task);
             return;
