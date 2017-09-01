@@ -149,12 +149,12 @@ public class YouViewUploadController {
             HttpServletResponse response,
             String channelStr,
             FeedsTelescopeReporter telescope
-    ) throws IOException, PayloadGenerationException {
+    ) throws IOException, PayloadGenerationException, IllegalArgumentException {
+
         Channel channel = channelResolver.fromUri(channelStr).requireValue();
 
         if (!channel.getBroadcaster().key().equals("bbc.co.uk")) {
-            sendError(response, SC_BAD_REQUEST, "Only BBC channels can be uploaded");
-            return;
+            throw new IllegalArgumentException( "Only BBC channels can be uploaded");
         }
 
         uploadChannel(true, channel, false, telescope);
@@ -164,19 +164,19 @@ public class YouViewUploadController {
             HttpServletResponse response,
             String channelStr,
             FeedsTelescopeReporter telescope
-    ) throws IOException, PayloadGenerationException {
+    ) throws IOException, PayloadGenerationException, IllegalArgumentException {
+
         Channel channel = channelResolver.fromUri(channelStr).requireValue();
 
         if (!channel.getBroadcaster().key().equals("bbc.co.uk")) {
-            sendError(response, SC_BAD_REQUEST, "Only BBC channels can be uploaded");
-            return;
+            throw new IllegalArgumentException("Only BBC channels can be uploaded");
         }
 
         uploadChannel(true, channel, true, telescope);
     }
 
     @RequestMapping(value = "/feeds/youview/{publisher}/schedule/upload")
-    public void uploadSchedule(HttpServletResponse response,
+    public void uploadSchedule(HttpServletResponse response, HttpServletRequest request,
             @PathVariable("publisher") String publisherStr,
             @RequestParam("channel") String channelStr,
             @RequestParam("from") String fromStr,
@@ -226,9 +226,7 @@ public class YouViewUploadController {
             sendOkResponse(response, sb.toString());
         } catch (Exception e) {
             telescope.reportFailedEvent(
-                    "The call to /feeds/youview/"+publisherStr+"/schedule/upload"
-                    + " Params: channel="+channelStr+", from="+fromStr+", to="+toStr
-                    + " failed. (" + e.toString() + ")");
+                    "The call to " + request.getRequestURI() + " failed. (" + e.toString() + ")");
             telescope.endReporting();
             throw e;
         }
@@ -303,7 +301,7 @@ public class YouViewUploadController {
     // I'd argue its not just this method, its the whole class.
     @RequestMapping(value = "/feeds/youview/{publisher}/upload", method = RequestMethod.POST)
     public void uploadContent(
-            HttpServletResponse response,
+            HttpServletResponse response, HttpServletRequest request,
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri") String uri,
             @RequestParam(value = "element_id", required = false) String elementId,
@@ -313,6 +311,7 @@ public class YouViewUploadController {
     ) throws IOException, HttpException, PayloadGenerationException {
 
         FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_XML_UPLOADER);
+
         if(immediate){ //only start reporting if we will actually upload stuff as well.
             //I believe if this is not immediate it will schedule a task, and things will be
             //reported when the task is executed.
@@ -321,13 +320,17 @@ public class YouViewUploadController {
         try {
             Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
             if (!publisher.isPresent()) {
+                if (immediate) { //to prevent logging an error message if it is not started.
+                    telescope.reportFailedEvent(
+                            "The call to " + request.getRequestURL() + "Publisher " + publisherStr + " not found.");
+                    telescope.endReporting();
+                }
                 sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
                 return;
             }
 
             if (StringUtils.isEmpty(uri)) {
-                sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
-                return;
+                throw new IllegalArgumentException("required parameter 'uri' not specified");
             }
 
             if (isMasterbrandUri(uri)) {
@@ -339,14 +342,14 @@ public class YouViewUploadController {
             }
 
             sendOkResponse(response, "Upload for " + uri + " sent successfully");
-        } catch (Exception e){
-            if (immediate) { //to prevent logging an error message if it is not started.
+        }
+        catch (Exception e){
+            if (immediate) {
                 telescope.reportFailedEvent(
-                        "The call to /feeds/youview/"+publisherStr+"/upload"
-                        + " Params: uri="+uri+", element_id="+elementId+", type="+typeStr+", immediate="+immediate
-                        + " failed. (" + e.toString() + ")");
+                        "The call to " + request.getRequestURL() + " failed. (" + e.toString() + ")");
                 telescope.endReporting();
             }
+            sendError(response, SC_BAD_REQUEST, e.getMessage());
             throw e;
         }
     }
@@ -361,18 +364,17 @@ public class YouViewUploadController {
         return parts.length == 5 && "masterbrands".equals(parts[parts.length - 2]);
     }
 
-    private void handleContent(
+    private void handleContent (
             String uri,
             String elementId,
             @Nullable String typeStr,
             boolean immediate,
             HttpServletResponse response,
             FeedsTelescopeReporter telescope
-    ) throws IOException, PayloadGenerationException {
+    ) throws IOException, PayloadGenerationException, IllegalArgumentException {
         Optional<Content> toBeUploaded = getContent(uri);
         if (!toBeUploaded.isPresent()) {
-            sendError(response, SC_BAD_REQUEST, "content does not exist");
-            return;
+            throw new IllegalArgumentException("content does not exist");
         }
 
         Content content = toBeUploaded.get();
@@ -381,8 +383,7 @@ public class YouViewUploadController {
             TVAElementType type = parseTypeFrom(typeStr);
 
             if (type == null) {
-                sendError(response, SC_BAD_REQUEST, "Invalid type provided");
-                return;
+                throw new IllegalArgumentException("Invalid type provided");
             }
 
             Payload payload = payloadCreator.payloadFrom(
@@ -420,14 +421,9 @@ public class YouViewUploadController {
             Optional<Content> toBeUploaded,
             Payload payload,
             FeedsTelescopeReporter telescope
-    ) throws IOException {
+    ) throws IOException, IllegalArgumentException {
         if (elementId == null) {
-            sendError(
-                    response,
-                    SC_BAD_REQUEST,
-                    "required parameter 'element_id' not specified when uploading an individual TVAnytime element"
-            );
-            return;
+            throw new IllegalArgumentException("required parameter 'element_id' not specified when uploading an individual TVAnytime element");
         }
         log.info("Creating task to process (series?). Atlasid should be {} ",toBeUploaded.get().getId());
         processTask(
@@ -437,17 +433,17 @@ public class YouViewUploadController {
     }
 
     private void handleVersion(String elementId, boolean immediate, HttpServletResponse response,
-            Content content, Payload payload, FeedsTelescopeReporter telescope) throws IOException {
+            Content content, Payload payload, FeedsTelescopeReporter telescope)
+            throws IOException, IllegalArgumentException {
+
         if (!(content instanceof Item)) {
-            sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Version");
-            return;
+            throw new IllegalArgumentException( "content must be an Item to upload a Version");
         }
         Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor((Item) content);
         Optional<ItemAndVersion> versionHierarchy = Optional.fromNullable(versionHierarchies.get(
                 elementId));
         if (!versionHierarchy.isPresent()) {
-            sendError(response, SC_BAD_REQUEST, "No Version found with the provided elementId");
-            return;
+            throw new IllegalArgumentException( "No Version found with the provided elementId");
         }
         log.info("Creating task to process (version?). Atlasid should be {} ",versionHierarchy.get().item().getId());
         processTask(
@@ -457,18 +453,18 @@ public class YouViewUploadController {
     }
 
     private void handleOnDemand(String elementId, boolean immediate, HttpServletResponse response,
-            Content content, Payload payload, FeedsTelescopeReporter telescope) throws IOException {
+            Content content, Payload payload, FeedsTelescopeReporter telescope)
+            throws IOException, IllegalArgumentException {
+
         if (!(content instanceof Item)) {
-            sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a OnDemand");
-            return;
+            throw new IllegalArgumentException( "content must be an Item to upload a OnDemand");
         }
         Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor(
                 (Item) content);
         Optional<ItemOnDemandHierarchy> onDemandHierarchy = Optional.fromNullable(
                 onDemandHierarchies.get(elementId));
         if (!onDemandHierarchy.isPresent()) {
-            sendError(response, SC_BAD_REQUEST, "No OnDemand found with the provided elementId");
-            return;
+            throw new IllegalArgumentException( "No OnDemand found with the provided elementId");
         }
         log.info("Creating task to process (hierarcy?). Atlasid should be {} ",onDemandHierarchy.get().item().getId());
 
@@ -479,10 +475,11 @@ public class YouViewUploadController {
     }
 
     private void handleBroadcast(String elementId, boolean immediate, HttpServletResponse response,
-            Content content, FeedsTelescopeReporter telescope) throws IOException, PayloadGenerationException {
+            Content content, FeedsTelescopeReporter telescope)
+            throws IOException, PayloadGenerationException, IllegalArgumentException {
+
         if (!(content instanceof Item)) {
-            sendError(response, SC_BAD_REQUEST, "content must be an Item to upload a Broadcast");
-            return;
+            throw new IllegalArgumentException( "content must be an Item to upload a Broadcast");
         }
         Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor(
                 (Item) content);
@@ -490,8 +487,7 @@ public class YouViewUploadController {
         if (!Strings.isNullOrEmpty(elementId)) {
             ItemBroadcastHierarchy broadcastHierarchy = broadcastHierarchies.get(elementId);
             if (broadcastHierarchy == null) {
-                sendError(response, SC_BAD_REQUEST, "No element found with ID " + elementId);
-                return;
+                throw new IllegalArgumentException( "No element found with ID " + elementId);
             }
             uploadBroadcast(elementId, broadcastHierarchy, immediate, telescope);
         } else {
@@ -718,40 +714,29 @@ public class YouViewUploadController {
      * @throws IOException
      */
     @RequestMapping(value = "/feeds/youview/{publisher}/revoke", method = RequestMethod.POST)
-    public void revokeContent(HttpServletResponse response,
+    public void revokeContent(HttpServletResponse response, HttpServletRequest request,
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri", required = true) String uri) throws IOException {
 
         FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_REVOKER);
         telescope.startReporting();
-        String url = "/feeds/youview/" + publisherStr + "/revoke/" + "?uri" + uri;
 
         try {
             Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
             if (!publisher.isPresent()) {
                 telescope.reportFailedEvent(
-                        "The call to " + url
-                        + " failed because publisher "+ publisherStr+" was not found.");
+                        "The call to " + request.getRequestURL()
+                        + " failed, because publisher "+ publisherStr+" was not found.");
                 telescope.endReporting();
                 sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
                 return;
             }
             if (uri == null) {
-                telescope.reportFailedEvent(
-                        "The call to " + url
-                        + " failed because the uri was not specified.");
-                telescope.endReporting();
-                sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
-                return;
+                throw new IllegalArgumentException("Required parameter 'uri' not specified");
             }
             Optional<Content> toBeRevoked = getContent(uri);
             if (!toBeRevoked.isPresent()) {
-                telescope.reportFailedEvent(
-                        "The call to " + url
-                        + " failed because the content does not exist.");
-                telescope.endReporting();
-                sendError(response, SC_BAD_REQUEST, "content does not exist");
-                return;
+                throw new IllegalArgumentException( "Content does not exist");
             }
 
             ImmutableList<Task> revocationTasks = revocationProcessor.revoke(toBeRevoked.get());
@@ -759,9 +744,10 @@ public class YouViewUploadController {
                 processTask(revocationTask, true, telescope);
             }
 
-            sendOkResponse(response, "Revoke for " + uri + " sent sucessfully");
-        } catch(Exception e) { telescope.reportFailedEvent(
-                "The call to " + url
+            sendOkResponse(response, "Revoke for " + uri + " sent successfully");
+        } catch(Exception e) {
+            telescope.reportFailedEvent(
+                "The call to " + request.getRequestURL()
                 + " failed. (" + e.toString() + ")");
             telescope.endReporting();
             throw e;
@@ -775,39 +761,29 @@ public class YouViewUploadController {
      * @throws IOException
      */
     @RequestMapping(value = "/feeds/youview/{publisher}/unrevoke", method = RequestMethod.POST)
-    public void unrevokeContent(HttpServletResponse response,
+    public void unrevokeContent(HttpServletResponse response, HttpServletRequest request,
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri", required = true) String uri) throws IOException {
 
         FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_UNREVOKER);
         telescope.startReporting();
-        String url = "/feeds/youview/" + publisherStr + "/unrevoke/" + "?uri" + uri;
 
         try {
             Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
             if (!publisher.isPresent()) {
                 telescope.reportFailedEvent(
-                    "The call to " + url
+                    "The call to " + request.getRequestURL()
                     + " failed because publisher "+ publisherStr+" was not found.");
                 telescope.endReporting();
                 sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
                 return;
             }
             if (uri == null) {
-                telescope.reportFailedEvent(
-                        "The call to " + url
-                        + " failed because the uri was not specified.");
-                telescope.endReporting();
-                sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
-                return;
+                throw new IllegalArgumentException("Required parameter 'uri' not specified");
             }
             Optional<Content> toBeUnrevoked = getContent(uri);
             if (!toBeUnrevoked.isPresent()) {
-                telescope.reportFailedEvent(
-                        "The call to " + url
-                        + " failed because the content does not exist.");
-                sendError(response, SC_BAD_REQUEST, "content does not exist");
-                return;
+               throw new IllegalArgumentException ("Content does not exist");
             }
 
             ImmutableList<Task> revocationTasks = revocationProcessor.unrevoke(toBeUnrevoked.get());
@@ -818,7 +794,7 @@ public class YouViewUploadController {
             sendOkResponse(response, "Unrevoke for " + uri + " sent sucessfully");
         } catch(Exception e) {
             telescope.reportFailedEvent(
-                    "The call to " + url + " failed. (" + e.toString() + ")");
+                    "The call to " + request.getRequestURL() + " failed. (" + e.toString() + ")");
             telescope.endReporting();
             throw e;
         }

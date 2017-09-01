@@ -9,7 +9,7 @@ public enum AtlasFeedsReporters implements TelescopeReporterName {
     // naming the key with dot namespacing allows for grouping permissions when it comes to
     // viewing events, so be mindful of your names.
     // Other names might exist in different projects so make some effort to avoid collisions.
-    YOU_VIEW_ASYNC_UPLOADER("youview.async-uploader", "YouView Async Uploader"),
+    YOU_VIEW_ASYNC_UPLOADER("youview.uploader", "YouView Async Uploader"),
     YOU_VIEW_SCHEDULE_UPLOADER("youview.schedule-uploader", "YouView Schedule Uploader"),
     YOU_VIEW_CONTENT_PROCESSOR("youview.content-processor", "YouView Content Processor"),
     YOU_VIEW_BBC_MULTI_UPLOADER("youview.multi-uploader", "YouView BBC Multi-uploader"),
