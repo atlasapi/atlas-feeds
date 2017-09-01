@@ -62,7 +62,8 @@ public class YouViewTaskProcessor implements TaskProcessor {
             log.error("Error processing Task {}", task.id(), e);
             //report to telescope
             String payload = task.payload().isPresent() ? task.payload().get().payload() : "";
-            telescope.reportFailedEvent(
+            telescope.reportFailedEventWithAtlasId(
+                    task,
                     "Failed to process taskId=" + task.id()
                     + ". destination " + task.destination()
                     + ". atlasId=" + task.atlasDbId()
@@ -81,7 +82,8 @@ public class YouViewTaskProcessor implements TaskProcessor {
     private void processUpdate(Task task, FeedsTelescopeReporter telescope) {
         log.info("proccessing an update for atlasid={}", task.atlasDbId());
         if (!task.payload().isPresent()) { //If you want remove this, check for any .get() down the line.
-            telescope.reportFailedEvent(
+            telescope.reportFailedEventWithAtlasId(
+                    task,
                     "Failed to " + task.action().name() + " taskId=" + task.id()
                     + ". destination " + task.destination()
                     + ". atlasId=" + task.atlasDbId()

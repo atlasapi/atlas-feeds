@@ -68,7 +68,8 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                     String payload = task.payload().isPresent()
                                      ? task.payload().get().payload()
                                      : "";
-                    telescope.reportFailedEvent(
+                    telescope.reportFailedEventWithAtlasId(
+                            task,
                             "Failed to process taskId=" + task.id()
                             + ". destination " + task.destination()
                             + ". atlasId=" + task.atlasDbId()

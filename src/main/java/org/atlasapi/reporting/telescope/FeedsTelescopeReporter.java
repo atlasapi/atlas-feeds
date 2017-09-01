@@ -2,6 +2,8 @@ package org.atlasapi.reporting.telescope;
 
 import java.time.LocalDateTime;
 
+import org.atlasapi.feeds.tasks.Task;
+
 import com.metabroadcast.columbus.telescope.api.EntityState;
 import com.metabroadcast.columbus.telescope.api.Event;
 import com.metabroadcast.columbus.telescope.client.TelescopeReporter;
@@ -87,6 +89,18 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
 
     public void reportFailedEventWithAtlasId(long dbId, String errorMsg) {
         reportFailedEventWithAtlasId(encode(dbId), errorMsg, "");
+    }
+
+    public void reportFailedEventWithAtlasId(Task task, String errorMsg, String payload) {
+        if (task != null && task.atlasDbId() != null) {
+            reportFailedEventWithAtlasId(encode(task.atlasDbId()), errorMsg, payload);
+        }else{
+            reportFailedEvent(errorMsg, "");
+        }
+    }
+
+    public void reportFailedEventWithAtlasId(Task task, String errorMsg) {
+        reportFailedEventWithAtlasId(task, errorMsg, "");
     }
 
     /**

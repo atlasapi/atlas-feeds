@@ -217,7 +217,8 @@ public class YouViewUploadController {
                     sb.append("Done uploading " + item.getCanonicalUri() + System.lineSeparator());
                 } catch (PayloadGenerationException e) {
                     telescope.reportFailedEvent(
-                            MAPPER.writeValueAsString(item) +" failed to upload. "
+                            "The item below, or one of its derivatives, failed to upload."+
+                            MAPPER.writeValueAsString(item)
                             + "(" + (e.toString() + ")" )
                     );
                     sb.append("Error uploading " + e.getMessage());
@@ -265,9 +266,9 @@ public class YouViewUploadController {
                             return Try.success(uri);
                         }
                     } catch (Exception e) {
-                        telescope.reportFailedEventWithAtlasId(
-                                "fw9fkw",
-                                "Content at uri " + uri + " failed to upload. "
+                        telescope.reportFailedEvent(
+                                "The content below, or one of its derivatives, failed to upload. "+
+                                "URI=" + uri
                                 + "(" + e.toString() + ")"
                                 , ""
                         );
@@ -533,8 +534,8 @@ public class YouViewUploadController {
                 );
                 processTask(versionTask, immediate, telescope);
             }
-            Map<String, ItemBroadcastHierarchy> broadcasts = hierarchyExpander.broadcastHierarchiesFor(
-                    (Item) content);
+            Map<String, ItemBroadcastHierarchy> broadcasts =
+                    hierarchyExpander.broadcastHierarchiesFor((Item) content);
             for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcasts.entrySet()) {
                 Optional<Payload> broadcastPayload = payloadCreator.payloadFrom(
                         broadcast.getKey(),
@@ -550,8 +551,8 @@ public class YouViewUploadController {
                     processTask(bcastTask, immediate, telescope);
                 }
             }
-            Map<String, ItemOnDemandHierarchy> onDemands = hierarchyExpander.onDemandHierarchiesFor(
-                    (Item) content);
+            Map<String, ItemOnDemandHierarchy> onDemands =
+                    hierarchyExpander.onDemandHierarchiesFor((Item) content);
             for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
                 ItemOnDemandHierarchy onDemandHierarchy = onDemand.getValue();
                 Location location = onDemandHierarchy.location();
