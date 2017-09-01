@@ -11,6 +11,7 @@ import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,15 +21,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
 
 public class YouViewTaskProcessor implements TaskProcessor {
-    
+
     private final Logger log = LoggerFactory.getLogger(YouViewTaskProcessor.class);
     private final YouViewClient client;
     private final RevokedContentStore revocationStore;
     private final ResultHandler resultHandler;
     private final TaskStore taskStore;
-    
-    public YouViewTaskProcessor(YouViewClient client, ResultHandler resultHandler,
-            RevokedContentStore revocationStore, TaskStore taskStore) {
+
+    public YouViewTaskProcessor(
+            YouViewClient client,
+            ResultHandler resultHandler,
+            RevokedContentStore revocationStore,
+            TaskStore taskStore
+    ) {
         this.client = checkNotNull(client);
         this.resultHandler = checkNotNull(resultHandler);
         this.revocationStore = checkNotNull(revocationStore);
@@ -36,34 +41,54 @@ public class YouViewTaskProcessor implements TaskProcessor {
     }
 
     @Override
-    public void process(Task task) {
+    public void process(Task task, FeedsTelescopeReporter telescope) {
         checkArgument(
-                YOUVIEW.equals(task.destination().type()), 
+                YOUVIEW.equals(task.destination().type()),
                 "task type " + task.destination().type() + " invalid, expected " + YOUVIEW.name()
         );
+
         try {
-            switch(task.action()) {
+            switch (task.action()) {
             case UPDATE:
-                processUpdate(task);
+                processUpdate(task, telescope);
                 break;
             case DELETE:
-                processDelete(task);
+                processDelete(task, telescope);
                 break;
             default:
                 throw new RuntimeException("action " + task.action().name() + " not recognised for task " + task.id());
             }
         } catch (Exception e) {
             log.error("Error processing Task {}", task.id(), e);
+            //report to telescope
+            String payload = task.payload().isPresent() ? task.payload().get().payload() : "";
+            telescope.reportFailedEventWithAtlasId(
+                    task,
+                    "Failed to process taskId=" + task.id()
+                    + ". destination " + task.destination()
+                    + ". atlasId=" + task.atlasDbId()
+                    + ". payload present=" + task.payload().isPresent()
+                    + " (" + e.getMessage() + ") ",
+                    payload
+            );
             setFailed(task, e);
         }
     }
-    
+
     private boolean isRevoked(String contentUri) {
         return revocationStore.isRevoked(contentUri);
     }
 
-    private void processUpdate(Task task) {
-        if (!task.payload().isPresent()) {
+    private void processUpdate(Task task, FeedsTelescopeReporter telescope) {
+        log.info("proccessing an update for atlasid={}", task.atlasDbId());
+        if (!task.payload().isPresent()) { //If you want remove this, check for any .get() down the line.
+            telescope.reportFailedEventWithAtlasId(
+                    task,
+                    "Failed to " + task.action().name() + " taskId=" + task.id()
+                    + ". destination " + task.destination()
+                    + ". atlasId=" + task.atlasDbId()
+                    + ". There was no payload."
+            );
             setFailed(task);
             return;
         }
@@ -78,13 +103,18 @@ public class YouViewTaskProcessor implements TaskProcessor {
                         destination.contentUri(),
                         task.action().name()
                 );
+                telescope.reportSuccessfulEventWithWarning(
+                        task.atlasDbId(),
+                        "Content " + destination.contentUri() + " is revoked. Cannot " + task.action().name(),
+                        task.payload().get().payload() //.isPresent() checked at method entry
+                );
                 setFailed(task);
                 return;
             }
         }
 
         YouViewResult uploadResult = client.upload(task.payload().get());
-        resultHandler.handleTransactionResult(task, uploadResult);
+        resultHandler.handleTransactionResult(task, uploadResult, telescope);
     }
 
     private void setFailed(Task task) {
@@ -107,15 +137,18 @@ public class YouViewTaskProcessor implements TaskProcessor {
 
     // No need to check for revocation for deletes, as deleting revoked content doesn't really matter
     // It also allows the deletes resulting from a revoke to go through unhindered.
-    private void processDelete(Task task) {
+    private void processDelete(Task task, FeedsTelescopeReporter telescope) {
         YouViewDestination destination = (YouViewDestination) task.destination();
         YouViewResult deleteResult = client.delete(destination.elementId());
-        resultHandler.handleTransactionResult(task, deleteResult);
+        resultHandler.handleTransactionResult(task, deleteResult, telescope);
     }
 
     @Override
     public void checkRemoteStatusOf(Task task) {
-        checkArgument(task.remoteId().isPresent(), "no transaction id present for task " + task.id() + ", cannot check status");
+        checkArgument(
+                task.remoteId().isPresent(),
+                "no transaction id present for task " + task.id() + ", cannot check status"
+        );
         YouViewResult result = client.checkRemoteStatus(task.remoteId().get());
         resultHandler.handleRemoteCheckResult(task, result);
     }

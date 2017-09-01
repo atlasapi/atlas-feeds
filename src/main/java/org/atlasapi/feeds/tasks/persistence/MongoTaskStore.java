@@ -8,6 +8,7 @@ import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
+import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
 
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
@@ -23,6 +24,8 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.ACTION_KEY;
@@ -42,6 +45,7 @@ import static org.atlasapi.feeds.tasks.persistence.TaskTranslator.toDBObject;
 public class MongoTaskStore implements TaskStore {
     
     private static final String COLLECTION_NAME = "youviewTasks";
+    private final Logger log = LoggerFactory.getLogger(MongoTaskStore.class);
     
     private final DBCollection collection;
     

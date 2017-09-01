@@ -83,7 +83,6 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         );
         
         List<Content> deleted = Lists.newArrayList();
-        
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
         YouViewContentProcessor deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
 
