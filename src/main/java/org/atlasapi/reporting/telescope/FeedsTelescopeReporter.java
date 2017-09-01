@@ -92,7 +92,8 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
     }
 
     public void reportFailedEvent(String errorMsg) {
-        reportFailedEvent(errorMsg, null);
+        //cant have null, telescope requires either an atlasId, or error+raw.
+        reportFailedEvent(errorMsg, "");
     }
 
     public void reportFailedEvent(String errorMsg, String payload, MimeType mimeType) {
