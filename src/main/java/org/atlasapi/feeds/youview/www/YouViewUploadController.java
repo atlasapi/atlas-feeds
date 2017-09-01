@@ -45,6 +45,7 @@ import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
+import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
 import com.metabroadcast.common.time.Clock;
@@ -187,10 +188,17 @@ public class YouViewUploadController {
         try {
             DateTime from = dateTimeInQueryParser.parse(fromStr);
             DateTime to = dateTimeInQueryParser.parse(toStr);
-            Channel channel = channelResolver.fromId(channelIdCodec.decode(channelStr).longValue())
-                    .requireValue();
+            Maybe<Channel> channelMaybe =
+                    channelResolver.fromId(channelIdCodec.decode(channelStr).longValue());
+            if(!channelMaybe.hasValue()){
+                throw new IllegalArgumentException("Channel "+channelStr+ " was not found.");
+            }
 
+            Channel channel = channelMaybe.requireValue();
             Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
+            if(!publisher.isPresent()){
+                throw new IllegalArgumentException("Publisher "+publisherStr.trim().toUpperCase()+ " was not found.");
+            }
 
             Schedule schedule = scheduleResolver.unmergedSchedule(
                     from,
@@ -238,7 +246,6 @@ public class YouViewUploadController {
 
             if (uris.isEmpty()) {
                 sendError(response, SC_BAD_REQUEST, "URI list is empty");
-
                 telescope.reportFailedEvent(
                         "The call to " + request.getRequestURL() + " failed. The URI list is empty.");
                 return;
@@ -330,7 +337,6 @@ public class YouViewUploadController {
             } else {
                 handleContent(uri, elementId, typeStr, immediate, response, telescope);
             }
-
 
             sendOkResponse(response, "Upload for " + uri + " sent successfully");
         } catch (Exception e){

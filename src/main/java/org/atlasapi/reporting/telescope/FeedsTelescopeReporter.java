@@ -49,7 +49,7 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         EntityState.Builder entityState = EntityState.builder()
                 .withAtlasId(atlasItemId)
                 .withRaw(payload)
-                .withRawMime(MimeType.APPLICATION_JSON.toString());
+                .withRawMime(MimeType.APPLICATION_XML.toString());
 
         if (warningMsg != null) {
             entityState.withWarning(warningMsg);
@@ -88,7 +88,7 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
      * @param payload Default payload is XML
      */
     public void reportFailedEvent(String errorMsg, String payload) {
-        reportFailedEvent(errorMsg,payload,MimeType.APPLICATION_XML);
+        reportFailedEvent(errorMsg, payload, MimeType.APPLICATION_XML);
     }
 
     public void reportFailedEvent(String errorMsg) {
