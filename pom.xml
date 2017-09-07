@@ -6,7 +6,7 @@
     <groupId>org.atlasapi</groupId>
     <artifactId>atlas-feeds</artifactId>
     <version>5.1-SNAPSHOT</version>
-    <description></description>
+
     <build>
         <plugins>
             <plugin>
@@ -107,7 +107,7 @@
         <dependency>
             <groupId>com.metabroadcast.columbus.telescope</groupId>
             <artifactId>telescope-client-shaded</artifactId>
-            <version>1.0-20170815.120924-16</version>
+            <version>1.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>

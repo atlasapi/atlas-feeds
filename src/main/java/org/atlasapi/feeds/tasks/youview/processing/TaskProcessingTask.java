@@ -9,6 +9,7 @@ import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
@@ -45,7 +46,8 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
-        FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_AUTOMATIC_UPLOADER);
+        FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
+                .getTelescopeReporter(AtlasFeedsReporters.YOU_VIEW_AUTOMATIC_UPLOADER);
         telescope.startReporting();
 
         for (Status uncheckedStatus : validStatuses()) {

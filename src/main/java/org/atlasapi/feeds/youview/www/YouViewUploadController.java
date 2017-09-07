@@ -44,6 +44,7 @@ import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
 import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.http.HttpException;
@@ -149,10 +150,13 @@ public class YouViewUploadController {
             HttpServletResponse response,
             String channelStr,
             FeedsTelescopeReporter telescope
-    ) throws IOException, PayloadGenerationException, IllegalArgumentException {
+    ) throws IOException, PayloadGenerationException, IllegalArgumentException, NullPointerException {
 
         Channel channel = channelResolver.fromUri(channelStr).requireValue();
 
+        if(channel.getBroadcaster() == null || channel.getBroadcaster().key() == null){
+            throw new NullPointerException("There was no broadcaster for this channel " + channel);
+        }
         if (!channel.getBroadcaster().key().equals("bbc.co.uk")) {
             throw new IllegalArgumentException( "Only BBC channels can be uploaded");
         }
@@ -168,6 +172,9 @@ public class YouViewUploadController {
 
         Channel channel = channelResolver.fromUri(channelStr).requireValue();
 
+        if(channel.getBroadcaster() == null || channel.getBroadcaster().key() == null){
+            throw new NullPointerException("There was no broadcaster for this channel " + channel);
+        }
         if (!channel.getBroadcaster().key().equals("bbc.co.uk")) {
             throw new IllegalArgumentException("Only BBC channels can be uploaded");
         }
@@ -182,7 +189,8 @@ public class YouViewUploadController {
             @RequestParam("from") String fromStr,
             @RequestParam("to") String toStr
     ) throws IOException {
-        FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_MANUAL_SCHEDULE_UPLOADER);
+        FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
+                .getTelescopeReporter(AtlasFeedsReporters.YOU_VIEW_MANUAL_SCHEDULE_UPLOADER);
         telescope.startReporting();
 
         try {
@@ -212,16 +220,16 @@ public class YouViewUploadController {
             StringBuilder sb = new StringBuilder();
             for (Item item : items) {
                 try {
-                    sb.append("Uploading " + item.getCanonicalUri() + System.lineSeparator());
+                    sb.append("Uploading ").append(item.getCanonicalUri()).append(System.lineSeparator());
                     uploadContent(true, item, telescope);
-                    sb.append("Done uploading " + item.getCanonicalUri() + System.lineSeparator());
+                    sb.append("Done uploading ").append(item.getCanonicalUri()).append(System.lineSeparator());
                 } catch (PayloadGenerationException e) {
                     telescope.reportFailedEvent(
                             "The item below, or one of its derivatives, failed to upload."+
                             MAPPER.writeValueAsString(item)
                             + "(" + (e.toString() + ")" )
                     );
-                    sb.append("Error uploading " + e.getMessage());
+                    sb.append("Error uploading ").append(e.getMessage());
                 }
             }
             sendOkResponse(response, sb.toString());
@@ -237,7 +245,8 @@ public class YouViewUploadController {
     public void uploadMultipleContent(HttpServletRequest request, HttpServletResponse response)
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
-        FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_MANUAL_UPLOADER);
+        FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
+                .getTelescopeReporter(AtlasFeedsReporters.YOU_VIEW_MANUAL_UPLOADER);
         telescope.startReporting();
 
         try{
@@ -313,7 +322,8 @@ public class YouViewUploadController {
                     boolean immediate
     ) throws IOException, HttpException, PayloadGenerationException {
 
-        FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_MANUAL_UPLOADER);
+        FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
+                .getTelescopeReporter(AtlasFeedsReporters.YOU_VIEW_MANUAL_UPLOADER);
 
         if(immediate){ //only start reporting if we will actually upload stuff as well.
             //I believe if this is not immediate it will schedule a task, and things will be
@@ -398,7 +408,7 @@ public class YouViewUploadController {
             case BRAND:
             case ITEM:
             case SERIES:
-                handleContent(elementId, immediate, response, toBeUploaded, payload, telescope);
+                handleContent(elementId, immediate, response, content, payload, telescope);
                 break;
             case BROADCAST:
                 handleBroadcast(elementId, immediate, response, content, telescope);
@@ -421,16 +431,19 @@ public class YouViewUploadController {
             @Nullable String elementId,
             boolean immediate,
             HttpServletResponse response,
-            Optional<Content> toBeUploaded,
+            Content toBeUploaded,
             Payload payload,
             FeedsTelescopeReporter telescope
     ) throws IOException, IllegalArgumentException {
         if (elementId == null) {
-            throw new IllegalArgumentException("required parameter 'element_id' not specified when uploading an individual TVAnytime element");
+            throw new NullPointerException("required parameter 'element_id' not specified when uploading an individual TVAnytime element");
         }
-        log.info("Creating task to process (series?). Atlasid should be {} ",toBeUploaded.get().getId());
+        if(toBeUploaded == null ){
+            throw new NullPointerException("required parameter 'content to be uploaded' not specified when uploading an individual TVAnytime element");
+        }
+        log.info("Creating task to process (series?). Atlasid should be {} ",toBeUploaded.getId());
         processTask(
-                taskCreator.taskFor(elementId, toBeUploaded.get(), payload, Action.UPDATE),
+                taskCreator.taskFor(elementId, toBeUploaded, payload, Action.UPDATE),
                 immediate, telescope
         );
     }
@@ -721,7 +734,8 @@ public class YouViewUploadController {
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri", required = true) String uri) throws IOException {
 
-        FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_REVOKER);
+        FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
+                .getTelescopeReporter(AtlasFeedsReporters.YOU_VIEW_REVOKER);
         telescope.startReporting();
 
         try {
@@ -768,7 +782,8 @@ public class YouViewUploadController {
             @PathVariable("publisher") String publisherStr,
             @RequestParam(value = "uri", required = true) String uri) throws IOException {
 
-        FeedsTelescopeReporter telescope = FeedsTelescopeReporter.create(AtlasFeedsReporters.YOU_VIEW_UNREVOKER);
+        FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
+                .getTelescopeReporter(AtlasFeedsReporters.YOU_VIEW_UNREVOKER);
         telescope.startReporting();
 
         try {
