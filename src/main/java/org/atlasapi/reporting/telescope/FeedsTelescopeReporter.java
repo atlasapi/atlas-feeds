@@ -45,7 +45,7 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
             String warningMsg,
             String payload
     ) {
-       //fail graciously by reporting nothing, but print a full stack so we know who caused this
+        //fail graciously by reporting nothing, but print a full stack so we know who caused this
         if (atlasItemId == null) {
             log.error(
                     "Cannot report a successful event to telescope, without an atlasId",
