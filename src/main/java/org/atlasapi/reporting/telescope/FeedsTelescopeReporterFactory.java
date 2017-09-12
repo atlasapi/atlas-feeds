@@ -28,14 +28,16 @@ public class FeedsTelescopeReporterFactory extends TelescopeReporterFactory {
         super(env, host, executor, metricsRegistry, metricsPrefix);
     }
 
+    //Surprisingly, this will draw the actual configuration from atlas config.
+
     //If fewer than this threads are running, a new thread is created. Else things are queued.
-    private static final int CORE_THREADS = 2;
+    private static final int CORE_THREADS = Integer.parseInt(Configurer.get("telescope.coreReportingThreads").get());
     //If the queue is full, spawn a new thread up to this number.
-    private static final int MAX_THREADS = 4;
+    private static final int MAX_THREADS = Integer.parseInt(Configurer.get("telescope.maxReportingThreads").get());
     //If new threads cant be spawned. Things that don't fit go to the RejectedExecutionHandler
-    private static final int QUEUE_SIZE = 500;
-    private static final String THREAD_NAME = "atlas-feeds-owl-to-telescope";
-    private static final String METRICS_PREFIX = "atlas-feeds-owl-main";
+    private static final int QUEUE_SIZE = Integer.parseInt(Configurer.get("telescope.queueSize").get());
+    private static final String THREAD_NAME = Configurer.get("telescope.reportingThreadName").get();
+    private static final String METRICS_PREFIX = Configurer.get("telescope.metricsPrefix").get();
 
 
     //Implement this as a Singleton
@@ -52,8 +54,6 @@ public class FeedsTelescopeReporterFactory extends TelescopeReporterFactory {
             );
             executor.allowCoreThreadTimeOut(true);
 
-
-            //Surprisingly, this will draw the actual configuration from atlas.
             INSTANCE = new FeedsTelescopeReporterFactory( //this should always produce an instance.
                     Configurer.get("telescope.environment").get(),
                     Configurer.get("telescope.host").get(),
