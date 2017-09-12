@@ -91,6 +91,8 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.joda.time.LocalTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -117,7 +119,7 @@ import static org.joda.time.DateTimeConstants.JANUARY;
 @Configuration
 @Import(TVAnytimeFeedsModule.class)
 public class YouViewUploadModule {
-    
+
     private static final String CONFIG_PREFIX = "youview.upload.";
     
     private static final Map<String, Publisher> PUBLISHER_MAPPING = ImmutableMap.of(

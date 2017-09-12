@@ -1,12 +1,5 @@
 package org.atlasapi.feeds.tasks.youview.processing;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Status;
@@ -18,6 +11,9 @@ import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
+
+import com.google.common.base.Optional;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +21,12 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.google.common.base.Optional;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class YouViewTaskProcessorTest {
@@ -36,6 +37,7 @@ public class YouViewTaskProcessorTest {
     @Mock private ResultHandler resultHandler;
     @Mock private RevokedContentStore revocationStore;
     @Mock private TaskStore taskStore;
+    @Mock private FeedsTelescopeReporter telescope;
 
     @Before
     public void setUp() {
@@ -56,9 +58,9 @@ public class YouViewTaskProcessorTest {
         when(revocationStore.isRevoked(contentUri)).thenReturn(Boolean.FALSE);
         when(client.upload(payload)).thenReturn(result);
 
-        youViewTaskProcessor.process(task);
+        youViewTaskProcessor.process(task, telescope);
 
-        verify(resultHandler).handleTransactionResult(task, result);
+        verify(resultHandler).handleTransactionResult(task, result, telescope);
     }
 
     @Test
@@ -76,10 +78,10 @@ public class YouViewTaskProcessorTest {
 
         when(revocationStore.isRevoked(contentUri)).thenReturn(Boolean.TRUE);
 
-        youViewTaskProcessor.process(task);
+        youViewTaskProcessor.process(task, telescope);
 
         verify(taskStore).updateWithStatus(taskId, Status.FAILED);
         verify(client, never()).upload(payload);
-        verify(resultHandler, never()).handleTransactionResult(eq(task), any(YouViewResult.class));
+        verify(resultHandler, never()).handleTransactionResult(eq(task), any(YouViewResult.class), eq(telescope));
     }
 }

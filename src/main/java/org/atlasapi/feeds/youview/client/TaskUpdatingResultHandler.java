@@ -12,6 +12,7 @@ import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
 import com.codahale.metrics.Counting;
 import com.codahale.metrics.Gauge;
@@ -23,55 +24,75 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.StatusReport;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-
 public class TaskUpdatingResultHandler implements ResultHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(TaskUpdatingResultHandler.class);
 
     private final TaskStore taskStore;
     private final JAXBContext context;
-    
+
     private YouViewReportHandler reportHandler;
-    private TimedTaskCounter successfullCounter;
-    private TimedTaskCounter unsuccessfulCounter;
-    
-    public TaskUpdatingResultHandler(TaskStore taskStore, MetricRegistry metricRegistry) throws JAXBException {
+    private TimeCounter successfullCounter;
+    private TimeCounter unsuccessfulCounter;
+
+    public TaskUpdatingResultHandler(TaskStore taskStore, MetricRegistry metricRegistry)
+            throws JAXBException {
         this.taskStore = checkNotNull(taskStore);
         this.context = JAXBContext.newInstance("com.youview.refdata.schemas.youviewstatusreport._2010_12_07");
         this.successfullCounter = metricRegistry.register(
                 "YouviewSuccessfullTasks",
-                new TimedTaskCounter(4, TimeUnit.HOURS)
+                new TimeCounter(4, TimeUnit.HOURS)
         );
         this.unsuccessfulCounter = metricRegistry.register(
                 "YouviewUnsuccessfullTasks",
-                new TimedTaskCounter(4, TimeUnit.HOURS)
+                new TimeCounter(4, TimeUnit.HOURS)
         );
-    }
-    
-    @Override
-    public void registerReportHandler(YouViewReportHandler reportHandler) {
-        this.reportHandler = checkNotNull(reportHandler);
     }
 
     /**
-     * This handles a couple of different cases. The simplest is success, where the task is moved forwards
-     * and a remote ID and upload time are written.
-     * <p> 
-     * Next simplest is 400, which is YouView parlance for an error in the uploaded payload. This results in
-     * the Task being failed.
+     * This handles a couple of different cases. The simplest is success, where the task is moved
+     * forwards and a remote ID and upload time are written.
      * <p>
-     * Any other response is treated as an erroneous upload error, and the response is written to the task with
-     * a status of PENDING, so it will be reuploaded. The exception to this is if the retry count has been 
-     * exceeded, in which case the Task will be failed. 
+     * Next simplest is 400, which is YouView parlance for an error in the uploaded payload. This
+     * results in the Task being failed.
+     * <p>
+     * Any other response is treated as an erroneous upload error, and the response is written to
+     * the task with a status of PENDING, so it will be reuploaded. The exception to this is if the
+     * retry count has been exceeded, in which case the Task will be failed.
      */
     @Override
-    public void handleTransactionResult(Task task, YouViewResult result) {
+    public void handleTransactionResult(
+            Task task,
+            YouViewResult result,
+            FeedsTelescopeReporter telescope
+    ) {
+        String payload = task.payload().isPresent()
+                         ? task.payload().get().payload()
+                         : "";
+
+        log.info("handling transaction result for {}", task.atlasDbId());
+
         if (result.isSuccess()) {
-            taskStore.updateWithRemoteId(task.id(), Status.ACCEPTED, result.result(), result.uploadTime());
+            telescope.reportSuccessfulEvent(task.atlasDbId(), payload);
+            taskStore.updateWithRemoteId(
+                    task.id(),
+                    Status.ACCEPTED,
+                    result.result(),
+                    result.uploadTime()
+            );
             successfullCounter.inc();
         } else {
             Response response = new Response(Status.REJECTED, result.result(), result.uploadTime());
+            telescope.reportFailedEventWithAtlasId(
+                    task, //will try to attach it to an atlasId if one exists.
+                    String.format("Content was rejected. Result=%s", result.result())+". Task="+task,
+                    payload
+            );
             taskStore.updateWithResponse(task.id(), response);
             unsuccessfulCounter.inc();
         }
@@ -88,7 +109,12 @@ public class TaskUpdatingResultHandler implements ResultHandler {
         Response response = new Response(status, result.result(), result.uploadTime());
         taskStore.updateWithResponse(task.id(), response);
     }
-    
+
+    @Override
+    public void registerReportHandler(YouViewReportHandler reportHandler) {
+        this.reportHandler = checkNotNull(reportHandler);
+    }
+
     private Status parseAndHandleStatusReport(String result, Task task) {
         try {
             TransactionReportType txnReport = parseReportFrom(result);
@@ -122,9 +148,35 @@ public class TaskUpdatingResultHandler implements ResultHandler {
 
     private TransactionReportType parseReportFrom(String result) throws JAXBException {
         Unmarshaller unmarshaller = context.createUnmarshaller();
-        StatusReport report = (StatusReport) unmarshaller.unmarshal(new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8)));
-        TransactionReportType txnReport = Iterables.getOnlyElement(report.getTransactionReport());
-        return txnReport;
+        StatusReport report = (StatusReport) unmarshaller.unmarshal(
+                new ByteArrayInputStream(
+                        result.getBytes(StandardCharsets.UTF_8)
+                )
+        );
+        return Iterables.getOnlyElement(report.getTransactionReport());
+    }
+
+    public static class TimeCounter implements Metric, Gauge<Long>, Counting {
+
+        private final Histogram histogram;
+
+        public TimeCounter(long time, TimeUnit unit) {
+            histogram = new Histogram(new SlidingTimeWindowReservoir(time, unit));
+        }
+
+        public void inc() {
+            histogram.update(1L);
+        }
+
+        @Override
+        public long getCount() {
+            return histogram.getSnapshot().size();
+        }
+
+        @Override
+        public Long getValue() {
+            return getCount();
+        }
     }
 
     public static class TimedTaskCounter implements Metric, Gauge<Long>, Counting {

@@ -17,7 +17,6 @@ import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.nitro.NitroIdGenerator;
 import org.atlasapi.media.channel.Channel;
-import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -118,22 +117,22 @@ public class YouViewEntityTaskCreator implements TaskCreator {
 
     private Task taskFor(String contentCrid, Content content, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(content.getCanonicalUri(), contentTypeFrom(content), contentCrid);
-        return createTask(content.getPublisher(), payload, action, destination, status);
+        return createTask(content.getId(), content.getPublisher(), payload, action, destination, status);
     }
 
     private Task taskFor(String versionCrid, ItemAndVersion versionHierarchy, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(versionHierarchy.item().getCanonicalUri(), TVAElementType.VERSION, versionCrid);
-        return createTask(versionHierarchy.item().getPublisher(), payload, action, destination, status);
+        return createTask(versionHierarchy.item().getId(), versionHierarchy.item().getPublisher(), payload, action, destination, status);
     }
 
     private Task taskFor(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(broadcastHierarchy.item().getCanonicalUri(), TVAElementType.BROADCAST, broadcastImi);
-        return createTask(broadcastHierarchy.item().getPublisher(), payload, action, destination, status);
+        return createTask(broadcastHierarchy.item().getId(), broadcastHierarchy.item().getPublisher(), payload, action, destination, status);
     }
 
     private Task taskFor(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(onDemandHierarchy.item().getCanonicalUri(), TVAElementType.ONDEMAND, onDemandImi);
-        return createTask(onDemandHierarchy.item().getPublisher(), payload, action, destination, status);
+        return createTask(onDemandHierarchy.item().getId(), onDemandHierarchy.item().getPublisher(), payload, action, destination, status);
     }
 
     private Task taskFor(String channelCrid, Channel channel, Payload payload, Action action, Status status) {
@@ -143,11 +142,14 @@ public class YouViewEntityTaskCreator implements TaskCreator {
                 TVAElementType.CHANNEL,
                 channelCrid
         );
-        return createTask(channel.getSource(), payload, action, destination, status);
+        return createTask(channel.getId(), channel.getSource(), payload, action, destination, status);
     }
-
-    private Task createTask(Publisher publisher, Payload payload, Action action, Destination destination, Status status) {
+//    private Task createTask(Publisher publisher, Payload payload, Action action, Destination destination, Status status) {
+//        return createTask(null, publisher, payload, action, destination, status);
+//    }
+    private Task createTask(Long atlasDbId, Publisher publisher, Payload payload, Action action, Destination destination, Status status) {
         return Task.builder()
+                .withAtlasDbId(atlasDbId)
                 .withAction(action)
                 .withCreated(clock.now())
                 .withDestination(destination)

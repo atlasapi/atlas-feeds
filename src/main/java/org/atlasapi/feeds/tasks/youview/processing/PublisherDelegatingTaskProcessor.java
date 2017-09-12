@@ -5,6 +5,7 @@ import java.util.Map;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.youview.InvalidPublisherException;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -18,9 +19,9 @@ public class PublisherDelegatingTaskProcessor implements TaskProcessor {
     }
 
     @Override
-    public void process(Task task) {
+    public void process(Task task, FeedsTelescopeReporter telescope) {
         TaskProcessor delegate = fetchDelegateOrThrow(task.publisher());
-        delegate.process(task);
+        delegate.process(task, telescope);
     }
 
     @Override

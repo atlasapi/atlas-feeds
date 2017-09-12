@@ -6,7 +6,7 @@
     <groupId>org.atlasapi</groupId>
     <artifactId>atlas-feeds</artifactId>
     <version>5.0-SNAPSHOT</version>
-    <description></description>
+
     <build>
         <plugins>
             <plugin>
@@ -103,6 +103,11 @@
                     <groupId>net.sourceforge.htmlunit</groupId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.metabroadcast.columbus.telescope</groupId>
+            <artifactId>telescope-client-shaded</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
@@ -239,12 +244,12 @@
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient_servlet</artifactId>
+            <artifactId>simpleclient_dropwizard</artifactId>
             <version>${prometheus.version}</version>
         </dependency>
         <dependency>
             <groupId>io.prometheus</groupId>
-            <artifactId>simpleclient_dropwizard</artifactId>
+            <artifactId>simpleclient_servlet</artifactId>
             <version>${prometheus.version}</version>
         </dependency>
         <dependency>

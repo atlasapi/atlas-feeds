@@ -12,10 +12,7 @@ import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
-import org.atlasapi.media.channel.Channel;
-import org.atlasapi.media.channel.ChannelQuery;
 import org.atlasapi.media.channel.ChannelResolver;
-import org.atlasapi.media.channel.ChannelType;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 
@@ -83,7 +80,6 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         );
         
         List<Content> deleted = Lists.newArrayList();
-        
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
         YouViewContentProcessor deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
 
