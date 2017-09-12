@@ -11,6 +11,7 @@ import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
+import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
@@ -35,19 +36,22 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     private final TaskStore taskStore;
     private final TaskProcessor processor;
     private final DestinationType destinationType;
-    
+    private final TelescopeReporterName reporterName;
+
     public TaskProcessingTask(TaskStore taskStore, TaskProcessor processor,
-            DestinationType destinationType) {
+            DestinationType destinationType,
+            TelescopeReporterName reporterName) {
         this.taskStore = checkNotNull(taskStore);
         this.processor = checkNotNull(processor);
         this.destinationType = checkNotNull(destinationType);
+        this.reporterName = reporterName;
     }
 
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
         FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
-                .getTelescopeReporter(AtlasFeedsReporters.YOU_VIEW_AUTOMATIC_UPLOADER);
+                .getTelescopeReporter(reporterName);
         telescope.startReporting();
 
         for (Status uncheckedStatus : validStatuses()) {

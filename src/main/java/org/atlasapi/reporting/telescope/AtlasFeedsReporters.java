@@ -12,10 +12,11 @@ public enum AtlasFeedsReporters implements TelescopeReporterName {
     YOU_VIEW_MANUAL_UPLOADER("youview.manual-uploader", "YouView Manual Uploader"),
     YOU_VIEW_MANUAL_SCHEDULE_UPLOADER("youview.manual-schedule-uploader", "YouView Manual Schedule Uploader"),
     YOU_VIEW_AUTOMATIC_UPLOADER("youview.automatic-uploader", "YouView Automatic Uploader"),
+    YOU_VIEW_AUTOMATIC_DELETER("youview.automatic-deleter", "Youview Automatic Deleter" ),
     YOU_VIEW_AUTOMATIC_SCHEDULE_UPLOADER("youview.automatic-schedule-uploader", "YouView Automatic Schedule Uploader"),
 
     YOU_VIEW_REVOKER("youview.revoker", "YouView Revoker"),
-    YOU_VIEW_UNREVOKER("youview.unrevoker", "YouView Unrevoker")
+    YOU_VIEW_UNREVOKER("youview.unrevoker", "YouView Unrevoker"),
     ;
 
     String reporterKey;
