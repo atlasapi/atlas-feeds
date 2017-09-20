@@ -727,7 +727,6 @@ public class YouViewUploadController {
                 .withCreated(clock.now())
                 .withPublisher(toBeDeleted.get().getPublisher())
                 .withStatus(Status.NEW)
-                .withEntityType(EntityType.getVerbose(typeStr))
                 .build();
         taskStore.save(task);
 

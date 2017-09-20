@@ -56,7 +56,8 @@ public class YouViewTaskProcessor implements TaskProcessor {
                 processDelete(task, telescope);
                 break;
             default:
-                throw new RuntimeException("action " + task.action().name() + " not recognised for task " + task.id());
+                throw new IllegalStateException("action " + task.action().name()
+                                                + " not recognised for task " + task.id());
             }
         } catch (Exception e) {
             log.error("Error processing Task {}", task.id(), e);
@@ -77,7 +78,6 @@ public class YouViewTaskProcessor implements TaskProcessor {
     }
 
     private void processUpdate(Task task, FeedsTelescopeReporter telescope) {
-        log.info("processing an update for atlasid={}", task.atlasDbId());
         if (!task.payload().isPresent()) { //If you want remove this, check for any .get() down the line.
             telescope.reportFailedEvent(
                     task,

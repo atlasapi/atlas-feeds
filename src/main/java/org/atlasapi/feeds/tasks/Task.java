@@ -26,7 +26,6 @@ public class Task {
     private final ImmutableSet<Response> remoteResponses;
     private final Optional<String> lastError;
     private final Boolean manuallyCreated;
-    private final Optional<String> entityType;
 
     public static Builder builder() {
         return new Builder();
@@ -43,7 +42,6 @@ public class Task {
                 .withUploadTime(task.uploadTime.orNull())
                 .withRemoteId(task.remoteId.orNull())
                 .withPayload(task.payload.orNull())
-                .withEntityType(task.entityType.orNull())
                 .withLastError(task.lastError.orNull())
                 .withManuallyCreated(task.manuallyCreated);
         for (Response remoteResponse : task.remoteResponses) {
@@ -52,13 +50,12 @@ public class Task {
         return builder;
     }
 
-    private Task(
+    private Task( //NOSONAR
             Long id, Long atlasDbId, DateTime created, Publisher publisher, Action action,
             Destination destination, Status status,
             Optional<DateTime> uploadTime,
             Optional<String> remoteId,
             Optional<Payload> payload,
-            Optional<String> entityType,
             Iterable<Response> remoteResponses,
             Optional<String> lastError,
             Boolean manuallyCreated
@@ -73,7 +70,6 @@ public class Task {
         this.uploadTime = checkNotNull(uploadTime);
         this.remoteId = checkNotNull(remoteId);
         this.payload = checkNotNull(payload);
-        this.entityType = checkNotNull(entityType);
         this.remoteResponses = ImmutableSet.copyOf(remoteResponses);
         this.lastError = checkNotNull(lastError);
         this.manuallyCreated = manuallyCreated;
@@ -124,8 +120,6 @@ public class Task {
     public Optional<Payload> payload() {
         return payload;
     }
-
-    public Optional<String> entityType() { return entityType; }
     
     public Set<Response> remoteResponses() {
         return remoteResponses;
@@ -187,14 +181,13 @@ public class Task {
         private Optional<String> lastError = Optional.absent();
         private ImmutableSet.Builder<Response> remoteResponses = ImmutableSet.builder();
         private Boolean manuallyCreated = Boolean.FALSE;
-        private Optional<String> entityType = Optional.absent();
 
         private Builder() { }
         
         public Task build() {
             return new Task(id,
                     atlasDbId, created, publisher, action, destination, status, uploadTime,
-                    remoteId, payload, entityType, remoteResponses.build(), lastError, manuallyCreated);
+                    remoteId, payload, remoteResponses.build(), lastError, manuallyCreated);
         }
 
         public Builder withId(Long id) {
@@ -264,11 +257,6 @@ public class Task {
 
         public Builder withManuallyCreated(Boolean manuallyCreated) {
             this.manuallyCreated = manuallyCreated != null && manuallyCreated;
-            return this;
-        }
-
-        public Builder withEntityType(String entityType) {
-            this.entityType = Optional.fromNullable(entityType);
             return this;
         }
     }

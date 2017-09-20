@@ -5,6 +5,7 @@ import org.atlasapi.feeds.tasks.Task;
 import com.metabroadcast.columbus.telescope.api.EntityState;
 import com.metabroadcast.columbus.telescope.api.Environment;
 import com.metabroadcast.columbus.telescope.api.Event;
+import com.metabroadcast.columbus.telescope.client.EntityType;
 import com.metabroadcast.columbus.telescope.client.TelescopeClientImpl;
 import com.metabroadcast.columbus.telescope.client.TelescopeReporter;
 import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
@@ -138,9 +139,11 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         String payload = task.payload().isPresent()
                          ? task.payload().get().payload()
                          : null;
-        String entityType = task.entityType().isPresent()
-                            ? task.entityType().get()
-                            : null;
+
+        String entityType = null;
+        if (task.destination() != null && task.destination().type() != null) {
+            entityType = EntityType.getVerbose(task.destination().type().name());
+        }
 
         return entityStateFromStrings(atlasId, entityType, payload);
     }
