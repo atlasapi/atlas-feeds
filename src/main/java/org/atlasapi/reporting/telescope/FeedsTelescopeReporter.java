@@ -1,6 +1,8 @@
 package org.atlasapi.reporting.telescope;
 
+import org.atlasapi.feeds.tasks.Destination;
 import org.atlasapi.feeds.tasks.Task;
+import org.atlasapi.feeds.tasks.YouViewDestination;
 
 import com.metabroadcast.columbus.telescope.api.EntityState;
 import com.metabroadcast.columbus.telescope.api.Environment;
@@ -50,7 +52,7 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         reportSuccessfulEventGeneric(entityState, warningMsg);
     }
 
-    private void reportSuccessfulEventGeneric(
+    private void reportSuccessfulEventGeneric( //NOSONAR
             String atlasItemId,
             String warningMsg,
             String entityType,
@@ -141,14 +143,29 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
                          : null;
 
         String entityType = null;
-        if (task.destination() != null && task.destination().type() != null) {
-            entityType = EntityType.getVerbose(task.destination().type().name());
+        try { //I got trust issues
+            //see if you can get a type from the destination
+            if (task.destination() != null
+                //but surpriiiiize, only YOUVIEW destinations got types. Toooooooot. *lame party popper pops*
+                && task.destination().type() == Destination.DestinationType.YOUVIEW) {
+
+                YouViewDestination yvDest = (YouViewDestination) task.destination();
+                entityType = EntityType.getVerbose(yvDest.elementType().name());
+                //if it is not in the enumeration, use whatever you can
+                if (entityType == null) {
+                    entityType = yvDest.elementType().name();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract an entityState from a task. Essentially I caught that "
+                     + "exception to prevent failing, and felt bad to just swallow it.", e);
         }
 
         return entityStateFromStrings(atlasId, entityType, payload);
     }
 
-    private EntityState.Builder entityStateFromStrings(String atlasId, String entityType, String payload){
+    private EntityState.Builder entityStateFromStrings(String atlasId, String entityType,
+            String payload) {
         return EntityState.builder()
                 .withAtlasId(atlasId)
                 .withType(entityType)
