@@ -46,6 +46,7 @@ import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
+import com.metabroadcast.columbus.telescope.client.EntityType;
 import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.http.HttpException;
 import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
@@ -227,7 +228,8 @@ public class YouViewUploadController {
                     telescope.reportFailedEvent(
                             "The item below, or one of its derivatives, failed to upload."+
                             MAPPER.writeValueAsString(item)
-                            + "(" + (e.toString() + ")" )
+                            + "(" + e.toString() + ")",
+                            EntityType.SCHEDULE.getVerbose()
                     );
                     sb.append("Error uploading ").append(e.getMessage());
                 }
@@ -235,7 +237,8 @@ public class YouViewUploadController {
             sendOkResponse(response, sb.toString());
         } catch (Exception e) {
             telescope.reportFailedEvent(
-                    "The call to " + request.getRequestURI() + " failed. (" + e.toString() + ")");
+                    "The call to " + request.getRequestURI() + " failed. (" + e.toString() + ")",
+                    EntityType.SCHEDULE.getVerbose());
             telescope.endReporting();
             throw e;
         }
@@ -717,10 +720,11 @@ public class YouViewUploadController {
                 .withCreated(clock.now())
                 .withPublisher(toBeDeleted.get().getPublisher())
                 .withStatus(Status.NEW)
+                .withEntityType(EntityType.getVerbose(typeStr))
                 .build();
         taskStore.save(task);
 
-        sendOkResponse(response, "Delete for " + uri + " sent sucessfully");
+        sendOkResponse(response, "Delete for " + uri + " sent successfully");
     }
 
     /**

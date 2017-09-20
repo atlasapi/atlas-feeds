@@ -23,6 +23,8 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 
+import com.metabroadcast.columbus.telescope.api.EntityState;
+import com.metabroadcast.columbus.telescope.client.EntityType;
 import com.metabroadcast.common.time.Clock;
 
 
@@ -116,23 +118,24 @@ public class YouViewEntityTaskCreator implements TaskCreator {
     }
 
     private Task taskFor(String contentCrid, Content content, Payload payload, Action action, Status status) {
-        Destination destination = new YouViewDestination(content.getCanonicalUri(), contentTypeFrom(content), contentCrid);
-        return createTask(content.getId(), content.getPublisher(), payload, action, destination, status);
+        TVAElementType type = contentTypeFrom(content);
+        Destination destination = new YouViewDestination(content.getCanonicalUri(), type, contentCrid);
+        return createTask(content.getId(), content.getPublisher(), EntityType.getVerbose(type.name()), payload, action, destination, status);
     }
 
     private Task taskFor(String versionCrid, ItemAndVersion versionHierarchy, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(versionHierarchy.item().getCanonicalUri(), TVAElementType.VERSION, versionCrid);
-        return createTask(versionHierarchy.item().getId(), versionHierarchy.item().getPublisher(), payload, action, destination, status);
+        return createTask(versionHierarchy.item().getId(), versionHierarchy.item().getPublisher(), EntityType.VERSION.getVerbose(), payload, action, destination, status);
     }
 
     private Task taskFor(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(broadcastHierarchy.item().getCanonicalUri(), TVAElementType.BROADCAST, broadcastImi);
-        return createTask(broadcastHierarchy.item().getId(), broadcastHierarchy.item().getPublisher(), payload, action, destination, status);
+        return createTask(broadcastHierarchy.item().getId(), broadcastHierarchy.item().getPublisher(), EntityType.BROADCAST.getVerbose(), payload, action, destination, status);
     }
 
     private Task taskFor(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Payload payload, Action action, Status status) {
         Destination destination = new YouViewDestination(onDemandHierarchy.item().getCanonicalUri(), TVAElementType.ONDEMAND, onDemandImi);
-        return createTask(onDemandHierarchy.item().getId(), onDemandHierarchy.item().getPublisher(), payload, action, destination, status);
+        return createTask(onDemandHierarchy.item().getId(), onDemandHierarchy.item().getPublisher(), EntityType.ONDEMAND.getVerbose(), payload, action, destination, status);
     }
 
     private Task taskFor(String channelCrid, Channel channel, Payload payload, Action action, Status status) {
@@ -142,17 +145,24 @@ public class YouViewEntityTaskCreator implements TaskCreator {
                 TVAElementType.CHANNEL,
                 channelCrid
         );
-        return createTask(channel.getId(), channel.getSource(), payload, action, destination, status);
+        return createTask(channel.getId(), channel.getSource(), EntityType.CHANNEL.getVerbose(), payload, action, destination, status);
     }
-//    private Task createTask(Publisher publisher, Payload payload, Action action, Destination destination, Status status) {
-//        return createTask(null, publisher, payload, action, destination, status);
-//    }
-    private Task createTask(Long atlasDbId, Publisher publisher, Payload payload, Action action, Destination destination, Status status) {
+
+    private Task createTask(
+            Long atlasDbId,
+            Publisher publisher,
+            String entityType, //this is the entity type we report to telescope.
+            Payload payload,
+            Action action,
+            Destination destination,
+            Status status) {
+
         return Task.builder()
                 .withAtlasDbId(atlasDbId)
                 .withAction(action)
                 .withCreated(clock.now())
                 .withDestination(destination)
+                .withEntityType(entityType)
                 .withPublisher(publisher)
                 .withStatus(status)
                 .withPayload(payload)
