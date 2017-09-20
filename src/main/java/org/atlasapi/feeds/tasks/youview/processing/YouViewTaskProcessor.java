@@ -77,7 +77,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
     }
 
     private void processUpdate(Task task, FeedsTelescopeReporter telescope) {
-        log.info("proccessing an update for atlasid={}", task.atlasDbId());
+        log.info("processing an update for atlasid={}", task.atlasDbId());
         if (!task.payload().isPresent()) { //If you want remove this, check for any .get() down the line.
             telescope.reportFailedEvent(
                     task,

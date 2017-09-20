@@ -21,8 +21,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -31,7 +29,6 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
     public static final Duration UPDATE_WINDOW_GRACE_PERIOD = Duration.standardHours(2);
 
-    private static final Logger log = LoggerFactory.getLogger(DeltaTaskCreationTask.class);
     private static final Ordering<Content> HIERARCHICAL_ORDER = new HierarchicalOrdering();
 
     private final YouViewContentResolver contentResolver;
@@ -70,7 +67,9 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     protected void runTask() {
         Optional<DateTime> lastUpdated = getLastUpdatedTime();
         if (!lastUpdated.isPresent()) {
-            throw new RuntimeException("The bootstrap has not successfully run. Please run the bootstrap upload and ensure that it succeeds before running the delta upload.");
+            throw new IllegalStateException("The bootstrap has not successfully run. Please run the "
+                                            + "bootstrap upload and ensure that it succeeds before "
+                                            + "running the delta upload.");
         }
         
         Optional<DateTime> startOfTask = Optional.of(new DateTime());
@@ -99,36 +98,6 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             deletionProcessor.process(toBeDeleted);
             reportStatus("Deletes: " + deletionProcessor.getResult());
         }
-
-//        VOTE ROMAIN!!!
-//
-//        reportStatus("Creating channel tasks");
-//
-//        YouViewChannelProcessor channelProcessor = channelProcessor(
-//                Action.UPDATE,
-//                ChannelType.CHANNEL
-//        );
-//
-//        YouViewChannelProcessor masterBrandProcessor = channelProcessor(
-//                Action.UPDATE,
-//                ChannelType.MASTERBRAND
-//        );
-//
-//        ChannelQuery nitroChannelsQuery = ChannelQuery.builder()
-//                .withPublisher(Publisher.BBC_NITRO)
-//                .build();
-//        for (Channel channel : channelResolver.allChannels(nitroChannelsQuery)) {
-//            switch (channel.getChannelType()) {
-//            case CHANNEL:
-//                channelProcessor.process(channel);
-//                break;
-//            case MASTERBRAND:
-//                masterBrandProcessor.process(channel);
-//                break;
-//            default:
-//                log.warn("Unknown channel type {}", channel.getChannelType());
-//            }
-//        }
 
         setLastUpdatedTime(startOfTask.get());
         

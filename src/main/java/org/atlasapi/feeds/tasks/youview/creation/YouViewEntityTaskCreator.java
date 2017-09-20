@@ -23,14 +23,13 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 
-import com.metabroadcast.columbus.telescope.api.EntityState;
 import com.metabroadcast.columbus.telescope.client.EntityType;
 import com.metabroadcast.common.time.Clock;
 
 
 public class YouViewEntityTaskCreator implements TaskCreator {
 
-    private final static String SERVICE_ID_PREFIX = "http://nitro.bbc.co.uk/services/";
+    private static final String NO_PAYLOAD_ERROR = "Can't create status=NEW without payload";
     private final Clock clock;
 
     public YouViewEntityTaskCreator(Clock clock) {
@@ -64,31 +63,31 @@ public class YouViewEntityTaskCreator implements TaskCreator {
 
     @Override
     public Task taskFor(String contentCrid, Content content, Action action, Status status) {
-        checkArgument(status != Status.NEW, "Can't create status=NEW without payload");
+        checkArgument(status != Status.NEW, NO_PAYLOAD_ERROR);
         return taskFor(contentCrid, content, null, action, status);
     }
 
     @Override
     public Task taskFor(String versionCrid, ItemAndVersion versionHierarchy, Action action, Status status) {
-        checkArgument(status != Status.NEW, "Can't create status=NEW without payload");
+        checkArgument(status != Status.NEW, NO_PAYLOAD_ERROR);
         return taskFor(versionCrid, versionHierarchy, null, action, status);
     }
 
     @Override
     public Task taskFor(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Action action, Status status) {
-        checkArgument(status != Status.NEW, "Can't create status=NEW without payload");
+        checkArgument(status != Status.NEW, NO_PAYLOAD_ERROR);
         return taskFor(broadcastImi, broadcastHierarchy, null, action, status);
     }
 
     @Override
     public Task taskFor(String onDemandImi, ItemOnDemandHierarchy onDemandHierarchy, Action action, Status status) {
-        checkArgument(status != Status.NEW, "Can't create status=NEW without payload");
+        checkArgument(status != Status.NEW, NO_PAYLOAD_ERROR);
         return taskFor(onDemandImi, onDemandHierarchy, null, action, status);
     }
 
     @Override
     public Task taskFor(String channelCrid, Channel channel, Action action, Status status) {
-        checkArgument(status != Status.NEW, "Can't create status=NEW without payload");
+        checkArgument(status != Status.NEW, NO_PAYLOAD_ERROR);
         return taskFor(channelCrid, channel, null, action, status);
     }
 

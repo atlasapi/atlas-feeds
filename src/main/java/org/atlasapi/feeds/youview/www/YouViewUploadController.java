@@ -42,7 +42,7 @@ import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
-import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
@@ -54,6 +54,7 @@ import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
 
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.common.base.Charsets;
@@ -191,7 +192,7 @@ public class YouViewUploadController {
             @RequestParam("to") String toStr
     ) throws IOException {
         FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
-                .getTelescopeReporter(AtlasFeedsReporters.YOU_VIEW_MANUAL_SCHEDULE_UPLOADER);
+                .getTelescopeReporter(FeedsReporterNames.YOU_VIEW_MANUAL_SCHEDULE_UPLOADER);
         telescope.startReporting();
 
         try {
@@ -249,7 +250,7 @@ public class YouViewUploadController {
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
         FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
-                .getTelescopeReporter(AtlasFeedsReporters.YOU_VIEW_MANUAL_UPLOADER);
+                .getTelescopeReporter(FeedsReporterNames.YOU_VIEW_MANUAL_UPLOADER);
         telescope.startReporting();
 
         try{
@@ -296,7 +297,12 @@ public class YouViewUploadController {
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("application/json");
             MAPPER.writeValue(response.getOutputStream(), allResponses);
-        } catch (Exception e) {
+        }
+        catch (JsonMappingException e){
+            log.error("Failed to write the results of calling "
+                      + request.getRequestURL() + " to the output.", e);
+        }
+        catch (Exception e) {
             telescope.reportFailedEvent(
                     "The call to " + request.getRequestURL() + " failed. "
                     + "(" + e.toString() + ")");
@@ -326,7 +332,7 @@ public class YouViewUploadController {
     ) throws IOException, HttpException, PayloadGenerationException {
 
         FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
-                .getTelescopeReporter(AtlasFeedsReporters.YOU_VIEW_MANUAL_UPLOADER);
+                .getTelescopeReporter(FeedsReporterNames.YOU_VIEW_MANUAL_UPLOADER);
 
         if(immediate){ //only start reporting if we will actually upload stuff as well.
             //I believe if this is not immediate it will schedule a task, and things will be
@@ -336,9 +342,10 @@ public class YouViewUploadController {
         try {
             Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
             if (!publisher.isPresent()) {
-                if (immediate) { //to prevent logging an error message if it is not started.
+                if (immediate) { //to prevent logging an error message if telescope is not started.
                     telescope.reportFailedEvent(
-                            "The call to " + request.getRequestURL() + "Publisher " + publisherStr + " not found.");
+                            "The call to " + request.getRequestURL()
+                            + " has failed. Publisher=" + publisherStr + " not found.");
                     telescope.endReporting();
                 }
                 sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
@@ -739,7 +746,7 @@ public class YouViewUploadController {
             @RequestParam(value = "uri", required = true) String uri) throws IOException {
 
         FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
-                .getTelescopeReporter(AtlasFeedsReporters.YOU_VIEW_REVOKER);
+                .getTelescopeReporter(FeedsReporterNames.YOU_VIEW_REVOKER);
         telescope.startReporting();
 
         try {
@@ -787,7 +794,7 @@ public class YouViewUploadController {
             @RequestParam(value = "uri", required = true) String uri) throws IOException {
 
         FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
-                .getTelescopeReporter(AtlasFeedsReporters.YOU_VIEW_UNREVOKER);
+                .getTelescopeReporter(FeedsReporterNames.YOU_VIEW_UNREVOKER);
         telescope.startReporting();
 
         try {

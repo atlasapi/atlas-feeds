@@ -5,7 +5,7 @@ import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
 /**
  * Add more elements as needed if more uploaders need to report to telescope.
  */
-public enum AtlasFeedsReporters implements TelescopeReporterName {
+public enum FeedsReporterNames implements TelescopeReporterName {
     // naming the key with dot namespacing allows for grouping permissions when it comes to
     // viewing events, so be mindful of your names.
     // Other names might exist in different projects so make some effort to avoid collisions.
@@ -22,7 +22,7 @@ public enum AtlasFeedsReporters implements TelescopeReporterName {
     String reporterKey;
     String reporterName;
 
-    AtlasFeedsReporters(String reporterKey, String reporterName) {
+    FeedsReporterNames(String reporterKey, String reporterName) {
         this.reporterKey = reporterKey;
         this.reporterName = reporterName;
     }

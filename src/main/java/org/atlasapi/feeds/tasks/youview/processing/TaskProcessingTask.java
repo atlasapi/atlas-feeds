@@ -55,7 +55,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
 
         for (Status uncheckedStatus : validStatuses()) {
             Iterable<Task> tasksToCheck = taskStore.allTasks(destinationType, uncheckedStatus);
-            for (Task task : tasksToCheck) {
+            for (Task task : tasksToCheck) { //NOSONAR
                 if (!shouldContinue()) {
                     break;
                 }
@@ -69,10 +69,6 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                 } catch(Exception e) {
                     log.error("Failed to process task {}", task, e);
                     progress = progress.reduce(UpdateProgress.FAILURE);
-                    //report to telescope
-                    String payload = task.payload().isPresent()
-                                     ? task.payload().get().payload()
-                                     : "";
                     telescope.reportFailedEvent(
                             task,
                             "Failed to process taskId=" + task.id()
