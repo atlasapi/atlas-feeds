@@ -71,14 +71,10 @@ public class TaskUpdatingResultHandler implements ResultHandler {
             YouViewResult result,
             FeedsTelescopeReporter telescope
     ) {
-        String payload = task.payload().isPresent()
-                         ? task.payload().get().payload()
-                         : "";
-
         log.info("handling transaction result for {}", task.atlasDbId());
 
         if (result.isSuccess()) {
-            telescope.reportSuccessfulEvent(task.atlasDbId(), payload);
+            telescope.reportSuccessfulEvent(task);
             taskStore.updateWithRemoteId(
                     task.id(),
                     Status.ACCEPTED,
@@ -88,10 +84,9 @@ public class TaskUpdatingResultHandler implements ResultHandler {
             successfullCounter.inc();
         } else {
             Response response = new Response(Status.REJECTED, result.result(), result.uploadTime());
-            telescope.reportFailedEventWithAtlasId(
+            telescope.reportFailedEvent(
                     task, //will try to attach it to an atlasId if one exists.
-                    String.format("Content was rejected. Result=%s", result.result())+". Task="+task,
-                    payload
+                    String.format("Content was rejected. Result=%s", result.result())+". Task="+task
             );
             taskStore.updateWithResponse(task.id(), response);
             unsuccessfulCounter.inc();

@@ -7,7 +7,6 @@ import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
-import org.atlasapi.reporting.telescope.AtlasFeedsReporters;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
@@ -74,14 +73,13 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                     String payload = task.payload().isPresent()
                                      ? task.payload().get().payload()
                                      : "";
-                    telescope.reportFailedEventWithAtlasId(
+                    telescope.reportFailedEvent(
                             task,
                             "Failed to process taskId=" + task.id()
                             + ". destination " + task.destination()
                             + ". atlasId=" + task.atlasDbId()
                             + ". payload present=" + task.payload().isPresent()
-                            + " (" + e.toString() + ")",
-                            payload
+                            + " (" + e.toString() + ")"
                     );
                 }
                 reportStatus(progress.toString());

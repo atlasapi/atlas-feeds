@@ -1,7 +1,5 @@
 package org.atlasapi.reporting.telescope;
 
-import java.time.LocalDateTime;
-
 import org.atlasapi.feeds.tasks.Task;
 
 import com.metabroadcast.columbus.telescope.api.EntityState;
@@ -32,92 +30,126 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         super(reporterName, environment, client);
     }
 
-    public void reportSuccessfulEvent(Long dbId, String payload) {
-        reportSuccessfulEventGeneric(encode(dbId), null, payload);
+    public void reportSuccessfulEvent(Task task){
+        reportSuccessfulEventWithWarning(task, null);
     }
 
-    public void reportSuccessfulEventWithWarning(long dbId, String warningMsg, String payload) {
-        reportSuccessfulEventGeneric(encode(dbId), warningMsg, payload);
+    public void reportSuccessfulEventWithWarning(
+            long dbId,
+            String warningMsg,
+            String entityType,
+            String payload) {
+
+        EntityState.Builder entityState = entityStateFromStrings(encode(dbId), entityType, payload);
+        reportSuccessfulEventGeneric(entityState, warningMsg);
+    }
+
+    public void reportSuccessfulEventWithWarning(Task task, String warningMsg){
+        EntityState.Builder entityState = entityStateFromTask(task);
+        reportSuccessfulEventGeneric(entityState, warningMsg);
     }
 
     private void reportSuccessfulEventGeneric(
             String atlasItemId,
             String warningMsg,
-            String payload
-    ) {
-        //fail graciously by reporting nothing, but print a full stack so we know who caused this
-        if (atlasItemId == null) {
-            log.error(
-                    "Cannot report a successful event to telescope, without an atlasId",
-                    new IllegalArgumentException("No atlasId was given"));
-            return;
-        }
+            String entityType,
+            String payload) {
 
-        EntityState.Builder entityState = EntityState.builder()
-                .withAtlasId(atlasItemId)
-                .withRaw(payload)
-                .withRawMime(MimeType.APPLICATION_XML.toString());
+        EntityState.Builder entityState = entityStateFromStrings(atlasItemId, entityType, payload);
+        reportFailedEventGeneric(entityState, warningMsg);
+    }
+
+    private void reportSuccessfulEventGeneric(
+            EntityState.Builder entityState,
+            String warningMsg) {
 
         if (warningMsg != null) {
             entityState.withWarning(warningMsg);
         }
 
-        Event event = super.getEventBuilder()
+        EntityState entityStateBuilt = entityState.build();
+        //fail graciously by reporting nothing, but print a full stack so we know who caused this
+        if (!entityStateBuilt.getAtlasId().isPresent()) {
+            log.error(
+                    "Cannot report a successful event to telescope, without an atlasId",
+                    new NullPointerException("No atlasId was given"));
+            return;
+        }
+
+        Event event = getEventBuilder()
                 .withType(Event.Type.UPLOAD)
                 .withStatus(Event.Status.SUCCESS)
-                .withEntityState(entityState.build())
+                .withEntityState(entityStateBuilt)
                 .build();
 
         reportEvent(event);
     }
 
     public void reportFailedEvent(String errorMsg) {
+        reportFailedEvent( errorMsg, null);
+    }
+
+    public void reportFailedEvent(String errorMsg, String entityType) {
         //cant have null, telescope requires either an atlasId, or error+raw.
-        reportFailedEventWithAtlasId("", errorMsg, "");
+        reportFailedEvent( errorMsg, entityType, "");
     }
 
-    public void reportFailedEvent(String errorMsg, String payload) {
-        reportFailedEventWithAtlasId("", errorMsg, payload);
+    public void reportFailedEvent(String errorMsg, String entityType, String payload) {
+        reportFailedEventGeneric("", errorMsg, entityType, payload);
     }
 
-    public void reportFailedEventWithAtlasId(long dbId, String errorMsg, String payload) {
-        reportFailedEventWithAtlasId(encode(dbId), errorMsg, payload);
+    public void reportFailedEvent(Task task, String errorMsg) {
+       reportFailedEventGeneric( entityStateFromTask(task), errorMsg);
     }
 
-    public void reportFailedEventWithAtlasId(long dbId, String errorMsg) {
-        reportFailedEventWithAtlasId(encode(dbId), errorMsg, "");
-    }
-
-    public void reportFailedEventWithAtlasId(Task task, String errorMsg, String payload) {
-        if (task != null && task.atlasDbId() != null) {
-            reportFailedEventWithAtlasId(encode(task.atlasDbId()), errorMsg, payload);
-        }else{
-            reportFailedEvent(errorMsg, "");
-        }
-    }
-
-    public void reportFailedEventWithAtlasId(Task task, String errorMsg) {
-        reportFailedEventWithAtlasId(task, errorMsg, "");
+    private void reportFailedEventGeneric(
+            String atlasId,
+            String errorMsg,
+            String entityType,
+            String payload) {
+        EntityState.Builder entityState = entityStateFromStrings(atlasId, entityType, payload);
+        reportFailedEventGeneric(entityState, errorMsg);
     }
 
     /**
-     * At least (atlasId || ( errorMsg && payload )) must be defined, otherwise telescope with throw exceptions.
+     * At least (atlasId || ( errorMsg && payload )) must be defined, otherwise telescope with throw
+     * exceptions. reportEvent() will handle the errors though.
      */
-    private void reportFailedEventWithAtlasId(String atlasId, String errorMsg, String payload) {
-        Event event = Event.builder()
-                .withStatus(Event.Status.FAILURE)
+    private void reportFailedEventGeneric(EntityState.Builder entityState, String errorMsg){
+        entityState.withError(errorMsg);
+        Event event = getEventBuilder()
                 .withType(Event.Type.UPLOAD)
-                .withEntityState(EntityState.builder()
-                        .withAtlasId(atlasId)
-                        .withError(errorMsg)
-                        .withRaw(payload)
-                        .withRawMime(MimeType.APPLICATION_XML.toString())
-                        .build()
-                )
-                .withTaskId(getTaskId())
-                .withTimestamp(LocalDateTime.now())
+                .withStatus(Event.Status.FAILURE)
+                .withEntityState(entityState.build())
                 .build();
 
         reportEvent(event);
+    }
+
+    private EntityState.Builder entityStateFromTask(Task task) {
+        if (task == null) {
+            //this will eventually fail (silently). Look at reportFailedEventGeneric comments.
+            //However it should not happen either, and its here to prevent NullPointerExceptions.
+            return EntityState.builder();
+        }
+        String atlasId = task.atlasDbId() != null
+                         ? encode(task.atlasDbId())
+                        : null;
+        String payload = task.payload().isPresent()
+                         ? task.payload().get().payload()
+                         : null;
+        String entityType = task.entityType().isPresent()
+                            ? task.entityType().get()
+                            : null;
+
+        return entityStateFromStrings(atlasId, entityType, payload);
+    }
+
+    private EntityState.Builder entityStateFromStrings(String atlasId, String entityType, String payload){
+        return EntityState.builder()
+                .withAtlasId(atlasId)
+                .withType(entityType)
+                .withRaw(payload)
+                .withRawMime(MimeType.APPLICATION_XML.toString());
     }
 }
