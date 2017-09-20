@@ -71,8 +71,6 @@ public class TaskUpdatingResultHandler implements ResultHandler {
             YouViewResult result,
             FeedsTelescopeReporter telescope
     ) {
-        log.info("handling transaction result for {}", task.atlasDbId());
-
         if (result.isSuccess()) {
             telescope.reportSuccessfulEvent(task);
             taskStore.updateWithRemoteId(

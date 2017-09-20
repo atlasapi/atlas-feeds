@@ -63,7 +63,6 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                     continue;
                 }
                 try {
-                    log.info("task processor for atlasid={}", task.atlasDbId());
                     processor.process(task, telescope);
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch(Exception e) {
