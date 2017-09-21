@@ -50,35 +50,26 @@ public class Task {
         return builder;
     }
 
-    private Task( //NOSONAR
-            Long id, Long atlasDbId, DateTime created, Publisher publisher, Action action,
-            Destination destination, Status status,
-            Optional<DateTime> uploadTime,
-            Optional<String> remoteId,
-            Optional<Payload> payload,
-            Iterable<Response> remoteResponses,
-            Optional<String> lastError,
-            Boolean manuallyCreated
-    ) {
-        this.id = id;
-        this.atlasDbId = atlasDbId;
-        this.created = checkNotNull(created);
-        this.publisher = checkNotNull(publisher);
-        this.action = checkNotNull(action);
-        this.destination = checkNotNull(destination);
-        this.status = checkNotNull(status);
-        this.uploadTime = checkNotNull(uploadTime);
-        this.remoteId = checkNotNull(remoteId);
-        this.payload = checkNotNull(payload);
-        this.remoteResponses = ImmutableSet.copyOf(remoteResponses);
-        this.lastError = checkNotNull(lastError);
-        this.manuallyCreated = manuallyCreated;
+    private Task(Builder builder) {
+        this.id = builder.id;
+        this.atlasDbId = builder.atlasDbId;
+        this.created = checkNotNull(builder.created);
+        this.publisher = checkNotNull(builder.publisher);
+        this.action = checkNotNull(builder.action);
+        this.destination = checkNotNull(builder.destination);
+        this.status = checkNotNull(builder.status);
+        this.uploadTime = checkNotNull(builder.uploadTime);
+        this.remoteId = checkNotNull(builder.remoteId);
+        this.payload = checkNotNull(builder.payload);
+        this.remoteResponses = ImmutableSet.copyOf(builder.remoteResponses.build());
+        this.lastError = checkNotNull(builder.lastError);
+        this.manuallyCreated = builder.manuallyCreated;
     }
 
     public Long id() {
         return id;
     }
-    
+
     public DateTime created() {
         return created;
     }
@@ -185,9 +176,7 @@ public class Task {
         private Builder() { }
         
         public Task build() {
-            return new Task(id,
-                    atlasDbId, created, publisher, action, destination, status, uploadTime,
-                    remoteId, payload, remoteResponses.build(), lastError, manuallyCreated);
+            return new Task(this);
         }
 
         public Builder withId(Long id) {

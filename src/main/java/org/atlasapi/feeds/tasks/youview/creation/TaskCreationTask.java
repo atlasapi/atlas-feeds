@@ -189,11 +189,10 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 Payload p = payloadCreator.payloadFrom(contentCrid, content);
 
                 if (shouldSave(HashType.CONTENT, contentCrid, p)) {
-                    log.debug("Storing content that with id {}", content.getId());
                     taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, p, action));
                     payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
                 } else {
-                    log.info("Existing hash found for Content {}, not updating", contentCrid);
+                    log.debug("Existing hash found for Content {}, not updating", contentCrid);
                 }
             }
 

@@ -52,16 +52,6 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         reportSuccessfulEventGeneric(entityState, warningMsg);
     }
 
-    private void reportSuccessfulEventGeneric( //NOSONAR
-            String atlasItemId,
-            String warningMsg,
-            String entityType,
-            String payload) {
-
-        EntityState.Builder entityState = entityStateFromStrings(atlasItemId, entityType, payload);
-        reportFailedEventGeneric(entityState, warningMsg);
-    }
-
     private void reportSuccessfulEventGeneric(
             EntityState.Builder entityState,
             String warningMsg) {
@@ -143,10 +133,10 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
                          : null;
 
         String entityType = null;
-        try { //I got trust issues
+        try { //Because I got trust issues
             //see if you can get a type from the destination
             if (task.destination() != null
-                //but surpriiiiize, only YOUVIEW destinations got types. Toooooooot. *lame party popper pops*
+                //only YOUVIEW destinations got types.
                 && task.destination().type() == Destination.DestinationType.YOUVIEW) {
 
                 YouViewDestination yvDest = (YouViewDestination) task.destination();
