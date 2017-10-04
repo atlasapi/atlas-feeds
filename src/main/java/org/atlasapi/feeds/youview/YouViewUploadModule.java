@@ -132,7 +132,7 @@ public class YouViewUploadModule {
     private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
     
-    // Uploads are being performed as part of the delta job, temporarily
+    // Uploads are being performed as part of the delta job. This is here in case it ever comes in handy again.
     private static final RepetitionRule UPLOAD = RepetitionRules.NEVER;
     private static final RepetitionRule DELETE = RepetitionRules.every(Duration.standardMinutes(15)).withOffset(Duration.standardMinutes(5));
     private static final RepetitionRule TASK_REMOVAL = RepetitionRules.daily(LocalTime.MIDNIGHT);

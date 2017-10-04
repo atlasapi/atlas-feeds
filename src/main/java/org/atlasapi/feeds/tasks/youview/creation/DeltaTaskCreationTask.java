@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.tasks.youview.processing.TaskProcessingTask;
 import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -21,11 +22,15 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class DeltaTaskCreationTask extends TaskCreationTask {
+
+    private final Logger log = LoggerFactory.getLogger(DeltaTaskCreationTask.class);
 
     public static final Duration UPDATE_WINDOW_GRACE_PERIOD = Duration.standardHours(2);
 
@@ -77,6 +82,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         Iterator<Content> updatedContent = contentResolver.updatedSince(
                 lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD)
         );
+
+        log.info("Starting new Delta discovery and Upload job for " + getPublisherString());
         
         List<Content> deleted = Lists.newArrayList();
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);

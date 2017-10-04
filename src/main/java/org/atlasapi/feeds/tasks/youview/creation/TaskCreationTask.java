@@ -90,6 +90,11 @@ public abstract class TaskCreationTask extends ScheduledTask {
         this.hashCheckMode = hashCheckMode;
     }
 
+    //for debugging purposes
+    protected String getPublisherString(){
+        return publisher.toString();
+    }
+
     protected Optional<DateTime> getLastUpdatedTime() {
         return lastUpdatedStore.getLastUpdated(publisher);
     }

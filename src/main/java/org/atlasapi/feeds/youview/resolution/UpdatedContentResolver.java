@@ -1,8 +1,5 @@
 package org.atlasapi.feeds.youview.resolution;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.joda.time.DateTimeConstants.APRIL;
-
 import java.util.Iterator;
 
 import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
@@ -10,13 +7,17 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
-import org.joda.time.DateTime;
+
+import com.metabroadcast.common.time.DateTimeZones;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterators;
-import com.metabroadcast.common.time.DateTimeZones;
+import org.joda.time.DateTime;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.joda.time.DateTimeConstants.APRIL;
 
 
 public class UpdatedContentResolver implements YouViewContentResolver {
@@ -58,7 +59,17 @@ public class UpdatedContentResolver implements YouViewContentResolver {
     }
     
     private Iterator<Content> fetchContentUpdatedSinceDate(DateTime since) {
-        return Iterators.filter(contentFinder.updatedSince(publisher, since), 
-                                Predicates.and(IS_VIDEO_CONTENT, HAS_MASTER_BRAND_MAPPING));
+        //bbc specific hack. I don't know whence this requirement stems.
+        if (Publisher.BBC == publisher) {
+            return Iterators.filter(
+                    contentFinder.updatedSince(publisher, since),
+                    Predicates.and(IS_VIDEO_CONTENT, HAS_MASTER_BRAND_MAPPING)
+            );
+        } else {
+            return Iterators.filter(
+                    contentFinder.updatedSince(publisher, since),
+                    IS_VIDEO_CONTENT
+            );
+        }
     }
 }
