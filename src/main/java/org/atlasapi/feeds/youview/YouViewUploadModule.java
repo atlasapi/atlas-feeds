@@ -169,7 +169,7 @@ public class YouViewUploadModule {
     public void startScheduledTasks() throws JAXBException, SAXException {
         for (Entry<String, Publisher> publisherEntry : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
-            if (isEnabled(publisherPrefix) || publisherEntry.getKey().equals(Publisher.AMAZON_UNBOX.key())) {
+            if (isEnabled(publisherPrefix) || publisherEntry.getValue().key().equals(Publisher.AMAZON_UNBOX.key())) {
                 scheduler.schedule(scheduleBootstrapTaskCreationTask(publisherEntry.getValue()), BOOTSTRAP_CONTENT_CHECK);
                 scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), DELTA_CONTENT_CHECK);
             }

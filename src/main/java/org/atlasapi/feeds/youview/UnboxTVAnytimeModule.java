@@ -1,5 +1,10 @@
 package org.atlasapi.feeds.youview;
 
+import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
+import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
+import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
+import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
+import org.atlasapi.feeds.youview.nitro.NitroContentHierarchyExpander;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxChannelGenerator;
@@ -9,6 +14,9 @@ import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxMasterbrandGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxProgramInformationGenerator;
+
+import com.metabroadcast.common.time.SystemClock;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -58,4 +66,24 @@ public class UnboxTVAnytimeModule {
     public UnboxBroadcastServiceMapping unboxBroadcastServiceMapping() {
         return new UnboxBroadcastServiceMapping();
     }
+
+//    @Bean
+//    public ContentHierarchyExpander contentHierarchyExpander() {
+//        return new NitroContentHierarchyExpander(versionHierarchyExpander(), broadcastHierarchyExpander(), onDemandHierarchyExpander(), unboxIdGenerator());
+//    }
+//
+//    @Bean
+//    public VersionHierarchyExpander versionHierarchyExpander() {
+//        return new VersionHierarchyExpander(unboxIdGenerator());
+//    }
+//
+//    @Bean
+//    public OnDemandHierarchyExpander onDemandHierarchyExpander() {
+//        return new OnDemandHierarchyExpander(unboxIdGenerator());
+//    }
+//
+//    @Bean
+//    public BroadcastHierarchyExpander broadcastHierarchyExpander() {
+//        return new BroadcastHierarchyExpander(unboxIdGenerator(), nitroServiceMapping(), bbcServiceIdResolver(), new SystemClock());
+//    }
 }
