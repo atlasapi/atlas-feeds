@@ -97,7 +97,6 @@ public class NitroTVAnytimeModule {
         return new NitroCreditsItemGenerator(peopleResolver);
     }
 
-    @Bean
     public ServiceIdResolver bbcServiceIdResolver() {
         return new UnboxChannelResolvingServiceIdResolver(channelResolver);
     }
