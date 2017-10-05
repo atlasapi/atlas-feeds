@@ -33,7 +33,6 @@ import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
 import org.atlasapi.feeds.youview.payload.Converter;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.TVAPayloadCreator;
@@ -91,8 +90,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.joda.time.LocalTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -151,11 +148,11 @@ public class YouViewUploadModule {
     private @Autowired SimpleScheduler scheduler;
     private @Autowired TvAnytimeGenerator generator;
     private @Autowired TaskStore taskStore;
-    private @Autowired BbcServiceIdResolver bbcServiceIdResolver;
+    private @Autowired ServiceIdResolver serviceIdResolver;
     private @Autowired IdGenerator nitroIdGenerator;
     private @Autowired OnDemandHierarchyExpander onDemandHierarchyExpander;
     private @Autowired VersionHierarchyExpander versionHierarchyExpander;
-    private @Autowired ContentHierarchyExpander unboxContentHierarchyExpander;
+    private @Autowired ContentHierarchyExpander contentHierarchyExpander;
     private @Autowired ContentHierarchyExtractor contentHierarchy;
     private @Autowired ChannelResolver channelResolver;
     private @Autowired ScheduleResolver scheduleResolver;
@@ -267,7 +264,7 @@ public class YouViewUploadModule {
                         // nope.
                     }
                 }))
-                .withHierarchyExpander(unboxContentHierarchyExpander)
+                .withHierarchyExpander(contentHierarchyExpander)
                 .withRevocationProcessor(revocationProcessor())
                 .withTaskProcessor(taskProcessor())
                 .withScheduleResolver(scheduleResolver)
@@ -297,7 +294,7 @@ public class YouViewUploadModule {
         return new BootstrapTaskCreationTask(
                 lastUpdatedStore(), 
                 publisher, 
-                unboxContentHierarchyExpander, 
+                contentHierarchyExpander,
                 nitroIdGenerator, 
                 taskStore, 
                 taskCreator(), 
@@ -314,7 +311,7 @@ public class YouViewUploadModule {
         return new DeltaTaskCreationTask(
                 lastUpdatedStore(), 
                 publisher, 
-                unboxContentHierarchyExpander, 
+                contentHierarchyExpander,
                 nitroIdGenerator, 
                 taskStore, 
                 taskCreator(), 
@@ -355,13 +352,13 @@ public class YouViewUploadModule {
     
     private YouViewContentResolver nitroBootstrapContentResolver(Publisher publisher) {
         return new FullHierarchyResolvingContentResolver(
-                new UpdatedContentResolver(contentFinder, bbcServiceIdResolver, publisher), 
+                new UpdatedContentResolver(contentFinder, serviceIdResolver, publisher),
                 contentHierarchy
         );
     }
     
     private YouViewContentResolver nitroDeltaContentResolver(Publisher publisher) {
-        return new UpdatedContentResolver(contentFinder, bbcServiceIdResolver, publisher);
+        return new UpdatedContentResolver(contentFinder, serviceIdResolver, publisher);
     }
      
     @Bean

@@ -10,7 +10,7 @@ import java.util.Set;
 
 import org.atlasapi.feeds.youview.UniqueIdGenerator;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
+import org.atlasapi.feeds.youview.ServiceIdResolver;
 import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
@@ -33,7 +33,7 @@ public class BroadcastHierarchyExpanderTest {
     private Clock clock = new TimeMachine();
     private IdGenerator idGenerator;
     private BroadcastServiceMapping serviceMapping = Mockito.mock(BroadcastServiceMapping.class);
-    private BbcServiceIdResolver serviceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
+    private ServiceIdResolver serviceIdResolver = Mockito.mock(ServiceIdResolver.class);
     private BroadcastHierarchyExpander hierarchyExpander;
 
     @Test

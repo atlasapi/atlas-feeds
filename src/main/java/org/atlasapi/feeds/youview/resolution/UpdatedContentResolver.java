@@ -2,7 +2,7 @@ package org.atlasapi.feeds.youview.resolution;
 
 import java.util.Iterator;
 
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
+import org.atlasapi.feeds.youview.ServiceIdResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Publisher;
@@ -37,20 +37,20 @@ public class UpdatedContentResolver implements YouViewContentResolver {
 
         @Override
         public boolean apply(Content input) {
-            return bbcServiceIdResolver.resolveMasterBrandId(input).isPresent();
+            return serviceIdResolver.resolveMasterBrandId(input).isPresent();
         }
         
     };
     
     private final LastUpdatedContentFinder contentFinder;
     private final Publisher publisher;
-    private final BbcServiceIdResolver bbcServiceIdResolver;
+    private final ServiceIdResolver serviceIdResolver;
     
-    public UpdatedContentResolver(LastUpdatedContentFinder contentFinder, BbcServiceIdResolver bbcServiceIdResolver, 
+    public UpdatedContentResolver(LastUpdatedContentFinder contentFinder, ServiceIdResolver serviceIdResolver,
             Publisher publisher) {
         this.contentFinder = checkNotNull(contentFinder);
         this.publisher = checkNotNull(publisher);
-        this.bbcServiceIdResolver = checkNotNull(bbcServiceIdResolver);
+        this.serviceIdResolver = checkNotNull(serviceIdResolver);
     }
 
     @Override

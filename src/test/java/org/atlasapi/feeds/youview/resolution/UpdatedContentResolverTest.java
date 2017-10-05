@@ -3,7 +3,7 @@ package org.atlasapi.feeds.youview.resolution;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
+import org.atlasapi.feeds.youview.ServiceIdResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
@@ -27,14 +27,15 @@ public class UpdatedContentResolverTest {
     private static final Content AUDIO_CONTENT = createItemWithMediaType(MediaType.AUDIO, "audio");
     
     private LastUpdatedContentFinder contentFinder = Mockito.mock(LastUpdatedContentFinder.class);
-    private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
+    private ServiceIdResolver serviceIdResolver = Mockito.mock(ServiceIdResolver.class);
     
-    private final YouViewContentResolver resolver = new UpdatedContentResolver(contentFinder, bbcServiceIdResolver, PUBLISHER);
+    private final YouViewContentResolver resolver = new UpdatedContentResolver(contentFinder,
+            serviceIdResolver, PUBLISHER);
 
     @Before
     public void setup() {
         when(contentFinder.updatedSince(PUBLISHER, RECENT_TIMESTAMP)).thenReturn(Iterators.forArray(VIDEO_CONTENT, AUDIO_CONTENT));
-        when(bbcServiceIdResolver.resolveMasterBrandId(VIDEO_CONTENT)).thenReturn(Optional.of("abc"));
+        when(serviceIdResolver.resolveMasterBrandId(VIDEO_CONTENT)).thenReturn(Optional.of("abc"));
     }
 
     @Test

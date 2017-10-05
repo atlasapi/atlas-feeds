@@ -4,8 +4,7 @@ import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
-import org.atlasapi.feeds.youview.nitro.ChannelResolvingBbcServiceIdResolver;
+import org.atlasapi.feeds.youview.unbox.UnboxChannelResolvingServiceIdResolver;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxChannelGenerator;
@@ -74,8 +73,8 @@ public class UnboxTVAnytimeModule {
     }
 
     @Bean
-    public BbcServiceIdResolver bbcServiceIdResolver() {
-        return new ChannelResolvingBbcServiceIdResolver(channelResolver);
+    public ServiceIdResolver unboxServiceIdResolver() {
+        return new UnboxChannelResolvingServiceIdResolver(channelResolver);
     }
 
     @Bean
@@ -95,6 +94,6 @@ public class UnboxTVAnytimeModule {
 
     @Bean
     public BroadcastHierarchyExpander broadcastHierarchyExpander() {
-        return new BroadcastHierarchyExpander(unboxIdGenerator(), unboxBroadcastServiceMapping(), bbcServiceIdResolver() , new SystemClock());
+        return new BroadcastHierarchyExpander(unboxIdGenerator(), unboxBroadcastServiceMapping(), unboxServiceIdResolver() , new SystemClock());
     }
 }

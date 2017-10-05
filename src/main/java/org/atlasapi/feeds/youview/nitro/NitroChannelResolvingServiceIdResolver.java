@@ -2,8 +2,7 @@ package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.atlasapi.feeds.youview.NoChannelFoundException;
-import org.atlasapi.feeds.youview.NoSuchChannelAliasException;
+import org.atlasapi.feeds.youview.ServiceIdResolver;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Alias;
@@ -16,7 +15,7 @@ import com.google.common.collect.Iterables;
 import com.metabroadcast.common.base.Maybe;
 
 
-public final class ChannelResolvingBbcServiceIdResolver implements BbcServiceIdResolver {
+public final class NitroChannelResolvingServiceIdResolver implements ServiceIdResolver {
     
     private static final String BBC_SID_NAMESPACE = "bbc:service:id";
 
@@ -24,7 +23,7 @@ public final class ChannelResolvingBbcServiceIdResolver implements BbcServiceIdR
     
     private final ChannelResolver channelResolver;
 
-    public ChannelResolvingBbcServiceIdResolver(ChannelResolver channelResolver) {
+    public NitroChannelResolvingServiceIdResolver(ChannelResolver channelResolver) {
         this.channelResolver = checkNotNull(channelResolver);
     }
 

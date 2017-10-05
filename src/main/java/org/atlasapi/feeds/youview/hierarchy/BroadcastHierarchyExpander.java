@@ -4,16 +4,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Map;
 
-import javax.annotation.Nullable;
-
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
+import org.atlasapi.feeds.youview.ServiceIdResolver;
 import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,13 +30,13 @@ public class BroadcastHierarchyExpander {
     private final Logger log = LoggerFactory.getLogger(BroadcastHierarchyExpander.class);
     private final IdGenerator idGenerator;
     private final BroadcastServiceMapping serviceMapping;
-    private final BbcServiceIdResolver serviceIdResolver;
+    private final ServiceIdResolver serviceIdResolver;
     private final Clock clock;
 
     private static final Duration MAXIMUM_BROADCAST_AGE = Duration.standardDays(7);
 
     public BroadcastHierarchyExpander(IdGenerator idGenerator, BroadcastServiceMapping serviceMapping,
-            BbcServiceIdResolver serviceIdResolver, Clock clock) {
+            ServiceIdResolver serviceIdResolver, Clock clock) {
         this.idGenerator = checkNotNull(idGenerator);
         this.serviceMapping = checkNotNull(serviceMapping);
         this.serviceIdResolver = checkNotNull(serviceIdResolver);

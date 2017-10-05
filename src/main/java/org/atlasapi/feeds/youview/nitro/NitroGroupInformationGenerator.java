@@ -5,16 +5,15 @@ import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
-import com.metabroadcast.common.intl.Countries;
 import org.atlasapi.feeds.tvanytime.CreditsItemGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
+import org.atlasapi.feeds.youview.ServiceIdResolver;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Brand;
@@ -30,8 +29,6 @@ import org.atlasapi.media.entity.ReleaseDate.ReleaseType;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 
-import org.joda.time.LocalDate;
-import scala.collection.parallel.ParIterableLike;
 import tva.metadata._2010.BaseProgramGroupTypeType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ControlledTermType;
@@ -129,7 +126,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
 
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
-    private final BbcServiceIdResolver sIdResolver;
+    private final ServiceIdResolver sIdResolver;
     private final CreditsItemGenerator creditsGenerator;
     private final ContentTitleGenerator titleGenerator;
     
@@ -139,7 +136,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             .withOmissionMarker("...");
     
     public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping,
-            BbcServiceIdResolver sIdResolver, CreditsItemGenerator creditsGenerator, 
+            ServiceIdResolver sIdResolver, CreditsItemGenerator creditsGenerator,
             ContentTitleGenerator titleGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
         this.genreMapping = checkNotNull(genreMapping);

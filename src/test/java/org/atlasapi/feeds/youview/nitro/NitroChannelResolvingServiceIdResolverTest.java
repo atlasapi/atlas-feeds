@@ -3,8 +3,7 @@ package org.atlasapi.feeds.youview.nitro;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import org.atlasapi.feeds.youview.NoChannelFoundException;
-import org.atlasapi.feeds.youview.NoSuchChannelAliasException;
+import org.atlasapi.feeds.youview.ServiceIdResolver;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Alias;
@@ -21,14 +20,14 @@ import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.time.TimeMachine;
 
 
-public class ChannelResolvingBbcServiceIdResolverTest {
+public class NitroChannelResolvingServiceIdResolverTest {
 
     private static final String SERVICE_ID = "serviceId";
     private static final String SID_NAMESPACE = "bbc:service:id";
     private static final String MASTERBRAND_ID_NAMESPACE = "bbc:masterbrand:id";
     private Clock clock = new TimeMachine();
     private ChannelResolver channelResolver = Mockito.mock(ChannelResolver.class);
-    private final BbcServiceIdResolver serviceIdResolver = new ChannelResolvingBbcServiceIdResolver(channelResolver); 
+    private final ServiceIdResolver serviceIdResolver = new NitroChannelResolvingServiceIdResolver(channelResolver);
     
     @SuppressWarnings("deprecation") // Maybe
     public void testAbsentReturnedWhenNoMatchingChannelFound() {

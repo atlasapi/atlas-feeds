@@ -4,8 +4,7 @@ import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
-import org.atlasapi.feeds.youview.nitro.ChannelResolvingBbcServiceIdResolver;
+import org.atlasapi.feeds.youview.nitro.NitroChannelResolvingServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.nitro.NitroChannelInformationGenerator;
@@ -98,8 +97,8 @@ public class NitroTVAnytimeModule {
     }
 
     @Bean
-    public BbcServiceIdResolver bbcServiceIdResolver() {
-        return new ChannelResolvingBbcServiceIdResolver(channelResolver);
+    public ServiceIdResolver bbcServiceIdResolver() {
+        return new NitroChannelResolvingServiceIdResolver(channelResolver);
     }
 
     @Bean
