@@ -53,16 +53,25 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                 .getTelescopeReporter(reporterName);
         telescope.startReporting();
 
+        log.info("the task is finally running "+telescope.getReporterName());
         for (Status uncheckedStatus : validStatuses()) {
+            log.info("In the status loop for status="+uncheckedStatus);
             Iterable<Task> tasksToCheck = taskStore.allTasks(destinationType, uncheckedStatus);
+            log.info("Tasks where retrieved from the db.");
+            log.info("Tasks="+tasksToCheck);
+            log.info("trying to itterate tasks");
             for (Task task : tasksToCheck) { //NOSONAR
+                log.info("itterating task "+task);
                 if (!shouldContinue()) {
                     break;
                 }
+                log.info("we should continue");
                 if (!action().equals(task.action())) {
                     continue;
                 }
+                log.info("the action is correct "+task.action());
                 try {
+                    log.info("will try to process the task.");
                     processor.process(task, telescope);
                     progress = progress.reduce(UpdateProgress.SUCCESS);
                 } catch(Exception e) {

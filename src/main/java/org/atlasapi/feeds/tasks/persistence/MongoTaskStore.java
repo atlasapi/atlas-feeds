@@ -146,16 +146,24 @@ public class MongoTaskStore implements TaskStore {
 
     @Override
     public Iterable<Task> allTasks(DestinationType type, Status status) {
+        log.info("gettting tasks for "+type+" and status "+status);
         MongoQueryBuilder mongoQuery = new MongoQueryBuilder()
                 .fieldEquals(DESTINATION_TYPE_KEY, type.name())
                 .fieldEquals(STATUS_KEY, status.name());
-        
+        log.info("the query is ready "+mongoQuery);
         DBCursor cursor = getOrderedCursor(mongoQuery.build(), TaskQuery.Sort.DEFAULT)
                                 .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
-        
-        return FluentIterable.from(cursor)
-                .transform(TaskTranslator.fromDBObjects())
+        log.info("the query got run, and we got a cursor back "+cursor);
+
+        FluentIterable<DBObject> from = FluentIterable.from(cursor);
+        log.info("we got a iterable from the cursor "+from);
+        FluentIterable<Task> transform = from
+                .transform(TaskTranslator.fromDBObjects());
+        log.info("We transform the stuff we got to tasks "+transform);
+        FluentIterable<Task> filter = transform
                 .filter(Predicates.notNull());
+        log.info("tasks for filtered for non null ones "+filter);
+        return filter;
     }
 
     @Override
