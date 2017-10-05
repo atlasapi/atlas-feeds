@@ -19,6 +19,7 @@ import org.atlasapi.feeds.youview.nitro.NitroOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroProgramInformationGenerator;
 import org.atlasapi.feeds.youview.persistence.IdMappingStore;
 import org.atlasapi.feeds.youview.persistence.StoringMappingIdGenerator;
+import org.atlasapi.feeds.youview.unbox.UnboxChannelResolvingServiceIdResolver;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.persistence.content.PeopleResolver;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,7 +99,7 @@ public class NitroTVAnytimeModule {
 
     @Bean
     public ServiceIdResolver bbcServiceIdResolver() {
-        return new NitroChannelResolvingServiceIdResolver(channelResolver);
+        return new UnboxChannelResolvingServiceIdResolver(channelResolver);
     }
 
     @Bean

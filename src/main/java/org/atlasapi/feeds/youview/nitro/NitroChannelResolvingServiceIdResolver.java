@@ -2,7 +2,6 @@ package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.atlasapi.feeds.youview.ServiceIdResolver;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Alias;
@@ -17,9 +16,9 @@ import com.metabroadcast.common.base.Maybe;
 
 public final class NitroChannelResolvingServiceIdResolver  {
     
-    private static final String UNBOX_SID_NAMESPACE = "bbc:service:id";
+    private static final String NITRO_SID_NAMESPACE = "bbc:service:id";
 
-    private static final String UNBOX_MASTERBRAND_ID_NAMESPACE = "bbc:masterbrand:id";
+    private static final String NITRO_MASTERBRAND_ID_NAMESPACE = "bbc:masterbrand:id";
     
     private final ChannelResolver channelResolver;
 
@@ -29,7 +28,7 @@ public final class NitroChannelResolvingServiceIdResolver  {
 
 //    @Override
     public Optional<String> resolveSId(Broadcast broadcast) {
-        return resolveServiceId(broadcast.getBroadcastOn(), UNBOX_SID_NAMESPACE);
+        return resolveServiceId(broadcast.getBroadcastOn(), NITRO_SID_NAMESPACE);
     }
 
     private Optional<String> resolveServiceId(String channelUri, String namespace) {
@@ -47,12 +46,12 @@ public final class NitroChannelResolvingServiceIdResolver  {
 
 //    @Override
     public Optional<String> resolveSId(Content content) {
-        return resolveServiceId(content.getPresentationChannel(), UNBOX_SID_NAMESPACE);
+        return resolveServiceId(content.getPresentationChannel(), NITRO_SID_NAMESPACE);
     }
 
 //    @Override
     public Optional<String> resolveMasterBrandId(Content content) {
-        return resolveServiceId(content.getPresentationChannel(), UNBOX_MASTERBRAND_ID_NAMESPACE);
+        return resolveServiceId(content.getPresentationChannel(), NITRO_MASTERBRAND_ID_NAMESPACE);
     }
     
     private Predicate<Alias> hasNamespace(final String namespace) {

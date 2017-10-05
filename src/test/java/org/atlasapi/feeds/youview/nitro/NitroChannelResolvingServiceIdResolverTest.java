@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import org.atlasapi.feeds.youview.ServiceIdResolver;
+import org.atlasapi.feeds.youview.unbox.UnboxChannelResolvingServiceIdResolver;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Alias;
@@ -27,7 +28,7 @@ public class NitroChannelResolvingServiceIdResolverTest {
     private static final String MASTERBRAND_ID_NAMESPACE = "bbc:masterbrand:id";
     private Clock clock = new TimeMachine();
     private ChannelResolver channelResolver = Mockito.mock(ChannelResolver.class);
-    private final ServiceIdResolver serviceIdResolver = new NitroChannelResolvingServiceIdResolver(channelResolver);
+    private final ServiceIdResolver serviceIdResolver = new UnboxChannelResolvingServiceIdResolver(channelResolver);
     
     @SuppressWarnings("deprecation") // Maybe
     public void testAbsentReturnedWhenNoMatchingChannelFound() {
