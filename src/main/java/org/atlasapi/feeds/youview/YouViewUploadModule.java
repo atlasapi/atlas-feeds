@@ -155,7 +155,7 @@ public class YouViewUploadModule {
     private @Autowired IdGenerator nitroIdGenerator;
     private @Autowired OnDemandHierarchyExpander onDemandHierarchyExpander;
     private @Autowired VersionHierarchyExpander versionHierarchyExpander;
-    private @Autowired ContentHierarchyExpander contentHierarchyExpander;
+    private @Autowired ContentHierarchyExpander unboxContentHierarchyExpander;
     private @Autowired ContentHierarchyExtractor contentHierarchy;
     private @Autowired ChannelResolver channelResolver;
     private @Autowired ScheduleResolver scheduleResolver;
@@ -267,7 +267,7 @@ public class YouViewUploadModule {
                         // nope.
                     }
                 }))
-                .withHierarchyExpander(contentHierarchyExpander)
+                .withHierarchyExpander(unboxContentHierarchyExpander)
                 .withRevocationProcessor(revocationProcessor())
                 .withTaskProcessor(taskProcessor())
                 .withScheduleResolver(scheduleResolver)
@@ -297,7 +297,7 @@ public class YouViewUploadModule {
         return new BootstrapTaskCreationTask(
                 lastUpdatedStore(), 
                 publisher, 
-                contentHierarchyExpander, 
+                unboxContentHierarchyExpander, 
                 nitroIdGenerator, 
                 taskStore, 
                 taskCreator(), 
@@ -314,7 +314,7 @@ public class YouViewUploadModule {
         return new DeltaTaskCreationTask(
                 lastUpdatedStore(), 
                 publisher, 
-                contentHierarchyExpander, 
+                unboxContentHierarchyExpander, 
                 nitroIdGenerator, 
                 taskStore, 
                 taskCreator(), 
