@@ -15,11 +15,11 @@ import com.google.common.collect.Iterables;
 import com.metabroadcast.common.base.Maybe;
 
 
-public final class NitroChannelResolvingServiceIdResolver implements ServiceIdResolver {
+public final class NitroChannelResolvingServiceIdResolver  {
     
-    private static final String BBC_SID_NAMESPACE = "bbc:service:id";
+    private static final String UNBOX_SID_NAMESPACE = "bbc:service:id";
 
-    private static final String BBC_MASTERBRAND_ID_NAMESPACE = "bbc:masterbrand:id";
+    private static final String UNBOX_MASTERBRAND_ID_NAMESPACE = "bbc:masterbrand:id";
     
     private final ChannelResolver channelResolver;
 
@@ -27,9 +27,9 @@ public final class NitroChannelResolvingServiceIdResolver implements ServiceIdRe
         this.channelResolver = checkNotNull(channelResolver);
     }
 
-    @Override
+//    @Override
     public Optional<String> resolveSId(Broadcast broadcast) {
-        return resolveServiceId(broadcast.getBroadcastOn(), BBC_SID_NAMESPACE);
+        return resolveServiceId(broadcast.getBroadcastOn(), UNBOX_SID_NAMESPACE);
     }
 
     private Optional<String> resolveServiceId(String channelUri, String namespace) {
@@ -45,14 +45,14 @@ public final class NitroChannelResolvingServiceIdResolver implements ServiceIdRe
         return Optional.of(Iterables.getOnlyElement(bbcSIdAliases).getValue());
     }
 
-    @Override
+//    @Override
     public Optional<String> resolveSId(Content content) {
-        return resolveServiceId(content.getPresentationChannel(), BBC_SID_NAMESPACE);
+        return resolveServiceId(content.getPresentationChannel(), UNBOX_SID_NAMESPACE);
     }
 
-    @Override
+//    @Override
     public Optional<String> resolveMasterBrandId(Content content) {
-        return resolveServiceId(content.getPresentationChannel(), BBC_MASTERBRAND_ID_NAMESPACE);
+        return resolveServiceId(content.getPresentationChannel(), UNBOX_MASTERBRAND_ID_NAMESPACE);
     }
     
     private Predicate<Alias> hasNamespace(final String namespace) {
