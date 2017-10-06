@@ -152,9 +152,13 @@ public class MongoTaskStore implements TaskStore {
                 .fieldEquals(STATUS_KEY, status.name());
         log.info("the query is ready "+mongoQuery);
         DBCursor cursor = getOrderedCursor(mongoQuery.build(), TaskQuery.Sort.DEFAULT)
-                                .limit(20)
+                                .limit(1)
                                 .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
         log.info("the query got run, and we got a cursor back "+cursor);
+
+        log.info("cursor size: "+ cursor.size());
+        log.info("cursor count: "+cursor.count());
+
 
         FluentIterable<DBObject> from = FluentIterable.from(cursor);
         log.info("we got a iterable from the cursor "+from);
