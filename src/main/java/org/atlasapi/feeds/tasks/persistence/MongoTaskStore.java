@@ -152,6 +152,7 @@ public class MongoTaskStore implements TaskStore {
                 .fieldEquals(STATUS_KEY, status.name());
         log.info("the query is ready "+mongoQuery);
         DBCursor cursor = getOrderedCursor(mongoQuery.build(), TaskQuery.Sort.DEFAULT)
+                                .limit(20)
                                 .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
         log.info("the query got run, and we got a cursor back "+cursor);
 

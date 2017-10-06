@@ -12,8 +12,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 
 public class MongoYouViewLastUpdatedStore implements YouViewLastUpdatedStore {
-    
-    private static final String ID_VALUE = "YVlastUpdated";
+
     private static final String COLLECTION_NAME = "youViewLastUpdated";
     private final DBCollection collection;
     
@@ -23,19 +22,18 @@ public class MongoYouViewLastUpdatedStore implements YouViewLastUpdatedStore {
 
     @Override
     public Optional<DateTime> getLastUpdated(Publisher publisher) {
-        DBObject lastUpdated = collection.findOne(new BasicDBObject(MongoConstants.ID, ID_VALUE));
+        DBObject lastUpdated = collection.findOne(new BasicDBObject(MongoConstants.ID, publisher.key()));
         if (lastUpdated == null) {
             return Optional.absent();
         }
-        return Optional.fromNullable(TranslatorUtils.toDateTime(lastUpdated, publisher.name()));
+        return Optional.fromNullable(TranslatorUtils.toDateTime(lastUpdated, "date"));
     }
 
     @Override
     public void setLastUpdated(DateTime lastUpdated, Publisher publisher) {
         DBObject dbo = new BasicDBObject();
-        TranslatorUtils.from(dbo, MongoConstants.ID, ID_VALUE);
-        TranslatorUtils.fromDateTime(dbo, publisher.name(), lastUpdated);
-        collection.update(new BasicDBObject(MongoConstants.ID, ID_VALUE), dbo, true, false);
+        TranslatorUtils.fromDateTime(dbo, "date", lastUpdated);
+        collection.update(new BasicDBObject(MongoConstants.ID, publisher.key()), dbo, true, false);
     }
 
 }
