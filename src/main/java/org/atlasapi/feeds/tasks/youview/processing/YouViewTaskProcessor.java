@@ -67,7 +67,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
                     + ". destination " + task.destination()
                     + ". atlasId=" + task.atlasDbId()
                     + ". payload present=" + task.payload().isPresent()
-                    + " (" + e.getMessage() + ") "
+                    + " (" + e.getClass() + ") " //cause getMessage contains the payload again
             );
             setFailed(task, e);
         }
