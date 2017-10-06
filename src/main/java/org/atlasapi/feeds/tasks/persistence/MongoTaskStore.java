@@ -1,18 +1,19 @@
 package org.atlasapi.feeds.tasks.persistence;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
+import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
-import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
+import org.atlasapi.feeds.tasks.YouViewDestination;
+import org.atlasapi.media.entity.Publisher;
 
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
@@ -165,14 +166,42 @@ public class MongoTaskStore implements TaskStore {
 
 
         List<Task> a = new ArrayList<>();
-        while(cursor.hasNext()) {
-            DBObject obj = cursor.next();
-            System.out.println("got next "+obj);
-            Task task = TaskTranslator.fromDBObject(obj);
-            System.out.println("made a task out of it "+task);
+
+        if(status == Status.NEW){
+            Task task = Task.builder()
+                    .withId(49767548L)
+                    .withAtlasDbId(33191554L)
+                    .withCreated(new DateTime("2017-10-05T13:11:03.322Z"))
+                    .withPublisher(Publisher.AMAZON_UNBOX)
+                    .withAction(Action.UPDATE)
+                    .withDestination(new YouViewDestination(
+                                    "http://unbox.amazon.co.uk/B00IG82A06",
+                                    TVAElementType.ITEM,
+                                    "crid://nitro.bbc.co.uk/iplayer/youview/http://unbox.amazon.co.uk/B00IG82A06"
+                            )
+                    )
+                    .withStatus(Status.NEW)
+                    .withUploadTime(new DateTime())
+                    .withRemoteId("")
+                    .withPayload(new Payload(
+                            "<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\" standalone=\\\"yes\\\"?><TVAMain xmlns=\\\"urn:tva:metadata:2010\\\" xmlns:ns2=\\\"urn:tva:metadata:extended:2010\\\" xmlns:ns3=\\\"urn:tva:mpeg7:2008\\\" xmlns:ns4=\\\"http://refdata.youview.com/schemas/Metadata/2012-11-19\\\" xml:lang=\\\"en-GB\\\"><ProgramDescription><ProgramInformationTable/><GroupInformationTable><GroupInformation groupId=\\\"crid://unbox.amazon.co.uk/product/http://unbox.amazon.co.uk/B00IG82A06\\\"><GroupType xmlns:xsi=\\\"http://www.w3.org/2001/XMLSchema-instance\\\" xsi:type=\\\"ProgramGroupTypeType\\\" value=\\\"programConcept\\\"/><BasicDescription><Title type=\\\"main\\\">Fashion of the Christ</Title><Synopsis length=\\\"short\\\">Nancy gets a rude awakening when her brother-in-lax Andy comes for a surprise visit...</Synopsis><Synopsis length=\\\"medium\\\">Nancy gets a rude awakening when her brother-in-lax Andy comes for a surprise visit. Doug has an idea for a location for the faux bakery, which Nancy may need more than ever Andy in the way. While Andy...</Synopsis><Synopsis length=\\\"long\\\">Nancy gets a rude awakening when her brother-in-lax Andy comes for a surprise visit. Doug has an idea for a location for the faux bakery, which Nancy may need more than ever Andy in the way. While Andy wreaks havoc in the Botwin's lives, Nancy is introduced to &quot;The Candy Man&quot; in order to help meet her customer's needs, and Celia drops a bombshell on her husband.</Synopsis><Genre type=\\\"main\\\" href=\\\"urn:tva:metadata:cs:ContentCS:2010:3.1\\\"/><Genre type=\\\"main\\\" href=\\\"urn:tva:metadata:cs:OriginationCS:2005:5.8\\\"/><Genre type=\\\"other\\\" href=\\\"urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3\\\"/><Language type=\\\"original\\\">en</Language><CreditsList><CreditsItem role=\\\"urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN\\\"><PersonName><ns3:GivenName>Lee Rose,Burr Steers</ns3:GivenName></PersonName></CreditsItem><CreditsItem role=\\\"urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN\\\"><PersonName><ns3:GivenName>Mary-Louise Parker</ns3:GivenName></PersonName></CreditsItem><CreditsItem role=\\\"urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN\\\"><PersonName><ns3:GivenName>Romany Malco</ns3:GivenName></PersonName></CreditsItem></CreditsList><RelatedMaterial xmlns:xsi=\\\"http://www.w3.org/2001/XMLSchema-instance\\\" xsi:type=\\\"ns2:ExtendedRelatedMaterialType\\\"><HowRelated href=\\\"urn:tva:metadata:cs:HowRelatedCS:2010:19\\\"/><Format href=\\\"urn:mpeg:mpeg7:cs:FileFormatCS:2001:1\\\"/><MediaLocator><ns3:MediaUri>http://ecx.images-amazon.com/images/I/51ijt5PFjkL._SX320_SY240_.jpg</ns3:MediaUri></MediaLocator><ns2:ContentProperties><ns2:ContentAttributes xsi:type=\\\"ns2:StillImageContentAttributesType\\\"><ns2:Width>320</ns2:Width><ns2:Height>240</ns2:Height><ns2:IntendedUse href=\\\"http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary\\\"/></ns2:ContentAttributes></ns2:ContentProperties></RelatedMaterial></BasicDescription><MemberOf xmlns:xsi=\\\"http://www.w3.org/2001/XMLSchema-instance\\\" xsi:type=\\\"MemberOfType\\\" index=\\\"4\\\" crid=\\\"crid://unbox.amazon.co.uk/product/http://unbox.amazon.co.uk/B00HUT9GOA\\\"/></GroupInformation></GroupInformationTable><ProgramLocationTable/><ServiceInformationTable/></ProgramDescription></TVAMain>",
+                            new DateTime("2017-10-05T13:11:03.311Z")
+                    ))
+                    .withRemoteResponses(new ArrayList<>())
+                    .withLastError("")
+                    .withManuallyCreated(false)
+                    .build();
             a.add(task);
-            System.out.println("added to tasks list size:"+a.size());
         }
+
+//        while(cursor.hasNext()) {
+//            DBObject obj = cursor.next();
+//            System.out.println("got next "+obj);
+//            Task task = TaskTranslator.fromDBObject(obj);
+//            System.out.println("made a task out of it "+task);
+//            a.add(task);
+//            System.out.println("added to tasks list size:"+a.size());
+//        }
 
         return a;
 
