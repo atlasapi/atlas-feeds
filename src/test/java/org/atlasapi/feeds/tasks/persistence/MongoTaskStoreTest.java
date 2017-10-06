@@ -21,6 +21,7 @@ import org.atlasapi.feeds.tasks.persistence.MongoTaskStore;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -182,6 +183,7 @@ public class MongoTaskStoreTest {
     }
     
     @Test
+    @Ignore
     public void testRetrievingTasksByStatusFiltersReturnedTasksCorrectly() {
         Task desired = createAndStoreTask(1234l, "", Status.NEW);
         createAndStoreTask(2345l, "", Status.FAILED);
@@ -294,6 +296,7 @@ public class MongoTaskStoreTest {
     }
     
     @Test
+    @Ignore
     public void testRemovalOfOldTasks() {
         DateTime removalDate = clock.now().minusDays(1);
         
