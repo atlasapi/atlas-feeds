@@ -22,7 +22,7 @@ public class MongoYouViewLastUpdatedStore implements YouViewLastUpdatedStore {
 
     @Override
     public Optional<DateTime> getLastUpdated(Publisher publisher) {
-        DBObject lastUpdated = collection.findOne(new BasicDBObject(MongoConstants.ID, publisher));
+        DBObject lastUpdated = collection.findOne(new BasicDBObject(MongoConstants.ID, publisher.name()));
         if (lastUpdated == null) {
             return Optional.absent();
         }
@@ -33,7 +33,7 @@ public class MongoYouViewLastUpdatedStore implements YouViewLastUpdatedStore {
     public void setLastUpdated(DateTime lastUpdated, Publisher publisher) {
         DBObject dbo = new BasicDBObject();
         TranslatorUtils.fromDateTime(dbo, "date", lastUpdated);
-        collection.update(new BasicDBObject(MongoConstants.ID, publisher), dbo, true, false);
+        collection.update(new BasicDBObject(MongoConstants.ID, publisher.name()), dbo, true, false);
     }
 
 }
