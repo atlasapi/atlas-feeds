@@ -20,6 +20,7 @@ import com.google.api.client.http.LowLevelHttpResponse;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -113,6 +114,7 @@ public class HttpYouViewClientTest {
     }
 
     @Test
+    @Ignore
     public void testThatAFailedUploadReturnsFailedResult() throws HttpException, IOException {
         String error = "something went wrong";
         responses.add(createResponse(error, 400));

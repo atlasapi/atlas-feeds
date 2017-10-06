@@ -7,6 +7,7 @@ import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 

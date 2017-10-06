@@ -121,7 +121,7 @@ public class HttpYouViewClient implements YouViewClient {
                         100,
                         SLEEP_DURATION.getMillis(),
                         TimeUnit.MILLISECONDS))
-                .withStopStrategy(StopStrategies.neverStop())
+                .withStopStrategy(StopStrategies.stopAfterAttempt(2))
                 .retryIfResult(responseCodeIsEqualOrHigherThan500)
                 .build();
     }
@@ -136,7 +136,7 @@ public class HttpYouViewClient implements YouViewClient {
     public YouViewResult upload(final Payload payload) {
         final String queryUrl = urlBase + TRANSACTION_URL_STEM;
         final String payloadString = payload.payload();
-        log.trace("POSTing YouView output xml to {}", queryUrl);
+        log.info("POSTing YouView output xml to {}", queryUrl);
         Retryer<HttpResponse> retryer = getHttpRequestRetryer();
 
         Callable<HttpResponse> uploadCall = new Callable<HttpResponse>() {
@@ -166,6 +166,7 @@ public class HttpYouViewClient implements YouViewClient {
 
         try {
             HttpResponse response = retryer.call(uploadCall);
+            log.info(response.parseAsString());
             uploadRetryCount = 0;
             if (response.getStatusCode() == HttpServletResponse.SC_ACCEPTED) {
                 HttpHeaders headers = response.getHeaders();
@@ -179,9 +180,7 @@ public class HttpYouViewClient implements YouViewClient {
                     throw Throwables.propagate(e);
                 }
             }
-        } catch (ExecutionException e) {
-            throw new YouViewClientException("Error uploading " + payload, e);
-        } catch (RetryException e) {
+        } catch (ExecutionException | RetryException | IOException e) {
             throw new YouViewClientException("Error uploading " + payload, e);
         }
     }

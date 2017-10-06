@@ -154,7 +154,10 @@ public class MongoTaskStore implements TaskStore {
         log.info("gettting tasks for "+type+" and status "+status);
         MongoQueryBuilder mongoQuery = new MongoQueryBuilder()
                 .fieldEquals(DESTINATION_TYPE_KEY, type.name())
-                .fieldEquals(STATUS_KEY, status.name());
+                .fieldEquals(STATUS_KEY, status.name())
+                .fieldEquals("publisher", Publisher.AMAZON_UNBOX.key())
+                .fieldEquals("_id","49767548")
+                ;
         log.info("the query is ready "+mongoQuery);
         DBCursor cursor = getOrderedCursor(mongoQuery.build(), TaskQuery.Sort.DEFAULT)
                                 .limit(5)
