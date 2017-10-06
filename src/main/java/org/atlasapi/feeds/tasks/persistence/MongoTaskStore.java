@@ -1,6 +1,8 @@
 package org.atlasapi.feeds.tasks.persistence;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -162,11 +164,14 @@ public class MongoTaskStore implements TaskStore {
         log.info("cursor count: "+cursor.count());
 
 
-        HashSet<Task> a = new HashSet<>();
-        if(cursor.hasNext()) {
+        List<Task> a = new ArrayList<>();
+        while(cursor.hasNext()) {
             DBObject obj = cursor.next();
+            System.out.println("got next "+obj);
             Task task = TaskTranslator.fromDBObject(obj);
+            System.out.println("made a task out of it "+task);
             a.add(task);
+            System.out.println("added to tasks list size:"+a.size());
         }
 
         return a;
