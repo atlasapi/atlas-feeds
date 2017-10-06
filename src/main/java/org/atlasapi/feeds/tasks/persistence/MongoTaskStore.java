@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.tasks.persistence;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
@@ -160,15 +162,25 @@ public class MongoTaskStore implements TaskStore {
         log.info("cursor count: "+cursor.count());
 
 
-        FluentIterable<DBObject> from = FluentIterable.from(cursor);
-        log.info("we got a iterable from the cursor "+from);
-        FluentIterable<Task> transform = from
-                .transform(TaskTranslator.fromDBObjects());
-        log.info("We transform the stuff we got to tasks "+transform);
-        FluentIterable<Task> filter = transform
-                .filter(Predicates.notNull());
-        log.info("tasks for filtered for non null ones "+filter);
-        return filter;
+        HashSet<Task> a = new HashSet<>();
+        if(cursor.hasNext()) {
+            DBObject obj = cursor.next();
+            Task task = TaskTranslator.fromDBObject(obj);
+            a.add(task);
+        }
+
+        return a;
+
+
+//        FluentIterable<DBObject> from = FluentIterable.from(cursor);
+//        log.info("we got a iterable from the cursor "+from);
+//        FluentIterable<Task> transform = from
+//                .transform();
+//        log.info("We transform the stuff we got to tasks "+transform);
+//        FluentIterable<Task> filter = transform
+//                .filter(Predicates.notNull());
+//        log.info("tasks for filtered for non null ones "+filter);
+//        return filter;
     }
 
     @Override
