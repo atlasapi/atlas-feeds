@@ -5,7 +5,7 @@ import static org.joda.time.DateTimeConstants.APRIL;
 
 import java.util.Iterator;
 
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
+import org.atlasapi.feeds.youview.nitro.NitroServiceIdResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Publisher;
@@ -36,29 +36,39 @@ public class UpdatedContentResolver implements YouViewContentResolver {
 
         @Override
         public boolean apply(Content input) {
-            return bbcServiceIdResolver.resolveMasterBrandId(input).isPresent();
+            return nitroServiceIdResolver.resolveMasterBrandId(input).isPresent();
         }
         
     };
     
     private final LastUpdatedContentFinder contentFinder;
     private final Publisher publisher;
-    private final BbcServiceIdResolver bbcServiceIdResolver;
+    private final NitroServiceIdResolver nitroServiceIdResolver;
     
-    public UpdatedContentResolver(LastUpdatedContentFinder contentFinder, BbcServiceIdResolver bbcServiceIdResolver, 
+    public UpdatedContentResolver(LastUpdatedContentFinder contentFinder, NitroServiceIdResolver nitroServiceIdResolver,
             Publisher publisher) {
         this.contentFinder = checkNotNull(contentFinder);
         this.publisher = checkNotNull(publisher);
-        this.bbcServiceIdResolver = checkNotNull(bbcServiceIdResolver);
+        this.nitroServiceIdResolver = checkNotNull(nitroServiceIdResolver);
     }
 
     @Override
     public Iterator<Content> updatedSince(DateTime dateTime) {
         return fetchContentUpdatedSinceDate(dateTime);
     }
-    
+
     private Iterator<Content> fetchContentUpdatedSinceDate(DateTime since) {
-        return Iterators.filter(contentFinder.updatedSince(publisher, since), 
-                                Predicates.and(IS_VIDEO_CONTENT, HAS_MASTER_BRAND_MAPPING));
+        //bbc specific hack. I don't know whence this requirement stems.
+        if (Publisher.BBC == publisher) {
+            return Iterators.filter(
+                    contentFinder.updatedSince(publisher, since),
+                    Predicates.and(IS_VIDEO_CONTENT, HAS_MASTER_BRAND_MAPPING)
+            );
+        } else {
+            return Iterators.filter(
+                    contentFinder.updatedSince(publisher, since),
+                    IS_VIDEO_CONTENT
+            );
+        }
     }
 }

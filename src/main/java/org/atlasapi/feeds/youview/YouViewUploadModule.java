@@ -24,16 +24,14 @@ import org.atlasapi.feeds.tasks.youview.processing.YouViewTaskProcessor;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.ValidatingTvAnytimeGenerator;
 import org.atlasapi.feeds.youview.client.HttpYouViewClient;
-import org.atlasapi.feeds.youview.client.ReferentialIntegrityCheckingReportHandler;
+import org.atlasapi.feeds.youview.client.NitroReferentialIntegrityCheckingReportHandler;
 import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewReportHandler;
-import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
-import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
+import org.atlasapi.feeds.youview.nitro.NitroServiceIdResolver;
 import org.atlasapi.feeds.youview.payload.Converter;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.TVAPayloadCreator;
@@ -103,7 +101,6 @@ import tva.metadata._2010.TVAMainType;
 
 import static com.metabroadcast.common.time.DateTimeZones.UTC;
 import static java.lang.management.ManagementFactory.*;
-import static org.joda.time.DateTimeConstants.JANUARY;
 import static org.joda.time.DateTimeConstants.OCTOBER;
 
 /**
@@ -120,12 +117,12 @@ import static org.joda.time.DateTimeConstants.OCTOBER;
 @Configuration
 @Import(TVAnytimeFeedsModule.class)
 public class YouViewUploadModule {
+    private static final Logger log = LoggerFactory.getLogger(YouViewUploadModule.class);
 
     private static final String CONFIG_PREFIX = "youview.upload.";
-    
+
     private static final Map<String, Publisher> PUBLISHER_MAPPING = ImmutableMap.of(
             "nitro", Publisher.BBC_NITRO,
-            "lovefilm", Publisher.LOVEFILM,
             "unbox", Publisher.AMAZON_UNBOX
     );
     
@@ -133,7 +130,7 @@ public class YouViewUploadModule {
     private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
     
-    // Uploads are being performed as part of the delta job, temporarily
+    // Uploads are being performed as part of the delta job.
     private static final RepetitionRule UPLOAD = RepetitionRules.NEVER;
     private static final RepetitionRule DELETE = RepetitionRules.every(Duration.standardMinutes(15)).withOffset(Duration.standardMinutes(5));
     private static final RepetitionRule TASK_REMOVAL = RepetitionRules.daily(LocalTime.MIDNIGHT);
@@ -152,25 +149,22 @@ public class YouViewUploadModule {
     private @Autowired SimpleScheduler scheduler;
     private @Autowired TvAnytimeGenerator generator;
     private @Autowired TaskStore taskStore;
-    private @Autowired BbcServiceIdResolver bbcServiceIdResolver;
-    private @Autowired IdGenerator nitroIdGenerator;
+    private @Autowired NitroServiceIdResolver bbcServiceIdResolver;
     private @Autowired OnDemandHierarchyExpander onDemandHierarchyExpander;
     private @Autowired VersionHierarchyExpander versionHierarchyExpander;
-    private @Autowired ContentHierarchyExpander contentHierarchyExpander;
     private @Autowired ContentHierarchyExtractor contentHierarchy;
     private @Autowired ChannelResolver channelResolver;
     private @Autowired ScheduleResolver scheduleResolver;
+    private @Autowired ContentHierarchyExpanderFactory contentHierarchyExpanderFactory;
     
     private @Value("${youview.upload.validation}") String performValidation;
 
-    // N.B. The Task trimming task should probably move to a more appropriate location once Tasks
-    // are used for other feeds, as currently if no youview uploads are enabled for an environment, then
-    // this task will be disabled.
     @PostConstruct
     public void startScheduledTasks() throws JAXBException, SAXException {
         for (Entry<String, Publisher> publisherEntry : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
             if (isEnabled(publisherPrefix)) {
+                log.info("Registering a bootstrap and deltaupload tasks for "+publisherEntry);
                 scheduler.schedule(scheduleBootstrapTaskCreationTask(publisherEntry.getValue()), BOOTSTRAP_CONTENT_CHECK);
                 scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), DELTA_CONTENT_CHECK);
             }
@@ -268,12 +262,10 @@ public class YouViewUploadModule {
                         // nope.
                     }
                 }))
-                .withHierarchyExpander(contentHierarchyExpander)
                 .withRevocationProcessor(revocationProcessor())
                 .withTaskProcessor(taskProcessor())
                 .withScheduleResolver(scheduleResolver)
                 .withChannelResolver(channelResolver)
-                .withIdGenerator(nitroIdGenerator)
                 .withClock(clock)
                 .withNitroTaskProcessor(taskProcessor("nitro").get())
                 .build();
@@ -297,9 +289,9 @@ public class YouViewUploadModule {
             throws JAXBException, SAXException {
         return new BootstrapTaskCreationTask(
                 lastUpdatedStore(), 
-                publisher, 
-                contentHierarchyExpander, 
-                nitroIdGenerator, 
+                publisher,
+                contentHierarchyExpanderFactory.create(publisher),
+                IdGeneratorFactory.create(publisher),
                 taskStore, 
                 taskCreator(), 
                 payloadCreator(), 
@@ -314,9 +306,9 @@ public class YouViewUploadModule {
             throws JAXBException, SAXException {
         return new DeltaTaskCreationTask(
                 lastUpdatedStore(), 
-                publisher, 
-                contentHierarchyExpander, 
-                nitroIdGenerator, 
+                publisher,
+                contentHierarchyExpanderFactory.create(publisher),
+                IdGeneratorFactory.create(publisher),
                 taskStore, 
                 taskCreator(), 
                 payloadCreator(), 
@@ -377,9 +369,9 @@ public class YouViewUploadModule {
 
     @Bean
     public YouViewReportHandler reportHandler() throws JAXBException, SAXException {
-        return new ReferentialIntegrityCheckingReportHandler(
-                taskCreator(), 
-                nitroIdGenerator, 
+        return new NitroReferentialIntegrityCheckingReportHandler(
+                taskCreator(),
+                IdGeneratorFactory.create(Publisher.BBC_NITRO),
                 taskStore, 
                 payloadCreator(),
                 contentResolver, 

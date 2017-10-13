@@ -13,6 +13,7 @@ import org.atlasapi.media.entity.Version;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -26,6 +27,10 @@ public final class NitroIdGenerator implements IdGenerator {
     private static final String IMI_PREFIX = "imi:www.nitro.bbc.co.uk/";
 
     private final HashFunction hasher;
+
+    public NitroIdGenerator(){
+        this(Hashing.md5());
+    }
 
     public NitroIdGenerator(HashFunction hasher) {
         this.hasher = checkNotNull(hasher);

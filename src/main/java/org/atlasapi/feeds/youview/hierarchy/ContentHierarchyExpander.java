@@ -6,7 +6,6 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 
 
-// TODO consider renaming?
 public interface ContentHierarchyExpander {
 
     String contentCridFor(Content content);

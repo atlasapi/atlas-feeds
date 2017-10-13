@@ -15,6 +15,7 @@ import javax.xml.namespace.QName;
 import com.metabroadcast.common.intl.Countries;
 import org.atlasapi.feeds.tvanytime.CreditsItemGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
+import org.atlasapi.feeds.youview.ServiceIdResolver;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Brand;
@@ -129,7 +130,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
 
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
-    private final BbcServiceIdResolver sIdResolver;
+    private final ServiceIdResolver sIdResolver;
     private final CreditsItemGenerator creditsGenerator;
     private final ContentTitleGenerator titleGenerator;
     
@@ -139,7 +140,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             .withOmissionMarker("...");
     
     public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping,
-            BbcServiceIdResolver sIdResolver, CreditsItemGenerator creditsGenerator, 
+            ServiceIdResolver sIdResolver, CreditsItemGenerator creditsGenerator,
             ContentTitleGenerator titleGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
         this.genreMapping = checkNotNull(genreMapping);

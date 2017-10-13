@@ -46,7 +46,7 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionSt
 import tva.mpeg7._2008.TextualType;
 
 
-public class ReferentialIntegrityCheckingReportHandlerTest {
+public class NitroReferentialIntegrityCheckingReportHandlerTest {
 
     private static final String REFERENTIAL_INTEGRITY_ERROR_REASON_CODE = 
             "http://refdata.youview.com/mpeg7cs/YouViewMetadataIngestReasonCS/2010-09-23#semantic-referential_integrity";
@@ -64,7 +64,7 @@ public class ReferentialIntegrityCheckingReportHandlerTest {
     private VersionHierarchyExpander versionExpander = new VersionHierarchyExpander(idGenerator);
     private ContentHierarchyExtractor hierarchyExtractor = mock(ContentHierarchyExtractor.class);
     
-    private final YouViewReportHandler handler = new ReferentialIntegrityCheckingReportHandler(
+    private final YouViewReportHandler handler = new NitroReferentialIntegrityCheckingReportHandler(
             taskCreator, 
             idGenerator, 
             taskStore, 

@@ -22,6 +22,8 @@ import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
+import org.atlasapi.feeds.youview.ContentHierarchyExpanderFactory;
+import org.atlasapi.feeds.youview.IdGeneratorFactory;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
@@ -72,6 +74,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -89,6 +92,8 @@ public class YouViewUploadController {
     private static final Logger log = LoggerFactory.getLogger(YouViewUploadController.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    private @Autowired ContentHierarchyExpanderFactory contentHierarchyExpanderFactory;
+
     static {
         MAPPER.registerModule(new GuavaModule());
     }
@@ -100,7 +105,6 @@ public class YouViewUploadController {
     private final TaskCreator taskCreator;
     private final TaskStore taskStore;
     private final PayloadCreator payloadCreator;
-    private final ContentHierarchyExpander hierarchyExpander;
     private final RevocationProcessor revocationProcessor;
     private final Clock clock;
     private final TaskProcessor taskProcessor;
@@ -109,7 +113,6 @@ public class YouViewUploadController {
     private final ChannelResolver channelResolver;
     private final SubstitutionTableNumberCodec channelIdCodec;
     private final ListeningExecutorService executor;
-    private final IdGenerator idGenerator;
     private final TaskProcessor nitroTaskProcessor;
 
     public static Builder builder() {
@@ -121,12 +124,10 @@ public class YouViewUploadController {
             TaskCreator taskCreator,
             TaskStore taskStore,
             PayloadCreator payloadCreator,
-            ContentHierarchyExpander hierarchyExpander,
             RevocationProcessor revocationProcessor,
             TaskProcessor taskProcessor,
             ScheduleResolver scheduleResolver,
             ChannelResolver channelResolver,
-            IdGenerator idGenerator,
             Clock clock,
             TaskProcessor nitroTaskProcessor
     ) {
@@ -134,13 +135,11 @@ public class YouViewUploadController {
         this.taskCreator = checkNotNull(taskCreator);
         this.taskStore = checkNotNull(taskStore);
         this.payloadCreator = checkNotNull(payloadCreator);
-        this.hierarchyExpander = checkNotNull(hierarchyExpander);
         this.revocationProcessor = checkNotNull(revocationProcessor);
         this.taskProcessor = checkNotNull(taskProcessor);
         this.clock = checkNotNull(clock);
         this.scheduleResolver = checkNotNull(scheduleResolver);
         this.channelResolver = checkNotNull(channelResolver);
-        this.idGenerator = checkNotNull(idGenerator);
         this.nitroTaskProcessor = checkNotNull(nitroTaskProcessor);
 
         this.dateTimeInQueryParser = new DateTimeInQueryParser();
@@ -151,6 +150,7 @@ public class YouViewUploadController {
     private void handleChannel(
             HttpServletResponse response,
             String channelStr,
+            IdGenerator idGenerator,
             FeedsTelescopeReporter telescope
     ) throws IOException, PayloadGenerationException, IllegalArgumentException, NullPointerException {
 
@@ -163,12 +163,13 @@ public class YouViewUploadController {
             throw new IllegalArgumentException( "Only BBC channels can be uploaded");
         }
 
-        uploadChannel(true, channel, false, telescope);
+        uploadChannel(true, idGenerator, channel, false, telescope);
     }
 
     private void handleMasterbrand(
             HttpServletResponse response,
             String channelStr,
+            IdGenerator idGenerator,
             FeedsTelescopeReporter telescope
     ) throws IOException, PayloadGenerationException, IllegalArgumentException {
 
@@ -181,7 +182,7 @@ public class YouViewUploadController {
             throw new IllegalArgumentException("Only BBC channels can be uploaded");
         }
 
-        uploadChannel(true, channel, true, telescope);
+        uploadChannel(true, idGenerator, channel, true, telescope);
     }
 
     @RequestMapping(value = "/feeds/youview/{publisher}/schedule/upload")
@@ -210,6 +211,9 @@ public class YouViewUploadController {
                 throw new IllegalArgumentException("Publisher "+publisherStr.trim().toUpperCase()+ " was not found.");
             }
 
+            ContentHierarchyExpander hierarchyExpander =
+                    contentHierarchyExpanderFactory.create(publisher.get());
+
             Schedule schedule = scheduleResolver.unmergedSchedule(
                     from,
                     to,
@@ -223,7 +227,7 @@ public class YouViewUploadController {
             for (Item item : items) {
                 try {
                     sb.append("Uploading ").append(item.getCanonicalUri()).append(System.lineSeparator());
-                    uploadContent(true, item, telescope);
+                    uploadContent(true, hierarchyExpander, item, telescope);
                     sb.append("Done uploading ").append(item.getCanonicalUri()).append(System.lineSeparator());
                 } catch (PayloadGenerationException e) {
                     telescope.reportFailedEvent(
@@ -253,6 +257,9 @@ public class YouViewUploadController {
                 .getTelescopeReporter(FeedsReporterNames.YOU_VIEW_MANUAL_UPLOADER);
         telescope.startReporting();
 
+        ContentHierarchyExpander hierarchyExpander =
+                contentHierarchyExpanderFactory.create(Publisher.BBC_NITRO);
+
         try{
             List<String> uris = MAPPER.readValue(request.getInputStream(), STRING_LIST);
 
@@ -275,7 +282,7 @@ public class YouViewUploadController {
                                     uri
                             )));
                         } else {
-                            uploadContent(true, content.get(), telescope);
+                            uploadContent(true, hierarchyExpander, content.get(), telescope);
                             return Try.success(uri);
                         }
                     } catch (Exception e) {
@@ -357,11 +364,11 @@ public class YouViewUploadController {
             }
 
             if (isMasterbrandUri(uri)) {
-                handleMasterbrand(response, uri, telescope);
+                handleMasterbrand(response, uri, IdGeneratorFactory.create(publisher.get()), telescope);
             } else if (isServiceUri(uri)) {
-                handleChannel(response, uri, telescope);
+                handleChannel(response, uri, IdGeneratorFactory.create(publisher.get()), telescope);
             } else {
-                handleContent(uri, elementId, typeStr, immediate, response, telescope);
+                handleContent(uri, publisher.get(), elementId, typeStr, immediate, response, telescope);
             }
 
             sendOkResponse(response, "Upload for " + uri + " sent successfully");
@@ -389,6 +396,7 @@ public class YouViewUploadController {
 
     private void handleContent (
             String uri,
+            Publisher publisher,
             String elementId,
             @Nullable String typeStr,
             boolean immediate,
@@ -401,6 +409,8 @@ public class YouViewUploadController {
         }
 
         Content content = toBeUploaded.get();
+
+        ContentHierarchyExpander hierarchyExpander = contentHierarchyExpanderFactory.create(publisher);
 
         if (typeStr != null) {
             TVAElementType type = parseTypeFrom(typeStr);
@@ -418,33 +428,35 @@ public class YouViewUploadController {
             case BRAND:
             case ITEM:
             case SERIES:
-                handleContent(elementId, immediate, response, content, payload, telescope);
+                handleContent(elementId, immediate, hierarchyExpander, response, content, payload, telescope);
                 break;
             case BROADCAST:
-                handleBroadcast(elementId, immediate, response, content, telescope);
+                handleBroadcast(elementId, immediate, hierarchyExpander, response, content, telescope);
                 break;
             case ONDEMAND:
-                handleOnDemand(elementId, immediate, response, content, payload, telescope);
+                handleOnDemand(elementId, immediate, hierarchyExpander, response, content, payload, telescope);
                 break;
             case VERSION:
-                handleVersion(elementId, immediate, response, content, payload, telescope);
+                handleVersion(elementId, immediate, hierarchyExpander, response, content, payload, telescope);
                 break;
             default:
                 throw new IllegalArgumentException("Invalid type provided");
             }
         } else {
-            uploadContent(immediate, content, telescope);
+            uploadContent(immediate, hierarchyExpander, content, telescope);
         }
     }
 
     private void handleContent(
             @Nullable String elementId,
             boolean immediate,
+            ContentHierarchyExpander hierarchyExpander,
             HttpServletResponse response,
             Content toBeUploaded,
             Payload payload,
             FeedsTelescopeReporter telescope
     ) throws IOException, IllegalArgumentException {
+
         if (elementId == null) {
             throw new NullPointerException("required parameter 'element_id' not specified when uploading an individual TVAnytime element");
         }
@@ -458,9 +470,15 @@ public class YouViewUploadController {
         );
     }
 
-    private void handleVersion(String elementId, boolean immediate, HttpServletResponse response,
-            Content content, Payload payload, FeedsTelescopeReporter telescope)
-            throws IOException, IllegalArgumentException {
+    private void handleVersion(
+            String elementId,
+            boolean immediate,
+            ContentHierarchyExpander hierarchyExpander,
+            HttpServletResponse response,
+            Content content,
+            Payload payload,
+            FeedsTelescopeReporter telescope
+    ) throws IOException, IllegalArgumentException {
 
         if (!(content instanceof Item)) {
             throw new IllegalArgumentException( "content must be an Item to upload a Version");
@@ -478,9 +496,15 @@ public class YouViewUploadController {
         );
     }
 
-    private void handleOnDemand(String elementId, boolean immediate, HttpServletResponse response,
-            Content content, Payload payload, FeedsTelescopeReporter telescope)
-            throws IOException, IllegalArgumentException {
+    private void handleOnDemand(
+            String elementId,
+            boolean immediate,
+            ContentHierarchyExpander hierarchyExpander,
+            HttpServletResponse response,
+            Content content,
+            Payload payload,
+            FeedsTelescopeReporter telescope
+    )  throws IOException, IllegalArgumentException {
 
         if (!(content instanceof Item)) {
             throw new IllegalArgumentException( "content must be an Item to upload a OnDemand");
@@ -500,9 +524,14 @@ public class YouViewUploadController {
         );
     }
 
-    private void handleBroadcast(String elementId, boolean immediate, HttpServletResponse response,
-            Content content, FeedsTelescopeReporter telescope)
-            throws IOException, PayloadGenerationException, IllegalArgumentException {
+    private void handleBroadcast(
+            String elementId,
+            boolean immediate,
+            ContentHierarchyExpander hierarchyExpander,
+            HttpServletResponse response,
+            Content content,
+            FeedsTelescopeReporter telescope
+    ) throws IOException, PayloadGenerationException, IllegalArgumentException {
 
         if (!(content instanceof Item)) {
             throw new IllegalArgumentException( "content must be an Item to upload a Broadcast");
@@ -528,8 +557,12 @@ public class YouViewUploadController {
         }
     }
 
-    private void uploadContent(boolean immediate, Content content, FeedsTelescopeReporter telescope)
-            throws PayloadGenerationException {
+    private void uploadContent(
+            boolean immediate,
+            ContentHierarchyExpander hierarchyExpander,
+            Content content,
+            FeedsTelescopeReporter telescope
+    ) throws PayloadGenerationException {
         if (immediate) {
             log.info("Force uploading content {}", content.getCanonicalUri());
         }
@@ -596,18 +629,25 @@ public class YouViewUploadController {
 
             if (immediate) {
                 Item item = (Item) content;
-                resolveAndUploadParent(item.getContainer(), true, telescope);
+                resolveAndUploadParent(hierarchyExpander, item.getContainer(), true, telescope);
 
                 if (item instanceof Episode) {
                     Episode episode = (Episode) item;
-                    resolveAndUploadParent(episode.getSeriesRef(), true, telescope);
+                    resolveAndUploadParent(hierarchyExpander, episode.getSeriesRef(), true, telescope);
                 }
             }
         }
     }
 
-    private void uploadChannel(boolean immediate, Channel channel, boolean masterbrand, FeedsTelescopeReporter telescope)
+    private void uploadChannel(
+            boolean immediate,
+            IdGenerator idGenerator,
+            Channel channel,
+            boolean masterbrand,
+            FeedsTelescopeReporter telescope)
+
             throws PayloadGenerationException {
+
         Payload p = payloadCreator.payloadFrom(channel, masterbrand);
         Task task = taskCreator.taskFor(
                 idGenerator.generateChannelCrid(channel),
@@ -618,8 +658,13 @@ public class YouViewUploadController {
         processChannelTask(task, immediate, telescope);
     }
 
-    private void resolveAndUploadParent(ParentRef ref, boolean immediate, FeedsTelescopeReporter telescope)
-            throws PayloadGenerationException {
+    private void resolveAndUploadParent(
+            ContentHierarchyExpander hierarchyExpander,
+            ParentRef ref,
+            boolean immediate,
+            FeedsTelescopeReporter telescope
+    ) throws PayloadGenerationException {
+
         if (ref == null) {
             return;
         }
@@ -642,6 +687,7 @@ public class YouViewUploadController {
             boolean immediate,
             FeedsTelescopeReporter telescope
     ) {
+
         if (task == null) {
             return;
         }
@@ -915,13 +961,11 @@ public class YouViewUploadController {
         private TaskCreator taskCreator;
         private TaskStore taskStore;
         private PayloadCreator payloadCreator;
-        private ContentHierarchyExpander hierarchyExpander;
         private RevocationProcessor revocationProcessor;
         private Clock clock;
         private TaskProcessor taskProcessor;
         private ScheduleResolver scheduleResolver;
         private ChannelResolver channelResolver;
-        private IdGenerator idGenerator;
         private TaskProcessor nitroTaskProcessor;
 
         private Builder() {
@@ -944,11 +988,6 @@ public class YouViewUploadController {
 
         public Builder withPayloadCreator(PayloadCreator val) {
             payloadCreator = val;
-            return this;
-        }
-
-        public Builder withHierarchyExpander(ContentHierarchyExpander val) {
-            hierarchyExpander = val;
             return this;
         }
 
@@ -977,11 +1016,6 @@ public class YouViewUploadController {
             return this;
         }
 
-        public Builder withIdGenerator(IdGenerator val) {
-            idGenerator = val;
-            return this;
-        }
-
         public Builder withNitroTaskProcessor(TaskProcessor val) {
             nitroTaskProcessor = val;
             return this;
@@ -993,12 +1027,10 @@ public class YouViewUploadController {
                     taskCreator,
                     taskStore,
                     payloadCreator,
-                    hierarchyExpander,
                     revocationProcessor,
                     taskProcessor,
                     scheduleResolver,
                     channelResolver,
-                    idGenerator,
                     clock,
                     nitroTaskProcessor
             );

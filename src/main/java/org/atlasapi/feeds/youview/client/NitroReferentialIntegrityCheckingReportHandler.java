@@ -39,14 +39,14 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionSt
 import tva.mpeg7._2008.TextualType;
 
 
-public class ReferentialIntegrityCheckingReportHandler implements YouViewReportHandler {
+public class NitroReferentialIntegrityCheckingReportHandler implements YouViewReportHandler {
 
     private static final Pattern VERSION_CRID_PATTERN = Pattern.compile("crid://nitro.bbc.co.uk/iplayer/youview/[a-z0-9]*");
     private static final String REFERENTIAL_INTEGRITY_REASON 
             = "http://refdata.youview.com/mpeg7cs/YouViewMetadataIngestReasonCS/2010-09-23#semantic-referential_integrity";
     
     
-    private final Logger log = LoggerFactory.getLogger(ReferentialIntegrityCheckingReportHandler.class);
+    private final Logger log = LoggerFactory.getLogger(NitroReferentialIntegrityCheckingReportHandler.class);
     
     private final ContentResolver contentResolver;
     private final TaskCreator taskCreator;
@@ -56,7 +56,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
     private final ContentHierarchyExtractor hierarchyExtractor;
     private PayloadCreator payloadCreator;
 
-    public ReferentialIntegrityCheckingReportHandler(TaskCreator taskCreator, IdGenerator idGenerator,
+    public NitroReferentialIntegrityCheckingReportHandler(TaskCreator taskCreator, IdGenerator idGenerator,
             TaskStore taskStore, PayloadCreator payloadCreator, ContentResolver contentResolver, 
             VersionHierarchyExpander versionExpander, ContentHierarchyExtractor hierarchyExtractor) {
         this.taskCreator = checkNotNull(taskCreator);
