@@ -50,9 +50,7 @@ public class OnDemandBasedRevocationProcessor implements RevocationProcessor {
         checkArgument(content instanceof Item, "content " + content.getCanonicalUri() + " not an item, cannot revoke");
         
         Item item = (Item) content;
-        Publisher publisher = content.getPublisher();
-        OnDemandHierarchyExpander onDemandHierarchyExpander =
-                new OnDemandHierarchyExpander(IdGeneratorFactory.create(publisher));
+        OnDemandHierarchyExpander onDemandHierarchyExpander = getOnDemandHierarchyExpander(item);
         Map<String, ItemOnDemandHierarchy> onDemands = onDemandHierarchyExpander.expandHierarchy(item);
 
         ImmutableList.Builder<Task> taskList = ImmutableList.builder();
@@ -73,9 +71,7 @@ public class OnDemandBasedRevocationProcessor implements RevocationProcessor {
         revocationStore.unrevoke(content.getCanonicalUri());
         
         Item item = (Item) content;
-        Publisher publisher = content.getPublisher();
-        OnDemandHierarchyExpander onDemandHierarchyExpander =
-                new OnDemandHierarchyExpander(IdGeneratorFactory.create(publisher));
+        OnDemandHierarchyExpander onDemandHierarchyExpander = getOnDemandHierarchyExpander(item);
         Map<String, ItemOnDemandHierarchy> onDemands = onDemandHierarchyExpander.expandHierarchy(item);
 
         ImmutableList.Builder<Task> taskList = ImmutableList.builder();
@@ -94,5 +90,10 @@ public class OnDemandBasedRevocationProcessor implements RevocationProcessor {
         }
 
         return taskList.build();
+    }
+
+    protected OnDemandHierarchyExpander getOnDemandHierarchyExpander(Item item){
+        Publisher publisher = item.getPublisher();
+        return new OnDemandHierarchyExpander(IdGeneratorFactory.create(publisher));
     }
 }
