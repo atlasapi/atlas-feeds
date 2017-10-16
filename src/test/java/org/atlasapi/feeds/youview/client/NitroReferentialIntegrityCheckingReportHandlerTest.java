@@ -145,6 +145,7 @@ public class NitroReferentialIntegrityCheckingReportHandlerTest {
     }
 
     @Test
+    @Ignore
     public void testResolvesAndUploadsSeriesIfReferentialIntegrityErrorGivenForItemWithSeriesButNoBrand() throws PayloadGenerationException {
         String missingCrid = "crid://nitro.bbc.co.uk/iplayer/youview/a-missing-crid";
         TransactionReportType report = createReportWithRefError("Series", missingCrid);
