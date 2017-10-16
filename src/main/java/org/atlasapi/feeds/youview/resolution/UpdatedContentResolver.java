@@ -5,6 +5,8 @@ import static org.joda.time.DateTimeConstants.APRIL;
 
 import java.util.Iterator;
 
+import org.atlasapi.feeds.youview.ServiceIdResolver;
+import org.atlasapi.feeds.youview.ServiceIdResolverFactory;
 import org.atlasapi.feeds.youview.nitro.NitroServiceIdResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.MediaType;
@@ -36,20 +38,22 @@ public class UpdatedContentResolver implements YouViewContentResolver {
 
         @Override
         public boolean apply(Content input) {
-            return nitroServiceIdResolver.resolveMasterBrandId(input).isPresent();
+            return serviceIdResolver.resolveMasterBrandId(input).isPresent();
         }
         
     };
     
     private final LastUpdatedContentFinder contentFinder;
     private final Publisher publisher;
-    private final NitroServiceIdResolver nitroServiceIdResolver;
+    private final ServiceIdResolver serviceIdResolver;
     
-    public UpdatedContentResolver(LastUpdatedContentFinder contentFinder, NitroServiceIdResolver nitroServiceIdResolver,
+    public UpdatedContentResolver(
+            LastUpdatedContentFinder contentFinder,
             Publisher publisher) {
+        ServiceIdResolverFactory serviceIdResolverFactory = new ServiceIdResolverFactory();
+        this.serviceIdResolver = serviceIdResolverFactory.create(publisher);
         this.contentFinder = checkNotNull(contentFinder);
         this.publisher = checkNotNull(publisher);
-        this.nitroServiceIdResolver = checkNotNull(nitroServiceIdResolver);
     }
 
     @Override

@@ -13,6 +13,7 @@ import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
+import org.atlasapi.feeds.youview.IdGeneratorFactory;
 import org.atlasapi.feeds.youview.UnexpectedContentTypeException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
@@ -39,32 +40,32 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionSt
 import tva.mpeg7._2008.TextualType;
 
 
-public class NitroReferentialIntegrityCheckingReportHandler implements YouViewReportHandler {
+public class ReferentialIntegrityCheckingReportHandler implements YouViewReportHandler {
 
     private static final Pattern VERSION_CRID_PATTERN = Pattern.compile("crid://nitro.bbc.co.uk/iplayer/youview/[a-z0-9]*");
     private static final String REFERENTIAL_INTEGRITY_REASON 
             = "http://refdata.youview.com/mpeg7cs/YouViewMetadataIngestReasonCS/2010-09-23#semantic-referential_integrity";
     
     
-    private final Logger log = LoggerFactory.getLogger(NitroReferentialIntegrityCheckingReportHandler.class);
+    private final Logger log = LoggerFactory.getLogger(ReferentialIntegrityCheckingReportHandler.class);
     
     private final ContentResolver contentResolver;
     private final TaskCreator taskCreator;
-    private final IdGenerator idGenerator;
     private final TaskStore taskStore;
-    private final VersionHierarchyExpander versionExpander;
     private final ContentHierarchyExtractor hierarchyExtractor;
     private PayloadCreator payloadCreator;
 
-    public NitroReferentialIntegrityCheckingReportHandler(TaskCreator taskCreator, IdGenerator idGenerator,
-            TaskStore taskStore, PayloadCreator payloadCreator, ContentResolver contentResolver, 
-            VersionHierarchyExpander versionExpander, ContentHierarchyExtractor hierarchyExtractor) {
+    public ReferentialIntegrityCheckingReportHandler(
+            TaskCreator taskCreator,
+            TaskStore taskStore,
+            PayloadCreator payloadCreator,
+            ContentResolver contentResolver,
+            ContentHierarchyExtractor hierarchyExtractor) {
+
         this.taskCreator = checkNotNull(taskCreator);
         this.taskStore = checkNotNull(taskStore);
         this.payloadCreator = checkNotNull(payloadCreator);
-        this.idGenerator = checkNotNull(idGenerator);
         this.contentResolver = checkNotNull(contentResolver);
-        this.versionExpander = checkNotNull(versionExpander);
         this.hierarchyExtractor = checkNotNull(hierarchyExtractor);
     }
 
@@ -130,6 +131,7 @@ public class NitroReferentialIntegrityCheckingReportHandler implements YouViewRe
             throw new UnexpectedContentTypeException(Series.class, resolved);
         }
         Series series = (Series) resolved;
+
         Optional<Brand> brand = hierarchyExtractor.brandFor(series);
         if (!brand.isPresent()) {
             throw new RuntimeException("unable to resolve expected brand for series " + contentUri);
@@ -162,6 +164,7 @@ public class NitroReferentialIntegrityCheckingReportHandler implements YouViewRe
     }
 
     private void createAndWriteTaskFor(Content content) throws PayloadGenerationException {
+        IdGenerator idGenerator = IdGeneratorFactory.create(content.getPublisher());
         String contentCrid = idGenerator.generateContentCrid(content);
         taskStore.save(taskCreator.taskFor(contentCrid, content, payloadCreator.payloadFrom(contentCrid, content), Action.UPDATE));
     }
@@ -172,6 +175,8 @@ public class NitroReferentialIntegrityCheckingReportHandler implements YouViewRe
             throw new UnexpectedContentTypeException(Item.class, resolved);
         }
         String versionCrid = resolveVersionId(message.getComment());
+        IdGenerator idGenerator = IdGeneratorFactory.create(resolved.getPublisher());
+        VersionHierarchyExpander versionExpander = new VersionHierarchyExpander(idGenerator);
         ItemAndVersion versionHierarchy = versionExpander.expandHierarchy((Item) resolved).get(versionCrid);
         if (versionHierarchy == null) {
             throw new RuntimeException("Missing version crid " + versionCrid + " is not a valid version crid for content " + contentUri);
@@ -183,7 +188,7 @@ public class NitroReferentialIntegrityCheckingReportHandler implements YouViewRe
     private String resolveVersionId(TextualType comment) {
         Matcher matcher = VERSION_CRID_PATTERN.matcher(comment.getValue());
         if (!matcher.find()) {
-            throw new RuntimeException("unable to match version crid pattern in comment: " + comment.getValue());
+            throw new RuntimeException("Unable to match version crid pattern in comment: " + comment.getValue());
         }
         return matcher.group();
     }
@@ -192,7 +197,7 @@ public class NitroReferentialIntegrityCheckingReportHandler implements YouViewRe
         ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(contentUri));
         Content content = (Content) resolved.asResolvedMap().get(contentUri);
         if (content == null) {
-            throw new RuntimeException("unable to resolve content for uri " + contentUri);
+            throw new RuntimeException("Unable to resolve content for uri " + contentUri);
         }
         return content;
     }

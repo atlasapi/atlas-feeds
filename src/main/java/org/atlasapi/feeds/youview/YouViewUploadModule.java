@@ -24,14 +24,11 @@ import org.atlasapi.feeds.tasks.youview.processing.YouViewTaskProcessor;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.ValidatingTvAnytimeGenerator;
 import org.atlasapi.feeds.youview.client.HttpYouViewClient;
-import org.atlasapi.feeds.youview.client.NitroReferentialIntegrityCheckingReportHandler;
+import org.atlasapi.feeds.youview.client.ReferentialIntegrityCheckingReportHandler;
 import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
 import org.atlasapi.feeds.youview.client.YouViewReportHandler;
-import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
-import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
-import org.atlasapi.feeds.youview.nitro.NitroServiceIdResolver;
 import org.atlasapi.feeds.youview.payload.Converter;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.TVAPayloadCreator;
@@ -149,8 +146,6 @@ public class YouViewUploadModule {
     private @Autowired SimpleScheduler scheduler;
     private @Autowired TvAnytimeGenerator generator;
     private @Autowired TaskStore taskStore;
-    private @Autowired NitroServiceIdResolver bbcServiceIdResolver;
-    private @Autowired VersionHierarchyExpander versionHierarchyExpander;
     private @Autowired ContentHierarchyExtractor contentHierarchy;
     private @Autowired ChannelResolver channelResolver;
     private @Autowired ScheduleResolver scheduleResolver;
@@ -294,7 +289,7 @@ public class YouViewUploadModule {
                 taskStore, 
                 taskCreator(), 
                 payloadCreator(), 
-                nitroBootstrapContentResolver(publisher),
+                getBootstrapContentResolver(publisher),
                 payloadHashStore(),
                 BOOTSTRAP_START_DATE
         )
@@ -312,7 +307,7 @@ public class YouViewUploadModule {
                 taskCreator(), 
                 payloadCreator(), 
                 uploadTask(),
-                nitroDeltaContentResolver(publisher),
+                getDeltaContentResolver(publisher),
                 payloadHashStore(),
                 channelResolver
         )
@@ -345,15 +340,15 @@ public class YouViewUploadModule {
         return generator;
     }
     
-    private YouViewContentResolver nitroBootstrapContentResolver(Publisher publisher) {
+    private YouViewContentResolver getBootstrapContentResolver(Publisher publisher) {
         return new FullHierarchyResolvingContentResolver(
-                new UpdatedContentResolver(contentFinder, bbcServiceIdResolver, publisher), 
+                getDeltaContentResolver(publisher),
                 contentHierarchy
         );
     }
     
-    private YouViewContentResolver nitroDeltaContentResolver(Publisher publisher) {
-        return new UpdatedContentResolver(contentFinder, bbcServiceIdResolver, publisher);
+    private YouViewContentResolver getDeltaContentResolver(Publisher publisher) {
+        return new UpdatedContentResolver(contentFinder, publisher);
     }
      
     @Bean
@@ -368,13 +363,11 @@ public class YouViewUploadModule {
 
     @Bean
     public YouViewReportHandler reportHandler() throws JAXBException, SAXException {
-        return new NitroReferentialIntegrityCheckingReportHandler(
+        return new ReferentialIntegrityCheckingReportHandler(
                 taskCreator(),
-                IdGeneratorFactory.create(Publisher.BBC_NITRO),
                 taskStore, 
                 payloadCreator(),
-                contentResolver, 
-                versionHierarchyExpander, 
+                contentResolver,
                 contentHierarchy
         );
     }

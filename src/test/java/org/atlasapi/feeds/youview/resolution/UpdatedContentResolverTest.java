@@ -21,7 +21,7 @@ import com.google.common.collect.Iterators;
 
 public class UpdatedContentResolverTest {
     
-    private static final Publisher PUBLISHER = Publisher.METABROADCAST;
+    private static final Publisher PUBLISHER = Publisher.BBC_NITRO;
     private static final DateTime RECENT_TIMESTAMP = DateTime.now();
     private static final Content VIDEO_CONTENT = createItemWithMediaType(MediaType.VIDEO, "film");
     private static final Content AUDIO_CONTENT = createItemWithMediaType(MediaType.AUDIO, "audio");
@@ -29,8 +29,8 @@ public class UpdatedContentResolverTest {
     private LastUpdatedContentFinder contentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     private NitroServiceIdResolver nitroServiceIdResolver = Mockito.mock(NitroServiceIdResolver.class);
     
-    private final YouViewContentResolver resolver = new UpdatedContentResolver(contentFinder,
-            nitroServiceIdResolver, PUBLISHER);
+    private final YouViewContentResolver resolver =
+            new UpdatedContentResolver(contentFinder, PUBLISHER);
 
     @Before
     public void setup() {
