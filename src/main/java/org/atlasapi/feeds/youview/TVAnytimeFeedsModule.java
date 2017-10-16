@@ -63,7 +63,12 @@ public class TVAnytimeFeedsModule {
     private Clock clock() {
         return new SystemClock(DateTimeZone.UTC);
     }
-    
+
+    @Bean
+    public ContentHierarchyExpanderFactory contentHierarchyExpanderFactory(){
+        return new ContentHierarchyExpanderFactory();
+    }
+
     @Bean
     public FeedStatisticsResolver feedStatsResolver() {
         return feedStatsStore();

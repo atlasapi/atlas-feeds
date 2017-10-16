@@ -11,14 +11,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-@Configuration
 @Import( { NitroTVAnytimeModule.class, UnboxTVAnytimeModule.class } )
 public class ContentHierarchyExpanderFactory {
-
-    @Bean
-    public ContentHierarchyExpanderFactory contentHierarchyExpanderFactory(){
-        return new ContentHierarchyExpanderFactory();
-    }
 
     private @Autowired ContentHierarchyExpanderImpl unboxContentHierarchyExpander;
     private @Autowired ContentHierarchyExpanderImpl nitroContentHierarchyExpander;

@@ -112,7 +112,7 @@ import static org.joda.time.DateTimeConstants.OCTOBER;
  *
  */
 @Configuration
-@Import(TVAnytimeFeedsModule.class)
+@Import({TVAnytimeFeedsModule.class, ContentHierarchyExpanderFactory.class})
 public class YouViewUploadModule {
     private static final Logger log = LoggerFactory.getLogger(YouViewUploadModule.class);
 
