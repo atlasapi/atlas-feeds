@@ -41,7 +41,7 @@ public class OnDemandBasedRevocationProcessorTest {
     private TaskCreator taskCreator = mock(TaskCreator.class);
     private TaskStore taskStore = mock(TaskStore.class);
     
-    private final RevocationProcessor processor = new OnDemandBasedRevocationProcessor(revocationStore, onDemandHierarchyExpander, payloadCreator, taskCreator, taskStore);;
+    private final RevocationProcessor processor = new OnDemandBasedRevocationProcessor(revocationStore, payloadCreator, taskCreator, taskStore);;
     
     @Before
     public void setup() throws PayloadGenerationException {

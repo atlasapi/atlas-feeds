@@ -150,7 +150,6 @@ public class YouViewUploadModule {
     private @Autowired TvAnytimeGenerator generator;
     private @Autowired TaskStore taskStore;
     private @Autowired NitroServiceIdResolver bbcServiceIdResolver;
-    private @Autowired OnDemandHierarchyExpander onDemandHierarchyExpander;
     private @Autowired VersionHierarchyExpander versionHierarchyExpander;
     private @Autowired ContentHierarchyExtractor contentHierarchy;
     private @Autowired ChannelResolver channelResolver;
@@ -386,7 +385,7 @@ public class YouViewUploadModule {
 
     @Bean
     public RevocationProcessor revocationProcessor() throws JAXBException, SAXException {
-        return new OnDemandBasedRevocationProcessor(revokedContentStore(), onDemandHierarchyExpander, payloadCreator(), taskCreator(), taskStore);
+        return new OnDemandBasedRevocationProcessor(revokedContentStore(), payloadCreator(), taskCreator(), taskStore);
     }
     
     @Bean
