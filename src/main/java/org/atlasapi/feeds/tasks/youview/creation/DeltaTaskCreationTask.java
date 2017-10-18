@@ -92,7 +92,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         while (updatedContent.hasNext()) {
             Content updated = updatedContent.next();
             if (updated.isActivelyPublished()) {
-                log.info("@@@ processing content to be UPLOADED no:"+ ++activeContent +getPublisherString());
+                log.info("@@@ processing content "+updated.getId()+"to be UPLOADED no:"+ ++activeContent +getPublisherString());
                 uploadProcessor.process(updated);
                 reportStatus("Uploads: " + uploadProcessor.getResult());
             } else {
@@ -103,7 +103,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         List<Content> orderedForDeletion = orderContentForDeletion(deleted);
 
         for (Content toBeDeleted : orderedForDeletion) {
-            log.info("@@@ processing content to be DELETED no:"+ ++deletingContent +getPublisherString());
+            log.info("@@@ processing content "+toBeDeleted.getId()+"to be DELETED no:"+ ++deletingContent +getPublisherString());
             deletionProcessor.process(toBeDeleted);
             reportStatus("Deletes: " + deletionProcessor.getResult());
         }
