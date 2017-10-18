@@ -14,7 +14,6 @@ public class UnboxIdGenerator implements IdGenerator {
 
     private static final String UNBOX_IMI_PREFIX = "imi:unbox.amazon.co.uk/";
     private static final String UNBOX_PRODUCT_CRID_PREFIX = "crid://unbox.amazon.co.uk/product/";
-    private static final String UNBOX_URI_PATTERN = "http:\\/\\/unbox\\.amazon\\.co\\.uk\\/[a-z]*\\/";
     private static final String VERSION_SUFFIX = "_version";
     
     @Override
@@ -47,6 +46,7 @@ public class UnboxIdGenerator implements IdGenerator {
     }
 
     private static String idFrom(Content content) {
-        return content.getCanonicalUri().replaceAll(UNBOX_URI_PATTERN, "");
+        String[] splinters = content.getCanonicalUri().split("/");
+        return splinters[splinters.length-1];
     }
 }
