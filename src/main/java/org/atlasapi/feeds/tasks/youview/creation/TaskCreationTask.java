@@ -116,11 +116,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
             public boolean process(Content content) {
                 try {
                     if (content instanceof Item) {
-
-                        log.info("@@@ the content we are processing is an item, so we will do versions, broadcasta and ondemands.");
                         progress = progress.reduce(processVersions((Item) content, updatedSince, action));
                     }
-                    log.info("@@@ now we'll process content.");
                     progress = progress.reduce(processContent(content, action));
                 } catch (Exception e) {
                     log.error("error on upload for " + content.getCanonicalUri(), e);
