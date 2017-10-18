@@ -21,11 +21,15 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class DeltaTaskCreationTask extends TaskCreationTask {
+
+    private static final Logger log = LoggerFactory.getLogger(TaskCreationTask.class);
 
     public static final Duration UPDATE_WINDOW_GRACE_PERIOD = Duration.standardHours(2);
 
@@ -73,6 +77,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         }
         
         Optional<DateTime> startOfTask = Optional.of(new DateTime());
+        log.info("@@@ Started a new delta run for "+getPublisherString());
 
         Iterator<Content> updatedContent = contentResolver.updatedSince(
                 lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD)
@@ -82,9 +87,12 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
         YouViewContentProcessor deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
 
+        int deletingContent= 0;
+        int activeContent=0;
         while (updatedContent.hasNext()) {
             Content updated = updatedContent.next();
             if (updated.isActivelyPublished()) {
+                log.info("@@@ processing content to be UPLOADED no:"+activeContent);
                 uploadProcessor.process(updated);
                 reportStatus("Uploads: " + uploadProcessor.getResult());
             } else {
@@ -95,12 +103,15 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         List<Content> orderedForDeletion = orderContentForDeletion(deleted);
 
         for (Content toBeDeleted : orderedForDeletion) {
+            log.info("@@@ processing content to be DELETED no:"+deletingContent);
             deletionProcessor.process(toBeDeleted);
             reportStatus("Deletes: " + deletionProcessor.getResult());
         }
 
+        log.info("@@@ setting last update time to "+startOfTask.get());
         setLastUpdatedTime(startOfTask.get());
-        
+
+        log.info("@@@ Starting the upload task.");
         reportStatus("Uploading tasks to YouView");
         
         // temporary fix; too many txns are being generated, due to the separation of 
@@ -108,6 +119,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         // task generation should help.
         
         updateTask.run();
+        log.info("@@@ Done");
         
         reportStatus("Done uploading tasks to YouView");
     }

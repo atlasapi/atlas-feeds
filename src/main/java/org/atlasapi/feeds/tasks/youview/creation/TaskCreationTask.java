@@ -90,6 +90,11 @@ public abstract class TaskCreationTask extends ScheduledTask {
         this.hashCheckMode = hashCheckMode;
     }
 
+    //for debugging purposes
+    protected String getPublisherString(){
+        return publisher.toString();
+    }
+
     protected Optional<DateTime> getLastUpdatedTime() {
         return lastUpdatedStore.getLastUpdated(publisher);
     }
@@ -111,8 +116,11 @@ public abstract class TaskCreationTask extends ScheduledTask {
             public boolean process(Content content) {
                 try {
                     if (content instanceof Item) {
+
+                        log.info("@@@ the content we are processing is an item, so we will do versions, broadcasta and ondemands.");
                         progress = progress.reduce(processVersions((Item) content, updatedSince, action));
                     }
+                    log.info("@@@ now we'll process content.");
                     progress = progress.reduce(processContent(content, action));
                 } catch (Exception e) {
                     log.error("error on upload for " + content.getCanonicalUri(), e);
@@ -136,6 +144,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             @Override
             public boolean process(Channel content) {
                 try {
+                    log.info("@@@ CHANNEP PROCESSOR?!?!?!?!?\n\n");
                     progress = progress.reduce(processChannel(content, action, channelType));
                 } catch (Exception e) {
                     log.error("error on upload for " + content.getCanonicalUri(), e);
@@ -153,6 +162,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     // TODO tidy this up, ideally simplify/streamline it
     private UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
+        log.info("@@@ Consequently we are processing versions");
+
         Map<String, ItemAndVersion> versionHierarchies = Maps.filterValues(
                 hierarchyExpander.versionHierarchiesFor(item),
                 FilterFactory.versionFilter(updatedSince)
@@ -165,6 +176,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 hierarchyExpander.onDemandHierarchiesFor(item),
                 FilterFactory.onDemandFilter(updatedSince)
         );
+
+        log.info("@@@ The hierarcy expander has produced "+versionHierarchies.size()+ " versions, "+broadcastHierarchies.size()+" broadcasts, "+onDemandHierarchies.size()+ " onDemands");
 
         UpdateProgress progress = UpdateProgress.START;
 
@@ -183,16 +196,24 @@ public abstract class TaskCreationTask extends ScheduledTask {
     private UpdateProgress processContent(Content content, Action action) {
         String contentCrid = idGenerator.generateContentCrid(content);
         log.debug("Processing Content {}", contentCrid);
+        log.info("@@@ Processing Content {}", contentCrid);
         try {
             // not strictly necessary, but will save space
             if (!Action.DELETE.equals(action)) {
                 Payload p = payloadCreator.payloadFrom(contentCrid, content);
+                log.info("@@@ created the payload for the content\n\n"+p);
 
                 if (shouldSave(HashType.CONTENT, contentCrid, p)) {
-                    taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, p, action));
+                    Task savedTask = taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(
+                            content), content, p, action));
                     payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
+                    log.info(
+                            "@@@ Saved task {} for content {}",
+                            savedTask.id(),
+                            contentCrid);
                 } else {
                     log.debug("Existing hash found for Content {}, not updating", contentCrid);
+                    log.info("@@@ Existing hash found for Content {}, not updating", contentCrid);
                 }
             }
 
@@ -242,7 +263,10 @@ public abstract class TaskCreationTask extends ScheduledTask {
         try {
             log.debug("Processing Version {}", versionCrid);
 
+
+            log.info("@@@ Processing version {}", versionCrid);
             Payload payload = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
+            log.info("@@@ created the payload for the version\n\n"+payload);
 
             if (shouldSave(HashType.VERSION, versionCrid, payload)) {
                 Task savedTask = taskStore.save(taskCreator.taskFor(
@@ -252,6 +276,10 @@ public abstract class TaskCreationTask extends ScheduledTask {
                         action
                 ));
                 payloadHashStore.saveHash(HashType.VERSION, versionCrid, payload.hash());
+                log.info(
+                        "@@@ Saved task {} for version {}",
+                        savedTask.id(),
+                        versionCrid);
                 log.debug(
                         "Saved task {} for version {} with hash {}",
                         savedTask.id(),
@@ -260,6 +288,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 );
             } else {
                 log.debug("Existing hash found for Version {}, not updating", versionCrid);
+                log.info ("@@@ Existing hash found for Version {}, not updating", versionCrid);
             }
 
             return UpdateProgress.SUCCESS;
@@ -282,18 +311,25 @@ public abstract class TaskCreationTask extends ScheduledTask {
     private UpdateProgress processBroadcast(String broadcastImi, ItemBroadcastHierarchy broadcastHierarchy, Action action) {
         try {
             log.debug("Processing Broadcast {}", broadcastImi);
+            log.info("@@@ Processing Broadcast {}", broadcastImi);
 
-            Optional<Payload> p = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
-            if (!p.isPresent()) {
+            Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
+            if (!payload.isPresent()) {
                 return UpdateProgress.START;
             }
+            log.info("@@@ created the payload for the broadcast\n\n"+payload.get());
 
-            if (shouldSave(HashType.BROADCAST, broadcastImi, p.get())) {
-                Task unsavedTask = taskCreator.taskFor(broadcastImi, broadcastHierarchy, p.get(), action);
-                taskStore.save(unsavedTask);
-                payloadHashStore.saveHash(HashType.BROADCAST, broadcastImi, p.get().hash());
+            if (shouldSave(HashType.BROADCAST, broadcastImi, payload.get())) {
+                Task unsavedTask = taskCreator.taskFor(broadcastImi, broadcastHierarchy, payload.get(), action);
+                Task SaVeDTasK = taskStore.save(unsavedTask);
+                payloadHashStore.saveHash(HashType.BROADCAST, broadcastImi, payload.get().hash());
+                log.info(
+                        "@@@ Saved task {} for broadcast {}",
+                        SaVeDTasK.id(),
+                        broadcastImi);
             } else {
                 log.debug("Existing hash found for Broadcast {}, not updating", broadcastImi);
+                log.info("@@@ Existing hash found for Broadcast {}, not updating", broadcastImi);
             }
 
             return UpdateProgress.SUCCESS;
@@ -331,19 +367,26 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
         try {
             log.debug("Processing OnDemand {}", onDemandImi);
+            log.debug("@@@ Processing OnDemand {}", onDemandImi);
 
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
+            log.info("@@@ created the payload for the ondemand\n\n"+p);
 
             if (shouldSave(hashType, onDemandImi, p)) {
-                taskStore.save(taskCreator.taskFor(
+                Task savedTask = taskStore.save(taskCreator.taskFor(
                         onDemandImi,
                         onDemandHierarchy,
                         p,
                         action
                 ));
                 payloadHashStore.saveHash(hashType, onDemandImi, p.hash());
+                log.info(
+                        "@@@ Saved task {} for ondemand {}",
+                        savedTask.id(),
+                        onDemandImi);
             } else {
                 log.debug("Existing hash found for OnDemand {}, not updating", onDemandImi);
+                log.info("@@@ Existing hash found for OnDemand {}, not updating", onDemandImi);
             }
 
             return UpdateProgress.SUCCESS;
