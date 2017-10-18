@@ -22,6 +22,10 @@ public class ContentHierarchyExpanderImpl implements ContentHierarchyExpander {
     private final OnDemandHierarchyExpander onDemandExpander;
     private final IdGenerator idGenerator;
 
+    public IdGenerator getIdGenerator() {
+        return idGenerator;
+    }
+
     public ContentHierarchyExpanderImpl(
             VersionHierarchyExpander versionExpander,
             BroadcastHierarchyExpander broadcastExpander,

@@ -198,7 +198,6 @@ public abstract class TaskCreationTask extends ScheduledTask {
             // not strictly necessary, but will save space
             if (!Action.DELETE.equals(action)) {
                 Payload p = payloadCreator.payloadFrom(contentCrid, content);
-                log.info("@@@ created the payload for the content\n\n"+p);
 
                 if (shouldSave(HashType.CONTENT, contentCrid, p)) {
                     Task savedTask = taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(
@@ -314,7 +313,6 @@ public abstract class TaskCreationTask extends ScheduledTask {
             if (!payload.isPresent()) {
                 return UpdateProgress.START;
             }
-            log.info("@@@ created the payload for the broadcast\n\n"+payload.get());
 
             if (shouldSave(HashType.BROADCAST, broadcastImi, payload.get())) {
                 Task unsavedTask = taskCreator.taskFor(broadcastImi, broadcastHierarchy, payload.get(), action);
@@ -367,7 +365,6 @@ public abstract class TaskCreationTask extends ScheduledTask {
             log.debug("@@@ Processing OnDemand {}", onDemandImi);
 
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
-            log.info("@@@ created the payload for the ondemand\n\n"+p);
 
             if (shouldSave(hashType, onDemandImi, p)) {
                 Task savedTask = taskStore.save(taskCreator.taskFor(

@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview;
 
 import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
+import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.nitro.NitroServiceIdResolver;
@@ -98,7 +99,7 @@ public class NitroTVAnytimeModule {
     }
 
     @Bean
-    public ContentHierarchyExpanderImpl nitroContentHierarchyExpander() {
+    public ContentHierarchyExpander nitroContentHierarchyExpander() {
         return new ContentHierarchyExpanderImpl(versionHierarchyExpander(), broadcastHierarchyExpander(), onDemandHierarchyExpander(), nitroIdGenerator());
     }
 
