@@ -204,10 +204,14 @@ public class YouViewUploadModule {
      * @throws JAXBException 
      */
     private Optional<TaskProcessor> taskProcessor(String prefix) throws JAXBException, SAXException {
+        log.info("@@@ creating new task processor for "+prefix);
         String publisherPrefix = CONFIG_PREFIX + prefix;
+        log.info("@@@ the config prefix is "+publisherPrefix);
         if (!isEnabled(publisherPrefix)) {
-            Optional.absent();
+            return Optional.absent();
         }
+
+
         String baseUrl = parseUrl(publisherPrefix);
         final UsernameAndPassword credentials = parseCredentials(publisherPrefix);
 
@@ -405,6 +409,7 @@ public class YouViewUploadModule {
     }
 
     private String parseUrl(String publisherPrefix) {
+        log.info("@@@ and the config sais: "+Configurer.get(publisherPrefix + ".url").get());
         return Configurer.get(publisherPrefix + ".url").get();
     }
     

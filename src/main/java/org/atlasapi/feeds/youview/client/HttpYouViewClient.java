@@ -111,7 +111,7 @@ public class HttpYouViewClient implements YouViewClient {
         Predicate<HttpResponse> responseCodeIsEqualOrHigherThan500 = new Predicate<HttpResponse>() {
             public boolean apply(HttpResponse response) {
                 if(response.getStatusCode() >= 500 ){
-                    log.error(response.getStatusMessage());
+                    log.error("@@@ Uploading to YV responded with an error: "+ response.getStatusCode()+ " - " + response.getStatusMessage());
                     try {
                         log.error(response.parseAsString());
                     } catch (IOException e) {
