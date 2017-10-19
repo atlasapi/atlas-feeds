@@ -34,7 +34,7 @@ public class DeleteTaskTest {
     private TaskStore taskStore = mock(TaskStore.class);
     private TaskProcessor processor = mock(TaskProcessor.class);
     
-    private final DeleteTask deleteTask = new DeleteTask(taskStore, processor, YOUVIEW);
+    private final DeleteTask deleteTask = new DeleteTask(taskStore,processor,  null, YOUVIEW);
     
     @Test
     public void testProcessesAllNonFinalTasks() {

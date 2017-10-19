@@ -32,7 +32,7 @@ public class UpdateTaskTest {
     private TaskStore taskStore = mock(TaskStore.class);
     private TaskProcessor processor = mock(TaskProcessor.class);
     
-    private final UpdateTask updateTask = new UpdateTask(taskStore, processor, YOUVIEW);
+    private final UpdateTask updateTask = new UpdateTask(taskStore, processor, null, YOUVIEW);
     
     @Test
     public void testProcessesAllNonFinalTasks() {
