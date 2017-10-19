@@ -110,7 +110,16 @@ public class HttpYouViewClient implements YouViewClient {
     public static Retryer<HttpResponse> getHttpRequestRetryer() {
         Predicate<HttpResponse> responseCodeIsEqualOrHigherThan500 = new Predicate<HttpResponse>() {
             public boolean apply(HttpResponse response) {
-                return response.getStatusCode() >= 500;
+                if(response.getStatusCode() >= 500 ){
+                    log.error(response.getStatusMessage());
+                    try {
+                        log.error(response.parseAsString());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return true;
+                }
+                return false;
             }
         };
 
