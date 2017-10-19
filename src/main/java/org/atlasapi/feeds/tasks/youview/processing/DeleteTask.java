@@ -6,6 +6,7 @@ import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.reporting.telescope.FeedsReporterNames;
 
 import com.google.common.collect.ImmutableSet;
@@ -13,9 +14,17 @@ import com.google.common.collect.ImmutableSet;
 
 public final class DeleteTask extends TaskProcessingTask {
     
-    public DeleteTask(TaskStore taskStore, TaskProcessor processor, 
+    public DeleteTask(
+            TaskStore taskStore,
+            TaskProcessor processor,
+            Publisher publisher,
             DestinationType destinationType) {
-        super(taskStore, processor, destinationType,
+
+        super(
+                taskStore,
+                processor,
+                publisher,
+                destinationType,
                 FeedsReporterNames.YOU_VIEW_AUTOMATIC_DELETER
         );
     }
@@ -24,11 +33,10 @@ public final class DeleteTask extends TaskProcessingTask {
             Status.NEW,
             Status.PENDING
     );
-    private static final Action TO_DELETE = Action.DELETE; 
 
     @Override
     public Action action() {
-        return TO_DELETE;
+        return Action.DELETE;
     }
 
     @Override

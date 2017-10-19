@@ -15,7 +15,6 @@ import com.google.common.collect.ImmutableSet;
 
 
 public class UpdateTask extends TaskProcessingTask {
-    private final Publisher publisher;
 
     public UpdateTask(
             TaskStore taskStore,
@@ -26,11 +25,10 @@ public class UpdateTask extends TaskProcessingTask {
         super(
                 taskStore,
                 processor,
+                publisher,
                 destinationType,
                 FeedsReporterNames.YOU_VIEW_AUTOMATIC_UPLOADER
         );
-
-        this.publisher = publisher;
 
     }
 
@@ -39,16 +37,9 @@ public class UpdateTask extends TaskProcessingTask {
             Status.PENDING
     );
 
-    private static final Action TO_UPLOAD = Action.UPDATE;
-
-    @Override
-    public Publisher getPublisher() {
-        return this.publisher;
-    }
-
     @Override
     public Action action() {
-        return TO_UPLOAD;
+        return Action.UPDATE;
     }
 
     @Override

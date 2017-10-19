@@ -39,12 +39,18 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     private final TaskProcessor processor;
     private final DestinationType destinationType;
     private final TelescopeReporterName reporterName;
+    private final Publisher publisher;
 
-    public TaskProcessingTask(TaskStore taskStore, TaskProcessor processor,
+    public TaskProcessingTask(
+            TaskStore taskStore,
+            TaskProcessor processor,
+            Publisher publisher,
             DestinationType destinationType,
             TelescopeReporterName reporterName) {
+
         this.taskStore = checkNotNull(taskStore);
         this.processor = checkNotNull(processor);
+        this.publisher = publisher;
         this.destinationType = checkNotNull(destinationType);
         this.reporterName = reporterName;
     }
@@ -96,7 +102,9 @@ public abstract class TaskProcessingTask extends ScheduledTask {
         telescope.endReporting();
     }
 
-    public abstract Publisher getPublisher();
+    public Publisher getPublisher(){
+        return this.publisher;
+    }
 
     /**
      * @return the {@Action} that this task is trying to process {@link Task}s for

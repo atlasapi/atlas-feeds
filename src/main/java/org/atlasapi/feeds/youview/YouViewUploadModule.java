@@ -279,7 +279,7 @@ public class YouViewUploadModule {
     }
     
     private ScheduledTask deleteTask() throws JAXBException, SAXException {
-        return new DeleteTask(taskStore, taskProcessor(), DESTINATION_TYPE);
+        return new DeleteTask(taskStore, taskProcessor(), null, DESTINATION_TYPE);
     }
     
     // TODO remove dependency on nitro Id generator
