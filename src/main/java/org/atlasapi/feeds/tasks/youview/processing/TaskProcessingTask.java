@@ -6,11 +6,14 @@ import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
+import org.atlasapi.feeds.tasks.TaskQuery;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
 import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
+import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
@@ -53,8 +56,17 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                 .getTelescopeReporter(reporterName);
         telescope.startReporting();
 
+        Iterable<Task> tasksToCheck;
         for (Status uncheckedStatus : validStatuses()) {
-            Iterable<Task> tasksToCheck = taskStore.allTasks(destinationType, uncheckedStatus);
+            if(getPublisher() != null){
+                tasksToCheck = taskStore.allTasks(
+                        TaskQuery.builder(Selection.all(), getPublisher(), destinationType)
+                                .withTaskStatus(uncheckedStatus)
+                                .build());
+            } else {
+                tasksToCheck = taskStore.allTasks(destinationType, uncheckedStatus);
+            }
+
             for (Task task : tasksToCheck) { //NOSONAR
                 if (!shouldContinue()) {
                     break;
@@ -83,6 +95,8 @@ public abstract class TaskProcessingTask extends ScheduledTask {
 
         telescope.endReporting();
     }
+
+    public abstract Publisher getPublisher();
 
     /**
      * @return the {@Action} that this task is trying to process {@link Task}s for

@@ -271,7 +271,11 @@ public class YouViewUploadModule {
     }
 
     private UpdateTask uploadTask() throws JAXBException, SAXException {
-        return new UpdateTask(taskStore, taskProcessor(), DESTINATION_TYPE);
+        return new UpdateTask(taskStore, taskProcessor(), null, DESTINATION_TYPE);
+    }
+
+    private UpdateTask uploadTask(Publisher publisher) throws JAXBException, SAXException {
+        return new UpdateTask(taskStore, taskProcessor(), publisher, DESTINATION_TYPE);
     }
     
     private ScheduledTask deleteTask() throws JAXBException, SAXException {
@@ -306,7 +310,7 @@ public class YouViewUploadModule {
                 taskStore, 
                 taskCreator(), 
                 payloadCreator(), 
-                uploadTask(),
+                uploadTask(publisher),
                 getDeltaContentResolver(publisher),
                 payloadHashStore(),
                 channelResolver
