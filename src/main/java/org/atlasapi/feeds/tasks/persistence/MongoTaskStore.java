@@ -154,7 +154,8 @@ public class MongoTaskStore implements TaskStore {
                 .fieldEquals(STATUS_KEY, status.name());
 
         DBCursor cursor = collection.find(mongoQuery.build())
-                .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+                .addOption(Bytes.QUERYOPTION_NOTIMEOUT)
+                .limit(10000); //TODO: make this configurable
 
         return FluentIterable.from(cursor)
                 .transform(TaskTranslator.fromDBObjects())
