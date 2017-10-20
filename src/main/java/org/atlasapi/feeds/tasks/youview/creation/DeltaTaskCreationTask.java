@@ -108,10 +108,10 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             reportStatus("Deletes: " + deletionProcessor.getResult());
         }
 
-        log.info("@@@ setting last update time to "+startOfTask.get());
+        log.info("@@@"+getPublisherString()+" setting last update time to "+startOfTask.get());
         setLastUpdatedTime(startOfTask.get());
 
-        log.info("@@@ Starting the upload task.");
+        log.info("@@@"+getPublisherString()+" Starting the upload task.");
         reportStatus("Uploading tasks to YouView");
         
         // temporary fix; too many txns are being generated, due to the separation of 
@@ -119,7 +119,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         // task generation should help.
         
         updateTask.run();
-        log.info("@@@ Done");
+        log.info("@@@"+getPublisherString()+" Done");
         
         reportStatus("Done uploading tasks to YouView");
     }
