@@ -173,7 +173,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 FilterFactory.onDemandFilter(updatedSince)
         );
 
-        log.info("@@@"+item.getPublisher().key()+" The hierarcy expander has produced "+versionHierarchies.size()+ " versions, "+broadcastHierarchies.size()+" broadcasts, "+onDemandHierarchies.size()+ " onDemands");
+        log.info("@@@ The hierarcy expander has produced "+versionHierarchies.size()+ " versions, "+broadcastHierarchies.size()+" broadcasts, "+onDemandHierarchies.size()+ " onDemands");
 
         UpdateProgress progress = UpdateProgress.START;
 
@@ -360,7 +360,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
         try {
             log.debug("Processing OnDemand {}", onDemandImi);
-            log.debug("@@@"+onDemandHierarchy.item().getPublisher()+" Processing OnDemand {}", onDemandImi);
+            log.info("@@@"+onDemandHierarchy.item().getPublisher()+" Processing OnDemand {}", onDemandImi);
 
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
