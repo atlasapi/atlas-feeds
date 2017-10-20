@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -48,8 +49,8 @@ import org.atlasapi.feeds.youview.revocation.MongoRevokedContentStore;
 import org.atlasapi.feeds.youview.revocation.OnDemandBasedRevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
-import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.feeds.youview.www.MetricsController;
+import org.atlasapi.feeds.youview.www.YouViewUploadController;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Publisher;
@@ -60,6 +61,7 @@ import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.properties.Configurer;
+import com.metabroadcast.common.properties.Parameter;
 import com.metabroadcast.common.scheduling.RepetitionRule;
 import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.ScheduledTask;
@@ -79,6 +81,7 @@ import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
@@ -97,7 +100,7 @@ import org.xml.sax.SAXException;
 import tva.metadata._2010.TVAMainType;
 
 import static com.metabroadcast.common.time.DateTimeZones.UTC;
-import static java.lang.management.ManagementFactory.*;
+import static java.lang.management.ManagementFactory.getGarbageCollectorMXBeans;
 import static org.joda.time.DateTimeConstants.OCTOBER;
 
 /**
@@ -410,7 +413,21 @@ public class YouViewUploadModule {
 
     private String parseUrl(String publisherPrefix) {
         log.info("@@@ and the config sais: "+Configurer.get(publisherPrefix + ".url").get());
-        return Configurer.get(publisherPrefix + ".url").get();
+        Map<String, Parameter> unbox = Configurer.getParamsMapWithKeyMatching(new Predicate<CharSequence>() {
+
+            @Override
+            public boolean apply(@Nullable CharSequence input) {
+                if (input.toString().contains("unbox")) {
+                    return true;
+                }
+                return false;
+            }
+        });
+        for (Entry e : unbox.entrySet()
+                ) {
+            log.info("@@@ " + e.getKey() + " : " + e.getValue());
+        }
+        return "https://ingest-ext03.ccosvc.com/ingest";
     }
     
     private UsernameAndPassword parseCredentials(String publisherPrefix) {
