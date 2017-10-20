@@ -65,6 +65,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
             if (getPublisher() != null) {
                 tasksToCheck = taskStore.allTasks(getPublisher(), destinationType, status);
             } else {
+                //if no publisher is given, get everything
                 tasksToCheck = taskStore.allTasks(destinationType, status);
             }
 

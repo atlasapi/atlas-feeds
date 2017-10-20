@@ -100,6 +100,7 @@ public class TaskUpdatingResultHandler implements ResultHandler {
             status = Status.REJECTED;
         }
         Response response = new Response(status, result.result(), result.uploadTime());
+        log.info("@@@"+task.publisher().key()+" Task has changed status to "+status);
         taskStore.updateWithResponse(task.id(), response);
     }
 
