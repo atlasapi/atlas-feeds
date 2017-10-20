@@ -6,14 +6,12 @@ import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
-import org.atlasapi.feeds.tasks.TaskQuery;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
 import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
-import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
@@ -63,14 +61,11 @@ public abstract class TaskProcessingTask extends ScheduledTask {
         telescope.startReporting();
 
         Iterable<Task> tasksToCheck;
-        for (Status uncheckedStatus : validStatuses()) {
-            if(getPublisher() != null){
-                tasksToCheck = taskStore.allTasks(
-                        TaskQuery.builder(Selection.all(), getPublisher(), destinationType)
-                                .withTaskStatus(uncheckedStatus)
-                                .build());
+        for (Status status : validStatuses()) {
+            if (getPublisher() != null) {
+                tasksToCheck = taskStore.allTasks(getPublisher(), destinationType, status);
             } else {
-                tasksToCheck = taskStore.allTasks(destinationType, uncheckedStatus);
+                tasksToCheck = taskStore.allTasks(destinationType, status);
             }
 
             for (Task task : tasksToCheck) { //NOSONAR

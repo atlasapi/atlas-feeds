@@ -8,6 +8,8 @@ import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
+import org.atlasapi.media.entity.Publisher;
+
 import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
@@ -64,6 +66,11 @@ public class IdSettingTaskStore implements TaskStore {
     @Override
     public Iterable<Task> allTasks(TaskQuery query) {
         return delegate.allTasks(query);
+    }
+
+    @Override
+    public Iterable<Task> allTasks(Publisher publisher, DestinationType type, Status status) {
+        return delegate.allTasks(publisher, type, status);
     }
 
     @Override

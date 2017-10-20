@@ -52,7 +52,17 @@ public interface TaskStore {
     Optional<Task> taskFor(Long taskId);
     
     Iterable<Task> allTasks(TaskQuery query);
-    
+
+    /**
+     * Fetches all tasks for a given DestinationType (~= feed destination, e.g. YouView, RadioPlayer)
+     * Status and Publisher. We cant use the query because that enforces sorting on unindexed columns
+     * which causes the query to overflow.
+     * @param type The destination type of feed desired
+     * @param status the status to fetch
+     * @return
+     */
+    Iterable<Task> allTasks(Publisher publisher, DestinationType type, Status status);
+
     /**
      * Fetches all tasks for a given DestinationType (~= feed destination, e.g. YouView, RadioPlayer)
      * and Status

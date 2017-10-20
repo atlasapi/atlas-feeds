@@ -147,6 +147,21 @@ public class MongoTaskStore implements TaskStore {
     }
 
     @Override
+    public Iterable<Task> allTasks(Publisher publisher, DestinationType type, Status status) {
+        MongoQueryBuilder mongoQuery = new MongoQueryBuilder()
+                .fieldEquals(DESTINATION_TYPE_KEY, type.name())
+                .fieldEquals(PUBLISHER_KEY, publisher.key())
+                .fieldEquals(STATUS_KEY, status.name());
+
+        DBCursor cursor = collection.find(mongoQuery.build())
+                .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+
+        return FluentIterable.from(cursor)
+                .transform(TaskTranslator.fromDBObjects())
+                .filter(Predicates.notNull());
+    }
+
+    @Override
     public Iterable<Task> allTasks(DestinationType type, Status status) {
         MongoQueryBuilder mongoQuery = new MongoQueryBuilder()
                 .fieldEquals(DESTINATION_TYPE_KEY, type.name())
