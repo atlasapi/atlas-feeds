@@ -113,7 +113,6 @@ public class YouViewUploadController {
     private final ChannelResolver channelResolver;
     private final SubstitutionTableNumberCodec channelIdCodec;
     private final ListeningExecutorService executor;
-    private final TaskProcessor nitroTaskProcessor;
 
     public static Builder builder() {
         return new Builder();
@@ -128,8 +127,7 @@ public class YouViewUploadController {
             TaskProcessor taskProcessor,
             ScheduleResolver scheduleResolver,
             ChannelResolver channelResolver,
-            Clock clock,
-            TaskProcessor nitroTaskProcessor
+            Clock clock
     ) {
         this.contentResolver = checkNotNull(contentResolver);
         this.taskCreator = checkNotNull(taskCreator);
@@ -140,7 +138,6 @@ public class YouViewUploadController {
         this.clock = checkNotNull(clock);
         this.scheduleResolver = checkNotNull(scheduleResolver);
         this.channelResolver = checkNotNull(channelResolver);
-        this.nitroTaskProcessor = checkNotNull(nitroTaskProcessor);
 
         this.dateTimeInQueryParser = new DateTimeInQueryParser();
         this.executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
@@ -705,7 +702,7 @@ public class YouViewUploadController {
         Task savedTask = taskStore.save(Task.copy(task).withManuallyCreated(true).build());
 
         if (immediate) {
-            nitroTaskProcessor.process(savedTask, telescope);
+            taskProcessor.process(savedTask, telescope);
         }
     }
 
@@ -966,7 +963,6 @@ public class YouViewUploadController {
         private TaskProcessor taskProcessor;
         private ScheduleResolver scheduleResolver;
         private ChannelResolver channelResolver;
-        private TaskProcessor nitroTaskProcessor;
 
         private Builder() {
         }
@@ -1016,11 +1012,6 @@ public class YouViewUploadController {
             return this;
         }
 
-        public Builder withNitroTaskProcessor(TaskProcessor val) {
-            nitroTaskProcessor = val;
-            return this;
-        }
-
         public YouViewUploadController build() {
             return new YouViewUploadController(
                     contentResolver,
@@ -1031,8 +1022,7 @@ public class YouViewUploadController {
                     taskProcessor,
                     scheduleResolver,
                     channelResolver,
-                    clock,
-                    nitroTaskProcessor
+                    clock
             );
         }
     }

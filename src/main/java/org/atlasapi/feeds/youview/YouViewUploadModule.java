@@ -268,7 +268,6 @@ public class YouViewUploadModule {
                 .withScheduleResolver(scheduleResolver)
                 .withChannelResolver(channelResolver)
                 .withClock(clock)
-                .withNitroTaskProcessor(taskProcessor("nitro").get())
                 .build();
     }
 
