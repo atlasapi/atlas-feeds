@@ -411,7 +411,8 @@ public class YouViewUploadModule {
     }
 
     private String parseUrl(String publisherPrefix) {
-        log.info("@@@ and the config sais: "+Configurer.get(publisherPrefix + ".url").get());
+        log.info("@@@ and the config sais: "+publisherPrefix + ".url : "+Configurer.get(publisherPrefix + ".url").get());
+        log.info("@@@ but it also sais: YOUVIEW_UPLOAD_UNBOX_URL : "+Configurer.get("YOUVIEW_UPLOAD_UNBOX_URL").get());
         Map<String, Parameter> unbox = Configurer.getParamsMapWithKeyMatching(new Predicate<CharSequence>() {
 
             @Override
@@ -426,7 +427,7 @@ public class YouViewUploadModule {
                 ) {
             log.info("@@@ " + e.getKey() + " : " + e.getValue());
         }
-        return "https://ingest-ext03.ccosvc.com/ingest";
+        return "https://ingest-ext04.ccosvc.com/ingest";
     }
     
     private UsernameAndPassword parseCredentials(String publisherPrefix) {

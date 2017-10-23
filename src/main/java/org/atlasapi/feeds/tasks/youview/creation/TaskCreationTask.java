@@ -141,7 +141,6 @@ public abstract class TaskCreationTask extends ScheduledTask {
             @Override
             public boolean process(Channel content) {
                 try {
-                    log.info("@@@ CHANNEL PROCESSOR?!?!?!?!?\n\n");
                     progress = progress.reduce(processChannel(content, action, channelType));
                 } catch (Exception e) {
                     log.error("error on upload for " + content.getCanonicalUri(), e);
