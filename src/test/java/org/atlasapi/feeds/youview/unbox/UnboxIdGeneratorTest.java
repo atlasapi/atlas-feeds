@@ -23,14 +23,14 @@ public class UnboxIdGeneratorTest {
     public void testContentCridGeneration() {
         String contentCrid = generator.generateContentCrid(createItemWithUri("http://unbox.amazon.co.uk/films/123456"));
         
-        assertEquals("crid://unbox.amazon.co.uk/product/123456", contentCrid);
+        assertEquals("crid://amazon.com/product/123456", contentCrid);
     }
 
     @Test
     public void testVersionCridGeneration() {
         String versionCrid = generator.generateVersionCrid(createItemWithUri("http://unbox.amazon.co.uk/films/123456"), createVersion());
         
-        assertEquals("crid://unbox.amazon.co.uk/product/123456_version", versionCrid);
+        assertEquals("crid://amazon.com/product/123456_version", versionCrid);
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -42,7 +42,7 @@ public class UnboxIdGeneratorTest {
     public void testOnDemandImiGeneration() {
         String onDemandImi = generator.generateOnDemandImi(createItemWithUri("http://unbox.amazon.co.uk/films/123456"), createVersion(), createEncoding(), createLocation());
         
-        assertEquals("imi:unbox.amazon.co.uk/123456", onDemandImi);
+        assertEquals("imi:amazon.com/123456", onDemandImi);
     }
 
     private Item createItemWithUri(String uri) {

@@ -96,7 +96,7 @@ public class UnboxGroupInformationGeneratorTest {
         
         GroupInformationType groupInfo = generator.generate(series, Optional.<Brand>absent(), child);
         
-        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals("http://amazon.com/ContentOwning", groupInfo.getServiceIDRef());
     }
     
     /**
@@ -271,8 +271,8 @@ public class UnboxGroupInformationGeneratorTest {
     public void testFilmGroupInformationGeneration() {
         GroupInformationType groupInfo = generator.generate(createFilm());
 
-        assertEquals("crid://unbox.amazon.co.uk/product/177221", groupInfo.getGroupId());
-        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals("crid://amazon.com/product/177221", groupInfo.getGroupId());
+        assertEquals("http://amazon.com/ContentOwning", groupInfo.getServiceIDRef());
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
         
@@ -291,10 +291,10 @@ public class UnboxGroupInformationGeneratorTest {
     public void testEpisodeGroupInformationGeneration() {
         GroupInformationType groupInfo = generator.generate(createEpisode(), Optional.of(createSeries()), Optional.of(createBrand()));
 
-        assertEquals("crid://unbox.amazon.co.uk/product/180014", groupInfo.getGroupId());
+        assertEquals("crid://amazon.com/product/180014", groupInfo.getGroupId());
         
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://unbox.amazon.co.uk/product/179534", memberOf.getCrid());
+        assertEquals("crid://amazon.com/product/179534", memberOf.getCrid());
         assertEquals(Long.valueOf(5), memberOf.getIndex());
         
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -318,11 +318,11 @@ public class UnboxGroupInformationGeneratorTest {
         
         GroupInformationType groupInfo = generator.generate(createSeries(), Optional.of(createBrand()), episode);
 
-        assertEquals("crid://unbox.amazon.co.uk/product/179534", groupInfo.getGroupId());
+        assertEquals("crid://amazon.com/product/179534", groupInfo.getGroupId());
         assertTrue(groupInfo.isOrdered());
         
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://unbox.amazon.co.uk/product/184930", memberOf.getCrid());
+        assertEquals("crid://amazon.com/product/184930", memberOf.getCrid());
         assertEquals(Long.valueOf(2), memberOf.getIndex());
         
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -353,7 +353,7 @@ public class UnboxGroupInformationGeneratorTest {
         
         GroupInformationType groupInfo = generator.generate(createBrand(), episode);
 
-        assertEquals("crid://unbox.amazon.co.uk/product/184930", groupInfo.getGroupId());
+        assertEquals("crid://amazon.com/product/184930", groupInfo.getGroupId());
         assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
         assertTrue(groupInfo.isOrdered());
                 
@@ -536,7 +536,7 @@ public class UnboxGroupInformationGeneratorTest {
         film.setCanonicalUri("http://unbox.amazon.co.uk/movies/123456");
         
         GroupInformationType groupInfo = generator.generate(film);
-        assertEquals("crid://unbox.amazon.co.uk/product/123456", groupInfo.getGroupId());
+        assertEquals("crid://amazon.com/product/123456", groupInfo.getGroupId());
         assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
     }
     
