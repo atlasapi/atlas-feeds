@@ -354,7 +354,7 @@ public class UnboxGroupInformationGeneratorTest {
         GroupInformationType groupInfo = generator.generate(createBrand(), episode);
 
         assertEquals("crid://amazon.com/product/184930", groupInfo.getGroupId());
-        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals("http://amazon.com/ContentOwning", groupInfo.getServiceIDRef());
         assertTrue(groupInfo.isOrdered());
                 
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -537,7 +537,7 @@ public class UnboxGroupInformationGeneratorTest {
         
         GroupInformationType groupInfo = generator.generate(film);
         assertEquals("crid://amazon.com/product/123456", groupInfo.getGroupId());
-        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals("http://amazon.com/ContentOwning", groupInfo.getServiceIDRef());
     }
     
     
