@@ -12,8 +12,8 @@ import org.atlasapi.media.entity.Version;
 
 public class UnboxIdGenerator implements IdGenerator {
 
-    private static final String UNBOX_IMI_PREFIX = "imi:unbox.amazon.co.uk/";
-    private static final String UNBOX_PRODUCT_CRID_PREFIX = "crid://unbox.amazon.co.uk/product/";
+    private static final String UNBOX_IMI_PREFIX = "imi:amazon.com/";
+    private static final String UNBOX_PRODUCT_CRID_PREFIX = "crid://amazon.com/product/";
     private static final String VERSION_SUFFIX = "_version";
     
     @Override

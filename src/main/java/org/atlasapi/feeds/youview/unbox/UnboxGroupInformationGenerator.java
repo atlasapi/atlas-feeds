@@ -57,7 +57,7 @@ import com.metabroadcast.common.text.Truncator;
 
 public class UnboxGroupInformationGenerator implements GroupInformationGenerator {
 
-    private static final String UNBOX_GROUP_INFO_SERVICE_ID = "http://unbox.amazon.co.uk/ContentOwning";
+    private static final String UNBOX_GROUP_INFO_SERVICE_ID = "http://amazon.com/ContentOwning";
     private static final int DEFAULT_IMAGE_HEIGHT = 320;
     private static final int DEFAULT_IMAGE_WIDTH = 240;
     

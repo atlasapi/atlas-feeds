@@ -411,10 +411,12 @@ public class YouViewUploadModule {
     }
 
     private String parseUrl(String publisherPrefix) {
+        log.info("@@@@ parsed url for "+publisherPrefix+".url : "+Configurer.get(publisherPrefix + ".url").get());
         return Configurer.get(publisherPrefix + ".url").get();
     }
     
     private UsernameAndPassword parseCredentials(String publisherPrefix) {
+        log.info("@@@@ parsed username for "+publisherPrefix+".username : "+Configurer.get(publisherPrefix + ".username").get());
         return new UsernameAndPassword(
                 Configurer.get(publisherPrefix + ".username").get(), 
                 Configurer.get(publisherPrefix + ".password").get()
