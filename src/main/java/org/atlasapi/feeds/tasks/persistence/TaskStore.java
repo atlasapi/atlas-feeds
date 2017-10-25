@@ -3,6 +3,7 @@ package org.atlasapi.feeds.tasks.persistence;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
+import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
@@ -52,16 +53,6 @@ public interface TaskStore {
     Optional<Task> taskFor(Long taskId);
     
     Iterable<Task> allTasks(TaskQuery query);
-
-    /**
-     * Fetches all tasks for a given DestinationType (~= feed destination, e.g. YouView, RadioPlayer)
-     * Status and Publisher. We cant use the query because that enforces sorting on unindexed columns
-     * which causes the query to overflow.
-     * @param type The destination type of feed desired
-     * @param status the status to fetch
-     * @return
-     */
-    Iterable<Task> allTasks(Publisher publisher, DestinationType type, Status status);
 
     /**
      * Fetches all tasks for a given DestinationType (~= feed destination, e.g. YouView, RadioPlayer)

@@ -1,20 +1,28 @@
 package org.atlasapi.feeds.tasks.youview.processing;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Status;
+import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
+import org.atlasapi.feeds.tasks.TaskQuery;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
 import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
+import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
+import com.google.common.collect.ImmutableList;
+import jena.query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +47,12 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     private final TelescopeReporterName reporterName;
     private final Publisher publisher;
 
+    private static final List<TVAElementType> ELEMENT_TYPE_ORDER =
+            Collections.unmodifiableList(Arrays.asList(
+                    //do brands, series, then everything else.
+                    TVAElementType.BRAND, TVAElementType.SERIES, null
+            ));
+
     public TaskProcessingTask(
             TaskStore taskStore,
             TaskProcessor processor,
@@ -60,44 +74,57 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                 .getTelescopeReporter(reporterName);
         telescope.startReporting();
 
-        Iterable<Task> tasksToCheck;
-        for (Status status : validStatuses()) {
-            if (getPublisher() != null) {
-                tasksToCheck = taskStore.allTasks(getPublisher(), destinationType, status);
-            } else {
-                //if no publisher is given, get everything
-                tasksToCheck = taskStore.allTasks(destinationType, status);
-            }
+        //go through items based on type, then status
+        for (TVAElementType elementType : ELEMENT_TYPE_ORDER) {
+            for (Status status : validStatuses()) {
+                log.info("Uploading {} {} from {} (null=everyone)", status, elementType, publisher);
 
-            for (Task task : tasksToCheck) { //NOSONAR
-                if (!shouldContinue()) {
-                    break;
+                TaskQuery.Builder query = TaskQuery.builder(
+                        Selection.limitedTo(5000),
+                        //dont do everything at once because sorting overflows
+                        destinationType
+                ).withTaskStatus(status);
+
+                if (publisher != null) {
+                    query.withPublisher(publisher);
                 }
-                if (!action().equals(task.action())) {
-                    continue;
+                if (elementType != null) {
+                    query.withTaskType(elementType);
                 }
-                try {
-                    processor.process(task, telescope);
-                    progress = progress.reduce(UpdateProgress.SUCCESS);
-                } catch(Exception e) {
-                    log.error("Failed to process task {}", task, e);
-                    progress = progress.reduce(UpdateProgress.FAILURE);
-                    telescope.reportFailedEvent(
-                            task,
-                            "Failed to process taskId=" + task.id()
-                            + ". destination " + task.destination()
-                            + ". atlasId=" + task.atlasDbId()
-                            + ". payload present=" + task.payload().isPresent()
-                            + " (" + e.toString() + ")"
-                    );
-                }
-                reportStatus(progress.toString());
+
+                processTasks(taskStore.allTasks(query.build()), progress, telescope);
             }
         }
 
         telescope.endReporting();
     }
 
+    private void processTasks(Iterable<Task> tasksToCheck, UpdateProgress progress, FeedsTelescopeReporter telescope) {
+        for (Task task : tasksToCheck) { //NOSONAR
+            if (!shouldContinue()) {
+                break;
+            }
+            if (!action().equals(task.action())) {
+                continue;
+            }
+            try {
+                processor.process(task, telescope);
+                progress = progress.reduce(UpdateProgress.SUCCESS);
+            } catch (Exception e) {
+                log.error("Failed to process task {}", task, e);
+                progress = progress.reduce(UpdateProgress.FAILURE);
+                telescope.reportFailedEvent(
+                        task,
+                        "Failed to process taskId=" + task.id()
+                        + ". destination " + task.destination()
+                        + ". atlasId=" + task.atlasDbId()
+                        + ". payload present=" + task.payload().isPresent()
+                        + " (" + e.toString() + ")"
+                );
+            }
+            reportStatus(progress.toString());
+        }
+    }
     public Publisher getPublisher(){
         return this.publisher;
     }

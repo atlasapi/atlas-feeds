@@ -112,10 +112,9 @@ public class TaskQuery {
         }
     }
 
-
     private final Selection selection;
-    private final Publisher publisher;
     private final DestinationType destinationType;
+    private final Optional<Publisher> publisher;
     private final Optional<String> contentUri;
     private final Optional<String> remoteId;
     private final Optional<Status> status;
@@ -124,14 +123,14 @@ public class TaskQuery {
     private final Optional<String> elementId;
     private final Sort sort;
 
-    public static Builder builder(Selection selection, Publisher publisher, DestinationType destinationType) {
-        return new Builder(selection, publisher, destinationType);
+    public static Builder builder(Selection selection, DestinationType destinationType) {
+        return new Builder(selection, destinationType);
     }
     
     private TaskQuery(
             Selection selection,
-            Publisher publisher,
             DestinationType destinationType,
+            Optional<Publisher> publisher,
             Optional<String> contentUri,
             Optional<String> remoteId,
             Optional<Status> status,
@@ -156,7 +155,7 @@ public class TaskQuery {
         return selection;
     }
     
-    public Publisher publisher() {
+    public Optional<Publisher> publisher() {
         return publisher;
     }
     
@@ -211,8 +210,8 @@ public class TaskQuery {
     public static final class Builder {
         
         private final Selection selection;
-        private final Publisher publisher;
         private final DestinationType destinationType;
+        private Optional<Publisher> publisher;
         private Optional<String> contentUri = Optional.absent();
         private Optional<String> remoteId = Optional.absent();
         private Optional<Status> status = Optional.absent();
@@ -221,18 +220,22 @@ public class TaskQuery {
         private Optional<String> elementId = Optional.absent();
         private Sort sort = Sort.DEFAULT;
 
-        private Builder(Selection selection, Publisher publisher, DestinationType destinationType) {
+        private Builder(Selection selection, DestinationType destinationType) {
             this.selection = selection;
-            this.publisher = publisher;
             this.destinationType = destinationType;
         }
         
         public TaskQuery build() {
-            return new TaskQuery(selection, publisher, destinationType, contentUri, remoteId, 
+            return new TaskQuery(selection, destinationType, publisher, contentUri, remoteId,
                     status, action, elementType, elementId, sort
             );
         }
-        
+
+        public Builder withPublisher(Publisher publisher) {
+            this.publisher = Optional.fromNullable(publisher);
+            return this;
+        }
+
         public Builder withContentUri(String contentUri) {
             this.contentUri = Optional.fromNullable(contentUri);
             return this;

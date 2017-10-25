@@ -6,9 +6,9 @@ import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
+import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
-import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
 import org.atlasapi.media.entity.Publisher;
 
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
@@ -24,7 +24,6 @@ import com.mongodb.Bytes;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import jena.query;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,22 +146,6 @@ public class MongoTaskStore implements TaskStore {
     }
 
     @Override
-    public Iterable<Task> allTasks(Publisher publisher, DestinationType type, Status status) {
-        MongoQueryBuilder mongoQuery = new MongoQueryBuilder()
-                .fieldEquals(DESTINATION_TYPE_KEY, type.name())
-                .fieldEquals(PUBLISHER_KEY, publisher.key())
-                .fieldEquals(STATUS_KEY, status.name());
-
-        DBCursor cursor = collection.find(mongoQuery.build())
-                .addOption(Bytes.QUERYOPTION_NOTIMEOUT)
-                .limit(10000); //TODO: make this configurable
-
-        return FluentIterable.from(cursor)
-                .transform(TaskTranslator.fromDBObjects())
-                .filter(Predicates.notNull());
-    }
-
-    @Override
     public Iterable<Task> allTasks(DestinationType type, Status status) {
         MongoQueryBuilder mongoQuery = new MongoQueryBuilder()
                 .fieldEquals(DESTINATION_TYPE_KEY, type.name())
@@ -180,9 +163,11 @@ public class MongoTaskStore implements TaskStore {
     public Iterable<Task> allTasks(TaskQuery query) {
         MongoQueryBuilder mongoQuery = new MongoQueryBuilder();
         
-        mongoQuery.fieldEquals(PUBLISHER_KEY, query.publisher().key())
-                .fieldEquals(DESTINATION_TYPE_KEY, query.destinationType().name());
-        
+        mongoQuery.fieldEquals(DESTINATION_TYPE_KEY, query.destinationType().name());
+
+        if (query.publisher().isPresent()) {
+            mongoQuery.regexMatch(PUBLISHER_KEY, query.publisher().get().key());
+        }
         if (query.contentUri().isPresent()) {
             mongoQuery.regexMatch(CONTENT_KEY, transformToPrefixRegexPattern(query.contentUri().get()));
         }
