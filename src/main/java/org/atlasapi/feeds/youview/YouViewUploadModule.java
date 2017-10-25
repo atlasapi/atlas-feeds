@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -61,7 +60,6 @@ import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.properties.Configurer;
-import com.metabroadcast.common.properties.Parameter;
 import com.metabroadcast.common.scheduling.RepetitionRule;
 import com.metabroadcast.common.scheduling.RepetitionRules;
 import com.metabroadcast.common.scheduling.ScheduledTask;
@@ -81,7 +79,6 @@ import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
@@ -287,8 +284,7 @@ public class YouViewUploadModule {
     private ScheduledTask deleteTask() throws JAXBException, SAXException {
         return new DeleteTask(taskStore, taskProcessor(), null, DESTINATION_TYPE);
     }
-    
-    // TODO remove dependency on nitro Id generator
+
     private ScheduledTask scheduleBootstrapTaskCreationTask(Publisher publisher) 
             throws JAXBException, SAXException {
         return new BootstrapTaskCreationTask(

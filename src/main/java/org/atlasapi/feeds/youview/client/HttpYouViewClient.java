@@ -100,9 +100,7 @@ public class HttpYouViewClient implements YouViewClient {
                     throw Throwables.propagate(e);
                 }
             }
-        } catch (ExecutionException e) {
-            throw new YouViewClientException("Error deleting id " + elementId, e);
-        } catch (RetryException e) {
+        } catch (ExecutionException | RetryException e) {
             throw new YouViewClientException("Error deleting id " + elementId, e);
         }
     }
@@ -188,9 +186,7 @@ public class HttpYouViewClient implements YouViewClient {
                     throw Throwables.propagate(e);
                 }
             }
-        } catch (ExecutionException e) {
-            throw new YouViewClientException("Error uploading " + payload, e);
-        } catch (RetryException e) {
+        } catch (ExecutionException | RetryException e){
             throw new YouViewClientException("Error uploading " + payload, e);
         }
     }

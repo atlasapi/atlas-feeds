@@ -27,7 +27,7 @@ public class UpdateTask extends TaskProcessingTask {
                 processor,
                 publisher,
                 destinationType,
-                FeedsReporterNames.YOU_VIEW_AUTOMATIC_UPLOADER
+                FeedsReporterNames.PUBLISHER_MAPPING.get(publisher)
         );
 
     }
