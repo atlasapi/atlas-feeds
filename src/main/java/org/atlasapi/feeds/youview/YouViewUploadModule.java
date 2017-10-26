@@ -8,6 +8,7 @@ import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 
+import org.atlasapi.feeds.RepIdClient;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.checking.RemoteCheckTask;
 import org.atlasapi.feeds.tasks.maintainance.TaskTrimmingTask;
@@ -135,7 +136,7 @@ public class YouViewUploadModule {
     private static final String TASK_NAME_PATTERN = "YouView %s TVAnytime %s Upload";
     private static final DestinationType DESTINATION_TYPE = DestinationType.YOUVIEW;
     private static final DateTime BOOTSTRAP_START_DATE = new DateTime(2017, OCTOBER, 11, 0, 0, 0, 0, UTC);
-    
+
     private final Clock clock = new SystemClock(DateTimeZone.UTC);
 
     private MetricRegistry metrics = new MetricRegistry();
@@ -150,7 +151,7 @@ public class YouViewUploadModule {
     private @Autowired ChannelResolver channelResolver;
     private @Autowired ScheduleResolver scheduleResolver;
     private @Autowired ContentHierarchyExpanderFactory contentHierarchyExpanderFactory;
-    
+
     private @Value("${youview.upload.validation}") String performValidation;
 
     @PostConstruct
@@ -274,7 +275,7 @@ public class YouViewUploadModule {
     }
 
     private UpdateTask uploadTask() throws JAXBException, SAXException {
-        return new UpdateTask(taskStore, taskProcessor(), null, DESTINATION_TYPE);
+        return new UpdateTask(taskStore, taskProcessor(), null, DESTINATION_TYPE); //null for all publishers
     }
 
     private UpdateTask uploadTask(Publisher publisher) throws JAXBException, SAXException {

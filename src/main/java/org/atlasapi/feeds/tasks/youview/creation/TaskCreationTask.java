@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.atlasapi.feeds.RepIdClient;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Status;
@@ -52,6 +53,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
     private final TaskStore taskStore;
     private final TaskCreator taskCreator;
     private final PayloadCreator payloadCreator;
+    private final RepIdClient repIdClient;
 
     public TaskCreationTask(
             YouViewLastUpdatedStore lastUpdatedStore,
@@ -88,11 +90,16 @@ public abstract class TaskCreationTask extends ScheduledTask {
         this.payloadCreator = checkNotNull(payloadCreator);
         this.payloadHashStore = checkNotNull(payloadHashStore);
         this.hashCheckMode = hashCheckMode;
+        this.repIdClient = RepIdClient.getRepIdClient(publisher);
     }
 
     //for debugging purposes
     protected String getPublisherString(){
         return publisher.toString();
+    }
+
+    protected RepIdClient getRepIdClient() {
+        return repIdClient;
     }
 
     protected Optional<DateTime> getLastUpdatedTime() {
@@ -197,8 +204,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 Payload p = payloadCreator.payloadFrom(contentCrid, content);
 
                 if (shouldSave(HashType.CONTENT, contentCrid, p)) {
-                    taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(
-                            content), content, p, action));
+                    taskStore.save(taskCreator.taskFor(contentCrid, content, p, action));
                     payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
                 } else {
                     log.debug("Existing hash found for Content {}, not updating", contentCrid);

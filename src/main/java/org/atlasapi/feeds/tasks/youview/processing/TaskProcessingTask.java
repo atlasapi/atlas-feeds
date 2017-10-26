@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.atlasapi.feeds.RepIdClient;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Status;

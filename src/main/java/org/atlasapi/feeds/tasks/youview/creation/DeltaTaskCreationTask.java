@@ -82,6 +82,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         Iterator<Content> updatedContent = contentResolver.updatedSince(
                 lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD)
         );
+
         
         List<Content> deleted = Lists.newArrayList();
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
@@ -90,6 +91,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         int deletingContent= 0;
         while (updatedContent.hasNext()) {
             Content updated = updatedContent.next();
+            //Update the content with a representative ID
+            updated.setId(getRepIdClient().getDecoded(updated.getId()));
             if (updated.isActivelyPublished()) {
                 uploadProcessor.process(updated);
                 reportStatus("Uploads: " + uploadProcessor.getResult());
