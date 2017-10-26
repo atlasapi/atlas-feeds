@@ -75,7 +75,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
         //go through items based on type, then status
         for (TVAElementType elementType : ELEMENT_TYPE_ORDER) {
             for (Status status : validStatuses()) {
-                log.info("Uploading {} {} from {} (null=all)", status, elementType, publisher);
+                log.info("{} {} {} from {} (null=all)", action(), status, elementType, publisher);
 
                 TaskQuery.Builder query = TaskQuery.builder(Selection.all(), destinationType)
                         .withTaskStatus(status);
