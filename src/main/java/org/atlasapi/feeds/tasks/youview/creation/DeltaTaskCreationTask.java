@@ -88,11 +88,9 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         YouViewContentProcessor deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
 
         int deletingContent= 0;
-        int activeContent=0;
         while (updatedContent.hasNext()) {
             Content updated = updatedContent.next();
             if (updated.isActivelyPublished()) {
-                log.info("@@@ processing content "+updated.getId()+"to be UPLOADED no:"+ ++activeContent +getPublisherString());
                 uploadProcessor.process(updated);
                 reportStatus("Uploads: " + uploadProcessor.getResult());
             } else {
@@ -113,10 +111,6 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
         log.info("@@@"+getPublisherString()+" Starting the upload task.");
         reportStatus("Uploading tasks to YouView");
-        
-        // temporary fix; too many txns are being generated, due to the separation of 
-        // task generation and upload. Moving the upload to happen in sequence after
-        // task generation should help.
         
         updateTask.run();
         log.info("@@@"+getPublisherString()+" Done");

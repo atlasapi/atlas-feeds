@@ -266,8 +266,8 @@ public class TaskQuery {
             return this;
         }
 
-        public Builder withSort(Sort sortDirection) {
-            this.sort = sortDirection;
+        public Builder withSort(Sort sort) {
+            this.sort = sort;
             return this;
         }
     }

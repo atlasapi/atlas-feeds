@@ -21,8 +21,6 @@ import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
-import com.google.common.collect.ImmutableList;
-import jena.query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,13 +75,10 @@ public abstract class TaskProcessingTask extends ScheduledTask {
         //go through items based on type, then status
         for (TVAElementType elementType : ELEMENT_TYPE_ORDER) {
             for (Status status : validStatuses()) {
-                log.info("Uploading {} {} from {} (null=everyone)", status, elementType, publisher);
+                log.info("Uploading {} {} from {} (null=all)", status, elementType, publisher);
 
-                TaskQuery.Builder query = TaskQuery.builder(
-                        Selection.limitedTo(5000),
-                        //dont do everything at once because sorting overflows
-                        destinationType
-                ).withTaskStatus(status);
+                TaskQuery.Builder query = TaskQuery.builder(Selection.all(), destinationType)
+                        .withTaskStatus(status);
 
                 if (publisher != null) {
                     query.withPublisher(publisher);
