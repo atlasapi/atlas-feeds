@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -24,6 +22,16 @@ import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 
+import com.metabroadcast.common.text.Truncator;
+
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Strings;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import tva.metadata._2010.BaseProgramGroupTypeType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ControlledTermType;
@@ -45,15 +53,7 @@ import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Strings;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.metabroadcast.common.text.Truncator;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class UnboxGroupInformationGenerator implements GroupInformationGenerator {
@@ -244,7 +244,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     }
 
     private Optional<RelatedMaterialType> generateRelatedMaterial(@Nullable Content content) {
-        if (Strings.isNullOrEmpty(content.getImage())) {
+        if (content == null || Strings.isNullOrEmpty(content.getImage())) {
             return Optional.absent();
         }
         ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
@@ -257,20 +257,19 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         return Optional.<RelatedMaterialType>of(relatedMaterial);
     }
 
-    private ContentPropertiesType generateContentProperties(@Nullable Content content) {
+    private ContentPropertiesType generateContentProperties(Content content) {
         ContentPropertiesType contentProperties = new ContentPropertiesType();
         StillImageContentAttributesType attributes = new StillImageContentAttributesType();
 
-        if(content!=null) {
-            if (content.getImages() == null || content.getImages().isEmpty()) {
-                attributes.setWidth(DEFAULT_IMAGE_WIDTH);
-                attributes.setHeight(DEFAULT_IMAGE_HEIGHT);
-            } else {
-                Image image = Iterables.getFirst(content.getImages(), null);
-                attributes.setWidth(image.getWidth());
-                attributes.setHeight(image.getHeight());
-            }
+        if (content.getImages() == null || content.getImages().isEmpty()) {
+            attributes.setWidth(DEFAULT_IMAGE_WIDTH);
+            attributes.setHeight(DEFAULT_IMAGE_HEIGHT);
+        } else {
+            Image image = Iterables.getFirst(content.getImages(), null);
+            attributes.setWidth(image.getWidth());
+            attributes.setHeight(image.getHeight());
         }
+
         ControlledTermType primaryRole = new ControlledTermType();
         primaryRole.setHref(YOUVIEW_IMAGE_ATTRIBUTE_PRIMARY_ROLE);
         attributes.getIntendedUse().add(primaryRole);
@@ -291,11 +290,9 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         return controlledTerm;
     }
 
-    private MediaLocatorType generateMediaLocator(@Nullable Content content) {
+    private MediaLocatorType generateMediaLocator(Content content) {
         MediaLocatorType mediaLocator = new MediaLocatorType();
-        if(content != null) {
-            mediaLocator.setMediaUri(content.getImage());
-        }
+        mediaLocator.setMediaUri(content.getImage());
         return mediaLocator;
     }
 
