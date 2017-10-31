@@ -176,6 +176,7 @@ public class LoveFilmGroupInformationGenerator implements GroupInformationGenera
     
     @Override
     public GroupInformationType generate(Brand brand, Item item) {
+        //this class should be removed, so no null check is added.
         GroupInformationType groupInfo = generateWithCommonFields(brand, item);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));

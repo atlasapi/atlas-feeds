@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.tvanytime;
 
+import java.util.NoSuchElementException;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
@@ -53,7 +55,13 @@ public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
         }
 
         if (content instanceof Brand) {
-            return groupInfoGenerator.generate((Brand) content, hierarchy.lastItemFrom((Brand) content));
+            Item child = null;
+            try{
+                child = hierarchy.lastItemFrom((Brand) content);
+            }catch (NoSuchElementException e){
+                //oh well. If there is no such element, we'll give it no such element.
+            }
+            return groupInfoGenerator.generate((Brand) content, child);
         }
 
         if (content instanceof Series) {

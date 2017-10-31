@@ -38,7 +38,7 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 
 public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
-    private static final String UNBOX_ONDEMAND_SERVICE_ID = "http://unbox.amazon.co.uk/OnDemand";
+    private static final String UNBOX_ONDEMAND_SERVICE_ID = "http://amazon.com/services/on_demand/primevideo";
     private static final String UNBOX_DEEP_LINKING_ID = "deep_linking_id.unbox.amazon.co.uk";
     
     private static final String YOUVIEW_MIX_TYPE = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";

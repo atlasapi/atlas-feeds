@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.tvanytime;
 
+import javax.annotation.Nullable;
+
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
@@ -13,5 +15,5 @@ public interface GroupInformationGenerator {
     GroupInformationType generate(Film film);
     GroupInformationType generate(Item item, Optional<Series> series, Optional<Brand> brand);
     GroupInformationType generate(Series series, Optional<Brand> brand, Item firstChild);
-    GroupInformationType generate(Brand brand, Item firstChild);
+    GroupInformationType generate(Brand brand, @Nullable Item firstChild);
 }

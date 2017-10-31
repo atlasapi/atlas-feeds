@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
@@ -175,7 +176,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     }
     
     @Override
-    public GroupInformationType generate(Brand brand, Item item) {
+    public GroupInformationType generate(Brand brand, @Nullable Item item) {
         GroupInformationType groupInfo = generateWithCommonFields(brand, item);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
@@ -185,7 +186,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         return groupInfo;
     }
     
-    private GroupInformationType generateWithCommonFields(Content content, Item item) {
+    private GroupInformationType generateWithCommonFields(Content content, @Nullable Item item) {
         GroupInformationType groupInfo = new GroupInformationType();
         
         groupInfo.setGroupId(idGenerator.generateContentCrid(content));
@@ -200,7 +201,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         return type;
     }
 
-    private BasicContentDescriptionType generateBasicDescription(Content content, Item item) {
+    private BasicContentDescriptionType generateBasicDescription(Content content, @Nullable Item item) {
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
         
         if (content.getTitle() != null) {
@@ -242,7 +243,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         return title;
     }
 
-    private Optional<RelatedMaterialType> generateRelatedMaterial(Content content) {
+    private Optional<RelatedMaterialType> generateRelatedMaterial(@Nullable Content content) {
         if (Strings.isNullOrEmpty(content.getImage())) {
             return Optional.absent();
         }
@@ -256,19 +257,20 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         return Optional.<RelatedMaterialType>of(relatedMaterial);
     }
 
-    private ContentPropertiesType generateContentProperties(Content content) {
+    private ContentPropertiesType generateContentProperties(@Nullable Content content) {
         ContentPropertiesType contentProperties = new ContentPropertiesType();
         StillImageContentAttributesType attributes = new StillImageContentAttributesType();
-        
-        if (content.getImages() == null || content.getImages().isEmpty()) {
-            attributes.setWidth(DEFAULT_IMAGE_WIDTH);
-            attributes.setHeight(DEFAULT_IMAGE_HEIGHT);
-        } else {
-            Image image = Iterables.getFirst(content.getImages(), null);
-            attributes.setWidth(image.getWidth());
-            attributes.setHeight(image.getHeight());
+
+        if(content!=null) {
+            if (content.getImages() == null || content.getImages().isEmpty()) {
+                attributes.setWidth(DEFAULT_IMAGE_WIDTH);
+                attributes.setHeight(DEFAULT_IMAGE_HEIGHT);
+            } else {
+                Image image = Iterables.getFirst(content.getImages(), null);
+                attributes.setWidth(image.getWidth());
+                attributes.setHeight(image.getHeight());
+            }
         }
-        
         ControlledTermType primaryRole = new ControlledTermType();
         primaryRole.setHref(YOUVIEW_IMAGE_ATTRIBUTE_PRIMARY_ROLE);
         attributes.getIntendedUse().add(primaryRole);
@@ -289,9 +291,11 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         return controlledTerm;
     }
 
-    private MediaLocatorType generateMediaLocator(Content content) {
+    private MediaLocatorType generateMediaLocator(@Nullable Content content) {
         MediaLocatorType mediaLocator = new MediaLocatorType();
-        mediaLocator.setMediaUri(content.getImage());
+        if(content != null) {
+            mediaLocator.setMediaUri(content.getImage());
+        }
         return mediaLocator;
     }
 

@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
@@ -227,7 +228,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     }
     
     @Override
-    public GroupInformationType generate(Brand brand, Item item) {
+    public GroupInformationType generate(Brand brand, @Nullable Item item) {
         GroupInformationType groupInfo = generateWithCommonFields(brand);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
