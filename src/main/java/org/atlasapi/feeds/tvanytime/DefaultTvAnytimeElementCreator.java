@@ -2,8 +2,6 @@ package org.atlasapi.feeds.tvanytime;
 
 import java.util.NoSuchElementException;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.UnexpectedContentTypeException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
@@ -16,13 +14,14 @@ import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Series;
 
+import com.google.common.base.Optional;
 import tva.metadata._2010.BroadcastEventType;
 import tva.metadata._2010.GroupInformationType;
 import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.ProgramInformationType;
-
-import com.google.common.base.Optional;
 import tva.metadata._2010.ServiceInformationType;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
     
@@ -56,9 +55,9 @@ public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
 
         if (content instanceof Brand) {
             Item child = null;
-            try{
+            try {
                 child = hierarchy.lastItemFrom((Brand) content);
-            }catch (NoSuchElementException e){
+            } catch (NoSuchElementException e) {
                 //oh well. If there is no such element, we'll give it no such element.
             }
             return groupInfoGenerator.generate((Brand) content, child);

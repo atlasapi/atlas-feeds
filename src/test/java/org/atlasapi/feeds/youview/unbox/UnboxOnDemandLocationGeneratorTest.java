@@ -114,7 +114,7 @@ public class UnboxOnDemandLocationGeneratorTest {
         
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);
         
-        assertEquals("http://unbox.amazon.co.uk/OnDemand", onDemand.getServiceIDRef());
+        assertEquals("http://amazon.com/services/on_demand/primevideo", onDemand.getServiceIDRef());
         assertEquals("crid://amazon.com/product/177221_version", onDemand.getProgram().getCrid());
         assertEquals("imi:amazon.com/177221", onDemand.getInstanceMetadataId());
         
