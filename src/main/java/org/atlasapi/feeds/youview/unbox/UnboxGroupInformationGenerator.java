@@ -155,7 +155,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     }
     
     @Override
-    public GroupInformationType generate(Series series, Optional<Brand> brand, Item firstChild) {
+    public GroupInformationType generate(Series series, Optional<Brand> brand, @Nullable Item firstChild) {
         GroupInformationType groupInfo = generateWithCommonFields(series, firstChild);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));

@@ -66,7 +66,13 @@ public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
         if (content instanceof Series) {
             Series series = (Series) content;
             Optional<Brand> brand = hierarchy.brandFor(series);
-            return groupInfoGenerator.generate(series, brand, hierarchy.lastItemFrom(series));
+            Item child = null;
+            try {
+                child = hierarchy.lastItemFrom(series);
+            } catch (NoSuchElementException e) {
+                //oh well. If there is no such element, we'll give it no such element.
+            }
+            return groupInfoGenerator.generate(series, brand, child);
         }
 
         if (content instanceof Item) {
