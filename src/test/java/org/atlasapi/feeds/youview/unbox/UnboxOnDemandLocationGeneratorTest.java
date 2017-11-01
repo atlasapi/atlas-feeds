@@ -115,12 +115,12 @@ public class UnboxOnDemandLocationGeneratorTest {
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);
         
         assertEquals("http://amazon.com/services/on_demand/primevideo", onDemand.getServiceIDRef());
-        assertEquals("crid://amazon.com/product/177221_version", onDemand.getProgram().getCrid());
+        assertEquals("crid://amazon.com/exec/obidos/ASIN/177221_version", onDemand.getProgram().getCrid());
         assertEquals("imi:amazon.com/177221", onDemand.getInstanceMetadataId());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
-        assertEquals("deep_linking_id.unbox.amazon.co.uk", otherId.getAuthority());
+        assertEquals("deep_linking_id.amazon.com", otherId.getAuthority());
     }
 
     private Film createFilm(Version version) {

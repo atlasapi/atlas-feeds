@@ -61,7 +61,7 @@ public class UnboxProgramInformationGeneratorTest {
         assertEquals(versionCrid, progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
         assertEquals("deep_linking_id.unbox.amazon.co.uk", otherId.getAuthority());
-        assertEquals("crid://amazon.com/product/177221", progInfo.getDerivedFrom().getCrid());
+        assertEquals("crid://amazon.com/exec/obidos/ASIN/177221", progInfo.getDerivedFrom().getCrid());
     }
 
     private Film createFilm(Version version) {
