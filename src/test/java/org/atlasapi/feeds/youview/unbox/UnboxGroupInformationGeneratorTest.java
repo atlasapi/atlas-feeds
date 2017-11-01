@@ -533,10 +533,10 @@ public class UnboxGroupInformationGeneratorTest {
     public void testUnboxConstants() {
         Film film = createFilm();
         film.setPublisher(Publisher.AMAZON_UNBOX);
-        film.setCanonicalUri("http://unbox.amazon.co.uk/movies/123456");
+        film.setCanonicalUri("http://amazon.com/movies/123456");
         
         GroupInformationType groupInfo = generator.generate(film);
-        assertEquals("crid://amazon.com/product/123456", groupInfo.getGroupId());
+        assertEquals("crid://amazon.com/exec/obidos/ASIN/123456", groupInfo.getGroupId());
         assertEquals("http://amazon.com/ContentOwning", groupInfo.getServiceIDRef());
     }
     
