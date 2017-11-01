@@ -70,7 +70,9 @@ public class FilterFactory {
             @Override
             public boolean apply(ItemOnDemandHierarchy input) {
                 Policy policy = input.location().getPolicy();
-                return policy != null && Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform());
+                return policy != null
+                       && (Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform())
+                           || Platform.YOUVIEW_AMAZON.equals(policy.getPlatform()));
             }
         };
     }

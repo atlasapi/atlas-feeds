@@ -87,10 +87,7 @@ public class OnDemandHierarchyExpander {
             @Override
             public boolean apply(Location input) {
                 Policy policy = input.getPolicy();
-                if (policy == null) {
-                    return false;
-                }
-                return (policy.getPlatform() != null &&
+                return (policy !=null && policy.getPlatform() != null &&
                         (Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform())
                          || Platform.YOUVIEW_AMAZON.equals(policy.getPlatform())));
             }
