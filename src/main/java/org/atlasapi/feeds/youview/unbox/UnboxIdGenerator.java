@@ -12,8 +12,8 @@ import org.atlasapi.media.entity.Version;
 
 public class UnboxIdGenerator implements IdGenerator {
 
-    private static final String UNBOX_IMI_PREFIX = "imi:amazon.com/";
-    private static final String UNBOX_PRODUCT_CRID_PREFIX = "crid://amazon.com/product/";
+    private static final String AMAZON_IMI_PREFIX = "imi:amazon.com/";
+    private static final String AMAZON_PRODUCT_CRID_PREFIX = "crid://amazon.com/exec/obidos/ASIN/";
     private static final String VERSION_SUFFIX = "_version";
     
     @Override
@@ -28,7 +28,7 @@ public class UnboxIdGenerator implements IdGenerator {
     
     @Override
     public String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location) {
-        return UNBOX_IMI_PREFIX + idFrom(item);
+        return AMAZON_IMI_PREFIX + idFrom(item);
     }
     
     @Override
@@ -42,7 +42,7 @@ public class UnboxIdGenerator implements IdGenerator {
     }
 
     private static String baseCridFrom(Content content) {
-        return UNBOX_PRODUCT_CRID_PREFIX + idFrom(content);
+        return AMAZON_PRODUCT_CRID_PREFIX + idFrom(content);
     }
 
     private static String idFrom(Content content) {
