@@ -179,7 +179,10 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 FilterFactory.onDemandFilter(updatedSince)
         );
 
-        log.info("@@@"+item.getPublisher()+" The hierarcy expander has produced "+versionHierarchies.size()+ " versions, "+broadcastHierarchies.size()+" broadcasts, "+onDemandHierarchies.size()+ " onDemands");
+        log.info("@@@"+item.getPublisher()
+                 +" The hierarcy expander has produced "+versionHierarchies.size()
+                 + " versions, "+broadcastHierarchies.size()+" broadcasts, "
+                 +onDemandHierarchies.size()+ " onDemands");
 
         UpdateProgress progress = UpdateProgress.START;
 

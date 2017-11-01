@@ -76,6 +76,12 @@ public class FilterFactory {
     }
 
     public static boolean hasBeenUpdated(Identified identified, DateTime updatedSince) {
+        if(identified == null){
+            return false;
+        }
+        if(identified.getLastUpdated() == null){
+            return true;
+        }
         return !identified.getLastUpdated().isBefore(updatedSince);
     }
 }
