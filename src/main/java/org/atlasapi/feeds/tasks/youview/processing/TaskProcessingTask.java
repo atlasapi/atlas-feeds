@@ -48,8 +48,8 @@ public abstract class TaskProcessingTask extends ScheduledTask {
 
     private static final List<TVAElementType> ELEMENT_TYPE_ORDER =
             Collections.unmodifiableList(Arrays.asList(
-                    //do brands, series, then everything else.
-                    TVAElementType.BRAND, TVAElementType.SERIES, null
+                    //do brands, series, then everything else (null).
+                    TVAElementType.CHANNEL, TVAElementType.BRAND, TVAElementType.SERIES,TVAElementType.ITEM, null
             ));
 
     public TaskProcessingTask(
@@ -85,9 +85,6 @@ public abstract class TaskProcessingTask extends ScheduledTask {
 
                 if (publisher != null) {
                     query.withPublisher(publisher);
-                }
-                else{
-
                 }
                 if (elementType != null) {
                     query.withTaskType(elementType);

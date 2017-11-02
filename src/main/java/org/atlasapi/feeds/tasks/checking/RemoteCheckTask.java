@@ -7,12 +7,15 @@ import java.util.Set;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
+import org.atlasapi.feeds.tasks.TaskQuery;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableSet;
+
+import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
@@ -42,8 +45,13 @@ public class RemoteCheckTask extends ScheduledTask {
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
-        for (Status uncheckedStatus : TO_BE_CHECKED) {
-            Iterable<Task> tasksToCheck = taskStore.allTasks(destinationType, uncheckedStatus);
+        for (Status status : TO_BE_CHECKED) {
+
+            //We limit this to a reasonable number, cause if they are too many mongo sort overflows
+            TaskQuery.Builder query = TaskQuery.builder(Selection.limitedTo(10000), destinationType)
+                    .withTaskStatus(status);
+            Iterable<Task> tasksToCheck = taskStore.allTasks(query.build());
+
             for (Task task : tasksToCheck) {
                 if (!shouldContinue()) {
                     break;
