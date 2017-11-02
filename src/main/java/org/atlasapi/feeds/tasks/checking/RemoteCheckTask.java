@@ -1,25 +1,24 @@
 package org.atlasapi.feeds.tasks.checking;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Set;
 
+import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
-import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.TaskQuery;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
 
+import com.metabroadcast.common.query.Selection;
+import com.metabroadcast.common.scheduling.ScheduledTask;
+import com.metabroadcast.common.scheduling.UpdateProgress;
+
+import com.google.common.collect.ImmutableSet;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableSet;
-
-import com.metabroadcast.common.query.Selection;
-import com.metabroadcast.common.scheduling.ScheduledTask;
-import com.metabroadcast.common.scheduling.UpdateProgress;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class RemoteCheckTask extends ScheduledTask {
@@ -51,13 +50,13 @@ public class RemoteCheckTask extends ScheduledTask {
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
 
-        //We will check tasks per status, and then in blocks of NUM_TO_CHECK_PER_ITTERATION linked
+        //We will check tasks per status, and then in blocks of NUM_TO_CHECK_PER_ITERATION linked
         //through dates.
         for (Status status : TO_BE_CHECKED) {
             int numChecked = 0;
             DateTime lastDateChecked = new DateTime().minusYears(1);
             do {
-                numChecked = 0;
+                log.info("Checking remote status for {}, block {}", status, (numChecked % NUM_TO_CHECK_PER_ITTERATION));
                 TaskQuery.Builder query = TaskQuery.builder(
                         Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION),
                         destinationType)
@@ -82,7 +81,7 @@ public class RemoteCheckTask extends ScheduledTask {
                     }
                     reportStatus(progress.toString());
                 }
-            } while( numChecked == NUM_TO_CHECK_PER_ITTERATION );
+            } while ((numChecked % NUM_TO_CHECK_PER_ITTERATION) == 0 );
         }
     }
 }
