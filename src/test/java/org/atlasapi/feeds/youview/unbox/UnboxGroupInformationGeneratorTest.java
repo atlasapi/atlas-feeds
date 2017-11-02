@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.unbox;
 
+import static org.atlasapi.feeds.youview.unbox.UnboxGroupInformationGenerator.UNBOX_GROUP_INFO_SERVICE_ID;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -96,7 +97,7 @@ public class UnboxGroupInformationGeneratorTest {
         
         GroupInformationType groupInfo = generator.generate(series, Optional.<Brand>absent(), child);
         
-        assertEquals("http://amazon.com/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals(UNBOX_GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
     }
     
     /**
@@ -272,7 +273,7 @@ public class UnboxGroupInformationGeneratorTest {
         GroupInformationType groupInfo = generator.generate(createFilm());
 
         assertEquals("crid://amazon.com/exec/obidos/ASIN/177221", groupInfo.getGroupId());
-        assertEquals("http://amazon.com/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals(UNBOX_GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
         
@@ -354,7 +355,7 @@ public class UnboxGroupInformationGeneratorTest {
         GroupInformationType groupInfo = generator.generate(createBrand(), episode);
 
         assertEquals("crid://amazon.com/exec/obidos/ASIN/184930", groupInfo.getGroupId());
-        assertEquals("http://amazon.com/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals(UNBOX_GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
         assertTrue(groupInfo.isOrdered());
                 
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -537,7 +538,7 @@ public class UnboxGroupInformationGeneratorTest {
         
         GroupInformationType groupInfo = generator.generate(film);
         assertEquals("crid://amazon.com/exec/obidos/ASIN/123456", groupInfo.getGroupId());
-        assertEquals("http://amazon.com/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals(UNBOX_GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
     }
     
     
