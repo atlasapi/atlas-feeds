@@ -211,7 +211,7 @@ public class TaskQuery {
         
         private final Selection selection;
         private final DestinationType destinationType;
-        private Optional<Publisher> publisher;
+        private Optional<Publisher> publisher = Optional.absent();
         private Optional<String> contentUri = Optional.absent();
         private Optional<String> remoteId = Optional.absent();
         private Optional<Status> status = Optional.absent();

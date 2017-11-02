@@ -86,6 +86,9 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                 if (publisher != null) {
                     query.withPublisher(publisher);
                 }
+                else{
+
+                }
                 if (elementType != null) {
                     query.withTaskType(elementType);
                 }
