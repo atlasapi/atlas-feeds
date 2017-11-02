@@ -76,9 +76,11 @@ public abstract class TaskProcessingTask extends ScheduledTask {
         //go through items based on type, then status
         for (TVAElementType elementType : ELEMENT_TYPE_ORDER) {
             for (Status status : validStatuses()) {
-                log.info("{} {} {} from {} (null=all)", action(), status, elementType, publisher);
+                log.info("{} {} {} from publisher {} (null publisher = all)", action(), status, elementType, publisher);
 
-                TaskQuery.Builder query = TaskQuery.builder(Selection.all(), destinationType)
+                //We limit the amount of stuff because too many cause a mongo driver exception
+                //(presumably because the query builder does a default sort on date)
+                TaskQuery.Builder query = TaskQuery.builder(Selection.limitedTo(10000), destinationType)
                         .withTaskStatus(status);
 
                 if (publisher != null) {
