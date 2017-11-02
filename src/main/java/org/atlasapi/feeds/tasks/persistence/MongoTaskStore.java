@@ -186,6 +186,10 @@ public class MongoTaskStore implements TaskStore {
         if (query.elementId().isPresent()) {
             mongoQuery.fieldEquals(ELEMENT_ID_KEY, transformToPrefixRegexPattern(query.elementId().get()));
         }
+        if( query.getAfter().isPresent()){
+            mongoQuery.fieldAfter(CREATED_KEY, query.getAfter().get());
+        }
+
 
         Selection selection = query.selection();
         DBCursor cursor = getOrderedCursor(mongoQuery.build(), query.sort())

@@ -191,6 +191,10 @@ public class TaskQuery {
         return elementId;
     }
 
+    public Optional<DateTime> getAfter() {
+        return after;
+    }
+
     public Sort sort() {
         return sort;
     }
@@ -207,6 +211,7 @@ public class TaskQuery {
                 .add("action", action)
                 .add("elementType", elementType)
                 .add("elementId", elementId)
+                .add("after", after)
                 .add("sort", sort)
                 .toString();
     }

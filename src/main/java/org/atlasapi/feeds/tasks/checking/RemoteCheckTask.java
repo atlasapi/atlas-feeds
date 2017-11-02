@@ -10,6 +10,8 @@ import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.TaskQuery;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
+
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +32,7 @@ public class RemoteCheckTask extends ScheduledTask {
             Status.COMMITTED,
             Status.PUBLISHING
     );
+    private static final int NUM_TO_CHECK_PER_ITTERATION = 5000;
     
     private final Logger log = LoggerFactory.getLogger(RemoteCheckTask.class);
     private final TaskStore taskStore;
@@ -45,26 +48,38 @@ public class RemoteCheckTask extends ScheduledTask {
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
+
         for (Status status : TO_BE_CHECKED) {
+            int numChecked = 0;
+            DateTime lastDateChecked = new DateTime().minusYears(1); //start from the beginning of time
+            do {
+                numChecked = 0; //reset to zero for this itteration
+                //We limit this to a reasonable number, cause if they are too many mongo sort overflows
+                TaskQuery.Builder query = TaskQuery.builder(
+                        Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION),
+                        destinationType)
+                        .withTaskStatus(status)
+                        .after(lastDateChecked)
+                        .withSort(TaskQuery.Sort.of(TaskQuery.Sort.Field.CREATED_TIME, TaskQuery.Sort.Direction.ASC));
 
-            //We limit this to a reasonable number, cause if they are too many mongo sort overflows
-            TaskQuery.Builder query = TaskQuery.builder(Selection.all(), destinationType)
-                    .withTaskStatus(status);
-            Iterable<Task> tasksToCheck = taskStore.allTasks(query.build());
+                Iterable<Task> tasksToCheck = taskStore.allTasks(query.build());
 
-            for (Task task : tasksToCheck) {
-                if (!shouldContinue()) {
-                    break;
+                for (Task task : tasksToCheck) {
+                    if (!shouldContinue()) {
+                        break;
+                    }
+                    numChecked++; //if this goes up to the itteration limit, requery for more
+                    lastDateChecked = task.created().minusSeconds(1); //after this date
+                    try {
+                        processor.checkRemoteStatusOf(task);
+                        progress = progress.reduce(UpdateProgress.SUCCESS);
+                    } catch (Exception e) {
+                        log.error("error checking task {}", task.id(), e);
+                        progress = progress.reduce(UpdateProgress.FAILURE);
+                    }
+                    reportStatus(progress.toString());
                 }
-                try {
-                    processor.checkRemoteStatusOf(task);
-                    progress = progress.reduce(UpdateProgress.SUCCESS);
-                } catch (Exception e) {
-                    log.error("error checking task {}", task.id(), e);
-                    progress = progress.reduce(UpdateProgress.FAILURE);
-                }
-                reportStatus(progress.toString());
-            }
+            } while( numChecked == NUM_TO_CHECK_PER_ITTERATION );
         }
     }
 }

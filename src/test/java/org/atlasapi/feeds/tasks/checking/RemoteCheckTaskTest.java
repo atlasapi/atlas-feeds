@@ -17,7 +17,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
-
+import org.mockito.Matchers;
 
 public class RemoteCheckTaskTest {
 
@@ -35,12 +35,11 @@ public class RemoteCheckTaskTest {
     private TaskProcessor processor = mock(TaskProcessor.class);
     
     private final RemoteCheckTask remoteCheckTask = new RemoteCheckTask(taskStore, processor, YOUVIEW);
-    
-    @Ignore
+
     @Test
     public void testProcessesAllNonFinalTasks() {
         for (Status status : NON_TERMINAL_STATUSES) {
-            when(taskStore.allTasks(YOUVIEW, status)).thenReturn(ImmutableSet.of(task));
+            when(taskStore.allTasks(Matchers.any())).thenReturn(ImmutableSet.of(task));
         }
         
         remoteCheckTask.run();
