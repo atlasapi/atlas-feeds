@@ -24,7 +24,7 @@ import com.metabroadcast.common.scheduling.UpdateProgress;
 
 public class RemoteCheckTask extends ScheduledTask {
     
-    private static final Set<Status> TO_BE_CHECKED = ImmutableSet.of(
+    public static final Set<Status> TO_BE_CHECKED = ImmutableSet.of(
             Status.ACCEPTED,
             Status.VALIDATING,
             Status.QUARANTINED,
@@ -32,6 +32,8 @@ public class RemoteCheckTask extends ScheduledTask {
             Status.COMMITTED,
             Status.PUBLISHING
     );
+
+    //We need this limit to a reasonable number, cause if there are too many tasks mongo sort overflows
     private static final int NUM_TO_CHECK_PER_ITTERATION = 5000;
     
     private final Logger log = LoggerFactory.getLogger(RemoteCheckTask.class);
@@ -49,12 +51,13 @@ public class RemoteCheckTask extends ScheduledTask {
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
 
+        //We will check tasks per status, and then in blocks of NUM_TO_CHECK_PER_ITTERATION linked
+        //through dates.
         for (Status status : TO_BE_CHECKED) {
             int numChecked = 0;
-            DateTime lastDateChecked = new DateTime().minusYears(1); //start from the beginning of time
+            DateTime lastDateChecked = new DateTime().minusYears(1);
             do {
-                numChecked = 0; //reset to zero for this itteration
-                //We limit this to a reasonable number, cause if they are too many mongo sort overflows
+                numChecked = 0;
                 TaskQuery.Builder query = TaskQuery.builder(
                         Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION),
                         destinationType)
@@ -68,7 +71,7 @@ public class RemoteCheckTask extends ScheduledTask {
                     if (!shouldContinue()) {
                         break;
                     }
-                    numChecked++; //if this goes up to the itteration limit, requery for more
+                    numChecked++; //if this goes up to the iteration limit, requery for more
                     lastDateChecked = task.created().minusSeconds(1); //after this date
                     try {
                         processor.checkRemoteStatusOf(task);
