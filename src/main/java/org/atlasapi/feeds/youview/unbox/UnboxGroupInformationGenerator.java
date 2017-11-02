@@ -58,7 +58,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class UnboxGroupInformationGenerator implements GroupInformationGenerator {
 
-    private static final String UNBOX_GROUP_INFO_SERVICE_ID = "http://amazon.com/ContentOwning";
+    private static final String UNBOX_GROUP_INFO_SERVICE_ID = "http://amazon.com/services/content_owning/primevideo";
     private static final int DEFAULT_IMAGE_HEIGHT = 320;
     private static final int DEFAULT_IMAGE_WIDTH = 240;
     
