@@ -7,6 +7,7 @@ import com.metabroadcast.common.query.Selection;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -121,6 +122,7 @@ public class TaskQuery {
     private final Optional<Action> action;
     private final Optional<TVAElementType> elementType;
     private final Optional<String> elementId;
+    private final Optional<DateTime> after;
     private final Sort sort;
 
     public static Builder builder(Selection selection, DestinationType destinationType) {
@@ -137,6 +139,7 @@ public class TaskQuery {
             Optional<Action> action,
             Optional<TVAElementType> elementType,
             Optional<String> elementId,
+            Optional<DateTime> after,
             Sort sort
     ) {
         this.selection = checkNotNull(selection);
@@ -148,6 +151,7 @@ public class TaskQuery {
         this.action = checkNotNull(action);
         this.elementType = checkNotNull(elementType);
         this.elementId = checkNotNull(elementId);
+        this.after = checkNotNull(after);
         this.sort = checkNotNull(sort);
     }
     
@@ -218,6 +222,7 @@ public class TaskQuery {
         private Optional<Action> action = Optional.absent();
         private Optional<TVAElementType> elementType = Optional.absent();
         private Optional<String> elementId = Optional.absent();
+        private Optional<DateTime> after = Optional.absent();
         private Sort sort = Sort.DEFAULT;
 
         private Builder(Selection selection, DestinationType destinationType) {
@@ -227,7 +232,7 @@ public class TaskQuery {
         
         public TaskQuery build() {
             return new TaskQuery(selection, destinationType, publisher, contentUri, remoteId,
-                    status, action, elementType, elementId, sort
+                    status, action, elementType, elementId, after, sort
             );
         }
 
@@ -263,6 +268,16 @@ public class TaskQuery {
         
         public Builder withElementId(String elementId) {
             this.elementId = Optional.fromNullable(elementId);
+            return this;
+        }
+
+        /**
+         * Will enforce a greather than this date on the created field of the task.
+         * @param after
+         * @return
+         */
+        public Builder after(DateTime after){
+            this.after = Optional.fromNullable(after);
             return this;
         }
 

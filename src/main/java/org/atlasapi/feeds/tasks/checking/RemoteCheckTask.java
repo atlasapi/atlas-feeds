@@ -48,7 +48,7 @@ public class RemoteCheckTask extends ScheduledTask {
         for (Status status : TO_BE_CHECKED) {
 
             //We limit this to a reasonable number, cause if they are too many mongo sort overflows
-            TaskQuery.Builder query = TaskQuery.builder(Selection.limitedTo(10000), destinationType)
+            TaskQuery.Builder query = TaskQuery.builder(Selection.all(), destinationType)
                     .withTaskStatus(status);
             Iterable<Task> tasksToCheck = taskStore.allTasks(query.build());
 
