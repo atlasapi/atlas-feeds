@@ -46,7 +46,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
 
     private static final Map<Publisher, Pattern> PATTERN_MAPPING = ImmutableMap.of(
             Publisher.BBC_NITRO, Pattern.compile("crid://nitro.bbc.co.uk/iplayer/youview/[a-z0-9]*"),
-            Publisher.AMAZON_UNBOX, Pattern.compile("crid://unbox.amazon.co.uk/product/[A-Za-z0-9]*")
+            Publisher.AMAZON_UNBOX, Pattern.compile("crid://amazon.com/exec/obidos/ASIN/[A-Za-z0-9]*")
     );
 
 
