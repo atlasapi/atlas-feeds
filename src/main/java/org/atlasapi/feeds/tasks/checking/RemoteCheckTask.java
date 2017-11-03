@@ -56,7 +56,7 @@ public class RemoteCheckTask extends ScheduledTask {
             int numChecked = 0;
             DateTime lastDateChecked = new DateTime().minusYears(1);
             do {
-                log.info("Checking remote status for {}, block {}", status, (numChecked / NUM_TO_CHECK_PER_ITTERATION ));
+                log.info("Checking remote status for {}, already checked {}", status, numChecked );
                 TaskQuery.Builder query = TaskQuery.builder(
                         Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION),
                         destinationType)
@@ -81,7 +81,7 @@ public class RemoteCheckTask extends ScheduledTask {
                     }
                     reportStatus(progress.toString());
                 }
-            } while ((numChecked % NUM_TO_CHECK_PER_ITTERATION) == 0 );
+            } while (numChecked > 0 && (numChecked % NUM_TO_CHECK_PER_ITTERATION) == 0 );
         }
     }
 }
