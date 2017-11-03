@@ -13,8 +13,8 @@ import org.atlasapi.media.entity.Version;
 public class UnboxIdGenerator implements IdGenerator {
 
     private static final String AMAZON_IMI_PREFIX = "imi:amazon.com/";
-    private static final String AMAZON_PRODUCT_CRID_PREFIX = "crid://amazon.com/exec/obidos/ASIN/";
-    private static final String VERSION_SUFFIX = "_version";
+    public static final String AMAZON_PRODUCT_CRID_PREFIX = "crid://amazon.com/exec/obidos/ASIN/";
+    public static final String VERSION_SUFFIX = "_version";
     
     @Override
     public String generateVersionCrid(Item item, Version version) {

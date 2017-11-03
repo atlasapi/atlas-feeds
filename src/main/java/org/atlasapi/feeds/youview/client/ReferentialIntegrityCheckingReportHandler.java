@@ -18,6 +18,7 @@ import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
+import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -44,9 +45,9 @@ import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
 
 public class ReferentialIntegrityCheckingReportHandler implements YouViewReportHandler {
 
-    private static final Map<Publisher, Pattern> PATTERN_MAPPING = ImmutableMap.of(
+    private static final Map<Publisher, Pattern> PUBLISHER_TO_PATTERN_MAP = ImmutableMap.of(
             Publisher.BBC_NITRO, Pattern.compile("crid://nitro.bbc.co.uk/iplayer/youview/[a-z0-9]*"),
-            Publisher.AMAZON_UNBOX, Pattern.compile("crid://amazon.com/exec/obidos/ASIN/[A-Za-z0-9]*")
+            Publisher.AMAZON_UNBOX, Pattern.compile(UnboxIdGenerator.AMAZON_PRODUCT_CRID_PREFIX+"[A-Za-z0-9]*"+UnboxIdGenerator.VERSION_SUFFIX)
     );
 
 
@@ -193,7 +194,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
     }
 
     private String resolveVersionId(Publisher publisher, TextualType comment) {
-        Pattern pattern = PATTERN_MAPPING.get(publisher);
+        Pattern pattern = PUBLISHER_TO_PATTERN_MAP.get(publisher);
         Matcher matcher = pattern.matcher(comment.getValue());
         if (!matcher.find()) {
             throw new RuntimeException("Unable to match version crid pattern in comment: " + comment.getValue());
