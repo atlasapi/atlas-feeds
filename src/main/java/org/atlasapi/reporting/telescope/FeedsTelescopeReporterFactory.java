@@ -58,7 +58,7 @@ public class FeedsTelescopeReporterFactory extends TelescopeReporterFactory {
                     Configurer.get("telescope.environment").get(),
                     Configurer.get("telescope.host").get(),
                     executor,
-                    null, null //metricsRegistry and and METRICS_PREFIX, null until further notice.
+                    null, null //metricsRegistry and METRICS_PREFIX, null until further notice.
             );
         }
 
