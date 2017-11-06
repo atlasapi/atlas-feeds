@@ -7,6 +7,8 @@ import org.atlasapi.feeds.youview.ServiceIdResolverFactory;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.persistence.content.ContentResolver;
+import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 
 import com.metabroadcast.common.time.DateTimeZones;
@@ -47,16 +49,26 @@ public class UpdatedContentResolver implements YouViewContentResolver {
     private final LastUpdatedContentFinder contentFinder;
     private final Publisher publisher;
     private final ServiceIdResolver serviceIdResolver;
+    private final ContentResolver contentResolver;
 
-    public UpdatedContentResolver(LastUpdatedContentFinder contentFinder, Publisher publisher) {
+    public UpdatedContentResolver(
+            LastUpdatedContentFinder contentFinder,
+            ContentResolver contentResolver,
+            Publisher publisher) {
         this.serviceIdResolver = serviceIdResolverFactory.create(publisher);
         this.contentFinder = checkNotNull(contentFinder);
+        this.contentResolver = contentResolver;
         this.publisher = checkNotNull(publisher);
     }
 
     @Override
     public Iterator<Content> updatedSince(DateTime dateTime) {
         return fetchContentUpdatedSinceDate(dateTime);
+    }
+
+    @Override
+    public ResolvedContent findByUris(Iterable<String> uris){
+        return contentResolver.findByUris(uris);
     }
 
     private Iterator<Content> fetchContentUpdatedSinceDate(DateTime since) {

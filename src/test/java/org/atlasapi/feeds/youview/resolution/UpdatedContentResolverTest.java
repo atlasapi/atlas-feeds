@@ -30,7 +30,7 @@ public class UpdatedContentResolverTest {
     private NitroServiceIdResolver nitroServiceIdResolver = Mockito.mock(NitroServiceIdResolver.class);
     
     private final YouViewContentResolver resolver =
-            new UpdatedContentResolver(contentFinder, PUBLISHER);
+            new UpdatedContentResolver(contentFinder, contentResolver, PUBLISHER);
 
     @Before
     public void setup() {

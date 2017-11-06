@@ -1,11 +1,8 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
-import java.time.ZonedDateTime;
 import java.util.Iterator;
 import java.util.List;
 
-import org.atlasapi.application.query.ApplicationNotFoundException;
-import org.atlasapi.application.query.InvalidApiKeyException;
 import org.atlasapi.equiv.OutputContentMerger;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
@@ -19,22 +16,11 @@ import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.SimilarContentRef;
+import org.atlasapi.persistence.content.ResolvedContent;
 
-import com.metabroadcast.applications.client.ApplicationsClient;
-import com.metabroadcast.applications.client.ApplicationsClientImpl;
-import com.metabroadcast.applications.client.exceptions.ErrorCode;
-import com.metabroadcast.applications.client.metric.Metrics;
-import com.metabroadcast.applications.client.model.internal.AccessRoles;
-import com.metabroadcast.applications.client.model.internal.Application;
-import com.metabroadcast.applications.client.model.internal.ApplicationConfiguration;
-import com.metabroadcast.applications.client.model.internal.Environment;
-import com.metabroadcast.applications.client.query.Query;
-import com.metabroadcast.applications.client.query.Result;
-import com.metabroadcast.applications.client.service.HttpServiceClient;
-import com.metabroadcast.common.properties.Configurer;
-import com.metabroadcast.common.properties.Parameter;
+import com.metabroadcast.common.stream.MoreCollectors;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -104,7 +90,6 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         );
 
         OutputContentMerger contentMerger = new OutputContentMerger();
-        List<Content> mergedContent = contentMerger.merge(getApplication(), Lists.newArrayList(updatedContent));
 
         List<Content> deleted = Lists.newArrayList();
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
@@ -113,7 +98,24 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         int deletingContent= 0;
         while (updatedContent.hasNext()) {
             Content updated = updatedContent.next();
-            //Update the content with a representative ID
+
+            //Run equivalence on this piece of content.
+            List<SimilarContentRef> similarContent = updated.getSimilarContent();
+
+            ImmutableList<String> aliasUris = similarContent.stream()
+                    .map(SimilarContentRef::getUri)
+                    .collect(MoreCollectors.toImmutableList());
+
+            ResolvedContent resolvedContent = contentResolver.findByUris(aliasUris);
+            ImmutableList<Content> aliasedContent = resolvedContent.getAllResolvedResults()
+                    .stream()
+                    .filter(input -> input instanceof Content)
+                    .map(input -> (Content) input)
+                    .collect(MoreCollectors.toImmutableList());
+
+            List<Content> mergedContent = contentMerger.merge(getApplication(), aliasedContent);
+
+            //Update the existing content ID with a representative ID
             updated.setId(getRepIdClient().getDecoded(updated.getId()));
             if (updated.isActivelyPublished()) {
                 uploadProcessor.process(updated);

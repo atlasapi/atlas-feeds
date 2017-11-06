@@ -8,7 +8,6 @@ import javax.annotation.PostConstruct;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 
-import org.atlasapi.feeds.RepIdClient;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.checking.RemoteCheckTask;
 import org.atlasapi.feeds.tasks.maintainance.TaskTrimmingTask;
@@ -355,7 +354,7 @@ public class YouViewUploadModule {
     }
     
     private YouViewContentResolver getDeltaContentResolver(Publisher publisher) {
-        return new UpdatedContentResolver(contentFinder, publisher);
+        return new UpdatedContentResolver(contentFinder, contentResolver, publisher);
     }
      
     @Bean
