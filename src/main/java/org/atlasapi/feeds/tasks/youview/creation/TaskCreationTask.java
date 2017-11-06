@@ -35,7 +35,6 @@ import com.metabroadcast.applications.client.model.internal.Application;
 import com.metabroadcast.applications.client.model.internal.Environment;
 import com.metabroadcast.applications.client.query.Query;
 import com.metabroadcast.applications.client.query.Result;
-import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
@@ -43,7 +42,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
