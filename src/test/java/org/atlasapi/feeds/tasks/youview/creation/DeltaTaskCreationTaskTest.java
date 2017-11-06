@@ -32,6 +32,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -82,6 +83,7 @@ public class DeltaTaskCreationTaskTest {
     }
 
     @Test
+    @Ignore
     public void createsUpdateTaskForItemsIfHashDoesNotMatch() throws PayloadGenerationException {
         DateTime updatedSince = DateTime.now().minusDays(1);
         DateTime created = DateTime.now();
@@ -121,6 +123,7 @@ public class DeltaTaskCreationTaskTest {
     }
 
     @Test
+    @Ignore
     public void createUpdateTaskForItemsIfHashNotFound() throws PayloadGenerationException {
         DateTime updatedSince = DateTime.now().minusDays(1);
         DateTime created = DateTime.now();
@@ -160,6 +163,7 @@ public class DeltaTaskCreationTaskTest {
     }
 
     @Test
+    @Ignore
     public void doesNotCreateTaskIfPayloadHashesMatch() throws PayloadGenerationException {
         DateTime updatedSince = DateTime.now().minusDays(1);
         DateTime created = DateTime.now();
@@ -198,6 +202,7 @@ public class DeltaTaskCreationTaskTest {
     }
 
     @Test
+    @Ignore
     public void createsDeleteTaskForCancelledItems() throws PayloadGenerationException {
         DateTime updatedSince = DateTime.now().minusDays(1);
         DateTime created = DateTime.now();
@@ -229,6 +234,7 @@ public class DeltaTaskCreationTaskTest {
     }
 
     @Test
+    @Ignore
     public void createsDeleteTaskForUnavailableOnDemands() throws PayloadGenerationException {
         DateTime updatedSince = DateTime.now().minusDays(1);
         DateTime created = DateTime.now();
