@@ -8,6 +8,7 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -28,6 +29,7 @@ public class UpdatedContentResolverTest {
     
     private LastUpdatedContentFinder contentFinder = Mockito.mock(LastUpdatedContentFinder.class);
     private NitroServiceIdResolver nitroServiceIdResolver = Mockito.mock(NitroServiceIdResolver.class);
+    private ContentResolver contentResolver = Mockito.mock(ContentResolver.class);
     
     private final YouViewContentResolver resolver =
             new UpdatedContentResolver(contentFinder, contentResolver, PUBLISHER);

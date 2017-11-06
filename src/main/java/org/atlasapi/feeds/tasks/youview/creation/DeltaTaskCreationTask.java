@@ -102,18 +102,18 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             //Run equivalence on this piece of content.
             List<SimilarContentRef> similarContent = updated.getSimilarContent();
 
-            ImmutableList<String> aliasUris = similarContent.stream()
+            ImmutableList<String> equivUris = similarContent.stream()
                     .map(SimilarContentRef::getUri)
                     .collect(MoreCollectors.toImmutableList());
 
-            ResolvedContent resolvedContent = contentResolver.findByUris(aliasUris);
-            ImmutableList<Content> aliasedContent = resolvedContent.getAllResolvedResults()
+            ResolvedContent resolvedEquiv = contentResolver.findByUris(equivUris);
+            ImmutableList<Content> equivContent = resolvedEquiv.getAllResolvedResults()
                     .stream()
                     .filter(input -> input instanceof Content)
                     .map(input -> (Content) input)
                     .collect(MoreCollectors.toImmutableList());
 
-            List<Content> mergedContent = contentMerger.merge(getApplication(), aliasedContent);
+            List<Content> mergedContent = contentMerger.merge(getApplication(), equivContent);
 
             //Update the existing content ID with a representative ID
             updated.setId(getRepIdClient().getDecoded(updated.getId()));
