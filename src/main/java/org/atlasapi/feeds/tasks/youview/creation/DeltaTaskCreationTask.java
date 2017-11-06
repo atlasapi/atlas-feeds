@@ -31,6 +31,8 @@ import com.metabroadcast.applications.client.model.internal.Environment;
 import com.metabroadcast.applications.client.query.Query;
 import com.metabroadcast.applications.client.query.Result;
 import com.metabroadcast.applications.client.service.HttpServiceClient;
+import com.metabroadcast.common.properties.Configurer;
+import com.metabroadcast.common.properties.Parameter;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Optional;
@@ -101,33 +103,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                 lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD)
         );
 
-        ApplicationsClient applicationsClient = ApplicationsClientImpl.create("http://applications-service.production.svc.cluster.local", new MetricRegistry());
-
-        String apiKey = "fb0762e32f6041c4b9ef9f68bd22da14";
-        java.util.Optional<Application> application;
-        try {
-
-            Result result = applicationsClient
-                    .resolve(Query.create(apiKey, Environment.PROD));
-            if (result.getErrorCode().isPresent()) {
-                throw InvalidApiKeyException.create(apiKey, result.getErrorCode().orElse(null));
-            } else {
-                application = result.getSingleResult();
-            }
-
-        } catch (InvalidApiKeyException e) {
-            log.error("Problem with API key for request", e);
-            application = java.util.Optional.empty();
-        }
-
-        if (!application.isPresent()) {
-            log.error("No application found for request");
-        }
-
-
-
         OutputContentMerger contentMerger = new OutputContentMerger();
-        List<Content> mergedContent = contentMerger.merge(application.get(), Lists.newArrayList(updatedContent));
+        List<Content> mergedContent = contentMerger.merge(getApplication(), Lists.newArrayList(updatedContent));
 
         List<Content> deleted = Lists.newArrayList();
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);

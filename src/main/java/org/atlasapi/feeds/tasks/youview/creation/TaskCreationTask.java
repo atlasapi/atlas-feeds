@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.atlasapi.application.query.InvalidApiKeyException;
 import org.atlasapi.feeds.RepIdClient;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Payload;
@@ -28,11 +29,21 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Publisher;
 
+import com.metabroadcast.applications.client.ApplicationsClient;
+import com.metabroadcast.applications.client.ApplicationsClientImpl;
+import com.metabroadcast.applications.client.model.internal.Application;
+import com.metabroadcast.applications.client.model.internal.Environment;
+import com.metabroadcast.applications.client.query.Query;
+import com.metabroadcast.applications.client.query.Result;
+import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +65,11 @@ public abstract class TaskCreationTask extends ScheduledTask {
     private final TaskCreator taskCreator;
     private final PayloadCreator payloadCreator;
     private final RepIdClient repIdClient;
+
+    private static final Map<Publisher, String> PUBLISHER_TO_API_KEY_MAP = ImmutableMap.of(
+            Publisher.BBC_NITRO, "",
+            Publisher.AMAZON_UNBOX, "fb0762e32f6041c4b9ef9f68bd22da14"
+    );
 
     public TaskCreationTask(
             YouViewLastUpdatedStore lastUpdatedStore,
@@ -91,6 +107,36 @@ public abstract class TaskCreationTask extends ScheduledTask {
         this.payloadHashStore = checkNotNull(payloadHashStore);
         this.hashCheckMode = hashCheckMode;
         this.repIdClient = RepIdClient.getRepIdClient(publisher);
+    }
+
+    protected Application getApplication(){
+        // Configurer.get("applications.client.host").get()
+        // Configurer.get("applications.client.env").get()
+        ApplicationsClient applicationsClient = ApplicationsClientImpl.create("http://applications-service.production.svc.cluster.local", new MetricRegistry());
+        java.util.Optional<Application> application;
+        try {
+            Result result = applicationsClient
+                    .resolve(Query.create(getEquivApiKey(), Environment.PROD));
+            if (result.getErrorCode().isPresent()) {
+                throw InvalidApiKeyException.create(getEquivApiKey(), result.getErrorCode().get());
+            } else {
+                application = result.getSingleResult();
+            }
+
+            if (!application.isPresent()) {
+                throw new IllegalArgumentException("No application found for API key=" + getEquivApiKey());
+            }
+
+        } catch (InvalidApiKeyException | IllegalArgumentException e) {
+            log.error("There was a problem with the API key.", e);
+            application = java.util.Optional.empty();
+        }
+
+        return application.get();
+    }
+
+    private String getEquivApiKey(){
+        return PUBLISHER_TO_API_KEY_MAP.get(this.publisher);
     }
 
     //for debugging purposes

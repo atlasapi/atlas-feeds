@@ -36,6 +36,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.slf4j.spi.LocationAwareLogger;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
