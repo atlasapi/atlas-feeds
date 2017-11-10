@@ -20,6 +20,7 @@ import org.atlasapi.media.entity.SimilarContentRef;
 import org.atlasapi.persistence.content.ResolvedContent;
 
 import com.metabroadcast.common.stream.MoreCollectors;
+import com.metabroadcast.representative.api.RepresentativeIdResponse;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -31,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
+import static com.metabroadcast.representative.util.Utils.decode;
 
 public class DeltaTaskCreationTask extends TaskCreationTask {
 
@@ -116,7 +117,10 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             List<Content> mergedContent = contentMerger.merge(getApplication(), equivContent);
 
             //Update the existing content ID with a representative ID
-            updated.setId(getRepIdClient().getDecoded(updated.getId()));
+            RepresentativeIdResponse repIdResponse = getRepIdClient().getRepId(updated.getId());
+            log.info("swapped {} for repId {}", updated.getId(), decode(repIdResponse.getRepresentative().getId()));
+            updated.setId(decode(repIdResponse.getRepresentative().getId()));
+
             if (updated.isActivelyPublished()) {
                 uploadProcessor.process(updated);
                 reportStatus("Uploads: " + uploadProcessor.getResult());

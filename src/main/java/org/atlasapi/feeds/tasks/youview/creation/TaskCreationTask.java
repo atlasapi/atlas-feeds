@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.atlasapi.application.query.InvalidApiKeyException;
-import org.atlasapi.feeds.RepIdClient;
+import org.atlasapi.feeds.RepIdClientFactory;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Status;
@@ -37,6 +37,7 @@ import com.metabroadcast.applications.client.query.Query;
 import com.metabroadcast.applications.client.query.Result;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
+import com.metabroadcast.representative.client.RepIdClientWithApp;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Optional;
@@ -62,7 +63,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
     private final TaskStore taskStore;
     private final TaskCreator taskCreator;
     private final PayloadCreator payloadCreator;
-    private final RepIdClient repIdClient;
+    private final RepIdClientWithApp repIdClient;
 
     private static final Map<Publisher, String> PUBLISHER_TO_API_KEY_MAP = ImmutableMap.of(
             Publisher.BBC_NITRO, "",
@@ -104,7 +105,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
         this.payloadCreator = checkNotNull(payloadCreator);
         this.payloadHashStore = checkNotNull(payloadHashStore);
         this.hashCheckMode = hashCheckMode;
-        this.repIdClient = RepIdClient.getRepIdClient(publisher);
+        this.repIdClient = RepIdClientFactory.getRepIdClient(publisher);
     }
 
     protected Application getApplication(){
@@ -142,7 +143,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return publisher.toString();
     }
 
-    protected RepIdClient getRepIdClient() {
+    protected RepIdClientWithApp getRepIdClient() {
         return repIdClient;
     }
 
