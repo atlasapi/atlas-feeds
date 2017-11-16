@@ -9,11 +9,13 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
 
+import static com.metabroadcast.representative.util.Utils.encode;
 
 public class UnboxIdGenerator implements IdGenerator {
 
     private static final String AMAZON_IMI_PREFIX = "imi:amazon.com/";
-    public static final String AMAZON_PRODUCT_CRID_PREFIX = "crid://amazon.com/exec/obidos/ASIN/";
+    //old crid generation based on asin
+//    public static final String AMAZON_PRODUCT_CRID_PREFIX = "crid://amazon.com/exec/obidos/ASIN/";
     public static final String VERSION_SUFFIX = "_version";
     
     @Override
@@ -42,9 +44,12 @@ public class UnboxIdGenerator implements IdGenerator {
     }
 
     private static String baseCridFrom(Content content) {
-        return AMAZON_PRODUCT_CRID_PREFIX + idFrom(content);
+        return AMAZON_PRODUCT_CRID_PREFIX + encode(content.getId());
     }
 
+    /**
+     * @return The ASIN of an amazon content.
+     */
     private static String idFrom(Content content) {
         String[] splinters = content.getCanonicalUri().split("/");
         return splinters[splinters.length-1];
