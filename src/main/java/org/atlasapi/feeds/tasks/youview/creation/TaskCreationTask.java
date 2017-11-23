@@ -114,8 +114,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
         ApplicationsClient applicationsClient = ApplicationsClientImpl.create("http://applications-service.production.svc.cluster.local", new MetricRegistry());
         java.util.Optional<Application> application;
         try {
-            Result result = applicationsClient
-                    .resolve(Query.create(getEquivApiKey(), Environment.PROD));
+            Result result =
+                    applicationsClient.resolve(Query.create(getEquivApiKey(), Environment.PROD));
             if (result.getErrorCode().isPresent()) {
                 throw InvalidApiKeyException.create(getEquivApiKey(), result.getErrorCode().get());
             } else {

@@ -78,7 +78,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     protected void runTask() {
         Optional<DateTime> lastUpdated = getLastUpdatedTime();
         if (!lastUpdated.isPresent()) {
-            throw new IllegalStateException("The bootstrap has not successfully run. Please run the "
+            throw new IllegalStateException("The bootstrap for "+ getPublisher()
+                                            + " has not successfully run. Please run the "
                                             + "bootstrap upload and ensure that it succeeds before "
                                             + "running the delta upload.");
         }
