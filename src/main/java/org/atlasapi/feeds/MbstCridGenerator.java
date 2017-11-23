@@ -12,8 +12,8 @@ import static com.metabroadcast.representative.util.Utils.encode;
 public class MbstCridGenerator {
 
     private static final Map<String, String> CRID_PREFIX = ImmutableMap.of(
-            "prod", "crid://metabroadcast.com/",
-            "stage", "crid://stage-metabroadcast.com/"
+            "prod", "crid://metabroadcast.com",
+            "stage", "crid://stage-metabroadcast.com"
     );
 
     public static String getContentCrid(String env, Identified i) {

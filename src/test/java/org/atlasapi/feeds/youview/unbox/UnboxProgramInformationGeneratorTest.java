@@ -61,12 +61,12 @@ public class UnboxProgramInformationGeneratorTest {
         assertEquals(versionCrid, progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
         assertEquals(UnboxOnDemandLocationGenerator.UNBOX_DEEP_LINKING_ID, otherId.getAuthority());
-        assertEquals("crid://amazon.com/exec/obidos/ASIN/177221", progInfo.getDerivedFrom().getCrid());
+        assertEquals("crid://stage-metabroadcast.com/content/drrrrn", progInfo.getDerivedFrom().getCrid());
     }
 
     private Film createFilm(Version version) {
         Film film = new Film();
-        
+        film.setId(35320383L);
         film.setCanonicalUri("http://unbox.amazon.co.uk/movies/177221");
         film.setPublisher(Publisher.AMAZON_UNBOX);
         film.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));

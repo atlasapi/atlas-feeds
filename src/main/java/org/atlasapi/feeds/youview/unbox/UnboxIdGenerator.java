@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.unbox;
 
+import java.util.regex.Pattern;
+
 import org.atlasapi.feeds.MbstCridGenerator;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.channel.Channel;
@@ -9,8 +11,6 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
-
-import static com.metabroadcast.representative.util.Utils.encode;
 
 public class UnboxIdGenerator implements IdGenerator {
 
@@ -42,9 +42,13 @@ public class UnboxIdGenerator implements IdGenerator {
         throw new UnsupportedOperationException("Channels are not supported for the Amazon Unbox publisher");
     }
 
+    public static Pattern getVersionCridPattern(){
+        return Pattern.compile(MbstCridGenerator.getContentCrid("stage","") + "[A-Za-z0-9]*" + UnboxIdGenerator.VERSION_SUFFIX);
+    }
+
     private static String baseCridFrom(Content content) {
 
-        return MbstCridGenerator.getContentCrid("stage",content);
+        return MbstCridGenerator.getContentCrid("stage",content); //todo:hardcoded enviroment.
         //return "crid://amazon.com/exec/obidos/ASIN/" + getAsin(content); old way of generating crids
     }
 

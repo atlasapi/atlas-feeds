@@ -21,16 +21,16 @@ public class UnboxIdGeneratorTest {
     
     @Test
     public void testContentCridGeneration() {
-        String contentCrid = generator.generateContentCrid(createItemWithUri("http://unbox.amazon.co.uk/films/123456"));
+        String contentCrid = generator.generateContentCrid(createItemWithId(12045L));
         
-        assertEquals("crid://amazon.com/exec/obidos/ASIN/123456", contentCrid);
+        assertEquals("crid://stage-metabroadcast.com/content/wtf", contentCrid);
     }
 
     @Test
     public void testVersionCridGeneration() {
-        String versionCrid = generator.generateVersionCrid(createItemWithUri("http://unbox.amazon.co.uk/films/123456"), createVersion());
+        String versionCrid = generator.generateVersionCrid(createItemWithId(12045L), createVersion());
         
-        assertEquals("crid://amazon.com/exec/obidos/ASIN/123456_version", versionCrid);
+        assertEquals("crid://stage-metabroadcast.com/content/wtf_version", versionCrid);
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -40,13 +40,15 @@ public class UnboxIdGeneratorTest {
 
     @Test
     public void testOnDemandImiGeneration() {
-        String onDemandImi = generator.generateOnDemandImi(createItemWithUri("http://unbox.amazon.co.uk/films/123456"), createVersion(), createEncoding(), createLocation());
+        String onDemandImi = generator.generateOnDemandImi(createItemWithId(12045L), createVersion(), createEncoding(), createLocation());
         
         assertEquals("imi:amazon.com/123456", onDemandImi);
     }
 
-    private Item createItemWithUri(String uri) {
-        return new Film(uri, "curie", Publisher.LOVEFILM);
+    private Item createItemWithId(Long id) {
+        Film film = new Film("http://unbox.amazon.co.uk/films/123456", "curie", Publisher.LOVEFILM);
+        film.setId(id);
+        return film;
     }
 
     private Version createVersion() {

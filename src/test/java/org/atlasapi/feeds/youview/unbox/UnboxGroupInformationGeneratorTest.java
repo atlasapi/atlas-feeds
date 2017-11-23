@@ -272,7 +272,7 @@ public class UnboxGroupInformationGeneratorTest {
     public void testFilmGroupInformationGeneration() {
         GroupInformationType groupInfo = generator.generate(createFilm());
 
-        assertEquals("crid://amazon.com/exec/obidos/ASIN/177221", groupInfo.getGroupId());
+        assertEquals("crid://stage-metabroadcast.com/content/zzz", groupInfo.getGroupId());
         assertEquals(UNBOX_GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
@@ -292,10 +292,10 @@ public class UnboxGroupInformationGeneratorTest {
     public void testEpisodeGroupInformationGeneration() {
         GroupInformationType groupInfo = generator.generate(createEpisode(), Optional.of(createSeries()), Optional.of(createBrand()));
 
-        assertEquals("crid://amazon.com/exec/obidos/ASIN/180014", groupInfo.getGroupId());
+        assertEquals("crid://stage-metabroadcast.com/content/ssssh", groupInfo.getGroupId());
         
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://amazon.com/exec/obidos/ASIN/179534", memberOf.getCrid());
+        assertEquals("crid://stage-metabroadcast.com/content/qq", memberOf.getCrid());
         assertEquals(Long.valueOf(5), memberOf.getIndex());
         
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -315,15 +315,16 @@ public class UnboxGroupInformationGeneratorTest {
     @Test
     public void testSeriesGroupInformationGeneration() {
         Episode episode = createEpisode();
+        episode.setId(1L);
         episode.setImage("episode image");
         
         GroupInformationType groupInfo = generator.generate(createSeries(), Optional.of(createBrand()), episode);
 
-        assertEquals("crid://amazon.com/exec/obidos/ASIN/179534", groupInfo.getGroupId());
+        assertEquals("crid://stage-metabroadcast.com/content/qq", groupInfo.getGroupId());
         assertTrue(groupInfo.isOrdered());
         
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://amazon.com/exec/obidos/ASIN/184930", memberOf.getCrid());
+        assertEquals("crid://stage-metabroadcast.com/content/wtf", memberOf.getCrid());
         assertEquals(Long.valueOf(2), memberOf.getIndex());
         
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -350,11 +351,12 @@ public class UnboxGroupInformationGeneratorTest {
     @Test
     public void testBrandGroupInformationGeneration() {
         Episode episode = createEpisode();
+        episode.setId(1L);
         episode.setImage("episode image");
         
         GroupInformationType groupInfo = generator.generate(createBrand(), episode);
 
-        assertEquals("crid://amazon.com/exec/obidos/ASIN/184930", groupInfo.getGroupId());
+        assertEquals("crid://stage-metabroadcast.com/content/wtf", groupInfo.getGroupId());
         assertEquals(UNBOX_GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
         assertTrue(groupInfo.isOrdered());
                 
@@ -378,7 +380,7 @@ public class UnboxGroupInformationGeneratorTest {
     @Test
     public void testSecondaryTitleGeneration() {
         Film film = createFilm();
-        
+        film.setId(1L);
         film.setTitle("The film");
         GroupInformationType groupInfo = generator.generate(film);
         
@@ -467,7 +469,7 @@ public class UnboxGroupInformationGeneratorTest {
     @Test
     public void testSecondaryTitleGenerationDoesntReplaceNonFirstWord() {
         Film film = createFilm();
-        
+        film.setId(1L);
         film.setTitle("the film that contains another instance of the");
         GroupInformationType groupInfo = generator.generate(film);
         
@@ -491,6 +493,7 @@ public class UnboxGroupInformationGeneratorTest {
     @Test
     public void testImageDimensionsDefaultIfNoneProvided() { 
         Film film = createFilm();
+        film.setId(1L);
         Image image = new Image("someImageUri");
         image.setHeight(246);
         image.setWidth(572);
@@ -518,6 +521,7 @@ public class UnboxGroupInformationGeneratorTest {
     @Test
     public void testUnboxDefaultImageDimensions() { 
         Film film = createFilm();
+        film.setId(1L);
         film.setPublisher(Publisher.AMAZON_UNBOX);
         film.setImages(ImmutableSet.<Image>of());
         
@@ -533,18 +537,20 @@ public class UnboxGroupInformationGeneratorTest {
     @Test
     public void testUnboxConstants() {
         Film film = createFilm();
+        film.setId(1L);
         film.setPublisher(Publisher.AMAZON_UNBOX);
         film.setCanonicalUri("http://amazon.com/movies/123456");
         
         GroupInformationType groupInfo = generator.generate(film);
-        assertEquals("crid://amazon.com/exec/obidos/ASIN/123456", groupInfo.getGroupId());
+        assertEquals("crid://stage-metabroadcast.com/content/c", groupInfo.getGroupId());
         assertEquals(UNBOX_GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
     }
     
     
     private Brand createBrand() {
         Brand brand = new Brand();
-        
+
+        brand.setId(12045L);
         brand.setCanonicalUri("http://unbox.amazon.co.uk/episodes/184930");
         brand.setCurie("lf:e-184930");
         brand.setTitle("Northern Lights");
@@ -569,7 +575,8 @@ public class UnboxGroupInformationGeneratorTest {
     
     private Series createSeries() {
         Series series = new Series();
-        
+
+        series.setId(308L);
         series.setCanonicalUri("http://unbox.amazon.co.uk/episodes/179534");
         series.setCurie("lf:e-179534");
         series.setTitle("Series 2");
@@ -598,7 +605,8 @@ public class UnboxGroupInformationGeneratorTest {
     
     private Episode createEpisode() {
         Episode episode = new Episode();
-        
+
+        episode.setId(7174445L);
         episode.setCanonicalUri("http://unbox.amazon.co.uk/episodes/180014");
         episode.setCurie("lf:e-180014");
         episode.setTitle("Episode 1");
@@ -628,7 +636,7 @@ public class UnboxGroupInformationGeneratorTest {
 
     private Film createFilm() {
         Film film = new Film();
-        
+        film.setId(14383L);
         film.setCanonicalUri("http://unbox.amazon.co.uk/films/177221");
         film.setCurie("lf:f-177221");
         film.setTitle("Dr. Strangelove");
