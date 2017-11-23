@@ -149,9 +149,16 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                 List<Content> mergedContent = contentMerger.merge(getApplication(), equivContent);
 
                 //Update the existing content ID with a representative ID
-                RepresentativeIdResponse repIdResponse = getRepIdClient().getRepId(updated.getId());
-                log.info(
-                        "swapped {} for repId {}",
+                RepresentativeIdResponse repIdResponse;
+                try {
+                    repIdResponse = getRepIdClient().getRepId(updated.getId());
+                } catch (IllegalArgumentException e) {
+                    log.error("Cannot process item.", e);
+                    continue;
+                }
+
+                log.info( "{} swapped {} for repId {}",
+                        (updated.getId()) == (decode(repIdResponse.getRepresentative().getId())),
                         updated.getId(),
                         decode(repIdResponse.getRepresentative().getId())
                 );

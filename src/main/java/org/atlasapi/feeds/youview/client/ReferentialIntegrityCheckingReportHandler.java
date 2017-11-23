@@ -50,7 +50,6 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
             Publisher.AMAZON_UNBOX, UnboxIdGenerator.getVersionCridPattern()
     );
 
-
     private static final String REFERENTIAL_INTEGRITY_REASON
             = "http://refdata.youview.com/mpeg7cs/YouViewMetadataIngestReasonCS/2010-09-23#semantic-referential_integrity";
     

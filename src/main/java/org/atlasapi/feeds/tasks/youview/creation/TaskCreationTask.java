@@ -13,6 +13,7 @@ import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.FilterFactory;
+import org.atlasapi.feeds.youview.PerPublisherConfig;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
@@ -41,7 +42,6 @@ import com.metabroadcast.representative.client.RepIdClientWithApp;
 
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -64,11 +64,6 @@ public abstract class TaskCreationTask extends ScheduledTask {
     private final TaskCreator taskCreator;
     private final PayloadCreator payloadCreator;
     private final RepIdClientWithApp repIdClient;
-
-    private static final Map<Publisher, String> PUBLISHER_TO_API_KEY_MAP = ImmutableMap.of(
-            Publisher.BBC_NITRO, "",
-            Publisher.AMAZON_UNBOX, "fb0762e32f6041c4b9ef9f68bd22da14"
-    );
 
     public TaskCreationTask(
             YouViewLastUpdatedStore lastUpdatedStore,
@@ -135,7 +130,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
     }
 
     private String getEquivApiKey(){
-        return PUBLISHER_TO_API_KEY_MAP.get(this.publisher);
+        return PerPublisherConfig.TO_API_KEY_MAP.get(this.publisher);
     }
 
     protected Publisher getPublisher(){

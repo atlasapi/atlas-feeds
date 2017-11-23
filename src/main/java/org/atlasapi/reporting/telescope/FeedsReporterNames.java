@@ -18,7 +18,7 @@ public enum FeedsReporterNames implements TelescopeReporterName {
     YOU_VIEW_MANUAL_UPLOADER("youview.manual-uploader", "YouView Manual Uploader"),
     YOU_VIEW_MANUAL_SCHEDULE_UPLOADER("youview.manual-schedule-uploader", "YouView Manual Schedule Uploader"),
     YOU_VIEW_AUTOMATIC_UPLOADER("youview.automatic-uploader", "YV Auto Uploader (All)"),
-    YOU_VIEW_AUTOMATIC_UPLOADER_UNBOX("youview.automatic-uploader.unbox", "YV Auto Uploader (Amazon)"),
+    YOU_VIEW_AUTOMATIC_UPLOADER_AMAZON("youview.automatic-uploader.amazon", "YV Auto Uploader (Amazon)"),
     YOU_VIEW_AUTOMATIC_UPLOADER_NITRO("youview.automatic-uploader.nitro", "YV Auto Uploader (Nitro)"),
     YOU_VIEW_AUTOMATIC_DELETER("youview.automatic-deleter", "Youview Automatic Deleter" ),
     YOU_VIEW_AUTOMATIC_SCHEDULE_UPLOADER("youview.automatic-schedule-uploader", "YouView Automatic Schedule Uploader"),
@@ -34,11 +34,6 @@ public enum FeedsReporterNames implements TelescopeReporterName {
         this.reporterKey = reporterKey;
         this.reporterName = reporterName;
     }
-
-    public static final Map<Publisher, FeedsReporterNames> PUBLISHER_MAPPING = ImmutableMap.of(
-            Publisher.BBC_NITRO, YOU_VIEW_AUTOMATIC_UPLOADER_NITRO,
-            Publisher.AMAZON_UNBOX, YOU_VIEW_AUTOMATIC_UPLOADER_UNBOX
-    );
 
     public String getReporterKey() {
         return reporterKey;

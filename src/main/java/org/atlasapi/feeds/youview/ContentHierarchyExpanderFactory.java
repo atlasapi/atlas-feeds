@@ -27,7 +27,6 @@ public class ContentHierarchyExpanderFactory {
                 .put(Publisher.AMAZON_UNBOX, unboxContentHierarchyExpander)
                 .put(Publisher.BBC_NITRO, nitroContentHierarchyExpander)
                 .build();
-        log.info("@@@@ "+publisher+" asked for a hierarchyExpander and I gave him "+expanderMapping.get(publisher).getIdGenerator().getClass());
         return expanderMapping.get(publisher);
     }
 

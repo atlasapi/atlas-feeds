@@ -8,8 +8,8 @@ import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.youview.PerPublisherConfig;
 import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.reporting.telescope.FeedsReporterNames;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -27,7 +27,7 @@ public class UpdateTask extends TaskProcessingTask {
                 processor,
                 publisher,
                 destinationType,
-                FeedsReporterNames.PUBLISHER_MAPPING.get(publisher)
+                PerPublisherConfig.TO_TELESCOPE_REPORTER_NAME.get(publisher)
         );
 
     }
