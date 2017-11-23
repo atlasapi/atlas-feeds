@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.unbox;
 
+import org.atlasapi.feeds.MbstCridGenerator;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Broadcast;
@@ -14,8 +15,6 @@ import static com.metabroadcast.representative.util.Utils.encode;
 public class UnboxIdGenerator implements IdGenerator {
 
     private static final String AMAZON_IMI_PREFIX = "imi:amazon.com/";
-    //old crid generation based on asin
-//    public static final String AMAZON_PRODUCT_CRID_PREFIX = "crid://amazon.com/exec/obidos/ASIN/";
     public static final String VERSION_SUFFIX = "_version";
     
     @Override
@@ -30,7 +29,7 @@ public class UnboxIdGenerator implements IdGenerator {
     
     @Override
     public String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location) {
-        return AMAZON_IMI_PREFIX + idFrom(item);
+        return AMAZON_IMI_PREFIX + getAsin(item);
     }
     
     @Override
@@ -44,13 +43,12 @@ public class UnboxIdGenerator implements IdGenerator {
     }
 
     private static String baseCridFrom(Content content) {
-        return AMAZON_PRODUCT_CRID_PREFIX + encode(content.getId());
+
+        return MbstCridGenerator.getContentCrid("stage",content);
+        //return "crid://amazon.com/exec/obidos/ASIN/" + getAsin(content); old way of generating crids
     }
 
-    /**
-     * @return The ASIN of an amazon content.
-     */
-    private static String idFrom(Content content) {
+    private static String getAsin(Content content) {
         String[] splinters = content.getCanonicalUri().split("/");
         return splinters[splinters.length-1];
     }

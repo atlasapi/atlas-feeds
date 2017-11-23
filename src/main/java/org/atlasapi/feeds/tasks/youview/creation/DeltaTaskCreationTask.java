@@ -84,43 +84,94 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         }
         
         Optional<DateTime> startOfTask = Optional.of(new DateTime());
-        log.info("@@@ Started a new delta run for "+getPublisherString());
+        log.info("Started a new delta run for {}", getPublisher());
 
         Iterator<Content> updatedContent = contentResolver.updatedSince(
                 lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD)
         );
 
-        OutputContentMerger contentMerger = new OutputContentMerger();
-
-        List<Content> deleted = Lists.newArrayList();
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
         YouViewContentProcessor deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
 
+        List<Content> deleted;
+        if(getPublisher().equals(Publisher.BBC_NITRO)){
+            deleted = uploadFromBBC(updatedContent, uploadProcessor);
+        }
+        else if(getPublisher().equals(Publisher.AMAZON_UNBOX)){
+            deleted = uploadFromAmazon(updatedContent, uploadProcessor);
+        } else {
+            throw new IllegalStateException("Uploading to "+getPublisher()+" to YV is not supported.");
+        }
+
+        List<Content> orderedForDeletion = orderContentForDeletion(deleted);
         int deletingContent= 0;
+        for (Content toBeDeleted : orderedForDeletion) {
+            log.info("@@@ processing content " + toBeDeleted.getId() + "to be DELETED no:" + ++deletingContent + getPublisher());
+            deletionProcessor.process(toBeDeleted);
+            reportStatus("Deletes: " + deletionProcessor.getResult());
+        }
+
+        log.info("@@@" + getPublisher() + " setting last update time to " + startOfTask.get());
+        setLastUpdatedTime(startOfTask.get());
+
+        log.info("@@@" + getPublisher() + " Starting the upload task.");
+        reportStatus("Uploading tasks to YouView");
+        updateTask.run();
+
+        log.info("@@@" + getPublisher() + " Done");
+        reportStatus("Done uploading tasks to YouView");
+    }
+
+    private List<Content> uploadFromAmazon(Iterator<Content> content,
+            YouViewContentProcessor uploadProcessor) {
+
+        OutputContentMerger contentMerger = new OutputContentMerger();
+
+        List<Content> deleted = Lists.newArrayList();
+        while (content.hasNext()) {
+            Content updated = content.next();
+            if (updated.isActivelyPublished()) {
+                //Run equivalence on this piece of content.
+                List<SimilarContentRef> similarContent = updated.getSimilarContent();
+
+                ImmutableList<String> equivUris = similarContent.stream()
+                        .map(SimilarContentRef::getUri)
+                        .collect(MoreCollectors.toImmutableList());
+
+                ResolvedContent resolvedEquiv = contentResolver.findByUris(equivUris);
+                ImmutableList<Content> equivContent = resolvedEquiv.getAllResolvedResults()
+                        .stream()
+                        .filter(input -> input instanceof Content)
+                        .map(input -> (Content) input)
+                        .collect(MoreCollectors.toImmutableList());
+
+                List<Content> mergedContent = contentMerger.merge(getApplication(), equivContent);
+
+                //Update the existing content ID with a representative ID
+                RepresentativeIdResponse repIdResponse = getRepIdClient().getRepId(updated.getId());
+                log.info(
+                        "swapped {} for repId {}",
+                        updated.getId(),
+                        decode(repIdResponse.getRepresentative().getId())
+                );
+                updated.setId(decode(repIdResponse.getRepresentative().getId()));
+
+                uploadProcessor.process(updated);
+                reportStatus("Uploads: " + uploadProcessor.getResult());
+            } else {
+                deleted.add(updated);
+            }
+        }
+        return deleted;
+    }
+
+    private List<Content> uploadFromBBC(
+            Iterator<Content> updatedContent,
+            YouViewContentProcessor uploadProcessor) {
+
+        List<Content> deleted = Lists.newArrayList();
         while (updatedContent.hasNext()) {
             Content updated = updatedContent.next();
-
-            //Run equivalence on this piece of content.
-            List<SimilarContentRef> similarContent = updated.getSimilarContent();
-
-            ImmutableList<String> equivUris = similarContent.stream()
-                    .map(SimilarContentRef::getUri)
-                    .collect(MoreCollectors.toImmutableList());
-
-            ResolvedContent resolvedEquiv = contentResolver.findByUris(equivUris);
-            ImmutableList<Content> equivContent = resolvedEquiv.getAllResolvedResults()
-                    .stream()
-                    .filter(input -> input instanceof Content)
-                    .map(input -> (Content) input)
-                    .collect(MoreCollectors.toImmutableList());
-
-            List<Content> mergedContent = contentMerger.merge(getApplication(), equivContent);
-
-            //Update the existing content ID with a representative ID
-            RepresentativeIdResponse repIdResponse = getRepIdClient().getRepId(updated.getId());
-            log.info("swapped {} for repId {}", updated.getId(), decode(repIdResponse.getRepresentative().getId()));
-            updated.setId(decode(repIdResponse.getRepresentative().getId()));
-
             if (updated.isActivelyPublished()) {
                 uploadProcessor.process(updated);
                 reportStatus("Uploads: " + uploadProcessor.getResult());
@@ -128,24 +179,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                 deleted.add(updated);
             }
         }
-        
-        List<Content> orderedForDeletion = orderContentForDeletion(deleted);
-
-        for (Content toBeDeleted : orderedForDeletion) {
-            log.info("@@@ processing content "+toBeDeleted.getId()+"to be DELETED no:"+ ++deletingContent +getPublisherString());
-            deletionProcessor.process(toBeDeleted);
-            reportStatus("Deletes: " + deletionProcessor.getResult());
-        }
-
-        log.info("@@@"+getPublisherString()+" setting last update time to "+startOfTask.get());
-        setLastUpdatedTime(startOfTask.get());
-
-        log.info("@@@"+getPublisherString()+" Starting the upload task.");
-        reportStatus("Uploading tasks to YouView");
-        updateTask.run();
-
-        log.info("@@@"+getPublisherString()+" Done");
-        reportStatus("Done uploading tasks to YouView");
+        return deleted;
     }
     
     private static List<Content> orderContentForDeletion(Iterable<Content> toBeDeleted) {

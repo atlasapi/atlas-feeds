@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.atlasapi.media.entity.Publisher;
 
+import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.representative.client.RepIdClientWithApp;
 import com.metabroadcast.representative.client.http.HttpExecutor;
 import com.metabroadcast.representative.client.http.RetryStrategy;
@@ -16,10 +17,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RepIdClientFactory {
 
-    private static final String REP_SERVICE_HOST = "representative-id-service.stage.svc.cluster.local";
+    private static final String REP_SERVICE_HOST = Configurer.get("repid.service.host").get();
     private static final Map<Publisher, String> publisherToAppIdMap = ImmutableMap.of(
-            Publisher.BBC_NITRO, "nitroAppId",
-            Publisher.AMAZON_UNBOX, "jd9" //TODO:hardcoded appId and host ^
+            Publisher.BBC_NITRO, "nitroAppId", //not in use. Equiv not running for nitro.
+            Publisher.AMAZON_UNBOX, Configurer.get("youview.upload.unbox.equivapikey").get()
     );
 
     private RepIdClientFactory() { }

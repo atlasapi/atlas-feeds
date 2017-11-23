@@ -138,9 +138,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return PUBLISHER_TO_API_KEY_MAP.get(this.publisher);
     }
 
-    //for debugging purposes
-    protected String getPublisherString(){
-        return publisher.toString();
+    protected Publisher getPublisher(){
+        return publisher;
     }
 
     protected RepIdClientWithApp getRepIdClient() {
