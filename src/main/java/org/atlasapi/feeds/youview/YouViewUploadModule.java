@@ -56,6 +56,7 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
+import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
 import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
@@ -148,6 +149,7 @@ public class YouViewUploadModule {
     private @Autowired TaskStore taskStore;
     private @Autowired ContentHierarchyExtractor contentHierarchy;
     private @Autowired ChannelResolver channelResolver;
+    private @Autowired KnownTypeQueryExecutor mergingResolver;
     private @Autowired ScheduleResolver scheduleResolver;
     private @Autowired ContentHierarchyExpanderFactory contentHierarchyExpanderFactory;
 
@@ -315,7 +317,8 @@ public class YouViewUploadModule {
                 uploadTask(publisher),
                 getDeltaContentResolver(publisher),
                 payloadHashStore(),
-                channelResolver
+                channelResolver,
+                mergingResolver
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }

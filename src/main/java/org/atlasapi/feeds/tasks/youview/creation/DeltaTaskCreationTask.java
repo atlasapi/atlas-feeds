@@ -2,7 +2,11 @@ package org.atlasapi.feeds.tasks.youview.creation;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
+import org.atlasapi.content.criteria.ContentQuery;
+import org.atlasapi.content.criteria.ContentQueryBuilder;
+import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.equiv.OutputContentMerger;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
@@ -15,15 +19,16 @@ import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.media.entity.SimilarContentRef;
-import org.atlasapi.persistence.content.ResolvedContent;
+import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
-import com.metabroadcast.common.stream.MoreCollectors;
+import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.representative.api.RepresentativeIdResponse;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import org.joda.time.DateTime;
@@ -43,6 +48,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     private static final Ordering<Content> HIERARCHICAL_ORDER = new HierarchicalOrdering();
 
     private final YouViewContentResolver contentResolver;
+    private final KnownTypeQueryExecutor mergingResolver;
     private final ChannelResolver channelResolver;
     private final UpdateTask updateTask;
 
@@ -57,7 +63,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             UpdateTask updateTask,
             YouViewContentResolver contentResolver,
             YouViewPayloadHashStore payloadHashStore,
-            ChannelResolver channelResolver
+            ChannelResolver channelResolver,
+            KnownTypeQueryExecutor mergingResolver
     ) {
         super(
                 lastUpdatedStore,
@@ -72,6 +79,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         this.channelResolver = checkNotNull(channelResolver);
         this.contentResolver = checkNotNull(contentResolver);
         this.updateTask = checkNotNull(updateTask);
+        this.mergingResolver = checkNotNull(mergingResolver);
     }
 
     @Override
@@ -126,48 +134,52 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     private List<Content> uploadFromAmazon(Iterator<Content> content,
             YouViewContentProcessor uploadProcessor) {
 
+        //todo: remove that and its remnantsg
         OutputContentMerger contentMerger = new OutputContentMerger();
 
         List<Content> deleted = Lists.newArrayList();
         while (content.hasNext()) {
-            Content updated = content.next();
-            if (updated.isActivelyPublished()) {
-                //Run equivalence on this piece of content.
-                List<SimilarContentRef> similarContent = updated.getSimilarContent();
+            Content updatedContent = content.next();
+            if (updatedContent.isActivelyPublished()) {
+                //Merge this content with equived contents.
+                ContentQuery contentQuery = ContentQueryBuilder.query()
+                        .isAnEnumIn(
+                                Attributes.DESCRIPTION_PUBLISHER,
+                                ImmutableList.of(getPublisher())
+                        )
+                        .withSelection(Selection.all())
+                        .withApplication(getApplication())
+                        .build();
 
-                ImmutableList<String> equivUris = similarContent.stream()
-                        .map(SimilarContentRef::getUri)
-                        .collect(MoreCollectors.toImmutableList());
+                Map<String, List<Identified>> mergedResults =
+                        mergingResolver.executeUriQuery(
+                                ImmutableSet.of(updatedContent.getCanonicalUri()),
+                                contentQuery
+                        );
 
-                ResolvedContent resolvedEquiv = contentResolver.findByUris(equivUris);
-                ImmutableList<Content> equivContent = resolvedEquiv.getAllResolvedResults()
-                        .stream()
-                        .filter(input -> input instanceof Content)
-                        .map(input -> (Content) input)
-                        .collect(MoreCollectors.toImmutableList());
-
-                List<Content> mergedContent = contentMerger.merge(getApplication(), equivContent);
+                Identified mergedContent = mergedResults.get(0).get(0);
 
                 //Update the existing content ID with a representative ID
                 RepresentativeIdResponse repIdResponse;
                 try {
-                    repIdResponse = getRepIdClient().getRepId(updated.getId());
+                    repIdResponse = getRepIdClient().getRepId(mergedContent.getId());
                 } catch (IllegalArgumentException e) {
                     log.error("Cannot process item.", e);
                     continue;
                 }
 
-                log.info( "{} swapped {} for repId {}",
-                        (updated.getId()) == (decode(repIdResponse.getRepresentative().getId())),
-                        updated.getId(),
+                log.info(
+                        "{} swapped {} for repId {}",
+                        (updatedContent.getId()) == (decode(repIdResponse.getRepresentative().getId())),
+                        updatedContent.getId(),
                         decode(repIdResponse.getRepresentative().getId())
                 );
-                updated.setId(decode(repIdResponse.getRepresentative().getId()));
+                updatedContent.setId(decode(repIdResponse.getRepresentative().getId()));
 
-                uploadProcessor.process(updated);
+                uploadProcessor.process(updatedContent);
                 reportStatus("Uploads: " + uploadProcessor.getResult());
             } else {
-                deleted.add(updated);
+                deleted.add(updatedContent);
             }
         }
         return deleted;
