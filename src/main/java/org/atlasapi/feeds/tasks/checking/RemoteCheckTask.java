@@ -70,7 +70,7 @@ public class RemoteCheckTask extends ScheduledTask {
                     if (!shouldContinue()) {
                         break;
                     }
-                    numChecked++; //if this goes up to the iteration limit, requery for more
+                    numChecked++; //if this goes up to the iteration limit, request for more
                     lastDateChecked = task.created().minusSeconds(1); //after this date
                     try {
                         processor.checkRemoteStatusOf(task);

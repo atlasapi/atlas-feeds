@@ -131,15 +131,15 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         reportStatus("Done uploading tasks to YouView");
     }
 
-    private List<Content> uploadFromAmazon(Iterator<Content> content,
+    private List<Content> uploadFromAmazon(Iterator<Content> contentPieces,
             YouViewContentProcessor uploadProcessor) {
 
-        //todo: remove that and its remnantsg
+        //todo: remove that and its remnants
         OutputContentMerger contentMerger = new OutputContentMerger();
 
         List<Content> deleted = Lists.newArrayList();
-        while (content.hasNext()) {
-            Content updatedContent = content.next();
+        while (contentPieces.hasNext()) {
+            Content updatedContent = contentPieces.next();
             if (updatedContent.isActivelyPublished()) {
                 //Merge this content with equived contents.
                 ContentQuery contentQuery = ContentQueryBuilder.query()
@@ -157,7 +157,23 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                                 contentQuery
                         );
 
-                Identified mergedContent = mergedResults.get(0).get(0);
+                Identified mergedContent;
+
+                List<Identified> mergedContents = mergedResults.entrySet().iterator().next().getValue();
+                if(mergedContents.size() == 1){
+                    mergedContent = mergedContents.get(0);
+                } else if(mergedContents.isEmpty()){
+                    mergedContent = updatedContent;
+                    log.warn("The output merger returned no items. The original content was used "
+                             + "instead.OriginalContent={}", updatedContent);
+                } else {
+                    mergedContent = mergedContents.get(0);
+                    log.warn("The output merger returned more than 1 results. This implies some of "
+                             + "the equivalent content could not be merged. OriginalContent={}, "
+                             + "ResultOfMerge={}"
+                            , updatedContent.getCanonicalUri()
+                            , mergedContents);
+                }
 
                 //Update the existing content ID with a representative ID
                 RepresentativeIdResponse repIdResponse;
