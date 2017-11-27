@@ -30,20 +30,18 @@ public class HttpFetchingC4FlashPlayerVersionSupplier implements Supplier<String
     @Override
     public String get() {
         try {
-            return httpClient.get(SimpleHttpRequest.httpRequestFrom(uri, new HttpResponseTransformer<String>() {
-
-                @Override
-                public String transform(HttpResponsePrologue prologue, InputStream body)
-                        throws HttpException, Exception {
-                    InputStreamReader reader = new InputStreamReader(body);
-                    String content = CharStreams.toString(reader);
-                    Matcher matcher = VERSION_NUMBER_PATTERN.matcher(content);
-                    if (matcher.matches()) {
-                        return matcher.group(1);
+            return httpClient.get(SimpleHttpRequest.httpRequestFrom(
+                    uri,
+                    (prologue, body) -> {
+                        InputStreamReader reader = new InputStreamReader(body);
+                        String content = CharStreams.toString(reader);
+                        Matcher matcher = VERSION_NUMBER_PATTERN.matcher(content);
+                        if (matcher.matches()) {
+                            return matcher.group(1);
+                        }
+                        throw new RuntimeException("Failed to parse return result of " + uri);
                     }
-                    throw new RuntimeException("Failed to parse return result of " + uri + " with value of '" + content + "'");
-                }
-            }));
+            ));
         } catch (Exception e) {
             throw Throwables.propagate(e);
         }
