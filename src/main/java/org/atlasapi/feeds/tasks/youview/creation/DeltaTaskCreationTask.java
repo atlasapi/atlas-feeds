@@ -134,9 +134,6 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     private List<Content> uploadFromAmazon(Iterator<Content> contentPieces,
             YouViewContentProcessor uploadProcessor) {
 
-        //todo: remove that and its remnants
-        OutputContentMerger contentMerger = new OutputContentMerger();
-
         List<Content> deleted = Lists.newArrayList();
         while (contentPieces.hasNext()) {
             Content updatedContent = contentPieces.next();
