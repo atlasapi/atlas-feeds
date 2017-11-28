@@ -246,9 +246,15 @@ public class YouViewUploadController {
         }
     }
 
-    @RequestMapping(value = "/feeds/youview/bbc_nitro/upload/multi")
-    public void uploadMultipleContent(HttpServletRequest request, HttpServletResponse response)
+    @RequestMapping(value = "/feeds/youview/{publisher}/upload/multi")
+    public void uploadMultipleContent(HttpServletRequest request, HttpServletResponse response,
+            @PathVariable("publisher") String publisherStr)
             throws IOException, InterruptedException, ExecutionException, TimeoutException {
+
+        Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
+        if(!publisher.isPresent()){
+            throw new IllegalArgumentException("Publisher "+publisherStr.trim().toUpperCase()+ " was not found.");
+        }
 
         FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
                 .getTelescopeReporter(FeedsReporterNames.YOU_VIEW_MANUAL_UPLOADER);
