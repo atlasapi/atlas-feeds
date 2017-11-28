@@ -261,7 +261,7 @@ public class YouViewUploadController {
         telescope.startReporting();
 
         ContentHierarchyExpander hierarchyExpander =
-                contentHierarchyExpanderFactory.create(Publisher.BBC_NITRO);
+                contentHierarchyExpanderFactory.create(publisher.get());
 
         try{
             List<String> uris = MAPPER.readValue(request.getInputStream(), STRING_LIST);
