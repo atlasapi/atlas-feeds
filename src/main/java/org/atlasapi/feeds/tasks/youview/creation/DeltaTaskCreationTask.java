@@ -154,17 +154,17 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                                 contentQuery
                         );
 
-                Identified mergedContent;
+                Content mergedContent;
 
                 List<Identified> mergedContents = mergedResults.entrySet().iterator().next().getValue();
                 if(mergedContents.size() == 1){
-                    mergedContent = mergedContents.get(0);
+                    mergedContent = (Content) mergedContents.get(0);
                 } else if(mergedContents.isEmpty()){
                     mergedContent = updatedContent;
                     log.warn("The output merger returned no items. The original content was used "
                              + "instead.OriginalContent={}", updatedContent);
                 } else {
-                    mergedContent = mergedContents.get(0);
+                    mergedContent = (Content) mergedContents.get(0);
                     log.warn("The output merger returned more than 1 results. This implies some of "
                              + "the equivalent content could not be merged. OriginalContent={}, "
                              + "ResultOfMerge={}"
@@ -183,13 +183,13 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
                 log.info(
                         "{} swapped {} for repId {}",
-                        (updatedContent.getId()) == (decode(repIdResponse.getRepresentative().getId())),
-                        updatedContent.getId(),
+                        (mergedContent.getId()) == (decode(repIdResponse.getRepresentative().getId())),
+                        mergedContent.getId(),
                         decode(repIdResponse.getRepresentative().getId())
                 );
-                updatedContent.setId(decode(repIdResponse.getRepresentative().getId()));
+                mergedContent.setId(decode(repIdResponse.getRepresentative().getId()));
 
-                uploadProcessor.process(updatedContent);
+                uploadProcessor.process(mergedContent);
                 reportStatus("Uploads: " + uploadProcessor.getResult());
             } else {
                 deleted.add(updatedContent);

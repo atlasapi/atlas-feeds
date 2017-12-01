@@ -329,7 +329,7 @@ public class YouViewUploadController {
      * @throws HttpException
      */
     // TODO this method does far too much right now.
-    // I'd argue its not just this method, its the whole class.
+    // I'd argue its not just this method, its the whole class. Also when this endpoint was
     @RequestMapping(value = "/feeds/youview/{publisher}/upload", method = RequestMethod.POST)
     public void uploadContent(
             HttpServletResponse response, HttpServletRequest request,
