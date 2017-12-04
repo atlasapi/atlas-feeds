@@ -30,7 +30,7 @@ public class UnboxIdGeneratorTest {
     public void testVersionCridGeneration() {
         String versionCrid = generator.generateVersionCrid(createItemWithId(12045L), createVersion());
         
-        assertEquals("crid://stage-metabroadcast.com/content/wtf_version", versionCrid);
+        assertEquals("crid://amazon.com/exec/obidos/ASIN/SOMELOCATIONID_version", versionCrid);
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -53,6 +53,7 @@ public class UnboxIdGeneratorTest {
 
     private Version createVersion() {
         Version version = new Version();
+        version.setCanonicalUri("crid://amazon.com/exec/obidos/ASIN/SOMELOCATIONID");
         version.setId(12045L);
         return version;
     }

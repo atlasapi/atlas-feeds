@@ -11,6 +11,7 @@ import org.atlasapi.equiv.OutputContentMerger;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
+import org.atlasapi.feeds.youview.YouviewContentMerger;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
@@ -48,7 +49,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     private static final Ordering<Content> HIERARCHICAL_ORDER = new HierarchicalOrdering();
 
     private final YouViewContentResolver contentResolver;
-    private final KnownTypeQueryExecutor mergingResolver;
+    private final YouviewContentMerger youviewContentMerger;
     private final ChannelResolver channelResolver;
     private final UpdateTask updateTask;
 
@@ -79,7 +80,11 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         this.channelResolver = checkNotNull(channelResolver);
         this.contentResolver = checkNotNull(contentResolver);
         this.updateTask = checkNotNull(updateTask);
-        this.mergingResolver = checkNotNull(mergingResolver);
+        checkNotNull(mergingResolver);
+        this.youviewContentMerger = new YouviewContentMerger(
+                mergingResolver,
+                getPublisher()
+        );
     }
 
     @Override
@@ -138,56 +143,13 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         while (contentPieces.hasNext()) {
             Content updatedContent = contentPieces.next();
             if (updatedContent.isActivelyPublished()) {
-                //Merge this content with equived contents.
-                ContentQuery contentQuery = ContentQueryBuilder.query()
-                        .isAnEnumIn(
-                                Attributes.DESCRIPTION_PUBLISHER,
-                                ImmutableList.of(getPublisher())
-                        )
-                        .withSelection(Selection.all())
-                        .withApplication(getApplication())
-                        .build();
-
-                Map<String, List<Identified>> mergedResults =
-                        mergingResolver.executeUriQuery(
-                                ImmutableSet.of(updatedContent.getCanonicalUri()),
-                                contentQuery
-                        );
-
                 Content mergedContent;
-
-                List<Identified> mergedContents = mergedResults.entrySet().iterator().next().getValue();
-                if(mergedContents.size() == 1){
-                    mergedContent = (Content) mergedContents.get(0);
-                } else if(mergedContents.isEmpty()){
-                    mergedContent = updatedContent;
-                    log.warn("The output merger returned no items. The original content was used "
-                             + "instead.OriginalContent={}", updatedContent);
-                } else {
-                    mergedContent = (Content) mergedContents.get(0);
-                    log.warn("The output merger returned more than 1 results. This implies some of "
-                             + "the equivalent content could not be merged. OriginalContent={}, "
-                             + "ResultOfMerge={}"
-                            , updatedContent.getCanonicalUri()
-                            , mergedContents);
-                }
-
-                //Update the existing content ID with a representative ID
-                RepresentativeIdResponse repIdResponse;
                 try {
-                    repIdResponse = getRepIdClient().getRepId(mergedContent.getId());
+                    mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
                 } catch (IllegalArgumentException e) {
                     log.error("Cannot process item.", e);
                     continue;
                 }
-
-                log.info(
-                        "{} swapped {} for repId {}",
-                        (mergedContent.getId()) == (decode(repIdResponse.getRepresentative().getId())),
-                        mergedContent.getId(),
-                        decode(repIdResponse.getRepresentative().getId())
-                );
-                mergedContent.setId(decode(repIdResponse.getRepresentative().getId()));
 
                 uploadProcessor.process(mergedContent);
                 reportStatus("Uploads: " + uploadProcessor.getResult());

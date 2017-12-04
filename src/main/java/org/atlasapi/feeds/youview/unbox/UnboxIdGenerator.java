@@ -20,7 +20,11 @@ public class UnboxIdGenerator implements IdGenerator {
     
     @Override
     public String generateVersionCrid(Item item, Version version) {
-        return baseCridFrom(version) + VERSION_SUFFIX;
+        //we cannot base the version on the parent id, because we might have multiple versions
+        //and they need different crids. Consequently, we cannot generate a mbst style crids.
+        //But it shouldn't matter, because we dont want to use the rep-id service on versions,
+        //so that should be fine.
+        return "crid://amazon.com/exec/obidos/ASIN/" +getAsin(version) + VERSION_SUFFIX;
     }
 
     @Override
@@ -44,7 +48,7 @@ public class UnboxIdGenerator implements IdGenerator {
     }
 
     public static Pattern getVersionCridPattern(){
-        return Pattern.compile(MbstCridGenerator.getContentCrid("stage","") + "[A-Za-z0-9]*" + UnboxIdGenerator.VERSION_SUFFIX);
+        return Pattern.compile("crid://amazon.com/exec/obidos/ASIN/" + "[A-Za-z0-9]*" + VERSION_SUFFIX);
     }
 
     private static String baseCridFrom(Identified content) {
