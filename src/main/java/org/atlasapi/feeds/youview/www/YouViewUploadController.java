@@ -24,6 +24,7 @@ import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
 import org.atlasapi.feeds.youview.ContentHierarchyExpanderFactory;
 import org.atlasapi.feeds.youview.IdGeneratorFactory;
+import org.atlasapi.feeds.youview.YouviewContentMerger;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
@@ -277,7 +278,7 @@ public class YouViewUploadController {
             for (final String uri : uris) {
                 ListenableFuture<Try> task = executor.submit(() -> {
                     try {
-                        Optional<Content> content = getContent(uri);
+                        java.util.Optional<Content> content = getContent(uri);
                         if (!content.isPresent()) {
                             telescope.reportFailedEvent("No content was found at uri " + uri);
                             return Try.exception(new IllegalArgumentException(String.format(
@@ -328,8 +329,6 @@ public class YouViewUploadController {
      * @throws IOException
      * @throws HttpException
      */
-    // TODO this method does far too much right now.
-    // I'd argue its not just this method, its the whole class. Also when this endpoint was
     @RequestMapping(value = "/feeds/youview/{publisher}/upload", method = RequestMethod.POST)
     public void uploadContent(
             HttpServletResponse response, HttpServletRequest request,
@@ -406,7 +405,7 @@ public class YouViewUploadController {
             HttpServletResponse response,
             FeedsTelescopeReporter telescope
     ) throws IOException, PayloadGenerationException, IllegalArgumentException {
-        Optional<Content> toBeUploaded = getContent(uri);
+        java.util.Optional<Content> toBeUploaded = getContent(uri);
         if (!toBeUploaded.isPresent()) {
             throw new IllegalArgumentException("content does not exist");
         }
@@ -672,7 +671,7 @@ public class YouViewUploadController {
             return;
         }
 
-        Optional<Content> series = getContent(ref.getUri());
+        java.util.Optional<Content> series = getContent(ref.getUri());
         if (series.isPresent()) {
             String contentCrid = hierarchyExpander.contentCridFor(series.get());
             Task parentTask = taskCreator.taskFor(
@@ -751,7 +750,7 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "required parameter 'type' not specified");
             return;
         }
-        Optional<Content> toBeDeleted = getContent(uri);
+        java.util.Optional<Content> toBeDeleted = getContent(uri);
         if (!toBeDeleted.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
@@ -810,7 +809,7 @@ public class YouViewUploadController {
             if (uri == null) {
                 throw new IllegalArgumentException("Required parameter 'uri' not specified");
             }
-            Optional<Content> toBeRevoked = getContent(uri);
+            java.util.Optional<Content> toBeRevoked = getContent(uri);
             if (!toBeRevoked.isPresent()) {
                 throw new IllegalArgumentException( "Content does not exist");
             }
@@ -858,7 +857,7 @@ public class YouViewUploadController {
             if (uri == null) {
                 throw new IllegalArgumentException("Required parameter 'uri' not specified");
             }
-            Optional<Content> toBeUnrevoked = getContent(uri);
+            java.util.Optional<Content> toBeUnrevoked = getContent(uri);
             if (!toBeUnrevoked.isPresent()) {
                throw new IllegalArgumentException ("Content does not exist");
             }
@@ -911,10 +910,16 @@ public class YouViewUploadController {
         response.sendError(responseCode, message);
     }
 
-    private Optional<Content> getContent(String contentUri) {
+    private java.util.Optional<Content> getContent(String contentUri) {
         ResolvedContent resolvedContent = contentResolver.findByCanonicalUris(ImmutableList.of(
                 contentUri));
-        return Optional.fromNullable((Content) resolvedContent.getFirstValue().valueOrNull());
+
+        Content content = (Content) resolvedContent.getFirstValue().valueOrNull();
+        if (content != null) {
+            YouviewContentMerger merger = new YouviewContentMerger(content.getPublisher());
+            return java.util.Optional.of(merger.equivAndMerge(content));
+        }
+        return java.util.Optional.empty();
     }
 
     private void sendOkResponse(HttpServletResponse response, String message) throws IOException {

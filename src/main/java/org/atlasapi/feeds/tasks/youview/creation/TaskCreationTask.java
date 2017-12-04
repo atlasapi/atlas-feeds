@@ -104,6 +104,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
     }
 
     protected Application getApplication(){
+        //TODO:make this configurable.
         // Configurer.get("applications.client.host").get()
         // Configurer.get("applications.client.env").get()
         ApplicationsClient applicationsClient = ApplicationsClientImpl.create("http://applications-service.production.svc.cluster.local", new MetricRegistry());
@@ -202,7 +203,6 @@ public abstract class TaskCreationTask extends ScheduledTask {
         };
     }
 
-    // TODO tidy this up, ideally simplify/streamline it
     private UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
 
         Map<String, ItemAndVersion> versionHierarchies = Maps.filterValues(
