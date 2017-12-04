@@ -45,6 +45,7 @@ import org.atlasapi.media.entity.Schedule;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
+import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.reporting.telescope.FeedsReporterNames;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
@@ -76,6 +77,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -94,6 +96,7 @@ public class YouViewUploadController {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private @Autowired ContentHierarchyExpanderFactory contentHierarchyExpanderFactory;
+    private @Autowired @Qualifier("YouviewQueryExecutor") KnownTypeQueryExecutor mergingResolver;
 
     static {
         MAPPER.registerModule(new GuavaModule());
@@ -916,7 +919,10 @@ public class YouViewUploadController {
 
         Content content = (Content) resolvedContent.getFirstValue().valueOrNull();
         if (content != null) {
-            YouviewContentMerger merger = new YouviewContentMerger(content.getPublisher());
+            YouviewContentMerger merger = new YouviewContentMerger(
+                    mergingResolver,
+                    content.getPublisher()
+            );
             return java.util.Optional.of(merger.equivAndMerge(content));
         }
         return java.util.Optional.empty();

@@ -28,29 +28,26 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import static com.metabroadcast.representative.util.Utils.decode;
+
 
 public class YouviewContentMerger {
 
     private static final Logger log = LoggerFactory.getLogger(YouviewContentMerger.class);
 
-    private @Autowired @Qualifier("YouviewQueryExecutor") KnownTypeQueryExecutor mergingResolver;
+    private KnownTypeQueryExecutor mergingResolver;
     private final RepIdClientWithApp repIdClient;
     private final Publisher publisher;
 
-    public YouviewContentMerger(Publisher publisher) {
+    public YouviewContentMerger(KnownTypeQueryExecutor mergingResolver, Publisher publisher) {
 
         this.repIdClient = RepIdClientFactory.getRepIdClient(publisher);
-        ;
+        this.mergingResolver = mergingResolver;
         this.publisher = publisher;
     }
 
     public Content equivAndMerge(Content content) throws IllegalArgumentException {
-
-        RepIdClientWithApp repIdClient = RepIdClientFactory.getRepIdClient(publisher);
 
         //Merge this content with equived contents.
         ContentQuery contentQuery = ContentQueryBuilder.query()
