@@ -42,7 +42,7 @@ public class UnboxIdGeneratorTest {
     public void testOnDemandImiGeneration() {
         String onDemandImi = generator.generateOnDemandImi(createItemWithId(12045L), createVersion(), createEncoding(), createLocation());
         
-        assertEquals("imi:amazon.com/123456", onDemandImi);
+        assertEquals("imi:amazon.com/locationUri", onDemandImi);
     }
 
     private Item createItemWithId(Long id) {
@@ -52,19 +52,25 @@ public class UnboxIdGeneratorTest {
     }
 
     private Version createVersion() {
-        return new Version();
+        Version version = new Version();
+        version.setId(12045L);
+        return version;
     }
-
     private Broadcast createBroadcast() {
         return new Broadcast("http://bbc.co.uk/services/bbcone", DateTime.now(), Duration.standardMinutes(30));
     }
 
     private Encoding createEncoding() {
-        return new Encoding();
+        Encoding encoding = new Encoding();
+        encoding.setCanonicalUri("encodingUri");
+        return encoding;
     }
     
     private Location createLocation() {
-        return new Location();
+
+        Location location = new Location();
+        location.setCanonicalUri("locationUri");
+        return location;
     }
 
 }
