@@ -8,6 +8,7 @@ import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
@@ -19,7 +20,7 @@ public class UnboxIdGenerator implements IdGenerator {
     
     @Override
     public String generateVersionCrid(Item item, Version version) {
-        return baseCridFrom(item) + VERSION_SUFFIX;
+        return baseCridFrom(version) + VERSION_SUFFIX;
     }
 
     @Override
@@ -29,7 +30,7 @@ public class UnboxIdGenerator implements IdGenerator {
     
     @Override
     public String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location) {
-        return AMAZON_IMI_PREFIX + getAsin(item);
+        return AMAZON_IMI_PREFIX + getAsin(location);
     }
     
     @Override
@@ -46,13 +47,13 @@ public class UnboxIdGenerator implements IdGenerator {
         return Pattern.compile(MbstCridGenerator.getContentCrid("stage","") + "[A-Za-z0-9]*" + UnboxIdGenerator.VERSION_SUFFIX);
     }
 
-    private static String baseCridFrom(Content content) {
+    private static String baseCridFrom(Identified content) {
 
         return MbstCridGenerator.getContentCrid("stage",content); //todo:hardcoded enviroment.
         //return "crid://amazon.com/exec/obidos/ASIN/" + getAsin(content); old way of generating crids
     }
 
-    private static String getAsin(Content content) {
+    private static String getAsin(Identified content) {
         String[] splinters = content.getCanonicalUri().split("/");
         return splinters[splinters.length-1];
     }

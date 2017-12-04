@@ -10,6 +10,7 @@ import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.PerPublisherConfig;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -27,7 +28,8 @@ public class UpdateTask extends TaskProcessingTask {
                 processor,
                 publisher,
                 destinationType,
-                PerPublisherConfig.TO_TELESCOPE_REPORTER_NAME.get(publisher)
+                publisher == null ? FeedsReporterNames.YOU_VIEW_AUTOMATIC_UPLOADER
+                                  : PerPublisherConfig.TO_TELESCOPE_REPORTER_NAME.get(publisher)
         );
 
     }
