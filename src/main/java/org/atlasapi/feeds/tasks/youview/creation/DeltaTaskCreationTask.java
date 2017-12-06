@@ -146,8 +146,9 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                 Content mergedContent;
                 try {
                     mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
-                } catch (IllegalArgumentException e) {
-                    log.error("Cannot process item.", e);
+                } catch (Exception e) {
+                    log.error("Uploading an item from amazon failed during the attempt to "
+                              + "equiv, merge and get a repId.", e);
                     continue;
                 }
 

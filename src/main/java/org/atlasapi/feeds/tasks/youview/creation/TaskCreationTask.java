@@ -342,7 +342,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
             if (shouldSave(HashType.BROADCAST, broadcastImi, payload.get())) {
                 Task unsavedTask = taskCreator.taskFor(broadcastImi, broadcastHierarchy, payload.get(), action);
-                Task SaVeDTasK = taskStore.save(unsavedTask);
+                taskStore.save(unsavedTask);
                 payloadHashStore.saveHash(HashType.BROADCAST, broadcastImi, payload.get().hash());
             } else {
                 log.debug("Existing hash found for Broadcast {}, not updating", broadcastImi);
@@ -425,14 +425,14 @@ public abstract class TaskCreationTask extends ScheduledTask {
         }
     }
 
-    private boolean shouldSave(HashType type, String imi, Payload payload) {
-        Optional<String> hash = payloadHashStore.getHash(type, imi);
+    private boolean shouldSave(HashType type, String id, Payload payload) {
+        java.util.Optional<String> storedHash = payloadHashStore.getHash(type, id);
 
         if (type == HashType.DELETE) {
-            return !hash.isPresent();
+            return !storedHash.isPresent();
         } else {
-            return (hashCheckMode == HashCheck.IGNORE || !hash.isPresent())
-                    || (hashCheckMode == HashCheck.CHECK && payload.hasChanged(hash.get()));
+            return (hashCheckMode == HashCheck.IGNORE || !storedHash.isPresent())
+                    || (hashCheckMode == HashCheck.CHECK && payload.hasChanged(storedHash.get()));
         }
     }
 

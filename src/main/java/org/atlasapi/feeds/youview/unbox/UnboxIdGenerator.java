@@ -21,9 +21,9 @@ public class UnboxIdGenerator implements IdGenerator {
     @Override
     public String generateVersionCrid(Item item, Version version) {
         //we cannot base the version on the parent id, because we might have multiple versions
-        //and they need different crids. Consequently, we cannot generate a mbst style crids.
-        //But it shouldn't matter, because we dont want to use the rep-id service on versions,
-        //so that should be fine.
+        //and they need different crids. Since versions themselves dont have ids, we cannot generate
+        //mbst style crids. But it shouldn't matter, because we dont want to use the rep-id service
+        //on versions so amazon line crids should be fine.
         return "crid://amazon.com/exec/obidos/ASIN/" +getAsin(version) + VERSION_SUFFIX;
     }
 

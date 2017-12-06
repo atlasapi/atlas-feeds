@@ -38,7 +38,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.slf4j.spi.LocationAwareLogger;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -115,7 +114,7 @@ public class DeltaTaskCreationTaskTest {
         when(content.isActivelyPublished()).thenReturn(true);
         when(idGenerator.generateContentCrid(content)).thenReturn(contentCrid);
         when(payloadHashStore.getHash(HashType.CONTENT, contentCrid))
-                .thenReturn(Optional.of(payload.hash() + "nope"));
+                .thenReturn(java.util.Optional.of(payload.hash() + "nope"));
         when(taskCreator.taskFor(contentCrid, content, payload, action)).thenReturn(withoutId);
         when(taskStore.save(withoutId)).thenReturn(withId);
         when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(payload);
@@ -155,7 +154,7 @@ public class DeltaTaskCreationTaskTest {
         when(content.isActivelyPublished()).thenReturn(true);
         when(idGenerator.generateContentCrid(content)).thenReturn(contentCrid);
         when(payloadHashStore.getHash(HashType.CONTENT, contentCrid))
-                .thenReturn(Optional.<String>absent());
+                .thenReturn(java.util.Optional.<String>empty());
         when(taskCreator.taskFor(contentCrid, content, payload, action)).thenReturn(withoutId);
         when(taskStore.save(withoutId)).thenReturn(withId);
         when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(payload);
@@ -194,7 +193,7 @@ public class DeltaTaskCreationTaskTest {
         when(content.isActivelyPublished()).thenReturn(true);
         when(idGenerator.generateContentCrid(content)).thenReturn(contentCrid);
         when(payloadHashStore.getHash(HashType.CONTENT, contentCrid))
-                .thenReturn(Optional.of(payload.hash()));
+                .thenReturn(java.util.Optional.of(payload.hash()));
         when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(payload);
 
         task.runTask();
@@ -282,7 +281,7 @@ public class DeltaTaskCreationTaskTest {
         when(idGenerator.generateOnDemandImi(content, version, encoding, location))
                 .thenReturn(onDemandImi);
         when(payloadHashStore.getHash(HashType.ON_DEMAND, onDemandImi))
-                .thenReturn(Optional.of(onDemandPayload.hash() + "nope"));
+                .thenReturn(java.util.Optional.of(onDemandPayload.hash() + "nope"));
 
         when(payloadCreator.payloadFrom(eq(onDemandImi), any(ItemOnDemandHierarchy.class)))
                 .thenReturn(onDemandPayload);
@@ -296,7 +295,7 @@ public class DeltaTaskCreationTaskTest {
         // content upload
         when(idGenerator.generateContentCrid(content)).thenReturn(contentCrid);
         when(payloadHashStore.getHash(HashType.CONTENT, contentCrid))
-                .thenReturn(Optional.of(contentPayload.hash() + "nope"));
+                .thenReturn(java.util.Optional.of(contentPayload.hash() + "nope"));
 
         when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(contentPayload);
         when(taskCreator.taskFor(contentCrid, content, contentPayload, action)).thenReturn(withoutId);

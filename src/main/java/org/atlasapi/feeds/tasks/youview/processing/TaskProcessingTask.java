@@ -21,6 +21,7 @@ import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +51,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                     //do brands, series, then everything else (null).
                     TVAElementType.CHANNEL, TVAElementType.BRAND, TVAElementType.SERIES,TVAElementType.ITEM, null
             ));
+    private static int NUM_TO_CHECK_PER_ITTERATION = 1000;
 
     public TaskProcessingTask(
             TaskStore taskStore,
@@ -72,24 +74,33 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                 .getTelescopeReporter(reporterName);
         telescope.startReporting();
 
-        //go through items based on type, then status
+        //go through items based on type, then status, then in chunks of NUM_TO_CHECK_PER_ITTERATION
         for (TVAElementType elementType : ELEMENT_TYPE_ORDER) {
             for (Status status : validStatuses()) {
-                log.info("{} {} {} from publisher {} (null publisher = all)", action(), status, elementType, publisher);
+                log.info("{} {} {} from publisher {} (null publisher = all)",
+                        action(), status, elementType, publisher);
 
                 //We limit the amount of stuff because too many cause a mongo driver exception
                 //(presumably because the query builder does a default sort on date)
-                TaskQuery.Builder query = TaskQuery.builder(Selection.limitedTo(10000), destinationType)
-                        .withTaskStatus(status);
+                int numChecked = 0;
+                do {
+                    log.info("Processing batch {} to {}",
+                            numChecked, numChecked + NUM_TO_CHECK_PER_ITTERATION);
+                    TaskQuery.Builder query = TaskQuery.builder(
+                            Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION),
+                            destinationType)
+                            .withTaskStatus(status);
 
-                if (publisher != null) {
-                    query.withPublisher(publisher);
-                }
-                if (elementType != null) {
-                    query.withTaskType(elementType);
-                }
+                    if (publisher != null) {
+                        query.withPublisher(publisher);
+                    }
+                    if (elementType != null) {
+                        query.withTaskType(elementType);
+                    }
 
-                processTasks(taskStore.allTasks(query.build()), progress, telescope);
+                    processTasks(taskStore.allTasks(query.build()), progress, telescope);
+
+                } while (numChecked > 0 && (numChecked % NUM_TO_CHECK_PER_ITTERATION) == 0);
             }
         }
 
