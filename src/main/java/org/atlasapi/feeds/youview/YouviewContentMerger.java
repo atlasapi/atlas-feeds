@@ -73,11 +73,12 @@ public class YouviewContentMerger {
         } else if (mergedContents.isEmpty()) {
             mergedContent = content;
             log.warn("The output merger returned no items. The original content was used "
-                     + "instead.OriginalContent={}", content);
+                     + "instead. OriginalContent={}", content);
         } else {
             mergedContent = (Content) mergedContents.get(0);
             log.warn("The output merger returned more than 1 results. This implies some of "
-                     + "the equivalent content could not be merged. OriginalContent={}, "
+                     + "the equivalent content could not be merged. The first element of the "
+                     + "result set was used instead. OriginalContent={}, "
                      + "ResultOfMerge={}"
                     , content.getCanonicalUri()
                     , mergedContents);

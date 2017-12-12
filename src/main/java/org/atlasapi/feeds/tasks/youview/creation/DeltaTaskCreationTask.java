@@ -2,12 +2,7 @@ package org.atlasapi.feeds.tasks.youview.creation;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
-import org.atlasapi.content.criteria.ContentQuery;
-import org.atlasapi.content.criteria.ContentQueryBuilder;
-import org.atlasapi.content.criteria.attribute.Attributes;
-import org.atlasapi.equiv.OutputContentMerger;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
@@ -20,16 +15,10 @@ import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
-import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
-import com.metabroadcast.common.query.Selection;
-import com.metabroadcast.representative.api.RepresentativeIdResponse;
-
 import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import org.joda.time.DateTime;
@@ -38,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.metabroadcast.representative.util.Utils.decode;
 
 public class DeltaTaskCreationTask extends TaskCreationTask {
 
@@ -147,8 +135,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                 try {
                     mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
                 } catch (Exception e) {
-                    log.error("Uploading an item from amazon failed during the attempt to "
-                              + "equiv, merge and get a repId.", e);
+                    log.error("Uploading {} from amazon failed during the attempt to "
+                              + "equiv, merge and get a repId.", updatedContent.getId(), e);
                     continue;
                 }
 
