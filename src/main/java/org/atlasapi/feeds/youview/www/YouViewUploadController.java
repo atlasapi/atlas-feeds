@@ -377,6 +377,7 @@ public class YouViewUploadController {
             }
 
             sendOkResponse(response, "Upload for " + uri + " sent successfully");
+            telescope.endReporting();
         }
         catch (Exception e){
             if (immediate) {
