@@ -109,7 +109,7 @@ public class UnboxOnDemandLocationGeneratorTest {
     @Test
     public void testUnboxSpecificFields() {
         Location location = createLocation();
-        location.setCanonicalUri("unbox.amazon.co.uk/SOMELOCATIONID");
+        location.setCanonicalUri("unbox.amazon.co.uk/SOMELOCATIONID/SUBSCRIPTION");
         Encoding encoding = createEncoding(location);
         Version version = createVersion(encoding);
         version.setCanonicalUri("unbox.amazon.co.uk/SOMELOCATIONID");

@@ -42,7 +42,7 @@ public class UnboxIdGeneratorTest {
     public void testOnDemandImiGeneration() {
         String onDemandImi = generator.generateOnDemandImi(createItemWithId(12045L), createVersion(), createEncoding(), createLocation());
         
-        assertEquals("imi:amazon.com/locationUri", onDemandImi);
+        assertEquals("imi:amazon.com/B072NZYNMT", onDemandImi);
     }
 
     private Item createItemWithId(Long id) {
@@ -70,7 +70,7 @@ public class UnboxIdGeneratorTest {
     private Location createLocation() {
 
         Location location = new Location();
-        location.setCanonicalUri("locationUri");
+        location.setCanonicalUri("http://www.amazon.co.uk/gp/product/B072NZYNMT/PAY_TO_RENT");
         return location;
     }
 

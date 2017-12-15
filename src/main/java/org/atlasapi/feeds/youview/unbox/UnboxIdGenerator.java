@@ -64,7 +64,7 @@ public class UnboxIdGenerator implements IdGenerator {
 
     /**
      * CannonicalUris for amazon locations look like this
-     *
+     * http://www.amazon.co.uk/gp/product/B072NZYNMT/PAY_TO_RENT
      * (they are set in main atlas, AmazonUnboxContentExtractor).
      */
     private static String getAsin(Location content) {
