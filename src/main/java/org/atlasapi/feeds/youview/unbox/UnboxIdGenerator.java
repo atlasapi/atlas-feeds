@@ -61,4 +61,14 @@ public class UnboxIdGenerator implements IdGenerator {
         String[] splinters = content.getCanonicalUri().split("/");
         return splinters[splinters.length-1];
     }
+
+    /**
+     * CannonicalUris for amazon locations look like this
+     *
+     * (they are set in main atlas, AmazonUnboxContentExtractor).
+     */
+    private static String getAsin(Location content) {
+        String[] splinters = content.getCanonicalUri().split("/");
+        return splinters[splinters.length-2];
+    }
 }
