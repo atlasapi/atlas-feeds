@@ -22,6 +22,7 @@ public final class DeleteTask extends TaskProcessingTask {
         super(taskStore, processor, destinationType, YOU_VIEW_AUTOMATIC_DELETER, null);
     }
 
+    // For tests, allow use of own telescope
     public DeleteTask(
             TaskStore taskStore,
             TaskProcessor processor,

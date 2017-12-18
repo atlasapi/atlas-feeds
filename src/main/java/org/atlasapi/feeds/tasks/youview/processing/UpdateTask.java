@@ -22,6 +22,7 @@ public class UpdateTask extends TaskProcessingTask {
         super(taskStore, processor, destinationType, YOU_VIEW_AUTOMATIC_UPLOADER, null);
     }
 
+    // For tests, allow use of own telescope
     public UpdateTask(
             TaskStore taskStore,
             TaskProcessor processor,
