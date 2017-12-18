@@ -17,6 +17,8 @@ import com.metabroadcast.common.scheduling.UpdateProgress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -35,22 +37,27 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     private final TaskStore taskStore;
     private final TaskProcessor processor;
     private final DestinationType destinationType;
-    private final TelescopeReporterName reporterName;
+    private final FeedsTelescopeReporter telescope;
 
-    public TaskProcessingTask(TaskStore taskStore, TaskProcessor processor,
+    public TaskProcessingTask(
+            TaskStore taskStore,
+            TaskProcessor processor,
             DestinationType destinationType,
-            TelescopeReporterName reporterName) {
+            TelescopeReporterName reporterName,
+            @Nullable FeedsTelescopeReporter telescope
+    ) {
         this.taskStore = checkNotNull(taskStore);
         this.processor = checkNotNull(processor);
         this.destinationType = checkNotNull(destinationType);
-        this.reporterName = reporterName;
+        this.telescope = telescope != null ? telescope
+                                           : FeedsTelescopeReporterFactory.getInstance()
+                                 .getTelescopeReporter(reporterName);
     }
 
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
-        FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
-                .getTelescopeReporter(reporterName);
+
         telescope.startReporting();
 
         for (Status uncheckedStatus : validStatuses()) {
