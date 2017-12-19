@@ -12,11 +12,16 @@ import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
+import com.metabroadcast.applications.client.metric.Metrics;
 import com.metabroadcast.applications.client.model.internal.Application;
+import com.metabroadcast.applications.client.service.HttpServiceClient;
+import com.metabroadcast.applications.client.translators.ServiceModelTranslator;
+import com.metabroadcast.common.properties.Configurer;
 import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.representative.api.RepresentativeIdResponse;
 import com.metabroadcast.representative.client.RepIdClientWithApp;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
@@ -36,13 +41,21 @@ public class YouviewContentMerger {
 
     public YouviewContentMerger(
             KnownTypeQueryExecutor mergingResolver,
-            Publisher publisher,
-            Application application) {
+            Publisher publisher) {
+        //Get the app ID from the configuration, and translate it to a usable application
+        Metrics metrics = Metrics.create(new MetricRegistry());
+        ServiceModelTranslator translator = ServiceModelTranslator.create(metrics);
+        HttpServiceClient applicationClient =
+                HttpServiceClient.create(Configurer.get("applications.client.host").get(), metrics);
+
+        String appId = PerPublisherConfig.TO_APP_ID_MAP.get(publisher);
+        com.metabroadcast.applications.client.model.service.Application serviceApp
+                = applicationClient.resolve(appId);
+        this.application = translator.translate(serviceApp);
 
         this.repIdClient = RepIdClientFactory.getRepIdClient(publisher);
         this.mergingResolver = mergingResolver;
         this.publisher = publisher;
-        this.application = application;
     }
 
     public Content equivAndMerge(Content content) throws IllegalArgumentException {

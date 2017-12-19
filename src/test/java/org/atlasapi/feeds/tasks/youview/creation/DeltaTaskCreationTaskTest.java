@@ -27,8 +27,6 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
-import com.metabroadcast.applications.client.service.HttpServiceClient;
-
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -66,7 +64,6 @@ public class DeltaTaskCreationTaskTest {
     @Mock private YouViewPayloadHashStore payloadHashStore;
     @Mock private ChannelResolver channelResolver;
     @Mock private KnownTypeQueryExecutor mergingResolver;
-    @Mock private HttpServiceClient applicationClient;
 
     @Before
     public void setUp() {
@@ -82,8 +79,7 @@ public class DeltaTaskCreationTaskTest {
                 contentResolver,
                 payloadHashStore,
                 channelResolver,
-                mergingResolver,
-                applicationClient
+                mergingResolver
         );
         when(channelResolver.allChannels(any(ChannelQuery.class))).thenReturn(ImmutableList.of());
     }

@@ -53,7 +53,6 @@ import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
 import com.metabroadcast.applications.client.metric.Metrics;
 import com.metabroadcast.applications.client.model.internal.Application;
-import com.metabroadcast.applications.client.service.HttpServiceClient;
 import com.metabroadcast.applications.client.translators.ServiceModelTranslator;
 import com.metabroadcast.columbus.telescope.client.EntityType;
 import com.metabroadcast.common.base.Maybe;
@@ -103,7 +102,6 @@ public class YouViewUploadController {
 
     private @Autowired ContentHierarchyExpanderFactory contentHierarchyExpanderFactory;
     private @Autowired @Qualifier("YouviewQueryExecutor") KnownTypeQueryExecutor mergingResolver;
-    private @Autowired HttpServiceClient applicationClient;
 
     static {
         MAPPER.registerModule(new GuavaModule());
@@ -927,18 +925,9 @@ public class YouViewUploadController {
 
         Content content = (Content) resolvedContent.getFirstValue().valueOrNull();
         if (content != null) {
-            //Get the app ID from the configuration, and translate it to a usable application
-            String id = PerPublisherConfig.TO_APP_ID_MAP.get(content.getPublisher());
-            com.metabroadcast.applications.client.model.service.Application serviceApp
-                    = applicationClient.resolve(id);
-            ServiceModelTranslator translator =
-                    ServiceModelTranslator.create(Metrics.create(new MetricRegistry()));
-            Application internalApp = translator.translate(serviceApp);
-
             YouviewContentMerger merger = new YouviewContentMerger(
                     mergingResolver,
-                    content.getPublisher(),
-                    internalApp
+                    content.getPublisher()
             );
             return java.util.Optional.of(merger.equivAndMerge(content));
         }

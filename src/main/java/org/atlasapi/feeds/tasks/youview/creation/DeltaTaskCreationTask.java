@@ -6,7 +6,6 @@ import java.util.List;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
-import org.atlasapi.feeds.youview.PerPublisherConfig;
 import org.atlasapi.feeds.youview.YouviewContentMerger;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -19,12 +18,6 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
-import com.metabroadcast.applications.client.metric.Metrics;
-import com.metabroadcast.applications.client.model.internal.Application;
-import com.metabroadcast.applications.client.service.HttpServiceClient;
-import com.metabroadcast.applications.client.translators.ServiceModelTranslator;
-
-import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
@@ -60,8 +53,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             YouViewContentResolver contentResolver,
             YouViewPayloadHashStore payloadHashStore,
             ChannelResolver channelResolver,
-            KnownTypeQueryExecutor mergingResolver,
-            HttpServiceClient applicationClient) {
+            KnownTypeQueryExecutor mergingResolver) {
         super(
                 lastUpdatedStore,
                 publisher,
@@ -76,18 +68,11 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         this.contentResolver = checkNotNull(contentResolver);
         this.updateTask = checkNotNull(updateTask);
         checkNotNull(mergingResolver);
-        //Get the app ID from the configuration, and translate it to a usable application
-        String id = PerPublisherConfig.TO_APP_ID_MAP.get(publisher);
-        com.metabroadcast.applications.client.model.service.Application serviceApp
-                = applicationClient.resolve(id);
-        ServiceModelTranslator translator =
-                ServiceModelTranslator.create(Metrics.create(new MetricRegistry()));
-        Application internalApp = translator.translate(serviceApp);
+
 
         this.youviewContentMerger = new YouviewContentMerger(
                 mergingResolver,
-                getPublisher(),
-                internalApp);
+                getPublisher());
     }
 
     @Override

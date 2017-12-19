@@ -58,7 +58,6 @@ import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
-import com.metabroadcast.applications.client.service.HttpServiceClient;
 import com.metabroadcast.common.media.MimeType;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.properties.Configurer;
@@ -154,7 +153,6 @@ public class YouViewUploadModule {
     private @Autowired @Qualifier("YouviewQueryExecutor") KnownTypeQueryExecutor mergingResolver;
     private @Autowired ScheduleResolver scheduleResolver;
     private @Autowired ContentHierarchyExpanderFactory contentHierarchyExpanderFactory;
-    private @Autowired HttpServiceClient applicationClient;
 
     private @Value("${youview.upload.validation}") String performValidation;
 
@@ -321,8 +319,7 @@ public class YouViewUploadModule {
                 getDeltaContentResolver(publisher),
                 payloadHashStore(),
                 channelResolver,
-                mergingResolver,
-                applicationClient
+                mergingResolver
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }

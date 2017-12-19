@@ -5,7 +5,6 @@ import java.io.StringWriter;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.atlasapi.application.query.InvalidApiKeyException;
 import org.atlasapi.feeds.RepIdClientFactory;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Payload;
@@ -13,7 +12,6 @@ import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.FilterFactory;
-import org.atlasapi.feeds.youview.PerPublisherConfig;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
@@ -30,8 +28,6 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Publisher;
 
-import com.metabroadcast.applications.client.model.service.Application;
-import com.metabroadcast.applications.client.service.HttpServiceClient;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 import com.metabroadcast.representative.client.RepIdClientWithApp;
