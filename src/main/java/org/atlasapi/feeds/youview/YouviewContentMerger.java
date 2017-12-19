@@ -3,7 +3,6 @@ package org.atlasapi.feeds.youview;
 import java.util.List;
 import java.util.Map;
 
-import org.atlasapi.application.query.InvalidApiKeyException;
 import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.ContentQueryBuilder;
 import org.atlasapi.content.criteria.attribute.Attributes;
@@ -13,17 +12,11 @@ import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
-import com.metabroadcast.applications.client.ApplicationsClient;
-import com.metabroadcast.applications.client.ApplicationsClientImpl;
 import com.metabroadcast.applications.client.model.internal.Application;
-import com.metabroadcast.applications.client.model.internal.Environment;
-import com.metabroadcast.applications.client.query.Query;
-import com.metabroadcast.applications.client.query.Result;
 import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.representative.api.RepresentativeIdResponse;
 import com.metabroadcast.representative.client.RepIdClientWithApp;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.slf4j.Logger;
@@ -39,12 +32,17 @@ public class YouviewContentMerger {
     private KnownTypeQueryExecutor mergingResolver;
     private final RepIdClientWithApp repIdClient;
     private final Publisher publisher;
+    private final Application application;
 
-    public YouviewContentMerger(KnownTypeQueryExecutor mergingResolver, Publisher publisher) {
+    public YouviewContentMerger(
+            KnownTypeQueryExecutor mergingResolver,
+            Publisher publisher,
+            Application application) {
 
         this.repIdClient = RepIdClientFactory.getRepIdClient(publisher);
         this.mergingResolver = mergingResolver;
         this.publisher = publisher;
+        this.application = application;
     }
 
     public Content equivAndMerge(Content content) throws IllegalArgumentException {
@@ -56,7 +54,7 @@ public class YouviewContentMerger {
                         ImmutableList.of(publisher)
                 )
                 .withSelection(Selection.all())
-                .withApplication(getApplication())
+                .withApplication(application)
                 .build();
 
         Map<String, List<Identified>> mergedResults =
@@ -95,37 +93,5 @@ public class YouviewContentMerger {
         );
         mergedContent.setId(decode(repIdResponse.getRepresentative().getId()));
         return mergedContent;
-    }
-
-
-    protected Application getApplication(){
-        //TODO:make this configurable.
-        // Configurer.get("applications.client.host").get()
-        // Configurer.get("applications.client.env").get()
-        ApplicationsClient applicationsClient = ApplicationsClientImpl.create("http://applications-service.production.svc.cluster.local", new MetricRegistry());
-        java.util.Optional<Application> application;
-        try {
-            Result result =
-                    applicationsClient.resolve(Query.create(getEquivApiKey(), Environment.PROD));
-            if (result.getErrorCode().isPresent()) {
-                throw InvalidApiKeyException.create(getEquivApiKey(), result.getErrorCode().get());
-            } else {
-                application = result.getSingleResult();
-            }
-
-            if (!application.isPresent()) {
-                throw new IllegalArgumentException("No application found for API key=" + getEquivApiKey());
-            }
-
-        } catch (InvalidApiKeyException | IllegalArgumentException e) {
-            log.error("There was a problem with the API key.", e);
-            application = java.util.Optional.empty();
-        }
-
-        return application.get();
-    }
-
-    private String getEquivApiKey(){
-        return PerPublisherConfig.TO_API_KEY_MAP.get(this.publisher);
     }
 }

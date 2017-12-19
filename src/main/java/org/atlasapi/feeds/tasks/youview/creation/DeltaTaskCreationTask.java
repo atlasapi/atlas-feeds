@@ -6,6 +6,7 @@ import java.util.List;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
+import org.atlasapi.feeds.youview.PerPublisherConfig;
 import org.atlasapi.feeds.youview.YouviewContentMerger;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -18,6 +19,12 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
+import com.metabroadcast.applications.client.metric.Metrics;
+import com.metabroadcast.applications.client.model.internal.Application;
+import com.metabroadcast.applications.client.service.HttpServiceClient;
+import com.metabroadcast.applications.client.translators.ServiceModelTranslator;
+
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
@@ -53,8 +60,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             YouViewContentResolver contentResolver,
             YouViewPayloadHashStore payloadHashStore,
             ChannelResolver channelResolver,
-            KnownTypeQueryExecutor mergingResolver
-    ) {
+            KnownTypeQueryExecutor mergingResolver,
+            HttpServiceClient applicationClient) {
         super(
                 lastUpdatedStore,
                 publisher,
@@ -69,10 +76,18 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         this.contentResolver = checkNotNull(contentResolver);
         this.updateTask = checkNotNull(updateTask);
         checkNotNull(mergingResolver);
+        //Get the app ID from the configuration, and translate it to a usable application
+        String id = PerPublisherConfig.TO_APP_ID_MAP.get(publisher);
+        com.metabroadcast.applications.client.model.service.Application serviceApp
+                = applicationClient.resolve(id);
+        ServiceModelTranslator translator =
+                ServiceModelTranslator.create(Metrics.create(new MetricRegistry()));
+        Application internalApp = translator.translate(serviceApp);
+
         this.youviewContentMerger = new YouviewContentMerger(
                 mergingResolver,
-                getPublisher()
-        );
+                getPublisher(),
+                internalApp);
     }
 
     @Override
@@ -86,7 +101,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         }
         
         Optional<DateTime> startOfTask = Optional.of(new DateTime());
-        log.info("Started a new delta run for {}", getPublisher());
+        log.info("Started a delta YV task creation process for {} from {}", getPublisher(), lastUpdated);
 
         Iterator<Content> updatedContent = contentResolver.updatedSince(
                 lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD)
@@ -113,14 +128,14 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             reportStatus("Deletes: " + deletionProcessor.getResult());
         }
 
-        log.info("@@@" + getPublisher() + " setting last update time to " + startOfTask.get());
+        log.info("Done creating {} tasks for YV up to {}.", getPublisher(), startOfTask.get());
         setLastUpdatedTime(startOfTask.get());
 
-        log.info("@@@" + getPublisher() + " Starting the upload task.");
+        log.info("Started uploading YV tasks from {}.", getPublisher());
         reportStatus("Uploading tasks to YouView");
         updateTask.run();
 
-        log.info("@@@" + getPublisher() + " Done");
+        log.info("Done uploading tasks to YV from {}", getPublisher());
         reportStatus("Done uploading tasks to YouView");
     }
 

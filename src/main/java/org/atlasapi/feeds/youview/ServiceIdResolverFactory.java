@@ -7,7 +7,6 @@ import org.atlasapi.media.entity.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-@Import({ NitroTVAnytimeModule.class})
 public class ServiceIdResolverFactory {
 
     @Autowired

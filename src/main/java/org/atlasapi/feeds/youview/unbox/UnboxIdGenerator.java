@@ -13,6 +13,8 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
 
+import com.metabroadcast.common.properties.Configurer;
+
 public class UnboxIdGenerator implements IdGenerator {
 
     private static final String AMAZON_IMI_PREFIX = "imi:amazon.com/";
@@ -23,7 +25,7 @@ public class UnboxIdGenerator implements IdGenerator {
         //we cannot base the version on the parent id, because we might have multiple versions
         //and they need different crids. Since versions themselves dont have ids, we cannot generate
         //mbst style crids. But it shouldn't matter, because we dont want to use the rep-id service
-        //on versions so amazon line crids should be fine.
+        //on versions so amazon-like crids should be fine.
         return "crid://amazon.com/exec/obidos/ASIN/" +getAsin(version) + VERSION_SUFFIX;
     }
 
@@ -33,6 +35,9 @@ public class UnboxIdGenerator implements IdGenerator {
     }
     
     @Override
+    // If you ever want to create different IMIs for content that is available via 2 means
+    // (e.g. one ASIN for both subscription and pay_to_buy)
+    // consider using either the canonical uri, or location.getPolicy().getRevenueContract().
     public String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location) {
         return AMAZON_IMI_PREFIX + getAsin(location);
     }
@@ -52,14 +57,13 @@ public class UnboxIdGenerator implements IdGenerator {
     }
 
     private static String baseCridFrom(Identified content) {
-
-        return MbstCridGenerator.getContentCrid("stage",content); //todo:hardcoded enviroment.
+        return MbstCridGenerator.getContentCrid(Configurer.getPlatform(), content);
         //return "crid://amazon.com/exec/obidos/ASIN/" + getAsin(content); old way of generating crids
     }
 
     private static String getAsin(Identified content) {
         String[] splinters = content.getCanonicalUri().split("/");
-        return splinters[splinters.length-1];
+        return splinters[splinters.length - 1];
     }
 
     /**
@@ -69,6 +73,6 @@ public class UnboxIdGenerator implements IdGenerator {
      */
     private static String getAsin(Location content) {
         String[] splinters = content.getCanonicalUri().split("/");
-        return splinters[splinters.length-2];
+        return splinters[splinters.length - 2];
     }
 }
