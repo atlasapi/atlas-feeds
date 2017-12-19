@@ -24,6 +24,7 @@ import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
 import org.atlasapi.feeds.youview.ContentHierarchyExpanderFactory;
 import org.atlasapi.feeds.youview.IdGeneratorFactory;
+import org.atlasapi.feeds.youview.PerPublisherConfig;
 import org.atlasapi.feeds.youview.YouviewContentMerger;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
@@ -50,6 +51,10 @@ import org.atlasapi.reporting.telescope.FeedsReporterNames;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
+import com.metabroadcast.applications.client.metric.Metrics;
+import com.metabroadcast.applications.client.model.internal.Application;
+import com.metabroadcast.applications.client.service.HttpServiceClient;
+import com.metabroadcast.applications.client.translators.ServiceModelTranslator;
 import com.metabroadcast.columbus.telescope.client.EntityType;
 import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.http.HttpException;
@@ -57,6 +62,7 @@ import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
 
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -97,6 +103,7 @@ public class YouViewUploadController {
 
     private @Autowired ContentHierarchyExpanderFactory contentHierarchyExpanderFactory;
     private @Autowired @Qualifier("YouviewQueryExecutor") KnownTypeQueryExecutor mergingResolver;
+    private @Autowired HttpServiceClient applicationClient;
 
     static {
         MAPPER.registerModule(new GuavaModule());
@@ -915,14 +922,23 @@ public class YouViewUploadController {
     }
 
     private java.util.Optional<Content> getContent(String contentUri) {
-        ResolvedContent resolvedContent = contentResolver.findByCanonicalUris(ImmutableList.of(
-                contentUri));
+        ResolvedContent resolvedContent =
+                contentResolver.findByCanonicalUris(ImmutableList.of(contentUri));
 
         Content content = (Content) resolvedContent.getFirstValue().valueOrNull();
         if (content != null) {
+            //Get the app ID from the configuration, and translate it to a usable application
+            String id = PerPublisherConfig.TO_APP_ID_MAP.get(content.getPublisher());
+            com.metabroadcast.applications.client.model.service.Application serviceApp
+                    = applicationClient.resolve(id);
+            ServiceModelTranslator translator =
+                    ServiceModelTranslator.create(Metrics.create(new MetricRegistry()));
+            Application internalApp = translator.translate(serviceApp);
+
             YouviewContentMerger merger = new YouviewContentMerger(
                     mergingResolver,
-                    content.getPublisher()
+                    content.getPublisher(),
+                    internalApp
             );
             return java.util.Optional.of(merger.equivAndMerge(content));
         }

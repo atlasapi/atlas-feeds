@@ -26,13 +26,8 @@ public class PerPublisherConfig {
             Publisher.AMAZON_UNBOX, FeedsReporterNames.YOU_VIEW_AUTOMATIC_UPLOADER_AMAZON
     );
 
-    public static final Map<Publisher, String> TO_API_KEY_MAP = ImmutableMap.of(
-            Publisher.BBC_NITRO, Configurer.get("youview.upload.nitro.equivapikey").get(),
-            Publisher.AMAZON_UNBOX, Configurer.get("youview.upload.unbox.equivapikey").get()
-    );
-
     public static final Map<Publisher, String> TO_APP_ID_MAP = ImmutableMap.of(
-            Publisher.BBC_NITRO, "nitroAppId", //not in use. Equiv not running for nitro.
-            Publisher.AMAZON_UNBOX, "jd9"
+            Publisher.BBC_NITRO, Configurer.get("YOUVIEW_UPLOAD_NITRO_EQUIVAPPID").get(), //not in use. Equiv not running for nitro.
+            Publisher.AMAZON_UNBOX, Configurer.get("YOUVIEW_UPLOAD_UNBOX_EQUIVAPPID").get()
     );
 }

@@ -30,17 +30,12 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Publisher;
 
-import com.metabroadcast.applications.client.ApplicationsClient;
-import com.metabroadcast.applications.client.ApplicationsClientImpl;
-import com.metabroadcast.applications.client.model.internal.Application;
-import com.metabroadcast.applications.client.model.internal.Environment;
-import com.metabroadcast.applications.client.query.Query;
-import com.metabroadcast.applications.client.query.Result;
+import com.metabroadcast.applications.client.model.service.Application;
+import com.metabroadcast.applications.client.service.HttpServiceClient;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 import com.metabroadcast.representative.client.RepIdClientWithApp;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import org.joda.time.DateTime;
@@ -73,8 +68,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             TaskStore taskStore,
             TaskCreator taskCreator,
             PayloadCreator payloadCreator,
-            YouViewPayloadHashStore payloadHashStore
-    ) {
+            YouViewPayloadHashStore payloadHashStore) {
         this(lastUpdatedStore, publisher, hierarchyExpander, idGenerator, taskStore, taskCreator,
                 payloadCreator, payloadHashStore, HashCheck.CHECK
         );
@@ -101,37 +95,6 @@ public abstract class TaskCreationTask extends ScheduledTask {
         this.payloadHashStore = checkNotNull(payloadHashStore);
         this.hashCheckMode = hashCheckMode;
         this.repIdClient = RepIdClientFactory.getRepIdClient(publisher);
-    }
-
-    protected Application getApplication(){
-        //TODO:make this configurable.
-        // Configurer.get("applications.client.host").get()
-        // Configurer.get("applications.client.env").get()
-        ApplicationsClient applicationsClient = ApplicationsClientImpl.create("http://applications-service.production.svc.cluster.local", new MetricRegistry());
-        java.util.Optional<Application> application;
-        try {
-            Result result =
-                    applicationsClient.resolve(Query.create(getEquivApiKey(), Environment.PROD));
-            if (result.getErrorCode().isPresent()) {
-                throw InvalidApiKeyException.create(getEquivApiKey(), result.getErrorCode().get());
-            } else {
-                application = result.getSingleResult();
-            }
-
-            if (!application.isPresent()) {
-                throw new IllegalArgumentException("No application found for API key=" + getEquivApiKey());
-            }
-
-        } catch (InvalidApiKeyException | IllegalArgumentException e) {
-            log.error("There was a problem with the API key.", e);
-            application = java.util.Optional.empty();
-        }
-
-        return application.get();
-    }
-
-    private String getEquivApiKey(){
-        return PerPublisherConfig.TO_API_KEY_MAP.get(this.publisher);
     }
 
     protected Publisher getPublisher(){

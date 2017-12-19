@@ -11,6 +11,8 @@ import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import tva.metadata._2010.ProgramInformationType;
@@ -22,10 +24,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.intl.Countries;
 
-public class UnboxProgramInformationGeneratorTest {
-    
+public class UnboxProgramInformationGeneratorTest extends org.atlasapi.TestsWithConfiguration {
+
     private IdGenerator idGenerator = new UnboxIdGenerator();
-    
     private final ProgramInformationGenerator generator = new UnboxProgramInformationGenerator(idGenerator);
 
     @Test
