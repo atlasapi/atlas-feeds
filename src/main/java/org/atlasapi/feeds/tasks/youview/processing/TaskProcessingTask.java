@@ -48,7 +48,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     private static final List<TVAElementType> ELEMENT_TYPE_ORDER =
             Collections.unmodifiableList(Arrays.asList(
                     //do brands, series, then everything else (null).
-                    TVAElementType.CHANNEL, TVAElementType.BRAND, TVAElementType.SERIES,TVAElementType.ITEM, null
+                    TVAElementType.CHANNEL, TVAElementType.BRAND, TVAElementType.SERIES, TVAElementType.ITEM, null
             ));
     private static final int NUM_TO_CHECK_PER_ITTERATION = 1000;
 
@@ -81,7 +81,8 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                 int numChecked = 0;
                 do {
                     log.info("{} {} {} from publisher {} (batch {} to {})",
-                            action(), status, elementType,
+                            action(), status,
+                            (elementType == null ? "" : elementType),
                             (publisher == null ? "ALL" : publisher),
                             numChecked, numChecked + NUM_TO_CHECK_PER_ITTERATION);
 
@@ -103,8 +104,9 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                     numChecked += processTasks(taskStore.allTasks(query.build()), progress, telescope);
 
                 } while (numChecked > 0 && (numChecked % NUM_TO_CHECK_PER_ITTERATION) == 0);
-                log.info("{} {} {} from publisher {} is finished. Total items processed {})",
-                        action(), status, elementType,
+                log.info("{} {} {} from publisher {} is finished. Total items processed {} ",
+                        action(), status,
+                        (elementType == null ? "" : elementType),
                         (publisher == null ? "ALL" : publisher),
                         numChecked);
             }

@@ -144,8 +144,6 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                 continue;
             }
 
-            Episode updatedContent1 = (Episode) updatedContent;
-            updatedContent1.getEpisodeNumber();
             Content mergedContent;
             try {
                 mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
