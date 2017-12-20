@@ -58,7 +58,7 @@ public class YouviewContentMerger {
         this.publisher = publisher;
     }
 
-    public Content equivAndMerge(Content content) throws IllegalArgumentException {
+    public Content equivAndMerge(Content content) {
 
         //Merge this content with equived contents.
         ContentQuery contentQuery = ContentQueryBuilder.query()

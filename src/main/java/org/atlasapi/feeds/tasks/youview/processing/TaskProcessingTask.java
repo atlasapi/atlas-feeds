@@ -89,7 +89,8 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                     TaskQuery.Builder query = TaskQuery.builder(
                             Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION),
                             destinationType)
-                            .withTaskStatus(status);
+                            .withTaskStatus(status)
+                            .withTaskAction(action());
 
                     if (publisher != null) {
                         query.withPublisher(publisher);
@@ -98,7 +99,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                         query.withTaskType(elementType);
                     }
 
-                    processTasks(taskStore.allTasks(query.build()), progress, telescope);
+                    numChecked += processTasks(taskStore.allTasks(query.build()), progress, telescope);
 
                 } while (numChecked > 0 && (numChecked % NUM_TO_CHECK_PER_ITTERATION) == 0);
             }
@@ -107,14 +108,13 @@ public abstract class TaskProcessingTask extends ScheduledTask {
         telescope.endReporting();
     }
 
-    private void processTasks(Iterable<Task> tasksToCheck, UpdateProgress progress, FeedsTelescopeReporter telescope) {
+    private int processTasks(Iterable<Task> tasksToCheck, UpdateProgress progress, FeedsTelescopeReporter telescope) {
+        int tasksProcessed = 0;
         for (Task task : tasksToCheck) { //NOSONAR
             if (!shouldContinue()) {
                 break;
             }
-            if (!action().equals(task.action())) {
-                continue;
-            }
+            tasksProcessed++;
             try {
                 processor.process(task, telescope);
                 progress = progress.reduce(UpdateProgress.SUCCESS);
@@ -132,6 +132,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
             }
             reportStatus(progress.toString());
         }
+        return tasksProcessed;
     }
     public Publisher getPublisher(){
         return this.publisher;
