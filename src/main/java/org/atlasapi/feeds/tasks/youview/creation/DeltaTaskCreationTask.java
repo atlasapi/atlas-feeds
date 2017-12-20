@@ -2,6 +2,7 @@ package org.atlasapi.feeds.tasks.youview.creation;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
@@ -15,6 +16,7 @@ import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
@@ -130,21 +132,32 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         List<Content> deleted = Lists.newArrayList();
         while (contentPieces.hasNext()) {
             Content updatedContent = contentPieces.next();
-            if (updatedContent.isActivelyPublished()) {
-                Content mergedContent;
-                try {
-                    mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
-                } catch (Exception e) {
-                    log.error("Uploading {} from amazon failed during the attempt to "
-                              + "equiv, merge and get a repId.", updatedContent.getId(), e);
-                    continue;
-                }
-
-                uploadProcessor.process(mergedContent);
-                reportStatus("Uploads: " + uploadProcessor.getResult());
-            } else {
+            if (!updatedContent.isActivelyPublished()) {
                 deleted.add(updatedContent);
+                continue;
             }
+
+            // YV specifically requested that we do not update episodes with episode number 0.
+            // This is because to the best of our knowledge they are trailers.
+            if(updatedContent instanceof Episode &&
+               Objects.equals(0, ((Episode)updatedContent).getEpisodeNumber())){
+                continue;
+            }
+
+            Episode updatedContent1 = (Episode) updatedContent;
+            updatedContent1.getEpisodeNumber();
+            Content mergedContent;
+            try {
+                mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
+            } catch (Exception e) {
+                log.error("Uploading {} from amazon failed during the attempt to "
+                          + "equiv, merge and get a repId.", updatedContent.getId(), e);
+                continue;
+            }
+
+            uploadProcessor.process(mergedContent);
+            reportStatus("Uploads: " + uploadProcessor.getResult());
+
         }
         return deleted;
     }

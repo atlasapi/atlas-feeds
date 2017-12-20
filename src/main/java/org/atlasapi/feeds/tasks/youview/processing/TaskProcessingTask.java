@@ -21,7 +21,6 @@ import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +50,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                     //do brands, series, then everything else (null).
                     TVAElementType.CHANNEL, TVAElementType.BRAND, TVAElementType.SERIES,TVAElementType.ITEM, null
             ));
-    private static int NUM_TO_CHECK_PER_ITTERATION = 1000;
+    private static final int NUM_TO_CHECK_PER_ITTERATION = 1000;
 
     public TaskProcessingTask(
             TaskStore taskStore,
@@ -77,18 +76,20 @@ public abstract class TaskProcessingTask extends ScheduledTask {
         //go through items based on type, then status, then in chunks of NUM_TO_CHECK_PER_ITTERATION
         for (TVAElementType elementType : ELEMENT_TYPE_ORDER) {
             for (Status status : validStatuses()) {
-                log.info("{} {} {} from publisher {} (null publisher = all)",
-                        action(), status, elementType, publisher);
-
                 //We limit the amount of stuff because too many cause a mongo driver exception
                 //(presumably because the query builder does a default sort on date)
                 int numChecked = 0;
                 do {
-                    log.info("Processing batch {} to {}",
+                    log.info("{} {} {} from publisher {} (batch {} to {})",
+                            action(), status, elementType,
+                            (publisher == null ? "ALL" : publisher),
                             numChecked, numChecked + NUM_TO_CHECK_PER_ITTERATION);
-                    TaskQuery.Builder query = TaskQuery.builder(
-                            Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION),
-                            destinationType)
+
+                    TaskQuery.Builder query = TaskQuery
+                            .builder(
+                                    Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION),
+                                    destinationType
+                            )
                             .withTaskStatus(status)
                             .withTaskAction(action());
 
@@ -102,6 +103,10 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                     numChecked += processTasks(taskStore.allTasks(query.build()), progress, telescope);
 
                 } while (numChecked > 0 && (numChecked % NUM_TO_CHECK_PER_ITTERATION) == 0);
+                log.info("{} {} {} from publisher {} is finished. Total items processed {})",
+                        action(), status, elementType,
+                        (publisher == null ? "ALL" : publisher),
+                        numChecked);
             }
         }
 
@@ -110,7 +115,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
 
     private int processTasks(Iterable<Task> tasksToCheck, UpdateProgress progress, FeedsTelescopeReporter telescope) {
         int tasksProcessed = 0;
-        for (Task task : tasksToCheck) { //NOSONAR
+        for (Task task : tasksToCheck) {
             if (!shouldContinue()) {
                 break;
             }
