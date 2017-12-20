@@ -1,11 +1,10 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
@@ -23,6 +22,16 @@ import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 
+import com.metabroadcast.common.text.Truncator;
+
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Strings;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import tva.metadata._2010.BaseProgramGroupTypeType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ControlledTermType;
@@ -44,20 +53,12 @@ import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Strings;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.metabroadcast.common.text.Truncator;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class UnboxGroupInformationGenerator implements GroupInformationGenerator {
 
-    private static final String UNBOX_GROUP_INFO_SERVICE_ID = "http://unbox.amazon.co.uk/ContentOwning";
+    public static final String UNBOX_GROUP_INFO_SERVICE_ID = "http://amazon.com/services/content_owning/primevideo";
     private static final int DEFAULT_IMAGE_HEIGHT = 320;
     private static final int DEFAULT_IMAGE_WIDTH = 240;
     
@@ -154,7 +155,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     }
     
     @Override
-    public GroupInformationType generate(Series series, Optional<Brand> brand, Item firstChild) {
+    public GroupInformationType generate(Series series, Optional<Brand> brand, @Nullable Item firstChild) {
         GroupInformationType groupInfo = generateWithCommonFields(series, firstChild);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));
@@ -175,7 +176,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     }
     
     @Override
-    public GroupInformationType generate(Brand brand, Item item) {
+    public GroupInformationType generate(Brand brand, @Nullable Item item) {
         GroupInformationType groupInfo = generateWithCommonFields(brand, item);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
@@ -185,7 +186,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         return groupInfo;
     }
     
-    private GroupInformationType generateWithCommonFields(Content content, Item item) {
+    private GroupInformationType generateWithCommonFields(Content content, @Nullable Item item) {
         GroupInformationType groupInfo = new GroupInformationType();
         
         groupInfo.setGroupId(idGenerator.generateContentCrid(content));
@@ -200,7 +201,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         return type;
     }
 
-    private BasicContentDescriptionType generateBasicDescription(Content content, Item item) {
+    private BasicContentDescriptionType generateBasicDescription(Content content, @Nullable Item item) {
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
         
         if (content.getTitle() != null) {
@@ -242,8 +243,8 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         return title;
     }
 
-    private Optional<RelatedMaterialType> generateRelatedMaterial(Content content) {
-        if (Strings.isNullOrEmpty(content.getImage())) {
+    private Optional<RelatedMaterialType> generateRelatedMaterial(@Nullable Content content) {
+        if (content == null || Strings.isNullOrEmpty(content.getImage())) {
             return Optional.absent();
         }
         ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
@@ -259,7 +260,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     private ContentPropertiesType generateContentProperties(Content content) {
         ContentPropertiesType contentProperties = new ContentPropertiesType();
         StillImageContentAttributesType attributes = new StillImageContentAttributesType();
-        
+
         if (content.getImages() == null || content.getImages().isEmpty()) {
             attributes.setWidth(DEFAULT_IMAGE_WIDTH);
             attributes.setHeight(DEFAULT_IMAGE_HEIGHT);
@@ -268,7 +269,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
             attributes.setWidth(image.getWidth());
             attributes.setHeight(image.getHeight());
         }
-        
+
         ControlledTermType primaryRole = new ControlledTermType();
         primaryRole.setHref(YOUVIEW_IMAGE_ATTRIBUTE_PRIMARY_ROLE);
         attributes.getIntendedUse().add(primaryRole);

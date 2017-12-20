@@ -3,11 +3,12 @@ package org.atlasapi.feeds.youview.resolution;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
+import org.atlasapi.feeds.youview.nitro.NitroServiceIdResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -21,20 +22,22 @@ import com.google.common.collect.Iterators;
 
 public class UpdatedContentResolverTest {
     
-    private static final Publisher PUBLISHER = Publisher.METABROADCAST;
+    private static final Publisher PUBLISHER = Publisher.BBC_NITRO;
     private static final DateTime RECENT_TIMESTAMP = DateTime.now();
     private static final Content VIDEO_CONTENT = createItemWithMediaType(MediaType.VIDEO, "film");
     private static final Content AUDIO_CONTENT = createItemWithMediaType(MediaType.AUDIO, "audio");
     
     private LastUpdatedContentFinder contentFinder = Mockito.mock(LastUpdatedContentFinder.class);
-    private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
+    private NitroServiceIdResolver nitroServiceIdResolver = Mockito.mock(NitroServiceIdResolver.class);
+    private ContentResolver contentResolver = Mockito.mock(ContentResolver.class);
     
-    private final YouViewContentResolver resolver = new UpdatedContentResolver(contentFinder, bbcServiceIdResolver, PUBLISHER);
+    private final YouViewContentResolver resolver =
+            new UpdatedContentResolver(contentFinder, contentResolver, PUBLISHER);
 
     @Before
     public void setup() {
         when(contentFinder.updatedSince(PUBLISHER, RECENT_TIMESTAMP)).thenReturn(Iterators.forArray(VIDEO_CONTENT, AUDIO_CONTENT));
-        when(bbcServiceIdResolver.resolveMasterBrandId(VIDEO_CONTENT)).thenReturn(Optional.of("abc"));
+        when(nitroServiceIdResolver.resolveMasterBrandId(VIDEO_CONTENT)).thenReturn(Optional.of("abc"));
     }
 
     @Test

@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview.hierarchy;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Map;
 
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -17,6 +15,8 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class OnDemandHierarchyExpander {
@@ -87,10 +87,9 @@ public class OnDemandHierarchyExpander {
             @Override
             public boolean apply(Location input) {
                 Policy policy = input.getPolicy();
-                if (policy == null) {
-                    return false;
-                }
-                return policy.getPlatform() != null && Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform());
+                return (policy !=null && policy.getPlatform() != null &&
+                        (Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform())
+                         || Platform.YOUVIEW_AMAZON.equals(policy.getPlatform())));
             }
         };
     }

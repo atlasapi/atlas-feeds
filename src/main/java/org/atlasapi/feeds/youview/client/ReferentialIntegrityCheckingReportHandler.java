@@ -1,8 +1,6 @@
 package org.atlasapi.feeds.youview.client;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
-
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,36 +11,46 @@ import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
+import org.atlasapi.feeds.youview.IdGeneratorFactory;
 import org.atlasapi.feeds.youview.UnexpectedContentTypeException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
+import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.ControlledMessageType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.FragmentReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tva.mpeg7._2008.TextualType;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
 
 
 public class ReferentialIntegrityCheckingReportHandler implements YouViewReportHandler {
 
-    private static final Pattern VERSION_CRID_PATTERN = Pattern.compile("crid://nitro.bbc.co.uk/iplayer/youview/[a-z0-9]*");
-    private static final String REFERENTIAL_INTEGRITY_REASON 
+    private static final Map<Publisher, Pattern> PUBLISHER_TO_PATTERN_MAP = ImmutableMap.of(
+            Publisher.BBC_NITRO, Pattern.compile("crid://nitro.bbc.co.uk/iplayer/youview/[a-z0-9]*"),
+            Publisher.AMAZON_UNBOX, UnboxIdGenerator.getVersionCridPattern()
+    );
+
+    private static final String REFERENTIAL_INTEGRITY_REASON
             = "http://refdata.youview.com/mpeg7cs/YouViewMetadataIngestReasonCS/2010-09-23#semantic-referential_integrity";
     
     
@@ -50,21 +58,21 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
     
     private final ContentResolver contentResolver;
     private final TaskCreator taskCreator;
-    private final IdGenerator idGenerator;
     private final TaskStore taskStore;
-    private final VersionHierarchyExpander versionExpander;
     private final ContentHierarchyExtractor hierarchyExtractor;
     private PayloadCreator payloadCreator;
 
-    public ReferentialIntegrityCheckingReportHandler(TaskCreator taskCreator, IdGenerator idGenerator,
-            TaskStore taskStore, PayloadCreator payloadCreator, ContentResolver contentResolver, 
-            VersionHierarchyExpander versionExpander, ContentHierarchyExtractor hierarchyExtractor) {
+    public ReferentialIntegrityCheckingReportHandler(
+            TaskCreator taskCreator,
+            TaskStore taskStore,
+            PayloadCreator payloadCreator,
+            ContentResolver contentResolver,
+            ContentHierarchyExtractor hierarchyExtractor) {
+
         this.taskCreator = checkNotNull(taskCreator);
         this.taskStore = checkNotNull(taskStore);
         this.payloadCreator = checkNotNull(payloadCreator);
-        this.idGenerator = checkNotNull(idGenerator);
         this.contentResolver = checkNotNull(contentResolver);
-        this.versionExpander = checkNotNull(versionExpander);
         this.hierarchyExtractor = checkNotNull(hierarchyExtractor);
     }
 
@@ -87,7 +95,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         Preconditions.checkArgument(YOUVIEW.equals(task.destination().type()), "Expected feed type " + YOUVIEW.name() + ", was " + task.destination().type() + " for task " + task.id());
 
         YouViewDestination destination = (YouViewDestination) task.destination();
-        log.trace(String.format(
+        log.info(String.format(
                 "Handling missing content for %s: %s, content %s", 
                 destination.elementType().name(), 
                 destination.elementId(), 
@@ -130,6 +138,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
             throw new UnexpectedContentTypeException(Series.class, resolved);
         }
         Series series = (Series) resolved;
+
         Optional<Brand> brand = hierarchyExtractor.brandFor(series);
         if (!brand.isPresent()) {
             throw new RuntimeException("unable to resolve expected brand for series " + contentUri);
@@ -162,6 +171,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
     }
 
     private void createAndWriteTaskFor(Content content) throws PayloadGenerationException {
+        IdGenerator idGenerator = IdGeneratorFactory.create(content.getPublisher());
         String contentCrid = idGenerator.generateContentCrid(content);
         taskStore.save(taskCreator.taskFor(contentCrid, content, payloadCreator.payloadFrom(contentCrid, content), Action.UPDATE));
     }
@@ -171,7 +181,9 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         if (!(resolved instanceof Item)) {
             throw new UnexpectedContentTypeException(Item.class, resolved);
         }
-        String versionCrid = resolveVersionId(message.getComment());
+        String versionCrid = resolveVersionId(resolved.getPublisher(), message.getComment());
+        IdGenerator idGenerator = IdGeneratorFactory.create(resolved.getPublisher());
+        VersionHierarchyExpander versionExpander = new VersionHierarchyExpander(idGenerator);
         ItemAndVersion versionHierarchy = versionExpander.expandHierarchy((Item) resolved).get(versionCrid);
         if (versionHierarchy == null) {
             throw new RuntimeException("Missing version crid " + versionCrid + " is not a valid version crid for content " + contentUri);
@@ -180,10 +192,11 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, payload, Action.UPDATE));
     }
 
-    private String resolveVersionId(TextualType comment) {
-        Matcher matcher = VERSION_CRID_PATTERN.matcher(comment.getValue());
+    private String resolveVersionId(Publisher publisher, TextualType comment) {
+        Pattern pattern = PUBLISHER_TO_PATTERN_MAP.get(publisher);
+        Matcher matcher = pattern.matcher(comment.getValue());
         if (!matcher.find()) {
-            throw new RuntimeException("unable to match version crid pattern in comment: " + comment.getValue());
+            throw new RuntimeException("Unable to match version crid pattern in comment: " + comment.getValue());
         }
         return matcher.group();
     }
@@ -192,7 +205,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(contentUri));
         Content content = (Content) resolved.asResolvedMap().get(contentUri);
         if (content == null) {
-            throw new RuntimeException("unable to resolve content for uri " + contentUri);
+            throw new RuntimeException("Unable to resolve content for uri " + contentUri);
         }
         return content;
     }

@@ -39,7 +39,6 @@ import com.metabroadcast.common.intl.Country;
 public class UnboxProgramInformationGenerator implements ProgramInformationGenerator {
     
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
-    private static final String UNBOX_DEEP_LINKING_ID = "deep_linking_id.unbox.amazon.co.uk";
     
     private static final Predicate<Certificate> FILTER_CERT_FOR_GB = new Predicate<Certificate>() {
         @Override
@@ -95,7 +94,7 @@ public class UnboxProgramInformationGenerator implements ProgramInformationGener
     private UniqueIDType generateOtherId(Item item) {
         UniqueIDType id = new UniqueIDType();
         
-        id.setAuthority(UNBOX_DEEP_LINKING_ID);
+        id.setAuthority(UnboxOnDemandLocationGenerator.UNBOX_DEEP_LINKING_ID);
         id.setValue(getAsin(item));
         
         return id;

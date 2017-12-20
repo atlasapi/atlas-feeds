@@ -11,6 +11,8 @@ import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import tva.metadata._2010.ProgramInformationType;
@@ -22,10 +24,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.metabroadcast.common.intl.Countries;
 
-public class UnboxProgramInformationGeneratorTest {
-    
+public class UnboxProgramInformationGeneratorTest extends org.atlasapi.TestsWithConfiguration {
+
     private IdGenerator idGenerator = new UnboxIdGenerator();
-    
     private final ProgramInformationGenerator generator = new UnboxProgramInformationGenerator(idGenerator);
 
     @Test
@@ -60,13 +61,13 @@ public class UnboxProgramInformationGeneratorTest {
         
         assertEquals(versionCrid, progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
-        assertEquals("deep_linking_id.unbox.amazon.co.uk", otherId.getAuthority());
-        assertEquals("crid://unbox.amazon.co.uk/product/177221", progInfo.getDerivedFrom().getCrid());
+        assertEquals(UnboxOnDemandLocationGenerator.UNBOX_DEEP_LINKING_ID, otherId.getAuthority());
+        assertEquals("crid://stage-metabroadcast.com/content/drrrrn", progInfo.getDerivedFrom().getCrid());
     }
 
     private Film createFilm(Version version) {
         Film film = new Film();
-        
+        film.setId(35320383L);
         film.setCanonicalUri("http://unbox.amazon.co.uk/movies/177221");
         film.setPublisher(Publisher.AMAZON_UNBOX);
         film.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));

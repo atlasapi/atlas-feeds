@@ -10,12 +10,6 @@ import org.atlasapi.feeds.tvanytime.DefaultTvAnytimeElementCreator;
 import org.atlasapi.feeds.tvanytime.JaxbTvAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.PublisherSpecificTVAnytimeGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmBroadcastEventGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmChannelGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmGroupInformationGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmMasterbrandGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmOnDemandLocationGenerator;
-import org.atlasapi.feeds.youview.lovefilm.LoveFilmProgramInformationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroChannelInformationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroGroupInformationGenerator;
@@ -33,30 +27,24 @@ import org.atlasapi.feeds.youview.unbox.UnboxProgramInformationGenerator;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.ids.MongoSequentialIdGenerator;
+
+import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.metabroadcast.common.time.Clock;
+import com.metabroadcast.common.time.SystemClock;
+
+import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTimeZone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import com.google.common.collect.ImmutableMap;
-import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
-import com.metabroadcast.common.time.Clock;
-import com.metabroadcast.common.time.SystemClock;
-
 @Configuration
-@Import( { NitroTVAnytimeModule.class, LoveFilmTVAnytimeModule.class, UnboxTVAnytimeModule.class } )
+@Import( { NitroTVAnytimeModule.class, UnboxTVAnytimeModule.class } )
 public class TVAnytimeFeedsModule {
     
     private @Autowired DatabasedMongo mongo;
     private @Autowired ContentResolver contentResolver;
-
-    private @Autowired LoveFilmProgramInformationGenerator loveFilmProgInfoGenerator;
-    private @Autowired LoveFilmGroupInformationGenerator loveFilmGroupInfoGenerator;
-    private @Autowired LoveFilmOnDemandLocationGenerator loveFilmOnDemandGenerator;
-    private @Autowired LoveFilmBroadcastEventGenerator loveFilmBroadcastGenerator;
-    private @Autowired LoveFilmChannelGenerator loveFilmChannelGenerator;
-    private @Autowired LoveFilmMasterbrandGenerator loveFilmMasterbrandGenerator;
 
     private @Autowired UnboxProgramInformationGenerator unboxProgInfoGenerator;
     private @Autowired UnboxGroupInformationGenerator unboxGroupInfoGenerator;
@@ -75,7 +63,12 @@ public class TVAnytimeFeedsModule {
     private Clock clock() {
         return new SystemClock(DateTimeZone.UTC);
     }
-    
+
+    @Bean
+    public ContentHierarchyExpanderFactory contentHierarchyExpanderFactory(){
+        return new ContentHierarchyExpanderFactory();
+    }
+
     @Bean
     public FeedStatisticsResolver feedStatsResolver() {
         return feedStatsStore();
@@ -96,24 +89,11 @@ public class TVAnytimeFeedsModule {
     public TvAnytimeGenerator feedGenerator() {
         Map<Publisher, TvAnytimeGenerator> generatorMapping 
                 = ImmutableMap.<Publisher, TvAnytimeGenerator>builder()
-                .put(Publisher.LOVEFILM, loveFilmTVAGenerator())
                 .put(Publisher.AMAZON_UNBOX, unboxTVAGenerator())
                 .put(Publisher.BBC_NITRO, nitroTVAGenerator())
                 .build();
         
         return new PublisherSpecificTVAnytimeGenerator(generatorMapping);
-    }
-    
-    private TvAnytimeGenerator loveFilmTVAGenerator() {
-        return new JaxbTvAnytimeGenerator(new DefaultTvAnytimeElementCreator(
-                loveFilmProgInfoGenerator, 
-                loveFilmGroupInfoGenerator, 
-                loveFilmOnDemandGenerator, 
-                loveFilmBroadcastGenerator,
-                loveFilmChannelGenerator,
-                loveFilmMasterbrandGenerator,
-                contentHierarchy()
-        ));
     }
 
     private TvAnytimeGenerator unboxTVAGenerator() {

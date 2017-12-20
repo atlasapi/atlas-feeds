@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.atlasapi.feeds.RepIdClientFactory;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Status;
@@ -29,6 +30,7 @@ import org.atlasapi.media.entity.Publisher;
 
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
+import com.metabroadcast.representative.client.RepIdClientWithApp;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
@@ -52,6 +54,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
     private final TaskStore taskStore;
     private final TaskCreator taskCreator;
     private final PayloadCreator payloadCreator;
+    private final RepIdClientWithApp repIdClient;
 
     public TaskCreationTask(
             YouViewLastUpdatedStore lastUpdatedStore,
@@ -61,8 +64,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             TaskStore taskStore,
             TaskCreator taskCreator,
             PayloadCreator payloadCreator,
-            YouViewPayloadHashStore payloadHashStore
-    ) {
+            YouViewPayloadHashStore payloadHashStore) {
         this(lastUpdatedStore, publisher, hierarchyExpander, idGenerator, taskStore, taskCreator,
                 payloadCreator, payloadHashStore, HashCheck.CHECK
         );
@@ -88,6 +90,15 @@ public abstract class TaskCreationTask extends ScheduledTask {
         this.payloadCreator = checkNotNull(payloadCreator);
         this.payloadHashStore = checkNotNull(payloadHashStore);
         this.hashCheckMode = hashCheckMode;
+        this.repIdClient = RepIdClientFactory.getRepIdClient(publisher);
+    }
+
+    protected Publisher getPublisher(){
+        return publisher;
+    }
+
+    protected RepIdClientWithApp getRepIdClient() {
+        return repIdClient;
     }
 
     protected Optional<DateTime> getLastUpdatedTime() {
@@ -151,8 +162,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
         };
     }
 
-    // TODO tidy this up, ideally simplify/streamline it
     private UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
+
         Map<String, ItemAndVersion> versionHierarchies = Maps.filterValues(
                 hierarchyExpander.versionHierarchiesFor(item),
                 FilterFactory.versionFilter(updatedSince)
@@ -189,7 +200,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 Payload p = payloadCreator.payloadFrom(contentCrid, content);
 
                 if (shouldSave(HashType.CONTENT, contentCrid, p)) {
-                    taskStore.save(taskCreator.taskFor(idGenerator.generateContentCrid(content), content, p, action));
+                    taskStore.save(taskCreator.taskFor(contentCrid, content, p, action));
                     payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
                 } else {
                     log.debug("Existing hash found for Content {}, not updating", contentCrid);
@@ -283,15 +294,15 @@ public abstract class TaskCreationTask extends ScheduledTask {
         try {
             log.debug("Processing Broadcast {}", broadcastImi);
 
-            Optional<Payload> p = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
-            if (!p.isPresent()) {
+            Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
+            if (!payload.isPresent()) {
                 return UpdateProgress.START;
             }
 
-            if (shouldSave(HashType.BROADCAST, broadcastImi, p.get())) {
-                Task unsavedTask = taskCreator.taskFor(broadcastImi, broadcastHierarchy, p.get(), action);
+            if (shouldSave(HashType.BROADCAST, broadcastImi, payload.get())) {
+                Task unsavedTask = taskCreator.taskFor(broadcastImi, broadcastHierarchy, payload.get(), action);
                 taskStore.save(unsavedTask);
-                payloadHashStore.saveHash(HashType.BROADCAST, broadcastImi, p.get().hash());
+                payloadHashStore.saveHash(HashType.BROADCAST, broadcastImi, payload.get().hash());
             } else {
                 log.debug("Existing hash found for Broadcast {}, not updating", broadcastImi);
             }
@@ -331,19 +342,25 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
         try {
             log.debug("Processing OnDemand {}", onDemandImi);
+            log.info("@@@"+onDemandHierarchy.item().getPublisher()+" Processing OnDemand {}", onDemandImi);
 
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
             if (shouldSave(hashType, onDemandImi, p)) {
-                taskStore.save(taskCreator.taskFor(
+                Task savedTask = taskStore.save(taskCreator.taskFor(
                         onDemandImi,
                         onDemandHierarchy,
                         p,
                         action
                 ));
                 payloadHashStore.saveHash(hashType, onDemandImi, p.hash());
+                log.info(
+                        "@@@"+onDemandHierarchy.item().getPublisher()+" Saved task {} for ondemand {}",
+                        savedTask.id(),
+                        onDemandImi);
             } else {
                 log.debug("Existing hash found for OnDemand {}, not updating", onDemandImi);
+                log.info("@@@"+onDemandHierarchy.item().getPublisher()+" Existing hash found for OnDemand {}, not updating", onDemandImi);
             }
 
             return UpdateProgress.SUCCESS;
@@ -367,14 +384,14 @@ public abstract class TaskCreationTask extends ScheduledTask {
         }
     }
 
-    private boolean shouldSave(HashType type, String imi, Payload payload) {
-        Optional<String> hash = payloadHashStore.getHash(type, imi);
+    private boolean shouldSave(HashType type, String id, Payload payload) {
+        java.util.Optional<String> storedHash = payloadHashStore.getHash(type, id);
 
         if (type == HashType.DELETE) {
-            return !hash.isPresent();
+            return !storedHash.isPresent();
         } else {
-            return (hashCheckMode == HashCheck.IGNORE || !hash.isPresent())
-                    || (hashCheckMode == HashCheck.CHECK && payload.hasChanged(hash.get()));
+            return (hashCheckMode == HashCheck.IGNORE || !storedHash.isPresent())
+                    || (hashCheckMode == HashCheck.CHECK && payload.hasChanged(storedHash.get()));
         }
     }
 

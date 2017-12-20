@@ -9,11 +9,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.any;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
 
 import com.google.common.collect.Lists;
@@ -73,7 +71,6 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import com.google.common.hash.Hashing;
 import com.metabroadcast.common.intl.Countries;
 
@@ -101,19 +98,20 @@ public class NitroGroupInformationGeneratorTest {
     
     private SynopsisTypeEquivalence SYNOPSIS_EQUIVALENCE = new SynopsisTypeEquivalence();
     private NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
-    private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
+    private NitroServiceIdResolver nitroServiceIdResolver = Mockito.mock(NitroServiceIdResolver.class);
     private IdGenerator idGenerator = new NitroIdGenerator(Hashing.md5());
     private GenreMapping genreMapping = new NitroGenreMapping();
     private PeopleResolver peopleResolver = Mockito.mock(PeopleResolver.class);
     private NitroCreditsItemGenerator creditsGenerator = new NitroCreditsItemGenerator(peopleResolver);
     private ContentTitleGenerator titleGenerator = Mockito.mock(ContentTitleGenerator.class);
     
-    private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping, bbcServiceIdResolver,
+    private final GroupInformationGenerator generator = new NitroGroupInformationGenerator(idGenerator, genreMapping,
+            nitroServiceIdResolver,
             creditsGenerator, titleGenerator);
     
     @Before
     public void setup() {
-        when(bbcServiceIdResolver.resolveMasterBrandId(any(Content.class))).thenReturn(Optional.of(MASTER_BRAND));
+        when(nitroServiceIdResolver.resolveMasterBrandId(any(Content.class))).thenReturn(Optional.of(MASTER_BRAND));
         when(peopleResolver.person(GEORGE_SCOTT_URI)).thenReturn(Optional.of(createPerson(GEORGE_SCOTT_URI, "George C.", "Scott")));
         when(peopleResolver.person(KUBRICK_URI)).thenReturn(Optional.of(createPerson(KUBRICK_URI, "Stanley", "Kubrick")));
         when(titleGenerator.titleFor(any(Content.class))).thenAnswer(new Answer<String>() {

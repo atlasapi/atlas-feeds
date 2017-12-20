@@ -59,9 +59,12 @@ public class UnboxOnDemandLocationGeneratorTest {
     @Test
     public void testNonPublisherSpecificFields() {
         Location location = createLocation();
+        location.setCanonicalUri("unbox.amazon.co.uk/SOMELOCATIONID");
         Encoding encoding = createEncoding(location);
         Version version = createVersion(encoding);
+        version.setCanonicalUri("unbox.amazon.co.uk/SOMEVERSIONID");
         Film film = createFilm(version);
+        film.setId(1L);
         ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, location);
         String onDemandImi = "onDemandImi";
         
@@ -106,21 +109,23 @@ public class UnboxOnDemandLocationGeneratorTest {
     @Test
     public void testUnboxSpecificFields() {
         Location location = createLocation();
+        location.setCanonicalUri("unbox.amazon.co.uk/SOMELOCATIONID/SUBSCRIPTION");
         Encoding encoding = createEncoding(location);
         Version version = createVersion(encoding);
+        version.setCanonicalUri("unbox.amazon.co.uk/SOMELOCATIONID");
         Film film = createFilm(version);
         ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, location);
         String onDemandImi = "onDemandImi";
         
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);
         
-        assertEquals("http://unbox.amazon.co.uk/OnDemand", onDemand.getServiceIDRef());
-        assertEquals("crid://unbox.amazon.co.uk/product/177221_version", onDemand.getProgram().getCrid());
-        assertEquals("imi:unbox.amazon.co.uk/177221", onDemand.getInstanceMetadataId());
+        assertEquals("http://amazon.com/services/on_demand/primevideo", onDemand.getServiceIDRef());
+        assertEquals("crid://amazon.com/exec/obidos/ASIN/SOMELOCATIONID_version", onDemand.getProgram().getCrid());
+        assertEquals("imi:amazon.com/SOMELOCATIONID", onDemand.getInstanceMetadataId());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
-        assertEquals("deep_linking_id.unbox.amazon.co.uk", otherId.getAuthority());
+        assertEquals("deep_linking_id.amazon.com", otherId.getAuthority());
     }
 
     private Film createFilm(Version version) {

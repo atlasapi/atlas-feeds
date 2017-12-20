@@ -169,13 +169,13 @@ public class MongoTaskStoreTest {
         Task t3 = createAndStoreTask(3456l, "", Status.ACCEPTED);
         
         Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery.builder(selection, PUBLISHER, TYPE).build();
+        TaskQuery query = TaskQuery.builder(selection, TYPE).withPublisher(PUBLISHER).build();
         Iterable<Task> allTransactions = store.allTasks(query);
         
         assertEquals(ImmutableList.of(t1, t2, t3), ImmutableList.copyOf(allTransactions));
         
         selection = selectionWithParams(1, 1);
-        query = TaskQuery.builder(selection, PUBLISHER, TYPE).build();
+        query = TaskQuery.builder(selection, TYPE).withPublisher(PUBLISHER).build();
         allTransactions = store.allTasks(query);
         
         assertEquals(Iterables.getOnlyElement(allTransactions), t2);
@@ -204,7 +204,7 @@ public class MongoTaskStoreTest {
         createAndStoreTask(3456l, anotherContentUri, Status.ACCEPTED);
         
         Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery.builder(selection, PUBLISHER, TYPE)
+        TaskQuery query = TaskQuery.builder(selection,TYPE).withPublisher(PUBLISHER)
                 .withContentUri(desiredUri)
                 .build();
         Iterable<Task> allTransactions = store.allTasks(query);
@@ -226,7 +226,7 @@ public class MongoTaskStoreTest {
         store.updateWithRemoteId(thirdTask.id(), Status.COMMITTED, "txn3", clock.now());
         
         Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery.builder(selection, PUBLISHER, TYPE)
+        TaskQuery query = TaskQuery.builder(selection, TYPE).withPublisher(PUBLISHER)
                 .withRemoteId(transactionId)
                 .build();
         Iterable<Task> allTransactions = store.allTasks(query);
@@ -243,7 +243,7 @@ public class MongoTaskStoreTest {
         createAndStoreTask(2345l, "content", Status.COMMITTED);
         
         Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery.builder(selection, PUBLISHER, TYPE)
+        TaskQuery query = TaskQuery.builder(selection, TYPE).withPublisher(PUBLISHER)
                 .withTaskStatus(status)
                 .build();
         Iterable<Task> allTransactions = store.allTasks(query);
@@ -263,7 +263,7 @@ public class MongoTaskStoreTest {
         createAndStoreTask(3456l, anotherContentUri, Status.ACCEPTED);
         
         Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery.builder(selection, PUBLISHER, TYPE)
+        TaskQuery query = TaskQuery.builder(selection, TYPE).withPublisher(PUBLISHER)
                 .withContentUri("filterBy")
                 .build();
         Iterable<Task> allTransactions = store.allTasks(query);
@@ -285,7 +285,7 @@ public class MongoTaskStoreTest {
         store.updateWithRemoteId(thirdTask.id(), Status.COMMITTED, "txn3", clock.now());
         
         Selection selection = selectionWithParams(100, 0);
-        TaskQuery query = TaskQuery.builder(selection, PUBLISHER, TYPE)
+        TaskQuery query = TaskQuery.builder(selection, TYPE).withPublisher(PUBLISHER)
                 .withRemoteId("desired")
                 .build();
         Iterable<Task> allTransactions = store.allTasks(query);

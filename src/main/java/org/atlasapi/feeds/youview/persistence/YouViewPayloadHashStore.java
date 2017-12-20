@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview.persistence;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 public interface YouViewPayloadHashStore {
 

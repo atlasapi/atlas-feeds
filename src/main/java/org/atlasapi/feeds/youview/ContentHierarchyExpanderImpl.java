@@ -1,6 +1,4 @@
-package org.atlasapi.feeds.youview.nitro;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+package org.atlasapi.feeds.youview;
 
 import java.util.Map;
 
@@ -15,17 +13,25 @@ import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 
-public class NitroContentHierarchyExpander implements ContentHierarchyExpander {
-    
+public class ContentHierarchyExpanderImpl implements ContentHierarchyExpander {
+
     private final VersionHierarchyExpander versionExpander;
     private final BroadcastHierarchyExpander broadcastExpander;
     private final OnDemandHierarchyExpander onDemandExpander;
     private final IdGenerator idGenerator;
-    
-    public NitroContentHierarchyExpander(VersionHierarchyExpander versionExpander,
-            BroadcastHierarchyExpander broadcastExpander, OnDemandHierarchyExpander onDemandExpander,
+
+    public IdGenerator getIdGenerator() {
+        return idGenerator;
+    }
+
+    public ContentHierarchyExpanderImpl(
+            VersionHierarchyExpander versionExpander,
+            BroadcastHierarchyExpander broadcastExpander,
+            OnDemandHierarchyExpander onDemandExpander,
             IdGenerator idGenerator) {
+
         this.versionExpander = checkNotNull(versionExpander);
         this.broadcastExpander = checkNotNull(broadcastExpander);
         this.onDemandExpander = checkNotNull(onDemandExpander);

@@ -100,9 +100,7 @@ public class HttpYouViewClient implements YouViewClient {
                     throw Throwables.propagate(e);
                 }
             }
-        } catch (ExecutionException e) {
-            throw new YouViewClientException("Error deleting id " + elementId, e);
-        } catch (RetryException e) {
+        } catch (ExecutionException | RetryException e) {
             throw new YouViewClientException("Error deleting id " + elementId, e);
         }
     }
@@ -110,7 +108,16 @@ public class HttpYouViewClient implements YouViewClient {
     public static Retryer<HttpResponse> getHttpRequestRetryer() {
         Predicate<HttpResponse> responseCodeIsEqualOrHigherThan500 = new Predicate<HttpResponse>() {
             public boolean apply(HttpResponse response) {
-                return response.getStatusCode() >= 500;
+                if(response.getStatusCode() >= 500 ){
+                    log.error("@@@ Uploading to YV responded with an error: "+ response.getStatusCode()+ " - " + response.getStatusMessage());
+                    try {
+                        log.error(response.parseAsString());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return true;
+                }
+                return false;
             }
         };
 
@@ -179,9 +186,7 @@ public class HttpYouViewClient implements YouViewClient {
                     throw Throwables.propagate(e);
                 }
             }
-        } catch (ExecutionException e) {
-            throw new YouViewClientException("Error uploading " + payload, e);
-        } catch (RetryException e) {
+        } catch (ExecutionException | RetryException e){
             throw new YouViewClientException("Error uploading " + payload, e);
         }
     }

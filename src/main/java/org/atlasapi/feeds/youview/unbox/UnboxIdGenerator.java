@@ -1,25 +1,32 @@
 package org.atlasapi.feeds.youview.unbox;
 
+import java.util.regex.Pattern;
+
+import org.atlasapi.feeds.MbstCridGenerator;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
 
+import com.metabroadcast.common.properties.Configurer;
 
 public class UnboxIdGenerator implements IdGenerator {
 
-    private static final String UNBOX_IMI_PREFIX = "imi:unbox.amazon.co.uk/";
-    private static final String UNBOX_PRODUCT_CRID_PREFIX = "crid://unbox.amazon.co.uk/product/";
-    private static final String UNBOX_URI_PATTERN = "http:\\/\\/unbox\\.amazon\\.co\\.uk\\/[a-z]*\\/";
-    private static final String VERSION_SUFFIX = "_version";
+    private static final String AMAZON_IMI_PREFIX = "imi:amazon.com/";
+    public static final String VERSION_SUFFIX = "_version";
     
     @Override
     public String generateVersionCrid(Item item, Version version) {
-        return baseCridFrom(item) + VERSION_SUFFIX;
+        //we cannot base the version on the parent id, because we might have multiple versions
+        //and they need different crids. Since versions themselves dont have ids, we cannot generate
+        //mbst style crids. But it shouldn't matter, because we dont want to use the rep-id service
+        //on versions so amazon-like crids should be fine.
+        return "crid://amazon.com/exec/obidos/ASIN/" +getAsin(version) + VERSION_SUFFIX;
     }
 
     @Override
@@ -28,8 +35,11 @@ public class UnboxIdGenerator implements IdGenerator {
     }
     
     @Override
+    // If you ever want to create different IMIs for content that is available via 2 means
+    // (e.g. one ASIN for both subscription and pay_to_buy)
+    // consider using either the canonical uri, or location.getPolicy().getRevenueContract().
     public String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location) {
-        return UNBOX_IMI_PREFIX + idFrom(item);
+        return AMAZON_IMI_PREFIX + getAsin(location);
     }
     
     @Override
@@ -42,11 +52,27 @@ public class UnboxIdGenerator implements IdGenerator {
         throw new UnsupportedOperationException("Channels are not supported for the Amazon Unbox publisher");
     }
 
-    private static String baseCridFrom(Content content) {
-        return UNBOX_PRODUCT_CRID_PREFIX + idFrom(content);
+    public static Pattern getVersionCridPattern(){
+        return Pattern.compile("crid://amazon.com/exec/obidos/ASIN/" + "[A-Za-z0-9]*" + VERSION_SUFFIX);
     }
 
-    private static String idFrom(Content content) {
-        return content.getCanonicalUri().replaceAll(UNBOX_URI_PATTERN, "");
+    private static String baseCridFrom(Identified content) {
+        return MbstCridGenerator.getContentCrid(Configurer.getPlatform(), content);
+        //return "crid://amazon.com/exec/obidos/ASIN/" + getAsin(content); old way of generating crids
+    }
+
+    private static String getAsin(Identified content) {
+        String[] splinters = content.getCanonicalUri().split("/");
+        return splinters[splinters.length - 1];
+    }
+
+    /**
+     * CannonicalUris for amazon locations look like this
+     * http://www.amazon.co.uk/gp/product/B072NZYNMT/PAY_TO_RENT
+     * (they are set in main atlas, AmazonUnboxContentExtractor).
+     */
+    private static String getAsin(Location content) {
+        String[] splinters = content.getCanonicalUri().split("/");
+        return splinters[splinters.length - 2];
     }
 }
