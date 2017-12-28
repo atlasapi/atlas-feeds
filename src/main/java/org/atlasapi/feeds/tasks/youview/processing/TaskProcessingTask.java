@@ -77,7 +77,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
         for (TVAElementType elementType : ELEMENT_TYPE_ORDER) {
             for (Status status : validStatuses()) {
                 //We limit the amount of stuff because too many cause a mongo driver exception
-                //(presumably because the query builder does a default sort on date)
+                //(presumably due to the sort on date)
                 int numChecked = 0;
                 do {
                     log.info("{} {} {} from publisher {} (batch {} to {})",
@@ -92,7 +92,13 @@ public abstract class TaskProcessingTask extends ScheduledTask {
                                     destinationType
                             )
                             .withTaskStatus(status)
-                            .withTaskAction(action());
+                            .withTaskAction(action())
+                            // it is important that tasks are picked up in this order
+                            // for example if a version A is moved from item B to item C, the
+                            // revocation of A will be done first, and the recreation of A under C
+                            // second. Picking up tasks in the wrong order will result in the
+                            // permanent revocation of A.
+                            .withSort(TaskQuery.Sort.DATE_ASC);
 
                     if (publisher != null) {
                         query.withPublisher(publisher);

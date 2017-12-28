@@ -17,6 +17,7 @@ public class TaskQuery {
     public static class Sort {
 
         public static final Sort DEFAULT = Sort.of(Field.CREATED_TIME, Direction.ASC);
+        public static final Sort DATE_ASC = DEFAULT;
 
         private final Direction direction;
         private final Field field;

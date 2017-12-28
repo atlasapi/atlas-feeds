@@ -4,6 +4,7 @@ import org.atlasapi.feeds.youview.PerPublisherConfig;
 import org.atlasapi.media.entity.Publisher;
 
 import com.metabroadcast.common.properties.Configurer;
+import com.metabroadcast.representative.api.Version;
 import com.metabroadcast.representative.client.RepIdClientWithApp;
 import com.metabroadcast.representative.client.http.HttpExecutor;
 import com.metabroadcast.representative.client.http.RetryStrategy;
@@ -43,7 +44,8 @@ public class RepIdClientFactory {
 
         return new RepIdClientWithApp(
                 httpExecutor,
-                PerPublisherConfig.TO_APP_ID_MAP.get(publisher)
+                PerPublisherConfig.TO_APP_ID_MAP.get(publisher),
+                Version.OWL
         );
 
     }

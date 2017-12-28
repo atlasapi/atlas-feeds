@@ -105,8 +105,16 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return lastUpdatedStore.getLastUpdated(publisher);
     }
 
+    protected Optional<DateTime> getLastRepIdChangesChecked() {
+        return lastUpdatedStore.getLastRepIdChangesChecked(publisher);
+    }
+
     protected void setLastUpdatedTime(DateTime lastUpdated) {
         lastUpdatedStore.setLastUpdated(lastUpdated, publisher);
+    }
+
+    protected void setLastRepIdChecked(DateTime lastUpdated) {
+        lastUpdatedStore.setLastRepIdChecked(lastUpdated, publisher);
     }
 
     protected boolean isActivelyPublished(Content content) {
@@ -162,7 +170,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
         };
     }
 
-    private UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
+    protected UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
 
         Map<String, ItemAndVersion> versionHierarchies = Maps.filterValues(
                 hierarchyExpander.versionHierarchiesFor(item),
@@ -342,25 +350,19 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
         try {
             log.debug("Processing OnDemand {}", onDemandImi);
-            log.info("@@@"+onDemandHierarchy.item().getPublisher()+" Processing OnDemand {}", onDemandImi);
 
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
             if (shouldSave(hashType, onDemandImi, p)) {
-                Task savedTask = taskStore.save(taskCreator.taskFor(
+                taskStore.save(taskCreator.taskFor(
                         onDemandImi,
                         onDemandHierarchy,
                         p,
                         action
                 ));
                 payloadHashStore.saveHash(hashType, onDemandImi, p.hash());
-                log.info(
-                        "@@@"+onDemandHierarchy.item().getPublisher()+" Saved task {} for ondemand {}",
-                        savedTask.id(),
-                        onDemandImi);
             } else {
                 log.debug("Existing hash found for OnDemand {}, not updating", onDemandImi);
-                log.info("@@@"+onDemandHierarchy.item().getPublisher()+" Existing hash found for OnDemand {}, not updating", onDemandImi);
             }
 
             return UpdateProgress.SUCCESS;

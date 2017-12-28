@@ -14,6 +14,7 @@ import org.atlasapi.feeds.tasks.maintainance.TaskTrimmingTask;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.creation.BootstrapTaskCreationTask;
 import org.atlasapi.feeds.tasks.youview.creation.DeltaTaskCreationTask;
+import org.atlasapi.feeds.tasks.youview.creation.RepresentativeIdChangesHandlingTask;
 import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.tasks.youview.creation.YouViewEntityTaskCreator;
 import org.atlasapi.feeds.tasks.youview.processing.DeleteTask;
@@ -126,9 +127,9 @@ public class YouViewUploadModule {
     );
     
     private static final RepetitionRule DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
-    private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
+    private static final RepetitionRule REPID_CHANGES_HANDLING = RepetitionRules.NEVER;
+private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
-    
     // Uploads are being performed as part of the delta job.
     private static final RepetitionRule UPLOAD = RepetitionRules.NEVER;
     private static final RepetitionRule DELETE = RepetitionRules.every(Duration.standardMinutes(15)).withOffset(Duration.standardMinutes(5));
@@ -164,9 +165,13 @@ public class YouViewUploadModule {
                 log.info("Registering a bootstrap and deltaupload tasks for "+publisherEntry);
                 scheduler.schedule(scheduleBootstrapTaskCreationTask(publisherEntry.getValue()), BOOTSTRAP_CONTENT_CHECK);
                 scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), DELTA_CONTENT_CHECK);
+
+                if(publisherEntry.getValue().equals(Publisher.AMAZON_UNBOX)){
+                    scheduler.schedule(scheduleRepIdChangesHandlingTask(Publisher.AMAZON_UNBOX), REPID_CHANGES_HANDLING);
+                }
             }
         }
-        
+
         scheduler.schedule(uploadTask().withName("YouView Uploads"), UPLOAD);
         scheduler.schedule(deleteTask().withName("YouView Deletes"), DELETE);
         scheduler.schedule(remoteCheckTask().withName("YouView Task Status Check"), REMOTE_CHECK);
@@ -207,9 +212,7 @@ public class YouViewUploadModule {
      * @throws JAXBException 
      */
     private Optional<TaskProcessor> taskProcessor(String prefix) throws JAXBException, SAXException {
-        log.info("@@@ creating new task processor for "+prefix);
         String publisherPrefix = CONFIG_PREFIX + prefix;
-        log.info("@@@ the config prefix is "+publisherPrefix);
         if (!isEnabled(publisherPrefix)) {
             return Optional.absent();
         }
@@ -323,6 +326,33 @@ public class YouViewUploadModule {
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
+
+    /**
+     * Checks the representativeId service for changes and creates new tasks to handle the changes.
+     * @param publisher
+     * @return
+     * @throws JAXBException
+     * @throws SAXException
+     */
+    private ScheduledTask scheduleRepIdChangesHandlingTask(Publisher publisher)
+            throws JAXBException, SAXException {
+        return new RepresentativeIdChangesHandlingTask(
+                lastUpdatedStore(),
+                publisher,
+                contentHierarchyExpanderFactory.create(publisher),
+                IdGeneratorFactory.create(publisher),
+                taskStore,
+                taskCreator(),
+                payloadCreator(),
+                uploadTask(publisher),
+                getDeltaContentResolver(publisher),
+                payloadHashStore(),
+                channelResolver,
+                mergingResolver
+        ).withName(String.format("YouView repsentativeId changes handling for %s", publisher.title()));
+    }
+
+
     
     private PayloadCreator payloadCreator() throws JAXBException, SAXException {
         return payloadCreator(rollingWindowBroadcastEventDeduplicator());
@@ -411,12 +441,10 @@ public class YouViewUploadModule {
     }
 
     private String parseUrl(String publisherPrefix) {
-        log.info("@@@@ parsed url for "+publisherPrefix+".url : "+Configurer.get(publisherPrefix + ".url").get());
         return Configurer.get(publisherPrefix + ".url").get();
     }
     
     private UsernameAndPassword parseCredentials(String publisherPrefix) {
-        log.info("@@@@ parsed username for "+publisherPrefix+".username : "+Configurer.get(publisherPrefix + ".username").get());
         return new UsernameAndPassword(
                 Configurer.get(publisherPrefix + ".username").get(), 
                 Configurer.get(publisherPrefix + ".password").get()

@@ -32,7 +32,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class DeltaTaskCreationTask extends TaskCreationTask {
 
-    private static final Logger log = LoggerFactory.getLogger(TaskCreationTask.class);
+    private static final Logger log = LoggerFactory.getLogger(DeltaTaskCreationTask.class);
 
     public static final Duration UPDATE_WINDOW_GRACE_PERIOD = Duration.standardHours(2);
 
@@ -107,10 +107,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             throw new IllegalStateException("Uploading from "+getPublisher()+" to YV is not supported.");
         }
 
-        List<Content> orderedForDeletion = orderContentForDeletion(deleted);
-        int deletingContent= 0;
-        for (Content toBeDeleted : orderedForDeletion) {
-            log.info("@@@ processing content " + toBeDeleted.getId() + "to be DELETED no:" + ++deletingContent + getPublisher());
+        List<Content> sortedContentForDeletion = sortContentForDeletion(deleted);
+        for (Content toBeDeleted : sortedContentForDeletion) {
             deletionProcessor.process(toBeDeleted);
             reportStatus("Deletes: " + deletionProcessor.getResult());
         }
@@ -126,7 +124,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         reportStatus("Done uploading tasks to YouView");
     }
 
-    private List<Content> uploadFromAmazon(Iterator<Content> contentPieces,
+    protected List<Content> uploadFromAmazon(Iterator<Content> contentPieces,
             YouViewContentProcessor uploadProcessor) {
 
         List<Content> deleted = Lists.newArrayList();
@@ -177,7 +175,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         return deleted;
     }
     
-    private static List<Content> orderContentForDeletion(Iterable<Content> toBeDeleted) {
+    protected static List<Content> sortContentForDeletion(Iterable<Content> toBeDeleted) {
         return HIERARCHICAL_ORDER.immutableSortedCopy(toBeDeleted);
     }
 }
