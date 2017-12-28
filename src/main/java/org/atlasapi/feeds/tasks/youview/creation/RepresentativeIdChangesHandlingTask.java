@@ -83,7 +83,7 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
         }
 
         // despite the intermediate conversion, db dates are UTC.
-        Instant lastChecked = Instant.parse(lastCheckedOptional.toString());
+        Instant lastChecked = Instant.parse(lastCheckedOptional.get().toString());
         log.info("Started a repId status check for {} from {}", getPublisher(), lastChecked);
         DateTime startOfTask = new DateTime();
 
