@@ -51,7 +51,7 @@ public class MongoYouViewLastUpdatedStore implements YouViewLastUpdatedStore {
         DBObject dateObject = new BasicDBObject();
         TranslatorUtils.fromDateTime(dateObject, LAST_TASKS_CREATED, lastUpdated);
         BasicDBObject set = new BasicDBObject("$set", dateObject);
-        collection.update(getPublisherQuery(publisher), set);
+        collection.update(getPublisherQuery(publisher), set, true, true);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class MongoYouViewLastUpdatedStore implements YouViewLastUpdatedStore {
         DBObject dateObject = new BasicDBObject();
         TranslatorUtils.fromDateTime(dateObject, LAST_REP_ID_CHECKED, lastUpdated);
         BasicDBObject set = new BasicDBObject("$set", dateObject);
-        collection.update(getPublisherQuery(publisher), set);
+        collection.update(getPublisherQuery(publisher), set, true, true);
     }
 
     private static BasicDBObject getPublisherQuery(Publisher publisher) {
