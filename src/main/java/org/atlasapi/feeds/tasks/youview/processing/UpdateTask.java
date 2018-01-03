@@ -2,6 +2,7 @@ package org.atlasapi.feeds.tasks.youview.processing;
 
 import java.util.Set;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
@@ -23,7 +24,8 @@ public class UpdateTask extends TaskProcessingTask {
     }
 
     // For tests, allow use of own telescope
-    public UpdateTask(
+    @VisibleForTesting
+    UpdateTask(
             TaskStore taskStore,
             TaskProcessor processor,
             DestinationType destinationType,
