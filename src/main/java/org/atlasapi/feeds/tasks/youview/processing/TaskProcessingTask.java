@@ -37,7 +37,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     private final DestinationType destinationType;
     private final FeedsTelescopeReporter telescope;
 
-    public TaskProcessingTask(
+    TaskProcessingTask(
             TaskStore taskStore,
             TaskProcessor processor,
             DestinationType destinationType,
@@ -49,17 +49,18 @@ public abstract class TaskProcessingTask extends ScheduledTask {
         this.telescope = checkNotNull(telescope);
     }
 
-    protected TaskProcessingTask(
+    TaskProcessingTask(
             TaskStore taskStore,
             TaskProcessor processor,
             DestinationType destinationType,
             TelescopeReporterName reporterName
     ) {
-        this.taskStore = checkNotNull(taskStore);
-        this.processor = checkNotNull(processor);
-        this.destinationType = checkNotNull(destinationType);
-        this.telescope = FeedsTelescopeReporterFactory.getInstance()
-                .getTelescopeReporter(reporterName);
+        this(
+                taskStore,
+                processor,
+                destinationType,
+                FeedsTelescopeReporterFactory.getInstance().getTelescopeReporter(reporterName)
+        );
     }
 
     @Override
