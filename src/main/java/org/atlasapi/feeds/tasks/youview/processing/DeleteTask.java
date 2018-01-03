@@ -20,7 +20,7 @@ public final class DeleteTask extends TaskProcessingTask {
             TaskProcessor processor,
             DestinationType destinationType
     ) {
-        super(taskStore, processor, destinationType, YOU_VIEW_AUTOMATIC_DELETER, null);
+        super(taskStore, processor, destinationType, YOU_VIEW_AUTOMATIC_DELETER);
     }
 
     // For tests, allow use of own telescope
@@ -31,7 +31,7 @@ public final class DeleteTask extends TaskProcessingTask {
             DestinationType destinationType,
             FeedsTelescopeReporter telescope
     ) {
-        super(taskStore, processor, destinationType, YOU_VIEW_AUTOMATIC_DELETER, telescope);
+        super(taskStore, processor, destinationType, telescope);
     }
 
     private static final Set<Status> TO_BE_UPLOADED = ImmutableSet.of(

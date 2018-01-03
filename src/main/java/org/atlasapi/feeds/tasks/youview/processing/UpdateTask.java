@@ -20,7 +20,7 @@ public class UpdateTask extends TaskProcessingTask {
             TaskProcessor processor,
             DestinationType destinationType
     ) {
-        super(taskStore, processor, destinationType, YOU_VIEW_AUTOMATIC_UPLOADER, null);
+        super(taskStore, processor, destinationType, YOU_VIEW_AUTOMATIC_UPLOADER);
     }
 
     // For tests, allow use of own telescope
@@ -31,7 +31,7 @@ public class UpdateTask extends TaskProcessingTask {
             DestinationType destinationType,
             FeedsTelescopeReporter telescope
     ) {
-        super(taskStore, processor, destinationType, YOU_VIEW_AUTOMATIC_UPLOADER, telescope);
+        super(taskStore, processor, destinationType, telescope);
     }
 
     private static final Set<Status> TO_BE_UPLOADED = ImmutableSet.of(
