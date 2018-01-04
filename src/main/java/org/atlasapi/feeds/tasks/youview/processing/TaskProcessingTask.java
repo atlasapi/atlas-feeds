@@ -35,22 +35,38 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     private final TaskStore taskStore;
     private final TaskProcessor processor;
     private final DestinationType destinationType;
-    private final TelescopeReporterName reporterName;
+    private final FeedsTelescopeReporter telescope;
 
-    public TaskProcessingTask(TaskStore taskStore, TaskProcessor processor,
+    TaskProcessingTask(
+            TaskStore taskStore,
+            TaskProcessor processor,
             DestinationType destinationType,
-            TelescopeReporterName reporterName) {
+            FeedsTelescopeReporter telescope
+    ) {
         this.taskStore = checkNotNull(taskStore);
         this.processor = checkNotNull(processor);
         this.destinationType = checkNotNull(destinationType);
-        this.reporterName = reporterName;
+        this.telescope = checkNotNull(telescope);
+    }
+
+    TaskProcessingTask(
+            TaskStore taskStore,
+            TaskProcessor processor,
+            DestinationType destinationType,
+            TelescopeReporterName reporterName
+    ) {
+        this(
+                taskStore,
+                processor,
+                destinationType,
+                FeedsTelescopeReporterFactory.getInstance().getTelescopeReporter(reporterName)
+        );
     }
 
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
-        FeedsTelescopeReporter telescope = FeedsTelescopeReporterFactory.getInstance()
-                .getTelescopeReporter(reporterName);
+
         telescope.startReporting();
 
         for (Status uncheckedStatus : validStatuses()) {
