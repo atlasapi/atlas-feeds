@@ -62,7 +62,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     private static final int DEFAULT_IMAGE_HEIGHT = 320;
     private static final int DEFAULT_IMAGE_WIDTH = 240;
     
-    private static final String YOUVIEW_CREDIT_ROLE = "urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN";
+    private static final String YOUVIEW_CREDIT_ROLE_UNKNOWN = "urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN";
     private static final String YOUVIEW_IMAGE_FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS:2001:1";
     private static final String YOUVIEW_IMAGE_HOW_RELATED = "urn:tva:metadata:cs:HowRelatedCS:2010:19";
     private static final String YOUVIEW_IMAGE_ATTRIBUTE_PRIMARY_ROLE = "http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary";
@@ -301,7 +301,11 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
        
        for (CrewMember person : content.people()) {
            CreditsItemType credit = new CreditsItemType();
-           credit.setRole(YOUVIEW_CREDIT_ROLE);
+           try {
+               credit.setRole(person.role().requireTvaUri());
+           } catch( NullPointerException e){
+               credit.setRole(YOUVIEW_CREDIT_ROLE_UNKNOWN);
+           }
            
            PersonNameType personName = new PersonNameType();
            
