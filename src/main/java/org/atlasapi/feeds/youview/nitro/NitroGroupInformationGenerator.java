@@ -285,7 +285,6 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         String language = getLanguageCodeFor(content);
         basicDescription.getLanguage().addAll(generateLanguage(language));
 
-        basicDescription.setCreditsList(generateCreditsList(content));
         Optional<RelatedMaterialType> relatedMaterial = Optional.absent();
         relatedMaterial = generateRelatedMaterial(content);
         
@@ -370,30 +369,6 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         MediaLocatorType mediaLocator = new MediaLocatorType();
         mediaLocator.setMediaUri(content.getImage());
         return mediaLocator;
-    }
-
-    private CreditsListType generateCreditsList(Content content) {
-       CreditsListType creditsList = new CreditsListType();
-       
-       for (CrewMember person : content.people()) {
-           CreditsItemType credit = new CreditsItemType();
-           credit.setRole(YOUVIEW_CREDIT_ROLE);
-           
-           PersonNameType personName = new PersonNameType();
-           
-           NameComponentType nameComponent = new NameComponentType();
-           nameComponent.setValue(person.name());
-           
-           JAXBElement<NameComponentType> nameElem = new JAXBElement<NameComponentType>(new QName("urn:tva:mpeg7:2008", "GivenName"), NameComponentType.class, nameComponent);
-           personName.getGivenNameOrLinkingNameOrFamilyName().add(nameElem);
-           
-           JAXBElement<PersonNameType> personNameElem = new JAXBElement<PersonNameType>(new QName("urn:tva:metadata:2010", "PersonName"), PersonNameType.class, personName);
-           credit.getPersonNameOrPersonNameIDRefOrOrganizationName().add(personNameElem);
-           
-           creditsList.getCreditsItem().add(credit);
-       }
-       
-       return creditsList;
     }
 
     private List<ExtendedLanguageType> generateLanguage(String language) {

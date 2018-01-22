@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.unbox;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -298,7 +299,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
 
     private CreditsListType generateCreditsList(Content content) {
        CreditsListType creditsList = new CreditsListType();
-       
+       int index=1;
        for (CrewMember person : content.people()) {
            CreditsItemType credit = new CreditsItemType();
            try {
@@ -306,18 +307,18 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
            } catch( NullPointerException e){
                credit.setRole(YOUVIEW_CREDIT_ROLE_UNKNOWN);
            }
-           
-           PersonNameType personName = new PersonNameType();
-           
+           credit.setIndex(BigInteger.valueOf(index));
+           index++;
+
            NameComponentType nameComponent = new NameComponentType();
            nameComponent.setValue(person.name());
-           
            JAXBElement<NameComponentType> nameElem = new JAXBElement<NameComponentType>(new QName("urn:tva:mpeg7:2008", "GivenName"), NameComponentType.class, nameComponent);
+
+           PersonNameType personName = new PersonNameType();
            personName.getGivenNameOrLinkingNameOrFamilyName().add(nameElem);
-           
            JAXBElement<PersonNameType> personNameElem = new JAXBElement<PersonNameType>(new QName("urn:tva:metadata:2010", "PersonName"), PersonNameType.class, personName);
+
            credit.getPersonNameOrPersonNameIDRefOrOrganizationName().add(personNameElem);
-           
            creditsList.getCreditsItem().add(credit);
        }
        
