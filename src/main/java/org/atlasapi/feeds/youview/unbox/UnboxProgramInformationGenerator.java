@@ -16,11 +16,14 @@ import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 
+import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
 import tva.metadata._2010.BasicContentDescriptionType;
+import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.DerivedFromType;
 import tva.metadata._2010.ProgramInformationType;
 import tva.metadata._2010.TVAParentalGuidanceType;
 import tva.metadata._2010.TVATimeType;
+import tva.metadata.custom.ProgramInformationType4300CP;
 import tva.metadata.extended._2010.ExtendedContentDescriptionType;
 import tva.metadata.extended._2010.TargetingInformationType;
 import tva.mpeg7._2008.ControlledTermUseType;
@@ -39,6 +42,7 @@ import com.metabroadcast.common.intl.Country;
 public class UnboxProgramInformationGenerator implements ProgramInformationGenerator {
     
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
+    public static final String YOUVIEW_AMAZON_TARGET_USER_GROUP = "http://refdata.youview.com/mpeg7cs/YouViewApplicationPlayerCS/2017-09-28#html5-aiv1";
     
     private static final Predicate<Certificate> FILTER_CERT_FOR_GB = new Predicate<Certificate>() {
         @Override
@@ -75,13 +79,21 @@ public class UnboxProgramInformationGenerator implements ProgramInformationGener
 
     @Override
     public ProgramInformationType generate(ItemAndVersion versionHierarchy, String versionCrid) {
-        ProgramInformationType progInfo = new ProgramInformationType();
+        ProgramInformationType4300CP progInfo = new ProgramInformationType4300CP();
         
         progInfo.setProgramId(versionCrid);
         progInfo.setBasicDescription(generateBasicDescription(versionHierarchy.item(), versionHierarchy.version()));
         progInfo.setDerivedFrom(generateDerivedFromElem(versionHierarchy.item()));
         progInfo.getOtherIdentifier().add(generateOtherId(versionHierarchy.item()));
-        
+
+        // In order to ensure Amazon content is only discoverable on YouView devices which have
+        // Amazon enabled, we need a Discovery User Group
+        ControlledTermType targetUserGroup = new ControlledTermType();
+        targetUserGroup.setHref(YOUVIEW_AMAZON_TARGET_USER_GROUP);
+        ExtendedTargetingInformationType targetingInfo = new ExtendedTargetingInformationType();
+        targetingInfo.getTargetUserGroup().add(targetUserGroup);
+        progInfo.getTargetingInformation().add(targetingInfo);
+
         return progInfo;
     }
     
