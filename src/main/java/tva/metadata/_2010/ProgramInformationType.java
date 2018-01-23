@@ -73,7 +73,7 @@ public class ProgramInformationType {
     @XmlSchemaType(name = "dateTime")
     protected XMLGregorianCalendar fragmentExpirationDate;
 
-    // this element was extended by hand to meet the requirement of 4300CP,
+    // this element was added here by hand to meet the requirement of 4300CP,
     // in reference to the YV specification document.
     @XmlElement(name = "TargetingInformation")
     protected List<ExtendedTargetingInformationType> targetingInformation;
