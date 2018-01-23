@@ -85,14 +85,6 @@ public class UnboxProgramInformationGenerator implements ProgramInformationGener
         progInfo.setDerivedFrom(generateDerivedFromElem(versionHierarchy.item()));
         progInfo.getOtherIdentifier().add(generateOtherId(versionHierarchy.item()));
 
-        // In order to ensure Amazon content is only discoverable on YouView devices which have
-        // Amazon enabled, we need a Discovery User Group
-        ControlledTermType targetUserGroup = new ControlledTermType();
-        targetUserGroup.setHref(YOUVIEW_AMAZON_TARGET_USER_GROUP);
-        ExtendedTargetingInformationType targetingInfo = new ExtendedTargetingInformationType();
-        targetingInfo.getTargetUserGroup().add(targetUserGroup);
-        progInfo.getTargetingInformation().add(targetingInfo);
-
         return progInfo;
     }
     
@@ -121,7 +113,13 @@ public class UnboxProgramInformationGenerator implements ProgramInformationGener
         }
         basicDescription.getProductionLocation().addAll(generateProductLocations(item));
         basicDescription.setDuration(generateDuration(version));
-        basicDescription.getTargetingInformationOrTargetingInformationRef().add(new TargetingInformationType());
+        // In order to ensure Amazon content is only discoverable on YouView devices which have
+        // Amazon enabled, we need a Discovery User Group
+        ControlledTermType targetUserGroup = new ControlledTermType();
+        targetUserGroup.setHref(YOUVIEW_AMAZON_TARGET_USER_GROUP);
+        ExtendedTargetingInformationType targetingInfo = new ExtendedTargetingInformationType();
+        targetingInfo.getTargetUserGroup().add(targetUserGroup);
+        basicDescription.getTargetingInformationOrTargetingInformationRef().add(targetingInfo);
 
         return basicDescription;
     }

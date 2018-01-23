@@ -17,8 +17,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.datatype.XMLGregorianCalendar;
-
-import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
 import tva.mpeg7._2008.UniqueIDType;
 
 
@@ -50,7 +48,6 @@ import tva.mpeg7._2008.UniqueIDType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "ProgramInformationType", propOrder = {
     "basicDescription",
-    "TargetingInformation",
     "otherIdentifier",
     "memberOf",
     "derivedFrom"
@@ -72,19 +69,6 @@ public class ProgramInformationType {
     @XmlAttribute
     @XmlSchemaType(name = "dateTime")
     protected XMLGregorianCalendar fragmentExpirationDate;
-
-    // this element was added here by hand to meet the requirement of 4300CP,
-    // in reference to the YV specification document.
-    @XmlElement(name = "TargetingInformation")
-    protected List<ExtendedTargetingInformationType> targetingInformation;
-
-    public List<ExtendedTargetingInformationType> getTargetingInformation() {
-        if (targetingInformation == null) {
-            targetingInformation = new ArrayList<ExtendedTargetingInformationType>();
-        }
-        return targetingInformation;
-    }
-
     /**
      * Gets the value of the basicDescription property.
      * 
