@@ -48,7 +48,14 @@ public class YouviewContentMerger {
         HttpServiceClient applicationClient =
                 HttpServiceClient.create(Configurer.get("applications.client.host").get(), metrics);
 
+        log.info("publisher "+publisher);
+        log.info("metrics "+metrics);
+        log.info("translator "+translator);
+        log.info("applicationClient "+applicationClient);
+        log.info("PerPublisherConfig.TO_APP_ID_MAP "+PerPublisherConfig.TO_APP_ID_MAP);
+
         String appId = PerPublisherConfig.TO_APP_ID_MAP.get(publisher);
+        log.info("appId "+appId);
         com.metabroadcast.applications.client.model.service.Application serviceApp
                 = applicationClient.resolve(appId);
         this.application = translator.translate(serviceApp);
