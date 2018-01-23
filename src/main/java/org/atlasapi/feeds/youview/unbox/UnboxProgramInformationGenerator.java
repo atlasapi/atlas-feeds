@@ -1,8 +1,5 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
-
 import java.util.List;
 import java.util.Map;
 
@@ -16,18 +13,8 @@ import org.atlasapi.media.entity.Certificate;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 
-import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
-import tva.metadata._2010.BasicContentDescriptionType;
-import tva.metadata._2010.ControlledTermType;
-import tva.metadata._2010.DerivedFromType;
-import tva.metadata._2010.ProgramInformationType;
-import tva.metadata._2010.TVAParentalGuidanceType;
-import tva.metadata._2010.TVATimeType;
-import tva.metadata.custom.ProgramInformationType4300CP;
-import tva.metadata.extended._2010.ExtendedContentDescriptionType;
-import tva.metadata.extended._2010.TargetingInformationType;
-import tva.mpeg7._2008.ControlledTermUseType;
-import tva.mpeg7._2008.UniqueIDType;
+import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.intl.Country;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -35,8 +22,20 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.metabroadcast.common.intl.Countries;
-import com.metabroadcast.common.intl.Country;
+import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
+import tva.metadata._2010.BasicContentDescriptionType;
+import tva.metadata._2010.ControlledTermType;
+import tva.metadata._2010.DerivedFromType;
+import tva.metadata._2010.ProgramInformationType;
+import tva.metadata._2010.TVAParentalGuidanceType;
+import tva.metadata._2010.TVATimeType;
+import tva.metadata.extended._2010.ExtendedContentDescriptionType;
+import tva.metadata.extended._2010.TargetingInformationType;
+import tva.mpeg7._2008.ControlledTermUseType;
+import tva.mpeg7._2008.UniqueIDType;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
 
 
 public class UnboxProgramInformationGenerator implements ProgramInformationGenerator {
@@ -79,7 +78,7 @@ public class UnboxProgramInformationGenerator implements ProgramInformationGener
 
     @Override
     public ProgramInformationType generate(ItemAndVersion versionHierarchy, String versionCrid) {
-        ProgramInformationType4300CP progInfo = new ProgramInformationType4300CP();
+        ProgramInformationType progInfo = new ProgramInformationType();
         
         progInfo.setProgramId(versionCrid);
         progInfo.setBasicDescription(generateBasicDescription(versionHierarchy.item(), versionHierarchy.version()));
