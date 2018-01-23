@@ -50,6 +50,7 @@ import tva.mpeg7._2008.UniqueIDType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "ProgramInformationType", propOrder = {
     "basicDescription",
+    "TargetingInformation",
     "otherIdentifier",
     "memberOf",
     "derivedFrom"
@@ -74,7 +75,7 @@ public class ProgramInformationType {
 
     // this element was extended by hand to meet the requirement of 4300CP,
     // in reference to the YV specification document.
-    @XmlElement(name = "targetingInformation")
+    @XmlElement(name = "TargetingInformation")
     protected List<ExtendedTargetingInformationType> targetingInformation;
 
     public List<ExtendedTargetingInformationType> getTargetingInformation() {
