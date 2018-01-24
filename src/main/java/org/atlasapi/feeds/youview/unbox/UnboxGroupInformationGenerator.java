@@ -118,7 +118,8 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     @Override
     public GroupInformationType generate(Film film) {
         GroupInformationType groupInfo = generateWithCommonFields(film, null);
-        
+        createTitle(film, groupInfo.getBasicDescription());
+
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         groupInfo.setServiceIDRef(UNBOX_GROUP_INFO_SERVICE_ID);
         
@@ -128,6 +129,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     @Override
     public GroupInformationType generate(Item item, Optional<Series> series, Optional<Brand> brand) {
         GroupInformationType groupInfo = generateWithCommonFields(item, null);
+        createTitle(item, groupInfo.getBasicDescription());
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
 
@@ -159,11 +161,10 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     @Override
     public GroupInformationType generate(Series series, Optional<Brand> brand, @Nullable Item firstChild) {
         GroupInformationType groupInfo = generateWithCommonFields(series, firstChild);
+        createTitle(series, groupInfo.getBasicDescription());
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));
         groupInfo.setOrdered(true);
-
-        createTitle(series, groupInfo.getBasicDescription());
 
         if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
@@ -182,7 +183,6 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     @Override
     public GroupInformationType generate(Brand brand, @Nullable Item item) {
         GroupInformationType groupInfo = generateWithCommonFields(brand, item);
-
         createTitle(brand, groupInfo.getBasicDescription());
 
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
@@ -194,7 +194,6 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     
     private GroupInformationType generateWithCommonFields(Content content, @Nullable Item item) {
         GroupInformationType groupInfo = new GroupInformationType();
-        
         groupInfo.setGroupId(idGenerator.generateContentCrid(content));
         groupInfo.setBasicDescription(generateBasicDescription(content, item));
         
@@ -251,12 +250,12 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         }
     }
 
-    private void createTitle(Brand brand, BasicContentDescriptionType basicDescription) {
-        if (brand.getTitle() != null) {
-            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, brand.getTitle()));
+    private void createTitle(Content content, BasicContentDescriptionType basicDescription) {
+        if (content.getTitle() != null) {
+            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, content.getTitle()));
 
-            String secondaryTitle = generateAlternateTitle(brand.getTitle());
-            if (!brand.getTitle().equals(secondaryTitle)) {
+            String secondaryTitle = generateAlternateTitle(content.getTitle());
+            if (!content.getTitle().equals(secondaryTitle)) {
                 basicDescription.getTitle().add(generateTitle(TITLE_TYPE_SECONDARY, secondaryTitle));
             }
         }

@@ -336,7 +336,7 @@ public class UnboxGroupInformationGeneratorTest extends org.atlasapi.TestsWithCo
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
 
         TitleType title = Iterables.getOnlyElement(desc.getTitle());
-        assertEquals("Series 2", title.getValue());
+        assertEquals("Season 2", title.getValue()); //Synthesized series title
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
 
         ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
