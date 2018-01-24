@@ -19,6 +19,8 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
 
+import com.youview.refdata.schemas._2011_07_06.ExtendedInstanceDescriptionType;
+import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
 import tva.metadata._2010.AudioAttributesType;
@@ -82,11 +84,19 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
     }
 
     private InstanceDescriptionType generateInstanceDescription(Item item, Encoding encoding) {
-        InstanceDescriptionType instanceDescription = new InstanceDescriptionType();
+        ExtendedInstanceDescriptionType instanceDescription = new ExtendedInstanceDescriptionType();
         
         instanceDescription.getGenre().addAll(generateGenres());
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(generateOtherId(item));
+
+        // In order to ensure Amazon content is only discoverable on YouView devices which have
+        // Amazon enabled, we need a Discovery User Group
+        ControlledTermType targetUserGroup = new ControlledTermType();
+        targetUserGroup.setHref(UnboxProgramInformationGenerator.YOUVIEW_AMAZON_TARGET_USER_GROUP);
+        ExtendedTargetingInformationType targetingInfo = new ExtendedTargetingInformationType();
+        targetingInfo.getTargetUserGroup().add(targetUserGroup);
+        instanceDescription.setTargetingInformation(targetingInfo);
         
         return instanceDescription;
     }
