@@ -44,9 +44,9 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
     public static final String UNBOX_DEEP_LINKING_ID = "deep_linking_id.amazon.com";
     
     private static final String YOUVIEW_MIX_TYPE = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
-    public static final String YOUVIEW_GENRE_SUBSCRIPTION = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#subscription";
-    public static final String YOUVIEW_GENRE_PAY_TO_RENT = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#pay_to_rent";
-    public static final String YOUVIEW_GENRE_PAY_TO_BUY = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#pay_to_buy";
+    public static final String YOUVIEW_ENTITLEMENT_SUBSCRIPTION = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#subscription";
+    public static final String YOUVIEW_ENTITLEMENT_PAY_TO_RENT = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#rental";
+    public static final String YOUVIEW_ENTITLEMENT_PAY_TO_BUY = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#ownership";
     public static final String YOUVIEW_GENRE_MEDIA_AVAILABLE = "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available";
     private static final String GENRE_TYPE_OTHER = "other";
 
@@ -161,6 +161,7 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
 
     //Genres in this context describes the availability of the media. 
     private List<GenreType> generateGenres(Location location) {
+        //All media ingested by Amazon is available
         GenreType mediaAvailable = new GenreType();
         mediaAvailable.setType(GENRE_TYPE_OTHER);
         mediaAvailable.setHref(YOUVIEW_GENRE_MEDIA_AVAILABLE);
@@ -170,13 +171,13 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
 
         switch (location.getPolicy().getRevenueContract()) {
         case PAY_TO_BUY:
-            revenuePlan.setHref(YOUVIEW_GENRE_PAY_TO_BUY);
+            revenuePlan.setHref(YOUVIEW_ENTITLEMENT_PAY_TO_BUY);
             break;
         case PAY_TO_RENT:
-            revenuePlan.setHref(YOUVIEW_GENRE_PAY_TO_RENT);
+            revenuePlan.setHref(YOUVIEW_ENTITLEMENT_PAY_TO_RENT);
             break;
         case SUBSCRIPTION:
-            revenuePlan.setHref(YOUVIEW_GENRE_SUBSCRIPTION);
+            revenuePlan.setHref(YOUVIEW_ENTITLEMENT_SUBSCRIPTION);
             break;
         default:
             throw new IllegalDataException(

@@ -84,7 +84,8 @@ public class UnboxOnDemandLocationGeneratorTest {
         
         Set<String> expected = ImmutableSet.of(
                 UnboxOnDemandLocationGenerator.YOUVIEW_GENRE_MEDIA_AVAILABLE, //everything has it
-                UnboxOnDemandLocationGenerator.YOUVIEW_GENRE_PAY_TO_BUY); //the test location has it
+                UnboxOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_BUY
+        ); //the test location has it
         
         assertEquals(expected, hrefs);
 
