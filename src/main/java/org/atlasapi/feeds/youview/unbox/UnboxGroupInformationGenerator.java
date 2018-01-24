@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview.unbox;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -326,7 +327,9 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     private CreditsListType generateCreditsList(Content content) {
        CreditsListType creditsList = new CreditsListType();
        int index=1;
-       for (CrewMember person : content.people()) {
+
+        Iterable<CrewMember> people = getOrderedCrewMembers(content);
+        for (CrewMember person : people) {
            CreditsItemType credit = new CreditsItemType();
            try {
                credit.setRole(person.role().requireTvaUri());
@@ -349,6 +352,23 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
        }
        
        return creditsList;
+    }
+
+    private static Iterable<CrewMember> getOrderedCrewMembers(Content content) {
+        List<CrewMember> actors = new ArrayList<>();
+        List<CrewMember> directors = new ArrayList<>();
+        List<CrewMember> other = new ArrayList<>();
+        //sort actors first, directors second. atm amazon ingest does not contain anything else.
+        for (CrewMember person : content.people()) {
+            if (person.role() == CrewMember.Role.ACTOR) {
+                actors.add(person);
+            } else if (person.role() == CrewMember.Role.DIRECTOR) {
+                directors.add(person);
+            } else {
+                other.add(person);
+            }
+        }
+        return Iterables.concat(actors, directors, other);
     }
 
     private List<ExtendedLanguageType> generateLanguage() {
