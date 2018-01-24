@@ -100,7 +100,8 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
             return genre;
         }
     };
-    
+    private static final String SEASON = "Season ";
+
     private Truncator truncator = new Truncator()
             .omitTrailingPunctuationWhenTruncated()
             .onlyTruncateAtAWordBoundary()
@@ -161,7 +162,9 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SERIES));
         groupInfo.setOrdered(true);
-        
+
+        createTitle(series, groupInfo.getBasicDescription());
+
         if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(idGenerator.generateContentCrid(brand.get()));
@@ -179,7 +182,9 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     @Override
     public GroupInformationType generate(Brand brand, @Nullable Item item) {
         GroupInformationType groupInfo = generateWithCommonFields(brand, item);
-        
+
+        createTitle(brand, groupInfo.getBasicDescription());
+
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
         groupInfo.setOrdered(true);
         groupInfo.setServiceIDRef(UNBOX_GROUP_INFO_SERVICE_ID);
@@ -202,18 +207,11 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         return type;
     }
 
+
+
     private BasicContentDescriptionType generateBasicDescription(Content content, @Nullable Item item) {
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
-        
-        if (content.getTitle() != null) {
-            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, content.getTitle()));
-            
-            String secondaryTitle = generateAlternateTitle(content.getTitle());
-            if (!content.getTitle().equals(secondaryTitle)) {
-                basicDescription.getTitle().add(generateTitle(TITLE_TYPE_SECONDARY, secondaryTitle));
-            }            
-        }
-        
+
         basicDescription.getSynopsis().addAll(generateSynopses(content));
         basicDescription.getGenre().addAll(generateGenres(content));
         basicDescription.getGenre().add(generateGenreFromSpecialization(content));
@@ -233,6 +231,35 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         }
         
         return basicDescription;
+    }
+
+    private void createTitle(Series series, BasicContentDescriptionType basicDescription) {
+        // YV Has requested specifically the title to be synthesised, because they don't want
+        // the textual titles that are occasionally provided.
+        // https://jira-ngyv.youview.co.uk/browse/ECOTEST-282
+        if(series.getSeriesNumber() != null ) {
+            String sythesizedTitle = SEASON + series.getSeriesNumber();
+            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, sythesizedTitle));
+        }
+        else if (series.getTitle() != null) { //fallback
+            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, series.getTitle()));
+
+            String secondaryTitle = generateAlternateTitle(series.getTitle());
+            if (!series.getTitle().equals(secondaryTitle)) {
+                basicDescription.getTitle().add(generateTitle(TITLE_TYPE_SECONDARY, secondaryTitle));
+            }
+        }
+    }
+
+    private void createTitle(Brand brand, BasicContentDescriptionType basicDescription) {
+        if (brand.getTitle() != null) {
+            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, brand.getTitle()));
+
+            String secondaryTitle = generateAlternateTitle(brand.getTitle());
+            if (!brand.getTitle().equals(secondaryTitle)) {
+                basicDescription.getTitle().add(generateTitle(TITLE_TYPE_SECONDARY, secondaryTitle));
+            }
+        }
     }
 
     private String generateAlternateTitle(String title) {
