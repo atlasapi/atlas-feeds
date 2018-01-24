@@ -239,7 +239,11 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     }
     
     private String createMasterBrandLink(Content content) {
-        return MASTERBRAND_PREFIX + sIdResolver.resolveMasterBrandId(content).get();
+        Optional<String> masterBrandOpt = sIdResolver.resolveMasterBrandId(content);
+        if(!masterBrandOpt.isPresent()){
+            throw new NullPointerException("No masterbrand was found for " + content.getId());
+        }
+        return MASTERBRAND_PREFIX + masterBrandOpt.get();
     }
 
     private GroupInformationType generateWithCommonFields(Content content) {
