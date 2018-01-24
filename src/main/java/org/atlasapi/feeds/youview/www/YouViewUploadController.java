@@ -317,15 +317,12 @@ public class YouViewUploadController {
             response.setContentType("application/json");
             MAPPER.writeValue(response.getOutputStream(), allResponses);
         }
-        catch (JsonMappingException e){
-            log.error("Failed to write the results of calling "
-                      + request.getRequestURL() + " to the output.", e);
-        }
         catch (Exception e) {
             telescope.reportFailedEvent(
                     "The call to " + request.getRequestURL() + " failed. "
                     + "(" + e.toString() + ")");
             telescope.endReporting();
+            log.error("The call to {}, uri={} failed. ", request.getRequestURL(), e);
             throw e;
         }
     }
