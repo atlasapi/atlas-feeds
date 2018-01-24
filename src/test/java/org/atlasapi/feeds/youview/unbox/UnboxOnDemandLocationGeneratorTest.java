@@ -83,8 +83,8 @@ public class UnboxOnDemandLocationGeneratorTest {
         assertEquals("other", Iterables.getOnlyElement(types));
         
         Set<String> expected = ImmutableSet.of(
-                "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available",
-                "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#subscription");
+                UnboxOnDemandLocationGenerator.YOUVIEW_GENRE_MEDIA_AVAILABLE, //everything has it
+                UnboxOnDemandLocationGenerator.YOUVIEW_GENRE_PAY_TO_BUY); //the test location has it
         
         assertEquals(expected, hrefs);
 
@@ -168,7 +168,7 @@ public class UnboxOnDemandLocationGeneratorTest {
         Location location = new Location();
         
         Policy policy = new Policy();
-
+        policy.setRevenueContract(Policy.RevenueContract.PAY_TO_BUY);
         policy.setAvailabilityStart(new DateTime(2012, 7, 3, 0, 0, 0, DateTimeZone.UTC));
         policy.setAvailabilityEnd(new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC));
         

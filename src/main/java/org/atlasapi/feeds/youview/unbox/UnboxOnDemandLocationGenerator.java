@@ -1,8 +1,5 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
-
 import java.math.BigInteger;
 import java.util.List;
 
@@ -19,8 +16,12 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
 
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.youview.refdata.schemas._2011_07_06.ExtendedInstanceDescriptionType;
+import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
+import org.jdom.IllegalDataException;
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
 import tva.metadata._2010.AudioAttributesType;
@@ -34,9 +35,8 @@ import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
 
 public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
@@ -44,8 +44,10 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
     public static final String UNBOX_DEEP_LINKING_ID = "deep_linking_id.amazon.com";
     
     private static final String YOUVIEW_MIX_TYPE = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
-    private static final String YOUVIEW_GENRE_SUBSCRIPTION_REQUIRED = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#subscription";
-    private static final String YOUVIEW_GENRE_MEDIA_AVAILABLE = "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available";
+    public static final String YOUVIEW_GENRE_SUBSCRIPTION = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#subscription";
+    public static final String YOUVIEW_GENRE_PAY_TO_RENT = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#pay_to_rent";
+    public static final String YOUVIEW_GENRE_PAY_TO_BUY = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#pay_to_buy";
+    public static final String YOUVIEW_GENRE_MEDIA_AVAILABLE = "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available";
     private static final String GENRE_TYPE_OTHER = "other";
 
     private final IdGenerator idGenerator;
@@ -57,11 +59,11 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
     @Override
     public OnDemandProgramType generate(ItemOnDemandHierarchy onDemandHierarchy, String onDemandImi) {
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
-        
+        onDemandHierarchy.location().getPolicy().getRevenueContract();
         onDemand.setServiceIDRef(UNBOX_ONDEMAND_SERVICE_ID);
         onDemand.setProgram(generateProgram(onDemandHierarchy.item(), onDemandHierarchy.version()));
         onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(onDemandHierarchy.item(), onDemandHierarchy.version(), onDemandHierarchy.encoding(), onDemandHierarchy.location()));
-        onDemand.setInstanceDescription(generateInstanceDescription(onDemandHierarchy.item(), onDemandHierarchy.encoding()));
+        onDemand.setInstanceDescription(generateInstanceDescription(onDemandHierarchy));
         onDemand.setPublishedDuration(generatePublishedDuration(onDemandHierarchy.version()));
         onDemand.setStartOfAvailability(generateAvailabilityStart(onDemandHierarchy.location()));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(onDemandHierarchy.location()));
@@ -70,7 +72,7 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
         return onDemand;
     }
     
-    // hardcoded
+    // There is no such thing as a free meal.
     private FlagType generateFree() {
         FlagType free = new FlagType();
         free.setValue(false);
@@ -83,10 +85,13 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
         return program;
     }
 
-    private InstanceDescriptionType generateInstanceDescription(Item item, Encoding encoding) {
+    private InstanceDescriptionType generateInstanceDescription(ItemOnDemandHierarchy onDemandHie) {
+        Item item = onDemandHie.item();
+        Encoding encoding = onDemandHie.encoding();
+        Location location = onDemandHie.location();
         ExtendedInstanceDescriptionType instanceDescription = new ExtendedInstanceDescriptionType();
         
-        instanceDescription.getGenre().addAll(generateGenres());
+        instanceDescription.getGenre().addAll(generateGenres(location));
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(generateOtherId(item));
 
@@ -154,16 +159,32 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
         return id;
     }
 
-    private List<GenreType> generateGenres() {
+    //Genres in this context describes the availability of the media. 
+    private List<GenreType> generateGenres(Location location) {
         GenreType mediaAvailable = new GenreType();
         mediaAvailable.setType(GENRE_TYPE_OTHER);
         mediaAvailable.setHref(YOUVIEW_GENRE_MEDIA_AVAILABLE);
-        
-        GenreType subRequired = new GenreType();
-        subRequired.setType(GENRE_TYPE_OTHER);
-        subRequired.setHref(YOUVIEW_GENRE_SUBSCRIPTION_REQUIRED);
-        
-        return ImmutableList.of(mediaAvailable, subRequired);
+
+        GenreType revenuePlan = new GenreType();
+        revenuePlan.setType(GENRE_TYPE_OTHER);
+
+        switch (location.getPolicy().getRevenueContract()) {
+        case PAY_TO_BUY:
+            revenuePlan.setHref(YOUVIEW_GENRE_PAY_TO_BUY);
+            break;
+        case PAY_TO_RENT:
+            revenuePlan.setHref(YOUVIEW_GENRE_PAY_TO_RENT);
+            break;
+        case SUBSCRIPTION:
+            revenuePlan.setHref(YOUVIEW_GENRE_SUBSCRIPTION);
+            break;
+        default:
+            throw new IllegalDataException(
+                    "Amazon onDemand content is not accessible via sub, rent or buy. Location uri="
+                    + location.getUri());
+        }
+
+        return ImmutableList.of(mediaAvailable, revenuePlan);
     }
 
     private Duration generatePublishedDuration(Version version) {
