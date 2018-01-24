@@ -146,8 +146,9 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             try {
                 mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
             } catch (Exception e) {
-                log.error("Uploading {} from amazon failed during the attempt to "
-                          + "equiv, merge and get a repId.", updatedContent.getId(), e);
+                log.error("Failed during the attempt to equiv, merge or get a repId. "
+                          + "This item will not be pushed to YV. Content {} (amazon). ",
+                        updatedContent.getId(), e);
                 continue;
             }
 
