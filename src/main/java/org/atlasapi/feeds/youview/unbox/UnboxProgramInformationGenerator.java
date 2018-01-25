@@ -30,7 +30,6 @@ import tva.metadata._2010.ProgramInformationType;
 import tva.metadata._2010.TVAParentalGuidanceType;
 import tva.metadata._2010.TVATimeType;
 import tva.metadata.extended._2010.ExtendedContentDescriptionType;
-import tva.metadata.extended._2010.TargetingInformationType;
 import tva.mpeg7._2008.ControlledTermUseType;
 import tva.mpeg7._2008.UniqueIDType;
 

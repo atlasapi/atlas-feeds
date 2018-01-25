@@ -95,14 +95,6 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(generateOtherId(item));
 
-        // In order to ensure Amazon content is only discoverable on YouView devices which have
-        // Amazon enabled, we need a Discovery User Group
-        ControlledTermType targetUserGroup = new ControlledTermType();
-        targetUserGroup.setHref(UnboxProgramInformationGenerator.YOUVIEW_AMAZON_TARGET_USER_GROUP);
-        ExtendedTargetingInformationType targetingInfo = new ExtendedTargetingInformationType();
-        targetingInfo.getTargetUserGroup().add(targetUserGroup);
-        instanceDescription.setTargetingInformation(targetingInfo);
-        
         return instanceDescription;
     }
 
