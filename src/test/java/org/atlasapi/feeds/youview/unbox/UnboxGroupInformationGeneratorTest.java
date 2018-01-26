@@ -316,6 +316,16 @@ public class UnboxGroupInformationGeneratorTest extends org.atlasapi.TestsWithCo
     }
 
     @Test
+    public void testLanguageFallbackToUndefined() { //YV schema requires at least one lang.
+        Episode episode = createEpisode();
+        episode.setLanguages(ImmutableList.of()); //content with no language.
+        GroupInformationType groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
+        BasicContentDescriptionType desc = groupInfo.getBasicDescription();
+        ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
+        assertEquals(UnboxGroupInformationGenerator.LANGUAGE_UNDEFINED, language.getValue());
+    }
+
+    @Test
     public void testSeriesGroupInformationGeneration() {
         Episode episode = createEpisode();
         episode.setId(1L);
