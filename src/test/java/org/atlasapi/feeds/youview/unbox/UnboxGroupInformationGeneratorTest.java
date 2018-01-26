@@ -299,7 +299,7 @@ public class UnboxGroupInformationGeneratorTest extends org.atlasapi.TestsWithCo
 
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
         assertEquals("crid://stage-metabroadcast.com/content/qq", memberOf.getCrid());
-        assertEquals(Long.valueOf(5), memberOf.getIndex());
+        assertEquals(Long.valueOf(1), memberOf.getIndex());
 
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
@@ -323,6 +323,24 @@ public class UnboxGroupInformationGeneratorTest extends org.atlasapi.TestsWithCo
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
         ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
         assertEquals(UnboxGroupInformationGenerator.LANGUAGE_UNDEFINED, language.getValue());
+    }
+
+    @Test
+    public void testSynthesizedEpisodeTitle() { //YV requires to ditch text based titles.
+        Episode episode = createEpisode();
+        episode.setEpisodeNumber(5);
+        GroupInformationType groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
+        TitleType title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
+        assertEquals("Episode 5", title.getValue());
+    }
+
+    @Test
+    public void testSynthesizedEpisodeTitleFallback() {
+        Episode episode = createEpisode();
+        episode.setEpisodeNumber(null);
+        GroupInformationType groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
+        TitleType title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
+        assertEquals("Episode 1 - Drug Lords", title.getValue());
     }
 
     @Test
@@ -622,7 +640,7 @@ public class UnboxGroupInformationGeneratorTest extends org.atlasapi.TestsWithCo
         episode.setId(7174445L);
         episode.setCanonicalUri("http://unbox.amazon.co.uk/episodes/180014");
         episode.setCurie("lf:e-180014");
-        episode.setTitle("Episode 1");
+        episode.setTitle("Episode 1 - Drug Lords");
         episode.setDescription("some episode description");
         episode.setImage("some episode image");
         episode.setPublisher(Publisher.LOVEFILM);
@@ -641,7 +659,7 @@ public class UnboxGroupInformationGeneratorTest extends org.atlasapi.TestsWithCo
         ParentRef seriesRef = new ParentRef("http://unbox.amazon.co.uk/series/179534");
         episode.setSeriesRef(seriesRef);
 
-        episode.setEpisodeNumber(5);
+        episode.setEpisodeNumber(1);
         episode.setSeriesNumber(2);
 
         return episode;

@@ -102,6 +102,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         }
     };
     private static final String SEASON = "Season ";
+    private static final String EPISODE = "Episode ";
 
     private Truncator truncator = new Truncator()
             .omitTrailingPunctuationWhenTruncated()
@@ -130,10 +131,13 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     @Override
     public GroupInformationType generate(Item item, Optional<Series> series, Optional<Brand> brand) {
         GroupInformationType groupInfo = generateWithCommonFields(item, null);
-        createTitle(item, groupInfo.getBasicDescription());
-        
-        groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
+        if (item instanceof Episode) {
+            createTitle((Episode) item, groupInfo.getBasicDescription());
+        } else {
+            createTitle(item, groupInfo.getBasicDescription());
+        }
 
+        groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         if (series.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(idGenerator.generateContentCrid(series.get()));
@@ -241,13 +245,20 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
             String sythesizedTitle = SEASON + series.getSeriesNumber();
             basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, sythesizedTitle));
         }
-        else if (series.getTitle() != null) { //fallback
-            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, series.getTitle()));
+        else { //fallback
+            createTitle((Content) series, basicDescription);
+        }
+    }
 
-            String secondaryTitle = generateAlternateTitle(series.getTitle());
-            if (!series.getTitle().equals(secondaryTitle)) {
-                basicDescription.getTitle().add(generateTitle(TITLE_TYPE_SECONDARY, secondaryTitle));
-            }
+    private void createTitle(Episode episode, BasicContentDescriptionType basicDescription) {
+        // YV Has requested specifically the title to be synthesised, because they don't want
+        // the textual titles that are occasionally provided.
+        // https://jira-ngyv.youview.co.uk/browse/ECOTEST-268
+        if(episode.getEpisodeNumber() != null ) {
+            String sythesizedTitle = EPISODE + episode.getEpisodeNumber();
+            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, sythesizedTitle));
+        } else { //fallback
+            createTitle((Content) episode, basicDescription);
         }
     }
 
