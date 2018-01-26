@@ -114,10 +114,10 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
             .withOmissionMarker("...");
 
     private final IdGenerator idGenerator;
-    private final GenreMapping genreMapping;//Ep1, Episode 1 etc.
-    private final Pattern episodePattern1 = Pattern.compile("(?i)ep[\\.-]*[isode]*[ -]*[\\d]+");//S05E01 etc
-    private final Pattern episodePattern2 = Pattern.compile("(?i)[s|e]+[\\d]+[ \\.-\\/]*[s|e]+[\\d]+");//all dashes
-    private final Pattern strayDashes = Pattern.compile("^[\\p{Pd} ]+|[\\p{Pd} ]+$");
+    private final GenreMapping genreMapping;
+    private final Pattern episodePattern1 = Pattern.compile("(?i)ep[\\.-]*[isode]*[ -]*[\\d]+");//Ep1, Episode 1 etc.
+    private final Pattern episodePattern2 = Pattern.compile("(?i)[s|e]+[\\d]+[ \\.-\\/]*[s|e]+[\\d]+");//S05E01 etc
+    private final Pattern strayDashes = Pattern.compile("^[\\p{Pd} ]+|[\\p{Pd} ]+$");//all dashes
 
     public UnboxGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping) {
         this.idGenerator = checkNotNull(idGenerator);
