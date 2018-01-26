@@ -72,7 +72,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     private static final String GROUP_TYPE_SERIES = "series";
     private static final String GROUP_TYPE_SHOW = "show";
     private static final String LANGUAGE_TYPE_ORIGINAL = "original";
-    private static final String LANGUAGE = "en";
+    private static final String LANGUAGE_UNDEFINED = "und";
     private static final String GENRE_TYPE_MAIN = "main";
     private static final String GENRE_TYPE_OTHER = "other";
     private static final String TITLE_TYPE_MAIN = "main";
@@ -216,7 +216,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         basicDescription.getGenre().addAll(generateGenres(content));
         basicDescription.getGenre().add(generateGenreFromSpecialization(content));
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
-        basicDescription.getLanguage().addAll(generateLanguage());
+        basicDescription.getLanguage().addAll(generateLanguage(content));
         basicDescription.setCreditsList(generateCreditsList(content));
         Optional<RelatedMaterialType> relatedMaterial = Optional.absent();
         if (content instanceof Series) {
@@ -371,12 +371,23 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         return Iterables.concat(actors, directors, other);
     }
 
-    private List<ExtendedLanguageType> generateLanguage() {
+    private List<ExtendedLanguageType> generateLanguage(Content content) {
         List<ExtendedLanguageType> languages = Lists.newArrayList();
-        ExtendedLanguageType language = new ExtendedLanguageType();
-        language.setType(LANGUAGE_TYPE_ORIGINAL);
-        language.setValue(LANGUAGE);
-        languages.add(language);
+        for (String lang : content.getLanguages()) {
+            ExtendedLanguageType language = new ExtendedLanguageType();
+            language.setType(LANGUAGE_TYPE_ORIGINAL);
+            language.setValue(lang);
+            languages.add(language);
+            // This block kinda relies on a single language geing available. At the time of writing
+            // amazon does not even provide one. If more are provided YV might error.
+        }
+
+        if(languages.isEmpty()){ //if the content had no language, send undefined to YV.
+                ExtendedLanguageType language = new ExtendedLanguageType();
+                language.setType(LANGUAGE_TYPE_ORIGINAL);
+                language.setValue(LANGUAGE_UNDEFINED);
+                languages.add(language);
+        }
         return languages;
     }
 
