@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
@@ -34,6 +35,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tva.metadata._2010.BaseProgramGroupTypeType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ControlledTermType;
@@ -59,6 +62,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class UnboxGroupInformationGenerator implements GroupInformationGenerator {
+    private static final Logger log = LoggerFactory.getLogger(UnboxGroupInformationGenerator.class);
 
     public static final String UNBOX_GROUP_INFO_SERVICE_ID = "http://amazon.com/services/content_owning/primevideo";
     private static final int DEFAULT_IMAGE_HEIGHT = 320;
@@ -110,8 +114,11 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
             .withOmissionMarker("...");
 
     private final IdGenerator idGenerator;
-    private final GenreMapping genreMapping;
-    
+    private final GenreMapping genreMapping;//Ep1, Episode 1 etc.
+    private final Pattern episodePattern1 = Pattern.compile("(?i)ep[\\.-]*[isode]*[ -]*[\\d]+");//S05E01 etc
+    private final Pattern episodePattern2 = Pattern.compile("(?i)[s|e]+[\\d]+[ \\.-\\/]*[s|e]+[\\d]+");//all dashes
+    private final Pattern strayDashes = Pattern.compile("^[\\p{Pd} ]+|[\\p{Pd} ]+$");
+
     public UnboxGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping) {
         this.idGenerator = checkNotNull(idGenerator);
         this.genreMapping = checkNotNull(genreMapping);
@@ -251,12 +258,29 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     }
 
     private void createTitle(Episode episode, BasicContentDescriptionType basicDescription) {
-        // YV Has requested specifically the title to be synthesised, because they don't want
-        // the textual titles that are occasionally provided.
+        // Because YV presents Brand title, Series title, Episode title, it is crucial that
+        // the episode title does not repeat the brand title. The effort to clean this has
+        // been done in the amazon ingest. Here we will see if a meaningful title remains,
+        // and if not we'll synthesize one.
         // https://jira-ngyv.youview.co.uk/browse/ECOTEST-268
-        if(episode.getEpisodeNumber() != null ) {
+
+        //If we have a number, try to remove existing format and add synthesized
+        if (episode.getEpisodeNumber() != null) {
+            String title = episodePattern1.matcher(episode.getTitle()).replaceAll("");
+            title = episodePattern2.matcher(title).replaceAll("");
+            title = strayDashes.matcher(title.trim()).replaceAll("");
+            title = title.trim();
+
             String sythesizedTitle = EPISODE + episode.getEpisodeNumber();
+            if (!title.isEmpty()) { //if you still have a title append it
+                sythesizedTitle = sythesizedTitle + " - " + title;
+            }
             basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, sythesizedTitle));
+
+            //TODO:This line is here to monitor and discover cases that need fixing.
+            if (!sythesizedTitle.equals(episode.getTitle())) {
+                log.info("AMAZON_TITLE_CHANGE: {} = {}", episode.getTitle(), sythesizedTitle);
+            }
         } else { //fallback
             createTitle((Content) episode, basicDescription);
         }

@@ -307,7 +307,7 @@ public class UnboxGroupInformationGeneratorTest extends org.atlasapi.TestsWithCo
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
 
         TitleType title = Iterables.getOnlyElement(desc.getTitle());
-        assertEquals("Episode 1", title.getValue());
+        assertEquals("Episode 1 - Drug Lords", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
 
         ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
@@ -326,18 +326,55 @@ public class UnboxGroupInformationGeneratorTest extends org.atlasapi.TestsWithCo
     }
 
     @Test
-    public void testSynthesizedEpisodeTitle() { //YV requires to ditch text based titles.
+    public void testSynthesizedEpisodeTitle() {
         Episode episode = createEpisode();
         episode.setEpisodeNumber(5);
+        episode.setTitle("Ep.5 Drug Lords"); //remove episode info and append sythesized
         GroupInformationType groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
         TitleType title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
+        assertEquals("Episode 5 - Drug Lords", title.getValue());
+
+        episode.setTitle("Episode 6 - Drug Lords");
+        groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
+        title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
+        assertEquals("Episode 5 - Drug Lords", title.getValue());
+
+        episode.setTitle(" Drug Lords Episode 5");
+        groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
+        title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
+        assertEquals("Episode 5 - Drug Lords", title.getValue());
+
+        episode.setTitle("Drug Lords"); //append missing episode No
+        groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
+        title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
+        assertEquals("Episode 5 - Drug Lords", title.getValue());
+
+        episode.setTitle(""); //No title
+        groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
+        title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
         assertEquals("Episode 5", title.getValue());
+
+        episode.setTitle("Episode 6"); //Only number
+        groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
+        title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
+        assertEquals("Episode 5", title.getValue());
+
+        episode.setTitle("Ep.5 - Drug Lords"); //Dont leave dashes
+        groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
+        title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
+        assertEquals("Episode 5 - Drug Lords", title.getValue());
+
+        episode.setTitle("S06E05 - Drug Lords"); //other typical format
+        groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
+        title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
+        assertEquals("Episode 5 - Drug Lords", title.getValue());
     }
 
     @Test
     public void testSynthesizedEpisodeTitleFallback() {
         Episode episode = createEpisode();
         episode.setEpisodeNumber(null);
+        episode.setTitle("Episode 1 - Drug Lords");
         GroupInformationType groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
         TitleType title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
         assertEquals("Episode 1 - Drug Lords", title.getValue());
