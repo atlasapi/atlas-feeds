@@ -59,7 +59,6 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
     @Override
     public OnDemandProgramType generate(ItemOnDemandHierarchy onDemandHierarchy, String onDemandImi) {
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
-        onDemandHierarchy.location().getPolicy().getRevenueContract();
         onDemand.setServiceIDRef(UNBOX_ONDEMAND_SERVICE_ID);
         onDemand.setProgram(generateProgram(onDemandHierarchy.item(), onDemandHierarchy.version()));
         onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(onDemandHierarchy.item(), onDemandHierarchy.version(), onDemandHierarchy.encoding(), onDemandHierarchy.location()));
