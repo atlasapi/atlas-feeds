@@ -260,32 +260,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     }
 
     private void createTitle(Episode episode, BasicContentDescriptionType basicDescription) {
-        // Because YV presents Brand title, Series title, Episode title, it is crucial that
-        // the episode title does not repeat the brand title. The effort to clean this has
-        // been done in the amazon ingest. Here we will see if a meaningful title remains,
-        // and if not we'll synthesize one.
-        // https://jira-ngyv.youview.co.uk/browse/ECOTEST-268
-
-        //If we have a number, try to remove existing format and add synthesized
-        if (episode.getEpisodeNumber() != null) {
-            String title = episodePattern1.matcher(episode.getTitle()).replaceAll("");
-            title = episodePattern2.matcher(title).replaceAll("");
-            title = strayDashes.matcher(title.trim()).replaceAll("");
-            title = title.trim();
-
-            String sythesizedTitle = EPISODE + episode.getEpisodeNumber();
-            if (!title.isEmpty()) { //if you still have a title append it
-                sythesizedTitle = sythesizedTitle + " - " + title;
-            }
-            basicDescription.getTitle().add(generateTitle(TITLE_TYPE_MAIN, sythesizedTitle));
-
-            //TODO:This line is here to monitor and discover cases that need fixing.
-            if (!sythesizedTitle.equals(episode.getTitle())) {
-                log.info("AMAZON_TITLE_CHANGE: {} = {}", episode.getTitle(), sythesizedTitle);
-            }
-        } else { //fallback
             createTitle((Content) episode, basicDescription);
-        }
     }
 
     private void createTitle(Content content, BasicContentDescriptionType basicDescription) {
