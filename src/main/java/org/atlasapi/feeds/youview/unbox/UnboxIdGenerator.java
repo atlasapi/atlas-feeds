@@ -13,12 +13,16 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
 
+import com.metabroadcast.applications.client.model.internal.Environment;
 import com.metabroadcast.common.properties.Configurer;
 
 public class UnboxIdGenerator implements IdGenerator {
 
     private static final String AMAZON_IMI_PREFIX = "imi:amazon.com/";
+    private static final Environment ENVIRONMENT = Environment.parse(Configurer.getPlatform());
+
     public static final String VERSION_SUFFIX = "_version";
+    public static final String AMAZON_CRID_IDENTIFIER = "amazon.com";
     
     @Override
     public String generateVersionCrid(Item item, Version version) {
@@ -57,10 +61,12 @@ public class UnboxIdGenerator implements IdGenerator {
     }
 
     private static String baseCridFrom(Identified content) {
-        return MbstCridGenerator.getContentCrid(Configurer.getPlatform(), content);
-        //return "crid://amazon.com/exec/obidos/ASIN/" + getAsin(content); old way of generating crids
+        return MbstCridGenerator.getContentCrid(AMAZON_CRID_IDENTIFIER, ENVIRONMENT, content);
     }
 
+    /**
+     * Uris for amazon content look like http://unbox.amazon.co.uk/B00EV9L5LE
+     */
     private static String getAsin(Identified content) {
         String[] splinters = content.getCanonicalUri().split("/");
         return splinters[splinters.length - 1];
