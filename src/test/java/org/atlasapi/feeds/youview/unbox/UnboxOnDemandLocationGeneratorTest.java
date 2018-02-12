@@ -1,8 +1,5 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-
 import java.math.BigInteger;
 import java.util.Set;
 
@@ -17,11 +14,21 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
+
+import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.properties.Configurer;
+
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
+import org.junit.BeforeClass;
 import org.junit.Test;
-
+import org.mockito.Mockito;
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.GenreType;
@@ -29,12 +36,8 @@ import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.metabroadcast.common.intl.Countries;
-import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class UnboxOnDemandLocationGeneratorTest {
     
@@ -51,6 +54,11 @@ public class UnboxOnDemandLocationGeneratorTest {
             return input.getType();
         }
     };
+
+    @BeforeClass
+    public static void setUp() {
+        System.setProperty("MBST_PLATFORM", "stage");
+    }
 
     private IdGenerator idGenerator = new UnboxIdGenerator();
     
@@ -84,8 +92,8 @@ public class UnboxOnDemandLocationGeneratorTest {
         
         Set<String> expected = ImmutableSet.of(
                 UnboxOnDemandLocationGenerator.YOUVIEW_GENRE_MEDIA_AVAILABLE, //everything has it
-                UnboxOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_BUY
-        ); //the test location has it
+                UnboxOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_BUY //the test location has it
+        );
         
         assertEquals(expected, hrefs);
 
@@ -115,14 +123,15 @@ public class UnboxOnDemandLocationGeneratorTest {
         Version version = createVersion(encoding);
         version.setCanonicalUri("unbox.amazon.co.uk/SOMELOCATIONID");
         Film film = createFilm(version);
+        film.setId(10000L);
         ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, location);
         String onDemandImi = "onDemandImi";
         
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);
         
         assertEquals("http://amazon.com/services/on_demand/primevideo", onDemand.getServiceIDRef());
-        assertEquals("crid://amazon.com/exec/obidos/ASIN/SOMELOCATIONID_version", onDemand.getProgram().getCrid());
-        assertEquals("imi:amazon.com/SOMELOCATIONID", onDemand.getInstanceMetadataId());
+        assertEquals("crid://amazon.com/stage-metabroadcast.com/content/szp/version", onDemand.getProgram().getCrid());
+        assertEquals("crid://amazon.com/stage-metabroadcast.com/content/szp/ondemand/HD", onDemand.getInstanceMetadataId());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());

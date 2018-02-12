@@ -18,32 +18,55 @@ import com.metabroadcast.common.properties.Configurer;
 
 public class UnboxIdGenerator implements IdGenerator {
 
-    private static final String AMAZON_IMI_PREFIX = "imi:amazon.com/";
-    private static final Environment ENVIRONMENT = Environment.parse(Configurer.getPlatform());
+//    private static final String AMAZON_IMI_PREFIX = "imi:amazon.com/"
 
     public static final String VERSION_SUFFIX = "_version";
-    public static final String AMAZON_CRID_IDENTIFIER = "amazon.com";
-    
-    @Override
-    public String generateVersionCrid(Item item, Version version) {
-        //we cannot base the version on the parent id, because we might have multiple versions
-        //and they need different crids. Since versions themselves dont have ids, we cannot generate
-        //mbst style crids. But it shouldn't matter, because we dont want to use the rep-id service
-        //on versions so amazon-like crids should be fine.
-        return "crid://amazon.com/exec/obidos/ASIN/" +getAsin(version) + VERSION_SUFFIX;
-    }
 
+    private MbstCridGenerator mbstCridGenerator = new MbstCridGenerator(
+            Environment.parse(Configurer.getPlatform()),
+            "amazon.com" //amazon crid identifier
+    );
+
+    /**
+     * @return crid://amazon.com/metabroadcast.com/ITEM_ASIN
+     */
     @Override
     public String generateContentCrid(Content content) {
-        return baseCridFrom(content);
+        return mbstCridGenerator.getContentCrid(content);
     }
-    
+
+    /**
+     * @return crid://amazon.com/metabroadcast.com/ITEM_ASIN/version
+     */
     @Override
-    // If you ever want to create different IMIs for content that is available via 2 means
-    // (e.g. one ASIN for both subscription and pay_to_buy)
-    // consider using either the canonical uri, or location.getPolicy().getRevenueContract().
-    public String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location) {
-        return AMAZON_IMI_PREFIX + getAsin(location);
+    public String generateVersionCrid(Item item, Version version) {
+        //This assumes that each item only has a single version on it. That is not the case in atlas
+        //where each content is stored with its own version (that is based on the content's if), but
+        //it was a YV's requirement that we present everything under a single version, so the ID
+        //generation assumes this.
+        return mbstCridGenerator.getVersionCrid(item);
+    }
+
+    /**
+     * @return crid://amazon.com/metabroadcast.com/ITEM_ASIN/ondemand/QUALITY
+     */
+    @Override
+    public String generateOnDemandImi(Item item, Version version, Encoding encoding,
+            Location location) {
+        //decide on content quality based on YV's standard
+        MbstCridGenerator.Quality quality = MbstCridGenerator.Quality.SD;
+        Integer size = encoding.getVideoHorizontalSize();
+        if (size == null) {
+            size = 0; //assume SD
+        }
+        if (size < 720) {
+            quality = MbstCridGenerator.Quality.SD;
+        } else if (720 <= size && size < 2160) {
+            quality = MbstCridGenerator.Quality.HD;
+        } else if (2160 <= size) {
+            quality = MbstCridGenerator.Quality.UHD;
+        }
+        return mbstCridGenerator.getOndemandCrid(item, quality);
     }
     
     @Override
@@ -57,11 +80,8 @@ public class UnboxIdGenerator implements IdGenerator {
     }
 
     public static Pattern getVersionCridPattern(){
-        return Pattern.compile("crid://amazon.com/exec/obidos/ASIN/" + "[A-Za-z0-9]*" + VERSION_SUFFIX);
-    }
-
-    private static String baseCridFrom(Identified content) {
-        return MbstCridGenerator.getContentCrid(AMAZON_CRID_IDENTIFIER, ENVIRONMENT, content);
+        //version format is crid://amazon.com/metabroadcast.com/ITEM_ASIN/version
+        return Pattern.compile("crid://amazon.com/metabroadcast.com/" + "[A-Za-z0-9]*" + "/version");
     }
 
     /**

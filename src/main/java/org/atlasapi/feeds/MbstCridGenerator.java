@@ -18,21 +18,51 @@ public class MbstCridGenerator {
             Environment.STAGE, "stage-metabroadcast.com"
     );
 
-    private static final String CRID_START = "crid:/";
+    private static final Joiner SLASH_JOINER = Joiner.on("/");
 
-    public static String getContentCrid(String provider, Environment env, Identified i) {
-        return getContentCrid(provider, env, i.getId());
+    private static final String CRID_START = "crid:/"; //<-missing a slash so we can use the Joiner.
+    private static final String CONTENT = "content";
+    private static final String VERSION = "version";
+    private static final String ONDEMAND = "ondemand";
+
+    public enum Quality {
+        SD,
+        HD,
+        UHD
     }
 
-    public static String getContentCrid(String provider, Environment env, Long id) {
-        return getContentCrid(provider, env, encode(id));
+    private Environment env;
+    private String provider;
+
+    public MbstCridGenerator(Environment env, String provider) {
+        this.env = env;
+        this.provider = provider;
     }
 
-    public static String getContentCrid(String provider, Environment env, String id) {
-        return getCrid(provider, env, "content", id );
+    // If the format changes, you have update the version pattern at
+    // UnboxIdGenerator.getVersionCridPattern() as it's not automatically constructed.
+    public String getVersionCrid(Identified baseItem ){
+        return SLASH_JOINER.join(getContentCrid(baseItem), VERSION);
     }
 
-    public static String getCrid(String provider, Environment env, String type, String id) {
-        return Joiner.on("/").join(CRID_START, provider, MBST_IDENTIFIER.get(env), type, id);
+    public String getOndemandCrid(Identified baseItem, Quality quality) {
+        return SLASH_JOINER.join(getContentCrid(baseItem), ONDEMAND, quality);
+    }
+
+    public String getContentCrid(Identified i) {
+        return getContentCrid(i.getId());
+    }
+
+    public String getContentCrid( Long id) {
+        return getContentCrid(encode(id));
+    }
+
+    public String getContentCrid( String id) {
+        return getContentCridBase( id );
+    }
+
+    private String getContentCridBase( String id) {
+        //e.g. crid://amazon.com/stage-metabroadcast.com/content/hhnf
+        return SLASH_JOINER.join(CRID_START, provider, MBST_IDENTIFIER.get(env), CONTENT, id);
     }
 }
