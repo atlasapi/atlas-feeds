@@ -7,6 +7,7 @@ import java.util.Objects;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
+import org.atlasapi.feeds.youview.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.YouviewContentMerger;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -145,6 +146,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             Content mergedContent;
             try {
                 mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
+                mergedContent = AmazonContentConsolidator.consolidate(mergedContent);
             } catch (Exception e) {
                 log.error("Failed during the attempt to equiv, merge or get a repId. "
                           + "This item will not be pushed to YV. Content {} (amazon). ",

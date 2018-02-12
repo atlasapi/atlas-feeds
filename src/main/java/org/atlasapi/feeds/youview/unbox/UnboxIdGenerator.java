@@ -53,7 +53,7 @@ public class UnboxIdGenerator implements IdGenerator {
     @Override
     public String generateOnDemandImi(Item item, Version version, Encoding encoding,
             Location location) {
-        //decide on content quality based on YV's standard
+        //decide on content quality based on YV's standard (SPECWIP-4212)
         MbstCridGenerator.Quality quality = MbstCridGenerator.Quality.SD;
         Integer size = encoding.getVideoHorizontalSize();
         if (size == null) {
@@ -94,7 +94,7 @@ public class UnboxIdGenerator implements IdGenerator {
 
     /**
      * CannonicalUris for amazon locations look like this
-     * http://www.amazon.co.uk/gp/product/B072NZYNMT/PAY_TO_RENT
+     * http://gb.amazon.com/asin/B01MFA4GML/SUBSCRIPTION
      * (they are set in main atlas, AmazonUnboxContentExtractor).
      */
     private static String getAsin(Location content) {
