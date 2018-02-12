@@ -22,9 +22,9 @@ import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
+import org.atlasapi.feeds.youview.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.ContentHierarchyExpanderFactory;
 import org.atlasapi.feeds.youview.IdGeneratorFactory;
-import org.atlasapi.feeds.youview.PerPublisherConfig;
 import org.atlasapi.feeds.youview.YouviewContentMerger;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
@@ -51,9 +51,6 @@ import org.atlasapi.reporting.telescope.FeedsReporterNames;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
-import com.metabroadcast.applications.client.metric.Metrics;
-import com.metabroadcast.applications.client.model.internal.Application;
-import com.metabroadcast.applications.client.translators.ServiceModelTranslator;
 import com.metabroadcast.columbus.telescope.client.EntityType;
 import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.http.HttpException;
@@ -61,9 +58,7 @@ import com.metabroadcast.common.ids.SubstitutionTableNumberCodec;
 import com.metabroadcast.common.time.Clock;
 import com.metabroadcast.common.webapp.query.DateTimeInQueryParser;
 
-import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.google.common.base.Charsets;
@@ -921,12 +916,16 @@ public class YouViewUploadController {
                 contentResolver.findByCanonicalUris(ImmutableList.of(contentUri));
 
         Content content = (Content) resolvedContent.getFirstValue().valueOrNull();
-        if (content != null) {
+        if (content != null && content.getPublisher().equals(Publisher.AMAZON_UNBOX)) {
             YouviewContentMerger merger = new YouviewContentMerger(
                     mergingResolver,
                     content.getPublisher()
             );
-            return java.util.Optional.of(merger.equivAndMerge(content));
+            Content merged = merger.equivAndMerge(content);
+            merged = AmazonContentConsolidator.consolidate(merged);
+            return java.util.Optional.of(merged);
+        } else if (content != null) {
+            return java.util.Optional.of(content);
         }
         return java.util.Optional.empty();
     }

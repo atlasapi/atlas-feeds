@@ -146,11 +146,19 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             Content mergedContent;
             try {
                 mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
-                mergedContent = AmazonContentConsolidator.consolidate(mergedContent);
             } catch (Exception e) {
                 log.error("Failed during the attempt to equiv, merge or get a repId. "
-                          + "This item will not be pushed to YV. Content {} (amazon). ",
-                        updatedContent.getId(), e);
+                          + "This item will not be pushed to YV. Content {}. ",
+                        updatedContent.getCanonicalUri(), e);
+                continue;
+            }
+
+            try {
+                mergedContent = AmazonContentConsolidator.consolidate(mergedContent);
+            } catch (Exception e) {
+                log.error("Failed during the attempt to consolidate versions. "
+                          + "This item will not be pushed to YV. Content {}. ",
+                        updatedContent.getCanonicalUri(), e);
                 continue;
             }
 
