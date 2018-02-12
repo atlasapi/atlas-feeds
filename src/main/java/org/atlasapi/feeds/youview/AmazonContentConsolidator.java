@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
@@ -26,10 +28,11 @@ public class AmazonContentConsolidator {
      * would be different items.
      */
     public static Content consolidate(Content content) {
-        Set<Version> versions = content.getVersions();
+        Content copy = (Content) content.copy();
+        Set<Version> versions = copy.getVersions();
         // If there is none or one version, nothing to consolidate.
         if (versions.size() <= 1) {
-            return content;
+            return copy;
         }
 
         Iterator<Version> iter = versions.iterator();
@@ -52,7 +55,8 @@ public class AmazonContentConsolidator {
             }
         }
 
-        return content;
+        copy.setVersions(new HashSet<Version>(Arrays.asList(winnerVersion)));
+        return copy;
     }
 
     /**
