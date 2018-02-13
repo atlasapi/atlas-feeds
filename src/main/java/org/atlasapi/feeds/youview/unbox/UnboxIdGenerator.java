@@ -51,7 +51,7 @@ public class UnboxIdGenerator implements IdGenerator {
     public String generateOnDemandImi(Item item, Version version, Encoding encoding,
             List<Location> locations) {
 
-        return mbstCridGenerator.getOndemandCrid(
+        return mbstCridGenerator.getOndemandImi(
                 item, MbstCridGenerator.ATLAS_TO_YV_QUALITY_MAPPING.get(encoding.getQuality()));
 
         /* This is what should be happening. But amazon does not give us actual resolutions,
@@ -70,7 +70,7 @@ public class UnboxIdGenerator implements IdGenerator {
         } else if (2160 <= size) {
             quality = MbstCridGenerator.Quality.UHD;
         }
-        return mbstCridGenerator.getOndemandCrid(item, quality);
+        return mbstCridGenerator.getOndemandImi(item, quality);
         */
     }
     

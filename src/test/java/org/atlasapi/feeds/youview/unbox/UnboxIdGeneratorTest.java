@@ -53,7 +53,7 @@ public class UnboxIdGeneratorTest {
     public void testOnDemandImiGeneration() {
         String onDemandImi = generator.generateOnDemandImi(createItemWithId(12045L), createVersion(), createEncoding(), createLocations());
         
-        assertEquals("crid://amazon.com/stage-metabroadcast.com/content/wtf/ondemand/SD", onDemandImi);
+        assertEquals("imi://amazon.com/stage-metabroadcast.com/content/wtf/ondemand/SD", onDemandImi);
     }
 
     private Item createItemWithId(Long id) {

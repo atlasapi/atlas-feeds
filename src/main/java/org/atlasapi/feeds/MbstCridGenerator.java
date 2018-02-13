@@ -3,7 +3,6 @@ package org.atlasapi.feeds;
 import java.util.Map;
 
 import org.atlasapi.media.entity.Identified;
-import org.atlasapi.media.entity.Quality;
 
 import com.metabroadcast.applications.client.model.internal.Environment;
 
@@ -22,6 +21,7 @@ public class MbstCridGenerator {
     private static final Joiner SLASH_JOINER = Joiner.on("/");
 
     private static final String CRID_START = "crid:/"; //<-missing a slash so we can use the Joiner.
+    private static final String IMI_START = "imi:/"; //<-missing a slash so we can use the Joiner.
     private static final String CONTENT = "content";
     private static final String VERSION = "version";
     private static final String ONDEMAND = "ondemand";
@@ -53,24 +53,32 @@ public class MbstCridGenerator {
         return SLASH_JOINER.join(getContentCrid(baseItem), VERSION);
     }
 
-    public String getOndemandCrid(Identified baseItem, Quality quality) {
-        return SLASH_JOINER.join(getContentCrid(baseItem), ONDEMAND, quality);
+    public String getOndemandImi(Identified baseItem, Quality quality) {
+        return SLASH_JOINER.join(IMI_START, getContentBase(baseItem), ONDEMAND, quality);
     }
 
     public String getContentCrid(Identified i) {
         return getContentCrid(i.getId());
     }
 
-    public String getContentCrid( Long id) {
+    public String getContentCrid(Long id) {
         return getContentCrid(encode(id));
     }
 
-    public String getContentCrid( String id) {
-        return getContentCridBase( id );
+    public String getContentCrid(String id) {
+        return SLASH_JOINER.join(CRID_START, getContentBase(id));
     }
 
-    private String getContentCridBase( String id) {
+    private String getContentBase(Identified i) {
+        return getContentBase(i.getId());
+    }
+
+    private String getContentBase(Long id) {
+        return getContentBase(encode(id));
+    }
+
+    private String getContentBase(String id) {
         //e.g. crid://amazon.com/stage-metabroadcast.com/content/hhnf
-        return SLASH_JOINER.join(CRID_START, provider, MBST_IDENTIFIER.get(env), CONTENT, id);
+        return SLASH_JOINER.join(provider, MBST_IDENTIFIER.get(env), CONTENT, id);
     }
 }

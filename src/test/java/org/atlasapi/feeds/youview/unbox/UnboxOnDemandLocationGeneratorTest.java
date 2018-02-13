@@ -135,7 +135,7 @@ public class UnboxOnDemandLocationGeneratorTest {
         
         assertEquals("http://amazon.com/services/on_demand/primevideo", onDemand.getServiceIDRef());
         assertEquals("crid://amazon.com/stage-metabroadcast.com/content/szp/version", onDemand.getProgram().getCrid());
-        assertEquals("crid://amazon.com/stage-metabroadcast.com/content/szp/ondemand/HD", onDemand.getInstanceMetadataId());
+        assertEquals("imi://amazon.com/stage-metabroadcast.com/content/szp/ondemand/HD", onDemand.getInstanceMetadataId());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());

@@ -134,9 +134,9 @@ public class OnDemandHierarchyExpanderTest {
                 2, hierarchy.size());
 
         assertEquals("This hierarchy should contain the 4 SD locations",
-                4, hierarchy.get("crid://amazon.com/stage-metabroadcast.com/content/c/ondemand/SD").locations().size());
+                4, hierarchy.get("imi://amazon.com/stage-metabroadcast.com/content/c/ondemand/SD").locations().size());
         assertEquals("This hierarchy should contain the 2 HD locations",
-                2, hierarchy.get("crid://amazon.com/stage-metabroadcast.com/content/c/ondemand/HD").locations().size());
+                2, hierarchy.get("imi://amazon.com/stage-metabroadcast.com/content/c/ondemand/HD").locations().size());
     }
 
     @Test
