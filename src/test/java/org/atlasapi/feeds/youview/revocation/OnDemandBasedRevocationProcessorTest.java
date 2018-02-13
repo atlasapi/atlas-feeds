@@ -16,6 +16,7 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -74,7 +75,7 @@ public class OnDemandBasedRevocationProcessorTest {
     }
 
     private static ItemOnDemandHierarchy createItemOnDemandHierarchy() {
-        return new ItemOnDemandHierarchy(createItem(), createVersion(), createEncoding(), createLocation());
+        return new ItemOnDemandHierarchy(createItem(), createVersion(), createEncoding(), ImmutableList.of(createLocation()));
     }
 
     private static Item createItem() {

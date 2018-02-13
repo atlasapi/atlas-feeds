@@ -342,8 +342,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
             String onDemandImi,
             ItemOnDemandHierarchy onDemandHierarchy
     ) {
-
-        Location location = onDemandHierarchy.location();
+        //if the hierarchy has multiple locations, they should all be the same
+        Location location = onDemandHierarchy.locations().get(0);
 
         Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
         HashType hashType = action == Action.UPDATE ? HashType.ON_DEMAND : HashType.DELETE;
@@ -368,7 +368,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(
-                    "Failed to create payload for content {}, version {}, encoding {}, location {}",
+                    "Failed to create payload for content {}, version {}, encoding {}, locations {}",
                     onDemandHierarchy.item().getCanonicalUri(),
                     onDemandHierarchy.version().getCanonicalUri(),
                     onDemandHierarchy.encoding().toString(),

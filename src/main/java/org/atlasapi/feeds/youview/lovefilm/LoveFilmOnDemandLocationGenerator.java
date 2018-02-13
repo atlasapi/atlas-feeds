@@ -54,18 +54,7 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
 
     @Override
     public OnDemandProgramType generate(ItemOnDemandHierarchy onDemandHierarchy, String onDemandImi) {
-        ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
-        
-        onDemand.setServiceIDRef(LOVEFILM_ONDEMAND_SERVICE_ID);
-        onDemand.setProgram(generateProgram(onDemandHierarchy.item(), onDemandHierarchy.version()));
-        onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(onDemandHierarchy.item(), onDemandHierarchy.version(), onDemandHierarchy.encoding(), onDemandHierarchy.location()));
-        onDemand.setInstanceDescription(generateInstanceDescription(onDemandHierarchy.item(), onDemandHierarchy.encoding()));
-        onDemand.setPublishedDuration(generatePublishedDuration(onDemandHierarchy.version()));
-        onDemand.setStartOfAvailability(generateAvailabilityStart(onDemandHierarchy.location()));
-        onDemand.setEndOfAvailability(generateAvailabilityEnd(onDemandHierarchy.location()));
-        onDemand.setFree(generateFree());
-
-        return onDemand;
+        throw new UnsupportedOperationException();
     }
     
     // hardcoded

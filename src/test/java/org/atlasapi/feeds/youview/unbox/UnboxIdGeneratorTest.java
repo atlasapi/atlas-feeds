@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.unbox;
 
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -10,6 +12,8 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
+
+import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.junit.Test;
@@ -40,7 +44,7 @@ public class UnboxIdGeneratorTest {
 
     @Test
     public void testOnDemandImiGeneration() {
-        String onDemandImi = generator.generateOnDemandImi(createItemWithId(12045L), createVersion(), createEncoding(), createLocation());
+        String onDemandImi = generator.generateOnDemandImi(createItemWithId(12045L), createVersion(), createEncoding(), createLocations());
         
         assertEquals("crid://amazon.com/stage-metabroadcast.com/content/wtf/ondemand/SD", onDemandImi);
     }
@@ -67,11 +71,11 @@ public class UnboxIdGeneratorTest {
         return encoding;
     }
     
-    private Location createLocation() {
+    private List<Location> createLocations() {
 
         Location location = new Location();
         location.setCanonicalUri("http://www.amazon.co.uk/gp/product/B072NZYNMT/PAY_TO_RENT");
-        return location;
+        return ImmutableList.of(location);
     }
 
 }

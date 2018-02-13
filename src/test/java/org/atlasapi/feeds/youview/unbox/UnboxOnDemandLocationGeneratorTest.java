@@ -73,7 +73,7 @@ public class UnboxOnDemandLocationGeneratorTest {
         version.setCanonicalUri("unbox.amazon.co.uk/SOMEVERSIONID");
         Film film = createFilm(version);
         film.setId(1L);
-        ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, location);
+        ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, ImmutableList.of(location));
         String onDemandImi = "onDemandImi";
         
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);
@@ -92,7 +92,7 @@ public class UnboxOnDemandLocationGeneratorTest {
         
         Set<String> expected = ImmutableSet.of(
                 UnboxOnDemandLocationGenerator.YOUVIEW_GENRE_MEDIA_AVAILABLE, //everything has it
-                UnboxOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_BUY //the test location has it
+                UnboxOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_BUY //the test locations has it
         );
         
         assertEquals(expected, hrefs);
@@ -124,7 +124,7 @@ public class UnboxOnDemandLocationGeneratorTest {
         version.setCanonicalUri("unbox.amazon.co.uk/SOMELOCATIONID");
         Film film = createFilm(version);
         film.setId(10000L);
-        ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, location);
+        ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, ImmutableList.of(location));
         String onDemandImi = "onDemandImi";
         
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);

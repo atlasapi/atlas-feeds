@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -26,7 +27,7 @@ public class UniqueIdGenerator implements IdGenerator {
 
     @Override
     public String generateOnDemandImi(Item item, Version version, Encoding encoding,
-            Location location) {
+            List<Location> location) {
         return randomString();
     }
 

@@ -35,7 +35,7 @@ public class OnDemandHierarchyExpanderTest {
         idGenerator = Mockito.mock(IdGenerator.class);
         hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
         
-        when(idGenerator.generateOnDemandImi(any(Item.class), any(Version.class), any(Encoding.class), any(Location.class))).thenReturn("ondemand_imi");
+        when(idGenerator.generateOnDemandImi(any(Item.class), any(Version.class), any(Encoding.class), any())).thenReturn("ondemand_imi");
         
         Set<Version> versions = createNVersions(3);
         Set<Encoding> encodings = createNEncodings(2);

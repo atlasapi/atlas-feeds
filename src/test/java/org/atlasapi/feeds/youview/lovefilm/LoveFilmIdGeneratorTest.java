@@ -10,6 +10,8 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
+
+import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.junit.Test;
@@ -40,7 +42,7 @@ public class LoveFilmIdGeneratorTest {
 
     @Test
     public void testOnDemandImiGeneration() {
-        String onDemandImi = generator.generateOnDemandImi(createItemWithUri("http://lovefilm.com/films/123456"), createVersion(), createEncoding(), createLocation());
+        String onDemandImi = generator.generateOnDemandImi(createItemWithUri("http://lovefilm.com/films/123456"), createVersion(), createEncoding(), ImmutableList.of(createLocation()));
         
         assertEquals("imi:lovefilm.com/123456", onDemandImi);
     }

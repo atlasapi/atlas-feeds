@@ -614,7 +614,8 @@ public class YouViewUploadController {
                     hierarchyExpander.onDemandHierarchiesFor((Item) content);
             for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
                 ItemOnDemandHierarchy onDemandHierarchy = onDemand.getValue();
-                Location location = onDemandHierarchy.location();
+                //If this has multiple locations, they should all be the same in terms of available.
+                Location location = onDemandHierarchy.locations().get(0);
                 Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
 
                 Payload odPayload = payloadCreator.payloadFrom(

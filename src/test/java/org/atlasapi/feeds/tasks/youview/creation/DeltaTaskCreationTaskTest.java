@@ -278,7 +278,7 @@ public class DeltaTaskCreationTaskTest {
         when(content.isActivelyPublished()).thenReturn(true);
 
         // ondemand upload
-        when(idGenerator.generateOnDemandImi(content, version, encoding, location))
+        when(idGenerator.generateOnDemandImi(content, version, encoding,  any()))
                 .thenReturn(onDemandImi);
         when(payloadHashStore.getHash(HashType.ON_DEMAND, onDemandImi))
                 .thenReturn(java.util.Optional.of(onDemandPayload.hash() + "nope"));

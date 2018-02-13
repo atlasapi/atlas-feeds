@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.unbox;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.atlasapi.feeds.MbstCridGenerator;
@@ -52,7 +53,7 @@ public class UnboxIdGenerator implements IdGenerator {
      */
     @Override
     public String generateOnDemandImi(Item item, Version version, Encoding encoding,
-            Location location) {
+            List<Location> locations) {
         //decide on content quality based on YV's standard (SPECWIP-4212)
         MbstCridGenerator.Quality quality = MbstCridGenerator.Quality.SD;
         Integer size = encoding.getVideoHorizontalSize();

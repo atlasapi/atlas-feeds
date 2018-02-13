@@ -20,7 +20,6 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.youview.refdata.schemas._2011_07_06.ExtendedInstanceDescriptionType;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
-import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
 import org.jdom.IllegalDataException;
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
@@ -59,13 +58,22 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
     @Override
     public OnDemandProgramType generate(ItemOnDemandHierarchy onDemandHierarchy, String onDemandImi) {
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
+        List<Location> locations = onDemandHierarchy.locations();
+
         onDemand.setServiceIDRef(UNBOX_ONDEMAND_SERVICE_ID);
         onDemand.setProgram(generateProgram(onDemandHierarchy.item(), onDemandHierarchy.version()));
-        onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(onDemandHierarchy.item(), onDemandHierarchy.version(), onDemandHierarchy.encoding(), onDemandHierarchy.location()));
+        onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(
+                onDemandHierarchy.item(),
+                onDemandHierarchy.version(),
+                onDemandHierarchy.encoding(),
+                locations
+        ));
         onDemand.setInstanceDescription(generateInstanceDescription(onDemandHierarchy));
         onDemand.setPublishedDuration(generatePublishedDuration(onDemandHierarchy.version()));
-        onDemand.setStartOfAvailability(generateAvailabilityStart(onDemandHierarchy.location()));
-        onDemand.setEndOfAvailability(generateAvailabilityEnd(onDemandHierarchy.location()));
+        //This assumes that all amazon locations represent the same thing, and thus have the same
+        //start and end dates.
+        onDemand.setStartOfAvailability(generateAvailabilityStart(locations.get(0)));
+        onDemand.setEndOfAvailability(generateAvailabilityEnd(locations.get(0)));
         onDemand.setFree(generateFree());
 
         return onDemand;
@@ -87,10 +95,9 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
     private InstanceDescriptionType generateInstanceDescription(ItemOnDemandHierarchy onDemandHie) {
         Item item = onDemandHie.item();
         Encoding encoding = onDemandHie.encoding();
-        Location location = onDemandHie.location();
         ExtendedInstanceDescriptionType instanceDescription = new ExtendedInstanceDescriptionType();
         
-        instanceDescription.getGenre().addAll(generateGenres(location));
+        instanceDescription.getGenre().addAll(generateGenres(onDemandHie.locations()));
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
         instanceDescription.getOtherIdentifier().add(generateOtherId(item));
 
@@ -151,32 +158,37 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
     }
 
     //Genres in this context describes the availability of the media. 
-    private List<GenreType> generateGenres(Location location) {
+    private List<GenreType> generateGenres(List<Location> locations) {
+
+        ImmutableList.Builder<GenreType> plans = ImmutableList.builder();
+
         //All media ingested by Amazon is available
         GenreType mediaAvailable = new GenreType();
         mediaAvailable.setType(GENRE_TYPE_OTHER);
         mediaAvailable.setHref(YOUVIEW_GENRE_MEDIA_AVAILABLE);
+        plans.add(mediaAvailable);
 
-        GenreType revenuePlan = new GenreType();
-        revenuePlan.setType(GENRE_TYPE_OTHER);
-
-        switch (location.getPolicy().getRevenueContract()) {
-        case PAY_TO_BUY:
-            revenuePlan.setHref(YOUVIEW_ENTITLEMENT_PAY_TO_BUY);
-            break;
-        case PAY_TO_RENT:
-            revenuePlan.setHref(YOUVIEW_ENTITLEMENT_PAY_TO_RENT);
-            break;
-        case SUBSCRIPTION:
-            revenuePlan.setHref(YOUVIEW_ENTITLEMENT_SUBSCRIPTION);
-            break;
-        default:
-            throw new IllegalDataException(
-                    "Amazon onDemand content is not accessible via sub, rent or buy. Location uri="
-                    + location.getUri());
+        for (Location location : locations) {
+            GenreType revenuePlan = new GenreType();
+            revenuePlan.setType(GENRE_TYPE_OTHER);
+            switch (location.getPolicy().getRevenueContract()) {
+            case PAY_TO_BUY:
+                revenuePlan.setHref(YOUVIEW_ENTITLEMENT_PAY_TO_BUY);
+                break;
+            case PAY_TO_RENT:
+                revenuePlan.setHref(YOUVIEW_ENTITLEMENT_PAY_TO_RENT);
+                break;
+            case SUBSCRIPTION:
+                revenuePlan.setHref(YOUVIEW_ENTITLEMENT_SUBSCRIPTION);
+                break;
+            default:
+                throw new IllegalDataException(
+                        "Amazon onDemand content is not accessible via sub, rent or buy. Location uri="
+                        + location.getUri());
+            }
+            plans.add(revenuePlan);
         }
-
-        return ImmutableList.of(mediaAvailable, revenuePlan);
+        return plans.build();
     }
 
     private Duration generatePublishedDuration(Version version) {

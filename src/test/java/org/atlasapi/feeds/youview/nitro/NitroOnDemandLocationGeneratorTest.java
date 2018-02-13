@@ -23,6 +23,8 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Restriction;
 import org.atlasapi.media.entity.Version;
+
+import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
@@ -40,7 +42,6 @@ import tva.metadata._2010.SignLanguageType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
@@ -133,7 +134,7 @@ public class NitroOnDemandLocationGeneratorTest {
         Film film = createNitroFilm(false, DEFAULT_AVAILABILITY_END);
         ItemOnDemandHierarchy hierarchy = hierarchyFrom(film);
         String versionCrid = idGenerator.generateVersionCrid(hierarchy.item(), hierarchy.version());
-        String onDemandImi = idGenerator.generateOnDemandImi(hierarchy.item(), hierarchy.version(), hierarchy.encoding(), hierarchy.location());
+        String onDemandImi = idGenerator.generateOnDemandImi(hierarchy.item(), hierarchy.version(), hierarchy.encoding(), hierarchy.locations());
         
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(hierarchy, onDemandImi);
         
@@ -186,7 +187,7 @@ public class NitroOnDemandLocationGeneratorTest {
     
     private ExtendedOnDemandProgramType onDemandFor(Item item) {
         ItemOnDemandHierarchy hierarchy = hierarchyFrom(item);
-        String onDemandImi = idGenerator.generateOnDemandImi(hierarchy.item(), hierarchy.version(), hierarchy.encoding(), hierarchy.location());
+        String onDemandImi = idGenerator.generateOnDemandImi(hierarchy.item(), hierarchy.version(), hierarchy.encoding(), hierarchy.locations());
         return (ExtendedOnDemandProgramType) generator.generate(hierarchy, onDemandImi);
     }
     
@@ -194,7 +195,7 @@ public class NitroOnDemandLocationGeneratorTest {
     public void testIfNoActualAvailabilityThenContentNotMarkedAsAvailable() {
         ItemOnDemandHierarchy onDemandHierarchy = hierarchyFrom(createNitroFilm(false, DEFAULT_AVAILABILITY_END));
         
-        onDemandHierarchy.location().getPolicy().setActualAvailabilityStart(null);
+        onDemandHierarchy.locations().get(0).getPolicy().setActualAvailabilityStart(null);
         
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, ON_DEMAND_IMI);
         
@@ -242,7 +243,7 @@ public class NitroOnDemandLocationGeneratorTest {
         Version version = Iterables.getOnlyElement(item.getVersions());
         Encoding encoding = Iterables.getOnlyElement(version.getManifestedAs());
         Location location = Iterables.getOnlyElement(encoding.getAvailableAt());
-        return new ItemOnDemandHierarchy(item, version, encoding, location);
+        return new ItemOnDemandHierarchy(item, version, encoding,  ImmutableList.of(location));
     }
 
     private Film createNitroFilm(boolean subtitled, Duration availability) {
