@@ -923,7 +923,7 @@ public class YouViewUploadController {
                     content.getPublisher()
             );
             Content merged = merger.equivAndMerge(content);
-            merged = AmazonContentConsolidator.consolidate(merged);
+            AmazonContentConsolidator.consolidate(merged); //mutates the item
             return java.util.Optional.of(merged);
         } else if (content != null) {
             return java.util.Optional.of(content);

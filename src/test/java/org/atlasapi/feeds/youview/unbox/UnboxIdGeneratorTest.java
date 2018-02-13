@@ -11,17 +11,24 @@ import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Quality;
 import org.atlasapi.media.entity.Version;
 
 import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 
 public class UnboxIdGeneratorTest {
 
     private final IdGenerator generator = new UnboxIdGenerator();
+
+    @BeforeClass
+    public static void setUp() {
+        System.setProperty("MBST_PLATFORM", "stage");
+    }
     
     @Test
     public void testContentCridGeneration() {
@@ -67,6 +74,7 @@ public class UnboxIdGeneratorTest {
 
     private Encoding createEncoding() {
         Encoding encoding = new Encoding();
+        encoding.setQuality(Quality.SD);
         encoding.setCanonicalUri("encodingUri");
         return encoding;
     }

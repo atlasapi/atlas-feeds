@@ -1,9 +1,11 @@
 package org.atlasapi.feeds.youview.unbox;
 
 import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
+import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Alias;
@@ -13,6 +15,7 @@ import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Quality;
 import org.atlasapi.media.entity.Version;
 
 import com.metabroadcast.common.intl.Countries;
@@ -33,6 +36,7 @@ import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.InstanceDescriptionType;
+import tva.metadata._2010.ProgramInformationType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
@@ -138,6 +142,18 @@ public class UnboxOnDemandLocationGeneratorTest {
         assertEquals("deep_linking_id.amazon.com", otherId.getAuthority());
     }
 
+
+    @Test public void testOndemandsAfterConsolidation() {
+//        Film film = UnboxProgramInformationGeneratorTest.createConvolutedFilm();
+//        Iterator<Version> vIter = film.getVersions().iterator();
+//        Version version = vIter.next(); //there should be one after consolidation
+//        ItemAndVersion versionHierarchy = new ItemAndVersion(film, version);
+//        ProgramInformationType generate = generator.generate(
+//                versionHierarchy,
+//                version.getCanonicalUri()
+//        );
+    }
+
     private Film createFilm(Version version) {
         Film film = new Film();
         
@@ -164,7 +180,8 @@ public class UnboxOnDemandLocationGeneratorTest {
 
     private Encoding createEncoding(Location location) {
         Encoding encoding = new Encoding();
-        
+
+        encoding.setQuality(Quality.HD);
         encoding.setVideoHorizontalSize(1280);
         encoding.setVideoVerticalSize(720);
         encoding.setVideoAspectRatio("16:9");

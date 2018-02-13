@@ -4,15 +4,22 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.atlasapi.feeds.youview.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.UniqueIdGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
+import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
+import org.atlasapi.feeds.youview.unbox.UnboxProgramInformationGeneratorTest;
+import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
+import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
@@ -97,21 +104,86 @@ public class OnDemandHierarchyExpanderTest {
         
         assertEquals(numLocations, hierarchy.size());
     }
-    
+
     @Test
     public void testFiltersNonYouViewIPlayerLocationsFromExpandedHierarchy() {
         idGenerator = new UniqueIdGenerator();
         hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
-        
+
         Set<Version> versions = createNVersions(1);
         Set<Encoding> encodings = createNEncodings(1);
         Set<Location> locations = ImmutableSet.of(createLocationFrom(Platform.XBOX), createLocationFrom(Platform.YOUVIEW_IPLAYER));
-        
+
         Item item = createItem(versions, encodings, locations);
-        
+
         Map<String, ItemOnDemandHierarchy> hierarchy = hierarchyExpander.expandHierarchy(item);
-        
+
         assertEquals(1, hierarchy.size());
+    }
+    @Test
+    public void testAmazonGetsOndemandsBasedOnEncodings() {
+        System.setProperty("MBST_PLATFORM", "stage");
+        idGenerator = new UnboxIdGenerator();
+        hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
+
+        Film film = UnboxProgramInformationGeneratorTest.createConvolutedFilm();
+       AmazonContentConsolidator.consolidate(film);
+
+        Map<String, ItemOnDemandHierarchy> hierarchy = hierarchyExpander.expandHierarchy(film);
+        assertEquals("Amazon content should have 1 hierarchy for each encoding",
+                2, hierarchy.size());
+
+        assertEquals("This hierarchy should contain the 4 SD locations",
+                4, hierarchy.get("crid://amazon.com/stage-metabroadcast.com/content/c/ondemand/SD").locations().size());
+        assertEquals("This hierarchy should contain the 2 HD locations",
+                2, hierarchy.get("crid://amazon.com/stage-metabroadcast.com/content/c/ondemand/HD").locations().size());
+    }
+
+    @Test
+    public void testAmazonGetsMergedLocations() {
+        idGenerator = new UniqueIdGenerator();
+        hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
+
+        Set<Version> versions = createNVersions(1);
+        Set<Encoding> encodings = createNEncodings(1);
+        Set<Location> locations = ImmutableSet.of(
+                createLocationFrom(Platform.XBOX),
+                createLocationFrom(Platform.YOUVIEW_IPLAYER),
+                createLocationFrom(Platform.YOUVIEW_AMAZON));
+
+        Item item = createItem(versions, encodings, locations);
+        item.setPublisher(Publisher.AMAZON_UNBOX);
+
+        Map<String, ItemOnDemandHierarchy> hierarchy = hierarchyExpander.expandHierarchy(item);
+        assertEquals("Amazon content should have both locations under a single hierarchy",
+                1, hierarchy.size());
+        ItemOnDemandHierarchy hier = hierarchy.values().iterator().next();
+        assertEquals("This hierarchy should contain 2 locations, as we want them merged for amazon",
+                2, hier.locations().size());
+    }
+
+    @Test
+    public void testNonAmazonGetsNonMergedLocations() {
+        idGenerator = new UniqueIdGenerator();
+        hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
+
+        Set<Version> versions = createNVersions(1);
+        Set<Encoding> encodings = createNEncodings(1);
+        Set<Location> locations = ImmutableSet.of(
+                createLocationFrom(Platform.XBOX), //illegitimate location
+                createLocationFrom(Platform.YOUVIEW_IPLAYER),
+                createLocationFrom(Platform.YOUVIEW_AMAZON));
+
+        Item item = createItem(versions, encodings, locations);
+        item.setPublisher(Publisher.METABROADCAST);
+
+        Map<String, ItemOnDemandHierarchy> hierarchy = hierarchyExpander.expandHierarchy(item);
+        assertEquals("There should be 1 hierarchy for each legitimate LOCATION.", 2, hierarchy.size());
+        Iterator<ItemOnDemandHierarchy> iterator = hierarchy.values().iterator();
+        ItemOnDemandHierarchy hier = iterator.next();
+        assertEquals("Each hierarchy should only contain 1 location.", 1, hier.locations().size());
+        hier = iterator.next();
+        assertEquals("Each hierarchy should only contain 1 location.", 1, hier.locations().size());
     }
 
     private Location createLocationFrom(Platform platform) {

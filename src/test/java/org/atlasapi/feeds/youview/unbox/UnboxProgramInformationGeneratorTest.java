@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
 import org.atlasapi.feeds.youview.AmazonContentConsolidator;
+import org.atlasapi.feeds.youview.YouViewGeneratorUtils;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Alias;
@@ -15,7 +16,9 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Location;
+import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Quality;
 import org.atlasapi.media.entity.Version;
 
 import com.metabroadcast.common.intl.Countries;
@@ -75,51 +78,8 @@ public class UnboxProgramInformationGeneratorTest extends org.atlasapi.TestsWith
 
     @Test
     public void testVersionConsolidation() {
-        Location locA = new Location();
-        locA.setUri("LocationA");
-        Location locB = new Location();
-        locB.setUri("LocationB");
-        Encoding enc1 = new Encoding();
-        enc1.setVideoHorizontalSize(1000);
-        enc1.setCanonicalUri("Encoding1-1000");
-        enc1.setAvailableAt(new HashSet<Location>(Arrays.asList(locA, locB)));
-
-        Version version1 = createVersion();
-        version1.setCanonicalUri("Version1");
-        version1.setManifestedAs(new HashSet<Encoding>(Arrays.asList(enc1)));
-
-        Location locC = new Location();
-        locC.setUri("LocationC");
-        Location locD = new Location();
-        locD.setUri("LocationD");
-        Encoding enc2 = new Encoding();
-        enc2.setVideoHorizontalSize(1000);
-        enc2.setCanonicalUri("Encoding2-1000");
-        enc2.setAvailableAt(new HashSet<Location>(Arrays.asList(locC, locD)));
-
-        Location locE = new Location();
-        locE.setUri("LocationE");
-        Location locF = new Location();
-        locF.setUri("LocationF");
-        Encoding enc3 = new Encoding();
-        enc3.setVideoHorizontalSize(2000);
-        enc3.setCanonicalUri("Encoding3-2000");
-        enc3.setAvailableAt(new HashSet<Location>(Arrays.asList(locE, locF)));
-
-        Version version2 = createVersion();
-        version2.setCanonicalUri("Version2");
-        version2.setManifestedAs(new HashSet<Encoding>(Arrays.asList(enc2, enc3)));
-
-        Film film = new Film();
-        film.setId(1L);
-        film.setCanonicalUri("FilmUri");
-        film.setPublisher(Publisher.AMAZON_UNBOX);
-
-        film.setVersions(ImmutableSet.of(version1, version2));
-
+        Film film = createConvolutedFilm();
         Content consolidated = AmazonContentConsolidator.consolidate(film);
-
-        //TESTS
 
         assertEquals(
                 "Consolidation should not leave more than 1 versions, or eat them all.",
@@ -132,54 +92,106 @@ public class UnboxProgramInformationGeneratorTest extends org.atlasapi.TestsWith
                 version.getManifestedAs().size(), 2
         );
 
-        //find the 1000 quality encoding.
-        Encoding encoding1000 = null;
+        //find the SD quality encoding.
+        Encoding encodingSd = null;
         for (Encoding encoding : version.getManifestedAs()) {
-            if(encoding.getVideoHorizontalSize() == 1000){
-                encoding1000 = encoding;
+            if(encoding.getQuality() == Quality.SD){
+                encodingSd = encoding;
             }
         }
         assertEquals(
-                encoding1000.getCanonicalUri() + " should contain the 4 merged locations.",
-                encoding1000.getAvailableAt().size(), 4
+                encodingSd.getCanonicalUri() + " should contain the 4 merged locations.",
+                encodingSd.getAvailableAt().size(), 4
         );
         Set<String> acceptableUris = new HashSet<String>(Arrays.asList(
                 "LocationA", "LocationB", "LocationC", "LocationD"
         ));
-        for (Location location : encoding1000.getAvailableAt()) {
+        for (Location location : encodingSd.getAvailableAt()) {
             assertTrue(
-                    location.getUri() + " should not be in " + encoding1000.getCanonicalUri(),
+                    location.getUri() + " should not be in " + encodingSd.getCanonicalUri(),
                     acceptableUris.contains(location.getUri())
             );
         }
 
-
-        //find the 2000 quality encoding.
-        Encoding encoding2000 = null;
+        //find the HD quality encoding.
+        Encoding encodingHd = null;
         for (Encoding encoding : version.getManifestedAs()) {
-            if(encoding.getVideoHorizontalSize() == 2000){
-                encoding2000 = encoding;
+            if(encoding.getQuality() == Quality.HD){
+                encodingHd = encoding;
             }
         }
         assertEquals(
-                encoding2000.getCanonicalUri() + " should contain the 2 transferred locations.",
-                encoding2000.getAvailableAt().size(), 2
+                encodingHd.getCanonicalUri() + " should contain the 2 transferred locations.",
+                encodingHd.getAvailableAt().size(), 2
         );
 
         acceptableUris = new HashSet<String>(Arrays.asList(
                 "LocationE", "LocationF"
         ));
-        for (Location location : encoding2000.getAvailableAt()) {
+        for (Location location : encodingHd.getAvailableAt()) {
             assertTrue(
-                    location.getUri() + " should not be in " + encoding2000.getCanonicalUri(),
+                    location.getUri() + " should not be in " + encodingHd.getCanonicalUri(),
                     acceptableUris.contains(location.getUri())
             );
         }
-
-
     }
 
-    private Film createFilm(Version version) {
+    public static Film createConvolutedFilm() {
+        Policy policy = new Policy();
+        policy.setPlatform(Policy.Platform.YOUVIEW_AMAZON);
+
+        Location locA = new Location();
+        locA.setUri("LocationA");
+        locA.setPolicy(policy);
+        Location locB = new Location();
+        locB.setUri("LocationB");
+        locB.setPolicy(policy);
+        Encoding enc1 = new Encoding();
+        enc1.setQuality(Quality.SD);
+        enc1.setCanonicalUri("Encoding1-SD");
+        enc1.setAvailableAt(new HashSet<Location>(Arrays.asList(locA, locB)));
+
+        Version version1 = createVersion();
+        version1.setCanonicalUri("Version1");
+        version1.setManifestedAs(new HashSet<Encoding>(Arrays.asList(enc1)));
+
+        Location locC = new Location();
+        locC.setUri("LocationC");
+        locC.setPolicy(policy);
+        Location locD = new Location();
+        locD.setUri("LocationD");
+        locD.setPolicy(policy);
+        Encoding enc2 = new Encoding();
+        enc2.setQuality(Quality.SD);
+        enc2.setCanonicalUri("Encoding2-SD");
+        enc2.setAvailableAt(new HashSet<Location>(Arrays.asList(locC, locD)));
+
+        Location locE = new Location();
+        locE.setUri("LocationE");
+        locE.setPolicy(policy);
+        Location locF = new Location();
+        locF.setUri("LocationF");
+        locF.setPolicy(policy);
+        Encoding enc3 = new Encoding();
+        enc3.setQuality(Quality.HD);
+        enc3.setCanonicalUri("Encoding3-HD");
+        enc3.setAvailableAt(new HashSet<Location>(Arrays.asList(locE, locF)));
+
+        Version version2 = createVersion();
+        version2.setCanonicalUri("Version2");
+        version2.setManifestedAs(new HashSet<Encoding>(Arrays.asList(enc2, enc3)));
+
+        Film film = new Film();
+        film.setId(1L);
+        film.setCanonicalUri("FilmUri");
+        film.setPublisher(Publisher.AMAZON_UNBOX);
+        film.addAlias(new Alias(YouViewGeneratorUtils.ASIN_NAMESPACE,"AB123456"));
+
+        film.setVersions(ImmutableSet.of(version1, version2));
+        return film;
+    }
+
+    private static Film createFilm(Version version) {
         Film film = new Film();
         film.setId(35320383L);
         film.setCanonicalUri("http://unbox.amazon.co.uk/movies/177221");
@@ -193,7 +205,7 @@ public class UnboxProgramInformationGeneratorTest extends org.atlasapi.TestsWith
         return film;
     }
 
-    private Version createVersion() {
+    private static Version createVersion() {
         Version version = new Version();
         version.setDuration(Duration.standardMinutes(90));
         return version;

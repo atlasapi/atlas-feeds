@@ -154,7 +154,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             }
 
             try {
-                mergedContent = AmazonContentConsolidator.consolidate(mergedContent);
+                AmazonContentConsolidator.consolidate(mergedContent); //mutates the item
             } catch (Exception e) {
                 log.error("Failed during the attempt to consolidate versions. "
                           + "This item will not be pushed to YV. Content {}. ",

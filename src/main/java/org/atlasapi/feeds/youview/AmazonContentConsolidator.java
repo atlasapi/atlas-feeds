@@ -26,13 +26,15 @@ public class AmazonContentConsolidator {
      * This is a destructive merge. If versions were legitimately different, bad luck. This was
      * chosen because we don't dedup version on ingest, so they should have different titles and
      * would be different items.
+     * <p>
+     * THIS MUTATES THE ORIGINAL CONTENT. Unluckily content.copy() does not properly copy the
+     * manifestedAs().
      */
     public static Content consolidate(Content content) {
-        Content copy = (Content) content.copy();
-        Set<Version> versions = copy.getVersions();
+        Set<Version> versions = content.getVersions();
         // If there is none or one version, nothing to consolidate.
         if (versions.size() <= 1) {
-            return copy;
+            return content;
         }
 
         Iterator<Version> iter = versions.iterator();
@@ -55,8 +57,8 @@ public class AmazonContentConsolidator {
             }
         }
 
-        copy.setVersions(new HashSet<Version>(Arrays.asList(winnerVersion)));
-        return copy;
+        content.setVersions(new HashSet<Version>(Arrays.asList(winnerVersion)));
+        return content;
     }
 
     /**
@@ -70,12 +72,12 @@ public class AmazonContentConsolidator {
 
     /**
      * Looks into the encodings of the Version, to see if an encoding of the same quality exists.
-     * Quality is based on the HorizontalSize (because it's what we use to determine the YV
-     * quality).
+     * The generic quality is good enough for this purpose, but in general this test should match
+     * whatever is used in the youview outputter for amazon.
      */
     private static Encoding getSameQualityEncoding(Version version, Encoding enc) {
         for (Encoding tmpEnc : version.getManifestedAs()) {
-            if (Objects.equals(tmpEnc.getVideoHorizontalSize(), enc.getVideoHorizontalSize())) {
+            if (Objects.equals(tmpEnc.getQuality(), enc.getQuality())) {
                 return tmpEnc;
             }
         }

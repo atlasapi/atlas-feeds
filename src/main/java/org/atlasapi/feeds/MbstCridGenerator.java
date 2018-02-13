@@ -3,6 +3,7 @@ package org.atlasapi.feeds;
 import java.util.Map;
 
 import org.atlasapi.media.entity.Identified;
+import org.atlasapi.media.entity.Quality;
 
 import com.metabroadcast.applications.client.model.internal.Environment;
 
@@ -30,6 +31,13 @@ public class MbstCridGenerator {
         HD,
         UHD
     }
+
+    public static final Map<org.atlasapi.media.entity.Quality, Quality> ATLAS_TO_YV_QUALITY_MAPPING
+            = ImmutableMap.of(
+            org.atlasapi.media.entity.Quality.SD, Quality.SD,
+            org.atlasapi.media.entity.Quality.HD, Quality.HD,
+            org.atlasapi.media.entity.Quality.FOUR_K, Quality.UHD
+    );
 
     private Environment env;
     private String provider;

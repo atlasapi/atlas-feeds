@@ -19,10 +19,6 @@ import com.metabroadcast.common.properties.Configurer;
 
 public class UnboxIdGenerator implements IdGenerator {
 
-//    private static final String AMAZON_IMI_PREFIX = "imi:amazon.com/"
-
-    public static final String VERSION_SUFFIX = "_version";
-
     private MbstCridGenerator mbstCridGenerator = new MbstCridGenerator(
             Environment.parse(Configurer.getPlatform()),
             "amazon.com" //amazon crid identifier
@@ -54,6 +50,13 @@ public class UnboxIdGenerator implements IdGenerator {
     @Override
     public String generateOnDemandImi(Item item, Version version, Encoding encoding,
             List<Location> locations) {
+
+        return mbstCridGenerator.getOndemandCrid(
+                item, MbstCridGenerator.ATLAS_TO_YV_QUALITY_MAPPING.get(encoding.getQuality()));
+
+        /* This is what should be happening. But amazon does not give us actual resolutions,
+        so we just pass on whatever we got from amazon to YV.
+
         //decide on content quality based on YV's standard (SPECWIP-4212)
         MbstCridGenerator.Quality quality = MbstCridGenerator.Quality.SD;
         Integer size = encoding.getVideoHorizontalSize();
@@ -68,6 +71,7 @@ public class UnboxIdGenerator implements IdGenerator {
             quality = MbstCridGenerator.Quality.UHD;
         }
         return mbstCridGenerator.getOndemandCrid(item, quality);
+        */
     }
     
     @Override

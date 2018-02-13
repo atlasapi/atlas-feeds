@@ -6,7 +6,7 @@ import org.atlasapi.media.entity.Content;
 
 public class YouViewGeneratorUtils {
 
-    private static final String ASIN_NAMESPACE = "gb:amazon:asin";
+    public static final String ASIN_NAMESPACE = "gb:amazon:asin";
     
     public static String getAsin(Content content) {
         for (Alias alias : content.getAliases()) {
