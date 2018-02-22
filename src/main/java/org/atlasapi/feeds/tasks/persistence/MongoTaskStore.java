@@ -6,9 +6,10 @@ import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
+import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
-import org.atlasapi.feeds.youview.client.TaskUpdatingResultHandler;
+import org.atlasapi.media.entity.Publisher;
 
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
@@ -162,9 +163,11 @@ public class MongoTaskStore implements TaskStore {
     public Iterable<Task> allTasks(TaskQuery query) {
         MongoQueryBuilder mongoQuery = new MongoQueryBuilder();
         
-        mongoQuery.fieldEquals(PUBLISHER_KEY, query.publisher().key())
-                .fieldEquals(DESTINATION_TYPE_KEY, query.destinationType().name());
-        
+        mongoQuery.fieldEquals(DESTINATION_TYPE_KEY, query.destinationType().name());
+
+        if (query.publisher().isPresent()) {
+            mongoQuery.regexMatch(PUBLISHER_KEY, query.publisher().get().key());
+        }
         if (query.contentUri().isPresent()) {
             mongoQuery.regexMatch(CONTENT_KEY, transformToPrefixRegexPattern(query.contentUri().get()));
         }
@@ -183,6 +186,10 @@ public class MongoTaskStore implements TaskStore {
         if (query.elementId().isPresent()) {
             mongoQuery.fieldEquals(ELEMENT_ID_KEY, transformToPrefixRegexPattern(query.elementId().get()));
         }
+        if( query.getAfter().isPresent()){
+            mongoQuery.fieldAfter(CREATED_KEY, query.getAfter().get());
+        }
+
 
         Selection selection = query.selection();
         DBCursor cursor = getOrderedCursor(mongoQuery.build(), query.sort())

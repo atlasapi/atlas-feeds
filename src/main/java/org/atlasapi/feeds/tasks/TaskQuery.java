@@ -7,6 +7,7 @@ import com.metabroadcast.common.query.Selection;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
+import org.joda.time.DateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -16,6 +17,7 @@ public class TaskQuery {
     public static class Sort {
 
         public static final Sort DEFAULT = Sort.of(Field.CREATED_TIME, Direction.ASC);
+        public static final Sort DATE_ASC = DEFAULT;
 
         private final Direction direction;
         private final Field field;
@@ -112,32 +114,33 @@ public class TaskQuery {
         }
     }
 
-
     private final Selection selection;
-    private final Publisher publisher;
     private final DestinationType destinationType;
+    private final Optional<Publisher> publisher;
     private final Optional<String> contentUri;
     private final Optional<String> remoteId;
     private final Optional<Status> status;
     private final Optional<Action> action;
     private final Optional<TVAElementType> elementType;
     private final Optional<String> elementId;
+    private final Optional<DateTime> after;
     private final Sort sort;
 
-    public static Builder builder(Selection selection, Publisher publisher, DestinationType destinationType) {
-        return new Builder(selection, publisher, destinationType);
+    public static Builder builder(Selection selection, DestinationType destinationType) {
+        return new Builder(selection, destinationType);
     }
     
     private TaskQuery(
             Selection selection,
-            Publisher publisher,
             DestinationType destinationType,
+            Optional<Publisher> publisher,
             Optional<String> contentUri,
             Optional<String> remoteId,
             Optional<Status> status,
             Optional<Action> action,
             Optional<TVAElementType> elementType,
             Optional<String> elementId,
+            Optional<DateTime> after,
             Sort sort
     ) {
         this.selection = checkNotNull(selection);
@@ -149,6 +152,7 @@ public class TaskQuery {
         this.action = checkNotNull(action);
         this.elementType = checkNotNull(elementType);
         this.elementId = checkNotNull(elementId);
+        this.after = checkNotNull(after);
         this.sort = checkNotNull(sort);
     }
     
@@ -156,7 +160,7 @@ public class TaskQuery {
         return selection;
     }
     
-    public Publisher publisher() {
+    public Optional<Publisher> publisher() {
         return publisher;
     }
     
@@ -188,6 +192,10 @@ public class TaskQuery {
         return elementId;
     }
 
+    public Optional<DateTime> getAfter() {
+        return after;
+    }
+
     public Sort sort() {
         return sort;
     }
@@ -204,6 +212,7 @@ public class TaskQuery {
                 .add("action", action)
                 .add("elementType", elementType)
                 .add("elementId", elementId)
+                .add("after", after)
                 .add("sort", sort)
                 .toString();
     }
@@ -211,28 +220,33 @@ public class TaskQuery {
     public static final class Builder {
         
         private final Selection selection;
-        private final Publisher publisher;
         private final DestinationType destinationType;
+        private Optional<Publisher> publisher = Optional.absent();
         private Optional<String> contentUri = Optional.absent();
         private Optional<String> remoteId = Optional.absent();
         private Optional<Status> status = Optional.absent();
         private Optional<Action> action = Optional.absent();
         private Optional<TVAElementType> elementType = Optional.absent();
         private Optional<String> elementId = Optional.absent();
+        private Optional<DateTime> after = Optional.absent();
         private Sort sort = Sort.DEFAULT;
 
-        private Builder(Selection selection, Publisher publisher, DestinationType destinationType) {
+        private Builder(Selection selection, DestinationType destinationType) {
             this.selection = selection;
-            this.publisher = publisher;
             this.destinationType = destinationType;
         }
         
         public TaskQuery build() {
-            return new TaskQuery(selection, publisher, destinationType, contentUri, remoteId, 
-                    status, action, elementType, elementId, sort
+            return new TaskQuery(selection, destinationType, publisher, contentUri, remoteId,
+                    status, action, elementType, elementId, after, sort
             );
         }
-        
+
+        public Builder withPublisher(Publisher publisher) {
+            this.publisher = Optional.fromNullable(publisher);
+            return this;
+        }
+
         public Builder withContentUri(String contentUri) {
             this.contentUri = Optional.fromNullable(contentUri);
             return this;
@@ -263,8 +277,18 @@ public class TaskQuery {
             return this;
         }
 
-        public Builder withSort(Sort sortDirection) {
-            this.sort = sortDirection;
+        /**
+         * Will enforce a greater than this date on the created field of the task.
+         * @param after
+         * @return
+         */
+        public Builder after(DateTime after){
+            this.after = Optional.fromNullable(after);
+            return this;
+        }
+
+        public Builder withSort(Sort sort) {
+            this.sort = sort;
             return this;
         }
     }

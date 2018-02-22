@@ -10,12 +10,16 @@ import java.util.Set;
 
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
+import org.atlasapi.feeds.tasks.TaskQuery;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
+
+import org.joda.time.DateTime;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
-
+import org.mockito.Matchers;
+import org.mockito.internal.matchers.Any;
 
 public class RemoteCheckTaskTest {
 
@@ -36,9 +40,9 @@ public class RemoteCheckTaskTest {
     
     @Test
     public void testProcessesAllNonFinalTasks() {
-        for (Status status : NON_TERMINAL_STATUSES) {
-            when(taskStore.allTasks(YOUVIEW, status)).thenReturn(ImmutableSet.of(task));
-        }
+
+        when(taskStore.allTasks(Matchers.any(TaskQuery.class))).thenReturn(ImmutableSet.of(task));
+        when(task.created()).thenReturn(new DateTime());
         
         remoteCheckTask.run();
         
