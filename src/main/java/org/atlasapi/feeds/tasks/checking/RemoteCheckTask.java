@@ -1,25 +1,29 @@
 package org.atlasapi.feeds.tasks.checking;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Set;
 
+import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
-import org.atlasapi.feeds.tasks.Destination.DestinationType;
+import org.atlasapi.feeds.tasks.TaskQuery;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
+
+import com.metabroadcast.common.query.Selection;
+import com.metabroadcast.common.scheduling.ScheduledTask;
+import com.metabroadcast.common.scheduling.UpdateProgress;
+
+import com.google.common.collect.ImmutableSet;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableSet;
-import com.metabroadcast.common.scheduling.ScheduledTask;
-import com.metabroadcast.common.scheduling.UpdateProgress;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class RemoteCheckTask extends ScheduledTask {
     
-    private static final Set<Status> TO_BE_CHECKED = ImmutableSet.of(
+    public static final Set<Status> TO_BE_CHECKED = ImmutableSet.of(
             Status.ACCEPTED,
             Status.VALIDATING,
             Status.QUARANTINED,
@@ -27,6 +31,9 @@ public class RemoteCheckTask extends ScheduledTask {
             Status.COMMITTED,
             Status.PUBLISHING
     );
+
+    //We need this limit to a reasonable number, cause if there are too many tasks mongo sort overflows
+    private static final int NUM_TO_CHECK_PER_ITTERATION = 5000;
     
     private final Logger log = LoggerFactory.getLogger(RemoteCheckTask.class);
     private final TaskStore taskStore;
@@ -42,21 +49,39 @@ public class RemoteCheckTask extends ScheduledTask {
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
-        for (Status uncheckedStatus : TO_BE_CHECKED) {
-            Iterable<Task> tasksToCheck = taskStore.allTasks(destinationType, uncheckedStatus);
-            for (Task task : tasksToCheck) {
-                if (!shouldContinue()) {
-                    break;
+
+        //We will check tasks per status, and then in blocks of NUM_TO_CHECK_PER_ITERATION linked
+        //through dates. This is because requesting all out once causes mongo overflow problems.
+        for (Status status : TO_BE_CHECKED) {
+            int numChecked = 0;
+            DateTime lastDateChecked = new DateTime().minusYears(1);
+            do {
+                log.info("Checking remote status for {}, already checked {}", status, numChecked );
+                TaskQuery.Builder query = TaskQuery.builder(
+                        Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION),
+                        destinationType)
+                        .withTaskStatus(status)
+                        .after(lastDateChecked)
+                        .withSort(TaskQuery.Sort.of(TaskQuery.Sort.Field.CREATED_TIME, TaskQuery.Sort.Direction.ASC));
+
+                Iterable<Task> tasksToCheck = taskStore.allTasks(query.build());
+
+                for (Task task : tasksToCheck) {
+                    if (!shouldContinue()) {
+                        break;
+                    }
+                    try {
+                        processor.checkRemoteStatusOf(task);
+                        progress = progress.reduce(UpdateProgress.SUCCESS);
+                    } catch (Exception e) {
+                        log.error("error checking task {}", task.id(), e);
+                        progress = progress.reduce(UpdateProgress.FAILURE);
+                    }
+                    numChecked++; //if this goes up to the iteration limit, request for more
+                    lastDateChecked = task.created().minusSeconds(1); //after this date
+                    reportStatus(progress.toString());
                 }
-                try {
-                    processor.checkRemoteStatusOf(task);
-                    progress = progress.reduce(UpdateProgress.SUCCESS);
-                } catch (Exception e) {
-                    log.error("error checking task {}", task.id(), e);
-                    progress = progress.reduce(UpdateProgress.FAILURE);
-                }
-                reportStatus(progress.toString());
-            }
+            } while (numChecked > 0 && (numChecked % NUM_TO_CHECK_PER_ITTERATION) == 0 );
         }
     }
 }
