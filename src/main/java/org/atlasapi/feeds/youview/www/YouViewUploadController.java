@@ -964,7 +964,12 @@ public class YouViewUploadController {
         }
 
         public Exception getException() {
-            return exception.get();
+            if(isException()) {
+                return exception.get();
+            } else {
+                return new IllegalArgumentException("You tried to get an exception, but this Try was"
+                                                    + "not an exception.");
+            }
         }
 
         public String getData() {
