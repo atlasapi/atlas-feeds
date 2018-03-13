@@ -98,7 +98,7 @@ public class YouviewContentMerger {
         //Update the existing content ID with a representative ID. Will throw IAE if not found.
         RepresentativeIdResponse repIdResponse = repIdClient.getRepId(mergedContent.getId());
 
-        log.info(
+        log.debug(
                 "{} swapped {} for repId {}",
                 (mergedContent.getId()) == (decode(repIdResponse.getRepresentative().getId())),
                 mergedContent.getId(),
