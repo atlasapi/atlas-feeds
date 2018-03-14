@@ -63,7 +63,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
 
 //    private static final Logger log = LoggerFactory.getLogger(AmazonGroupInformationGenerator.class)
 
-    public static final String UNBOX_GROUP_INFO_SERVICE_ID = "http://amazon.com/services/content_owning/primevideo";
+    public static final String GROUP_INFO_SERVICE_ID = "http://amazon.com/services/content_owning/primevideo";
     private static final int DEFAULT_IMAGE_HEIGHT = 320;
     private static final int DEFAULT_IMAGE_WIDTH = 240;
     
@@ -132,7 +132,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         createTitle(film, groupInfo.getBasicDescription());
 
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
-        groupInfo.setServiceIDRef(UNBOX_GROUP_INFO_SERVICE_ID);
+        groupInfo.setServiceIDRef(GROUP_INFO_SERVICE_ID);
 
         groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getAmazonAsin(film)));
         
@@ -191,7 +191,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             }
             groupInfo.getMemberOf().add(memberOf);
         } else {
-            groupInfo.setServiceIDRef(UNBOX_GROUP_INFO_SERVICE_ID);
+            groupInfo.setServiceIDRef(GROUP_INFO_SERVICE_ID);
         }
 
         groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_SERIES, getAmazonAsin(series)));
@@ -206,7 +206,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
 
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
         groupInfo.setOrdered(true);
-        groupInfo.setServiceIDRef(UNBOX_GROUP_INFO_SERVICE_ID);
+        groupInfo.setServiceIDRef(GROUP_INFO_SERVICE_ID);
 
         groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_BRAND, getAmazonAsin(brand)));
         

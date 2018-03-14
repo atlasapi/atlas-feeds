@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import static org.atlasapi.feeds.youview.unbox.AmazonGroupInformationGenerator.UNBOX_GROUP_INFO_SERVICE_ID;
+import static org.atlasapi.feeds.youview.unbox.AmazonGroupInformationGenerator.GROUP_INFO_SERVICE_ID;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -97,7 +97,7 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
 
         GroupInformationType groupInfo = generator.generate(series, Optional.<Brand>absent(), child);
 
-        assertEquals(UNBOX_GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
+        assertEquals(GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
     }
 
     /**
@@ -273,7 +273,7 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         GroupInformationType groupInfo = generator.generate(createFilm());
 
         assertEquals("crid://amazon.com/stage-metabroadcast.com:content:zzz", groupInfo.getGroupId());
-        assertEquals(UNBOX_GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
+        assertEquals(GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
 
@@ -367,7 +367,7 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         GroupInformationType groupInfo = generator.generate(createBrand(), episode);
 
         assertEquals("crid://amazon.com/stage-metabroadcast.com:content:wtf", groupInfo.getGroupId());
-        assertEquals(UNBOX_GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
+        assertEquals(GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
         assertTrue(groupInfo.isOrdered());
 
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -553,7 +553,7 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
 
         GroupInformationType groupInfo = generator.generate(film);
         assertEquals("crid://amazon.com/stage-metabroadcast.com:content:c", groupInfo.getGroupId());
-        assertEquals(UNBOX_GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
+        assertEquals(GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
     }
 
 
