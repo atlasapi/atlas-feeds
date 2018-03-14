@@ -1,11 +1,9 @@
 package org.atlasapi.feeds.youview.unbox;
 
 import java.math.BigInteger;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
-import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Alias;
@@ -19,7 +17,6 @@ import org.atlasapi.media.entity.Quality;
 import org.atlasapi.media.entity.Version;
 
 import com.metabroadcast.common.intl.Countries;
-import com.metabroadcast.common.properties.Configurer;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -31,19 +28,17 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Mockito;
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AudioAttributesType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.InstanceDescriptionType;
-import tva.metadata._2010.ProgramInformationType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-public class UnboxOnDemandLocationGeneratorTest {
+public class AmazonOnDemandLocationGeneratorTest {
     
     private static final Function<GenreType, String> GENRE_TO_HREF = new Function<GenreType, String>() {
         @Override
@@ -64,9 +59,9 @@ public class UnboxOnDemandLocationGeneratorTest {
         System.setProperty("MBST_PLATFORM", "stage");
     }
 
-    private IdGenerator idGenerator = new UnboxIdGenerator();
+    private IdGenerator idGenerator = new AmazonIdGenerator();
     
-    private final OnDemandLocationGenerator generator = new UnboxOnDemandLocationGenerator(idGenerator);
+    private final OnDemandLocationGenerator generator = new AmazonOnDemandLocationGenerator(idGenerator);
 
     @Test
     public void testNonPublisherSpecificFields() {
@@ -95,8 +90,8 @@ public class UnboxOnDemandLocationGeneratorTest {
         assertEquals("other", Iterables.getOnlyElement(types));
         
         Set<String> expected = ImmutableSet.of(
-                UnboxOnDemandLocationGenerator.YOUVIEW_GENRE_MEDIA_AVAILABLE, //everything has it
-                UnboxOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_BUY //the test locations has it
+                AmazonOnDemandLocationGenerator.YOUVIEW_GENRE_MEDIA_AVAILABLE, //everything has it
+                AmazonOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_BUY //the test locations has it
         );
         
         assertEquals(expected, hrefs);

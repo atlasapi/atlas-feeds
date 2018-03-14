@@ -18,7 +18,7 @@ import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
-import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
+import org.atlasapi.feeds.youview.unbox.AmazonIdGenerator;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
@@ -47,7 +47,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
 
     private static final Map<Publisher, Pattern> PUBLISHER_TO_PATTERN_MAP = ImmutableMap.of(
             Publisher.BBC_NITRO, Pattern.compile("crid://nitro.bbc.co.uk/iplayer/youview/[a-z0-9]*"),
-            Publisher.AMAZON_UNBOX, UnboxIdGenerator.getVersionCridPattern()
+            Publisher.AMAZON_UNBOX, AmazonIdGenerator.getVersionCridPattern()
     );
 
     private static final String REFERENTIAL_INTEGRITY_REASON

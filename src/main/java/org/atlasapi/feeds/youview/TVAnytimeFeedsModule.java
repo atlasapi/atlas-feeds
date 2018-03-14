@@ -22,7 +22,7 @@ import org.atlasapi.feeds.youview.unbox.UnboxBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxChannelGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxGroupInformationGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxMasterbrandGenerator;
-import org.atlasapi.feeds.youview.unbox.UnboxOnDemandLocationGenerator;
+import org.atlasapi.feeds.youview.unbox.AmazonOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxProgramInformationGenerator;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
@@ -48,7 +48,7 @@ public class TVAnytimeFeedsModule {
 
     private @Autowired UnboxProgramInformationGenerator unboxProgInfoGenerator;
     private @Autowired UnboxGroupInformationGenerator unboxGroupInfoGenerator;
-    private @Autowired UnboxOnDemandLocationGenerator unboxOnDemandGenerator;
+    private @Autowired AmazonOnDemandLocationGenerator unboxOnDemandGenerator;
     private @Autowired UnboxBroadcastEventGenerator unboxBroadcastGenerator;
     private @Autowired UnboxChannelGenerator unboxChannelGenerator;
     private @Autowired UnboxMasterbrandGenerator unboxMasterbrandGenerator;

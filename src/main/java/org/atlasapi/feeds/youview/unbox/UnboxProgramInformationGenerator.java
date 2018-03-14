@@ -96,7 +96,7 @@ public class UnboxProgramInformationGenerator implements ProgramInformationGener
     private UniqueIDType generateOtherId(Item item) {
         UniqueIDType id = new UniqueIDType();
         
-        id.setAuthority(UnboxOnDemandLocationGenerator.UNBOX_DEEP_LINKING_ID);
+        id.setAuthority(AmazonOnDemandLocationGenerator.UNBOX_DEEP_LINKING_ID);
         id.setValue(getAsin(item));
         
         return id;

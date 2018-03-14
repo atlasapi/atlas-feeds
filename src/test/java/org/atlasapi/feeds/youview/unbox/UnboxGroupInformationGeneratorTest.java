@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,8 +29,6 @@ import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import tva.metadata._2010.BaseMemberOfType;
@@ -70,7 +67,7 @@ public class UnboxGroupInformationGeneratorTest extends org.atlasapi.TestsWithCo
 
     private SynopsisTypeEquivalence SYNOPSIS_EQUIVALENCE = new SynopsisTypeEquivalence();
     private NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
-    private IdGenerator idGenerator = new UnboxIdGenerator();
+    private IdGenerator idGenerator = new AmazonIdGenerator();
     private GenreMapping genreMapping = new UnboxGenreMapping();
 
     private final GroupInformationGenerator generator = new UnboxGroupInformationGenerator(idGenerator, genreMapping);

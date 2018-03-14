@@ -37,7 +37,7 @@ import tva.mpeg7._2008.UniqueIDType;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
 
-public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator {
+public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
     private static final String UNBOX_ONDEMAND_SERVICE_ID = "http://amazon.com/services/on_demand/primevideo";
     public static final String UNBOX_DEEP_LINKING_ID = "deep_linking_id.amazon.com";
@@ -51,7 +51,7 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
 
     private final IdGenerator idGenerator;
     
-    public UnboxOnDemandLocationGenerator(IdGenerator idGenerator) {
+    public AmazonOnDemandLocationGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
     }
 
@@ -62,12 +62,7 @@ public class UnboxOnDemandLocationGenerator implements OnDemandLocationGenerator
 
         onDemand.setServiceIDRef(UNBOX_ONDEMAND_SERVICE_ID);
         onDemand.setProgram(generateProgram(onDemandHierarchy.item(), onDemandHierarchy.version()));
-        onDemand.setInstanceMetadataId(idGenerator.generateOnDemandImi(
-                onDemandHierarchy.item(),
-                onDemandHierarchy.version(),
-                onDemandHierarchy.encoding(),
-                locations
-        ));
+        onDemand.setInstanceMetadataId(onDemandImi);
         onDemand.setInstanceDescription(generateInstanceDescription(onDemandHierarchy));
         onDemand.setPublishedDuration(generatePublishedDuration(onDemandHierarchy.version()));
         //This assumes that all amazon locations represent the same thing, and thus have the same

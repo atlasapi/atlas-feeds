@@ -17,7 +17,7 @@ import org.atlasapi.media.entity.Version;
 import com.metabroadcast.applications.client.model.internal.Environment;
 import com.metabroadcast.common.properties.Configurer;
 
-public class UnboxIdGenerator implements IdGenerator {
+public class AmazonIdGenerator implements IdGenerator {
 
     private MbstCridGenerator mbstCridGenerator = new MbstCridGenerator(
             Environment.parse(Configurer.getPlatform()),

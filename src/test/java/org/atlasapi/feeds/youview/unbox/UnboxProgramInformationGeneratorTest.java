@@ -37,7 +37,7 @@ import static org.junit.Assert.assertTrue;
 
 public class UnboxProgramInformationGeneratorTest extends org.atlasapi.TestsWithConfiguration {
 
-    private IdGenerator idGenerator = new UnboxIdGenerator();
+    private IdGenerator idGenerator = new AmazonIdGenerator();
     private final ProgramInformationGenerator generator = new UnboxProgramInformationGenerator(idGenerator);
 
     @Test
@@ -72,7 +72,7 @@ public class UnboxProgramInformationGeneratorTest extends org.atlasapi.TestsWith
         
         assertEquals(versionCrid, progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
-        assertEquals(UnboxOnDemandLocationGenerator.UNBOX_DEEP_LINKING_ID, otherId.getAuthority());
+        assertEquals(AmazonOnDemandLocationGenerator.UNBOX_DEEP_LINKING_ID, otherId.getAuthority());
         assertEquals("crid://amazon.com/stage-metabroadcast.com/content/drrrrn", progInfo.getDerivedFrom().getCrid());
     }
 

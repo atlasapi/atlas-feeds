@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
@@ -12,12 +11,9 @@ import java.util.Set;
 
 import org.atlasapi.feeds.youview.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.UniqueIdGenerator;
-import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
-import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
+import org.atlasapi.feeds.youview.unbox.AmazonIdGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxProgramInformationGeneratorTest;
-import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
@@ -123,7 +119,7 @@ public class OnDemandHierarchyExpanderTest {
     @Test
     public void testAmazonGetsOndemandsBasedOnEncodings() {
         System.setProperty("MBST_PLATFORM", "stage");
-        idGenerator = new UnboxIdGenerator();
+        idGenerator = new AmazonIdGenerator();
         hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
 
         Film film = UnboxProgramInformationGeneratorTest.createConvolutedFilm();

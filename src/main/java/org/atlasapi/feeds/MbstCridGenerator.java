@@ -18,10 +18,11 @@ public class MbstCridGenerator {
             Environment.STAGE, "stage-metabroadcast.com"
     );
 
-    private static final Joiner SLASH_JOINER = Joiner.on("/");
+    private static final Joiner COLON = Joiner.on(":");
+    private static final Joiner SLASH = Joiner.on("/");
 
     private static final String CRID_START = "crid:/"; //<-missing a slash so we can use the Joiner.
-    private static final String IMI_START = "imi:/"; //<-missing a slash so we can use the Joiner.
+    private static final String IMI_START = "imi"; //<-missing the colon so we can use the Joiner.
     private static final String CONTENT = "content";
     private static final String VERSION = "version";
     private static final String ONDEMAND = "ondemand";
@@ -48,13 +49,13 @@ public class MbstCridGenerator {
     }
 
     // If the format changes, you have update the version pattern at
-    // UnboxIdGenerator.getVersionCridPattern() as it's not automatically constructed.
+    // AmazonIdGenerator.getVersionCridPattern() as it's not automatically constructed.
     public String getVersionCrid(Identified baseItem ){
-        return SLASH_JOINER.join(getContentCrid(baseItem), VERSION);
+        return COLON.join(getContentCrid(baseItem), VERSION);
     }
 
     public String getOndemandImi(Identified baseItem, Quality quality) {
-        return SLASH_JOINER.join(IMI_START, getContentBase(baseItem), ONDEMAND, quality);
+        return COLON.join(IMI_START, getContentBase(baseItem), ONDEMAND, quality);
     }
 
     public String getContentCrid(Identified i) {
@@ -66,7 +67,7 @@ public class MbstCridGenerator {
     }
 
     public String getContentCrid(String id) {
-        return SLASH_JOINER.join(CRID_START, getContentBase(id));
+        return SLASH.join(CRID_START, getContentBase(id));
     }
 
     private String getContentBase(Identified i) {
@@ -79,6 +80,6 @@ public class MbstCridGenerator {
 
     private String getContentBase(String id) {
         //e.g. crid://amazon.com/stage-metabroadcast.com/content/hhnf
-        return SLASH_JOINER.join(provider, MBST_IDENTIFIER.get(env), CONTENT, id);
+        return COLON.join(provider, MBST_IDENTIFIER.get(env), CONTENT, id);
     }
 }

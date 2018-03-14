@@ -21,9 +21,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 
-public class UnboxIdGeneratorTest {
+public class AmazonIdGeneratorTest {
 
-    private final IdGenerator generator = new UnboxIdGenerator();
+    private final IdGenerator generator = new AmazonIdGenerator();
 
     @BeforeClass
     public static void setUp() {

@@ -4,15 +4,15 @@ import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
+import org.atlasapi.feeds.youview.unbox.AmazonIdGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxChannelGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxServiceIdResolver;
 import org.atlasapi.feeds.youview.unbox.UnboxGenreMapping;
 import org.atlasapi.feeds.youview.unbox.UnboxGroupInformationGenerator;
-import org.atlasapi.feeds.youview.unbox.UnboxIdGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxMasterbrandGenerator;
-import org.atlasapi.feeds.youview.unbox.UnboxOnDemandLocationGenerator;
+import org.atlasapi.feeds.youview.unbox.AmazonOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.unbox.UnboxProgramInformationGenerator;
 import org.atlasapi.media.channel.ChannelResolver;
 
@@ -39,8 +39,8 @@ public class UnboxTVAnytimeModule {
     }
     
     @Bean
-    public UnboxOnDemandLocationGenerator unboxOnDemandGenerator() {
-        return new UnboxOnDemandLocationGenerator(unboxIdGenerator());
+    public AmazonOnDemandLocationGenerator unboxOnDemandGenerator() {
+        return new AmazonOnDemandLocationGenerator(unboxIdGenerator());
     }
     
     @Bean
@@ -57,8 +57,8 @@ public class UnboxTVAnytimeModule {
         return new UnboxMasterbrandGenerator();
     }
     @Bean
-    public UnboxIdGenerator unboxIdGenerator() {
-        return new UnboxIdGenerator();
+    public AmazonIdGenerator unboxIdGenerator() {
+        return new AmazonIdGenerator();
     }
     
     @Bean
