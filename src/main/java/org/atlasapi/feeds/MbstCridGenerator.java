@@ -40,11 +40,11 @@ public class MbstCridGenerator {
             org.atlasapi.media.entity.Quality.FOUR_K, Quality.UHD
     );
 
-    private Environment env;
+    private String mbstIdentifier;
     private String provider;
 
     public MbstCridGenerator(Environment env, String provider) {
-        this.env = env;
+        this.mbstIdentifier = MBST_IDENTIFIER.get(env);
         this.provider = provider;
     }
 
@@ -56,7 +56,7 @@ public class MbstCridGenerator {
 
     public String getOndemandImi(Identified baseItem, Quality quality) {
         // imi:amazon.com/metabroadcast.com:content:dmn6std:ondemand:HD
-        String namePart = COLON.join(IMI_START, provider);
+        String namePart = COLON.join(IMI_START, mbstIdentifier);
         String datapart = COLON.join(getContentBase(baseItem), ONDEMAND, quality);
         return SLASH.join(namePart, datapart);
     }
@@ -70,7 +70,7 @@ public class MbstCridGenerator {
     }
 
     public String getContentCrid(String id) {
-        return SLASH.join(CRID_START, provider, getContentBase(id));
+        return SLASH.join(CRID_START, mbstIdentifier, getContentBase(id));
     }
 
     private String getContentBase(Identified i) {
@@ -83,6 +83,6 @@ public class MbstCridGenerator {
 
     private String getContentBase(String id) {
         //stage-metabroadcast.com:content:hhnf
-        return COLON.join(MBST_IDENTIFIER.get(env), CONTENT, id);
+        return COLON.join(provider, CONTENT, id);
     }
 }
