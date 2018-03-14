@@ -695,7 +695,8 @@ public class YouViewUploadController {
         if (task == null) {
             return;
         }
-ng""        Task savedTask = taskStore.save(Task.copy(task).withManuallyCreated(true).build());
+        
+        Task savedTask = taskStore.save(Task.copy(task).withManuallyCreated(true).build());
 
         if (immediate) {
             taskProcessor.process(savedTask, telescope);

@@ -89,14 +89,13 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
     }
 
     private InstanceDescriptionType generateInstanceDescription(ItemOnDemandHierarchy onDemandHie) {
-        Item item = onDemandHie.item();
         Encoding encoding = onDemandHie.encoding();
         ExtendedInstanceDescriptionType instanceDescription = new ExtendedInstanceDescriptionType();
         
         instanceDescription.getGenre().addAll(generateGenres(onDemandHie.locations()));
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
-        instanceDescription.getOtherIdentifier().add(generateDeepLinkingId(item));
-        instanceDescription.getOtherIdentifier().add(generateOtherAuthorityId(item));
+        instanceDescription.getOtherIdentifier().add(generateDeepLinkingId(onDemandHie.locations()));
+        instanceDescription.getOtherIdentifier().add(generateOtherAuthorityId(onDemandHie.locations()));
 
         return instanceDescription;
     }
@@ -147,17 +146,24 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
         return Optional.of(bitRateType);
     }
 
-    private UniqueIDType generateDeepLinkingId(Item item) {
+    private UniqueIDType generateDeepLinkingId(List<Location> locations) {
         UniqueIDType id = new UniqueIDType();
         id.setAuthority(DEEP_LINKING_AUTHORITY);
-        id.setValue(getAmazonAsin(item));
+        id.setValue(AmazonIdGenerator.getAsin(locations.get(0)));
         return id;
     }
 
-    private UniqueIDType generateOtherAuthorityId(Item item) {
+    private UniqueIDType generateOtherAuthorityId(List<Location> locations) {
         UniqueIDType id = new UniqueIDType();
         id.setAuthority(ALL_ASINS_AUTHORITY);
-        id.setValue(getAmazonAsin(item)); //TODO: At this stage we do not have all the ASINs that contributed. Optimally there should be a space separated list of all ASINs here.
+        // YV requires us to send all contributing IDs separated by spaces (ECOTEST-317)
+        StringBuilder contributing = new StringBuilder();
+        for (Location location : locations) {
+            contributing.append(AmazonIdGenerator.getAsin(location)).append(" ");
+        }
+        //trim the last space.
+        contributing = new StringBuilder(contributing.substring(0, contributing.length() - 1));
+        id.setValue(contributing.toString());
         return id;
     }
 

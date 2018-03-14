@@ -92,7 +92,7 @@ public class AmazonIdGenerator implements IdGenerator {
     /**
      * Uris for amazon content look like http://unbox.amazon.co.uk/B00EV9L5LE
      */
-    private static String getAsin(Identified content) {
+    public static String getAsin(Identified content) {
         String[] splinters = content.getCanonicalUri().split("/");
         return splinters[splinters.length - 1];
     }
@@ -102,7 +102,7 @@ public class AmazonIdGenerator implements IdGenerator {
      * http://gb.amazon.com/asin/B01MFA4GML/SUBSCRIPTION
      * (they are set in main atlas, AmazonUnboxContentExtractor).
      */
-    private static String getAsin(Location content) {
+    public static String getAsin(Location content) {
         String[] splinters = content.getCanonicalUri().split("/");
         return splinters[splinters.length - 2];
     }
