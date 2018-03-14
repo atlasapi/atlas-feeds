@@ -34,14 +34,14 @@ public class AmazonIdGeneratorTest {
     public void testContentCridGeneration() {
         String contentCrid = generator.generateContentCrid(createItemWithId(12045L));
         
-        assertEquals("crid://amazon.com:stage-metabroadcast.com:content:wtf", contentCrid);
+        assertEquals("crid://amazon.com/stage-metabroadcast.com:content:wtf", contentCrid);
     }
 
     @Test
     public void testVersionCridGeneration() {
         String versionCrid = generator.generateVersionCrid(createItemWithId(12045L), createVersion());
         
-        assertEquals("crid://amazon.com:stage-metabroadcast.com:content:wtf:version", versionCrid);
+        assertEquals("crid://amazon.com/stage-metabroadcast.com:content:wtf:version", versionCrid);
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -53,7 +53,7 @@ public class AmazonIdGeneratorTest {
     public void testOnDemandImiGeneration() {
         String onDemandImi = generator.generateOnDemandImi(createItemWithId(12045L), createVersion(), createEncoding(), createLocations());
         
-        assertEquals("imi:amazon.com:stage-metabroadcast.com:content:wtf:ondemand:SD", onDemandImi);
+        assertEquals("imi:amazon.com/stage-metabroadcast.com:content:wtf:ondemand:SD", onDemandImi);
     }
 
     private Item createItemWithId(Long id) {

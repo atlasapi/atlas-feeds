@@ -138,7 +138,7 @@ public class AmazonOnDemandLocationGeneratorTest {
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);
         
         assertEquals("http://amazon.com/services/on_demand/primevideo", onDemand.getServiceIDRef());
-        assertEquals("crid://amazon.com:stage-metabroadcast.com:content:szp:version", onDemand.getProgram().getCrid());
+        assertEquals("crid://amazon.com/stage-metabroadcast.com:content:szp:version", onDemand.getProgram().getCrid());
         assertEquals(onDemandImi, onDemand.getInstanceMetadataId());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();

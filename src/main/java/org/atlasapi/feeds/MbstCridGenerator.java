@@ -55,7 +55,10 @@ public class MbstCridGenerator {
     }
 
     public String getOndemandImi(Identified baseItem, Quality quality) {
-        return COLON.join(IMI_START, getContentBase(baseItem), ONDEMAND, quality);
+        // imi:amazon.com/metabroadcast.com:content:dmn6std:ondemand:HD
+        String namePart = COLON.join(IMI_START, provider);
+        String datapart = COLON.join(getContentBase(baseItem), ONDEMAND, quality);
+        return SLASH.join(namePart, datapart);
     }
 
     public String getContentCrid(Identified i) {
@@ -67,7 +70,7 @@ public class MbstCridGenerator {
     }
 
     public String getContentCrid(String id) {
-        return SLASH.join(CRID_START, getContentBase(id));
+        return SLASH.join(CRID_START, provider, getContentBase(id));
     }
 
     private String getContentBase(Identified i) {
@@ -79,7 +82,7 @@ public class MbstCridGenerator {
     }
 
     private String getContentBase(String id) {
-        //e.g. crid://amazon.com/stage-metabroadcast.com:content:hhnf
-        return COLON.join(provider, MBST_IDENTIFIER.get(env), CONTENT, id);
+        //stage-metabroadcast.com:content:hhnf
+        return COLON.join(MBST_IDENTIFIER.get(env), CONTENT, id);
     }
 }
