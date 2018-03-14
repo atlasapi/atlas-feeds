@@ -272,7 +272,7 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
     public void testFilmGroupInformationGeneration() {
         GroupInformationType groupInfo = generator.generate(createFilm());
 
-        assertEquals("crid://amazon.com/stage-metabroadcast.com:content:zzz", groupInfo.getGroupId());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:zzz", groupInfo.getGroupId());
         assertEquals(GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
@@ -292,10 +292,10 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
     public void testEpisodeGroupInformationGeneration() {
         GroupInformationType groupInfo = generator.generate(createEpisode(), Optional.of(createSeries()), Optional.of(createBrand()));
 
-        assertEquals("crid://amazon.com/stage-metabroadcast.com:content:ssssh", groupInfo.getGroupId());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:ssssh", groupInfo.getGroupId());
 
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://amazon.com/stage-metabroadcast.com:content:qq", memberOf.getCrid());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:qq", memberOf.getCrid());
         assertEquals(Long.valueOf(1), memberOf.getIndex());
 
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -330,11 +330,11 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
 
         GroupInformationType groupInfo = generator.generate(createSeries(), Optional.of(createBrand()), episode);
 
-        assertEquals("crid://amazon.com/stage-metabroadcast.com:content:qq", groupInfo.getGroupId());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:qq", groupInfo.getGroupId());
         assertTrue(groupInfo.isOrdered());
 
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://amazon.com/stage-metabroadcast.com:content:wtf", memberOf.getCrid());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:wtf", memberOf.getCrid());
         assertEquals(Long.valueOf(2), memberOf.getIndex());
 
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
@@ -366,7 +366,7 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
 
         GroupInformationType groupInfo = generator.generate(createBrand(), episode);
 
-        assertEquals("crid://amazon.com/stage-metabroadcast.com:content:wtf", groupInfo.getGroupId());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:wtf", groupInfo.getGroupId());
         assertEquals(GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
         assertTrue(groupInfo.isOrdered());
 
@@ -552,7 +552,7 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         film.setCanonicalUri("http://amazon.com/movies/123456");
 
         GroupInformationType groupInfo = generator.generate(film);
-        assertEquals("crid://amazon.com/stage-metabroadcast.com:content:c", groupInfo.getGroupId());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:c", groupInfo.getGroupId());
         assertEquals(GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
     }
 

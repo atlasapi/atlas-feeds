@@ -73,7 +73,7 @@ public class AmazonProgramInformationGeneratorTest extends org.atlasapi.TestsWit
         assertEquals(versionCrid, progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
         assertEquals(AmazonOnDemandLocationGenerator.DEEP_LINKING_AUTHORITY, otherId.getAuthority());
-        assertEquals("crid://amazon.com/stage-metabroadcast.com:content:drrrrn", progInfo.getDerivedFrom().getCrid());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:drrrrn", progInfo.getDerivedFrom().getCrid());
     }
 
     @Test

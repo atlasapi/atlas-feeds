@@ -65,14 +65,17 @@ public class AmazonOnDemandLocationGeneratorTest {
 
     @Test
     public void testNonPublisherSpecificFields() {
-        Location location = createLocation();
-        location.setCanonicalUri("unbox.amazon.co.uk/SOMELOCATIONID");
-        Encoding encoding = createEncoding(location);
+        Location location1 = createLocation();
+        location1.setCanonicalUri("unbox.amazon.co.uk/SOME_ASIN/PAY");
+        Location location2 = createLocation();
+        location2.setCanonicalUri("unbox.amazon.co.uk/SOME_OTHER_ASIN/RENT");
+        Encoding encoding = createEncoding(location1);
+        encoding.addAvailableAt(location2);
         Version version = createVersion(encoding);
         version.setCanonicalUri("unbox.amazon.co.uk/SOMEVERSIONID");
         Film film = createFilm(version);
         film.setId(1L);
-        ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, ImmutableList.of(location));
+        ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, ImmutableList.of(location1, location2));
         String onDemandImi = "onDemandImi";
         
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);
@@ -117,9 +120,9 @@ public class AmazonOnDemandLocationGeneratorTest {
         UniqueIDType allContributingAsins = instanceDesc.getOtherIdentifier().get(1);
 
         assertEquals("asin.amazon.com", deepLink.getAuthority());
-        assertEquals("filmAsin", deepLink.getValue());
+        assertEquals("SOME_ASIN", deepLink.getValue());
         assertEquals("ondemand.asin.amazon.com", allContributingAsins.getAuthority());
-        assertEquals("filmAsin", allContributingAsins.getValue()); //If you made it to get all contributing IDS here, add a proper test for it.
+        assertEquals("SOME_ASIN SOME_OTHER_ASIN", allContributingAsins.getValue()); //If you made it to get all contributing IDS here, add a proper test for it.
 
     }
     
@@ -138,7 +141,7 @@ public class AmazonOnDemandLocationGeneratorTest {
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);
         
         assertEquals("http://amazon.com/services/on_demand/primevideo", onDemand.getServiceIDRef());
-        assertEquals("crid://amazon.com/stage-metabroadcast.com:content:szp:version", onDemand.getProgram().getCrid());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:szp:version", onDemand.getProgram().getCrid());
         assertEquals(onDemandImi, onDemand.getInstanceMetadataId());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
