@@ -23,12 +23,12 @@ import com.google.common.io.InputSupplier;
 import com.google.common.io.Resources;
 
 
-public class UnboxGenreMapping implements GenreMapping, OldGenreMapping {
+public class AmazonGenreMapping implements GenreMapping, OldGenreMapping {
     
     private static final String UNBOX_GENRE_FILENAME = "Amazon_Unbox_YouView_GenreMapping.csv";
     private static final String UNBOX_GENRE_PREFIX = "http://unbox.amazon.co.uk/genres/";
     
-    private final Logger log = LoggerFactory.getLogger(UnboxGenreMapping.class);
+    private final Logger log = LoggerFactory.getLogger(AmazonGenreMapping.class);
    
     private final Function<String, Iterable<String>> toYouViewGenres = new Function<String, Iterable<String>>() {
         @Override
@@ -39,7 +39,7 @@ public class UnboxGenreMapping implements GenreMapping, OldGenreMapping {
     
     private final Multimap<String, String> genreMapping;
     
-    public UnboxGenreMapping() {
+    public AmazonGenreMapping() {
         this.genreMapping = generateLines();
     }
 

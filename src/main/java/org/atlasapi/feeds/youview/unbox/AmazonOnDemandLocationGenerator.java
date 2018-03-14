@@ -35,13 +35,14 @@ import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAmazonAsin;
 
 public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
-    private static final String UNBOX_ONDEMAND_SERVICE_ID = "http://amazon.com/services/on_demand/primevideo";
-    public static final String UNBOX_DEEP_LINKING_ID = "deep_linking_id.amazon.com";
-    
+    private static final String ONDEMAND_SERVICE_ID = "http://amazon.com/services/on_demand/primevideo";
+    public static final String DEEP_LINKING_AUTHORITY = "asin.amazon.com"; //requested to be a single ID (https://jira-ngyv.youview.co.uk/projects/ECOTEST/issues/ECOTEST-317?filter=allopenissues)
+    public static final String ALL_ASINS_AUTHORITY = "ondemand.asin.amazon.com"; //requested to be a space separated list of all ASINS that contributed. (as above)
+
     private static final String YOUVIEW_MIX_TYPE = "urn:mpeg:mpeg7:cs:AudioPresentationCS:2001:3";
     public static final String YOUVIEW_ENTITLEMENT_SUBSCRIPTION = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#subscription";
     public static final String YOUVIEW_ENTITLEMENT_PAY_TO_RENT = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#rental";
@@ -60,7 +61,7 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
         List<Location> locations = onDemandHierarchy.locations();
 
-        onDemand.setServiceIDRef(UNBOX_ONDEMAND_SERVICE_ID);
+        onDemand.setServiceIDRef(ONDEMAND_SERVICE_ID);
         onDemand.setProgram(generateProgram(onDemandHierarchy.item(), onDemandHierarchy.version()));
         onDemand.setInstanceMetadataId(onDemandImi);
         onDemand.setInstanceDescription(generateInstanceDescription(onDemandHierarchy));
@@ -94,7 +95,8 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
         
         instanceDescription.getGenre().addAll(generateGenres(onDemandHie.locations()));
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
-        instanceDescription.getOtherIdentifier().add(generateOtherId(item));
+        instanceDescription.getOtherIdentifier().add(generateDeepLinkingId(item));
+        instanceDescription.getOtherIdentifier().add(generateOtherAuthorityId(item));
 
         return instanceDescription;
     }
@@ -145,10 +147,17 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
         return Optional.of(bitRateType);
     }
 
-    private UniqueIDType generateOtherId(Item item) {
+    private UniqueIDType generateDeepLinkingId(Item item) {
         UniqueIDType id = new UniqueIDType();
-        id.setAuthority(UNBOX_DEEP_LINKING_ID);
-        id.setValue(getAsin(item));
+        id.setAuthority(DEEP_LINKING_AUTHORITY);
+        id.setValue(getAmazonAsin(item));
+        return id;
+    }
+
+    private UniqueIDType generateOtherAuthorityId(Item item) {
+        UniqueIDType id = new UniqueIDType();
+        id.setAuthority(ALL_ASINS_AUTHORITY);
+        id.setValue(getAmazonAsin(item)); //TODO: At this stage we do not have all the ASINs that contributed. Optimally there should be a space separated list of all ASINs here.
         return id;
     }
 

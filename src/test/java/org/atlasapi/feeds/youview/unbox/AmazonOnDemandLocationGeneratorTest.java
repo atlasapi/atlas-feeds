@@ -109,9 +109,18 @@ public class AmazonOnDemandLocationGeneratorTest {
 
         assertEquals(BigInteger.valueOf(3308), avAttributes.getBitRate().getValue());
         assertFalse(avAttributes.getBitRate().isVariable());
-        
-        UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
-        assertEquals("filmAsin", otherId.getValue());
+
+        for (UniqueIDType uniqueIDType : instanceDesc.getOtherIdentifier()) {
+            System.out.println(uniqueIDType.getAuthority()+" "+uniqueIDType.getValue());
+        }
+        UniqueIDType deepLink = instanceDesc.getOtherIdentifier().get(0);
+        UniqueIDType allContributingAsins = instanceDesc.getOtherIdentifier().get(1);
+
+        assertEquals("asin.amazon.com", deepLink.getAuthority());
+        assertEquals("filmAsin", deepLink.getValue());
+        assertEquals("ondemand.asin.amazon.com", allContributingAsins.getAuthority());
+        assertEquals("filmAsin", allContributingAsins.getValue()); //If you made it to get all contributing IDS here, add a proper test for it.
+
     }
     
     @Test
@@ -133,13 +142,15 @@ public class AmazonOnDemandLocationGeneratorTest {
         assertEquals(onDemandImi, onDemand.getInstanceMetadataId());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
-        UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());
-        assertEquals("deep_linking_id.amazon.com", otherId.getAuthority());
+        UniqueIDType deepLink = instanceDesc.getOtherIdentifier().get(0);
+        UniqueIDType allContributingAsins = instanceDesc.getOtherIdentifier().get(1);
+        assertEquals(AmazonOnDemandLocationGenerator.DEEP_LINKING_AUTHORITY, deepLink.getAuthority());
+        assertEquals(AmazonOnDemandLocationGenerator.ALL_ASINS_AUTHORITY, allContributingAsins.getAuthority());
     }
 
 
     @Test public void testOndemandsAfterConsolidation() {
-//        Film film = UnboxProgramInformationGeneratorTest.createConvolutedFilm();
+//        Film film = AmazonProgramInformationGeneratorTest.createConvolutedFilm();
 //        Iterator<Version> vIter = film.getVersions().iterator();
 //        Version version = vIter.next(); //there should be one after consolidation
 //        ItemAndVersion versionHierarchy = new ItemAndVersion(film, version);

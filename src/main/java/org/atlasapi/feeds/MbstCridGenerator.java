@@ -79,7 +79,7 @@ public class MbstCridGenerator {
     }
 
     private String getContentBase(String id) {
-        //e.g. crid://amazon.com/stage-metabroadcast.com/content/hhnf
+        //e.g. crid://amazon.com/stage-metabroadcast.com:content:hhnf
         return COLON.join(provider, MBST_IDENTIFIER.get(env), CONTENT, id);
     }
 }

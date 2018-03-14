@@ -34,10 +34,10 @@ import tva.mpeg7._2008.ControlledTermUseType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAmazonAsin;
 
 
-public class UnboxProgramInformationGenerator implements ProgramInformationGenerator {
+public class AmazonProgramInformationGenerator implements ProgramInformationGenerator {
     
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
     public static final String YOUVIEW_AMAZON_TARGET_USER_GROUP = "http://refdata.youview.com/mpeg7cs/YouViewApplicationPlayerCS/2017-09-28#html5-aiv1";
@@ -71,7 +71,7 @@ public class UnboxProgramInformationGenerator implements ProgramInformationGener
     
     private final IdGenerator idGenerator;
 
-    public UnboxProgramInformationGenerator(IdGenerator idGenerator) {
+    public AmazonProgramInformationGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
     }
 
@@ -96,8 +96,8 @@ public class UnboxProgramInformationGenerator implements ProgramInformationGener
     private UniqueIDType generateOtherId(Item item) {
         UniqueIDType id = new UniqueIDType();
         
-        id.setAuthority(AmazonOnDemandLocationGenerator.UNBOX_DEEP_LINKING_ID);
-        id.setValue(getAsin(item));
+        id.setAuthority(AmazonOnDemandLocationGenerator.DEEP_LINKING_AUTHORITY);
+        id.setValue(getAmazonAsin(item));
         
         return id;
     }

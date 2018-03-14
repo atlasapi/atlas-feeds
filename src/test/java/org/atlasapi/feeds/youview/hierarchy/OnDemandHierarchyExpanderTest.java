@@ -13,14 +13,13 @@ import org.atlasapi.feeds.youview.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.UniqueIdGenerator;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.unbox.AmazonIdGenerator;
-import org.atlasapi.feeds.youview.unbox.UnboxProgramInformationGeneratorTest;
+import org.atlasapi.feeds.youview.unbox.AmazonProgramInformationGeneratorTest;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
-import org.atlasapi.media.entity.Quality;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.junit.Test;
@@ -123,7 +122,7 @@ public class OnDemandHierarchyExpanderTest {
         idGenerator = new AmazonIdGenerator();
         hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
 
-        Film film = UnboxProgramInformationGeneratorTest.createConvolutedFilm();
+        Film film = AmazonProgramInformationGeneratorTest.createConvolutedFilm();
        AmazonContentConsolidator.consolidate(film);
 
         Map<String, ItemOnDemandHierarchy> hierarchy = hierarchyExpander.expandHierarchy(film);

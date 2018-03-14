@@ -18,12 +18,12 @@ import org.atlasapi.feeds.youview.nitro.NitroOnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroProgramInformationGenerator;
 import org.atlasapi.feeds.youview.statistics.FeedStatisticsResolver;
 import org.atlasapi.feeds.youview.statistics.MongoFeedStatisticsStore;
-import org.atlasapi.feeds.youview.unbox.UnboxBroadcastEventGenerator;
-import org.atlasapi.feeds.youview.unbox.UnboxChannelGenerator;
-import org.atlasapi.feeds.youview.unbox.UnboxGroupInformationGenerator;
-import org.atlasapi.feeds.youview.unbox.UnboxMasterbrandGenerator;
+import org.atlasapi.feeds.youview.unbox.AmazonBroadcastEventGenerator;
+import org.atlasapi.feeds.youview.unbox.AmazonChannelGenerator;
+import org.atlasapi.feeds.youview.unbox.AmazonGroupInformationGenerator;
+import org.atlasapi.feeds.youview.unbox.AmazonMasterbrandGenerator;
 import org.atlasapi.feeds.youview.unbox.AmazonOnDemandLocationGenerator;
-import org.atlasapi.feeds.youview.unbox.UnboxProgramInformationGenerator;
+import org.atlasapi.feeds.youview.unbox.AmazonProgramInformationGenerator;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.ids.MongoSequentialIdGenerator;
@@ -40,18 +40,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@Import( { NitroTVAnytimeModule.class, UnboxTVAnytimeModule.class } )
+@Import( { NitroTVAnytimeModule.class, AmazonTVAnytimeModule.class } )
 public class TVAnytimeFeedsModule {
     
     private @Autowired DatabasedMongo mongo;
     private @Autowired ContentResolver contentResolver;
 
-    private @Autowired UnboxProgramInformationGenerator unboxProgInfoGenerator;
-    private @Autowired UnboxGroupInformationGenerator unboxGroupInfoGenerator;
+    private @Autowired AmazonProgramInformationGenerator unboxProgInfoGenerator;
+    private @Autowired AmazonGroupInformationGenerator unboxGroupInfoGenerator;
     private @Autowired AmazonOnDemandLocationGenerator unboxOnDemandGenerator;
-    private @Autowired UnboxBroadcastEventGenerator unboxBroadcastGenerator;
-    private @Autowired UnboxChannelGenerator unboxChannelGenerator;
-    private @Autowired UnboxMasterbrandGenerator unboxMasterbrandGenerator;
+    private @Autowired AmazonBroadcastEventGenerator unboxBroadcastGenerator;
+    private @Autowired AmazonChannelGenerator amazonChannelGenerator;
+    private @Autowired AmazonMasterbrandGenerator amazonMasterbrandGenerator;
     
     private @Autowired NitroProgramInformationGenerator nitroProgInfoGenerator;
     private @Autowired NitroGroupInformationGenerator nitroGroupInfoGenerator;
@@ -102,8 +102,8 @@ public class TVAnytimeFeedsModule {
                 unboxGroupInfoGenerator, 
                 unboxOnDemandGenerator, 
                 unboxBroadcastGenerator,
-                unboxChannelGenerator,
-                unboxMasterbrandGenerator,
+                amazonChannelGenerator,
+                amazonMasterbrandGenerator,
                 contentHierarchy()
         ));
     }

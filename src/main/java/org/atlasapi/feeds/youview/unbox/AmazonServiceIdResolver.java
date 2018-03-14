@@ -6,9 +6,9 @@ import org.atlasapi.media.entity.Content;
 
 import com.google.common.base.Optional;
 
-public final class UnboxServiceIdResolver implements ServiceIdResolver {
+public final class AmazonServiceIdResolver implements ServiceIdResolver {
 
-    public UnboxServiceIdResolver() {
+    public AmazonServiceIdResolver() {
     }
 
     @Override

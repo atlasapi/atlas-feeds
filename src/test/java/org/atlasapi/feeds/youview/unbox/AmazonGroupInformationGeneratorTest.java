@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import static org.atlasapi.feeds.youview.unbox.UnboxGroupInformationGenerator.UNBOX_GROUP_INFO_SERVICE_ID;
+import static org.atlasapi.feeds.youview.unbox.AmazonGroupInformationGenerator.UNBOX_GROUP_INFO_SERVICE_ID;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -56,7 +56,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metabroadcast.common.intl.Countries;
 
-public class UnboxGroupInformationGeneratorTest extends org.atlasapi.TestsWithConfiguration {
+public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithConfiguration {
 
     private static final Function<GenreType, String> TO_HREF = new Function<GenreType, String>() {
         @Override
@@ -68,9 +68,9 @@ public class UnboxGroupInformationGeneratorTest extends org.atlasapi.TestsWithCo
     private SynopsisTypeEquivalence SYNOPSIS_EQUIVALENCE = new SynopsisTypeEquivalence();
     private NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
     private IdGenerator idGenerator = new AmazonIdGenerator();
-    private GenreMapping genreMapping = new UnboxGenreMapping();
+    private GenreMapping genreMapping = new AmazonGenreMapping();
 
-    private final GroupInformationGenerator generator = new UnboxGroupInformationGenerator(idGenerator, genreMapping);
+    private final GroupInformationGenerator generator = new AmazonGroupInformationGenerator(idGenerator, genreMapping);
 
     @Test
     public void testRelatedMaterialNotGeneratedIfNullOrEmptyImageString() {
@@ -319,7 +319,7 @@ public class UnboxGroupInformationGeneratorTest extends org.atlasapi.TestsWithCo
         GroupInformationType groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
         ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
-        assertEquals(UnboxGroupInformationGenerator.LANGUAGE_UNDEFINED, language.getValue());
+        assertEquals(AmazonGroupInformationGenerator.LANGUAGE_UNDEFINED, language.getValue());
     }
 
     @Test

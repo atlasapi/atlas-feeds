@@ -5,13 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
-import org.atlasapi.feeds.tasks.youview.creation.DeltaTaskCreationTask;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -36,8 +34,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import tva.metadata._2010.BaseProgramGroupTypeType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ControlledTermType;
@@ -58,13 +54,14 @@ import tva.mpeg7._2008.MediaLocatorType;
 import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
+import tva.mpeg7._2008.UniqueIDType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAmazonAsin;
 
+public class AmazonGroupInformationGenerator implements GroupInformationGenerator {
 
-public class UnboxGroupInformationGenerator implements GroupInformationGenerator {
-
-    private static final Logger log = LoggerFactory.getLogger(UnboxGroupInformationGenerator.class);
+//    private static final Logger log = LoggerFactory.getLogger(AmazonGroupInformationGenerator.class)
 
     public static final String UNBOX_GROUP_INFO_SERVICE_ID = "http://amazon.com/services/content_owning/primevideo";
     private static final int DEFAULT_IMAGE_HEIGHT = 320;
@@ -84,6 +81,10 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
     private static final String TITLE_TYPE_MAIN = "main";
     private static final String TITLE_TYPE_SECONDARY = "secondary";
     private static final String LOVEFILM_MEDIATYPE_GENRE_VIDEO = "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3";
+
+    public static final String OTHER_IDENTIFIER_AUTHORITY_BRAND = "show.asin.amazon.com";
+    public static final String OTHER_IDENTIFIER_AUTHORITY_SERIES = "season.asin.amazon.com";
+    public static final String OTHER_IDENTIFIER_AUTHORITY_EPISODE = "episode.asin.amazon.com";
     
     private static final Map<Specialization, String> YOUVIEW_SPECIALIZATION_GENRE_MAPPING = ImmutableMap.<Specialization, String>builder()
         .put(Specialization.FILM, "urn:tva:metadata:cs:OriginationCS:2005:5.7")
@@ -108,7 +109,6 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         }
     };
     private static final String SEASON = "Season ";
-    private static final String EPISODE = "Episode ";
 
     private Truncator truncator = new Truncator()
             .omitTrailingPunctuationWhenTruncated()
@@ -117,11 +117,11 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
 
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
-    private final Pattern episodePattern1 = Pattern.compile("(?i)ep[\\.-]*[isode]*[ -]*[\\d]+");//Ep1, Episode 1 etc.
-    private final Pattern episodePattern2 = Pattern.compile("(?i)[s|e]+[\\d]+[ \\.-\\/]*[s|e]+[\\d]+");//S05E01 etc
-    private final Pattern strayDashes = Pattern.compile("^[\\p{Pd} ]+|[\\p{Pd} ]+$");//all dashes
+//    Pattern episodePattern1 = Pattern.compile("(?i)ep[\\.-]*[isode]*[ -]*[\\d]+") //Ep1, Episode 1 etc.
+//    Pattern episodePattern2 = Pattern.compile("(?i)[s|e]+[\\d]+[ \\.-\\/]*[s|e]+[\\d]+") //S05E01 etc
+//    Pattern strayDashes = Pattern.compile("^[\\p{Pd} ]+|[\\p{Pd} ]+$") //all dashes
 
-    public UnboxGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping) {
+    public AmazonGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping) {
         this.idGenerator = checkNotNull(idGenerator);
         this.genreMapping = checkNotNull(genreMapping);
     }
@@ -133,6 +133,8 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
 
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         groupInfo.setServiceIDRef(UNBOX_GROUP_INFO_SERVICE_ID);
+
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getAmazonAsin(film)));
         
         return groupInfo;
     }
@@ -168,6 +170,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
             }
             groupInfo.getMemberOf().add(memberOf);
         }
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getAmazonAsin(item)));
         
         return groupInfo;  
     }
@@ -190,6 +193,8 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         } else {
             groupInfo.setServiceIDRef(UNBOX_GROUP_INFO_SERVICE_ID);
         }
+
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_SERIES, getAmazonAsin(series)));
         
         return groupInfo;
     }
@@ -202,6 +207,8 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
         groupInfo.setOrdered(true);
         groupInfo.setServiceIDRef(UNBOX_GROUP_INFO_SERVICE_ID);
+
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_BRAND, getAmazonAsin(brand)));
         
         return groupInfo;
     }
@@ -231,7 +238,7 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
         basicDescription.getLanguage().addAll(generateLanguage(content));
         basicDescription.setCreditsList(generateCreditsList(content));
-        Optional<RelatedMaterialType> relatedMaterial = Optional.absent();
+        Optional<RelatedMaterialType> relatedMaterial;
         if (content instanceof Series) {
             relatedMaterial = generateRelatedMaterial(item);
         } else if (content instanceof Brand) {
@@ -296,7 +303,12 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
         
         return Optional.<RelatedMaterialType>of(relatedMaterial);
     }
-
+    private UniqueIDType generateOtherIdentifier(String authority, String asin) {
+        UniqueIDType id = new UniqueIDType();
+        id.setAuthority(authority);
+        id.setValue(asin);
+        return id;
+    }
     private ContentPropertiesType generateContentProperties(Content content) {
         ContentPropertiesType contentProperties = new ContentPropertiesType();
         StillImageContentAttributesType attributes = new StillImageContentAttributesType();
@@ -353,11 +365,11 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
 
            NameComponentType nameComponent = new NameComponentType();
            nameComponent.setValue(person.name());
-           JAXBElement<NameComponentType> nameElem = new JAXBElement<NameComponentType>(new QName("urn:tva:mpeg7:2008", "GivenName"), NameComponentType.class, nameComponent);
+           JAXBElement<NameComponentType> nameElem = new JAXBElement<>(new QName("urn:tva:mpeg7:2008", "GivenName"), NameComponentType.class, nameComponent);
 
            PersonNameType personName = new PersonNameType();
            personName.getGivenNameOrLinkingNameOrFamilyName().add(nameElem);
-           JAXBElement<PersonNameType> personNameElem = new JAXBElement<PersonNameType>(new QName("urn:tva:metadata:2010", "PersonName"), PersonNameType.class, personName);
+           JAXBElement<PersonNameType> personNameElem = new JAXBElement<>(new QName("urn:tva:metadata:2010", "PersonName"), PersonNameType.class, personName);
 
            credit.getPersonNameOrPersonNameIDRefOrOrganizationName().add(personNameElem);
            creditsList.getCreditsItem().add(credit);
@@ -422,7 +434,9 @@ public class UnboxGroupInformationGenerator implements GroupInformationGenerator
        if (content.getMediaType().equals(MediaType.VIDEO)) {
            genre.setHref(LOVEFILM_MEDIATYPE_GENRE_VIDEO);
        } else {
-           throw new RuntimeException("invalid media type " + content.getMediaType() + " on item " + content.getCanonicalUri());
+           throw new IllegalArgumentException("Invalid media type " + content.getMediaType()
+                                              + " on item " + content.getCanonicalUri()
+                                              + ". Cannot generate genre.");
        }
        return genre;
     }

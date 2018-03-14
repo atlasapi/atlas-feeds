@@ -35,10 +35,10 @@ import tva.mpeg7._2008.UniqueIDType;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class UnboxProgramInformationGeneratorTest extends org.atlasapi.TestsWithConfiguration {
+public class AmazonProgramInformationGeneratorTest extends org.atlasapi.TestsWithConfiguration {
 
     private IdGenerator idGenerator = new AmazonIdGenerator();
-    private final ProgramInformationGenerator generator = new UnboxProgramInformationGenerator(idGenerator);
+    private final ProgramInformationGenerator generator = new AmazonProgramInformationGenerator(idGenerator);
 
     @Test
     public void testPublisherIndependentFields() {
@@ -72,7 +72,7 @@ public class UnboxProgramInformationGeneratorTest extends org.atlasapi.TestsWith
         
         assertEquals(versionCrid, progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
-        assertEquals(AmazonOnDemandLocationGenerator.UNBOX_DEEP_LINKING_ID, otherId.getAuthority());
+        assertEquals(AmazonOnDemandLocationGenerator.DEEP_LINKING_AUTHORITY, otherId.getAuthority());
         assertEquals("crid://amazon.com:stage-metabroadcast.com:content:drrrrn", progInfo.getDerivedFrom().getCrid());
     }
 
