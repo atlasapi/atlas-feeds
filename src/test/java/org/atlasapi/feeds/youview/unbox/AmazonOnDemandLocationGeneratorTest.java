@@ -124,13 +124,13 @@ public class AmazonOnDemandLocationGeneratorTest {
         Film film = createFilm(version);
         film.setId(10000L);
         ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, ImmutableList.of(location));
-        String onDemandImi = "onDemandImi";
+        String onDemandImi = "imi:amazon.com:stage-metabroadcast.com:content:szp:ondemand:HD";
         
         ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);
         
         assertEquals("http://amazon.com/services/on_demand/primevideo", onDemand.getServiceIDRef());
-        assertEquals("crid://amazon.com/stage-metabroadcast.com/content/szp/version", onDemand.getProgram().getCrid());
-        assertEquals("imi://amazon.com/stage-metabroadcast.com/content/szp/ondemand/HD", onDemand.getInstanceMetadataId());
+        assertEquals("crid://amazon.com:stage-metabroadcast.com:content:szp:version", onDemand.getProgram().getCrid());
+        assertEquals(onDemandImi, onDemand.getInstanceMetadataId());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
         UniqueIDType otherId = Iterables.getOnlyElement(instanceDesc.getOtherIdentifier());

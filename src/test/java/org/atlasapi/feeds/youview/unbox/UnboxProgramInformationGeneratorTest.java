@@ -73,7 +73,7 @@ public class UnboxProgramInformationGeneratorTest extends org.atlasapi.TestsWith
         assertEquals(versionCrid, progInfo.getProgramId());
         UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
         assertEquals(AmazonOnDemandLocationGenerator.UNBOX_DEEP_LINKING_ID, otherId.getAuthority());
-        assertEquals("crid://amazon.com/stage-metabroadcast.com/content/drrrrn", progInfo.getDerivedFrom().getCrid());
+        assertEquals("crid://amazon.com:stage-metabroadcast.com:content:drrrrn", progInfo.getDerivedFrom().getCrid());
     }
 
     @Test

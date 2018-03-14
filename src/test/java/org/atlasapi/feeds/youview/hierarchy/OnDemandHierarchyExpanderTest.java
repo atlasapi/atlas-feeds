@@ -20,6 +20,7 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Quality;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.junit.Test;
@@ -130,9 +131,9 @@ public class OnDemandHierarchyExpanderTest {
                 2, hierarchy.size());
 
         assertEquals("This hierarchy should contain the 4 SD locations",
-                4, hierarchy.get("imi://amazon.com/stage-metabroadcast.com/content/c/ondemand/SD").locations().size());
+                4, hierarchy.get("imi:amazon.com:stage-metabroadcast.com:content:c:ondemand:SD").locations().size());
         assertEquals("This hierarchy should contain the 2 HD locations",
-                2, hierarchy.get("imi://amazon.com/stage-metabroadcast.com/content/c/ondemand/HD").locations().size());
+                2, hierarchy.get("imi:amazon.com:stage-metabroadcast.com:content:c:ondemand:HD").locations().size());
     }
 
     @Test
