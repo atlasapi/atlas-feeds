@@ -33,7 +33,7 @@ public class RemoteCheckTask extends ScheduledTask {
     );
 
     //We need this limit to a reasonable number, cause if there are too many tasks mongo sort overflows
-    private static final int NUM_TO_CHECK_PER_ITTERATION = 5000;
+    private static final int NUM_TO_CHECK_PER_ITTERATION = 500;
     
     private final Logger log = LoggerFactory.getLogger(RemoteCheckTask.class);
     private final TaskStore taskStore;
