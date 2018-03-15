@@ -14,6 +14,7 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
+import org.atlasapi.media.entity.Quality;
 import org.atlasapi.media.entity.Version;
 
 import com.google.common.base.Optional;
@@ -35,7 +36,6 @@ import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAmazonAsin;
 
 public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerator {
 
@@ -124,8 +124,22 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
     private VideoAttributesType generateVideoAttributes(Encoding encoding) {
         VideoAttributesType attributes = new VideoAttributesType();
 
-        attributes.setHorizontalSize(encoding.getVideoHorizontalSize());
-        attributes.setVerticalSize(encoding.getVideoVerticalSize());
+        //We no longer set fake values during ingest, but YV requires something, so we'll fake them
+        //here instead, and we'll match them to YV's SPECWIP-4212
+        if (Quality.SD.equals(encoding.getQuality())) {
+            attributes.setHorizontalSize(848);
+            attributes.setVerticalSize(480);
+        }
+        if (Quality.HD.equals(encoding.getQuality())) {
+            attributes.setHorizontalSize(1280);
+            attributes.setVerticalSize(720); //lower value that is HD for YV.
+        }
+        if (Quality.FOUR_K.equals(encoding.getQuality())) {
+            attributes.setHorizontalSize(3840);
+            attributes.setVerticalSize(2160); //minimum to considered UHD by YV
+        }
+
+
         if (encoding.getVideoAspectRatio() != null) {
             AspectRatioType aspectRatio = new AspectRatioType();
             aspectRatio.setValue(encoding.getVideoAspectRatio());
