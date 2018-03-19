@@ -82,7 +82,6 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
         progInfo.setProgramId(versionCrid);
         progInfo.setBasicDescription(generateBasicDescription(versionHierarchy.item(), versionHierarchy.version()));
         progInfo.setDerivedFrom(generateDerivedFromElem(versionHierarchy.item()));
-        progInfo.getOtherIdentifier().add(generateOtherId(versionHierarchy.item()));
 
         return progInfo;
     }

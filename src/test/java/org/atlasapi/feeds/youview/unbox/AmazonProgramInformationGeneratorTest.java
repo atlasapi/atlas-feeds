@@ -49,9 +49,6 @@ public class AmazonProgramInformationGeneratorTest extends org.atlasapi.TestsWit
         
         ProgramInformationType progInfo = generator.generate(versionHierarchy, versionCrid);
 
-        UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
-        assertEquals("filmAsin", otherId.getValue());
-        
         ExtendedContentDescriptionType basicDescription = (ExtendedContentDescriptionType) progInfo.getBasicDescription();
         
         assertEquals("http://bbfc.org.uk/BBFCRatingCS/2002#PG", basicDescription.getParentalGuidance().getParentalRating().getHref());
@@ -71,8 +68,6 @@ public class AmazonProgramInformationGeneratorTest extends org.atlasapi.TestsWit
         ProgramInformationType progInfo = generator.generate(versionHierarchy, versionCrid);
         
         assertEquals(versionCrid, progInfo.getProgramId());
-        UniqueIDType otherId = Iterables.getOnlyElement(progInfo.getOtherIdentifier());
-        assertEquals(AmazonOnDemandLocationGenerator.DEEP_LINKING_AUTHORITY, otherId.getAuthority());
         assertEquals("crid://stage-metabroadcast.com/amazon.com:content:drrrrn", progInfo.getDerivedFrom().getCrid());
     }
 
