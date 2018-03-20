@@ -75,7 +75,7 @@ public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
             return groupInfoGenerator.generate(series, brand, child);
         }
 
-        if (content instanceof Item) {
+        if (content instanceof Item) { //films are handle
             Item item = (Item) content;
             Optional<Series> series = hierarchy.seriesFor(item);
             Optional<Brand> brand = hierarchy.brandFor(item);

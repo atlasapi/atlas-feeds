@@ -85,6 +85,9 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     public static final String OTHER_IDENTIFIER_AUTHORITY_BRAND = "show.asin.amazon.com";
     public static final String OTHER_IDENTIFIER_AUTHORITY_SERIES = "season.asin.amazon.com";
     public static final String OTHER_IDENTIFIER_AUTHORITY_EPISODE = "episode.asin.amazon.com";
+    public static final String OTHER_IDENTIFIER_AUTHORITY_CONTENT_TYPE = "content-type.amazon.com";
+    private static final String CONTENT_TYPE_MOVIE = "movie";
+    private static final String CONTENT_TYPE_EPISODE = "episode";
     
     private static final Map<Specialization, String> YOUVIEW_SPECIALIZATION_GENRE_MAPPING = ImmutableMap.<Specialization, String>builder()
         .put(Specialization.FILM, "urn:tva:metadata:cs:OriginationCS:2005:5.7")
@@ -117,7 +120,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
 
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
-//    Pattern episodePattern1 = Pattern.compile("(?i)ep[\\.-]*[isode]*[ -]*[\\d]+") //Ep1, Episode 1 etc.
+    //    Pattern episodePattern1 = Pattern.compile("(?i)ep[\\.-]*[isode]*[ -]*[\\d]+") //Ep1, Episode 1 etc.
 //    Pattern episodePattern2 = Pattern.compile("(?i)[s|e]+[\\d]+[ \\.-\\/]*[s|e]+[\\d]+") //S05E01 etc
 //    Pattern strayDashes = Pattern.compile("^[\\p{Pd} ]+|[\\p{Pd} ]+$") //all dashes
 
@@ -133,8 +136,11 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
 
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         groupInfo.setServiceIDRef(GROUP_INFO_SERVICE_ID);
-
         groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getAmazonAsin(film)));
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(
+                OTHER_IDENTIFIER_AUTHORITY_CONTENT_TYPE,
+                CONTENT_TYPE_MOVIE
+        ));
         
         return groupInfo;
     }
@@ -171,6 +177,10 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             groupInfo.getMemberOf().add(memberOf);
         }
         groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getAmazonAsin(item)));
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(
+                OTHER_IDENTIFIER_AUTHORITY_CONTENT_TYPE,
+                CONTENT_TYPE_EPISODE //films are handled elsewhere, if they land here is a bug.
+        ));
         
         return groupInfo;  
     }
