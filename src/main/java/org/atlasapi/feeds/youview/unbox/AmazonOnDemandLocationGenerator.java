@@ -1,7 +1,14 @@
 package org.atlasapi.feeds.youview.unbox;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
 
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -19,6 +26,7 @@ import org.atlasapi.media.entity.Version;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.youview.refdata.schemas._2011_07_06.ExtendedInstanceDescriptionType;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 import org.jdom.IllegalDataException;
@@ -191,7 +199,9 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
         mediaAvailable.setType(GENRE_TYPE_OTHER);
         mediaAvailable.setHref(YOUVIEW_GENRE_MEDIA_AVAILABLE);
         plans.add(mediaAvailable);
-
+        //Order the list so that the final xml will be the same between runs
+        locations = new ArrayList<>(locations);
+        locations.sort(new LocationComparator());
         for (Location location : locations) {
             GenreType revenuePlan = new GenreType();
             revenuePlan.setType(GENRE_TYPE_OTHER);
@@ -232,4 +242,61 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
         Policy policy = location.getPolicy();
         return TvAnytimeElementFactory.gregorianCalendar(policy.getAvailabilityEnd());
     }
+
+    public class LocationComparator implements Comparator<Location> {
+        //the order is insignificant, we just want it to be consistent.
+        private final Map<Policy.RevenueContract, Integer> scores = ImmutableMap.of(
+                Policy.RevenueContract.PAY_TO_BUY, 1,
+                Policy.RevenueContract.PAY_TO_RENT, 2,
+                Policy.RevenueContract.SUBSCRIPTION, 3
+        );
+
+        @Override
+        public int compare(Location l1, Location l2) {
+            int l1score = scores.get(l1.getPolicy().getRevenueContract());
+            int l2score = scores.get(l2.getPolicy().getRevenueContract());
+
+           return l1score - l2score;
+        }
+
+        @Override
+        public Comparator<Location> reversed() {
+            return null;
+        }
+
+        @Override
+        public Comparator<Location> thenComparing(Comparator<? super Location> other) {
+            return null;
+        }
+
+        @Override
+        public <U> Comparator<Location> thenComparing(
+                Function<? super Location, ? extends U> keyExtractor,
+                Comparator<? super U> keyComparator) {
+            return null;
+        }
+
+        @Override
+        public <U extends Comparable<? super U>> Comparator<Location> thenComparing(
+                Function<? super Location, ? extends U> keyExtractor) {
+            return null;
+        }
+
+        @Override
+        public Comparator<Location> thenComparingInt(ToIntFunction<? super Location> keyExtractor) {
+            return null;
+        }
+
+        @Override
+        public Comparator<Location> thenComparingLong(ToLongFunction<? super Location> keyExtractor) {
+            return null;
+        }
+
+        @Override
+        public Comparator<Location> thenComparingDouble(
+                ToDoubleFunction<? super Location> keyExtractor) {
+            return null;
+        }
+    }
+
 }

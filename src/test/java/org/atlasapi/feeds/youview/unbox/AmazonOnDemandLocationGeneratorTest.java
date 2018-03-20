@@ -67,7 +67,7 @@ public class AmazonOnDemandLocationGeneratorTest {
     public void testNonPublisherSpecificFields() {
         Location location1 = createLocation();
         location1.setCanonicalUri("unbox.amazon.co.uk/SOME_ASIN/PAY");
-        Location location2 = createLocation();
+        Location location2 = createLocation2();
         location2.setCanonicalUri("unbox.amazon.co.uk/SOME_OTHER_ASIN/RENT");
         Encoding encoding = createEncoding(location1);
         encoding.addAvailableAt(location2);
@@ -87,17 +87,12 @@ public class AmazonOnDemandLocationGeneratorTest {
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
         
-        Set<String> hrefs = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_HREF));
         Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
-                
         assertEquals("other", Iterables.getOnlyElement(types));
-        
-        Set<String> expected = ImmutableSet.of(
-                AmazonOnDemandLocationGenerator.YOUVIEW_GENRE_MEDIA_AVAILABLE, //everything has it
-                AmazonOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_BUY //the test locations has it
-        );
-        
-        assertEquals(expected, hrefs);
+
+        assertEquals(instanceDesc.getGenre().get(0).getHref(), AmazonOnDemandLocationGenerator.YOUVIEW_GENRE_MEDIA_AVAILABLE);
+        assertEquals(instanceDesc.getGenre().get(1).getHref(), AmazonOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_BUY);
+        assertEquals(instanceDesc.getGenre().get(2).getHref(), AmazonOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_RENT);
 
         AVAttributesType avAttributes = instanceDesc.getAVAttributes();
         AudioAttributesType audioAttrs = Iterables.getOnlyElement(avAttributes.getAudioAttributes());
@@ -113,9 +108,6 @@ public class AmazonOnDemandLocationGeneratorTest {
         assertEquals(BigInteger.valueOf(3308), avAttributes.getBitRate().getValue());
         assertFalse(avAttributes.getBitRate().isVariable());
 
-        for (UniqueIDType uniqueIDType : instanceDesc.getOtherIdentifier()) {
-            System.out.println(uniqueIDType.getAuthority()+" "+uniqueIDType.getValue());
-        }
         UniqueIDType deepLink = instanceDesc.getOtherIdentifier().get(0);
         UniqueIDType allContributingAsins = instanceDesc.getOtherIdentifier().get(1);
 
@@ -123,7 +115,6 @@ public class AmazonOnDemandLocationGeneratorTest {
         assertEquals("SOME_ASIN", deepLink.getValue());
         assertEquals("ondemand.asin.amazon.com", allContributingAsins.getAuthority());
         assertEquals("SOME_ASIN SOME_OTHER_ASIN", allContributingAsins.getValue()); //If you made it to get all contributing IDS here, add a proper test for it.
-
     }
     
     @Test
@@ -210,6 +201,19 @@ public class AmazonOnDemandLocationGeneratorTest {
         
         location.setPolicy(policy);
         
+        return location;
+    }
+
+    private Location createLocation2() {
+        Location location = new Location();
+
+        Policy policy = new Policy();
+        policy.setRevenueContract(Policy.RevenueContract.PAY_TO_RENT);
+        policy.setAvailabilityStart(new DateTime(2012, 7, 3, 0, 0, 0, DateTimeZone.UTC));
+        policy.setAvailabilityEnd(new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC));
+
+        location.setPolicy(policy);
+
         return location;
     }
 }
