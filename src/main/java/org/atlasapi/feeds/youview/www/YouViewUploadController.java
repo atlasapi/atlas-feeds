@@ -569,6 +569,7 @@ public class YouViewUploadController {
         if (immediate) {
             log.info("Force uploading content {}", content.getCanonicalUri());
         }
+
         Payload p = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(content), content);
         Task task = taskCreator.taskFor(
                 hierarchyExpander.contentCridFor(content),

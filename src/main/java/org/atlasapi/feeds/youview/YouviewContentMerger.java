@@ -7,9 +7,14 @@ import org.atlasapi.content.criteria.ContentQuery;
 import org.atlasapi.content.criteria.ContentQueryBuilder;
 import org.atlasapi.content.criteria.attribute.Attributes;
 import org.atlasapi.feeds.RepIdClientFactory;
+import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Identified;
+import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
 import com.metabroadcast.applications.client.metric.Metrics;
@@ -95,16 +100,69 @@ public class YouviewContentMerger {
                     , mergedContents);
         }
 
-        //Update the existing content ID with a representative ID. Will throw IAE if not found.
+        //Update the existing content IDs with representative IDs. Will throw IAE if not found.
         RepresentativeIdResponse repIdResponse = repIdClient.getRepId(mergedContent.getId());
-
-        log.debug(
-                "{} swapped {} for repId {}",
-                (mergedContent.getId()) == (decode(repIdResponse.getRepresentative().getId())),
-                mergedContent.getId(),
-                decode(repIdResponse.getRepresentative().getId())
-        );
         mergedContent.setId(decode(repIdResponse.getRepresentative().getId()));
+
+        if (mergedContent instanceof Episode) {
+            mergedContent = updateSeriesRef(mergedContent);
+        }
+        if (mergedContent instanceof Item) {
+            mergedContent = updateContainerRef(mergedContent);
+        }
+        if (mergedContent instanceof Series) {
+            mergedContent = updateBrand(mergedContent);
+        }
+        return mergedContent;
+    }
+
+    private Content updateBrand(Content mergedContent) {
+        RepresentativeIdResponse repIdResponse;Series series = (Series) mergedContent;
+        ParentRef parentRef = series.getParent();
+
+        if (parentRef != null) {
+            repIdResponse = repIdClient.getRepId(parentRef.getId());
+            series.setParentRef(
+                    new ParentRef(
+                            parentRef.getUri(),
+                            decode(repIdResponse.getRepresentative().getId())
+                    )
+            );
+        }
+        mergedContent = series;
+        return mergedContent;
+    }
+
+    private Content updateContainerRef(Content mergedContent) {
+        RepresentativeIdResponse repIdResponse;Item item = (Item) mergedContent;
+        ParentRef parentRef = item.getContainer();
+
+        if (parentRef != null) {
+            repIdResponse = repIdClient.getRepId(parentRef.getId());
+            Container newCont = new Container();
+            newCont.setCanonicalUri(parentRef.getUri());
+            newCont.setId(decode(repIdResponse.getRepresentative().getId()));
+            item.setContainer(newCont);
+        }
+
+        mergedContent = item;
+        return mergedContent;
+    }
+
+    private Content updateSeriesRef(Content mergedContent) {
+        RepresentativeIdResponse repIdResponse;Episode episode = (Episode) mergedContent;
+        ParentRef parentRef = episode.getSeriesRef();
+
+        if (parentRef != null) {
+            repIdResponse = repIdClient.getRepId(parentRef.getId());
+            episode.setSeriesRef(
+                    new ParentRef(
+                            parentRef.getUri(),
+                            decode(repIdResponse.getRepresentative().getId())
+                    )
+            );
+        }
+        mergedContent = episode;
         return mergedContent;
     }
 }
