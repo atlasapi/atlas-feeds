@@ -62,11 +62,22 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
     
     // TODO are there other settings than this? E, NR, TBA etc
     private static final Map<String, String> YOUVIEW_CERTIFICATE_MAPPING = ImmutableMap.<String, String>builder()
-            .put("U", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated")
-            .put("PG", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance")
-            .put("12", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#twelve")
-            .put("15", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#fifteen")
-            .put("18", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#eighteen")
+
+            .put("amazon_maturity_rating|all_ages", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated")
+            .put("amazon_maturity_rating|guidance_suggested", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance")
+            .put("amazon_maturity_rating|children", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance")
+            .put("amazon_maturity_rating|ages_9_and_older", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance")
+            .put("amazon_maturity_rating|ages_13_and_older", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#fifteen")
+            .put("amazon_maturity_rating|ages_17_and_older", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#eighteen")
+            .put("amazon_maturity_rating|adult_content", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#eighteen")
+            .put("amazon_maturity_rating|mature", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#eighteen")
+
+            .put("bbfc_rating|universal", "http://bbfc.org.uk/BBFCRatingCS/2002#U")
+            .put("bbfc_rating|parental_guidance", "http://bbfc.org.uk/BBFCRatingCS/2002#PG")
+            .put("bbfc_rating|ages_12_and_over", "http://bbfc.org.uk/BBFCRatingCS/2002#12")
+            .put("bbfc_rating|ages_15_and_over", "http://bbfc.org.uk/BBFCRatingCS/2002#15")
+            .put("bbfc_rating|ages_18_and_over", "http://bbfc.org.uk/BBFCRatingCS/2002#18")
+            .put("bbfc_rating|to_be_announced", "http://bbfc.org.uk/BBFCRatingCS/2002#18")
             .build();
     
     private final IdGenerator idGenerator;
