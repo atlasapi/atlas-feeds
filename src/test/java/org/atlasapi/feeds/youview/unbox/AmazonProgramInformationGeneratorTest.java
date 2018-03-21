@@ -51,7 +51,7 @@ public class AmazonProgramInformationGeneratorTest extends org.atlasapi.TestsWit
 
         ExtendedContentDescriptionType basicDescription = (ExtendedContentDescriptionType) progInfo.getBasicDescription();
         
-        assertEquals("http://bbfc.org.uk/BBFCRatingCS/2002#PG", basicDescription.getParentalGuidance().getParentalRating().getHref());
+        assertEquals("http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance", basicDescription.getParentalGuidance().getParentalRating().getHref());
         assertEquals("1963", basicDescription.getProductionDate().getTimePoint());
         // compare strings, as javax.xml.datatype.Duration is horrible to instantiate
         assertEquals("P0DT1H30M0.000S", basicDescription.getDuration().toString());

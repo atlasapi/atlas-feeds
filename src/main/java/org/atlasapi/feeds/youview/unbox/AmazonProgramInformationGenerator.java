@@ -62,11 +62,11 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
     
     // TODO are there other settings than this? E, NR, TBA etc
     private static final Map<String, String> YOUVIEW_CERTIFICATE_MAPPING = ImmutableMap.<String, String>builder()
-            .put("U", "http://bbfc.org.uk/BBFCRatingCS/2002#U")
-            .put("PG", "http://bbfc.org.uk/BBFCRatingCS/2002#PG")
-            .put("12", "http://bbfc.org.uk/BBFCRatingCS/2002#12")
-            .put("15", "http://bbfc.org.uk/BBFCRatingCS/2002#15")
-            .put("18", "http://bbfc.org.uk/BBFCRatingCS/2002#18")
+            .put("U", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated")
+            .put("PG", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance")
+            .put("12", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#twelve")
+            .put("15", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#fifteen")
+            .put("18", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#eighteen")
             .build();
     
     private final IdGenerator idGenerator;
