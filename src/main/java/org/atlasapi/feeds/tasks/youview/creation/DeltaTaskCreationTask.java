@@ -136,14 +136,6 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                 continue;
             }
 
-            // YV specifically requested that we do not update episodes with episode number 0.
-            // This is because to the best of our knowledge they are trailers. Not the best place
-            // to filter but given the generate state of thing, as good as any.
-            if(updatedContent instanceof Episode &&
-               Objects.equals(0, ((Episode)updatedContent).getEpisodeNumber())){
-                continue;
-            }
-
             Content mergedContent;
             try {
                 mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
