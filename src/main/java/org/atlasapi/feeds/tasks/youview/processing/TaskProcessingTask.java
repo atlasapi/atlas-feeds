@@ -134,7 +134,7 @@ public abstract class TaskProcessingTask extends ScheduledTask {
             } catch (Exception e) {
                 log.error("Failed to process task {}", task, e);
                 progress = progress.reduce(UpdateProgress.FAILURE);
-                telescope.reportFailedEvent(
+                telescope.reportFailedEventFromTask(
                         task,
                         "Failed to process taskId=" + task.id()
                         + ". destination " + task.destination()
