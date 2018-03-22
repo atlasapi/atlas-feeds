@@ -20,6 +20,7 @@ import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
+import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Film;
@@ -44,6 +45,7 @@ import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.FragmentRepor
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
 
+import org.mockito.Mock;
 import tva.mpeg7._2008.TextualType;
 
 
@@ -60,6 +62,7 @@ public class NitroReferentialIntegrityCheckingReportHandlerTest {
     TaskCreator taskCreator = mock(TaskCreator.class);
     TaskStore taskStore = mock(TaskStore.class);
     PayloadCreator payloadCreator = mock(PayloadCreator.class);
+    YouViewPayloadHashStore payloadHashStore = mock(YouViewPayloadHashStore.class);
     private ContentResolver contentResolver = mock(ContentResolver.class);
     private IdGenerator idGenerator = mock(IdGenerator.class);
     private VersionHierarchyExpander versionExpander = new VersionHierarchyExpander(idGenerator);
@@ -67,7 +70,8 @@ public class NitroReferentialIntegrityCheckingReportHandlerTest {
     
     private final YouViewReportHandler handler = new ReferentialIntegrityCheckingReportHandler(
             taskCreator,
-            taskStore, 
+            taskStore,
+            payloadHashStore,
             payloadCreator,
             contentResolver,
             hierarchyExtractor
