@@ -405,7 +405,8 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
     public YouViewReportHandler reportHandler() throws JAXBException, SAXException {
         return new ReferentialIntegrityCheckingReportHandler(
                 taskCreator(),
-                taskStore, 
+                taskStore,
+                payloadHashStore(),
                 payloadCreator(),
                 contentResolver,
                 contentHierarchy
