@@ -51,7 +51,7 @@ public class AmazonProgramInformationGeneratorTest extends org.atlasapi.TestsWit
 
         ExtendedContentDescriptionType basicDescription = (ExtendedContentDescriptionType) progInfo.getBasicDescription();
         
-        assertEquals("http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance", basicDescription.getParentalGuidance().getParentalRating().getHref());
+        assertEquals("http://bbfc.org.uk/BBFCRatingCS/2002#15", basicDescription.getParentalGuidance().getParentalRating().getHref());
         assertEquals("1963", basicDescription.getProductionDate().getTimePoint());
         // compare strings, as javax.xml.datatype.Duration is horrible to instantiate
         assertEquals("P0DT1H30M0.000S", basicDescription.getDuration().toString());
@@ -192,7 +192,7 @@ public class AmazonProgramInformationGeneratorTest extends org.atlasapi.TestsWit
         film.setCanonicalUri("http://unbox.amazon.co.uk/movies/177221");
         film.setPublisher(Publisher.AMAZON_UNBOX);
         film.setCountriesOfOrigin(ImmutableSet.of(Countries.GB));
-        film.setCertificates(ImmutableList.of(new Certificate("PG", Countries.GB)));
+        film.setCertificates(ImmutableList.of(new Certificate("bbfc_rating|ages_15_and_over", Countries.GB)));
         film.setYear(1963);
         film.addAlias(new Alias("gb:amazon:asin", "filmAsin"));
         

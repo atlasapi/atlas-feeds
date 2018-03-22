@@ -39,7 +39,7 @@ import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAmazonAsin;
 
 public class AmazonProgramInformationGenerator implements ProgramInformationGenerator {
     
-    private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
+    private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance";
     public static final String YOUVIEW_AMAZON_TARGET_USER_GROUP = "http://refdata.youview.com/mpeg7cs/YouViewApplicationPlayerCS/2017-09-28#html5-aiv1";
     
     private static final Predicate<Certificate> FILTER_CERT_FOR_GB = new Predicate<Certificate>() {
