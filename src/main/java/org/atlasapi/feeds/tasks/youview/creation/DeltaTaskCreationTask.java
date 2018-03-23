@@ -39,7 +39,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
     private static final Ordering<Content> HIERARCHICAL_ORDER = new HierarchicalOrdering();
 
-    private final YouViewContentResolver contentResolver;
+    protected final YouViewContentResolver contentResolver;
     private final YouviewContentMerger youviewContentMerger;
     private final ChannelResolver channelResolver;
     private final UpdateTask updateTask;

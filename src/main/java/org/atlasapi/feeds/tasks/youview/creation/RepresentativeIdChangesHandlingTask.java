@@ -2,6 +2,7 @@ package org.atlasapi.feeds.tasks.youview.creation;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.atlasapi.feeds.tasks.Action;
@@ -16,10 +17,17 @@ import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Described;
+import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.persistence.audit.NoLoggingPersistenceAuditLog;
+import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
+import org.atlasapi.persistence.lookup.entry.LookupEntry;
+import org.atlasapi.persistence.lookup.mongo.MongoLookupEntryStore;
 
+import com.metabroadcast.common.base.Maybe;
+import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.stream.MoreCollectors;
 import com.metabroadcast.representative.api.IdChange;
 import com.metabroadcast.representative.api.RepresentativeId;
@@ -30,9 +38,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.mongodb.ReadPreference;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static com.metabroadcast.representative.util.Utils.decode;
 
@@ -43,6 +53,8 @@ import static com.metabroadcast.representative.util.Utils.decode;
 public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
 
     private static final Logger log = LoggerFactory.getLogger(RepresentativeIdChangesHandlingTask.class);
+    private final MongoLookupEntryStore lookupStore;
+    private @Autowired DatabasedMongo mongo;
 
     public RepresentativeIdChangesHandlingTask(
             YouViewLastUpdatedStore lastUpdatedStore, Publisher publisher,
@@ -68,6 +80,9 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
                 channelResolver,
                 mergingResolver
         );
+
+        lookupStore = new MongoLookupEntryStore(mongo.collection("lookup"),
+                new NoLoggingPersistenceAuditLog(), ReadPreference.secondaryPreferred());
     }
 
     @Override
@@ -115,7 +130,8 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
                 // dependants are under A. As it not easy to merge now, we will make all items look
                 // like A. Each of them will remove different dependents though.
                 ImmutableSet<Content> toBeDeleted = from.get(id).getSameAs().stream()
-                        .map(RepresentativeIdChangesHandlingTask::resolve)
+                        .map(this::resolve)
+                        .filter(Objects::nonNull)
                         .peek(c -> c.setId(decode(id))) //because they where created with this id
                         .collect(MoreCollectors.toImmutableSet());
                 contentToDeleted.addAll(toBeDeleted);
@@ -132,7 +148,7 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
             // if equiv set has changed again in the meantime that's ok. This routine will
             // pick up the changes and also revoke them.
             ImmutableSet<Content> toBeUploaded = to.keySet().stream()
-                    .map(RepresentativeIdChangesHandlingTask::resolve)
+                    .map(this::resolve)
                     .collect(MoreCollectors.toImmutableSet());
             contentToUploaded.addAll(toBeUploaded);
         }
@@ -162,26 +178,25 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
     //TODO: fuck-my-life. We are looking for a mechanism to resolve content by id. We kinda want
     //to remove THIS content and not the EQUIVALATED content, because if the equiv graph has changed
     //we might not remove what we where trying to remove.
-    private static Content resolve (String id){
-        return new Content() {
+    private Content resolve (String id){
 
-            @Override
-            public Described copy() {
-                return new Item();
-            }
-        };
+        Iterable<LookupEntry> lookupEntries =
+                lookupStore.entriesForIds(ImmutableSet.of(Long.parseLong(id)));
+        //we passed in 1 id, there should be 1 result
+        if(lookupEntries.iterator().hasNext()) {
+            LookupEntry next = lookupEntries.iterator().next();
+            java.util.Optional<Identified> content
+                    = contentResolver.findByUris(ImmutableSet.of(next.uri()))
+                    .getFirstValue().toOptional();
+            return (Content) content.orElse(null);
+        }
+        return null;
     }
 
     //Map from repId to the repId-object.
     private static ImmutableMap<String, RepresentativeId> toMap(Set<RepresentativeId> set) {
         return set.stream()
                 .collect(MoreCollectors.toImmutableMap(RepresentativeId::getId, i -> i));
-    }
-
-    private static ImmutableSet<String> getRepIds(Set<RepresentativeId> set) {
-        return set.stream()
-                .map(RepresentativeId::getId)
-                .collect(MoreCollectors.toImmutableSet());
     }
 
 }
