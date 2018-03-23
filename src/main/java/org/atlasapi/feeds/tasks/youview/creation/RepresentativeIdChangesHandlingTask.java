@@ -72,6 +72,10 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
 
     @Override
     protected void runTask() {
+        if(!getPublisher().equals(Publisher.AMAZON_UNBOX)){
+            throw new IllegalStateException("Handling repId changes is not supported for "+getPublisher());
+        }
+
         Optional<DateTime> lastCheckedOptional = getLastRepIdChangesChecked();
         if (!lastCheckedOptional.isPresent()) {
             throw new IllegalStateException("The representative id changes have never been checked "
@@ -105,10 +109,11 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
 
             //Everything in that set is now represented by something else.
             for (String id : from.keySet()) {
-                //we need to remove the parent, but also all the the dependents such as versions.
-                //e.g. for set A(A, B) we need to remove Item A, and dependents for A & B
-                //Because we swap the id of all items in the set to match the repId, only A parents
-                //will be removed, and all dependents removed will be linked to A.
+                // we need to remove the parent, but also all the the dependents such as versions.
+                // e.g. for set A(A, B) we need to remove Item A, and dependents for A & B
+                // Because these got merged into a single item when we created YV fragments all
+                // dependants are under A. As it not easy to merge now, we will make all items look
+                // like A. Each of them will remove different dependents though.
                 ImmutableSet<Content> toBeDeleted = from.get(id).getSameAs().stream()
                         .map(RepresentativeIdChangesHandlingTask::resolve)
                         .peek(c -> c.setId(decode(id))) //because they where created with this id
