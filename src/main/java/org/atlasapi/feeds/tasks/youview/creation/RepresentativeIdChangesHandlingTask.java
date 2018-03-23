@@ -16,17 +16,13 @@ import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
-import org.atlasapi.media.entity.Described;
 import org.atlasapi.media.entity.Identified;
-import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.audit.NoLoggingPersistenceAuditLog;
-import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.lookup.entry.LookupEntry;
 import org.atlasapi.persistence.lookup.mongo.MongoLookupEntryStore;
 
-import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.stream.MoreCollectors;
 import com.metabroadcast.representative.api.IdChange;
@@ -37,7 +33,6 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.mongodb.ReadPreference;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -55,7 +50,7 @@ import static com.metabroadcast.representative.util.Utils.decode;
 public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
 
     private static final Logger log = LoggerFactory.getLogger(RepresentativeIdChangesHandlingTask.class);
-    private final MongoLookupEntryStore lookupStore;
+    private MongoLookupEntryStore lookupStore;
     private @Autowired DatabasedMongo mongo;
 
     public RepresentativeIdChangesHandlingTask(
@@ -82,9 +77,15 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
                 channelResolver,
                 mergingResolver
         );
+    }
 
-        lookupStore = new MongoLookupEntryStore(mongo.collection("lookup"),
-                new NoLoggingPersistenceAuditLog(), ReadPreference.secondaryPreferred());
+    private MongoLookupEntryStore getLookupStore(){
+        if(lookupStore == null) { //lazy initialize to get around Spring problems.
+            lookupStore = new MongoLookupEntryStore(mongo.collection("lookup"),
+                    new NoLoggingPersistenceAuditLog(), ReadPreference.secondaryPreferred()
+            );
+        }
+        return lookupStore;
     }
 
     @Override
@@ -183,7 +184,7 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
     private Content resolve (String id){
 
         Iterable<LookupEntry> lookupEntries =
-                lookupStore.entriesForIds(ImmutableSet.of(Long.parseLong(id)));
+                getLookupStore().entriesForIds(ImmutableSet.of(Long.parseLong(id)));
         //we passed in 1 id, there should be 1 result
         if(lookupEntries.iterator().hasNext()) {
             LookupEntry next = lookupEntries.iterator().next();
