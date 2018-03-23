@@ -54,14 +54,16 @@ public class RemoteCheckTask extends ScheduledTask {
         //through dates. This is because requesting all out once causes mongo overflow problems.
         for (Status status : TO_BE_CHECKED) {
             int numChecked = 0;
+            boolean checkedInLastLoop;
             DateTime lastDateChecked = new DateTime().minusYears(1);
             do {
                 log.info("Checking remote status for {}, already checked {}", status, numChecked );
+                checkedInLastLoop = false;
                 TaskQuery.Builder query = TaskQuery.builder(
                         Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION),
                         destinationType)
                         .withTaskStatus(status)
-                        .after(lastDateChecked)
+                        .after(lastDateChecked.minusSeconds(1))
                         .withSort(TaskQuery.Sort.of(TaskQuery.Sort.Field.CREATED_TIME, TaskQuery.Sort.Direction.ASC));
 
                 Iterable<Task> tasksToCheck = taskStore.allTasks(query.build());
@@ -77,11 +79,14 @@ public class RemoteCheckTask extends ScheduledTask {
                         log.error("error checking task {}", task.id(), e);
                         progress = progress.reduce(UpdateProgress.FAILURE);
                     }
-                    numChecked++; //if this goes up to the iteration limit, request for more
-                    lastDateChecked = task.created().minusSeconds(1); //after this date
+                    numChecked++;
+                    checkedInLastLoop = true;
+                    lastDateChecked = task.created();
                     reportStatus(progress.toString());
                 }
-            } while (numChecked > 0 && (numChecked % NUM_TO_CHECK_PER_ITTERATION) == 0 );
+            } while (checkedInLastLoop);
+            log.info("Done Checking remote status for {}. Checked {}", status, numChecked );
+
         }
     }
 }
