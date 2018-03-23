@@ -65,7 +65,7 @@ public class RemoteCheckTask extends ScheduledTask {
                         Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION),
                         destinationType)
                         .withTaskStatus(status)
-                        .after(lastDateChecked.minusSeconds(1))
+                        .after(lastDateChecked)
                         .withSort(TaskQuery.Sort.of(TaskQuery.Sort.Field.CREATED_TIME, TaskQuery.Sort.Direction.ASC));
 
                 Iterable<Task> tasksToCheck = taskStore.allTasks(query.build());
@@ -83,7 +83,12 @@ public class RemoteCheckTask extends ScheduledTask {
                     }
                     numChecked++;
                     checkedInLastLoop = true;
-                    lastDateChecked = task.created();
+                    //if more than NUM_TO_CHECK_PER_ITTERATION exist with the same date, it is
+                    //possible that this will get stuck in checking the same tasks over and over
+                    //assuming they don't change state (e.g. stay QUARANTINED). We will thus
+                    //increment that by a tiny bit to keep the loop from becoming stuck, and we
+                    //will count on the next itteration to check things that are still here.
+                    lastDateChecked = task.created().plusMillis(1);
                     reportStatus(progress.toString());
                 }
             } while (checkedInLastLoop);
