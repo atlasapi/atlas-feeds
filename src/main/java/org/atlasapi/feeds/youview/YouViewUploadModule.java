@@ -349,7 +349,7 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
                 payloadHashStore(),
                 channelResolver,
                 mergingResolver
-        ).withName(String.format("YouView repsentativeId changes handling for %s", publisher.title()));
+        ).withName(String.format("YouView representativeId changes handling for %s", publisher.title()));
     }
 
 
