@@ -43,6 +43,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 
 import static com.metabroadcast.representative.util.Utils.decode;
 
@@ -50,6 +51,7 @@ import static com.metabroadcast.representative.util.Utils.decode;
  * This class queries the representative id service for any changes in equiv sets between now and
  * the last time it checked. It then creates new revoke and upload tasks accordingly.
  */
+@Configuration
 public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
 
     private static final Logger log = LoggerFactory.getLogger(RepresentativeIdChangesHandlingTask.class);
