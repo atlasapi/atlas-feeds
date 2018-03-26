@@ -72,10 +72,6 @@ public class DeltaTaskCreationTaskTest {
     public void setUp() {
         System.setProperty("SERVEROPTS_REPID_SERVICE_HOST", "no_host");
         System.setProperty("SERVEROPTS_APPLICATIONS_CLIENT_HOST", "no_host");
-<<<<<<< HEAD
-=======
-        System.setProperty("SERVEROPTS_YOUVIEW_UPLOAD_NITRO_EQUIVAPPID", "no_app");
->>>>>>> 800f0fb40bc1c944684d6ab6283d7f9ea390111a
         System.setProperty("SERVEROPTS_YOUVIEW_UPLOAD_UNBOX_EQUIVAPPID", "no_app");
 
         task = new DeltaTaskCreationTask(

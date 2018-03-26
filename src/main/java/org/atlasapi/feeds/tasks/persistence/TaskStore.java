@@ -4,16 +4,8 @@ import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
-import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
-<<<<<<< HEAD
-=======
-import org.atlasapi.feeds.tasks.Destination.DestinationType;
-import org.atlasapi.media.entity.Publisher;
-
-import org.joda.time.DateTime;
->>>>>>> 800f0fb40bc1c944684d6ab6283d7f9ea390111a
 
 import com.google.common.base.Optional;
 import org.joda.time.DateTime;
