@@ -278,7 +278,7 @@ public class TaskQuery {
         }
 
         /**
-         * Will enforce a greater than this date on the created field of the task.
+         * Will enforce a greather than this date on the created field of the task.
          * @param after
          * @return
          */

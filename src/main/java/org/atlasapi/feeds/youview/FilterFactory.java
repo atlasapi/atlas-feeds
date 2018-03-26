@@ -46,8 +46,12 @@ public class FilterFactory {
                 new Predicate<ItemOnDemandHierarchy>() {
                     @Override
                     public boolean apply(ItemOnDemandHierarchy input) {
-                        return hasBeenUpdated(input.location(), updatedSince)
-                                && !isExpired(input.location());
+                        for (Location location : input.locations()) {
+                            if( hasBeenUpdated(location, updatedSince) && !isExpired(location)){
+                                return true;
+                            }
+                        }
+                        return false;
                     }
                 }
         );
@@ -69,13 +73,27 @@ public class FilterFactory {
         return new Predicate<ItemOnDemandHierarchy>() {
             @Override
             public boolean apply(ItemOnDemandHierarchy input) {
-                Policy policy = input.location().getPolicy();
-                return policy != null && Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform());
+                boolean allYv = true;
+                for (Location location : input.locations()) {
+                    Policy policy = location.getPolicy();
+                    if (policy != null
+                        && (!Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform())
+                            && !Platform.YOUVIEW_AMAZON.equals(policy.getPlatform()))) {
+                        allYv = false;
+                    }
+                }
+                return allYv;
             }
         };
     }
 
     public static boolean hasBeenUpdated(Identified identified, DateTime updatedSince) {
+        if(identified == null){
+            return false;
+        }
+        if(identified.getLastUpdated() == null){
+            return true;
+        }
         return !identified.getLastUpdated().isBefore(updatedSince);
     }
 }

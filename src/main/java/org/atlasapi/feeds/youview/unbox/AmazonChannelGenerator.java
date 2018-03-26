@@ -1,11 +1,11 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import org.atlasapi.feeds.tvanytime.MasterbrandElementGenerator;
+import org.atlasapi.feeds.tvanytime.ChannelElementGenerator;
 import org.atlasapi.media.channel.Channel;
 
 import tva.metadata._2010.ServiceInformationType;
 
-public class UnboxMasterbrandGenerator implements MasterbrandElementGenerator {
+public class AmazonChannelGenerator implements ChannelElementGenerator {
 
     @Override
     public ServiceInformationType generate(Channel channel) {

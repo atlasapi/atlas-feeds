@@ -9,6 +9,8 @@ import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Series;
+import org.atlasapi.persistence.content.ResolvedContent;
+
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +37,11 @@ public class FullHierarchyResolvingContentResolver implements YouViewContentReso
     @Override
     public Iterator<Content> updatedSince(DateTime dateTime) {
         return resolveHierarchyFor(delegate.updatedSince(dateTime));
+    }
+
+    @Override
+    public ResolvedContent findByUris(Iterable<String> uris) {
+        return delegate.findByUris(uris);
     }
 
     private Iterator<Content> resolveHierarchyFor(Iterator<Content> content) {

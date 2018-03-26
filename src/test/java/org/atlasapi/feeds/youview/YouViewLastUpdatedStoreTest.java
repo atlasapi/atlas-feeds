@@ -35,12 +35,14 @@ public class YouViewLastUpdatedStoreTest {
         
         assertFalse("No record should be present in store if last-updated time not written for publisher", lastUpdated.isPresent());
     }
-    
+
     @Test
     public void testWritingRecordForPublisherEnsuresRecordIsReturnedForThatPublisher() {
         store.setLastUpdated(DATE_TIME, PUBLISHER);
-        
+        store.setLastRepIdChecked(DATE_TIME, PUBLISHER);
+
         assertEquals(DATE_TIME.getMillis(), store.getLastUpdated(PUBLISHER).get().getMillis());
+        assertEquals(DATE_TIME.getMillis(), store.getLastRepIdChangesChecked(PUBLISHER).get().getMillis());
     }
     
     @Test

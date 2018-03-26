@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.unbox;
 
+import static org.atlasapi.feeds.youview.unbox.AmazonGroupInformationGenerator.GROUP_INFO_SERVICE_ID;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -55,111 +56,111 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.metabroadcast.common.intl.Countries;
 
-public class UnboxGroupInformationGeneratorTest {
-    
+public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithConfiguration {
+
     private static final Function<GenreType, String> TO_HREF = new Function<GenreType, String>() {
         @Override
         public String apply(GenreType input) {
             return input.getHref();
         }
     };
-    
+
     private SynopsisTypeEquivalence SYNOPSIS_EQUIVALENCE = new SynopsisTypeEquivalence();
     private NameComponentTypeEquivalence NAME_EQUIVALENCE = new NameComponentTypeEquivalence();
-    private IdGenerator idGenerator = new UnboxIdGenerator();
-    private GenreMapping genreMapping = new UnboxGenreMapping(); 
-    
-    private final GroupInformationGenerator generator = new UnboxGroupInformationGenerator(idGenerator, genreMapping);
-    
+    private IdGenerator idGenerator = new AmazonIdGenerator();
+    private GenreMapping genreMapping = new AmazonGenreMapping();
+
+    private final GroupInformationGenerator generator = new AmazonGroupInformationGenerator(idGenerator, genreMapping);
+
     @Test
     public void testRelatedMaterialNotGeneratedIfNullOrEmptyImageString() {
         Film film = createFilm();
         film.setImage("");
-        
+
         GroupInformationType groupInfo = generator.generate(film);
-        
+
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        
+
         assertTrue(desc.getRelatedMaterial().isEmpty());
     }
 
-    
+
     @Test
     public void testServiceIdRefCreatedForTopLevelSeries() {
         Series series = createSeries();
         series.setParentRef(null);
-        
+
         Episode child = createEpisode();
         child.setParentRef(ParentRef.parentRefFrom(series));
         child.setSeriesRef(null);
         child.setSeriesNumber(null);
-        
+
         GroupInformationType groupInfo = generator.generate(series, Optional.<Brand>absent(), child);
-        
-        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
+
+        assertEquals(GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
     }
-    
+
     /**
      * This tests both the conversion from unbox genre uris to the youview
      * genres, as well as de-duplication of the resulting genre collection
      */
     @Test
     public void testFilmGenreGeneration() {
-        
+
         Film film = createFilm();
         film.setGenres(ImmutableSet.of(
             "http://unbox.amazon.co.uk/genres/comedy",
             "http://unbox.amazon.co.uk/genres/comedy/family",
             "http://unbox.amazon.co.uk/genres/comedy/general"
             ));
-        
+
         GroupInformationType groupInfo = generator.generate(film);
-        
+
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        
+
         List<String> genreHrefs = Lists.newArrayList(Iterables.transform(desc.getGenre(), TO_HREF));
-        
+
         List<String> expectedGenres = Lists.newArrayList(
             "urn:tva:metadata:cs:OriginationCS:2005:5.7",
             "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3",
             "urn:tva:metadata:cs:ContentCS:2010:3.5.7",
             "urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9"
             );
-        
+
         Collections.sort(expectedGenres);
         Collections.sort(genreHrefs);
-        
+
         assertEquals(expectedGenres, genreHrefs);
     }
-    
+
     @Test
     public void testTVGenreGeneration() {
-        
+
         Episode episode = createEpisode();
         episode.setGenres(ImmutableSet.of(
             "http://unbox.amazon.co.uk/genres/comedy",
             "http://unbox.amazon.co.uk/genres/comedy/family"
             ));
-        
+
         GroupInformationType groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
-        
+
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        
+
         List<String> genreHrefs = Lists.newArrayList(Iterables.transform(desc.getGenre(), TO_HREF));
-        
+
         List<String> expectedGenres = Lists.newArrayList(
             "urn:tva:metadata:cs:OriginationCS:2005:5.8",
             "urn:tva:metadata:cs:MediaTypeCS:2005:7.1.3",
             "urn:tva:metadata:cs:ContentCS:2010:3.5.7",
             "urn:tva:metadata:cs:IntendedAudienceCS:2010:4.9.9"
             );
-        
+
         Collections.sort(expectedGenres);
         Collections.sort(genreHrefs);
-        
+
         assertEquals(expectedGenres, genreHrefs);
     }
-    
+
     @Test
     public void testSynopsisGeneration() {
         Film film = createFilm();
@@ -168,21 +169,21 @@ public class UnboxGroupInformationGeneratorTest {
             "thus shows the differences between short, medium and long descriptions, particularly regarding the " +
             "appending or not of ellipses."
             );
-        
+
         GroupInformationType groupInfo = generator.generate(film);
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        
+
         SynopsisType shortDesc = new SynopsisType();
         shortDesc.setLength(SynopsisLengthType.SHORT);
         shortDesc.setValue("Some lengthy episode description, that manages to go well over the medium description...");
-        
+
         SynopsisType mediumDesc = new SynopsisType();
         mediumDesc.setLength(SynopsisLengthType.MEDIUM);
         mediumDesc.setValue(
             "Some lengthy episode description, that manages to go well over the medium description cut-off" +
             " and thus shows the differences between short, medium and long descriptions, particularly regarding the appending..."
             );
-        
+
         SynopsisType longDesc = new SynopsisType();
         longDesc.setLength(SynopsisLengthType.LONG);
         longDesc.setValue(
@@ -190,20 +191,20 @@ public class UnboxGroupInformationGeneratorTest {
             "thus shows the differences between short, medium and long descriptions, particularly regarding the appending or " +
             "not of ellipses."
             );
-        
+
         assertTrue(SYNOPSIS_EQUIVALENCE.pairwise().equivalent(
-            ImmutableSet.of(shortDesc, mediumDesc, longDesc), 
+            ImmutableSet.of(shortDesc, mediumDesc, longDesc),
             desc.getSynopsis()
             ));
     }
-    
+
     @Test
     public void testImageGeneration() {
         Film film = createFilm();
         film.setImage("http://www.lovefilm.com/lovefilm/images/products/heroshots/1/177221-large.jpg");
-        
+
         GroupInformationType groupInfo = generator.generate(film);
-        
+
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
@@ -211,42 +212,42 @@ public class UnboxGroupInformationGeneratorTest {
         assertEquals("urn:mpeg:mpeg7:cs:FileFormatCS:2001:1", relatedMaterial.getFormat().getHref());
 
         assertEquals(
-            "http://www.lovefilm.com/lovefilm/images/products/heroshots/1/177221-large.jpg", 
+            "http://www.lovefilm.com/lovefilm/images/products/heroshots/1/177221-large.jpg",
             relatedMaterial.getMediaLocator().getMediaUri()
         );
 
         StillImageContentAttributesType imageProperties = (StillImageContentAttributesType)
                 Iterables.getOnlyElement(relatedMaterial.getContentProperties().getContentAttributes());
-        
+
         assertEquals(Integer.valueOf(240), imageProperties.getWidth());
         assertEquals(Integer.valueOf(320), imageProperties.getHeight());
-        
+
         ControlledTermType usage = Iterables.getOnlyElement(imageProperties.getIntendedUse());
-        
+
         assertEquals("http://refdata.youview.com/mpeg7cs/YouViewImageUsageCS/2010-09-23#role-primary", usage.getHref());
     }
-    
+
     @Test
     public void testPersonGeneration() {
         Film film = createFilm();
-        
+
         CrewMember georgeScott = new CrewMember();
         georgeScott.withName("George C. Scott");
         CrewMember stanley = new CrewMember();
         stanley.withName("Stanley Kubrick");
         film.setPeople(ImmutableList.of(georgeScott, stanley));
-        
+
         GroupInformationType groupInfo = generator.generate(film);
-        
+
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        
+
         List<CreditsItemType> creditsList = desc.getCreditsList().getCreditsItem();
         for (CreditsItemType credit : creditsList) {
             assertEquals("urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN", credit.getRole());
         }
-        
+
         Iterable<NameComponentType> people = Iterables.transform(
-            creditsList, 
+            creditsList,
             new Function<CreditsItemType, NameComponentType>() {
                 @Override
                 public NameComponentType apply(CreditsItemType input) {
@@ -254,34 +255,34 @@ public class UnboxGroupInformationGeneratorTest {
                     return (NameComponentType) Iterables.getOnlyElement(firstPerson.getGivenNameOrLinkingNameOrFamilyName()).getValue();
                 }
             });
-     
+
         NameComponentType scott = new NameComponentType();
         scott.setValue("George C. Scott");
-        
+
         NameComponentType kubrick = new NameComponentType();
         kubrick.setValue("Stanley Kubrick");
-        
+
         assertTrue(NAME_EQUIVALENCE.pairwise().equivalent(
-                ImmutableSet.of(scott, kubrick), 
+                ImmutableSet.of(scott, kubrick),
                 people
                 ));
     }
-    
+
     @Test
     public void testFilmGroupInformationGeneration() {
         GroupInformationType groupInfo = generator.generate(createFilm());
 
-        assertEquals("crid://unbox.amazon.co.uk/product/177221", groupInfo.getGroupId());
-        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:zzz", groupInfo.getGroupId());
+        assertEquals(GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
-        
+
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        
+
         TitleType title = Iterables.getOnlyElement(desc.getTitle());
         assertEquals("Dr. Strangelove", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
-        
+
         ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
         assertEquals("original", language.getType());
         assertEquals("en", language.getValue());
@@ -291,47 +292,58 @@ public class UnboxGroupInformationGeneratorTest {
     public void testEpisodeGroupInformationGeneration() {
         GroupInformationType groupInfo = generator.generate(createEpisode(), Optional.of(createSeries()), Optional.of(createBrand()));
 
-        assertEquals("crid://unbox.amazon.co.uk/product/180014", groupInfo.getGroupId());
-        
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:ssssh", groupInfo.getGroupId());
+
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://unbox.amazon.co.uk/product/179534", memberOf.getCrid());
-        assertEquals(Long.valueOf(5), memberOf.getIndex());
-        
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:qq", memberOf.getCrid());
+        assertEquals(Long.valueOf(1), memberOf.getIndex());
+
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("programConcept", groupType.getValue());
-        
+
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        
+
         TitleType title = Iterables.getOnlyElement(desc.getTitle());
-        assertEquals("Episode 1", title.getValue());
+        assertEquals("Episode 1 - Drug Lords", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
-        
+
         ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
         assertEquals("original", language.getType());
         assertEquals("en", language.getValue());
     }
-    
+
+    @Test
+    public void testLanguageFallbackToUndefined() { //YV schema requires at least one lang.
+        Episode episode = createEpisode();
+        episode.setLanguages(ImmutableList.of()); //content with no language.
+        GroupInformationType groupInfo = generator.generate(episode, Optional.of(createSeries()), Optional.of(createBrand()));
+        BasicContentDescriptionType desc = groupInfo.getBasicDescription();
+        ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
+        assertEquals(AmazonGroupInformationGenerator.LANGUAGE_UNDEFINED, language.getValue());
+    }
+
     @Test
     public void testSeriesGroupInformationGeneration() {
         Episode episode = createEpisode();
+        episode.setId(1L);
         episode.setImage("episode image");
-        
+
         GroupInformationType groupInfo = generator.generate(createSeries(), Optional.of(createBrand()), episode);
 
-        assertEquals("crid://unbox.amazon.co.uk/product/179534", groupInfo.getGroupId());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:qq", groupInfo.getGroupId());
         assertTrue(groupInfo.isOrdered());
-        
+
         BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
-        assertEquals("crid://unbox.amazon.co.uk/product/184930", memberOf.getCrid());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:wtf", memberOf.getCrid());
         assertEquals(Long.valueOf(2), memberOf.getIndex());
-        
+
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("series", groupType.getValue());
-        
+
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        
+
         TitleType title = Iterables.getOnlyElement(desc.getTitle());
-        assertEquals("Series 2", title.getValue());
+        assertEquals("Season 2", title.getValue()); //Synthesized series title
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
 
         ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
@@ -341,52 +353,53 @@ public class UnboxGroupInformationGeneratorTest {
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
         assertEquals(
-            "episode image", 
+            "episode image",
             relatedMaterial.getMediaLocator().getMediaUri()
         );
     }
-    
+
     @Test
     public void testBrandGroupInformationGeneration() {
         Episode episode = createEpisode();
+        episode.setId(1L);
         episode.setImage("episode image");
-        
+
         GroupInformationType groupInfo = generator.generate(createBrand(), episode);
 
-        assertEquals("crid://unbox.amazon.co.uk/product/184930", groupInfo.getGroupId());
-        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:wtf", groupInfo.getGroupId());
+        assertEquals(GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
         assertTrue(groupInfo.isOrdered());
-                
+
         ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
         assertEquals("show", groupType.getValue());
-        
+
         BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-        
+
         TitleType title = Iterables.getOnlyElement(desc.getTitle());
         assertEquals("Northern Lights", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
-        
+
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
         assertEquals(
-            "episode image", 
+            "episode image",
             relatedMaterial.getMediaLocator().getMediaUri()
         );
     }
-    
+
     @Test
     public void testSecondaryTitleGeneration() {
         Film film = createFilm();
-        
+        film.setId(1L);
         film.setTitle("The film");
         GroupInformationType groupInfo = generator.generate(film);
-        
+
         List<TitleType> titles = groupInfo.getBasicDescription().getTitle();
         assertThat(titles.size(), is(2));
-        
+
         TitleType first = titles.get(0);
         TitleType second = titles.get(1);
-        
+
         if (Iterables.getOnlyElement(first.getType()).equals("main")) {
             assertEquals("The film", first.getValue());
             assertEquals("film, The", second.getValue());
@@ -396,16 +409,16 @@ public class UnboxGroupInformationGeneratorTest {
             assertEquals("film, The", first.getValue());
             assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
         }
-        
+
         film.setTitle("the film");
         groupInfo = generator.generate(film);
-        
+
         titles = groupInfo.getBasicDescription().getTitle();
         assertThat(titles.size(), is(2));
-        
+
         first = titles.get(0);
         second = titles.get(1);
-        
+
         if (Iterables.getOnlyElement(first.getType()).equals("main")) {
             assertEquals("the film", first.getValue());
             assertEquals("film, the", second.getValue());
@@ -415,16 +428,16 @@ public class UnboxGroupInformationGeneratorTest {
             assertEquals("film, the", first.getValue());
             assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
         }
-        
+
         film.setTitle("a film");
         groupInfo = generator.generate(film);
-        
+
         titles = groupInfo.getBasicDescription().getTitle();
         assertThat(titles.size(), is(2));
-        
+
         first = titles.get(0);
         second = titles.get(1);
-        
+
         if (Iterables.getOnlyElement(first.getType()).equals("main")) {
             assertEquals("a film", first.getValue());
             assertEquals("film, a", second.getValue());
@@ -434,16 +447,16 @@ public class UnboxGroupInformationGeneratorTest {
             assertEquals("film, a", first.getValue());
             assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
         }
-        
+
         film.setTitle("An interesting film");
         groupInfo = generator.generate(film);
-        
+
         titles = groupInfo.getBasicDescription().getTitle();
         assertThat(titles.size(), is(2));
-        
+
         first = titles.get(0);
         second = titles.get(1);
-        
+
         if (Iterables.getOnlyElement(first.getType()).equals("main")) {
             assertEquals("An interesting film", first.getValue());
             assertEquals("interesting film, An", second.getValue());
@@ -453,29 +466,29 @@ public class UnboxGroupInformationGeneratorTest {
             assertEquals("interesting film, An", first.getValue());
             assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
         }
-        
+
         film.setTitle("Some interesting film");
         groupInfo = generator.generate(film);
-        
+
         TitleType title = Iterables.getOnlyElement(groupInfo.getBasicDescription().getTitle());
-        
+
         assertEquals("Some interesting film", title.getValue());
         assertEquals("main", Iterables.getOnlyElement(title.getType()));
     }
-    
+
     @Test
     public void testSecondaryTitleGenerationDoesntReplaceNonFirstWord() {
         Film film = createFilm();
-        
+        film.setId(1L);
         film.setTitle("the film that contains another instance of the");
         GroupInformationType groupInfo = generator.generate(film);
-        
+
         List<TitleType> titles = groupInfo.getBasicDescription().getTitle();
         assertThat(titles.size(), is(2));
-        
+
         TitleType first = titles.get(0);
         TitleType second = titles.get(1);
-        
+
         if (Iterables.getOnlyElement(first.getType()).equals("main")) {
             assertEquals("the film that contains another instance of the", first.getValue());
             assertEquals("film that contains another instance of the, the", second.getValue());
@@ -486,64 +499,68 @@ public class UnboxGroupInformationGeneratorTest {
             assertEquals("secondary", Iterables.getOnlyElement(first.getType()));
         }
     }
-    
+
     @Test
-    public void testImageDimensionsDefaultIfNoneProvided() { 
+    public void testImageDimensionsDefaultIfNoneProvided() {
         Film film = createFilm();
+        film.setId(1L);
         Image image = new Image("someImageUri");
         image.setHeight(246);
         image.setWidth(572);
         film.setImages(ImmutableSet.of(image));
-        
+
         GroupInformationType groupInfo = generator.generate(film);
-        
+
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(groupInfo.getBasicDescription().getRelatedMaterial());
         ContentPropertiesType contentProperties = relatedMaterial.getContentProperties();
         StillImageContentAttributesType attributes = (StillImageContentAttributesType) Iterables.getOnlyElement(contentProperties.getContentAttributes());
         assertThat(attributes.getHeight(), is(equalTo(246)));
         assertThat(attributes.getWidth(), is(equalTo(572)));
-        
+
         film.setImages(ImmutableSet.<Image>of());
-        
+
         groupInfo = generator.generate(film);
-        
+
         relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(groupInfo.getBasicDescription().getRelatedMaterial());
         contentProperties = relatedMaterial.getContentProperties();
         attributes = (StillImageContentAttributesType) Iterables.getOnlyElement(contentProperties.getContentAttributes());
         assertThat(attributes.getHeight(), is(equalTo(320)));
         assertThat(attributes.getWidth(), is(equalTo(240)));
     }
-    
+
     @Test
-    public void testUnboxDefaultImageDimensions() { 
+    public void testUnboxDefaultImageDimensions() {
         Film film = createFilm();
+        film.setId(1L);
         film.setPublisher(Publisher.AMAZON_UNBOX);
         film.setImages(ImmutableSet.<Image>of());
-        
+
         GroupInformationType groupInfo = generator.generate(film);
-        
+
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(groupInfo.getBasicDescription().getRelatedMaterial());
         ContentPropertiesType contentProperties = relatedMaterial.getContentProperties();
         StillImageContentAttributesType attributes = (StillImageContentAttributesType) Iterables.getOnlyElement(contentProperties.getContentAttributes());
         assertThat(attributes.getHeight(), is(equalTo(320)));
         assertThat(attributes.getWidth(), is(equalTo(240)));
     }
-    
+
     @Test
     public void testUnboxConstants() {
         Film film = createFilm();
+        film.setId(1L);
         film.setPublisher(Publisher.AMAZON_UNBOX);
-        film.setCanonicalUri("http://unbox.amazon.co.uk/movies/123456");
-        
+        film.setCanonicalUri("http://amazon.com/movies/123456");
+
         GroupInformationType groupInfo = generator.generate(film);
-        assertEquals("crid://unbox.amazon.co.uk/product/123456", groupInfo.getGroupId());
-        assertEquals("http://unbox.amazon.co.uk/ContentOwning", groupInfo.getServiceIDRef());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:c", groupInfo.getGroupId());
+        assertEquals(GROUP_INFO_SERVICE_ID, groupInfo.getServiceIDRef());
     }
-    
-    
+
+
     private Brand createBrand() {
         Brand brand = new Brand();
-        
+
+        brand.setId(12045L);
         brand.setCanonicalUri("http://unbox.amazon.co.uk/episodes/184930");
         brand.setCurie("lf:e-184930");
         brand.setTitle("Northern Lights");
@@ -556,19 +573,20 @@ public class UnboxGroupInformationGeneratorTest {
         brand.setMediaType(MediaType.VIDEO);
         brand.setSpecialization(Specialization.TV);
         brand.addAlias(new Alias("gb:amazon:asin", "brandAsin"));
-        
+
         CrewMember robson = new CrewMember();
         robson.withName("Robson Green");
         CrewMember mark = new CrewMember();
         mark.withName("Mark Benton");
         brand.setPeople(ImmutableList.of(robson, mark));
-        
+
         return brand;
     }
-    
+
     private Series createSeries() {
         Series series = new Series();
-        
+
+        series.setId(308L);
         series.setCanonicalUri("http://unbox.amazon.co.uk/episodes/179534");
         series.setCurie("lf:e-179534");
         series.setTitle("Series 2");
@@ -581,26 +599,27 @@ public class UnboxGroupInformationGeneratorTest {
         series.setMediaType(MediaType.VIDEO);
         series.setSpecialization(Specialization.TV);
         series.addAlias(new Alias("gb:amazon:asin", "seriesAsin"));
-        
+
         CrewMember robson = new CrewMember();
         robson.withName("Robson Green");
         CrewMember mark = new CrewMember();
         mark.withName("Mark Benton");
         series.setPeople(ImmutableList.of(robson, mark));
-        
+
         ParentRef brandRef = new ParentRef("http://unbox.amazon.co.uk/series/184930");
         series.setParentRef(brandRef);
         series.withSeriesNumber(2);
-        
+
         return series;
     }
-    
+
     private Episode createEpisode() {
         Episode episode = new Episode();
-        
+
+        episode.setId(7174445L);
         episode.setCanonicalUri("http://unbox.amazon.co.uk/episodes/180014");
         episode.setCurie("lf:e-180014");
-        episode.setTitle("Episode 1");
+        episode.setTitle("Episode 1 - Drug Lords");
         episode.setDescription("some episode description");
         episode.setImage("some episode image");
         episode.setPublisher(Publisher.LOVEFILM);
@@ -611,23 +630,23 @@ public class UnboxGroupInformationGeneratorTest {
         episode.setMediaType(MediaType.VIDEO);
         episode.setSpecialization(Specialization.TV);
         episode.addAlias(new Alias("gb:amazon:asin", "episodeAsin"));
-        
+
         Version version = new Version();
         version.setDuration(Duration.standardMinutes(45));
         episode.addVersion(version);
-        
+
         ParentRef seriesRef = new ParentRef("http://unbox.amazon.co.uk/series/179534");
         episode.setSeriesRef(seriesRef);
-        
-        episode.setEpisodeNumber(5);
+
+        episode.setEpisodeNumber(1);
         episode.setSeriesNumber(2);
-        
+
         return episode;
     }
 
     private Film createFilm() {
         Film film = new Film();
-        
+        film.setId(14383L);
         film.setCanonicalUri("http://unbox.amazon.co.uk/films/177221");
         film.setCurie("lf:f-177221");
         film.setTitle("Dr. Strangelove");
@@ -641,11 +660,11 @@ public class UnboxGroupInformationGeneratorTest {
         film.setMediaType(MediaType.VIDEO);
         film.setSpecialization(Specialization.FILM);
         film.addAlias(new Alias("gb:amazon:asin", "filmAsin"));
-        
+
         Version version = new Version();
         version.setDuration(Duration.standardMinutes(90));
         film.addVersion(version);
-        
+
         return film;
     }
 }

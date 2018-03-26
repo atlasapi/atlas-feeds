@@ -9,12 +9,14 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
 import com.metabroadcast.common.intl.Countries;
 import org.atlasapi.feeds.tvanytime.CreditsItemGenerator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
+import org.atlasapi.feeds.youview.ServiceIdResolver;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Brand;
@@ -129,7 +131,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
 
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
-    private final BbcServiceIdResolver sIdResolver;
+    private final ServiceIdResolver sIdResolver;
     private final CreditsItemGenerator creditsGenerator;
     private final ContentTitleGenerator titleGenerator;
     
@@ -139,7 +141,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             .withOmissionMarker("...");
     
     public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping,
-            BbcServiceIdResolver sIdResolver, CreditsItemGenerator creditsGenerator, 
+            ServiceIdResolver sIdResolver, CreditsItemGenerator creditsGenerator,
             ContentTitleGenerator titleGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
         this.genreMapping = checkNotNull(genreMapping);
@@ -226,7 +228,7 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     }
     
     @Override
-    public GroupInformationType generate(Brand brand, Item item) {
+    public GroupInformationType generate(Brand brand, @Nullable Item item) {
         GroupInformationType groupInfo = generateWithCommonFields(brand);
         
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_SHOW));
@@ -237,7 +239,11 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     }
     
     private String createMasterBrandLink(Content content) {
-        return MASTERBRAND_PREFIX + sIdResolver.resolveMasterBrandId(content).get();
+        Optional<String> masterBrandOpt = sIdResolver.resolveMasterBrandId(content);
+        if(!masterBrandOpt.isPresent()){
+            throw new NullPointerException("No masterbrand was found for " + content.getId());
+        }
+        return MASTERBRAND_PREFIX + masterBrandOpt.get();
     }
 
     private GroupInformationType generateWithCommonFields(Content content) {
@@ -283,7 +289,6 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         String language = getLanguageCodeFor(content);
         basicDescription.getLanguage().addAll(generateLanguage(language));
 
-        basicDescription.setCreditsList(generateCreditsList(content));
         Optional<RelatedMaterialType> relatedMaterial = Optional.absent();
         relatedMaterial = generateRelatedMaterial(content);
         
@@ -368,30 +373,6 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
         MediaLocatorType mediaLocator = new MediaLocatorType();
         mediaLocator.setMediaUri(content.getImage());
         return mediaLocator;
-    }
-
-    private CreditsListType generateCreditsList(Content content) {
-       CreditsListType creditsList = new CreditsListType();
-       
-       for (CrewMember person : content.people()) {
-           CreditsItemType credit = new CreditsItemType();
-           credit.setRole(YOUVIEW_CREDIT_ROLE);
-           
-           PersonNameType personName = new PersonNameType();
-           
-           NameComponentType nameComponent = new NameComponentType();
-           nameComponent.setValue(person.name());
-           
-           JAXBElement<NameComponentType> nameElem = new JAXBElement<NameComponentType>(new QName("urn:tva:mpeg7:2008", "GivenName"), NameComponentType.class, nameComponent);
-           personName.getGivenNameOrLinkingNameOrFamilyName().add(nameElem);
-           
-           JAXBElement<PersonNameType> personNameElem = new JAXBElement<PersonNameType>(new QName("urn:tva:metadata:2010", "PersonName"), PersonNameType.class, personName);
-           credit.getPersonNameOrPersonNameIDRefOrOrganizationName().add(personNameElem);
-           
-           creditsList.getCreditsItem().add(credit);
-       }
-       
-       return creditsList;
     }
 
     private List<ExtendedLanguageType> generateLanguage(String language) {

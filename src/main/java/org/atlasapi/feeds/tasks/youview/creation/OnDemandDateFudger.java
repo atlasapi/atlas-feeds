@@ -1,5 +1,8 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
@@ -35,10 +38,23 @@ public class OnDemandDateFudger {
     }
 
     public ItemOnDemandHierarchy fudgeStartDates(ItemOnDemandHierarchy onDemandHierarchy) {
-        Location resultLocation = onDemandHierarchy.location();
+        List<Location> resultLocation = new ArrayList<>();
 
         DateTime now = clock.now();
 
+        for (Location location : onDemandHierarchy.locations()) {
+            resultLocation.add(handleLocation(location, now));
+        }
+
+        return new ItemOnDemandHierarchy(
+                onDemandHierarchy.item(),
+                onDemandHierarchy.version(),
+                onDemandHierarchy.encoding(),
+                resultLocation
+        );
+    }
+
+    private Location handleLocation(Location resultLocation, DateTime now) {
         Policy policy = resultLocation.getPolicy();
 
         boolean availableNow = false;
@@ -57,12 +73,6 @@ public class OnDemandDateFudger {
             resultLocation = resultLocation.copy();
             resultLocation.setPolicy(resultPolicy);
         }
-
-        return new ItemOnDemandHierarchy(
-                onDemandHierarchy.item(),
-                onDemandHierarchy.version(),
-                onDemandHierarchy.encoding(),
-                resultLocation
-        );
+        return resultLocation;
     }
 }

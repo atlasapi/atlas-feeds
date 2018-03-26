@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.persistence;
 
+import java.util.List;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -36,8 +38,8 @@ public class StoringMappingIdGenerator implements IdGenerator {
 
     @Override
     public String generateOnDemandImi(Item item, Version version, Encoding encoding,
-            Location location) {
-        return delegate.generateOnDemandImi(item, version, encoding, location);
+            List<Location> locations) {
+        return delegate.generateOnDemandImi(item, version, encoding, locations);
     }
 
     @Override

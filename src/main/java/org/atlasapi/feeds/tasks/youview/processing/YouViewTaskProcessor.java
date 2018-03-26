@@ -61,7 +61,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
             }
         } catch (Exception e) {
             log.error("Error processing Task {}", task.id(), e);
-            telescope.reportFailedEvent(
+            telescope.reportFailedEventFromTask(
                     task,
                     "Failed to process taskId=" + task.id()
                     + ". destination " + task.destination()
@@ -79,14 +79,14 @@ public class YouViewTaskProcessor implements TaskProcessor {
 
     private void processUpdate(Task task, FeedsTelescopeReporter telescope) {
         if (!task.payload().isPresent()) { //If you want remove this, check for any .get() down the line.
-            telescope.reportFailedEvent(
+            telescope.reportFailedEventFromTask(
                     task,
                     "Failed to " + task.action().name() + " taskId=" + task.id()
                     + ". destination " + task.destination()
                     + ". atlasId=" + task.atlasDbId()
                     + ". There was no payload."
             );
-            setFailed(task);
+            setFailed(task, new Exception("Lack of payload."));
             return;
         }
 
@@ -104,7 +104,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
                         task,
                         "Content " + destination.contentUri() + " is revoked. Cannot " + task.action().name()
                 );
-                setFailed(task);
+                setFailed(task, new Exception("Content is revoked."));
                 return;
             }
         }

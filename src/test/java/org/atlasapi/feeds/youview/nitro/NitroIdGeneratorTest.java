@@ -11,6 +11,8 @@ import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Restriction;
 import org.atlasapi.media.entity.Version;
+
+import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.junit.Test;
@@ -66,8 +68,8 @@ public class NitroIdGeneratorTest {
         String onDemandImi = idGenerator.generateOnDemandImi(
                 createItemWithPid(pid), 
                 createVersion(versionPid, Duration.standardMinutes(30), true), 
-                createEncoding(horizontalSize, verticalSize, aspectRatio), 
-                createLocation(availabilityStart, availabilityEnd, actualAvailabilityStart)
+                createEncoding(horizontalSize, verticalSize, aspectRatio),
+                ImmutableList.of(createLocation(availabilityStart, availabilityEnd, actualAvailabilityStart))
         );
         
         String expectedId = availabilityStart + ":"

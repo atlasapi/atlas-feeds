@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview.lovefilm;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAsin;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAmazonAsin;
 
 import java.util.List;
 import java.util.Map;
@@ -96,7 +96,7 @@ public class LoveFilmProgramInformationGenerator implements ProgramInformationGe
         UniqueIDType id = new UniqueIDType();
         
         id.setAuthority(LOVEFILM_DEEP_LINKING_ID);
-        id.setValue(getAsin(item));
+        id.setValue(getAmazonAsin(item));
         
         return id;
     }

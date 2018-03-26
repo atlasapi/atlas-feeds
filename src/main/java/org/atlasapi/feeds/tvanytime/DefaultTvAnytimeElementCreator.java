@@ -1,6 +1,6 @@
 package org.atlasapi.feeds.tvanytime;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.NoSuchElementException;
 
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.UnexpectedContentTypeException;
@@ -14,13 +14,14 @@ import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Series;
 
+import com.google.common.base.Optional;
 import tva.metadata._2010.BroadcastEventType;
 import tva.metadata._2010.GroupInformationType;
 import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.ProgramInformationType;
-
-import com.google.common.base.Optional;
 import tva.metadata._2010.ServiceInformationType;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
     
@@ -53,16 +54,28 @@ public class DefaultTvAnytimeElementCreator implements TvAnytimeElementCreator {
         }
 
         if (content instanceof Brand) {
-            return groupInfoGenerator.generate((Brand) content, hierarchy.lastItemFrom((Brand) content));
+            Item child = null;
+            try {
+                child = hierarchy.lastItemFrom((Brand) content);
+            } catch (NoSuchElementException e) {
+                //oh well. If there is no such element, we'll give it no such element.
+            }
+            return groupInfoGenerator.generate((Brand) content, child);
         }
 
         if (content instanceof Series) {
             Series series = (Series) content;
             Optional<Brand> brand = hierarchy.brandFor(series);
-            return groupInfoGenerator.generate(series, brand, hierarchy.lastItemFrom(series));
+            Item child = null;
+            try {
+                child = hierarchy.lastItemFrom(series);
+            } catch (NoSuchElementException e) {
+                //oh well. If there is no such element, we'll give it no such element.
+            }
+            return groupInfoGenerator.generate(series, brand, child);
         }
 
-        if (content instanceof Item) {
+        if (content instanceof Item) { //films are handle
             Item item = (Item) content;
             Optional<Series> series = hierarchy.seriesFor(item);
             Optional<Brand> brand = hierarchy.brandFor(item);

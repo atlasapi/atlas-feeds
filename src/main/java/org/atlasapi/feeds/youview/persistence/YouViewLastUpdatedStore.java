@@ -8,5 +8,10 @@ import com.google.common.base.Optional;
 public interface YouViewLastUpdatedStore {
 
     public Optional<DateTime> getLastUpdated(Publisher publisher);
+
+    public Optional<DateTime> getLastRepIdChangesChecked(Publisher publisher);
+
     public void setLastUpdated(DateTime lastUpdated, Publisher publisher);
+
+    public void setLastRepIdChecked(DateTime lastUpdated, Publisher publisher);
 }

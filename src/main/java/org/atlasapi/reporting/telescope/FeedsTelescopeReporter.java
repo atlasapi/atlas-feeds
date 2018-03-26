@@ -91,7 +91,7 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         reportFailedEventGeneric("", errorMsg, entityType, payload);
     }
 
-    public void reportFailedEvent(Task task, String errorMsg) {
+    public void reportFailedEventFromTask(Task task, String errorMsg) {
        reportFailedEventGeneric( entityStateFromTask(task), errorMsg);
     }
 
