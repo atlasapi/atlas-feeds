@@ -1,9 +1,11 @@
 package org.atlasapi.feeds.youview.persistence;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
+
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoConstants;
 import com.metabroadcast.common.persistence.translator.TranslatorUtils;
+
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -29,13 +31,13 @@ public class MongoYouViewPayloadHashStore implements YouViewPayloadHashStore {
     }
 
     @Override
-    public Optional<String> getHash(HashType payloadType, String objectKey) {
-        DBObject dbObject = collection.findOne(key(payloadType, objectKey));
+    public Optional<String> getHash(HashType hashType, String id) {
+        DBObject dbObject = collection.findOne(key(hashType, id));
 
         if (dbObject != null) {
-            return Optional.fromNullable(TranslatorUtils.toString(dbObject, HASH_FIELD));
+            return Optional.ofNullable(TranslatorUtils.toString(dbObject, HASH_FIELD));
         } else {
-            return Optional.absent();
+            return Optional.empty();
         }
     }
 

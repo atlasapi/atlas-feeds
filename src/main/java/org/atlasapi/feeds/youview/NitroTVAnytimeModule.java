@@ -4,12 +4,10 @@ import org.atlasapi.feeds.youview.hierarchy.BroadcastHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
-import org.atlasapi.feeds.youview.nitro.ChannelResolvingBbcServiceIdResolver;
+import org.atlasapi.feeds.youview.nitro.NitroServiceIdResolver;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastEventGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroBroadcastServiceMapping;
 import org.atlasapi.feeds.youview.nitro.NitroChannelInformationGenerator;
-import org.atlasapi.feeds.youview.nitro.NitroContentHierarchyExpander;
 import org.atlasapi.feeds.youview.nitro.NitroCreditsItemGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroEpisodeNumberPrefixAddingContentTitleGenerator;
 import org.atlasapi.feeds.youview.nitro.NitroGenreMapping;
@@ -26,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.google.common.hash.Hashing;
 import com.metabroadcast.common.time.SystemClock;
 
 @Configuration
@@ -81,10 +78,9 @@ public class NitroTVAnytimeModule {
     public NitroBroadcastServiceMapping nitroServiceMapping() {
         return new NitroBroadcastServiceMapping("nitro_service_mapping.csv");
     }
-    
-    @Bean
-    public StoringMappingIdGenerator nitroIdGenerator() {
-        return new StoringMappingIdGenerator(idMappingStore, new NitroIdGenerator(Hashing.md5()));
+
+    private StoringMappingIdGenerator nitroIdGenerator() {
+        return new StoringMappingIdGenerator(idMappingStore, new NitroIdGenerator());
     }
     
     @Bean
@@ -98,26 +94,23 @@ public class NitroTVAnytimeModule {
     }
 
     @Bean
-    public BbcServiceIdResolver bbcServiceIdResolver() {
-        return new ChannelResolvingBbcServiceIdResolver(channelResolver);
+    public NitroServiceIdResolver bbcServiceIdResolver() {
+        return new NitroServiceIdResolver(channelResolver);
     }
 
     @Bean
-    public ContentHierarchyExpander contentHierarchyExpander() {
-        return new NitroContentHierarchyExpander(versionHierarchyExpander(), broadcastHierarchyExpander(), onDemandHierarchyExpander(), nitroIdGenerator());
+    public ContentHierarchyExpander nitroContentHierarchyExpander() {
+        return new ContentHierarchyExpanderImpl(versionHierarchyExpander(), broadcastHierarchyExpander(), onDemandHierarchyExpander(), nitroIdGenerator());
     }
-    
-    @Bean
+
     public VersionHierarchyExpander versionHierarchyExpander() {
         return new VersionHierarchyExpander(nitroIdGenerator());
     }
-    
-    @Bean
+
     public OnDemandHierarchyExpander onDemandHierarchyExpander() {
         return new OnDemandHierarchyExpander(nitroIdGenerator());
     }
 
-    @Bean
     public BroadcastHierarchyExpander broadcastHierarchyExpander() {
         return new BroadcastHierarchyExpander(nitroIdGenerator(), nitroServiceMapping(), bbcServiceIdResolver(), new SystemClock());
     }

@@ -1,17 +1,18 @@
 package org.atlasapi.feeds.tasks.persistence;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
-import org.atlasapi.feeds.tasks.Destination.DestinationType;
-import org.joda.time.DateTime;
+
+import com.metabroadcast.common.ids.IdGenerator;
 
 import com.google.common.base.Optional;
-import com.metabroadcast.common.ids.IdGenerator;
+import org.joda.time.DateTime;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class IdSettingTaskStore implements TaskStore {

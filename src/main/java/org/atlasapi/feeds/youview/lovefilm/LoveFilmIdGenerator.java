@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.lovefilm;
 
+import java.util.List;
+
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Broadcast;
@@ -28,7 +30,7 @@ public class LoveFilmIdGenerator implements IdGenerator {
     }
     
     @Override
-    public String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location) {
+    public String generateOnDemandImi(Item item, Version version, Encoding encoding, List<Location> location) {
         return LOVEFILM_IMI_PREFIX + idFrom(item);
     }
     

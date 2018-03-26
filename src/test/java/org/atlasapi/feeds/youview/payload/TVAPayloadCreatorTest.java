@@ -28,6 +28,8 @@ import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Version;
+
+import com.google.common.collect.ImmutableList;
 import org.joda.time.LocalDate;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -110,7 +112,7 @@ public class TVAPayloadCreatorTest {
         Version version = mock(Version.class);
         Encoding encoding = mock(Encoding.class);
         Location location = mock(Location.class);
-        ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(item, version, encoding, location);
+        ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(item, version, encoding,  ImmutableList.of(location));
         String onDemandImi = "onDemandImi";
         
         when(generator.generateOnDemandTVAFrom(onDemandHierarchy, onDemandImi)).thenReturn(tvaMain);

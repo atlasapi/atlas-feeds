@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.nitro;
 
+import java.util.List;
+
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.entity.Broadcast;
@@ -13,6 +15,7 @@ import org.atlasapi.media.entity.Version;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -26,6 +29,10 @@ public final class NitroIdGenerator implements IdGenerator {
     private static final String IMI_PREFIX = "imi:www.nitro.bbc.co.uk/";
 
     private final HashFunction hasher;
+
+    public NitroIdGenerator(){
+        this(Hashing.md5());
+    }
 
     public NitroIdGenerator(HashFunction hasher) {
         this.hasher = checkNotNull(hasher);
@@ -42,8 +49,8 @@ public final class NitroIdGenerator implements IdGenerator {
     }
 
     @Override
-    public String generateOnDemandImi(Item item, Version version, Encoding encoding, Location location) {
-        return IMI_PREFIX + hasher.hashString(generateOnDemandIdFor(item, version, encoding, location), Charsets.UTF_8);
+    public String generateOnDemandImi(Item item, Version version, Encoding encoding, List<Location> locations) {
+        return IMI_PREFIX + hasher.hashString(generateOnDemandIdFor(item, version, encoding, locations), Charsets.UTF_8);
     }
 
     @Override
@@ -60,7 +67,7 @@ public final class NitroIdGenerator implements IdGenerator {
         return channel.getCanonicalUri();
     }
 
-    private String generateOnDemandIdFor(Item item, Version version, Encoding encoding, Location location) {
+    private String generateOnDemandIdFor(Item item, Version version, Encoding encoding, List<Location> locations) {
 //      scheduled_start
 //      scheduled_end
 //      youview_media_quality
@@ -71,6 +78,9 @@ public final class NitroIdGenerator implements IdGenerator {
 //      has_dubbed_audio
 //      aspect_ratio
 //      has_signing
+
+        //bbc ondemands should have exactly 1 locations
+        Location location = locations.get(0);
         return JOIN_ON_COLON.join(
                 location.getPolicy().getAvailabilityStart(),
                 location.getPolicy().getAvailabilityEnd(),

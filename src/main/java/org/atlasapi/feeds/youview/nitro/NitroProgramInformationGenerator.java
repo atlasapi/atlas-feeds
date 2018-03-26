@@ -21,6 +21,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import org.jdom.IllegalDataException;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.DerivedFromType;
 import tva.metadata._2010.ExplanationLengthType;
@@ -96,7 +97,7 @@ public final class NitroProgramInformationGenerator implements ProgramInformatio
         Duration versionDuration = generateDuration(version);
         // YouView *requires* durations on versions, so throw up if we don't have one
         if (versionDuration == null) {
-            throw new RuntimeException("null version for item " + item.getCanonicalUri());
+            throw new IllegalDataException("null version duration for item " + item.getCanonicalUri());
         }
         basicDescription.setDuration(versionDuration);
 

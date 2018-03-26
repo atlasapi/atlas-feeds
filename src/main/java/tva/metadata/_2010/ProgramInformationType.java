@@ -69,7 +69,6 @@ public class ProgramInformationType {
     @XmlAttribute
     @XmlSchemaType(name = "dateTime")
     protected XMLGregorianCalendar fragmentExpirationDate;
-
     /**
      * Gets the value of the basicDescription property.
      * 

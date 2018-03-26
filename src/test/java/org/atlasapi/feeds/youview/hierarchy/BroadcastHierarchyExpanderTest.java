@@ -8,9 +8,10 @@ import static org.mockito.Mockito.when;
 import java.util.Map;
 import java.util.Set;
 
+import org.atlasapi.feeds.youview.ServiceIdResolver;
 import org.atlasapi.feeds.youview.UniqueIdGenerator;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
-import org.atlasapi.feeds.youview.nitro.BbcServiceIdResolver;
+import org.atlasapi.feeds.youview.nitro.NitroServiceIdResolver;
 import org.atlasapi.feeds.youview.services.BroadcastServiceMapping;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
@@ -33,16 +34,17 @@ public class BroadcastHierarchyExpanderTest {
     private Clock clock = new TimeMachine();
     private IdGenerator idGenerator;
     private BroadcastServiceMapping serviceMapping = Mockito.mock(BroadcastServiceMapping.class);
-    private BbcServiceIdResolver serviceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
+    private NitroServiceIdResolver nitroServiceIdResolver = Mockito.mock(NitroServiceIdResolver.class);
     private BroadcastHierarchyExpander hierarchyExpander;
 
     @Test
     public void testCombinesEqualIdsInMapping() {
         idGenerator = Mockito.mock(IdGenerator.class);
-        hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping, serviceIdResolver, clock);
+        hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping,
+                nitroServiceIdResolver, clock);
         
         when(idGenerator.generateBroadcastImi(anyString(), any(Broadcast.class))).thenReturn("broadcast_imi");
-        when(serviceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of("123"));
+        when(nitroServiceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of("123"));
         when(serviceMapping.youviewServiceIdFor(anyString())).thenReturn(ImmutableSet.of("youviewServiceId"));
         
         Set<Version> versions = createNVersions(3);
@@ -56,9 +58,10 @@ public class BroadcastHierarchyExpanderTest {
     @Test
     public void testIfBroadcastImisAreUniqueAllVersionsAreExpanded() {
         idGenerator = new UniqueIdGenerator();
-        hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping, serviceIdResolver, clock);
+        hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping,
+                nitroServiceIdResolver, clock);
         
-        when(serviceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of("123"));
+        when(nitroServiceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of("123"));
         when(serviceMapping.youviewServiceIdFor(anyString())).thenReturn(ImmutableSet.of("youviewServiceId"));
         
         int numVersions = 3;
@@ -74,9 +77,10 @@ public class BroadcastHierarchyExpanderTest {
     @Test
     public void testIfBroadcastImisAreUniqueAllBroadcastsAreExpanded() {
         idGenerator = new UniqueIdGenerator();
-        hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping, serviceIdResolver, clock);
+        hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping,
+                nitroServiceIdResolver, clock);
         
-        when(serviceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of("123"));
+        when(nitroServiceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of("123"));
         when(serviceMapping.youviewServiceIdFor(anyString())).thenReturn(ImmutableSet.of("youviewServiceId"));
         
         int numNewBroadcasts = 3;
@@ -93,11 +97,12 @@ public class BroadcastHierarchyExpanderTest {
     @Test
     public void testIfBroadcastImisUniqueAreUniqueAllYouViewServiceIdsAreExpanded() {
         idGenerator = new UniqueIdGenerator();
-        hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping, serviceIdResolver, clock);
+        hierarchyExpander = new BroadcastHierarchyExpander(idGenerator, serviceMapping,
+                nitroServiceIdResolver, clock);
         
         ImmutableSet<String> youViewServiceIds = ImmutableSet.of("yvSID_1", "yvSID_2");
         when(serviceMapping.youviewServiceIdFor(anyString())).thenReturn(youViewServiceIds);
-        when(serviceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of("123"));
+        when(nitroServiceIdResolver.resolveSId(any(Broadcast.class))).thenReturn(Optional.of("123"));
         
         Set<Version> versions = createNVersions(1);
         Set<Broadcast> broadcasts = createNBroadcasts(1);

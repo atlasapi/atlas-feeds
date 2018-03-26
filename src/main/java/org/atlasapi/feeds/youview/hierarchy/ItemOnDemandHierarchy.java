@@ -1,5 +1,7 @@
 package org.atlasapi.feeds.youview.hierarchy;
 
+import java.util.List;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.atlasapi.media.entity.Encoding;
@@ -20,14 +22,20 @@ public final class ItemOnDemandHierarchy {
     private final Item item;
     private final Version version;
     private final Encoding encoding;
-    private final Location location;
+    private final List<Location> locations; //multiple locations represent the same item
+    // being available in multiple locations with the same uri, for example being available
+    // to buy, to rent, and under subscription.
     
-    public ItemOnDemandHierarchy(Item item, Version version, 
-            Encoding encoding, Location location) {
+    public ItemOnDemandHierarchy(
+            Item item,
+            Version version,
+            Encoding encoding,
+            List<Location> locations) {
+
         this.item = checkNotNull(item);
         this.version = checkNotNull(version);
         this.encoding = checkNotNull(encoding);
-        this.location = checkNotNull(location);
+        this.locations = checkNotNull(locations);
     }
     
     public Item item() {
@@ -42,7 +50,7 @@ public final class ItemOnDemandHierarchy {
         return encoding;
     }
     
-    public Location location() {
-        return location;
+    public List<Location> locations() {
+        return locations;
     }
 }

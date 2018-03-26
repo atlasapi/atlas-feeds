@@ -5,9 +5,9 @@ import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 
 import tva.metadata._2010.BroadcastEventType;
 
-public class UnboxBroadcastEventGenerator implements BroadcastEventGenerator {
+public class AmazonBroadcastEventGenerator implements BroadcastEventGenerator {
 
-    public UnboxBroadcastEventGenerator() { }
+    public AmazonBroadcastEventGenerator() { }
 
     @Override
     public BroadcastEventType generate(ItemBroadcastHierarchy broadcast, String broadcastImi) {

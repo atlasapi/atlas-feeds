@@ -1,9 +1,5 @@
 package org.atlasapi.feeds.youview.revocation;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Task;
@@ -19,12 +15,17 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
-import com.google.common.collect.ImmutableMap;
-
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class OnDemandBasedRevocationProcessorTest {
 
@@ -40,11 +41,12 @@ public class OnDemandBasedRevocationProcessorTest {
     private PayloadCreator payloadCreator = mock(PayloadCreator.class);
     private TaskCreator taskCreator = mock(TaskCreator.class);
     private TaskStore taskStore = mock(TaskStore.class);
-    
-    private final RevocationProcessor processor = new OnDemandBasedRevocationProcessor(revocationStore, onDemandHierarchyExpander, payloadCreator, taskCreator, taskStore);;
-    
+
+    private OnDemandBasedRevocationProcessor processor = Mockito.spy(new OnDemandBasedRevocationProcessor(revocationStore, payloadCreator, taskCreator, taskStore));
+
     @Before
     public void setup() throws PayloadGenerationException {
+        when(processor.getOnDemandHierarchyExpander(HIERARCHY.item())).thenReturn(onDemandHierarchyExpander);
         when(onDemandHierarchyExpander.expandHierarchy(HIERARCHY.item())).thenReturn(ImmutableMap.of(ON_DEMAND_IMI, HIERARCHY));
         when(payloadCreator.payloadFrom(ON_DEMAND_IMI, HIERARCHY)).thenReturn(payload);
         when(task.id()).thenReturn(TASK_ID);
@@ -73,11 +75,11 @@ public class OnDemandBasedRevocationProcessorTest {
     }
 
     private static ItemOnDemandHierarchy createItemOnDemandHierarchy() {
-        return new ItemOnDemandHierarchy(createItem(), createVersion(), createEncoding(), createLocation());
+        return new ItemOnDemandHierarchy(createItem(), createVersion(), createEncoding(), ImmutableList.of(createLocation()));
     }
 
     private static Item createItem() {
-        return new Film("film", "curie", Publisher.METABROADCAST);
+        return new Film("film", "curie", Publisher.BBC_NITRO);
     }
 
     private static Version createVersion() {

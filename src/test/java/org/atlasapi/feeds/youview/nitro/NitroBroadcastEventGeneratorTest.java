@@ -1,11 +1,5 @@
 package org.atlasapi.feeds.youview.nitro;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.when;
-
 import javax.xml.datatype.DatatypeConfigurationException;
 
 import org.atlasapi.feeds.tvanytime.BroadcastEventGenerator;
@@ -18,19 +12,25 @@ import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
+
+import com.metabroadcast.common.time.Clock;
+import com.metabroadcast.common.time.TimeMachine;
+
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-
 import tva.metadata._2010.BroadcastEventType;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.metabroadcast.common.time.Clock;
-import com.metabroadcast.common.time.TimeMachine;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.when;
 
 
 public class NitroBroadcastEventGeneratorTest {
@@ -46,7 +46,7 @@ public class NitroBroadcastEventGeneratorTest {
     private Clock clock = new TimeMachine(time);
     private IdGenerator idGenerator = Mockito.mock(IdGenerator.class);
     private BroadcastServiceMapping serviceMapping = Mockito.mock(BroadcastServiceMapping.class);
-    private BbcServiceIdResolver bbcServiceIdResolver = Mockito.mock(BbcServiceIdResolver.class);
+    private NitroServiceIdResolver bbcServiceIdResolver = Mockito.mock(NitroServiceIdResolver.class);
     
     private final BroadcastEventGenerator generator;
     

@@ -1,8 +1,6 @@
 package org.atlasapi.feeds.youview.client;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
-
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,36 +11,48 @@ import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
+import org.atlasapi.feeds.youview.IdGeneratorFactory;
 import org.atlasapi.feeds.youview.UnexpectedContentTypeException;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
+import org.atlasapi.feeds.youview.persistence.HashType;
+import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
+import org.atlasapi.feeds.youview.unbox.AmazonIdGenerator;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.ControlledMessageType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.FragmentReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionReportType;
 import com.youview.refdata.schemas.youviewstatusreport._2010_12_07.TransactionStateType;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tva.mpeg7._2008.TextualType;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
 
 
 public class ReferentialIntegrityCheckingReportHandler implements YouViewReportHandler {
 
-    private static final Pattern VERSION_CRID_PATTERN = Pattern.compile("crid://nitro.bbc.co.uk/iplayer/youview/[a-z0-9]*");
-    private static final String REFERENTIAL_INTEGRITY_REASON 
+    private static final Map<Publisher, Pattern> PUBLISHER_TO_PATTERN_MAP = ImmutableMap.of(
+            Publisher.BBC_NITRO, Pattern.compile("crid://nitro.bbc.co.uk/iplayer/youview/[a-z0-9]*"),
+            Publisher.AMAZON_UNBOX, AmazonIdGenerator.getVersionCridPattern()
+    );
+
+    private static final String REFERENTIAL_INTEGRITY_REASON
             = "http://refdata.youview.com/mpeg7cs/YouViewMetadataIngestReasonCS/2010-09-23#semantic-referential_integrity";
     
     
@@ -50,21 +60,24 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
     
     private final ContentResolver contentResolver;
     private final TaskCreator taskCreator;
-    private final IdGenerator idGenerator;
     private final TaskStore taskStore;
-    private final VersionHierarchyExpander versionExpander;
+    private final YouViewPayloadHashStore payloadHashStore;
     private final ContentHierarchyExtractor hierarchyExtractor;
     private PayloadCreator payloadCreator;
 
-    public ReferentialIntegrityCheckingReportHandler(TaskCreator taskCreator, IdGenerator idGenerator,
-            TaskStore taskStore, PayloadCreator payloadCreator, ContentResolver contentResolver, 
-            VersionHierarchyExpander versionExpander, ContentHierarchyExtractor hierarchyExtractor) {
+    public ReferentialIntegrityCheckingReportHandler(
+            TaskCreator taskCreator,
+            TaskStore taskStore,
+            YouViewPayloadHashStore payloadHashStore,
+            PayloadCreator payloadCreator,
+            ContentResolver contentResolver,
+            ContentHierarchyExtractor hierarchyExtractor) {
+
         this.taskCreator = checkNotNull(taskCreator);
         this.taskStore = checkNotNull(taskStore);
+        this.payloadHashStore = checkNotNull(payloadHashStore);
         this.payloadCreator = checkNotNull(payloadCreator);
-        this.idGenerator = checkNotNull(idGenerator);
         this.contentResolver = checkNotNull(contentResolver);
-        this.versionExpander = checkNotNull(versionExpander);
         this.hierarchyExtractor = checkNotNull(hierarchyExtractor);
     }
 
@@ -87,7 +100,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         Preconditions.checkArgument(YOUVIEW.equals(task.destination().type()), "Expected feed type " + YOUVIEW.name() + ", was " + task.destination().type() + " for task " + task.id());
 
         YouViewDestination destination = (YouViewDestination) task.destination();
-        log.trace(String.format(
+        log.info(String.format(
                 "Handling missing content for %s: %s, content %s", 
                 destination.elementType().name(), 
                 destination.elementId(), 
@@ -102,7 +115,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
                         message.getComment().getValue()
                         ));
             case SERIES:
-                handleMissingBrand(message, destination.contentUri());
+                handleMissingSeries(message, destination.contentUri());
                 break;
             case ITEM:
                 handleMissingContainer(message, destination.contentUri());
@@ -124,12 +137,13 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         }
     }
 
-    private void handleMissingBrand(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
+    private void handleMissingSeries(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
         Content resolved = resolveContentFor(contentUri);
         if (!(resolved instanceof Series)) {
             throw new UnexpectedContentTypeException(Series.class, resolved);
         }
         Series series = (Series) resolved;
+
         Optional<Brand> brand = hierarchyExtractor.brandFor(series);
         if (!brand.isPresent()) {
             throw new RuntimeException("unable to resolve expected brand for series " + contentUri);
@@ -162,8 +176,17 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
     }
 
     private void createAndWriteTaskFor(Content content) throws PayloadGenerationException {
+        IdGenerator idGenerator = IdGeneratorFactory.create(content.getPublisher());
         String contentCrid = idGenerator.generateContentCrid(content);
-        taskStore.save(taskCreator.taskFor(contentCrid, content, payloadCreator.payloadFrom(contentCrid, content), Action.UPDATE));
+        Payload payload = payloadCreator.payloadFrom(contentCrid, content);
+        if (shouldSave(HashType.CONTENT, contentCrid, payload)) {
+            taskStore.save(taskCreator.taskFor
+                    (contentCrid, content, payload, Action.UPDATE)
+            );
+            payloadHashStore.saveHash(HashType.CONTENT, contentCrid, payload.hash());
+        } else {
+            log.debug("Existing hash found for Content {}, not updating", contentCrid);
+        }
     }
 
     private void handleMissingVersion(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
@@ -171,19 +194,30 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         if (!(resolved instanceof Item)) {
             throw new UnexpectedContentTypeException(Item.class, resolved);
         }
-        String versionCrid = resolveVersionId(message.getComment());
+        String versionCrid = resolveVersionId(resolved.getPublisher(), message.getComment());
+        IdGenerator idGenerator = IdGeneratorFactory.create(resolved.getPublisher());
+        VersionHierarchyExpander versionExpander = new VersionHierarchyExpander(idGenerator);
         ItemAndVersion versionHierarchy = versionExpander.expandHierarchy((Item) resolved).get(versionCrid);
         if (versionHierarchy == null) {
             throw new RuntimeException("Missing version crid " + versionCrid + " is not a valid version crid for content " + contentUri);
         }
         Payload payload = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
-        taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, payload, Action.UPDATE));
+        if (shouldSave(HashType.CONTENT, versionCrid, payload)) {
+            taskStore.save(taskCreator.taskFor
+                    (versionCrid, versionHierarchy, payload, Action.UPDATE)
+            );
+
+            payloadHashStore.saveHash(HashType.CONTENT, versionCrid, payload.hash());
+        } else {
+            log.debug("Existing hash found for Content {}, not updating", versionCrid);
+        }
     }
 
-    private String resolveVersionId(TextualType comment) {
-        Matcher matcher = VERSION_CRID_PATTERN.matcher(comment.getValue());
+    private String resolveVersionId(Publisher publisher, TextualType comment) {
+        Pattern pattern = PUBLISHER_TO_PATTERN_MAP.get(publisher);
+        Matcher matcher = pattern.matcher(comment.getValue());
         if (!matcher.find()) {
-            throw new RuntimeException("unable to match version crid pattern in comment: " + comment.getValue());
+            throw new RuntimeException("Unable to match version crid pattern in comment: " + comment.getValue());
         }
         return matcher.group();
     }
@@ -192,9 +226,15 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(contentUri));
         Content content = (Content) resolved.asResolvedMap().get(contentUri);
         if (content == null) {
-            throw new RuntimeException("unable to resolve content for uri " + contentUri);
+            throw new RuntimeException("Unable to resolve content for uri " + contentUri);
         }
         return content;
+    }
+
+    private boolean shouldSave(HashType type, String id, Payload payload) {
+        java.util.Optional<String> storedHash = payloadHashStore.getHash(type, id);
+        //if the hash changed, or is not there, we should save.
+        return storedHash.map(payload::hasChanged).orElse(true);
     }
 
 }

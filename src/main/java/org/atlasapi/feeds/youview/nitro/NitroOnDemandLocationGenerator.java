@@ -24,8 +24,6 @@ import org.atlasapi.media.entity.Version;
 
 import com.metabroadcast.common.time.SystemClock;
 
-import org.joda.time.DateTime;
-
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
 import tva.metadata._2010.AudioAttributesType;
@@ -76,6 +74,8 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
     public final OnDemandProgramType generate(ItemOnDemandHierarchy hierarchy, String imi) {
 
         ItemOnDemandHierarchy doctoredDates = onDemandDateFudger.fudgeStartDates(hierarchy);
+        //bbc ondemands should have exactly 1 locations.
+        Location location = doctoredDates.locations().get(0);
 
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
 
@@ -85,12 +85,12 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
         onDemand.setInstanceDescription(generateInstanceDescription(
                 doctoredDates.item(),
                 doctoredDates.encoding(),
-                doctoredDates.location(),
+                location,
                 getLanguageCodeFor(doctoredDates.item())
         ));
         onDemand.setPublishedDuration(generatePublishedDuration(doctoredDates.version()));
-        onDemand.setStartOfAvailability(generateAvailabilityStart(doctoredDates.location()));
-        onDemand.setEndOfAvailability(generateAvailabilityEnd(doctoredDates.location()));
+        onDemand.setStartOfAvailability(generateAvailabilityStart(location));
+        onDemand.setEndOfAvailability(generateAvailabilityEnd(location));
         onDemand.setFree(generateFree());
         onDemand.setLang(LANGUAGE);
 

@@ -32,9 +32,10 @@ public class RemoteCheckTask extends ScheduledTask {
             Status.PUBLISHING
     );
 
-    //We need this limit to a reasonable number, cause if there are too many tasks mongo sort overflows
+    //We need this to limit this a surprisingly small number,
+    // cause if there are too many tasks mongo sort overflows.
     private static final int NUM_TO_CHECK_PER_ITTERATION = 10;
-    
+
     private final Logger log = LoggerFactory.getLogger(RemoteCheckTask.class);
     private final TaskStore taskStore;
     private final TaskProcessor processor;
@@ -49,7 +50,7 @@ public class RemoteCheckTask extends ScheduledTask {
     @Override
     protected void runTask() {
         UpdateProgress progress = UpdateProgress.START;
-
+        
         //We will check tasks per status, and then in blocks of NUM_TO_CHECK_PER_ITERATION linked
         //through dates. This is because requesting all out once causes mongo overflow problems.
         for (Status status : TO_BE_CHECKED) {

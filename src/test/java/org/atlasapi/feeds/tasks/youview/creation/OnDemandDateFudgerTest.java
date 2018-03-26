@@ -9,6 +9,7 @@ import org.atlasapi.media.entity.Version;
 
 import com.metabroadcast.common.time.Clock;
 
+import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,8 +51,7 @@ public class OnDemandDateFudgerTest {
                 item,
                 version,
                 encoding,
-                location
-        );
+                ImmutableList.of(location));
 
         fudger = OnDemandDateFudger.create(clock);
     }
@@ -85,7 +85,7 @@ public class OnDemandDateFudgerTest {
         assertTrue(result.item() == item);
         assertTrue(result.version() == version);
         assertTrue(result.encoding() == encoding);
-        assertTrue(result.location() == locationCopy);
+        assertTrue(result.locations().get(0) == locationCopy);
 
         verify(locationCopy, times(1)).setPolicy(policyCopy);
         verify(policyCopy, times(1)).setAvailabilityStart(now.minusHours(6));
@@ -120,7 +120,7 @@ public class OnDemandDateFudgerTest {
         assertTrue(result.item() == item);
         assertTrue(result.version() == version);
         assertTrue(result.encoding() == encoding);
-        assertTrue(result.location() == locationCopy);
+        assertTrue(result.locations().get(0) == locationCopy);
 
         verify(locationCopy, times(1)).setPolicy(policyCopy);
         verify(policyCopy, times(1)).setAvailabilityStart(now.minusHours(6));

@@ -1,14 +1,15 @@
 package org.atlasapi.feeds.youview.persistence;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import java.util.Optional;
+
+import com.metabroadcast.common.persistence.MongoTestHelper;
+import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Optional;
-import com.metabroadcast.common.persistence.MongoTestHelper;
-import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 public class MongoYouViewPayloadHashStoreTest {
 

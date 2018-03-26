@@ -1,14 +1,14 @@
 package org.atlasapi.feeds.tasks.persistence;
 
+import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
-import org.atlasapi.feeds.tasks.Destination.DestinationType;
-import org.joda.time.DateTime;
 
 import com.google.common.base.Optional;
+import org.joda.time.DateTime;
 
 
 public interface TaskStore {
@@ -50,7 +50,7 @@ public interface TaskStore {
     Optional<Task> taskFor(Long taskId);
     
     Iterable<Task> allTasks(TaskQuery query);
-    
+
     /**
      * Fetches all tasks for a given DestinationType (~= feed destination, e.g. YouView, RadioPlayer)
      * and Status

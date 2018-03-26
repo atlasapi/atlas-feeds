@@ -2,47 +2,46 @@ package org.atlasapi.feeds.tasks.youview.processing;
 
 import java.util.Set;
 
-import com.google.common.annotations.VisibleForTesting;
+import javax.annotation.Nullable;
+
 import org.atlasapi.feeds.tasks.Action;
-import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
+import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.youview.PerPublisherConfig;
+import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
 
 import com.google.common.collect.ImmutableSet;
-import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
-import static org.atlasapi.reporting.telescope.FeedsReporterNames.YOU_VIEW_AUTOMATIC_UPLOADER;
 
 public class UpdateTask extends TaskProcessingTask {
-    
+
     public UpdateTask(
             TaskStore taskStore,
             TaskProcessor processor,
-            DestinationType destinationType
-    ) {
-        super(taskStore, processor, destinationType, YOU_VIEW_AUTOMATIC_UPLOADER);
-    }
+            @Nullable Publisher publisher,
+            DestinationType destinationType) {
 
-    // For tests, allow use of own telescope
-    @VisibleForTesting
-    UpdateTask(
-            TaskStore taskStore,
-            TaskProcessor processor,
-            DestinationType destinationType,
-            FeedsTelescopeReporter telescope
-    ) {
-        super(taskStore, processor, destinationType, telescope);
+        super(
+                taskStore,
+                processor,
+                publisher,
+                destinationType,
+                publisher == null ? FeedsReporterNames.YOU_VIEW_AUTOMATIC_UPLOADER
+                                  : PerPublisherConfig.TO_TELESCOPE_REPORTER_NAME.get(publisher)
+        );
+
     }
 
     private static final Set<Status> TO_BE_UPLOADED = ImmutableSet.of(
             Status.NEW,
             Status.PENDING
     );
-    private static final Action TO_UPLOAD = Action.UPDATE; 
 
     @Override
     public Action action() {
-        return TO_UPLOAD;
+        return Action.UPDATE;
     }
 
     @Override
