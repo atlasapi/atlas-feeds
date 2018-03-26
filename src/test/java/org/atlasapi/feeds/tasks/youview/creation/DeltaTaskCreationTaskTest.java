@@ -27,6 +27,8 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
+import com.metabroadcast.common.properties.Configurer;
+
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -38,6 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import sun.tools.java.Environment;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -49,7 +52,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class DeltaTaskCreationTaskTest {
 
-    private static final Publisher PUBLISHER = Publisher.BBC;
+    private static final Publisher PUBLISHER = Publisher.BBC_NITRO;
 
     private DeltaTaskCreationTask task;
 
@@ -67,6 +70,11 @@ public class DeltaTaskCreationTaskTest {
 
     @Before
     public void setUp() {
+        System.setProperty("SERVEROPTS_REPID_SERVICE_HOST", "no_host");
+        System.setProperty("SERVEROPTS_APPLICATIONS_CLIENT_HOST", "no_host");
+        System.setProperty("SERVEROPTS_YOUVIEW_UPLOAD_NITRO_EQUIVAPPID", "no_app");
+        System.setProperty("SERVEROPTS_YOUVIEW_UPLOAD_UNBOX_EQUIVAPPID", "no_app");
+
         task = new DeltaTaskCreationTask(
                 lastUpdatedStore,
                 PUBLISHER,
@@ -206,6 +214,7 @@ public class DeltaTaskCreationTaskTest {
     @Test
     @Ignore
     public void createsDeleteTaskForCancelledItems() throws PayloadGenerationException {
+
         DateTime updatedSince = DateTime.now().minusDays(1);
         DateTime created = DateTime.now();
         String contentCrid = "foobar crid";
