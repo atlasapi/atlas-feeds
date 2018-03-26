@@ -25,7 +25,7 @@ public class PerPublisherConfig {
     );
 
     public static final Map<Publisher, String> TO_APP_ID_MAP = ImmutableMap.of(
-            Publisher.BBC_NITRO, "", //not in use. Equiv not running for nitro.
+            Publisher.BBC_NITRO, Configurer.get("YOUVIEW_UPLOAD_NITRO_EQUIVAPPID").get(), //not in use, equiv not running for nitro. But this needs to be something valid for proper startup.
             Publisher.AMAZON_UNBOX, Configurer.get("YOUVIEW_UPLOAD_UNBOX_EQUIVAPPID").get()
     );
 }
