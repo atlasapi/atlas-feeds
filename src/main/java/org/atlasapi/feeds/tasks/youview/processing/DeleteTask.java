@@ -11,7 +11,6 @@ import org.atlasapi.reporting.telescope.FeedsReporterNames;
 
 import com.google.common.collect.ImmutableSet;
 
-
 public final class DeleteTask extends TaskProcessingTask {
     
     public DeleteTask(
