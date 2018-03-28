@@ -196,7 +196,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(idGenerator.generateContentCrid(brand.get()));
-            if (series.getSeriesNumber() != null) {
+            if (series.getSeriesNumber() != null && series.getSeriesNumber() != 0) {
                 memberOf.setIndex(Long.valueOf(series.getSeriesNumber()));
             }
             groupInfo.getMemberOf().add(memberOf);
