@@ -162,7 +162,7 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
     }
 
     private BitRateType generateBitRate(Encoding encoding) {
-        Integer bitRate = Objects.firstNonNull(encoding.getVideoBitRate(), DEFAULT_BIT_RATE);
+        Integer bitRate = Objects.firstNonNull(encoding.getBitRate(), DEFAULT_BIT_RATE);
         BitRateType bitRateType = new BitRateType();
         bitRateType.setVariable(false);
         bitRateType.setValue(BigInteger.valueOf(bitRate));
