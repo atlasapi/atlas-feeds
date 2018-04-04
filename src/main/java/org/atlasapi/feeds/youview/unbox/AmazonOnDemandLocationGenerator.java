@@ -1,18 +1,10 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToIntFunction;
-import java.util.function.ToLongFunction;
-
-import javax.xml.datatype.Duration;
-import javax.xml.datatype.XMLGregorianCalendar;
-
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.youview.refdata.schemas._2011_07_06.ExtendedInstanceDescriptionType;
+import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
@@ -23,12 +15,6 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Quality;
 import org.atlasapi.media.entity.Version;
-
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.youview.refdata.schemas._2011_07_06.ExtendedInstanceDescriptionType;
-import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 import org.jdom.IllegalDataException;
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
@@ -42,6 +28,18 @@ import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
+
+import javax.xml.datatype.Duration;
+import javax.xml.datatype.XMLGregorianCalendar;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -57,6 +55,7 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
     public static final String YOUVIEW_ENTITLEMENT_PAY_TO_BUY = "http://refdata.youview.com/mpeg7cs/YouViewEntitlementTypeCS/2010-11-11#ownership";
     public static final String YOUVIEW_GENRE_MEDIA_AVAILABLE = "http://refdata.youview.com/mpeg7cs/YouViewMediaAvailabilityCS/2010-09-29#media_available";
     private static final String GENRE_TYPE_OTHER = "other";
+    private static final Integer DEFAULT_BIT_RATE = 3200000;
 
     private final IdGenerator idGenerator;
     
@@ -113,10 +112,7 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
 
         attributes.getAudioAttributes().add(generateAudioAttributes());
         attributes.setVideoAttributes(generateVideoAttributes(encoding));
-        Optional<BitRateType> bitRate = generateBitRate(encoding);
-        if (bitRate.isPresent()) {
-            attributes.setBitRate(bitRate.get());
-        }
+        attributes.setBitRate(generateBitRate(encoding));
         
         return attributes;
     }
@@ -132,40 +128,45 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
     private VideoAttributesType generateVideoAttributes(Encoding encoding) {
         VideoAttributesType attributes = new VideoAttributesType();
 
-        //We no longer set fake values during ingest, but YV requires something, so we'll fake them
+        //We no longer set hard-coded values during ingest, but YV requires something, so we'll hard-code them
         //here instead, and we'll match them to YV's SPECWIP-4212
+        AspectRatioType aspectRatio = new AspectRatioType();
         if (Quality.SD.equals(encoding.getQuality())) {
             attributes.setHorizontalSize(848);
             attributes.setVerticalSize(480);
+            aspectRatio.setValue("16:9");
         }
         if (Quality.HD.equals(encoding.getQuality())) {
             attributes.setHorizontalSize(1280);
             attributes.setVerticalSize(720); //lower value that is HD for YV.
+            aspectRatio.setValue("16:9");
         }
         if (Quality.FOUR_K.equals(encoding.getQuality())) {
             attributes.setHorizontalSize(3840);
             attributes.setVerticalSize(2160); //minimum to considered UHD by YV
+            aspectRatio.setValue("16:9");
         }
 
 
         if (encoding.getVideoAspectRatio() != null) {
-            AspectRatioType aspectRatio = new AspectRatioType();
+            aspectRatio = new AspectRatioType();
             aspectRatio.setValue(encoding.getVideoAspectRatio());
+            attributes.getAspectRatio().add(aspectRatio);
+        }
+
+        else {
             attributes.getAspectRatio().add(aspectRatio);
         }
 
         return attributes;
     }
 
-    private Optional<BitRateType> generateBitRate(Encoding encoding) {
-        Integer bitRate = encoding.getBitRate();
-        if (bitRate == null) {
-            return Optional.absent();
-        }
+    private BitRateType generateBitRate(Encoding encoding) {
+        Integer bitRate = Objects.firstNonNull(encoding.getVideoBitRate(), DEFAULT_BIT_RATE);
         BitRateType bitRateType = new BitRateType();
         bitRateType.setVariable(false);
         bitRateType.setValue(BigInteger.valueOf(bitRate));
-        return Optional.of(bitRateType);
+        return bitRateType;
     }
 
     private UniqueIDType generateDeepLinkingId(List<Location> locations) {
