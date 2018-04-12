@@ -23,6 +23,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.youview.refdata.schemas._2011_07_06.ExtendedTargetingInformationType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.DerivedFromType;
@@ -38,8 +40,8 @@ import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAmazonAsin;
 
 
 public class AmazonProgramInformationGenerator implements ProgramInformationGenerator {
-    
-    private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance";
+
+    private static final Logger log = LoggerFactory.getLogger(AmazonProgramInformationGenerator.class);
     public static final String YOUVIEW_AMAZON_TARGET_USER_GROUP = "http://refdata.youview.com/mpeg7cs/YouViewApplicationPlayerCS/2017-09-28#html5-aiv1";
     
     private static final Predicate<Certificate> FILTER_CERT_FOR_GB = new Predicate<Certificate>() {
@@ -54,13 +56,19 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
         public String apply(Certificate input) {
             String href = YOUVIEW_CERTIFICATE_MAPPING.get(input.classification());
             if (href == null) {
+                log.warn(
+                        "Age rating classification from amazon ({}) could not be mapped to a YV certificate. This "
+                        + "probably means that amazon started sending new classifications that "
+                        + "are not in the existing map. Find this class in code, and update the map."
+                        + "In the meantime the default rating is used ({}).",
+                        input.classification(), YOUVIEW_DEFAULT_CERTIFICATE);
                 href = YOUVIEW_DEFAULT_CERTIFICATE;
             }
             return href;
         }
     };
-    
-    // TODO are there other settings than this? E, NR, TBA etc
+
+    private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance";
     private static final Map<String, String> YOUVIEW_CERTIFICATE_MAPPING = ImmutableMap.<String, String>builder()
 
             //The mapping is as agreed in YV ticket ECOTEST-283
