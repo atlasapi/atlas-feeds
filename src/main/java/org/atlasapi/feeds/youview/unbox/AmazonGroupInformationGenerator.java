@@ -196,6 +196,8 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(idGenerator.generateContentCrid(brand.get()));
+            //Index 0 is illegal for YV. It was agreed that we still send the series, but without
+            //the index number.
             if (series.getSeriesNumber() != null && series.getSeriesNumber() != 0) {
                 memberOf.setIndex(Long.valueOf(series.getSeriesNumber()));
             }
