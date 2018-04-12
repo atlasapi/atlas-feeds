@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview.unbox;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.youview.refdata.schemas._2011_07_06.ExtendedInstanceDescriptionType;
 import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToIntFunction;
@@ -191,9 +193,9 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
     }
 
     //Genres in this context describes the availability of the media. 
-    private List<GenreType> generateGenres(List<Location> locations) {
+    private Set<GenreType> generateGenres(List<Location> locations) {
 
-        ImmutableList.Builder<GenreType> plans = ImmutableList.builder();
+        ImmutableSet.Builder<GenreType> plans = ImmutableSet.builder();
 
         //All media ingested by Amazon is available
         GenreType mediaAvailable = new GenreType();
