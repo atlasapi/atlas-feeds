@@ -2,6 +2,8 @@ package org.atlasapi.feeds.youview.unbox;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.xml.datatype.Duration;
 
@@ -28,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.DerivedFromType;
+import tva.metadata._2010.ExplanationLengthType;
+import tva.metadata._2010.ExplanationType;
 import tva.metadata._2010.ProgramInformationType;
 import tva.metadata._2010.TVAParentalGuidanceType;
 import tva.metadata._2010.TVATimeType;
@@ -68,9 +72,19 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
         }
     };
 
+    private static final Function<Certificate, String> CERTIFICATE_TO_EXPLANATION = new Function<Certificate, String>() {
+        @Override
+        public String apply(Certificate input) {
+            String href = YOUVIEW_CERTIFICATE_EXPLANATION_MAPPING.get(input.classification());
+            if (href == null) {
+                href = "";
+            }
+            return href;
+        }
+    };
+
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance";
     private static final Map<String, String> YOUVIEW_CERTIFICATE_MAPPING = ImmutableMap.<String, String>builder()
-
             //The mapping is as agreed in YV ticket ECOTEST-283
             .put("amazon_maturity_rating|all_ages", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#no_parental_control")
             .put("amazon_maturity_rating|children", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#no_parental_control")
@@ -87,6 +101,25 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
             .put("bbfc_rating|ages_15_and_over", "http://bbfc.org.uk/BBFCRatingCS/2002#15")
             .put("bbfc_rating|ages_18_and_over", "http://bbfc.org.uk/BBFCRatingCS/2002#18")
             .put("bbfc_rating|to_be_announced", "http://bbfc.org.uk/BBFCRatingCS/2002#unrated")
+            .build();
+
+    private static final Map<String, String> YOUVIEW_CERTIFICATE_EXPLANATION_MAPPING = ImmutableMap.<String, String>builder()
+            //The mapping is as agreed in YV ticket ECOTEST-283
+            .put("amazon_maturity_rating|all_ages", "")
+            .put("amazon_maturity_rating|children", "")
+            .put("amazon_maturity_rating|guidance_suggested","Guidance Suggested")
+            .put("amazon_maturity_rating|ages_9_and_older","Suitable for 9 years and over")
+            .put("amazon_maturity_rating|ages_13_and_older","Suitable for 13 years and over")
+            .put("amazon_maturity_rating|ages_17_and_older","Suitable for 17 years and over")
+            .put("amazon_maturity_rating|adult_content", "Suitable for 18 years and over")
+            .put("amazon_maturity_rating|mature","Suitable for 18 years and over")
+
+            .put("bbfc_rating|universal","")
+            .put("bbfc_rating|parental_guidance","")
+            .put("bbfc_rating|ages_12_and_over", "")
+            .put("bbfc_rating|ages_15_and_over", "")
+            .put("bbfc_rating|ages_18_and_over","")
+            .put("bbfc_rating|to_be_announced", "Rating to be announced")
             .build();
     
     private final IdGenerator idGenerator;
@@ -155,15 +188,33 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
         TVAParentalGuidanceType parentalGuidance = new TVAParentalGuidanceType();
 
         String certificate = Iterables.getFirst(
-            Iterables.transform(
-                Iterables.filter(item.getCertificates(), FILTER_CERT_FOR_GB), 
-                CERTIFICATE_TO_CLASSIFICATION
-            ), 
+                item.getCertificates()
+                        .stream()
+                        .filter(FILTER_CERT_FOR_GB::apply)
+                        .collect(Collectors.toList())
+                        .stream()
+                        .map(CERTIFICATE_TO_CLASSIFICATION::apply)
+                        .collect(Collectors.toList()),
             YOUVIEW_DEFAULT_CERTIFICATE);
 
         ControlledTermUseType useType = new ControlledTermUseType();
         useType.setHref(certificate);
         parentalGuidance.setParentalRating(useType);
+
+        String explanationText = Iterables.getFirst(
+                item.getCertificates()
+                        .stream()
+                        .filter(FILTER_CERT_FOR_GB::apply)
+                        .collect(Collectors.toList())
+                        .stream()
+                        .map(CERTIFICATE_TO_EXPLANATION::apply)
+                        .collect(Collectors.toList()),
+                "");
+
+        ExplanationType explanationType = new ExplanationType();
+        explanationType.setLength(ExplanationLengthType.LONG);
+        explanationType.setValue(explanationText);
+        parentalGuidance.getExplanatoryText().add(explanationType);
         return parentalGuidance;
     }
 
