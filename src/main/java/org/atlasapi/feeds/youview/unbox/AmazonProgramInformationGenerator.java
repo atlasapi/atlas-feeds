@@ -63,7 +63,7 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
                 log.warn(
                         "Age rating classification from amazon ({}) could not be mapped to a YV certificate. This "
                         + "probably means that amazon started sending new classifications that "
-                        + "are not in the existing map. Find this class in code, and update the map."
+                        + "are not in the existing map. Find this class in code, and update the map. "
                         + "In the meantime the default rating is used ({}).",
                         input.classification(), YOUVIEW_DEFAULT_CERTIFICATE);
                 href = YOUVIEW_DEFAULT_CERTIFICATE;

@@ -1,7 +1,11 @@
 package org.atlasapi.feeds.tasks.checking;
 
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import org.atlasapi.BlockingExecutor;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
@@ -36,6 +40,8 @@ public class RemoteCheckTask extends ScheduledTask {
     // cause if there are too many tasks mongo sort overflows.
     private static final int NUM_TO_CHECK_PER_ITTERATION = 10;
 
+    private final BlockingExecutor executor = new BlockingExecutor(50, 1000);
+
     private final Logger log = LoggerFactory.getLogger(RemoteCheckTask.class);
     private final TaskStore taskStore;
     private final TaskProcessor processor;
@@ -49,7 +55,7 @@ public class RemoteCheckTask extends ScheduledTask {
 
     @Override
     protected void runTask() {
-        UpdateProgress progress = UpdateProgress.START;
+        final UpdateProgress[] progress = { UpdateProgress.START };
         
         //We will check tasks per status, and then in blocks of NUM_TO_CHECK_PER_ITERATION linked
         //through dates. This is because requesting all out once causes mongo overflow problems.
@@ -58,14 +64,16 @@ public class RemoteCheckTask extends ScheduledTask {
             boolean checkedInLastLoop;
             DateTime lastDateChecked = new DateTime().minusYears(1);
             do {
-                log.info("Checking remote status for {}, already checked {}", status, numChecked );
+                log.info("Checking remote status for {}, already checked {}", status, numChecked);
                 checkedInLastLoop = false;
                 TaskQuery.Builder query = TaskQuery.builder(
-                        Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION),
-                        destinationType)
+                        Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION), destinationType)
                         .withTaskStatus(status)
                         .after(lastDateChecked)
-                        .withSort(TaskQuery.Sort.of(TaskQuery.Sort.Field.CREATED_TIME, TaskQuery.Sort.Direction.ASC));
+                        .withSort(TaskQuery.Sort.of(
+                                TaskQuery.Sort.Field.CREATED_TIME,
+                                TaskQuery.Sort.Direction.ASC
+                        ));
 
                 Iterable<Task> tasksToCheck = taskStore.allTasks(query.build());
 
@@ -74,11 +82,13 @@ public class RemoteCheckTask extends ScheduledTask {
                         break;
                     }
                     try {
-                        processor.checkRemoteStatusOf(task);
-                        progress = progress.reduce(UpdateProgress.SUCCESS);
+                        executor.execute(() -> {
+                            processor.checkRemoteStatusOf(task);
+                            progress[0] = progress[0].reduce(UpdateProgress.SUCCESS);
+                        });
                     } catch (Exception e) {
                         log.error("error checking task {}", task.id(), e);
-                        progress = progress.reduce(UpdateProgress.FAILURE);
+                        progress[0] = progress[0].reduce(UpdateProgress.FAILURE);
                     }
                     numChecked++;
                     checkedInLastLoop = true;
@@ -86,13 +96,15 @@ public class RemoteCheckTask extends ScheduledTask {
                     //possible that this will get stuck in checking the same tasks over and over
                     //assuming they don't change state (e.g. stay QUARANTINED). We will thus
                     //increment that by a tiny bit to keep the loop from becoming stuck, and we
-                    //will count on the next itteration to check things that are still here.
+                    //will count on the next iteration to check things that might have been skipped.
                     lastDateChecked = task.created().plusMillis(1);
-                    reportStatus(progress.toString());
+                    reportStatus(progress[0].toString());
                 }
             } while (checkedInLastLoop);
             log.info("Done Checking remote status for {}. Checked {}", status, numChecked );
-
         }
     }
+
+
+
 }
