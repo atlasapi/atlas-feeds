@@ -104,7 +104,6 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
             .build();
 
     private static final Map<String, String> YOUVIEW_CERTIFICATE_EXPLANATION_MAPPING = ImmutableMap.<String, String>builder()
-            //The mapping is as agreed in YV ticket ECOTEST-283
             .put("amazon_maturity_rating|all_ages", "")
             .put("amazon_maturity_rating|children", "")
             .put("amazon_maturity_rating|guidance_suggested","Guidance Suggested")
