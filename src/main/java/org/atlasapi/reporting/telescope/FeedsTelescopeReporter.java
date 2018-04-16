@@ -62,7 +62,8 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
                         EntityType.CHANNEL.getVerbose(), result.toString());
             }
         } else {
-            reportFailedEvent(result.getUpload().toString());
+            reportFailedEvent(result.getUpload().type().toNiceString(),
+                    EntityType.CHANNEL.getVerbose(), result.toString());
         }
     }
 
