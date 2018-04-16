@@ -29,7 +29,7 @@ import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SU
 
 public class FeedsTelescopeReporter extends TelescopeReporter {
 
-    public @Autowired ChannelResolver channelResolver;
+    private @Autowired ChannelResolver channelResolver;
     private static final Logger log = LoggerFactory.getLogger(FeedsTelescopeReporter.class);
 
     /**
@@ -187,9 +187,7 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
     @Nullable
     private EntityState.Builder entityStateFromRadioPlayerResult(RadioPlayerUploadResult result) {
         if (result == null) {
-            //this will eventually fail (silently). Look at reportFailedEventGeneric comments.
-            //However it should not happen either, and its here to prevent NullPointerExceptions.
-            return EntityState.builder();
+          return null;
         }
 
         try {
