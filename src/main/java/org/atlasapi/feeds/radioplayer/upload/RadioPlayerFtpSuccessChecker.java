@@ -74,7 +74,7 @@ public class RadioPlayerFtpSuccessChecker implements Runnable {
     }
 
     private RadioPlayerUploadResult radioPlayerResult(RadioPlayerFilenameMatcher matcher, FileUploadResult result) {
-        return new RadioPlayerUploadResult(matcher.type().requireValue(), matcher.service().requireValue(), matcher.date().requireValue(), result);
+        return new RadioPlayerUploadResult(matcher.type().requireValue(), matcher.service().requireValue(), matcher.date().requireValue(), result, "");
     }
 
     private Set<FileUploadResult> getCurrentResults(RadioPlayerFilenameMatcher matcher) {

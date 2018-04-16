@@ -9,6 +9,9 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
 import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
@@ -17,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -39,11 +43,16 @@ public class RadioPlayerOdBatchUploadTaskTest {
     @Mock private LastUpdatedContentFinder contentFinder;
     @Mock private ContentLister contentLister;
     @Mock private RadioPlayerUploadResultStore resultStore;
+    @Mock private FeedsTelescopeReporterFactory telescopeFactory;
+    @Mock private FeedsTelescopeReporter telescopeReporter;
 
     private RadioPlayerOdBatchUploadTask task;
 
     @Before
     public void setUp() throws Exception {
+        when(telescopeFactory.getTelescopeReporter(Matchers.any())).thenReturn(telescopeReporter);
+        FeedsTelescopeReporterFactory.setInstance(telescopeFactory);
+
         when(uploader.serviceIdentifier()).thenReturn("httpsUpload");
 
         task = new RadioPlayerOdBatchUploadTask(
@@ -56,7 +65,8 @@ public class RadioPlayerOdBatchUploadTaskTest {
                 contentFinder,
                 contentLister,
                 PUBLISHER,
-                resultStore
+                resultStore,
+                FeedsReporterNames.YOU_VIEW_MANUAL_UPLOADER
         );
     }
 

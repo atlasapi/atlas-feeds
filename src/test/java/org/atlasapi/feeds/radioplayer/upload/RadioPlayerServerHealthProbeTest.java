@@ -72,7 +72,7 @@ public class RadioPlayerServerHealthProbeTest {
     }
     
     private RadioPlayerUploadResult result(DateTime successDate, FileUploadResultType type, boolean connectionSuccess) {
-        return new RadioPlayerUploadResult(PI, SERVICE, successDate.toLocalDate(), new FileUploadResult("remote", String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type).withConnectionSuccess(connectionSuccess));
+        return new RadioPlayerUploadResult(PI, SERVICE, successDate.toLocalDate(), new FileUploadResult("remote", String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type).withConnectionSuccess(connectionSuccess),"");
     }
     
 }

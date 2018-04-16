@@ -28,22 +28,26 @@ public class FeedsTelescopeReporterFactory extends TelescopeReporterFactory {
         super(env, host, executor, metricsRegistry, metricsPrefix);
     }
 
-    //Surprisingly, this will draw the actual configuration from atlas config.
-
-    //If fewer than this threads are running, a new thread is created. Else things are queued.
-    private static final int CORE_THREADS = Integer.parseInt(Configurer.get("telescope.coreReportingThreads").get());
-    //If the queue is full, spawn a new thread up to this number.
-    private static final int MAX_THREADS = Integer.parseInt(Configurer.get("telescope.maxReportingThreads").get());
-    //If new threads cant be spawned. Things that don't fit go to the RejectedExecutionHandler
-    private static final int QUEUE_SIZE = Integer.parseInt(Configurer.get("telescope.queueSize").get());
-    private static final String THREAD_NAME = Configurer.get("telescope.reportingThreadName").get();
-    private static final String METRICS_PREFIX = Configurer.get("telescope.metricsPrefix").get();
-
-
     //Implement this as a Singleton
     private static FeedsTelescopeReporterFactory INSTANCE;
+
+    public static void setInstance(FeedsTelescopeReporterFactory instance){
+        INSTANCE = instance;
+    }
+
     public static synchronized FeedsTelescopeReporterFactory getInstance() {
         if (INSTANCE == null) {
+            //Surprisingly, this will draw the actual configuration from atlas config.
+
+            //If fewer than this threads are running, a new thread is created. Else things are queued.
+            int CORE_THREADS = Integer.parseInt(Configurer.get("telescope.coreReportingThreads").get());
+            //If the queue is full, spawn a new thread up to this number.
+            int MAX_THREADS = Integer.parseInt(Configurer.get("telescope.maxReportingThreads").get());
+            //If new threads cant be spawned. Things that don't fit go to the RejectedExecutionHandler
+            int QUEUE_SIZE = Integer.parseInt(Configurer.get("telescope.queueSize").get());
+            String THREAD_NAME = Configurer.get("telescope.reportingThreadName").get();
+            String METRICS_PREFIX = Configurer.get("telescope.metricsPrefix").get();
+
             ThreadPoolExecutor executor = new ThreadPoolExecutor(
                     CORE_THREADS,
                     MAX_THREADS,
