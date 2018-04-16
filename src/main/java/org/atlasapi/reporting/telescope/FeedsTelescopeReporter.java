@@ -55,14 +55,14 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         if (SUCCESS.equals(result.getUpload().type())) {
             EntityState.Builder entityState = entityStateFromRadioPlayerResult(result);
             if(entityState != null){
-                reportSuccessfulEventGeneric(entityStateFromRadioPlayerResult(result), null);
+                reportSuccessfulEventGeneric(entityState, null);
             } else {
                 reportFailedEvent("The event was reported as successful, but a proper telescope "
-                                  + "report could not be constucted by the given UploadResult.",
+                                  + "report could not be constructed by the given UploadResult.",
                         EntityType.CHANNEL.getVerbose(), result.toString());
             }
         } else {
-            reportFailedEvent(result.getUpload().exceptionSummary().toString());
+            reportFailedEvent(result.getUpload().toString());
         }
     }
 
@@ -199,7 +199,7 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
             return entityStateFromStrings(atlasId, EntityType.CHANNEL.getVerbose(), result.getPayload());
         } catch (Exception e) {
             log.warn("Failed to extract an entityState from a RadioPlayer upload result. "
-                     + "It won't be reported to telescope. {}", result, e);
+                     + "It won't be reported to telescope.", e);
         }
 
         return null;
