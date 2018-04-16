@@ -8,6 +8,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.upload.FileUploadService;
+import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
@@ -38,6 +40,7 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
     private final Iterable<LocalDate> days;
     private final AdapterLog adapterLog;
     private final Publisher publisher;
+    private ChannelResolver channelResolver;
     private FeedsReporterNames telescopeName;
 
     public RadioPlayerPiBatchUploadTask(
@@ -47,6 +50,7 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
             Iterable<LocalDate> dayRange,
             AdapterLog adapterLog,
             Publisher publisher,
+            ChannelResolver channelResolver,
             FeedsReporterNames telescopeName
     ) {
         this.uploaders = uploaders;
@@ -55,6 +59,7 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
         this.days = dayRange;
         this.adapterLog = adapterLog;
         this.publisher = publisher;
+        this.channelResolver = channelResolver;
         this.telescopeName = telescopeName;
     }
     
@@ -74,6 +79,11 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
                 Lists.newArrayListWithCapacity(Iterables.size(days) * serviceCount);
         
         for (RadioPlayerService service : services) {
+            //we will resolve the channels to get the atlasId so we can report to telescope.
+            java.util.Optional<Channel> channelOptional =
+                    channelResolver.fromUri(service.getServiceUri()).toOptional();
+            channelOptional.ifPresent( c -> service.setAtlasId(c.getId()));
+
             for (LocalDate day : days) {
                 uploadTasks.add(new RadioPlayerPiUploadTask(uploaders, day, service,
                         adapterLog, publisher));

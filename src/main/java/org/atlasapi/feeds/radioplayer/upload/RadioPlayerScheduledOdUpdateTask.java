@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
@@ -26,6 +27,7 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
     private final ContentLister contentLister;
     private final Publisher publisher;
     private final RadioPlayerUploadResultStore resultStore;
+    private ChannelResolver channelResolver;
     private FeedsReporterNames telescopeName;
 
     public RadioPlayerScheduledOdUpdateTask(
@@ -38,6 +40,7 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
             ContentLister contentLister,
             Publisher publisher,
             RadioPlayerUploadResultStore resultStore,
+            ChannelResolver channelResolver,
             FeedsReporterNames telescopeName
     ) {
         this.uploadersSupplier = uploadServicesSupplier;
@@ -49,6 +52,7 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
         this.contentLister = contentLister;
         this.publisher = publisher;
         this.resultStore = checkNotNull(resultStore);
+        this.channelResolver = channelResolver;
         this.telescopeName = telescopeName;
     }
     
@@ -69,6 +73,7 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
                 contentLister,
                 publisher,
                 resultStore,
+                channelResolver,
                 telescopeName
         ).run();
     }

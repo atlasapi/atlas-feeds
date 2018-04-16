@@ -286,7 +286,8 @@ public class RadioPlayerModule {
                 lastUpdatedContentFinder,
                 contentLister,
                 BBC,
-                uploadResultRecorder()
+                uploadResultRecorder(),
+                channelResolver
         ).withLog(log);
     }
 
@@ -297,7 +298,8 @@ public class RadioPlayerModule {
                 lastUpdatedContentFinder,
                 contentLister,
                 NITRO,
-                uploadResultRecorder()
+                uploadResultRecorder(),
+                channelResolver
         ).withLog(log);
     }
 

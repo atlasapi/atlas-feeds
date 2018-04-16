@@ -1,13 +1,13 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.reporting.telescope.FeedsReporterNames;
 
-import com.metabroadcast.columbus.telescope.client.TelescopeReporter;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.time.DayRangeGenerator;
 
@@ -26,6 +26,7 @@ public class RadioPlayerUploadTaskBuilder {
     private final LastUpdatedContentFinder lastUpdatedContentFinder;
     private final Publisher publisher;
     private final RadioPlayerUploadResultStore resultStore;
+    private ChannelResolver channelResolver;
 
     public RadioPlayerUploadTaskBuilder(
             RadioPlayerUploadServicesSupplier uploadServicesSupplier,
@@ -33,14 +34,15 @@ public class RadioPlayerUploadTaskBuilder {
             LastUpdatedContentFinder lastUpdatedContentFinder,
             ContentLister contentLister,
             Publisher publisher,
-            RadioPlayerUploadResultStore resultStore
-    ) {
+            RadioPlayerUploadResultStore resultStore,
+            ChannelResolver channelResolver) {
         this.uploadServicesSupplier = uploadServicesSupplier;
         this.executor = executor;
         this.lastUpdatedContentFinder = lastUpdatedContentFinder;
         this.contentLister = contentLister;
         this.publisher = publisher;
         this.resultStore = checkNotNull(resultStore);
+        this.channelResolver = channelResolver;
     }
     
     public RadioPlayerUploadTaskBuilder withLog(AdapterLog log) {
@@ -57,6 +59,7 @@ public class RadioPlayerUploadTaskBuilder {
                 dayGenerator,
                 log,
                 publisher,
+                channelResolver,
                 telescopeName
         );
     }
@@ -73,6 +76,7 @@ public class RadioPlayerUploadTaskBuilder {
                 days,
                 log,
                 publisher,
+                channelResolver,
                 telescopeName
         );
     }
@@ -91,6 +95,7 @@ public class RadioPlayerUploadTaskBuilder {
                 contentLister,
                 publisher,
                 resultStore,
+                channelResolver,
                 telescopeName
         );
     }
@@ -110,6 +115,7 @@ public class RadioPlayerUploadTaskBuilder {
                 contentLister,
                 publisher,
                 resultStore,
+                channelResolver,
                 telescopeName
         );
     }

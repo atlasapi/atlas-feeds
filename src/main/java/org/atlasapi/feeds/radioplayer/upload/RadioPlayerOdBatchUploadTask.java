@@ -11,6 +11,8 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerOdFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadService;
+import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
@@ -20,11 +22,6 @@ import org.atlasapi.reporting.telescope.FeedsReporterNames;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
-import com.metabroadcast.columbus.telescope.api.EntityState;
-import com.metabroadcast.columbus.telescope.api.Event;
-import com.metabroadcast.columbus.telescope.client.TelescopeReporter;
-import com.metabroadcast.columbus.telescope.client.TelescopeReporterFactory;
-import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
 import com.metabroadcast.common.time.DateTimeZones;
 
 import com.google.common.base.Optional;
@@ -57,6 +54,7 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
     private final Optional<DateTime> since;
     private final RadioPlayerOdUriResolver uriResolver;
     private final Publisher publisher;
+    private ChannelResolver channelResolver;
     private final RadioPlayerUploadResultStore resultStore;
     private final FeedsReporterNames telescopeName;
 
@@ -71,6 +69,7 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
             ContentLister contentLister,
             Publisher publisher,
             RadioPlayerUploadResultStore resultStore,
+            ChannelResolver channelResolver,
             FeedsReporterNames telescopeName
     ) {
         this.uploaders = uploaders;
@@ -80,6 +79,7 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
         this.fullSnapshot = fullSnapshot;
         this.adapterLog = adapterLog;
         this.publisher = publisher;
+        this.channelResolver = channelResolver;
         this.since = fullSnapshot
                      ? Optional.absent()
                      : Optional.of(day.toDateTimeAtStartOfDay(DateTimeZone.UTC).minusHours(2));
@@ -140,6 +140,10 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
                     );
                 }
             } else {
+                //we will resolve the channels to get the atlasId so we can report to telescope.
+                java.util.Optional<Channel> channelOptional =
+                        channelResolver.fromUri(service.getServiceUri()).toOptional();
+                channelOptional.ifPresent( c -> service.setAtlasId(c.getId()));
                 uploadTasks.add(new RadioPlayerOdUploadTask(uploaders, since, day, service, uris,
                         adapterLog, publisher));
             }

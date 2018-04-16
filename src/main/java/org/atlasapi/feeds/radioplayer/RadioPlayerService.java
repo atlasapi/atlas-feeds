@@ -12,6 +12,7 @@ public class RadioPlayerService {
     private String dabServiceId = "00.0000.0000.0";
     private String ionId;
     private String masterBrandId;
+    private Long atlasId;
 
     public RadioPlayerService(int radioplayerId, String name) {
         this.radioplayerId = radioplayerId;
@@ -93,5 +94,13 @@ public class RadioPlayerService {
     @Override
     public String toString() {
         return String.format("[%d] %s (%s)", radioplayerId, name, serviceUri);
+    }
+
+    public void setAtlasId(Long atlasId) {
+        this.atlasId = atlasId;
+    }
+
+    public Long getAtlasId() {
+        return atlasId;
     }
 }

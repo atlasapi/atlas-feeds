@@ -66,7 +66,7 @@ public class RadioPlayerOdBatchUploadTaskTest {
                 contentLister,
                 PUBLISHER,
                 resultStore,
-                FeedsReporterNames.YOU_VIEW_MANUAL_UPLOADER
+                channelResolver, FeedsReporterNames.YOU_VIEW_MANUAL_UPLOADER
         );
     }
 

@@ -1,14 +1,11 @@
 package org.atlasapi.reporting.telescope;
 
-import java.util.Optional;
-
 import javax.annotation.Nullable;
 
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadResult;
 import org.atlasapi.feeds.tasks.Destination;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
-import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 
 import com.metabroadcast.columbus.telescope.api.EntityState;
@@ -18,7 +15,6 @@ import com.metabroadcast.columbus.telescope.client.EntityType;
 import com.metabroadcast.columbus.telescope.client.TelescopeClientImpl;
 import com.metabroadcast.columbus.telescope.client.TelescopeReporter;
 import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
-import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.media.MimeType;
 
 import org.slf4j.Logger;
@@ -191,11 +187,16 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         }
 
         try {
-            Optional<Channel> channelOptional =
-                    channelResolver.fromUri(result.getService().getServiceUri()).toOptional();
-
-            String atlasId = Long.toString(channelOptional.get().getId());
-            return entityStateFromStrings(atlasId, EntityType.CHANNEL.getVerbose(), result.getPayload());
+            if(result.getService().getAtlasId() == null){
+                throw new NullPointerException("There was no atlas id, so a telescope EntityState"
+                                               + "could not be constructed from this RadioPlayer "
+                                               + "upload result. " + result.getService());
+            }
+            return entityStateFromStrings(
+                    result.getService().getAtlasId().toString(),
+                    EntityType.CHANNEL.getVerbose(),
+                    result.getPayload()
+            );
         } catch (Exception e) {
             log.warn("Failed to extract an entityState from a RadioPlayer upload result. "
                      + "It won't be reported to telescope.", e);

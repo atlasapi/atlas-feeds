@@ -69,7 +69,6 @@ import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
-import org.jmock.integration.junit4.JMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
@@ -166,7 +165,7 @@ public class RadioPlayerFileUploaderTest {
 				new DayRangeGenerator(),
 				new SystemOutAdapterLog(),
 				Iterables.getOnlyElement(publishers),
-				FeedsReporterNames.RADIO_PLAYER_MANUAL_PI_UPLOADER
+				channelResolver, FeedsReporterNames.RADIO_PLAYER_MANUAL_PI_UPLOADER
 		);
 
 		Executor executor = MoreExecutors.sameThreadExecutor();

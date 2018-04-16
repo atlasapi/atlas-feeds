@@ -46,7 +46,7 @@ public class FeedsTelescopeReporterFactory extends TelescopeReporterFactory {
             //If new threads cant be spawned. Things that don't fit go to the RejectedExecutionHandler
             int QUEUE_SIZE = Integer.parseInt(Configurer.get("telescope.queueSize").get());
             String THREAD_NAME = Configurer.get("telescope.reportingThreadName").get();
-            String METRICS_PREFIX = Configurer.get("telescope.metricsPrefix").get();
+//            String METRICS_PREFIX = Configurer.get("telescope.metricsPrefix").get()
 
             ThreadPoolExecutor executor = new ThreadPoolExecutor(
                     CORE_THREADS,

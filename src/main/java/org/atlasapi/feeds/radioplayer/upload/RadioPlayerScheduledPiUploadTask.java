@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.reporting.telescope.FeedsReporterNames;
@@ -21,12 +22,14 @@ public class RadioPlayerScheduledPiUploadTask extends ScheduledTask {
     private final DayRangeGenerator dayRangeGenerator;
     private final AdapterLog log;
     private final Publisher publisher;
+    private ChannelResolver channelResolver;
     private FeedsReporterNames telescopeName;
 
     public RadioPlayerScheduledPiUploadTask(
             RadioPlayerUploadServicesSupplier uploadServicesSupplier,
             RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services,
             DayRangeGenerator dayRangeGenerator, AdapterLog log, Publisher publisher,
+            ChannelResolver channelResolver,
             FeedsReporterNames telescopeName) {
         this.uploadersSupplier = uploadServicesSupplier;
         this.executor = executor;
@@ -34,6 +37,7 @@ public class RadioPlayerScheduledPiUploadTask extends ScheduledTask {
         this.dayRangeGenerator = dayRangeGenerator;
         this.log = log;
         this.publisher = publisher;
+        this.channelResolver = channelResolver;
         this.telescopeName = telescopeName;
     }
 
@@ -49,6 +53,7 @@ public class RadioPlayerScheduledPiUploadTask extends ScheduledTask {
                 dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC)),
                 log,
                 publisher,
+                channelResolver,
                 telescopeName
         ).run();
         
