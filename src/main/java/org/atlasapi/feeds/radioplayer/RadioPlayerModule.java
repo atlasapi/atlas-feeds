@@ -352,14 +352,16 @@ public class RadioPlayerModule {
                 scheduler.schedule(
                         radioPlayerFtpUploadTaskBuilder().newScheduledPiTask(
                                 ftpUploadServices(),
-                                dayRangeGenerator
+                                dayRangeGenerator,
+                                FeedsReporterNames.RADIO_PLAYER_AUTO_PI_UPLOADER
                         ).withName("Radioplayer PI Full Upload"),
                         UPLOAD_EVERY_TWO_HOURS
                 );
                 scheduler.schedule(
                         radioPlayerFtpUploadTaskBuilder().newScheduledPiTask(
                                 ftpUploadServices(),
-                                new DayRangeGenerator()
+                                new DayRangeGenerator(),
+                                FeedsReporterNames.RADIO_PLAYER_AUTO_PI_UPLOADER
                         ).withName("Radioplayer PI Today Upload"),
                         UPLOAD_EVERY_TEN_MINUTES
                 );
@@ -394,14 +396,16 @@ public class RadioPlayerModule {
                 scheduler.schedule(
                         radioPlayerHttpsUploadTaskBuilder().newScheduledPiTask(
                                 httpsUploadServices(),
-                                dayRangeGenerator
+                                dayRangeGenerator,
+                                FeedsReporterNames.RADIO_PLAYER_AUTO_PI_UPLOADER
                         ).withName("Radioplayer HTTPS PI Full Upload"),
                         UPLOAD_EVERY_TWO_HOURS
                 );
                 scheduler.schedule(
                         radioPlayerHttpsUploadTaskBuilder().newScheduledPiTask(
                                 httpsUploadServices(),
-                                new DayRangeGenerator()
+                                new DayRangeGenerator(),
+                                FeedsReporterNames.RADIO_PLAYER_AUTO_PI_UPLOADER
                         ).withName("Radioplayer HTTPS PI Today Upload"),
                         UPLOAD_EVERY_THIRTY_MINUTES
                 );

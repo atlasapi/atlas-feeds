@@ -144,7 +144,7 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
                 spec.getService(),
                 spec.getDay(),
                 successfulUpload(input.serviceIdentifier(), spec.filename()),
-                ""
+                "Nothing to upload"
         );
     }
 

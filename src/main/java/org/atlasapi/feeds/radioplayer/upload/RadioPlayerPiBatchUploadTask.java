@@ -11,6 +11,9 @@ import org.atlasapi.feeds.upload.FileUploadService;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
 import com.metabroadcast.common.time.DateTimeZones;
 
@@ -35,6 +38,7 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
     private final Iterable<LocalDate> days;
     private final AdapterLog adapterLog;
     private final Publisher publisher;
+    private FeedsReporterNames telescopeName;
 
     public RadioPlayerPiBatchUploadTask(
             Iterable<FileUploadService> uploaders,
@@ -42,7 +46,8 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
             Iterable<RadioPlayerService> services,
             Iterable<LocalDate> dayRange,
             AdapterLog adapterLog,
-            Publisher publisher
+            Publisher publisher,
+            FeedsReporterNames telescopeName
     ) {
         this.uploaders = uploaders;
         this.executor = executor;
@@ -50,10 +55,15 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
         this.days = dayRange;
         this.adapterLog = adapterLog;
         this.publisher = publisher;
+        this.telescopeName = telescopeName;
     }
     
     @Override
     public void run() {
+        FeedsTelescopeReporter telescopeReporter =
+                FeedsTelescopeReporterFactory.getInstance().getTelescopeReporter(telescopeName);
+        telescopeReporter.startReporting();
+
         DateTime start = new DateTime(DateTimeZones.UTC);
         int serviceCount = Iterables.size(services);
 
@@ -86,6 +96,7 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
                         if (SUCCESS.equals(result.getUpload().type())) {
                             successes++;
                         }
+                        telescopeReporter.reportEvent(result);
                     }
 
                     if (noResultsFound) {
@@ -104,6 +115,7 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
         String runTime = new Period(start, new DateTime(DateTimeZones.UTC))
                 .toString(PeriodFormat.getDefault());
 
+        telescopeReporter.endReporting();
         logInfo("Radioplayer PI Batch Uploader finished in %s, %s/%s successful.",
                 runTime, successes, uploadTasks.size());
     }

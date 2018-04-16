@@ -1,12 +1,5 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.List;
@@ -14,18 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-import org.apache.ftpserver.FtpServer;
-import org.apache.ftpserver.FtpServerFactory;
-import org.apache.ftpserver.ftplet.Authentication;
-import org.apache.ftpserver.ftplet.AuthenticationFailedException;
-import org.apache.ftpserver.ftplet.Authority;
-import org.apache.ftpserver.ftplet.AuthorizationRequest;
-import org.apache.ftpserver.ftplet.FtpException;
-import org.apache.ftpserver.ftplet.User;
-import org.apache.ftpserver.ftplet.UserManager;
-import org.apache.ftpserver.listener.ListenerFactory;
-import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
-import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
@@ -52,6 +33,35 @@ import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.logging.SystemOutAdapterLog;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
+
+import com.metabroadcast.common.base.Maybe;
+import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.security.UsernameAndPassword;
+import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.DayRangeGenerator;
+
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.io.Files;
+import com.google.common.net.HostSpecifier;
+import com.google.common.util.concurrent.MoreExecutors;
+import org.apache.ftpserver.FtpServer;
+import org.apache.ftpserver.FtpServerFactory;
+import org.apache.ftpserver.ftplet.Authentication;
+import org.apache.ftpserver.ftplet.AuthenticationFailedException;
+import org.apache.ftpserver.ftplet.Authority;
+import org.apache.ftpserver.ftplet.AuthorizationRequest;
+import org.apache.ftpserver.ftplet.FtpException;
+import org.apache.ftpserver.ftplet.User;
+import org.apache.ftpserver.ftplet.UserManager;
+import org.apache.ftpserver.listener.ListenerFactory;
+import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
+import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -66,20 +76,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import com.google.common.io.Files;
-import com.google.common.net.HostSpecifier;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.metabroadcast.common.base.Maybe;
-import com.metabroadcast.common.intl.Countries;
-import com.metabroadcast.common.security.UsernameAndPassword;
-import com.metabroadcast.common.time.DateTimeZones;
-import com.metabroadcast.common.time.DayRangeGenerator;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 
 @RunWith(JMock.class)
 public class RadioPlayerFileUploaderTest {
@@ -146,7 +148,14 @@ public class RadioPlayerFileUploaderTest {
             will(returnValue(ImmutableList.of(fileUploader)));
         }});
 		
-		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(supplier, new RadioPlayerRecordingExecutor(recorder, MoreExecutors.sameThreadExecutor()), services, new DayRangeGenerator(), new SystemOutAdapterLog(), Iterables.getOnlyElement(publishers));
+		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(supplier,
+				new RadioPlayerRecordingExecutor(recorder, MoreExecutors.sameThreadExecutor()),
+				services,
+				new DayRangeGenerator(),
+				new SystemOutAdapterLog(),
+				Iterables.getOnlyElement(publishers),
+				FeedsReporterNames.RADIO_PLAYER_MANUAL_PI_UPLOADER
+		);
 
 		Executor executor = MoreExecutors.sameThreadExecutor();
 		executor.execute(uploader);

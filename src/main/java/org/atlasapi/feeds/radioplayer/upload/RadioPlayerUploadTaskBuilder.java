@@ -48,18 +48,21 @@ public class RadioPlayerUploadTaskBuilder {
         return this;
     }
     
-    public ScheduledTask newScheduledPiTask(Iterable<RadioPlayerService> services, DayRangeGenerator dayGenerator) {
+    public ScheduledTask newScheduledPiTask(Iterable<RadioPlayerService> services, DayRangeGenerator dayGenerator,
+            FeedsReporterNames telescopeName) {
         return new RadioPlayerScheduledPiUploadTask(
                 uploadServicesSupplier,
                 executor,
                 services,
                 dayGenerator,
                 log,
-                publisher
+                publisher,
+                telescopeName
         );
     }
     
-    public Runnable newBatchPiTask(Iterable<RadioPlayerService> services, Iterable<LocalDate> days) {
+    public Runnable newBatchPiTask(Iterable<RadioPlayerService> services, Iterable<LocalDate> days,
+            FeedsReporterNames telescopeName) {
         return new RadioPlayerPiBatchUploadTask(
                 uploadServicesSupplier.get(
                         new DateTime(DateTimeZone.UTC),
@@ -69,7 +72,8 @@ public class RadioPlayerUploadTaskBuilder {
                 services,
                 days,
                 log,
-                publisher
+                publisher,
+                telescopeName
         );
     }
     

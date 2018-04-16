@@ -3,13 +3,15 @@ package org.atlasapi.feeds.radioplayer.upload;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.LocalDate;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
 
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.time.DateTimeZones;
 import com.metabroadcast.common.time.DayRangeGenerator;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
 
 public class RadioPlayerScheduledPiUploadTask extends ScheduledTask {
 
@@ -19,19 +21,36 @@ public class RadioPlayerScheduledPiUploadTask extends ScheduledTask {
     private final DayRangeGenerator dayRangeGenerator;
     private final AdapterLog log;
     private final Publisher publisher;
+    private FeedsReporterNames telescopeName;
 
-    public RadioPlayerScheduledPiUploadTask(RadioPlayerUploadServicesSupplier uploadServicesSupplier, RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services, DayRangeGenerator dayRangeGenerator, AdapterLog log, Publisher publisher) {
+    public RadioPlayerScheduledPiUploadTask(
+            RadioPlayerUploadServicesSupplier uploadServicesSupplier,
+            RadioPlayerRecordingExecutor executor, Iterable<RadioPlayerService> services,
+            DayRangeGenerator dayRangeGenerator, AdapterLog log, Publisher publisher,
+            FeedsReporterNames telescopeName) {
         this.uploadersSupplier = uploadServicesSupplier;
         this.executor = executor;
         this.services = services;
         this.dayRangeGenerator = dayRangeGenerator;
         this.log = log;
         this.publisher = publisher;
+        this.telescopeName = telescopeName;
     }
 
     @Override
     public void runTask() {
-        new RadioPlayerPiBatchUploadTask(uploadersSupplier.get(new DateTime(DateTimeZone.UTC), FileType.PI), executor, services, dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC)), log, publisher).run();
+        new RadioPlayerPiBatchUploadTask(
+                uploadersSupplier.get(
+                        new DateTime(DateTimeZone.UTC),
+                        FileType.PI
+                ),
+                executor,
+                services,
+                dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC)),
+                log,
+                publisher,
+                telescopeName
+        ).run();
         
     }
 

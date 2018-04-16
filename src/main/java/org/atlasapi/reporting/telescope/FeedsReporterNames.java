@@ -28,6 +28,8 @@ public enum FeedsReporterNames implements TelescopeReporterName {
 
     RADIO_PLAYER_AUTO_OD_UPLOADER("radioplayer.od.auto-uploader", "RadioPlayer Auto Uploader (OD)"),
     RADIO_PLAYER_MANUAL_OD_UPLOADER("radioplayer.od.manual-uploader", "RadioPlayer Manual Uploader (OD)"),
+    RADIO_PLAYER_AUTO_PI_UPLOADER("radioplayer.pi.auto-uploader", "RadioPlayer Auto Uploader (PI)"),
+    RADIO_PLAYER_MANUAL_PI_UPLOADER("radioplayer.pi.manual-uploader", "RadioPlayer Manual Uploader (PI)"),
     ;
 
     String reporterKey;
