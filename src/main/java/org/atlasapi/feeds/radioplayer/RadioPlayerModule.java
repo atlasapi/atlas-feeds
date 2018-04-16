@@ -38,6 +38,7 @@ import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
 import org.atlasapi.persistence.logging.AdapterLogEntry.Severity;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
 
 import com.metabroadcast.common.health.HealthProbe;
 import com.metabroadcast.common.http.SimpleHttpClient;
@@ -374,14 +375,16 @@ public class RadioPlayerModule {
                 scheduler.schedule(
                         radioPlayerFtpUploadTaskBuilder().newScheduledOdTask(
                                 ftpUploadServices(),
-                                true
+                                true,
+                                FeedsReporterNames.RADIO_PLAYER_AUTO_OD_UPLOADER
                         ).withName("Radioplayer OD Full Upload"),
                         NEVER
                 );
                 scheduler.schedule(
                         radioPlayerFtpUploadTaskBuilder().newScheduledOdTask(
                                 ftpUploadServices(),
-                                false
+                                false,
+                                FeedsReporterNames.RADIO_PLAYER_AUTO_OD_UPLOADER
                         ).withName("Radioplayer OD Today Upload"),
                         UPLOAD_EVERY_TEN_MINUTES
                 );
@@ -415,14 +418,16 @@ public class RadioPlayerModule {
                 scheduler.schedule(
                         radioPlayerHttpsUploadTaskBuilder().newScheduledOdTask(
                                 httpsUploadServices(),
-                                true
+                                true,
+                                FeedsReporterNames.RADIO_PLAYER_AUTO_OD_UPLOADER
                         ).withName("Radioplayer HTTPS OD Full Upload"),
                         NEVER
                 );
                 scheduler.schedule(
                         radioPlayerHttpsUploadTaskBuilder().newScheduledOdTask(
                                 httpsUploadServices(),
-                                false
+                                false,
+                                FeedsReporterNames.RADIO_PLAYER_AUTO_OD_UPLOADER
                         ).withName("Radioplayer HTTPS OD Today Upload"),
                         UPLOAD_EVERY_THIRTY_MINUTES
                 );

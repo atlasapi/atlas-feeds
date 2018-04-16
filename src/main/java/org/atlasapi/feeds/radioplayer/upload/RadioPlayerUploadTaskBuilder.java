@@ -5,7 +5,9 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
 
+import com.metabroadcast.columbus.telescope.client.TelescopeReporter;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.time.DayRangeGenerator;
 
@@ -71,7 +73,10 @@ public class RadioPlayerUploadTaskBuilder {
         );
     }
     
-    public ScheduledTask newScheduledOdTask(Iterable<RadioPlayerService> services, boolean fullSnapshot) {
+    public ScheduledTask newScheduledOdTask(
+            Iterable<RadioPlayerService> services,
+            boolean fullSnapshot,
+            FeedsReporterNames telescopeName) {
         return new RadioPlayerScheduledOdUpdateTask(
                 uploadServicesSupplier,
                 executor,
@@ -81,11 +86,15 @@ public class RadioPlayerUploadTaskBuilder {
                 lastUpdatedContentFinder,
                 contentLister,
                 publisher,
-                resultStore
+                resultStore,
+                telescopeName
         );
     }
     
-    public Runnable newBatchOdTask(Iterable<RadioPlayerService> services, LocalDate day) {
+    public Runnable newBatchOdTask(
+            Iterable<RadioPlayerService> services,
+            LocalDate day,
+            FeedsReporterNames telescopeName) {
         return new RadioPlayerOdBatchUploadTask(
                 uploadServicesSupplier.get(new DateTime(DateTimeZone.UTC), FileType.OD),
                 executor,
@@ -96,7 +105,8 @@ public class RadioPlayerUploadTaskBuilder {
                 lastUpdatedContentFinder,
                 contentLister,
                 publisher,
-                resultStore
+                resultStore,
+                telescopeName
         );
     }
 }

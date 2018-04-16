@@ -16,7 +16,15 @@ import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
+import com.metabroadcast.columbus.telescope.api.EntityState;
+import com.metabroadcast.columbus.telescope.api.Event;
+import com.metabroadcast.columbus.telescope.client.TelescopeReporter;
+import com.metabroadcast.columbus.telescope.client.TelescopeReporterFactory;
+import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
 import com.metabroadcast.common.time.DateTimeZones;
 
 import com.google.common.base.Optional;
@@ -50,6 +58,7 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
     private final RadioPlayerOdUriResolver uriResolver;
     private final Publisher publisher;
     private final RadioPlayerUploadResultStore resultStore;
+    private final FeedsReporterNames telescopeName;
 
     public RadioPlayerOdBatchUploadTask(
             Iterable<FileUploadService> uploaders,
@@ -61,7 +70,8 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
             LastUpdatedContentFinder lastUpdatedContentFinder,
             ContentLister contentLister,
             Publisher publisher,
-            RadioPlayerUploadResultStore resultStore
+            RadioPlayerUploadResultStore resultStore,
+            FeedsReporterNames telescopeName
     ) {
         this.uploaders = uploaders;
         this.executor = executor;
@@ -77,10 +87,15 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
                 contentLister, lastUpdatedContentFinder, publisher
         );
         this.resultStore = checkNotNull(resultStore);
+        this.telescopeName = checkNotNull(telescopeName);
     }
     
     @Override
     public void run() {
+        FeedsTelescopeReporter telescopeReporter =
+                FeedsTelescopeReporterFactory.getInstance().getTelescopeReporter(telescopeName);
+        telescopeReporter.startReporting();
+
         DateTime start = new DateTime(DateTimeZones.UTC);
         int serviceCount = Iterables.size(services);
 
@@ -119,7 +134,8 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
                                             ).filename(),
                                             DateTime.now(),
                                             NO_OP
-                                    )
+                                    ),
+                                    ""
                             )
                     );
                 }
@@ -145,6 +161,7 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
                         if (SUCCESS.equals(result.getUpload().type())) {
                             successes++;
                         }
+                        telescopeReporter.reportEvent(result);
                     }
 
                     if (noResultsFound) {
@@ -162,6 +179,8 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
 
         String runTime = new Period(start, new DateTime(DateTimeZones.UTC))
                 .toString(PeriodFormat.getDefault());
+
+        telescopeReporter.endReporting();
 
         logInfo("Radioplayer OD Batch Uploader finished in %s, %s/%s successful.",
                 runTime, successes, uploadTasks.size());

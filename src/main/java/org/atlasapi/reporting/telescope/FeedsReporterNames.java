@@ -25,6 +25,9 @@ public enum FeedsReporterNames implements TelescopeReporterName {
 
     YOU_VIEW_REVOKER("youview.revoker", "YouView Revoker"),
     YOU_VIEW_UNREVOKER("youview.unrevoker", "YouView Unrevoker"),
+
+    RADIO_PLAYER_AUTO_OD_UPLOADER("radioplayer.od.auto-uploader", "RadioPlayer Auto Uploader (OD)"),
+    RADIO_PLAYER_MANUAL_OD_UPLOADER("radioplayer.od.manual-uploader", "RadioPlayer Manual Uploader (OD)"),
     ;
 
     String reporterKey;

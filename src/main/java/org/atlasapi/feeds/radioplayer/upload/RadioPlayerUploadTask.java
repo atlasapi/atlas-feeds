@@ -120,7 +120,8 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
                 type,
                 spec.getService(),
                 spec.getDay(),
-                uploadService.upload(upload)
+                uploadService.upload(upload),
+                new String(upload.getFileData())
         );
     }
 
@@ -132,7 +133,8 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
                 failedUpload(
                         input.serviceIdentifier(),
                         spec.filename()).withCause(e).copyWithMessage(e.getMessage()
-                )
+                ),
+                ""
         );
     }
 
@@ -141,7 +143,8 @@ public abstract class RadioPlayerUploadTask implements Callable<Iterable<RadioPl
                 type,
                 spec.getService(),
                 spec.getDay(),
-                successfulUpload(input.serviceIdentifier(), spec.filename())
+                successfulUpload(input.serviceIdentifier(), spec.filename()),
+                ""
         );
     }
 

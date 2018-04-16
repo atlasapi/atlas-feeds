@@ -1,8 +1,13 @@
 package org.atlasapi.reporting.telescope;
 
+import java.util.Optional;
+
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadResult;
 import org.atlasapi.feeds.tasks.Destination;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
+import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
 
 import com.metabroadcast.columbus.telescope.api.EntityState;
 import com.metabroadcast.columbus.telescope.api.Environment;
@@ -11,13 +16,18 @@ import com.metabroadcast.columbus.telescope.client.EntityType;
 import com.metabroadcast.columbus.telescope.client.TelescopeClientImpl;
 import com.metabroadcast.columbus.telescope.client.TelescopeReporter;
 import com.metabroadcast.columbus.telescope.client.TelescopeReporterName;
+import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.media.MimeType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
 
 public class FeedsTelescopeReporter extends TelescopeReporter {
 
+    public @Autowired ChannelResolver channelResolver;
     private static final Logger log = LoggerFactory.getLogger(FeedsTelescopeReporter.class);
 
     /**
@@ -35,6 +45,16 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
 
     public void reportSuccessfulEvent(Task task){
         reportSuccessfulEventWithWarning(task, null);
+    }
+
+
+    public void reportEvent(RadioPlayerUploadResult result) {
+
+        if (SUCCESS.equals(result.getUpload().type())) {
+            reportSuccessfulEventGeneric(entityStateFromRadioPlayerResult(result), null);
+        } else {
+            reportFailedEvent(result.getUpload().exceptionSummary().toString());
+        }
     }
 
     public void reportSuccessfulEventWithWarning(
@@ -152,6 +172,27 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         }
 
         return entityStateFromStrings(atlasId, entityType, payload);
+    }
+
+    private EntityState.Builder entityStateFromRadioPlayerResult(RadioPlayerUploadResult result) {
+        if (result == null) {
+            //this will eventually fail (silently). Look at reportFailedEventGeneric comments.
+            //However it should not happen either, and its here to prevent NullPointerExceptions.
+            return EntityState.builder();
+        }
+
+        try {
+            Optional<Channel> channelOptional =
+                    channelResolver.fromUri(result.getService().getServiceUri()).toOptional();
+
+            String atlasId = Long.toString(channelOptional.get().getId());
+            return entityStateFromStrings(atlasId, EntityType.CHANNEL.getVerbose(), result.getPayload());
+        } catch (Exception e) {
+            log.warn("Failed to extract an entityState from a RadioPlayer upload result. "
+                     + "It won't be reported to telescope. {}", result, e);
+        }
+
+        return null;
     }
 
     private EntityState.Builder entityStateFromStrings(String atlasId, String entityType,

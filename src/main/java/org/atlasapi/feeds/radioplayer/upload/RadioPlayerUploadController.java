@@ -17,6 +17,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.http.HttpStatus;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
+
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -101,7 +103,11 @@ public class RadioPlayerUploadController {
             Iterable<LocalDate> days = day != null ? ImmutableList.of(DATE_PATTERN.parseDateTime(day).toLocalDate()) : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
             executor.submit(taskBuilder.newBatchPiTask(ImmutableList.of(service), days));
         } else if (fileType.equals(OD)) {
-            executor.submit(taskBuilder.newBatchOdTask(ImmutableList.of(service), DATE_PATTERN.parseDateTime(day).toLocalDate()));
+            executor.submit(
+                    taskBuilder.newBatchOdTask(
+                            ImmutableList.of(service),
+                            DATE_PATTERN.parseDateTime(day).toLocalDate(),
+                            FeedsReporterNames.RADIO_PLAYER_MANUAL_OD_UPLOADER));
         }
 
         response.setStatus(HttpStatus.SC_ACCEPTED);

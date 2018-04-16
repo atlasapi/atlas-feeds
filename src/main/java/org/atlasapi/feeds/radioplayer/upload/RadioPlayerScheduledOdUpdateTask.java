@@ -5,6 +5,7 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
 
 import com.metabroadcast.common.scheduling.ScheduledTask;
 
@@ -25,6 +26,7 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
     private final ContentLister contentLister;
     private final Publisher publisher;
     private final RadioPlayerUploadResultStore resultStore;
+    private FeedsReporterNames telescopeName;
 
     public RadioPlayerScheduledOdUpdateTask(
             RadioPlayerUploadServicesSupplier uploadServicesSupplier,
@@ -35,7 +37,8 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
             LastUpdatedContentFinder lastUpdatedContentFinder,
             ContentLister contentLister,
             Publisher publisher,
-            RadioPlayerUploadResultStore resultStore
+            RadioPlayerUploadResultStore resultStore,
+            FeedsReporterNames telescopeName
     ) {
         this.uploadersSupplier = uploadServicesSupplier;
         this.executor = executor;
@@ -46,6 +49,7 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
         this.contentLister = contentLister;
         this.publisher = publisher;
         this.resultStore = checkNotNull(resultStore);
+        this.telescopeName = telescopeName;
     }
     
     @Override
@@ -64,7 +68,8 @@ public class RadioPlayerScheduledOdUpdateTask extends ScheduledTask {
                 lastUpdatedContentFinder,
                 contentLister,
                 publisher,
-                resultStore
+                resultStore,
+                telescopeName
         ).run();
     }
 }
