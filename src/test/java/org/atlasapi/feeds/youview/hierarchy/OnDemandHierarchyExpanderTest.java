@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.atlasapi.TestsWithConfiguration;
 import org.atlasapi.feeds.youview.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.UniqueIdGenerator;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -28,7 +29,7 @@ import org.mockito.Mockito;
 import com.google.common.collect.ImmutableSet;
 
 
-public class OnDemandHierarchyExpanderTest {
+public class OnDemandHierarchyExpanderTest extends TestsWithConfiguration {
 
     private IdGenerator idGenerator;
     private OnDemandHierarchyExpander hierarchyExpander;
@@ -118,7 +119,6 @@ public class OnDemandHierarchyExpanderTest {
     }
     @Test
     public void testAmazonGetsOndemandsBasedOnEncodings() {
-        System.setProperty("MBST_PLATFORM", "stage");
         idGenerator = new AmazonIdGenerator();
         hierarchyExpander = new OnDemandHierarchyExpander(idGenerator);
 

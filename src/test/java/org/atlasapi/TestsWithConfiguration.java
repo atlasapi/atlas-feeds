@@ -1,5 +1,7 @@
 package org.atlasapi;
 
+import com.metabroadcast.common.properties.Configurer;
+
 import org.junit.BeforeClass;
 
 /**
@@ -12,5 +14,6 @@ public abstract class TestsWithConfiguration {
     @BeforeClass
     public static void recreateConfig() {
         System.setProperty("MBST_PLATFORM", "stage");
+        Configurer.load();
     }
 }

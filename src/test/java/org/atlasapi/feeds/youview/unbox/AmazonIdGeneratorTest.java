@@ -4,6 +4,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
+import org.atlasapi.TestsWithConfiguration;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Encoding;
@@ -21,14 +22,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 
-public class AmazonIdGeneratorTest {
+public class AmazonIdGeneratorTest extends TestsWithConfiguration{
 
     private final IdGenerator generator = new AmazonIdGenerator();
-
-    @BeforeClass
-    public static void setUp() {
-        System.setProperty("MBST_PLATFORM", "stage");
-    }
     
     @Test
     public void testContentCridGeneration() {

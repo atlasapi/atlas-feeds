@@ -2,6 +2,8 @@ package org.atlasapi.reporting.telescope;
 
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadResult;
 import org.atlasapi.feeds.tasks.Destination;
 import org.atlasapi.feeds.tasks.Task;
@@ -51,7 +53,14 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
     public void reportEvent(RadioPlayerUploadResult result) {
 
         if (SUCCESS.equals(result.getUpload().type())) {
-            reportSuccessfulEventGeneric(entityStateFromRadioPlayerResult(result), null);
+            EntityState.Builder entityState = entityStateFromRadioPlayerResult(result);
+            if(entityState != null){
+                reportSuccessfulEventGeneric(entityStateFromRadioPlayerResult(result), null);
+            } else {
+                reportFailedEvent("The event was reported as successful, but a proper telescope "
+                                  + "report could not be constucted by the given UploadResult.",
+                        EntityType.CHANNEL.getVerbose(), result.toString());
+            }
         } else {
             reportFailedEvent(result.getUpload().exceptionSummary().toString());
         }
@@ -174,6 +183,7 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         return entityStateFromStrings(atlasId, entityType, payload);
     }
 
+    @Nullable
     private EntityState.Builder entityStateFromRadioPlayerResult(RadioPlayerUploadResult result) {
         if (result == null) {
             //this will eventually fail (silently). Look at reportFailedEventGeneric comments.

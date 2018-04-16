@@ -3,6 +3,7 @@ package org.atlasapi.feeds.youview.unbox;
 import java.math.BigInteger;
 import java.util.Set;
 
+import org.atlasapi.TestsWithConfiguration;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -38,7 +39,7 @@ import tva.mpeg7._2008.UniqueIDType;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-public class AmazonOnDemandLocationGeneratorTest {
+public class AmazonOnDemandLocationGeneratorTest extends TestsWithConfiguration {
     
     private static final Function<GenreType, String> GENRE_TO_HREF = new Function<GenreType, String>() {
         @Override
@@ -53,11 +54,6 @@ public class AmazonOnDemandLocationGeneratorTest {
             return input.getType();
         }
     };
-
-    @BeforeClass
-    public static void setUp() {
-        System.setProperty("MBST_PLATFORM", "stage");
-    }
 
     private IdGenerator idGenerator = new AmazonIdGenerator();
     

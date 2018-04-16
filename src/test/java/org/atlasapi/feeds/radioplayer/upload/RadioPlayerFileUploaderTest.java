@@ -34,6 +34,8 @@ import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.logging.SystemOutAdapterLog;
 import org.atlasapi.reporting.telescope.FeedsReporterNames;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
 import com.metabroadcast.common.base.Maybe;
 import com.metabroadcast.common.intl.Countries;
@@ -75,6 +77,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Matchers;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -82,8 +87,9 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.Mockito.when;
 
-@RunWith(JMock.class)
+@RunWith(MockitoJUnitRunner.class)
 public class RadioPlayerFileUploaderTest {
 
     private static final String TEST_PASSWORD = "testpassword";
@@ -101,6 +107,9 @@ public class RadioPlayerFileUploaderTest {
     private final Channel channel = new Channel(Publisher.METABROADCAST, "BBC Radio 1", "radio1", false, MediaType.AUDIO, "http://www.bbc.co.uk/radio1");
     private final Set<Channel> channels = ImmutableSet.of(channel);
     private final Set<Publisher> publishers = ImmutableSet.of(Publisher.BBC);
+
+	@Mock private FeedsTelescopeReporterFactory telescopeFactory;
+	@Mock private FeedsTelescopeReporter telescopeReporter;
     
 	private static File dir;
 
@@ -110,6 +119,9 @@ public class RadioPlayerFileUploaderTest {
 	public void setUp() throws Exception {
 	    dir = Files.createTempDir();
         dir.deleteOnExit();
+
+		when(telescopeFactory.getTelescopeReporter(Matchers.any())).thenReturn(telescopeReporter);
+		FeedsTelescopeReporterFactory.setInstance(telescopeFactory);
 
         File files = new File(dir.getAbsolutePath() + File.separator + "files");
         files.mkdir();
