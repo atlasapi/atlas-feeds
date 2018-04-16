@@ -4,6 +4,7 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadService;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
@@ -45,6 +46,7 @@ public class RadioPlayerOdBatchUploadTaskTest {
     @Mock private RadioPlayerUploadResultStore resultStore;
     @Mock private FeedsTelescopeReporterFactory telescopeFactory;
     @Mock private FeedsTelescopeReporter telescopeReporter;
+    @Mock private ChannelResolver channelResolver;
 
     private RadioPlayerOdBatchUploadTask task;
 
@@ -66,7 +68,8 @@ public class RadioPlayerOdBatchUploadTaskTest {
                 contentLister,
                 PUBLISHER,
                 resultStore,
-                channelResolver, FeedsReporterNames.YOU_VIEW_MANUAL_UPLOADER
+                channelResolver,
+                FeedsReporterNames.YOU_VIEW_MANUAL_UPLOADER
         );
     }
 
