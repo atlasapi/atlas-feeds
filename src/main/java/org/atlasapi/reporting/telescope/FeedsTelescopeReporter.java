@@ -48,8 +48,8 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
 
     public void reportEvent(RadioPlayerUploadResult result) {
 
+        EntityState.Builder entityState = entityStateFromRadioPlayerResult(result);
         if (SUCCESS.equals(result.getUpload().type())) {
-            EntityState.Builder entityState = entityStateFromRadioPlayerResult(result);
             if(entityState != null){
                 reportSuccessfulEventGeneric(entityState, null);
             } else {
@@ -58,8 +58,18 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
                         EntityType.CHANNEL.getVerbose(), result.toString());
             }
         } else {
-            reportFailedEvent(result.getUpload().type().toNiceString()+":"+result.getUpload().message(),
-                    EntityType.CHANNEL.getVerbose(), result.getPayload());
+            String error =
+                    result.getUpload().type().toNiceString() + ":" + result.getUpload().message();
+            if (entityState != null) {
+                reportFailedEventGeneric(entityState, error);
+            } else {
+                reportFailedEventGeneric(
+                        "",
+                        error,
+                        EntityType.CHANNEL.getVerbose(),
+                        result.getPayload()
+                );
+            }
         }
     }
 
