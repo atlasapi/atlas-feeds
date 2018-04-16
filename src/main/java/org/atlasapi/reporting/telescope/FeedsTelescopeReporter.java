@@ -59,7 +59,7 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
             }
         } else {
             reportFailedEvent(result.getUpload().type().toNiceString(),
-                    EntityType.CHANNEL.getVerbose(), result.toString());
+                    EntityType.CHANNEL.getVerbose(), result.getPayload());
         }
     }
 
@@ -193,7 +193,7 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
                                                + "upload result. " + result.getService());
             }
             return entityStateFromStrings(
-                    result.getService().getAtlasId().toString(),
+                    encode(result.getService().getAtlasId()),
                     EntityType.CHANNEL.getVerbose(),
                     result.getPayload()
             );
