@@ -35,6 +35,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -183,8 +184,12 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
         id.setAuthority(ALL_ASINS_AUTHORITY);
         // YV requires us to send all contributing IDs separated by spaces (ECOTEST-317)
         StringBuilder contributing = new StringBuilder();
+        Set<String> asins = new HashSet<>(); //put them set to remove duplicates.
         for (Location location : locations) {
-            contributing.append(AmazonIdGenerator.getAsin(location)).append(" ");
+            asins.add(AmazonIdGenerator.getAsin(location));
+        }
+        for (String asin : asins) {
+            contributing.append(asin).append(" ");
         }
         //trim the last space.
         contributing = new StringBuilder(contributing.substring(0, contributing.length() - 1));
