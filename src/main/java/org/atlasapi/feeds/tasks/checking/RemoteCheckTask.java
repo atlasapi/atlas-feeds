@@ -36,9 +36,8 @@ public class RemoteCheckTask extends ScheduledTask {
             Status.PUBLISHING
     );
 
-    //We need this to limit this a surprisingly small number,
-    // cause if there are too many tasks mongo sort overflows.
-    private static final int NUM_TO_CHECK_PER_ITTERATION = 10;
+    //This approach is no longer needed, but we left it here cause it provides a progress indicator.
+    private static final int NUM_TO_CHECK_PER_ITTERATION = 1000;
 
     private final BlockingExecutor executor = new BlockingExecutor(50, 1000);
 
