@@ -110,7 +110,7 @@ public class AmazonOnDemandLocationGeneratorTest extends TestsWithConfiguration 
         assertEquals("asin.amazon.com", deepLink.getAuthority());
         assertEquals("SOME_ASIN", deepLink.getValue());
         assertEquals("ondemand.asin.amazon.com", allContributingAsins.getAuthority());
-        assertEquals("SOME_ASIN SOME_OTHER_ASIN", allContributingAsins.getValue()); //If you made it to get all contributing IDS here, add a proper test for it.
+        assertEquals("SOME_OTHER_ASIN SOME_ASIN", allContributingAsins.getValue()); //If you made it to get all contributing IDS here, add a proper test for it.
     }
     
     @Test
