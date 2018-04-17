@@ -69,11 +69,7 @@ public class RemoteCheckTask extends ScheduledTask {
                 TaskQuery.Builder query = TaskQuery.builder(
                         Selection.limitedTo(NUM_TO_CHECK_PER_ITTERATION), destinationType)
                         .withTaskStatus(status)
-                        .after(lastDateChecked)
-                        .withSort(TaskQuery.Sort.of(
-                                TaskQuery.Sort.Field.CREATED_TIME,
-                                TaskQuery.Sort.Direction.ASC
-                        ));
+                        .after(lastDateChecked);
 
                 Iterable<Task> tasksToCheck = taskStore.allTasks(query.build());
 

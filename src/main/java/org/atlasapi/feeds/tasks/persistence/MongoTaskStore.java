@@ -6,10 +6,8 @@ import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Response;
 import org.atlasapi.feeds.tasks.Status;
-import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.TaskQuery;
-import org.atlasapi.media.entity.Publisher;
 
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
 import com.metabroadcast.common.persistence.mongo.MongoQueryBuilder;
@@ -63,9 +61,11 @@ public class MongoTaskStore implements TaskStore {
             orderBy.descending(sort.getField().getDbField());
         }
 
-        return collection
-                .find(query)
-                .sort(orderBy.build());
+        return getCursor(query).sort(orderBy.build());
+    }
+
+    private DBCursor getCursor(DBObject query){
+       return collection.find(query);
     }
 
     @Override
@@ -190,10 +190,14 @@ public class MongoTaskStore implements TaskStore {
             mongoQuery.fieldAfter(CREATED_KEY, query.getAfter().get());
         }
 
-
+        DBCursor cursor;
         Selection selection = query.selection();
-        DBCursor cursor = getOrderedCursor(mongoQuery.build(), query.sort())
-                .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+        if (query.sort().isPresent()) {
+            cursor = getOrderedCursor(mongoQuery.build(), query.sort().get())
+                    .addOption(Bytes.QUERYOPTION_NOTIMEOUT);
+        } else {
+            cursor = getCursor(mongoQuery.build());
+        }
 
         if (selection.getOffset() != 0) {
             cursor.skip(selection.getOffset());

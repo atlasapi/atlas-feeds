@@ -124,7 +124,7 @@ public class TaskQuery {
     private final Optional<TVAElementType> elementType;
     private final Optional<String> elementId;
     private final Optional<DateTime> after;
-    private final Sort sort;
+    private final Optional<Sort> sort;
 
     public static Builder builder(Selection selection, DestinationType destinationType) {
         return new Builder(selection, destinationType);
@@ -141,7 +141,7 @@ public class TaskQuery {
             Optional<TVAElementType> elementType,
             Optional<String> elementId,
             Optional<DateTime> after,
-            Sort sort
+            Optional<Sort> sort
     ) {
         this.selection = checkNotNull(selection);
         this.publisher = checkNotNull(publisher);
@@ -196,7 +196,7 @@ public class TaskQuery {
         return after;
     }
 
-    public Sort sort() {
+    public Optional<Sort> sort() {
         return sort;
     }
 
@@ -229,7 +229,7 @@ public class TaskQuery {
         private Optional<TVAElementType> elementType = Optional.absent();
         private Optional<String> elementId = Optional.absent();
         private Optional<DateTime> after = Optional.absent();
-        private Sort sort = Sort.DEFAULT;
+        private Optional<Sort> sort = Optional.absent();
 
         private Builder(Selection selection, DestinationType destinationType) {
             this.selection = selection;
@@ -288,7 +288,7 @@ public class TaskQuery {
         }
 
         public Builder withSort(Sort sort) {
-            this.sort = sort;
+            this.sort = Optional.fromNullable(sort);
             return this;
         }
     }

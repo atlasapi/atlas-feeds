@@ -88,6 +88,7 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
                 TaskQuery.builder(Selection.all(), destinationType)
                         .withPublisher(publisher)
                         .withTaskStatus(Status.NEW)
+                        .withSort(TaskQuery.Sort.DEFAULT)
                         .build()));
     }
 
