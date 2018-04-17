@@ -8,9 +8,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.upload.FileUploadService;
+import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
 import com.metabroadcast.common.time.DateTimeZones;
 
@@ -35,6 +40,8 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
     private final Iterable<LocalDate> days;
     private final AdapterLog adapterLog;
     private final Publisher publisher;
+    private ChannelResolver channelResolver;
+    private FeedsReporterNames telescopeName;
 
     public RadioPlayerPiBatchUploadTask(
             Iterable<FileUploadService> uploaders,
@@ -42,7 +49,9 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
             Iterable<RadioPlayerService> services,
             Iterable<LocalDate> dayRange,
             AdapterLog adapterLog,
-            Publisher publisher
+            Publisher publisher,
+            ChannelResolver channelResolver,
+            FeedsReporterNames telescopeName
     ) {
         this.uploaders = uploaders;
         this.executor = executor;
@@ -50,10 +59,16 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
         this.days = dayRange;
         this.adapterLog = adapterLog;
         this.publisher = publisher;
+        this.channelResolver = channelResolver;
+        this.telescopeName = telescopeName;
     }
     
     @Override
     public void run() {
+        FeedsTelescopeReporter telescopeReporter =
+                FeedsTelescopeReporterFactory.getInstance().getTelescopeReporter(telescopeName);
+        telescopeReporter.startReporting();
+
         DateTime start = new DateTime(DateTimeZones.UTC);
         int serviceCount = Iterables.size(services);
 
@@ -64,6 +79,11 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
                 Lists.newArrayListWithCapacity(Iterables.size(days) * serviceCount);
         
         for (RadioPlayerService service : services) {
+            //we will resolve the channels to get the atlasId so we can report to telescope.
+            java.util.Optional<Channel> channelOptional =
+                    channelResolver.fromUri(service.getServiceUri()).toOptional();
+            channelOptional.ifPresent( c -> service.setAtlasId(c.getId()));
+
             for (LocalDate day : days) {
                 uploadTasks.add(new RadioPlayerPiUploadTask(uploaders, day, service,
                         adapterLog, publisher));
@@ -86,6 +106,7 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
                         if (SUCCESS.equals(result.getUpload().type())) {
                             successes++;
                         }
+                        telescopeReporter.reportEvent(result);
                     }
 
                     if (noResultsFound) {
@@ -104,6 +125,7 @@ public class RadioPlayerPiBatchUploadTask implements Runnable {
         String runTime = new Period(start, new DateTime(DateTimeZones.UTC))
                 .toString(PeriodFormat.getDefault());
 
+        telescopeReporter.endReporting();
         logInfo("Radioplayer PI Batch Uploader finished in %s, %s/%s successful.",
                 runTime, successes, uploadTasks.size());
     }

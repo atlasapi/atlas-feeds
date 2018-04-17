@@ -1,11 +1,5 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.metabroadcast.common.http.HttpStatusCode.BAD_REQUEST;
-import static com.metabroadcast.common.http.HttpStatusCode.NOT_FOUND;
-import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
-import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -14,9 +8,20 @@ import java.util.concurrent.Executors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.http.HttpStatus;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
+
+import com.metabroadcast.common.media.MimeType;
+import com.metabroadcast.common.security.HttpBasicAuthChecker;
+import com.metabroadcast.common.security.UsernameAndPassword;
+import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.DayRangeGenerator;
+
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.http.HttpStatus;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -25,14 +30,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.metabroadcast.common.media.MimeType;
-import com.metabroadcast.common.security.HttpBasicAuthChecker;
-import com.metabroadcast.common.security.UsernameAndPassword;
-import com.metabroadcast.common.time.DateTimeZones;
-import com.metabroadcast.common.time.DayRangeGenerator;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.metabroadcast.common.http.HttpStatusCode.BAD_REQUEST;
+import static com.metabroadcast.common.http.HttpStatusCode.NOT_FOUND;
+import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
+import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
 
 @Controller
 public class RadioPlayerUploadController {
@@ -98,10 +100,22 @@ public class RadioPlayerUploadController {
         }
 
         if (fileType.equals(PI)) {
-            Iterable<LocalDate> days = day != null ? ImmutableList.of(DATE_PATTERN.parseDateTime(day).toLocalDate()) : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
-            executor.submit(taskBuilder.newBatchPiTask(ImmutableList.of(service), days));
+            Iterable<LocalDate> days = day != null
+                                       ? ImmutableList.of(DATE_PATTERN.parseDateTime(day)
+                    .toLocalDate())
+                                       : dayRangeGenerator.generate(new LocalDate(DateTimeZones.UTC));
+            executor.submit(taskBuilder.newBatchPiTask(
+                    ImmutableList.of(service),
+                    days,
+                    FeedsReporterNames.RADIO_PLAYER_MANUAL_PI_UPLOADER
+            ));
         } else if (fileType.equals(OD)) {
-            executor.submit(taskBuilder.newBatchOdTask(ImmutableList.of(service), DATE_PATTERN.parseDateTime(day).toLocalDate()));
+            executor.submit(
+                    taskBuilder.newBatchOdTask(
+                            ImmutableList.of(service),
+                            DATE_PATTERN.parseDateTime(day).toLocalDate(),
+                            FeedsReporterNames.RADIO_PLAYER_MANUAL_OD_UPLOADER
+                    ));
         }
 
         response.setStatus(HttpStatus.SC_ACCEPTED);

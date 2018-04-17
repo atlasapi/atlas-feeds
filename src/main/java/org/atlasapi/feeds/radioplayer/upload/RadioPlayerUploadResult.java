@@ -13,17 +13,20 @@ public class RadioPlayerUploadResult {
     private final FileUploadResult upload;
     private final LocalDate day;
     private final FileType type;
+    private final String payload;
 
     public RadioPlayerUploadResult(
             FileType type,
             RadioPlayerService service,
             LocalDate day,
-            FileUploadResult upload
+            FileUploadResult upload,
+            String payload
     ) {
         this.type = type;
         this.day = checkNotNull(day);
         this.service = checkNotNull(service);
         this.upload = checkNotNull(upload);
+        this.payload = payload;
     }
 
     public RadioPlayerService getService() {
@@ -40,5 +43,20 @@ public class RadioPlayerUploadResult {
 
     public LocalDate getDay() {
         return day;
+    }
+
+    public String getPayload(){
+        return payload;
+    }
+
+    @Override
+    public String toString() {
+        return "RadioPlayerUploadResult{" +
+               "service=" + service +
+               ", upload=" + upload +
+               ", day=" + day +
+               ", type=" + type +
+               ", payload='" + payload + '\'' +
+               '}';
     }
 }

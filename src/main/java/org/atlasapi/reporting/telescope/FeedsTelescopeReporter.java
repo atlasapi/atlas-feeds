@@ -1,8 +1,12 @@
 package org.atlasapi.reporting.telescope;
 
+import javax.annotation.Nullable;
+
+import org.atlasapi.feeds.radioplayer.upload.RadioPlayerUploadResult;
 import org.atlasapi.feeds.tasks.Destination;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
+import org.atlasapi.media.channel.ChannelResolver;
 
 import com.metabroadcast.columbus.telescope.api.EntityState;
 import com.metabroadcast.columbus.telescope.api.Environment;
@@ -15,9 +19,13 @@ import com.metabroadcast.common.media.MimeType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import static org.atlasapi.feeds.upload.FileUploadResult.FileUploadResultType.SUCCESS;
 
 public class FeedsTelescopeReporter extends TelescopeReporter {
 
+    private @Autowired ChannelResolver channelResolver;
     private static final Logger log = LoggerFactory.getLogger(FeedsTelescopeReporter.class);
 
     /**
@@ -35,6 +43,34 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
 
     public void reportSuccessfulEvent(Task task){
         reportSuccessfulEventWithWarning(task, null);
+    }
+
+
+    public void reportEvent(RadioPlayerUploadResult result) {
+
+        EntityState.Builder entityState = entityStateFromRadioPlayerResult(result);
+        if (SUCCESS.equals(result.getUpload().type())) {
+            if(entityState != null){
+                reportSuccessfulEventGeneric(entityState, null);
+            } else {
+                reportFailedEvent("The event was reported as successful, but a proper telescope "
+                                  + "report could not be constructed by the given UploadResult.",
+                        EntityType.CHANNEL.getVerbose(), result.toString());
+            }
+        } else {
+            String error =
+                    result.getUpload().type().toNiceString() + ":" + result.getUpload().message();
+            if (entityState != null) {
+                reportFailedEventGeneric(entityState, error);
+            } else {
+                reportFailedEventGeneric(
+                        "",
+                        error,
+                        EntityType.CHANNEL.getVerbose(),
+                        result.getPayload()
+                );
+            }
+        }
     }
 
     public void reportSuccessfulEventWithWarning(
@@ -152,6 +188,31 @@ public class FeedsTelescopeReporter extends TelescopeReporter {
         }
 
         return entityStateFromStrings(atlasId, entityType, payload);
+    }
+
+    @Nullable
+    private EntityState.Builder entityStateFromRadioPlayerResult(RadioPlayerUploadResult result) {
+        if (result == null) {
+          return null;
+        }
+
+        try {
+            if(result.getService().getAtlasId() == null){
+                throw new NullPointerException("There was no atlas id, so a telescope EntityState"
+                                               + "could not be constructed from this RadioPlayer "
+                                               + "upload result. " + result.getService());
+            }
+            return entityStateFromStrings(
+                    encode(result.getService().getAtlasId()),
+                    EntityType.CHANNEL.getVerbose(),
+                    result.getPayload()
+            );
+        } catch (Exception e) {
+            log.warn("Failed to extract an entityState from a RadioPlayer upload result. "
+                     + "It won't be reported to telescope.", e);
+        }
+
+        return null;
     }
 
     private EntityState.Builder entityStateFromStrings(String atlasId, String entityType,

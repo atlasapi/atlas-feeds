@@ -107,7 +107,7 @@ public class RadioPlayerUploadHealthProbeTest {
         
         DateTime futureDay = new DateTime(DateTimeZones.UTC).plusDays(4);
         FileUploadResult upResult = new FileUploadResult(REMOTE_SERVICE_ID, String.format("%s_%s_PI.xml", futureDay.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), new DateTime(DateTimeZones.UTC), FAILURE);
-        RadioPlayerUploadResult rpResult = new RadioPlayerUploadResult(PI, SERVICE, futureDay.toLocalDate(), upResult);
+        RadioPlayerUploadResult rpResult = new RadioPlayerUploadResult(PI, SERVICE, futureDay.toLocalDate(), upResult, "");
         
         recorder.record(rpResult);
         
@@ -127,6 +127,6 @@ public class RadioPlayerUploadHealthProbeTest {
 
     public RadioPlayerUploadResult result(DateTime successDate, FileUploadResultType type) {
         return new RadioPlayerUploadResult(PI, SERVICE, successDate.toLocalDate(), 
-                new FileUploadResult(REMOTE_SERVICE_ID, String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type).withRemoteProcessingResult(SUCCESS).withTransactionId("123"));
+                new FileUploadResult(REMOTE_SERVICE_ID, String.format("%s_%s_PI.xml", successDate.toString(DATE_FORMAT), SERVICE.getRadioplayerId()), successDate, type).withRemoteProcessingResult(SUCCESS).withTransactionId("123"),"");
     }
 }

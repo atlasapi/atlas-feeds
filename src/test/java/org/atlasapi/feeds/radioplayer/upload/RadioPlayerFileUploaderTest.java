@@ -1,12 +1,5 @@
 package org.atlasapi.feeds.radioplayer.upload;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.List;
@@ -14,18 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-import org.apache.ftpserver.FtpServer;
-import org.apache.ftpserver.FtpServerFactory;
-import org.apache.ftpserver.ftplet.Authentication;
-import org.apache.ftpserver.ftplet.AuthenticationFailedException;
-import org.apache.ftpserver.ftplet.Authority;
-import org.apache.ftpserver.ftplet.AuthorizationRequest;
-import org.apache.ftpserver.ftplet.FtpException;
-import org.apache.ftpserver.ftplet.User;
-import org.apache.ftpserver.ftplet.UserManager;
-import org.apache.ftpserver.listener.ListenerFactory;
-import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
-import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.atlasapi.feeds.radioplayer.RadioPlayerFeedCompiler;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.radioplayer.RadioPlayerServices;
@@ -52,19 +33,15 @@ import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.KnownTypeContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.logging.SystemOutAdapterLog;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
-import org.jmock.Expectations;
-import org.jmock.Mockery;
-import org.jmock.integration.junit4.JMock;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Interval;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
+
+import com.metabroadcast.common.base.Maybe;
+import com.metabroadcast.common.intl.Countries;
+import com.metabroadcast.common.security.UsernameAndPassword;
+import com.metabroadcast.common.time.DateTimeZones;
+import com.metabroadcast.common.time.DayRangeGenerator;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -75,13 +52,43 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.net.HostSpecifier;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.metabroadcast.common.base.Maybe;
-import com.metabroadcast.common.intl.Countries;
-import com.metabroadcast.common.security.UsernameAndPassword;
-import com.metabroadcast.common.time.DateTimeZones;
-import com.metabroadcast.common.time.DayRangeGenerator;
+import org.apache.ftpserver.FtpServer;
+import org.apache.ftpserver.FtpServerFactory;
+import org.apache.ftpserver.ftplet.Authentication;
+import org.apache.ftpserver.ftplet.AuthenticationFailedException;
+import org.apache.ftpserver.ftplet.Authority;
+import org.apache.ftpserver.ftplet.AuthorizationRequest;
+import org.apache.ftpserver.ftplet.FtpException;
+import org.apache.ftpserver.ftplet.User;
+import org.apache.ftpserver.ftplet.UserManager;
+import org.apache.ftpserver.listener.ListenerFactory;
+import org.apache.ftpserver.usermanager.UsernamePasswordAuthentication;
+import org.apache.ftpserver.usermanager.impl.WritePermission;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
+import org.jmock.Expectations;
+import org.jmock.Mockery;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Matchers;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
-@RunWith(JMock.class)
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.class)
 public class RadioPlayerFileUploaderTest {
 
     private static final String TEST_PASSWORD = "testpassword";
@@ -99,6 +106,9 @@ public class RadioPlayerFileUploaderTest {
     private final Channel channel = new Channel(Publisher.METABROADCAST, "BBC Radio 1", "radio1", false, MediaType.AUDIO, "http://www.bbc.co.uk/radio1");
     private final Set<Channel> channels = ImmutableSet.of(channel);
     private final Set<Publisher> publishers = ImmutableSet.of(Publisher.BBC);
+
+	@Mock private FeedsTelescopeReporterFactory telescopeFactory;
+	@Mock private FeedsTelescopeReporter telescopeReporter;
     
 	private static File dir;
 
@@ -108,6 +118,9 @@ public class RadioPlayerFileUploaderTest {
 	public void setUp() throws Exception {
 	    dir = Files.createTempDir();
         dir.deleteOnExit();
+
+		when(telescopeFactory.getTelescopeReporter(Matchers.any())).thenReturn(telescopeReporter);
+		FeedsTelescopeReporterFactory.setInstance(telescopeFactory);
 
         File files = new File(dir.getAbsolutePath() + File.separator + "files");
         files.mkdir();
@@ -146,7 +159,14 @@ public class RadioPlayerFileUploaderTest {
             will(returnValue(ImmutableList.of(fileUploader)));
         }});
 		
-		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(supplier, new RadioPlayerRecordingExecutor(recorder, MoreExecutors.sameThreadExecutor()), services, new DayRangeGenerator(), new SystemOutAdapterLog(), Iterables.getOnlyElement(publishers));
+		RadioPlayerScheduledPiUploadTask uploader = new RadioPlayerScheduledPiUploadTask(supplier,
+				new RadioPlayerRecordingExecutor(recorder, MoreExecutors.sameThreadExecutor()),
+				services,
+				new DayRangeGenerator(),
+				new SystemOutAdapterLog(),
+				Iterables.getOnlyElement(publishers),
+				channelResolver, FeedsReporterNames.RADIO_PLAYER_MANUAL_PI_UPLOADER
+		);
 
 		Executor executor = MoreExecutors.sameThreadExecutor();
 		executor.execute(uploader);

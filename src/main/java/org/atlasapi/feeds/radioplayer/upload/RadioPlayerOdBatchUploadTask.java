@@ -11,11 +11,16 @@ import org.atlasapi.feeds.radioplayer.RadioPlayerOdFeedSpec;
 import org.atlasapi.feeds.radioplayer.RadioPlayerService;
 import org.atlasapi.feeds.upload.FileUploadResult;
 import org.atlasapi.feeds.upload.FileUploadService;
+import org.atlasapi.media.channel.Channel;
+import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.listing.ContentLister;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.logging.AdapterLog;
 import org.atlasapi.persistence.logging.AdapterLogEntry;
+import org.atlasapi.reporting.telescope.FeedsReporterNames;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
+import org.atlasapi.reporting.telescope.FeedsTelescopeReporterFactory;
 
 import com.metabroadcast.common.time.DateTimeZones;
 
@@ -49,7 +54,9 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
     private final Optional<DateTime> since;
     private final RadioPlayerOdUriResolver uriResolver;
     private final Publisher publisher;
+    private ChannelResolver channelResolver;
     private final RadioPlayerUploadResultStore resultStore;
+    private final FeedsReporterNames telescopeName;
 
     public RadioPlayerOdBatchUploadTask(
             Iterable<FileUploadService> uploaders,
@@ -61,7 +68,9 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
             LastUpdatedContentFinder lastUpdatedContentFinder,
             ContentLister contentLister,
             Publisher publisher,
-            RadioPlayerUploadResultStore resultStore
+            RadioPlayerUploadResultStore resultStore,
+            ChannelResolver channelResolver,
+            FeedsReporterNames telescopeName
     ) {
         this.uploaders = uploaders;
         this.executor = executor;
@@ -70,6 +79,7 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
         this.fullSnapshot = fullSnapshot;
         this.adapterLog = adapterLog;
         this.publisher = publisher;
+        this.channelResolver = channelResolver;
         this.since = fullSnapshot
                      ? Optional.absent()
                      : Optional.of(day.toDateTimeAtStartOfDay(DateTimeZone.UTC).minusHours(2));
@@ -77,10 +87,15 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
                 contentLister, lastUpdatedContentFinder, publisher
         );
         this.resultStore = checkNotNull(resultStore);
+        this.telescopeName = checkNotNull(telescopeName);
     }
     
     @Override
     public void run() {
+        FeedsTelescopeReporter telescopeReporter =
+                FeedsTelescopeReporterFactory.getInstance().getTelescopeReporter(telescopeName);
+        telescopeReporter.startReporting();
+
         DateTime start = new DateTime(DateTimeZones.UTC);
         int serviceCount = Iterables.size(services);
 
@@ -119,11 +134,16 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
                                             ).filename(),
                                             DateTime.now(),
                                             NO_OP
-                                    )
+                                    ),
+                                    ""
                             )
                     );
                 }
             } else {
+                //we will resolve the channels to get the atlasId so we can report to telescope.
+                java.util.Optional<Channel> channelOptional =
+                        channelResolver.fromUri(service.getServiceUri()).toOptional();
+                channelOptional.ifPresent( c -> service.setAtlasId(c.getId()));
                 uploadTasks.add(new RadioPlayerOdUploadTask(uploaders, since, day, service, uris,
                         adapterLog, publisher));
             }
@@ -145,6 +165,7 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
                         if (SUCCESS.equals(result.getUpload().type())) {
                             successes++;
                         }
+                        telescopeReporter.reportEvent(result);
                     }
 
                     if (noResultsFound) {
@@ -162,6 +183,8 @@ public class RadioPlayerOdBatchUploadTask implements Runnable {
 
         String runTime = new Period(start, new DateTime(DateTimeZones.UTC))
                 .toString(PeriodFormat.getDefault());
+
+        telescopeReporter.endReporting();
 
         logInfo("Radioplayer OD Batch Uploader finished in %s, %s/%s successful.",
                 runTime, successes, uploadTasks.size());
