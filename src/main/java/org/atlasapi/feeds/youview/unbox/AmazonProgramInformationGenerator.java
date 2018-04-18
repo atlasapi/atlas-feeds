@@ -86,8 +86,8 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance";
     private static final Map<String, String> YOUVIEW_CERTIFICATE_MAPPING = ImmutableMap.<String, String>builder()
             //The mapping is as agreed in YV ticket ECOTEST-283
-            .put("amazon_maturity_rating|all_ages", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#no_parental_control")
-            .put("amazon_maturity_rating|children", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#no_parental_control")
+            .put("amazon_maturity_rating|all_ages", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#no_parental_controls")
+            .put("amazon_maturity_rating|children", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#no_parental_controls")
             .put("amazon_maturity_rating|guidance_suggested", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance")
             .put("amazon_maturity_rating|ages_9_and_older", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#twelve")
             .put("amazon_maturity_rating|ages_13_and_older", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#fifteen")
@@ -100,7 +100,7 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
             .put("bbfc_rating|ages_12_and_over", "http://bbfc.org.uk/BBFCRatingCS/2002#12")
             .put("bbfc_rating|ages_15_and_over", "http://bbfc.org.uk/BBFCRatingCS/2002#15")
             .put("bbfc_rating|ages_18_and_over", "http://bbfc.org.uk/BBFCRatingCS/2002#18")
-            .put("bbfc_rating|to_be_announced", "http://bbfc.org.uk/BBFCRatingCS/2002#unrated")
+            .put("bbfc_rating|to_be_announced", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated")
             .build();
 
     private static final Map<String, String> YOUVIEW_CERTIFICATE_EXPLANATION_MAPPING = ImmutableMap.<String, String>builder()
