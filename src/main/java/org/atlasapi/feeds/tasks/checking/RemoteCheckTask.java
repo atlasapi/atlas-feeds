@@ -1,9 +1,6 @@
 package org.atlasapi.feeds.tasks.checking;
 
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.atlasapi.BlockingExecutor;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
@@ -38,8 +35,6 @@ public class RemoteCheckTask extends ScheduledTask {
 
     //This approach is no longer needed, but we left it here cause it provides a progress indicator.
     private static final int NUM_TO_CHECK_PER_ITTERATION = 1000;
-
-    private final BlockingExecutor executor = new BlockingExecutor(50, 1000);
 
     private final Logger log = LoggerFactory.getLogger(RemoteCheckTask.class);
     private final TaskStore taskStore;
@@ -77,10 +72,8 @@ public class RemoteCheckTask extends ScheduledTask {
                         break;
                     }
                     try {
-                        executor.execute(() -> {
-                            processor.checkRemoteStatusOf(task);
-                            progress[0] = progress[0].reduce(UpdateProgress.SUCCESS);
-                        });
+                        processor.checkRemoteStatusOf(task);
+                        progress[0] = progress[0].reduce(UpdateProgress.SUCCESS);
                     } catch (Exception e) {
                         log.error("error checking task {}", task.id(), e);
                         progress[0] = progress[0].reduce(UpdateProgress.FAILURE);

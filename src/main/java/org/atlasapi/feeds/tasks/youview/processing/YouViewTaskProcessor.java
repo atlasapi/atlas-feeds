@@ -14,6 +14,7 @@ import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
+import com.google.common.util.concurrent.RateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
     private final RevokedContentStore revocationStore;
     private final ResultHandler resultHandler;
     private final TaskStore taskStore;
+    private final RateLimiter rateLimiter = RateLimiter.create(25); //limit the rate or we might screw YV
 
     public YouViewTaskProcessor(
             YouViewClient client,
@@ -51,9 +53,11 @@ public class YouViewTaskProcessor implements TaskProcessor {
         try {
             switch (task.action()) {
             case UPDATE:
+                rateLimiter.acquire();
                 processUpdate(task, telescope);
                 break;
             case DELETE:
+                rateLimiter.acquire();
                 processDelete(task, telescope);
                 break;
             default:
@@ -148,6 +152,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
         );
         YouViewResult result;
         try {
+            rateLimiter.acquire();
             result = client.checkRemoteStatus(task.remoteId().get());
         } catch (YouViewClientException e){
             log.error("", e);
