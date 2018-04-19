@@ -200,6 +200,9 @@ public class HttpYouViewClient implements YouViewClient {
             String bodyStr = response.parseAsString();
             if (response.getStatusCode() == HttpServletResponse.SC_OK) {
                 return success(bodyStr, clock.now(), response.getStatusCode());
+            } else if(response.getStatusCode() >= 400){
+                throw new YouViewClientException("Response Code: " + response.getStatusCode()
+                                                 + " Message: " + response.getStatusMessage());
             } else {
                 return failure(bodyStr, clock.now(), response.getStatusCode());
             }

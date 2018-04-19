@@ -9,6 +9,7 @@ import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.client.ResultHandler;
 import org.atlasapi.feeds.youview.client.YouViewClient;
+import org.atlasapi.feeds.youview.client.YouViewClientException;
 import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
@@ -145,7 +146,13 @@ public class YouViewTaskProcessor implements TaskProcessor {
                 task.remoteId().isPresent(),
                 "no transaction id present for task " + task.id() + ", cannot check status"
         );
-        YouViewResult result = client.checkRemoteStatus(task.remoteId().get());
+        YouViewResult result;
+        try {
+            result = client.checkRemoteStatus(task.remoteId().get());
+        } catch (YouViewClientException e){
+            log.error("", e);
+            return;
+        }
         resultHandler.handleRemoteCheckResult(task, result);
     }
 }
