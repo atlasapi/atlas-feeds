@@ -176,8 +176,8 @@ public class HttpYouViewClientTest {
         assertEquals(report, result.result());
     }
 
-    @Test
-    public void testThatAFailedStatusCheckReturnsFailedResult() throws Exception {
+    @Test(expected = YouViewClientException.class)
+    public void testThatAFailedStatusCheckThrows() throws Exception {
         String error = "something went wrong";
 
         responses.add(createResponse(error, 503));
@@ -188,7 +188,6 @@ public class HttpYouViewClientTest {
         assertThat(urlUsed, is(baseUrl + "/transaction/" + "txnId"));
         assertThat(methodUsed, is("GET"));
         assertThat(result.isSuccess(), is(false));
-        assertEquals(error, result.result());
     }
 
     private LowLevelHttpResponse createSuccessfulResponseWithTransaction(String transactionUrl) throws IOException {
