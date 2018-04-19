@@ -3,6 +3,7 @@ package org.atlasapi.feeds.tasks.youview.processing;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import org.atlasapi.feeds.RateLimiter;
 import org.atlasapi.feeds.tasks.Status;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
@@ -14,7 +15,6 @@ import org.atlasapi.feeds.youview.client.YouViewResult;
 import org.atlasapi.feeds.youview.revocation.RevokedContentStore;
 import org.atlasapi.reporting.telescope.FeedsTelescopeReporter;
 
-import com.google.common.util.concurrent.RateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
     private final RevokedContentStore revocationStore;
     private final ResultHandler resultHandler;
     private final TaskStore taskStore;
-    private final RateLimiter rateLimiter = RateLimiter.create(25); //limit the rate or we might screw YV
+    private final RateLimiter rateLimiter = RateLimiter.create(25); //limit the requests per second
 
     public YouViewTaskProcessor(
             YouViewClient client,
