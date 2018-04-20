@@ -101,7 +101,7 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
                                             + ". It would be insensible to check the status since"
                                             + "forever. Open a mongo console and add a date. "
                                             + "Example call, from atlas-split db, "
-                                            + "db.youviewLastUpdated.update({_id:\""+ getPublisher()+"\"},{$set:{lastRepIdChangesChecked:new ISODate(\"2017-12-18T14:58:00.002Z\")}}))");
+                                            + "db.youviewLastUpdated.update({_id:\""+ getPublisher()+"\"},{$set:{lastRepIdChangesChecked:new ISODate(\"2017-12-18T14:58:00.002Z\")}})");
         }
 
         // despite the intermediate conversion, db dates are UTC.
@@ -140,11 +140,11 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
                 contentToDeleted.addAll(toBeDeleted);
             }
 
-            //If wanted to do more precise movements, we should find the FROM repIds no longer
+            //If we wanted to do more precise movements, we should find the FROM repIds no longer
             //used and remove those and their dependents, then find what remains in FROM and remove
             //only the dependents. However, that would require us to write the code that can handle
             //dependents only. Instead, we'll use the existing deletionProcessor to revoke
-            // everything, and then recreate it under its new status.
+            //everything, and then recreate it under its new status.
 
             // Now we can just reupload the whole TO set using the normal pipeline. That will
             // pick up the latest changes and handle both new items and larger equiv sets.
@@ -168,8 +168,6 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
         if(getPublisher().equals(Publisher.AMAZON_UNBOX)){
             //this method will run equiv, merge and repId the item again.
             super.uploadFromAmazon(contentToUploaded.iterator(), uploadProcessor);
-        } else {
-            throw new IllegalStateException("Handling repId changes is not supported for "+getPublisher());
         }
 
         log.info("Done creating {} tasks to handle RepId changes until {}.", getPublisher(), startOfTask);
@@ -178,7 +176,7 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
     }
 
     //Now we need to convert the IDs to Content.
-    //TODO: fuck-my-life. We are looking for a mechanism to resolve content by id. We kinda want
+    //We are looking for a mechanism to resolve content by id. We kinda want
     //to remove THIS content and not the EQUIVALATED content, because if the equiv graph has changed
     //we might not remove what we where trying to remove.
     private Content resolve (String id){
