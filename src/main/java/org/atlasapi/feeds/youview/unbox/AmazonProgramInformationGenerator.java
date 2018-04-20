@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview.unbox;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -229,7 +230,16 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
         if (item.getYear() == null) {
             return Optional.absent();
         }
-        
+
+        //YV's acceptable range
+        Calendar now = Calendar.getInstance();
+        now.add(Calendar.DAY_OF_MONTH, 365);
+        int upperLimit = now.get(Calendar.YEAR);
+        int lowerLimit = 1888;
+        if(item.getYear() < lowerLimit || item.getYear() > upperLimit){
+            return Optional.absent();
+        }
+
         TVATimeType productionDate = new TVATimeType();
         productionDate.setTimePoint(item.getYear().toString());
         return Optional.of(productionDate);
