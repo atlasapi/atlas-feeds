@@ -19,6 +19,7 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.audit.NoLoggingPersistenceAuditLog;
+import org.atlasapi.persistence.content.mongo.MongoContentResolver;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.lookup.entry.LookupEntry;
 import org.atlasapi.persistence.lookup.mongo.MongoLookupEntryStore;
@@ -51,6 +52,7 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
 
     private static final Logger log = LoggerFactory.getLogger(RepresentativeIdChangesHandlingTask.class);
     private MongoLookupEntryStore lookupStore;
+    private MongoContentResolver mongoContentResolver;
     private @Autowired DatabasedMongo mongo;
 
     public RepresentativeIdChangesHandlingTask(
@@ -81,11 +83,20 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
 
     private MongoLookupEntryStore getLookupStore(){
         if(lookupStore == null) { //lazy initialize to get around Spring problems.
-            lookupStore = new MongoLookupEntryStore(mongo.collection("lookup"),
-                    new NoLoggingPersistenceAuditLog(), ReadPreference.secondaryPreferred()
+            lookupStore = new MongoLookupEntryStore(
+                    mongo.collection("lookup"),
+                    new NoLoggingPersistenceAuditLog(),
+                    ReadPreference.secondaryPreferred()
             );
         }
         return lookupStore;
+    }
+
+    private MongoContentResolver getMongoContentResolver() {
+        if(mongoContentResolver == null) {
+            mongoContentResolver = new MongoContentResolver(mongo, getLookupStore());
+        }
+        return mongoContentResolver;
     }
 
     @Override
@@ -178,7 +189,7 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
     //Now we need to convert the IDs to Content.
     //We are looking for a mechanism to resolve content by id. We kinda want
     //to remove THIS content and not the EQUIVALATED content, because if the equiv graph has changed
-    //we might not remove what we where trying to remove.
+    //we might not remove what we where trying to remove, so we need a non_merged response.
     private Content resolve (String id){
 
         Iterable<LookupEntry> lookupEntries =
@@ -187,7 +198,7 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
         if(lookupEntries.iterator().hasNext()) {
             LookupEntry next = lookupEntries.iterator().next();
             java.util.Optional<Identified> content
-                    = contentResolver.findByUris(ImmutableSet.of(next.uri()))
+                    = getMongoContentResolver().findByLookupRefs(ImmutableSet.of(next.lookupRef()))
                     .getFirstValue().toOptional();
             return (Content) content.orElse(null);
         }
