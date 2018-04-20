@@ -40,6 +40,9 @@ public class RemoteCheckTask extends ScheduledTask {
     private final TaskStore taskStore;
     private final TaskProcessor processor;
     private final DestinationType destinationType;
+    // Experience sais each thread does about ~5 requests per second.
+    // The processor has a rate-limiter, and we need to be able to hit that limit.
+    private final BlockingExecutor executor = new BlockingExecutor(10, 1000);
 
     public RemoteCheckTask(TaskStore taskStore, TaskProcessor processor, DestinationType destinationType) {
         this.taskStore = checkNotNull(taskStore);
@@ -72,8 +75,10 @@ public class RemoteCheckTask extends ScheduledTask {
                         break;
                     }
                     try {
-                        processor.checkRemoteStatusOf(task);
-                        progress[0] = progress[0].reduce(UpdateProgress.SUCCESS);
+                        executor.submit(() -> {
+                            processor.checkRemoteStatusOf(task);
+                            progress[0] = progress[0].reduce(UpdateProgress.SUCCESS);
+                        });
                     } catch (Exception e) {
                         log.error("error checking task {}", task.id(), e);
                         progress[0] = progress[0].reduce(UpdateProgress.FAILURE);
