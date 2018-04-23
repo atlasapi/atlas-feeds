@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview.unbox;
 
 import java.math.BigInteger;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.atlasapi.TestsWithConfiguration;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
@@ -27,10 +28,10 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AudioAttributesType;
+import tva.metadata._2010.ControlledTermType;
 import tva.metadata._2010.GenreType;
 import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.VideoAttributesType;
@@ -38,6 +39,7 @@ import tva.mpeg7._2008.UniqueIDType;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class AmazonOnDemandLocationGeneratorTest extends TestsWithConfiguration {
     
@@ -86,9 +88,11 @@ public class AmazonOnDemandLocationGeneratorTest extends TestsWithConfiguration 
         Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
         assertEquals("other", Iterables.getOnlyElement(types));
 
-        assertEquals(instanceDesc.getGenre().get(0).getHref(), AmazonOnDemandLocationGenerator.YOUVIEW_GENRE_MEDIA_AVAILABLE);
-        assertEquals(instanceDesc.getGenre().get(1).getHref(), AmazonOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_BUY);
-        assertEquals(instanceDesc.getGenre().get(2).getHref(), AmazonOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_RENT);
+        assertEquals(3, instanceDesc.getGenre().size());
+        Set<String> hrefs = instanceDesc.getGenre().stream().map(ControlledTermType::getHref).collect(Collectors.toSet());
+        assertTrue(hrefs.contains(AmazonOnDemandLocationGenerator.YOUVIEW_GENRE_MEDIA_AVAILABLE));
+        assertTrue(hrefs.contains(AmazonOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_BUY));
+        assertTrue(hrefs.contains(AmazonOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_PAY_TO_RENT));
 
         AVAttributesType avAttributes = instanceDesc.getAVAttributes();
         AudioAttributesType audioAttrs = Iterables.getOnlyElement(avAttributes.getAudioAttributes());
