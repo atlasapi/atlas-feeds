@@ -125,8 +125,9 @@ public class YouViewUploadModule {
             "nitro", Publisher.BBC_NITRO,
             "unbox", Publisher.AMAZON_UNBOX
     );
-    
-    private static final RepetitionRule DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
+
+    private static final RepetitionRule NITRO_DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
+    private static final RepetitionRule AMAZON_DELTA_CONTENT_CHECK = RepetitionRules.daily(LocalTime.MIDNIGHT.plusHours(12));
     private static final RepetitionRule REPID_CHANGES_HANDLING = RepetitionRules.NEVER;
 private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
@@ -162,11 +163,13 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
         for (Entry<String, Publisher> publisherEntry : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
             if (isEnabled(publisherPrefix)) {
-                log.info("Registering a bootstrap and deltaupload tasks for "+publisherEntry);
                 scheduler.schedule(scheduleBootstrapTaskCreationTask(publisherEntry.getValue()), BOOTSTRAP_CONTENT_CHECK);
-                scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), DELTA_CONTENT_CHECK);
 
-                if(publisherEntry.getValue().equals(Publisher.AMAZON_UNBOX)){
+                if(publisherEntry.getValue().equals(Publisher.BBC_NITRO)){
+                    scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), NITRO_DELTA_CONTENT_CHECK);
+                }
+                else if(publisherEntry.getValue().equals(Publisher.AMAZON_UNBOX)){
+                    scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), AMAZON_DELTA_CONTENT_CHECK);
                     scheduler.schedule(scheduleRepIdChangesHandlingTask(Publisher.AMAZON_UNBOX), REPID_CHANGES_HANDLING);
                 }
             }
