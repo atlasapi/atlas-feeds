@@ -42,7 +42,7 @@ public class RemoteCheckTask extends ScheduledTask {
     private final DestinationType destinationType;
     // Experience says each thread does about ~5-10 requests per second.
     // The processor has a ratelimiter, and we need to be able to hit that limit.
-    private final BlockingExecutor executor = new BlockingExecutor(20, 1000);
+    private final BlockingExecutor executor = new BlockingExecutor(10, 1000);
 
     public RemoteCheckTask(TaskStore taskStore, TaskProcessor processor, DestinationType destinationType) {
         this.taskStore = checkNotNull(taskStore);

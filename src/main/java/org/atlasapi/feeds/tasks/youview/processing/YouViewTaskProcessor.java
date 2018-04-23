@@ -29,7 +29,7 @@ public class YouViewTaskProcessor implements TaskProcessor {
     private final RevokedContentStore revocationStore;
     private final ResultHandler resultHandler;
     private final TaskStore taskStore;
-    private final RateLimiter rateLimiter = RateLimiter.create(100); //limit the requests per second
+    private final RateLimiter rateLimiter = RateLimiter.create(25); //limit the requests per second
 
     public YouViewTaskProcessor(
             YouViewClient client,
