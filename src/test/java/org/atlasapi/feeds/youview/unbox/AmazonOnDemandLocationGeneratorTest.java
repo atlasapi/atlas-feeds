@@ -62,8 +62,35 @@ public class AmazonOnDemandLocationGeneratorTest extends TestsWithConfiguration 
     private final OnDemandLocationGenerator generator = new AmazonOnDemandLocationGenerator(idGenerator);
 
     @Test
+    public void testGenreTypesHaveNoDuplicated() {
+        Location location1 = createLocationSub();
+        location1.setCanonicalUri("unbox.amazon.co.uk/SOME_ASIN/SUBSCRIPTION");
+        Location location2 = createLocationSub();
+        location2.setCanonicalUri("unbox.amazon.co.uk/SOME_OTHER_ASIN/SUBSCRIPTION");
+        Encoding encoding = createEncoding(location1);
+        encoding.addAvailableAt(location2);
+        Version version = createVersion(encoding);
+        version.setCanonicalUri("unbox.amazon.co.uk/SOMEVERSIONID");
+        Film film = createFilm(version);
+        film.setId(1L);
+        ItemOnDemandHierarchy onDemandHierarchy = new ItemOnDemandHierarchy(film, version, encoding, ImmutableList.of(location1, location2));
+        String onDemandImi = "onDemandImi";
+
+        ExtendedOnDemandProgramType onDemand = (ExtendedOnDemandProgramType) generator.generate(onDemandHierarchy, onDemandImi);
+
+        InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
+
+        Set<String> types = ImmutableSet.copyOf(Iterables.transform(instanceDesc.getGenre(), GENRE_TO_TYPE));
+        assertEquals("other", Iterables.getOnlyElement(types));
+
+        assertEquals("The resulting objecting either omitted genres, or included multiple copies of a genre.", 2, instanceDesc.getGenre().size());
+        Set<String> hrefs = instanceDesc.getGenre().stream().map(ControlledTermType::getHref).collect(Collectors.toSet());
+        assertTrue( hrefs.contains(AmazonOnDemandLocationGenerator.YOUVIEW_GENRE_MEDIA_AVAILABLE));
+        assertTrue("YOUVIEW_ENTITLEMENT_SUBSCRIPTION was not included in the resulting object.", hrefs.contains(AmazonOnDemandLocationGenerator.YOUVIEW_ENTITLEMENT_SUBSCRIPTION));
+    }
+    @Test
     public void testNonPublisherSpecificFields() {
-        Location location1 = createLocation();
+        Location location1 = createLocation1();
         location1.setCanonicalUri("unbox.amazon.co.uk/SOME_ASIN/PAY");
         Location location2 = createLocation2();
         location2.setCanonicalUri("unbox.amazon.co.uk/SOME_OTHER_ASIN/RENT");
@@ -119,7 +146,7 @@ public class AmazonOnDemandLocationGeneratorTest extends TestsWithConfiguration 
     
     @Test
     public void testUnboxSpecificFields() {
-        Location location = createLocation();
+        Location location = createLocation1();
         location.setCanonicalUri("unbox.amazon.co.uk/SOMELOCATIONID/SUBSCRIPTION");
         Encoding encoding = createEncoding(location);
         Version version = createVersion(encoding);
@@ -191,7 +218,7 @@ public class AmazonOnDemandLocationGeneratorTest extends TestsWithConfiguration 
         return encoding;
     }
 
-    private Location createLocation() {
+    private Location createLocation1() {
         Location location = new Location();
         
         Policy policy = new Policy();
@@ -209,6 +236,19 @@ public class AmazonOnDemandLocationGeneratorTest extends TestsWithConfiguration 
 
         Policy policy = new Policy();
         policy.setRevenueContract(Policy.RevenueContract.PAY_TO_RENT);
+        policy.setAvailabilityStart(new DateTime(2012, 7, 3, 0, 0, 0, DateTimeZone.UTC));
+        policy.setAvailabilityEnd(new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC));
+
+        location.setPolicy(policy);
+
+        return location;
+    }
+
+    private Location createLocationSub() {
+        Location location = new Location();
+
+        Policy policy = new Policy();
+        policy.setRevenueContract(Policy.RevenueContract.SUBSCRIPTION);
         policy.setAvailabilityStart(new DateTime(2012, 7, 3, 0, 0, 0, DateTimeZone.UTC));
         policy.setAvailabilityEnd(new DateTime(2013, 7, 17, 0, 0, 0, DateTimeZone.UTC));
 
