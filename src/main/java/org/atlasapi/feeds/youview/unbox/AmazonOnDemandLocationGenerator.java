@@ -1,11 +1,20 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.youview.refdata.schemas._2011_07_06.ExtendedInstanceDescriptionType;
-import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
+
+import javax.xml.datatype.Duration;
+import javax.xml.datatype.XMLGregorianCalendar;
+
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
@@ -16,6 +25,12 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Quality;
 import org.atlasapi.media.entity.Version;
+
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.youview.refdata.schemas._2011_07_06.ExtendedInstanceDescriptionType;
+import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 import org.jdom.IllegalDataException;
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
@@ -29,20 +44,6 @@ import tva.metadata._2010.InstanceDescriptionType;
 import tva.metadata._2010.OnDemandProgramType;
 import tva.metadata._2010.VideoAttributesType;
 import tva.mpeg7._2008.UniqueIDType;
-
-import javax.xml.datatype.Duration;
-import javax.xml.datatype.XMLGregorianCalendar;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToIntFunction;
-import java.util.function.ToLongFunction;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -200,7 +201,7 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
     //Genres in this context describes the availability of the media. 
     private Set<GenreType> generateGenres(List<Location> locations) {
 
-        ImmutableSet.Builder<GenreType> plans = ImmutableSet.builder();
+        Set<GenreType> plans = new HashSet<>();
 
         //All media ingested by Amazon is available
         GenreType mediaAvailable = new GenreType();
@@ -228,9 +229,21 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
                         "Amazon onDemand content is not accessible via sub, rent or buy. Location uri="
                         + location.getUri());
             }
-            plans.add(revenuePlan);
+            if(!setContainsGenre(plans, revenuePlan)) {
+                plans.add(revenuePlan);
+            }
         }
-        return plans.build();
+        return ImmutableSet.copyOf(plans);
+    }
+
+    private boolean setContainsGenre(Set<GenreType> types, GenreType type) {
+        for (GenreType genreType : types) {
+            if (genreType.getType().equals(type.getType()) &&
+                genreType.getHref().equals(type.getHref())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Duration generatePublishedDuration(Version version) {
