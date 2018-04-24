@@ -107,7 +107,6 @@ public class AmazonOnDemandLocationGeneratorTest extends TestsWithConfiguration 
 
         assertEquals("P0DT1H30M0.000S", onDemand.getPublishedDuration().toString());
         assertEquals("2012-07-03T00:00:00Z", onDemand.getStartOfAvailability().toString());
-        assertEquals("2013-07-17T00:00:00Z", onDemand.getEndOfAvailability().toString());
         assertFalse(onDemand.getFree().isValue());
         
         InstanceDescriptionType instanceDesc = onDemand.getInstanceDescription();
