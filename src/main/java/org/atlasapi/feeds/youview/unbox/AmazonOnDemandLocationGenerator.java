@@ -80,7 +80,10 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
         //This assumes that all amazon locations represent the same thing, and thus have the same
         //start and end dates.
         onDemand.setStartOfAvailability(generateAvailabilityStart(locations.get(0)));
-        onDemand.setEndOfAvailability(generateAvailabilityEnd(locations.get(0)));
+        //Amazon does not send start and end dates. These are fixed by us to certain dates.
+        //YV has requested we do not send end-dates for content available indefinitely, and simply
+        //revoke it if is no longer available.
+       // onDemand.setEndOfAvailability(generateAvailabilityEnd(locations.get(0)));
         onDemand.setFree(generateFree());
 
         return onDemand;
