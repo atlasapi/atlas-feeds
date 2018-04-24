@@ -1,7 +1,5 @@
 package org.atlasapi.feeds.youview;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.ChildRef;
 import org.atlasapi.media.entity.Episode;
@@ -16,6 +14,8 @@ import org.atlasapi.persistence.content.ResolvedContent;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class ContentResolvingContentHierarchyExtractor implements ContentHierarchyExtractor {
@@ -38,6 +38,15 @@ public class ContentResolvingContentHierarchyExtractor implements ContentHierarc
             return Optional.absent();
         }
         Brand brand = (Brand) identified;
+        //The repId service might have changed the ID of the brandRef we have here, but not the uri.
+        //As we now resolved by uri we will get back the original item, but we really need to retain
+        //the id of the repId for this brand. So will put the Brand back in an inconsistent state
+        //by replacing the id with the one that we had. For Nitro that should be the same so no
+        //actual change for amazon it should keep the repId.
+        if (brandRef.getId() != null) {
+            brand.setId(brandRef.getId());
+        }
+
         return Optional.fromNullable(brand);
     }
 
@@ -64,6 +73,14 @@ public class ContentResolvingContentHierarchyExtractor implements ContentHierarc
         if (!(identified instanceof Series)) {
             return Optional.absent();
         }
+        //The repId service might have changed the ID of the seriesRef we have here,but not the uri.
+        //As we now resolved by uri we will get back the original item, but we really need to retain
+        //the id of the repId for this series. So will put the Series back in an inconsistent state
+        //by replacing the id with the one that we had. For Nitro that should be the same so no
+        //actual change for amazon it should keep the repId.
+        if (seriesRef.getId() != null) {
+            identified.setId(seriesRef.getId());
+        }
         Series series = (Series) identified;
         return Optional.fromNullable(series);
     }
@@ -76,6 +93,14 @@ public class ContentResolvingContentHierarchyExtractor implements ContentHierarc
         }
         ResolvedContent resolved = contentResolver.findByCanonicalUris(ImmutableList.of(brandRef.getUri()));
         Brand brand = (Brand) resolved.asResolvedMap().get(brandRef.getUri());
+        //The repId service might have changed the ID of the brandRef we have here, but not the uri.
+        //As we now resolved by uri we will get back the original item, but we really need to retain
+        //the id of the repId for this brand. So will put the Brand back in an inconsistent state
+        //by replacing the id with the one that we had. For Nitro that should be the same so no
+        //actual change for amazon it should keep the repId.
+        if (brandRef.getId() != null) {
+            brand.setId(brandRef.getId());
+        }
         return Optional.fromNullable(brand);
     }
 
