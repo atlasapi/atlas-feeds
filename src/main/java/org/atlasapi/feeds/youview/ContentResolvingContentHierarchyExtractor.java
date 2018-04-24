@@ -6,6 +6,7 @@ import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.ParentRef;
+import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.SeriesRef;
 import org.atlasapi.persistence.content.ContentResolver;
@@ -43,7 +44,7 @@ public class ContentResolvingContentHierarchyExtractor implements ContentHierarc
         //the id of the repId for this brand. So will put the Brand back in an inconsistent state
         //by replacing the id with the one that we had. For Nitro that should be the same so no
         //actual change for amazon it should keep the repId.
-        if (brandRef.getId() != null) {
+        if (brandRef.getId() != null && item.getPublisher().equals(Publisher.AMAZON_UNBOX)) {
             brand.setId(brandRef.getId());
         }
 
@@ -78,7 +79,7 @@ public class ContentResolvingContentHierarchyExtractor implements ContentHierarc
         //the id of the repId for this series. So will put the Series back in an inconsistent state
         //by replacing the id with the one that we had. For Nitro that should be the same so no
         //actual change for amazon it should keep the repId.
-        if (seriesRef.getId() != null) {
+        if (seriesRef.getId() != null && item.getPublisher().equals(Publisher.AMAZON_UNBOX)) {
             identified.setId(seriesRef.getId());
         }
         Series series = (Series) identified;
@@ -98,7 +99,7 @@ public class ContentResolvingContentHierarchyExtractor implements ContentHierarc
         //the id of the repId for this brand. So will put the Brand back in an inconsistent state
         //by replacing the id with the one that we had. For Nitro that should be the same so no
         //actual change for amazon it should keep the repId.
-        if (brandRef.getId() != null) {
+        if (brandRef.getId() != null && series.getPublisher().equals(Publisher.AMAZON_UNBOX)) {
             brand.setId(brandRef.getId());
         }
         return Optional.fromNullable(brand);
