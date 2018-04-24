@@ -127,7 +127,7 @@ public class YouViewUploadModule {
     );
 
     private static final RepetitionRule NITRO_DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
-    private static final RepetitionRule AMAZON_DELTA_CONTENT_CHECK = RepetitionRules.daily(LocalTime.MIDNIGHT.plusHours(12));
+    private static final RepetitionRule AMAZON_DELTA_CONTENT_CHECK = RepetitionRules.NEVER; //RepetitionRules.daily(LocalTime.MIDNIGHT.plusHours(12));
     private static final RepetitionRule REPID_CHANGES_HANDLING = RepetitionRules.NEVER;
 private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
