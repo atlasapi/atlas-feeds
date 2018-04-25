@@ -104,20 +104,21 @@ public class YouviewContentMerger {
         RepresentativeIdResponse repIdResponse = repIdClient.getRepId(mergedContent.getId());
         mergedContent.setId(decode(repIdResponse.getRepresentative().getId()));
 
-        if (mergedContent instanceof Episode) {
-            mergedContent = updateSeriesRef(mergedContent);
-        }
         if (mergedContent instanceof Item) {
             mergedContent = updateContainerRef(mergedContent);
+            if (mergedContent instanceof Episode) {
+                mergedContent = updateSeriesRef(mergedContent);
+            }
         }
-        if (mergedContent instanceof Series) {
+        else if (mergedContent instanceof Series) {
             mergedContent = updateBrand(mergedContent);
         }
         return mergedContent;
     }
 
     private Content updateBrand(Content mergedContent) {
-        RepresentativeIdResponse repIdResponse;Series series = (Series) mergedContent;
+        RepresentativeIdResponse repIdResponse;
+        Series series = (Series) mergedContent;
         ParentRef parentRef = series.getParent();
 
         if (parentRef != null) {
@@ -129,12 +130,13 @@ public class YouviewContentMerger {
                     )
             );
         }
-        mergedContent = series;
-        return mergedContent;
+
+        return series;
     }
 
     private Content updateContainerRef(Content mergedContent) {
-        RepresentativeIdResponse repIdResponse;Item item = (Item) mergedContent;
+        RepresentativeIdResponse repIdResponse;
+        Item item = (Item) mergedContent;
         ParentRef parentRef = item.getContainer();
 
         if (parentRef != null) {
@@ -145,12 +147,12 @@ public class YouviewContentMerger {
             item.setContainer(newCont);
         }
 
-        mergedContent = item;
-        return mergedContent;
+        return item;
     }
 
     private Content updateSeriesRef(Content mergedContent) {
-        RepresentativeIdResponse repIdResponse;Episode episode = (Episode) mergedContent;
+        RepresentativeIdResponse repIdResponse;
+        Episode episode = (Episode) mergedContent;
         ParentRef parentRef = episode.getSeriesRef();
 
         if (parentRef != null) {
@@ -162,7 +164,7 @@ public class YouviewContentMerger {
                     )
             );
         }
-        mergedContent = episode;
-        return mergedContent;
+
+        return episode;
     }
 }

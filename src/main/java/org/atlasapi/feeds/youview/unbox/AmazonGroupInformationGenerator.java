@@ -172,6 +172,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             memberOf.setCrid(idGenerator.generateContentCrid(series.get()));
             if (item instanceof Episode) {
                 Episode episode = (Episode) item;
+                //index 0 not valid for YV
                 if (episode.getEpisodeNumber() != null && episode.getEpisodeNumber() !=0 ) {
                     memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
                 }
@@ -182,6 +183,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             memberOf.setCrid(idGenerator.generateContentCrid(brand.get()));
             if (item instanceof Episode) {
                 Episode episode = (Episode) item;
+                //index 0 not valid for YV
                 if (episode.getEpisodeNumber() != null && episode.getEpisodeNumber() !=0) {
                     memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
                 }
@@ -208,8 +210,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         if (brand.isPresent()) {
             MemberOfType memberOf = new MemberOfType();
             memberOf.setCrid(idGenerator.generateContentCrid(brand.get()));
-            //Index 0 is illegal for YV. It was agreed that we still send the series, but without
-            //the index number.
+            //index 0 not valid for YV
             if (series.getSeriesNumber() != null && series.getSeriesNumber() != 0) {
                 memberOf.setIndex(Long.valueOf(series.getSeriesNumber()));
             }
@@ -250,8 +251,6 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         type.setValue(groupType);
         return type;
     }
-
-
 
     private BasicContentDescriptionType generateBasicDescription(Content content, @Nullable Item item) {
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
