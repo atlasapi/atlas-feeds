@@ -2,6 +2,7 @@ package org.atlasapi.feeds.youview.nitro;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.youview.nitro.NitroUtils.getLanguageCodeFor;
+import static org.atlasapi.feeds.youview.unbox.AmazonGroupInformationGenerator.YOUVIEW_SYNOPSIS_LENGTH_MAP;
 
 import java.util.List;
 import java.util.Map;
@@ -65,7 +66,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.metabroadcast.common.text.Truncator;
 
 public class NitroGroupInformationGenerator implements GroupInformationGenerator {
 
@@ -99,12 +99,6 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
             .put(Specialization.TV, "urn:tva:metadata:cs:OriginationCS:2005:5.8")
             .build();
     
-    private static final Map<SynopsisLengthType, Integer> YOUVIEW_SYNOPSIS_LENGTH = ImmutableMap.<SynopsisLengthType, Integer>builder()
-            .put(SynopsisLengthType.SHORT, 90)
-            .put(SynopsisLengthType.MEDIUM, 210)
-            .put(SynopsisLengthType.LONG, 1200)
-            .build();
-    
     private static final List<String> TITLE_PREFIXES = ImmutableList.of("The ", "the ", "A ", "a ", "An ", "an ");
     
     private static final Function<String, List<GenreType>> TO_GENRE = new Function<String, List<GenreType>>() {
@@ -134,11 +128,6 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     private final ServiceIdResolver sIdResolver;
     private final CreditsItemGenerator creditsGenerator;
     private final ContentTitleGenerator titleGenerator;
-    
-    private Truncator truncator = new Truncator()
-            .omitTrailingPunctuationWhenTruncated()
-            .onlyTruncateAtAWordBoundary()
-            .withOmissionMarker("...");
     
     public NitroGroupInformationGenerator(IdGenerator idGenerator, GenreMapping genreMapping,
             ServiceIdResolver sIdResolver, CreditsItemGenerator creditsGenerator,
@@ -444,16 +433,13 @@ public class NitroGroupInformationGenerator implements GroupInformationGenerator
     }
     
     private SynopsisType createSynopsis(SynopsisLengthType synopsisType, String description) {
-        Integer length = YOUVIEW_SYNOPSIS_LENGTH.get(synopsisType);
-        if (length == null) {
+        if (YOUVIEW_SYNOPSIS_LENGTH_MAP.get(synopsisType) == null) {
             throw new RuntimeException("No length mapping found for YouView Synopsis length " + synopsisType.name());
         }
-        
-        truncator = truncator.withMaxLength(length);
+
         SynopsisType synopsis = new SynopsisType();
-        
         synopsis.setLength(synopsisType);
-        synopsis.setValue(truncator.truncatePossibleNull(description));
+        synopsis.setValue(YOUVIEW_SYNOPSIS_LENGTH_MAP.get(synopsisType).truncatePossibleNull(description));
         
         return synopsis;
     }

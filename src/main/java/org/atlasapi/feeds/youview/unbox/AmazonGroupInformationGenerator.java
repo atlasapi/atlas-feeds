@@ -95,13 +95,28 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         .put(Specialization.FILM, "urn:tva:metadata:cs:OriginationCS:2005:5.7")
         .put(Specialization.TV, "urn:tva:metadata:cs:OriginationCS:2005:5.8")
         .build();
-    
-    private static final Map<SynopsisLengthType, Integer> YOUVIEW_SYNOPSIS_LENGTH = ImmutableMap.<SynopsisLengthType, Integer>builder()
-        .put(SynopsisLengthType.SHORT, 90)
-        .put(SynopsisLengthType.MEDIUM, 210)
-        .put(SynopsisLengthType.LONG, 1200)
-        .build();
-    
+
+    // That is relevant to YV not amazon, so it should not be here.
+    // But anyway for efficiency lets make it available to other classes.
+    public static final Map<SynopsisLengthType, Truncator> YOUVIEW_SYNOPSIS_LENGTH_MAP =
+            ImmutableMap.<SynopsisLengthType, Truncator>builder()
+                    .put(SynopsisLengthType.SHORT, new Truncator()
+                            .omitTrailingPunctuationWhenTruncated()
+                            .onlyTruncateAtAWordBoundary()
+                            .withOmissionMarker("...")
+                            .withMaxLength(90))
+                    .put(SynopsisLengthType.MEDIUM, new Truncator()
+                            .omitTrailingPunctuationWhenTruncated()
+                            .onlyTruncateAtAWordBoundary()
+                            .withOmissionMarker("...")
+                            .withMaxLength(210))
+                    .put(SynopsisLengthType.LONG, new Truncator()
+                            .omitTrailingPunctuationWhenTruncated()
+                            .onlyTruncateAtAWordBoundary()
+                            .withOmissionMarker("...")
+                            .withMaxLength(1200))
+                    .build();
+
     private static final List<String> TITLE_PREFIXES = ImmutableList.of("The ", "the ", "A ", "a ", "An ", "an ");
     
     private static final Function<String, GenreType> TO_GENRE = new Function<String, GenreType>() {
@@ -114,11 +129,6 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         }
     };
     private static final String SEASON = "Season ";
-
-    private Truncator truncator = new Truncator()
-            .omitTrailingPunctuationWhenTruncated()
-            .onlyTruncateAtAWordBoundary()
-            .withOmissionMarker("...");
 
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
@@ -457,19 +467,20 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
 
     private List<SynopsisType> generateSynopses(Content content) {
         List<SynopsisType> synopses = Lists.newArrayList();
-        for (Entry<SynopsisLengthType, Integer> entry : YOUVIEW_SYNOPSIS_LENGTH.entrySet()) {
+        for (Entry<SynopsisLengthType, Truncator> entry : YOUVIEW_SYNOPSIS_LENGTH_MAP.entrySet()) {
             String description = content.getDescription();
             //YV needs a short synopses. Everything should already have one, but bugs are more
             //than humans in this world. Use the title.
             if (description == null && entry.getKey().equals(SynopsisLengthType.SHORT)) {
-               description = content.getTitle();
-               log.warn("Amazon content was lacking synopsis. It shouldn't. The title was used instead. uri={}",content.getCanonicalUri());
+                description = content.getTitle();
+                log.warn(
+                        "Amazon content was lacking synopsis. It shouldn't. The title was used instead. uri={}",
+                        content.getCanonicalUri());
             }
             if (description != null) {
                 SynopsisType synopsis = new SynopsisType();
                 synopsis.setLength(entry.getKey());
-                truncator = truncator.withMaxLength(entry.getValue());
-                synopsis.setValue(truncator.truncate(description));
+                synopsis.setValue(entry.getValue().truncate(description));
                 synopses.add(synopsis);
             }
         }
