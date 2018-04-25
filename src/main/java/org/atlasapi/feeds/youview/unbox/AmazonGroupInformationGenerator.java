@@ -34,6 +34,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import tva.metadata._2010.BaseProgramGroupTypeType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ControlledTermType;
@@ -61,7 +63,7 @@ import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAmazonAsin;
 
 public class AmazonGroupInformationGenerator implements GroupInformationGenerator {
 
-//    private static final Logger log = LoggerFactory.getLogger(AmazonGroupInformationGenerator.class)
+    private static final Logger log = LoggerFactory.getLogger(AmazonGroupInformationGenerator.class);
 
     public static final String GROUP_INFO_SERVICE_ID = "http://amazon.com/services/content_owning/primevideo";
     private static final int DEFAULT_IMAGE_HEIGHT = 320;
@@ -456,10 +458,16 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     private List<SynopsisType> generateSynopses(Content content) {
         List<SynopsisType> synopses = Lists.newArrayList();
         for (Entry<SynopsisLengthType, Integer> entry : YOUVIEW_SYNOPSIS_LENGTH.entrySet()) {
-            SynopsisType synopsis = new SynopsisType();
-            synopsis.setLength(entry.getKey());
             String description = content.getDescription();
+            //YV needs a short synopses. Everything should already have one, but bugs are more
+            //than humans in this world. Use the title.
+            if (description == null && entry.getKey().equals(SynopsisLengthType.SHORT)) {
+               description = content.getTitle();
+               log.warn("Amazon content was lacking synopsis. It shouldn't. The title was used instead. uri={}",content.getCanonicalUri());
+            }
             if (description != null) {
+                SynopsisType synopsis = new SynopsisType();
+                synopsis.setLength(entry.getKey());
                 truncator = truncator.withMaxLength(entry.getValue());
                 synopsis.setValue(truncator.truncate(description));
                 synopses.add(synopsis);
