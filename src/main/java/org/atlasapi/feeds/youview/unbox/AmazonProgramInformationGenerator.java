@@ -78,13 +78,14 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
         public String apply(Certificate input) {
             String href = YOUVIEW_CERTIFICATE_EXPLANATION_MAPPING.get(input.classification());
             if (href == null) {
-                href = "";
+                href = YOUVIEW_DEFAULT_EXPLANATION;
             }
             return href;
         }
     };
 
-    private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance";
+    private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
+    private static final String YOUVIEW_DEFAULT_EXPLANATION = "Rating to be announced";
     private static final Map<String, String> YOUVIEW_CERTIFICATE_MAPPING = ImmutableMap.<String, String>builder()
             //The mapping is as agreed in YV ticket ECOTEST-283
             .put("amazon_maturity_rating|all_ages", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#no_parental_controls")
