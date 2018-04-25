@@ -287,8 +287,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                             "Failed to create payload for content %s, version %s",
                             versionHierarchy.item().getCanonicalUri(),
                             versionHierarchy.version().getCanonicalUri()
-                    ),
-                    e
+                    ), e
             );
             Task task = taskStore.save(
                     taskCreator.taskFor(versionCrid, versionHierarchy, action, Status.FAILED)
@@ -322,8 +321,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                             broadcastHierarchy.item().getCanonicalUri(),
                             broadcastHierarchy.version().getCanonicalUri(),
                             broadcastHierarchy.broadcast().toString()
-                    ),
-                    e
+                    ), e
             );
             Task task = taskStore.save(taskCreator.taskFor(broadcastImi, broadcastHierarchy, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));

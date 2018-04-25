@@ -172,7 +172,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             memberOf.setCrid(idGenerator.generateContentCrid(series.get()));
             if (item instanceof Episode) {
                 Episode episode = (Episode) item;
-                if (episode.getEpisodeNumber() != null) {
+                if (episode.getEpisodeNumber() != null && episode.getEpisodeNumber() !=0 ) {
                     memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
                 }
             }
@@ -182,7 +182,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             memberOf.setCrid(idGenerator.generateContentCrid(brand.get()));
             if (item instanceof Episode) {
                 Episode episode = (Episode) item;
-                if (episode.getEpisodeNumber() != null) {
+                if (episode.getEpisodeNumber() != null && episode.getEpisodeNumber() !=0) {
                     memberOf.setIndex(Long.valueOf(episode.getEpisodeNumber()));
                 }
             }
