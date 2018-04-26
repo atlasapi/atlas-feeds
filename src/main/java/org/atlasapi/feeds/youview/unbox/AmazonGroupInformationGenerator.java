@@ -1,6 +1,8 @@
 package org.atlasapi.feeds.youview.unbox;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +92,8 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     public static final String OTHER_IDENTIFIER_AUTHORITY_CONTENT_TYPE = "content-type.amazon.com";
     private static final String CONTENT_TYPE_MOVIE = "movie";
     private static final String CONTENT_TYPE_EPISODE = "episode";
+
+    private static final String MBST_BASE_IMAGE_URL = "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur&source=";
     
     private static final Map<Specialization, String> YOUVIEW_SPECIALIZATION_GENRE_MAPPING = ImmutableMap.<Specialization, String>builder()
         .put(Specialization.FILM, "urn:tva:metadata:cs:OriginationCS:2005:5.7")
@@ -367,8 +371,25 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
 
     private MediaLocatorType generateMediaLocator(Content content) {
         MediaLocatorType mediaLocator = new MediaLocatorType();
-        mediaLocator.setMediaUri(content.getImage());
+        mediaLocator.setMediaUri(getMetabroadcastImageUrl(content.getImage()));
         return mediaLocator;
+    }
+
+    public static String getMetabroadcastImageUrl(String amazonUrl) {
+        //Chop amazon's native resizing out of their url.
+//        int lastDot = amazonUrl.lastIndexOf('.');
+//        int preLastDot = amazonUrl.lastIndexOf('.', lastDot - 1);
+//        if (lastDot > 0 || preLastDot > 0) {
+//            amazonUrl = amazonUrl.substring(0, preLastDot)
+//                        + amazonUrl.substring(lastDot, amazonUrl.length());
+//        }
+        try {
+            return MBST_BASE_IMAGE_URL + URLEncoder.encode(amazonUrl, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            log.error("", e);
+        }
+
+        return amazonUrl;
     }
 
     private CreditsListType generateCreditsList(Content content) {

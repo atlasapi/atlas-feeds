@@ -201,7 +201,7 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
     @Test
     public void testImageGeneration() {
         Film film = createFilm();
-        film.setImage("http://www.lovefilm.com/lovefilm/images/products/heroshots/1/177221-large.jpg");
+        film.setImage("https://m.media-amazon.com/images/S/aiv-image/jp/84e17b33-8910-491a-b8a1-1e81cbecce65-f193b98f-3d70-458c-b44e-c7d685779341_RGB_SD._SX320_SY240_.jpg");
 
         GroupInformationType groupInfo = generator.generate(film);
 
@@ -212,7 +212,8 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         assertEquals("urn:mpeg:mpeg7:cs:FileFormatCS:2001:1", relatedMaterial.getFormat().getHref());
 
         assertEquals(
-            "http://www.lovefilm.com/lovefilm/images/products/heroshots/1/177221-large.jpg",
+            "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur&source="
+            + "https%3A%2F%2Fm.media-amazon.com%2Fimages%2FS%2Faiv-image%2Fjp%2F84e17b33-8910-491a-b8a1-1e81cbecce65-f193b98f-3d70-458c-b44e-c7d685779341_RGB_SD._SX320_SY240_.jpg",
             relatedMaterial.getMediaLocator().getMediaUri()
         );
 
@@ -353,7 +354,8 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
         assertEquals(
-            "episode image",
+            "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur&source="
+            + "episode+image",
             relatedMaterial.getMediaLocator().getMediaUri()
         );
     }
@@ -382,7 +384,8 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
         assertEquals(
-            "episode image",
+            "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur&source="
+            + "episode+image",
             relatedMaterial.getMediaLocator().getMediaUri()
         );
     }
