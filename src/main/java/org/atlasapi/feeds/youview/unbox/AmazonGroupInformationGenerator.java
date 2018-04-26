@@ -68,8 +68,8 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     private static final Logger log = LoggerFactory.getLogger(AmazonGroupInformationGenerator.class);
 
     public static final String GROUP_INFO_SERVICE_ID = "http://amazon.com/services/content_owning/primevideo";
-    private static final int DEFAULT_IMAGE_HEIGHT = 320;
-    private static final int DEFAULT_IMAGE_WIDTH = 240;
+//    private static final int DEFAULT_IMAGE_HEIGHT = 320;
+//    private static final int DEFAULT_IMAGE_WIDTH = 240;
     
     private static final String YOUVIEW_CREDIT_ROLE_UNKNOWN = "urn:mpeg:mpeg7:cs:RoleCS:2001:UNKNOWN";
     private static final String YOUVIEW_IMAGE_FORMAT = "urn:mpeg:mpeg7:cs:FileFormatCS:2001:1";
@@ -94,6 +94,8 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     private static final String CONTENT_TYPE_EPISODE = "episode";
 
     private static final String MBST_BASE_IMAGE_URL = "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur&source=";
+    private static final int MBST_IMAGE_WIDTH = 1024;
+    private static final int MBST_IMAGE_HEIGHT = 576;
     
     private static final Map<Specialization, String> YOUVIEW_SPECIALIZATION_GENRE_MAPPING = ImmutableMap.<Specialization, String>builder()
         .put(Specialization.FILM, "urn:tva:metadata:cs:OriginationCS:2005:5.7")
@@ -340,14 +342,17 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         ContentPropertiesType contentProperties = new ContentPropertiesType();
         StillImageContentAttributesType attributes = new StillImageContentAttributesType();
 
-        if (content.getImages() == null || content.getImages().isEmpty()) {
-            attributes.setWidth(DEFAULT_IMAGE_WIDTH);
-            attributes.setHeight(DEFAULT_IMAGE_HEIGHT);
-        } else {
-            Image image = Iterables.getFirst(content.getImages(), null);
-            attributes.setWidth(image.getWidth());
-            attributes.setHeight(image.getHeight());
-        }
+        //Metabroadcast now supplies the images, so the format is fixed.
+        attributes.setWidth(MBST_IMAGE_WIDTH);
+        attributes.setHeight(MBST_IMAGE_HEIGHT);
+//        if (content.getImages() == null || content.getImages().isEmpty()) {
+//            attributes.setWidth(DEFAULT_IMAGE_WIDTH);
+//            attributes.setHeight(DEFAULT_IMAGE_HEIGHT);
+//        } else {
+//            Image image = Iterables.getFirst(content.getImages(), null);
+//            attributes.setWidth(image.getWidth());
+//            attributes.setHeight(image.getHeight());
+//        }
 
         ControlledTermType primaryRole = new ControlledTermType();
         primaryRole.setHref(YOUVIEW_IMAGE_ATTRIBUTE_PRIMARY_ROLE);

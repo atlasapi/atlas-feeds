@@ -220,8 +220,8 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         StillImageContentAttributesType imageProperties = (StillImageContentAttributesType)
                 Iterables.getOnlyElement(relatedMaterial.getContentProperties().getContentAttributes());
 
-        assertEquals(Integer.valueOf(240), imageProperties.getWidth());
-        assertEquals(Integer.valueOf(320), imageProperties.getHeight());
+        assertEquals(Integer.valueOf(1024), imageProperties.getWidth());
+        assertEquals(Integer.valueOf(576), imageProperties.getHeight());
 
         ControlledTermType usage = Iterables.getOnlyElement(imageProperties.getIntendedUse());
 
@@ -517,18 +517,8 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(groupInfo.getBasicDescription().getRelatedMaterial());
         ContentPropertiesType contentProperties = relatedMaterial.getContentProperties();
         StillImageContentAttributesType attributes = (StillImageContentAttributesType) Iterables.getOnlyElement(contentProperties.getContentAttributes());
-        assertThat(attributes.getHeight(), is(equalTo(246)));
-        assertThat(attributes.getWidth(), is(equalTo(572)));
-
-        film.setImages(ImmutableSet.<Image>of());
-
-        groupInfo = generator.generate(film);
-
-        relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(groupInfo.getBasicDescription().getRelatedMaterial());
-        contentProperties = relatedMaterial.getContentProperties();
-        attributes = (StillImageContentAttributesType) Iterables.getOnlyElement(contentProperties.getContentAttributes());
-        assertThat(attributes.getHeight(), is(equalTo(320)));
-        assertThat(attributes.getWidth(), is(equalTo(240)));
+        assertThat(attributes.getHeight(), is(equalTo(576))); // dimensions change to those of mbst images.
+        assertThat(attributes.getWidth(), is(equalTo(1024)));
     }
 
     @Test
@@ -543,8 +533,8 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(groupInfo.getBasicDescription().getRelatedMaterial());
         ContentPropertiesType contentProperties = relatedMaterial.getContentProperties();
         StillImageContentAttributesType attributes = (StillImageContentAttributesType) Iterables.getOnlyElement(contentProperties.getContentAttributes());
-        assertThat(attributes.getHeight(), is(equalTo(320)));
-        assertThat(attributes.getWidth(), is(equalTo(240)));
+        assertThat(attributes.getHeight(), is(equalTo(576))); // default dimensions are those of mbst images.
+        assertThat(attributes.getWidth(), is(equalTo(1024)));
     }
 
     @Test
