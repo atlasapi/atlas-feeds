@@ -23,7 +23,7 @@ public class AmazonContentConsolidator {
      * versions, and put everything under a single version, with locations that are grouped under
      * the same quality.
      * <p>
-     * This is a destructive merge. If versions were legitimately different, bad luck. This was
+     * This is a destructive merge. If versions were legitimately different, tough luck. This was
      * chosen because we don't dedup version on ingest, so they should have different titles and
      * would be different items.
      * <p>

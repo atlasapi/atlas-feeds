@@ -1,12 +1,15 @@
 package org.atlasapi.feeds.youview.www;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
@@ -87,6 +90,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
+import static org.atlasapi.feeds.tasks.youview.creation.DeltaTaskCreationTask.getContributingAsins;
 
 // TODO remove all the duplication
 @Controller
@@ -754,8 +758,8 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "required parameter 'type' not specified");
             return;
         }
-        java.util.Optional<Content> toBeDeleted = getContent(uri);
-        if (!toBeDeleted.isPresent()) {
+        java.util.Optional<Content> content = getContent(uri);
+        if (!content.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
         }
@@ -766,23 +770,41 @@ public class YouViewUploadController {
             return;
         }
 
+        List<Content> toBeDeleted = new ArrayList<>();
+        toBeDeleted.add(content.get());
+        if(content.get().getPublisher().equals(Publisher.AMAZON_UNBOX)) {
+            //we will attempt to delete all
+            Set<String> contributingUris = getContributingAsins(content.get());
+            ResolvedContent resolved = contentResolver.findByUris(contributingUris);
+            if (resolved != null && resolved.getAllResolvedResults() != null) {
+                toBeDeleted.addAll(resolved.getAllResolvedResults().stream()
+                        .filter(c -> c instanceof Content)
+                        .map(c -> (Content) c)
+                        .collect(Collectors.toList()));
+            }
+        }
+
         // TODO ideally this would go via the TaskCreator, but that would require resolving 
         // the hierarchies for each type of element
-        Destination destination = new YouViewDestination(
-                toBeDeleted.get().getCanonicalUri(),
-                type,
-                elementId
-        );
-        Task task = Task.builder()
-                .withAction(Action.DELETE)
-                .withDestination(destination)
-                .withCreated(clock.now())
-                .withPublisher(toBeDeleted.get().getPublisher())
-                .withStatus(Status.NEW)
-                .build();
-        taskStore.save(task);
+        StringBuilder uris = new StringBuilder();
+        for (Content forDeletion : toBeDeleted) {
+            Destination destination = new YouViewDestination(
+                    forDeletion.getCanonicalUri(),
+                    type,
+                    elementId
+            );
+            Task task = Task.builder()
+                    .withAction(Action.DELETE)
+                    .withDestination(destination)
+                    .withCreated(clock.now())
+                    .withPublisher(forDeletion.getPublisher())
+                    .withStatus(Status.NEW)
+                    .build();
+            taskStore.save(task);
+            uris.append(forDeletion.getCanonicalUri()).append(" ");
+        }
 
-        sendOkResponse(response, "Delete for " + uri + " sent successfully");
+        sendOkResponse(response, "Delete for " + uri + " sent successfully +( "+uris+")");
     }
 
     /**

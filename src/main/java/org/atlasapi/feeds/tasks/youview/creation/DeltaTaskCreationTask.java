@@ -1,8 +1,11 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
@@ -15,10 +18,12 @@ import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
+import org.atlasapi.feeds.youview.unbox.AmazonIdGenerator;
 import org.atlasapi.media.channel.ChannelResolver;
+import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Content;
-import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 
 import com.google.common.base.Optional;
@@ -128,11 +133,11 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     protected List<Content> uploadFromAmazon(Iterator<Content> contentPieces,
             YouViewContentProcessor uploadProcessor) {
 
-        List<Content> deleted = Lists.newArrayList();
+        List<Content> forDeletion = Lists.newArrayList();
         while (contentPieces.hasNext()) {
             Content updatedContent = contentPieces.next();
             if (!updatedContent.isActivelyPublished()) {
-                deleted.add(updatedContent);
+                forDeletion.add(updatedContent);
                 continue;
             }
 
@@ -145,9 +150,9 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                         updatedContent.getCanonicalUri(), e);
                 continue;
             }
-
             try {
                 AmazonContentConsolidator.consolidate(mergedContent); //mutates the item
+                //            forDeletion.addAll(extractForDeletion(mergedContent));
             } catch (Exception e) {
                 log.error("Failed during the attempt to consolidate versions. "
                           + "This item will not be pushed to YV. Content {}. ",
@@ -159,7 +164,43 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             reportStatus("Uploads: " + uploadProcessor.getResult());
 
         }
-        return deleted;
+        return forDeletion;
+    }
+
+    private Set<Content> extractForDeletion(Content mergedContent) {
+        //Good, now that we have the merged content, we need to ensure that the pieces this
+        //represents are not uploaded to YV separately. One case that can cause this is that
+        //content was uploaded to YV before it had a chance to equivalate, and thus each
+        //piece was uploaded separately.
+        Set<String> contributingUris = getContributingAsins(mergedContent);
+
+        ResolvedContent resolved = contentResolver.findByUris(contributingUris);
+        if (resolved != null && resolved.getAllResolvedResults() != null) {
+            return resolved.getAllResolvedResults().stream()
+                     .filter(c -> c instanceof Content)
+                     .map(c -> (Content) c)
+                     .collect(Collectors.toSet());
+        }
+        return new HashSet<>();
+    }
+
+    public static Set<String> getContributingAsins(Content mergedContent) {
+        String GB_AMAZON_ASIN = "gb:amazon:asin";
+        String URI_PREFIX = "http://unbox.amazon.co.uk/";
+
+        //find all URIs that took part in the merge
+        String ourAsin = AmazonIdGenerator.getAsin(mergedContent);
+        Set<Alias> aliases = mergedContent.getAliases();
+        Set<String> contributingUris = null;
+        if(aliases != null){
+            contributingUris = aliases.stream()
+                    .filter(c -> c.getNamespace().equals(GB_AMAZON_ASIN))
+                    .filter(c -> !c.getValue().equals(ourAsin))
+                    .map(Alias::getValue)
+                    .map(c-> URI_PREFIX + c)
+                    .collect(Collectors.toSet());
+        }
+        return contributingUris;
     }
 
     private List<Content> uploadFromBBC(

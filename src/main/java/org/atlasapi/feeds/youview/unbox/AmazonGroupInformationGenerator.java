@@ -268,6 +268,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         basicDescription.getLanguage().addAll(generateLanguage(content));
         basicDescription.setCreditsList(generateCreditsList(content));
         Optional<RelatedMaterialType> relatedMaterial;
+        //TODO: why are series and brands generating material from children, oeo?
         if (content instanceof Series) {
             relatedMaterial = generateRelatedMaterial(item);
         } else if (content instanceof Brand) {
