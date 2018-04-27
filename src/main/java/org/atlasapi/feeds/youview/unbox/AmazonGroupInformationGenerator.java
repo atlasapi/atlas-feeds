@@ -494,9 +494,14 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         List<SynopsisType> synopses = Lists.newArrayList();
         for (Entry<SynopsisLengthType, Truncator> entry : YOUVIEW_SYNOPSIS_LENGTH_MAP.entrySet()) {
             String description = content.getDescription();
+            if (description == null){
+               description = "";
+            } else {
+                description = description.trim();
+            }
             //YV needs a short synopses. Everything should already have one, but bugs are more
             //than humans in this world. Use the title.
-            if (description == null && entry.getKey().equals(SynopsisLengthType.SHORT)) {
+            if (description.equals("") && entry.getKey().equals(SynopsisLengthType.SHORT)) {
                 description = content.getTitle();
                 log.warn(
                         "Amazon content was lacking synopsis. It shouldn't. The title was used instead. uri={}",
