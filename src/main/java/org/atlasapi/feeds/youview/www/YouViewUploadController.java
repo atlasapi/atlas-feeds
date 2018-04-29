@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.youview.www;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -9,7 +8,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
@@ -254,6 +252,10 @@ public class YouViewUploadController {
         }
     }
 
+    /**
+     * If this is amazon content, it will not upload the URI itself, but rather find its repId,
+     * merge the equivs, and upload the sum (as per normal amazon process).
+     */
     @RequestMapping(value = "/feeds/youview/{publisher}/upload/multi")
     public void uploadMultipleContent(HttpServletRequest request, HttpServletResponse response,
             @PathVariable("publisher") String publisherStr)
@@ -285,7 +287,7 @@ public class YouViewUploadController {
             for (final String uri : uris) {
                 ListenableFuture<Try> task = executor.submit(() -> {
                     try {
-                        java.util.Optional<Content> content = getContent(uri);
+                        java.util.Optional<Content> content = getMergedContent(uri);
                         if (!content.isPresent()) {
                             telescope.reportFailedEvent("No content was found at uri " + uri);
                             return Try.exception(new IllegalArgumentException(String.format(
@@ -410,7 +412,7 @@ public class YouViewUploadController {
             HttpServletResponse response,
             FeedsTelescopeReporter telescope
     ) throws IOException, PayloadGenerationException, IllegalArgumentException {
-        java.util.Optional<Content> toBeUploaded = getContent(uri);
+        java.util.Optional<Content> toBeUploaded = getMergedContent(uri);
         if (!toBeUploaded.isPresent()) {
             throw new IllegalArgumentException("content does not exist");
         }
@@ -678,7 +680,7 @@ public class YouViewUploadController {
             return;
         }
 
-        java.util.Optional<Content> series = getContent(ref.getUri());
+        java.util.Optional<Content> series = getMergedContent(ref.getUri());
         if (series.isPresent()) {
             String contentCrid = hierarchyExpander.contentCridFor(series.get());
             Task parentTask = taskCreator.taskFor(
@@ -770,41 +772,48 @@ public class YouViewUploadController {
             return;
         }
 
-        List<Content> toBeDeleted = new ArrayList<>();
-        toBeDeleted.add(content.get());
-        if(content.get().getPublisher().equals(Publisher.AMAZON_UNBOX)) {
-            //we will attempt to delete all
-            Set<String> contributingUris = getContributingAsins(content.get());
-            ResolvedContent resolved = contentResolver.findByUris(contributingUris);
-            if (resolved != null && resolved.getAllResolvedResults() != null) {
-                toBeDeleted.addAll(resolved.getAllResolvedResults().stream()
-                        .filter(c -> c instanceof Content)
-                        .map(c -> (Content) c)
-                        .collect(Collectors.toList()));
-            }
-        }
-
         // TODO ideally this would go via the TaskCreator, but that would require resolving 
         // the hierarchies for each type of element
-        StringBuilder uris = new StringBuilder();
-        for (Content forDeletion : toBeDeleted) {
-            Destination destination = new YouViewDestination(
-                    forDeletion.getCanonicalUri(),
-                    type,
-                    elementId
-            );
-            Task task = Task.builder()
-                    .withAction(Action.DELETE)
-                    .withDestination(destination)
-                    .withCreated(clock.now())
-                    .withPublisher(forDeletion.getPublisher())
-                    .withStatus(Status.NEW)
-                    .build();
-            taskStore.save(task);
-            uris.append(forDeletion.getCanonicalUri()).append(" ");
-        }
+        Destination destination = new YouViewDestination(
+                content.get().getCanonicalUri(),
+                type,
+                elementId
+        );
+        Task task = Task.builder()
+                .withAction(Action.DELETE)
+                .withDestination(destination)
+                .withCreated(clock.now())
+                .withPublisher(content.get().getPublisher())
+                .withStatus(Status.NEW)
+                .build();
+        taskStore.save(task);
 
-        sendOkResponse(response, "Delete for " + uri + " sent successfully +( "+uris+")");
+        //If this amazon, we'll get in the trouble of figuring out what the merged content would be
+        //and inform our user on the response.
+        if (publisher.get().equals(Publisher.AMAZON_UNBOX)) {
+            YouviewContentMerger merger = new YouviewContentMerger(
+                    mergingResolver,
+                    Publisher.AMAZON_UNBOX
+            );
+            Content merged = merger.equivAndMerge(content.get());
+            AmazonContentConsolidator.consolidate(merged); //mutates the item
+
+            Set<String> contributingUris = getContributingAsins(merged);
+            sendOkResponse(
+                    response,
+                    new StringBuilder().append("Delete for ")
+                            .append(content.get().getCanonicalUri())
+                            .append(" sent successfully.<br>")
+                            .append("This amazon content is represented by ")
+                            .append(merged.getCanonicalUri())
+                            .append("<br>")
+                            .append("The complete set of contributing ids is ")
+                            .append(contributingUris)
+                            .toString()
+            );
+        } else {
+            sendOkResponse(response, "Delete for " + uri + " sent successfully ");
+        }
     }
 
     /**
@@ -835,7 +844,7 @@ public class YouViewUploadController {
             if (uri == null) {
                 throw new IllegalArgumentException("Required parameter 'uri' not specified");
             }
-            java.util.Optional<Content> toBeRevoked = getContent(uri);
+            java.util.Optional<Content> toBeRevoked = getMergedContent(uri);
             if (!toBeRevoked.isPresent()) {
                 throw new IllegalArgumentException( "Content does not exist");
             }
@@ -883,7 +892,7 @@ public class YouViewUploadController {
             if (uri == null) {
                 throw new IllegalArgumentException("Required parameter 'uri' not specified");
             }
-            java.util.Optional<Content> toBeUnrevoked = getContent(uri);
+            java.util.Optional<Content> toBeUnrevoked = getMergedContent(uri);
             if (!toBeUnrevoked.isPresent()) {
                throw new IllegalArgumentException ("Content does not exist");
             }
@@ -937,6 +946,22 @@ public class YouViewUploadController {
     }
 
     private java.util.Optional<Content> getContent(String contentUri) {
+        ResolvedContent resolvedContent =
+                contentResolver.findByCanonicalUris(ImmutableList.of(contentUri));
+
+        Content content = (Content) resolvedContent.getFirstValue().valueOrNull();
+        return java.util.Optional.ofNullable(content);
+    }
+
+    /**
+     * This method will pass amazon content through equivAndMerge. Consequently the uploads will
+     * not upload the Uri that was given, but rather follow the normal upload procedure for
+     * amazon, find the equivs for the given uri, merge the content into one and upload it under
+     * the repId.
+     * @param contentUri
+     * @return
+     */
+    private java.util.Optional<Content> getMergedContent(String contentUri) {
         ResolvedContent resolvedContent =
                 contentResolver.findByCanonicalUris(ImmutableList.of(contentUri));
 
