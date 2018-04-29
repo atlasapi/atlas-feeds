@@ -130,6 +130,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         reportStatus("Done uploading tasks to YouView");
     }
 
+    //Returns the content that should be deleted.
     protected List<Content> uploadFromAmazon(Iterator<Content> contentPieces,
             YouViewContentProcessor uploadProcessor) {
 
@@ -152,7 +153,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             }
             try {
                 AmazonContentConsolidator.consolidate(mergedContent); //mutates the item
-                //            forDeletion.addAll(extractForDeletion(mergedContent));
+                forDeletion.addAll(extractForDeletion(mergedContent));
             } catch (Exception e) {
                 log.error("Failed during the attempt to consolidate versions. "
                           + "This item will not be pushed to YV. Content {}. ",
@@ -184,6 +185,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         return new HashSet<>();
     }
 
+    //does not include self.
     public static Set<String> getContributingAsins(Content mergedContent) {
         String GB_AMAZON_ASIN = "gb:amazon:asin";
         String URI_PREFIX = "http://unbox.amazon.co.uk/";
@@ -203,6 +205,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         return contributingUris;
     }
 
+    //returns the content that should be deleted.
     private List<Content> uploadFromBBC(
             Iterator<Content> updatedContent,
             YouViewContentProcessor uploadProcessor) {
