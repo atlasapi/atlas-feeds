@@ -382,13 +382,15 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     }
 
     public static String getMetabroadcastImageUrl(String amazonUrl) {
-        //Chop amazon's native resizing out of their url.
-//        int lastDot = amazonUrl.lastIndexOf('.');
-//        int preLastDot = amazonUrl.lastIndexOf('.', lastDot - 1);
-//        if (lastDot > 0 || preLastDot > 0) {
-//            amazonUrl = amazonUrl.substring(0, preLastDot)
-//                        + amazonUrl.substring(lastDot, amazonUrl.length());
-//        }
+        //Chop amazon's native resizing out of their url (ECOTEST-265)
+        //e.g. from https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD._SX320_SY240_.jpg
+        //go to https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD.jpg
+        int lastDot = amazonUrl.lastIndexOf('.');
+        int preLastDot = amazonUrl.lastIndexOf('.', lastDot - 1);
+        if (lastDot > 0 || preLastDot > 0) {
+            amazonUrl = amazonUrl.substring(0, preLastDot)
+                        + amazonUrl.substring(lastDot, amazonUrl.length());
+        }
         try {
             return MBST_BASE_IMAGE_URL + URLEncoder.encode(amazonUrl, "UTF-8");
         } catch (UnsupportedEncodingException e) {
