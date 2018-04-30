@@ -206,18 +206,25 @@ public abstract class TaskCreationTask extends ScheduledTask {
         String contentCrid = idGenerator.generateContentCrid(content);
         log.debug("Processing Content {}", contentCrid);
         try {
-            // not strictly necessary, but will save space
-            if (!Action.DELETE.equals(action)) {
+            if (Publisher.AMAZON_UNBOX.equals(content.getPublisher())) {
+                HashType hashType = action == Action.UPDATE ? HashType.CONTENT : HashType.DELETE;
                 Payload p = payloadCreator.payloadFrom(contentCrid, content);
+                if (shouldSave(hashType, contentCrid, p)) {
+                    save(payloadHashStore, taskStore, taskCreator.taskFor(contentCrid, content, p, action));
+                }
+            } else {
+                // not strictly necessary, but will save space
+                if (!Action.DELETE.equals(action)) {
+                    Payload p = payloadCreator.payloadFrom(contentCrid, content);
 
-                if (shouldSave(HashType.CONTENT, contentCrid, p)) {
-                    taskStore.save(taskCreator.taskFor(contentCrid, content, p, action));
-                    payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
-                } else {
-                    log.debug("Existing hash found for Content {}, not updating", contentCrid);
+                    if (shouldSave(HashType.CONTENT, contentCrid, p)) {
+                        taskStore.save(taskCreator.taskFor(contentCrid, content, p, action));
+                        payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
+                    } else {
+                        log.debug("Existing hash found for Content {}, not updating", contentCrid);
+                    }
                 }
             }
-
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error("Failed to create payload for content {}", content.getCanonicalUri(), e);
@@ -265,25 +272,32 @@ public abstract class TaskCreationTask extends ScheduledTask {
             log.debug("Processing Version {}", versionCrid);
 
             Payload payload = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
+            Task task = taskCreator.taskFor(
+                    versionCrid,
+                    versionHierarchy,
+                    payload,
+                    action
+            );
 
-            if (shouldSave(HashType.VERSION, versionCrid, payload)) {
-                Task savedTask = taskStore.save(taskCreator.taskFor(
-                        versionCrid,
-                        versionHierarchy,
-                        payload,
-                        action
-                ));
-                payloadHashStore.saveHash(HashType.VERSION, versionCrid, payload.hash());
-                log.debug(
-                        "Saved task {} for version {} with hash {}",
-                        savedTask.id(),
-                        versionCrid,
-                        payload.hash()
-                );
+            if (Publisher.AMAZON_UNBOX.equals(versionHierarchy.item().getPublisher())) {
+                HashType hashType = action == Action.UPDATE ? HashType.VERSION : HashType.DELETE;
+                if (shouldSave(hashType, versionCrid, payload)) {
+                    save(payloadHashStore, taskStore, task);
+                }
             } else {
-                log.debug("Existing hash found for Version {}, not updating", versionCrid);
+                if (shouldSave(HashType.VERSION, versionCrid, payload)) {
+                    Task savedTask = taskStore.save(task);
+                    payloadHashStore.saveHash(HashType.VERSION, versionCrid, payload.hash());
+                    log.debug(
+                            "Saved task {} for version {} with hash {}",
+                            savedTask.id(),
+                            versionCrid,
+                            payload.hash()
+                    );
+                } else {
+                    log.debug("Existing hash found for Version {}, not updating", versionCrid);
+                }
             }
-
             return UpdateProgress.SUCCESS;
         } catch (Exception e) {
             log.error(String.format(
@@ -357,12 +371,22 @@ public abstract class TaskCreationTask extends ScheduledTask {
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
             if (shouldSave(hashType, onDemandImi, p)) {
-                saveIfYouMust(payloadHashStore, taskStore, taskCreator.taskFor(
-                        onDemandImi,
-                        onDemandHierarchy,
-                        p,
-                        action
-                ));
+                if (Publisher.AMAZON_UNBOX.equals(onDemandHierarchy.item().getPublisher())) {
+                    save(payloadHashStore, taskStore, taskCreator.taskFor(
+                            onDemandImi,
+                            onDemandHierarchy,
+                            p,
+                            action
+                    ));
+                } else {
+                    taskStore.save(taskCreator.taskFor(
+                            onDemandImi,
+                            onDemandHierarchy,
+                            p,
+                            action
+                    ));
+                    payloadHashStore.saveHash(hashType, onDemandImi, p.hash());
+                }
             } else {
                 log.debug("Existing hash found for OnDemand {}, not updating", onDemandImi);
             }
@@ -389,7 +413,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
     }
 
     //Returns null if nothing was saved. Throws an exception is nothing could be saved.
-    private static Task saveIfYouMust(
+    private static Task save(
             YouViewPayloadHashStore payloadHashStore,
             TaskStore taskStore,
             Task task) throws IllegalArgumentException {
@@ -427,36 +451,19 @@ public abstract class TaskCreationTask extends ScheduledTask {
     }
 
     private static HashType getCorresponding(TVAElementType elementType) {
-        HashType hashType;
         switch (elementType) {
-        case BRAND:
-            hashType = HashType.CONTENT;
-            break;
-        case SERIES:
-            hashType = HashType.CONTENT;
-            break;
-        case ITEM:
-            hashType = HashType.CONTENT;
-            break;
-        case VERSION:
-            hashType = HashType.VERSION;
-            break;
-        case ONDEMAND:
-            hashType = HashType.ON_DEMAND;
-            break;
-        case BROADCAST:
-            hashType = HashType.BROADCAST;
-            break;
-        case CHANNEL:
-            hashType = HashType.CHANNEL;
-            break;
+        case BRAND: return HashType.CONTENT;
+        case SERIES: return HashType.CONTENT;
+        case ITEM: return HashType.CONTENT;
+        case VERSION: return HashType.VERSION;
+        case ONDEMAND: return HashType.ON_DEMAND;
+        case BROADCAST: return HashType.BROADCAST;
+        case CHANNEL: return HashType.CHANNEL;
         default:
             throw new IllegalArgumentException("YV Element type ("
                                                + elementType
                                                + ") does not correspond to a valid HashType.");
         }
-
-        return hashType;
     }
 
     private boolean shouldSave(HashType type, String id, Payload payload) {
