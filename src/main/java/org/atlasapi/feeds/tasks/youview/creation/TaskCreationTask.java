@@ -210,7 +210,11 @@ public abstract class TaskCreationTask extends ScheduledTask {
             ));
         }
         for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
-            progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue()));
+            progress = progress.reduce(processOnDemand(
+                    onDemand.getKey(),
+                    onDemand.getValue(),
+                    action)
+            );
         }
         return progress;
     }
@@ -370,12 +374,21 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     private UpdateProgress processOnDemand(
             String onDemandImi,
-            ItemOnDemandHierarchy onDemandHierarchy
-    ) {
-        //if the hierarchy has multiple locations, they should all be the same
-        Location location = onDemandHierarchy.locations().get(0);
+            ItemOnDemandHierarchy onDemandHierarchy,
+            Action action) {
 
-        Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+        if (Publisher.AMAZON_UNBOX.equals(onDemandHierarchy.item().getPublisher())) {
+            if(action.equals(Action.UPDATE)){  //if it is delete, always delete.
+                //Amazon's locations should all be the same
+                Location location = onDemandHierarchy.locations().get(0);
+                action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+            }
+        } else {
+            //Nitro only has 1 location.
+            Location location = onDemandHierarchy.locations().get(0);
+            action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+        }
+
         HashType hashType = action == Action.UPDATE ? HashType.ON_DEMAND : HashType.DELETE;
 
         try {
@@ -392,6 +405,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                             action
                     ));
                 } else {
+
                     taskStore.save(taskCreator.taskFor(
                             onDemandImi,
                             onDemandHierarchy,
