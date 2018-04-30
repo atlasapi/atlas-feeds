@@ -9,6 +9,7 @@ import com.metabroadcast.common.persistence.translator.TranslatorUtils;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
+import com.mongodb.WriteResult;
 
 public class MongoYouViewPayloadHashStore implements YouViewPayloadHashStore {
 
@@ -28,6 +29,13 @@ public class MongoYouViewPayloadHashStore implements YouViewPayloadHashStore {
                 .add(HASH_FIELD, hash)
                 .get();
         collection.save(dbObject);
+    }
+
+    public WriteResult removeHash(HashType type, String elementId){
+        DBObject dbObject = BasicDBObjectBuilder
+                .start(MongoConstants.ID, key(type, elementId))
+                .get();
+        return collection.remove(dbObject);
     }
 
     @Override

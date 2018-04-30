@@ -9,7 +9,9 @@ import org.atlasapi.feeds.RepIdClientFactory;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Status;
+import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
+import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.youview.FilterFactory;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
@@ -34,6 +36,7 @@ import com.metabroadcast.representative.client.RepIdClientWithApp;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
+import com.mongodb.WriteResult;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -287,7 +290,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
                             "Failed to create payload for content %s, version %s",
                             versionHierarchy.item().getCanonicalUri(),
                             versionHierarchy.version().getCanonicalUri()
-                    ), e
+                    ),
+                    e
             );
             Task task = taskStore.save(
                     taskCreator.taskFor(versionCrid, versionHierarchy, action, Status.FAILED)
@@ -321,7 +325,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
                             broadcastHierarchy.item().getCanonicalUri(),
                             broadcastHierarchy.version().getCanonicalUri(),
                             broadcastHierarchy.broadcast().toString()
-                    ), e
+                    ),
+                    e
             );
             Task task = taskStore.save(taskCreator.taskFor(broadcastImi, broadcastHierarchy, action, Status.FAILED));
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
@@ -352,13 +357,12 @@ public abstract class TaskCreationTask extends ScheduledTask {
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
             if (shouldSave(hashType, onDemandImi, p)) {
-                taskStore.save(taskCreator.taskFor(
+                saveIfYouMust(payloadHashStore, taskStore, taskCreator.taskFor(
                         onDemandImi,
                         onDemandHierarchy,
                         p,
                         action
                 ));
-                payloadHashStore.saveHash(hashType, onDemandImi, p.hash());
             } else {
                 log.debug("Existing hash found for OnDemand {}, not updating", onDemandImi);
             }
@@ -382,6 +386,77 @@ public abstract class TaskCreationTask extends ScheduledTask {
             taskStore.updateWithLastError(task.id(), exceptionToString(e));
             return UpdateProgress.FAILURE;
         }
+    }
+
+    //Returns null if nothing was saved. Throws an exception is nothing could be saved.
+    private static Task saveIfYouMust(
+            YouViewPayloadHashStore payloadHashStore,
+            TaskStore taskStore,
+            Task task) throws IllegalArgumentException {
+
+        try {
+            YouViewDestination destination = (YouViewDestination) task.destination();
+            HashType hashType = getCorresponding(destination.elementType());
+
+            if (Action.UPDATE.equals(task.action())) {
+                //if this an update, we need to remove the delete hash (if any)
+                payloadHashStore.removeHash(HashType.DELETE, destination.elementId());
+                Task savedTask = taskStore.save(task);
+                Optional<String> hash = task.payload().transform(Payload::hash);
+                payloadHashStore.saveHash( hashType, destination.elementId(), hash.get() );
+                return savedTask;
+            } else {
+                //if this is a delete, we need to remove from the db the hash of the upload
+                WriteResult writeResult =
+                        payloadHashStore.removeHash(hashType, destination.elementId());
+                //if there was no update hash, it means that the fragment we are trying to delete
+                // was never uploaded, and as such we don't need to delete it.
+                // (this can happen by sending proactive delete requests for equived content).
+                if (writeResult.getN() > 0) {
+                    //otherwise save the delete task, and the delete hash
+                    Task savedTask = taskStore.save(task);
+                    payloadHashStore.saveHash(HashType.DELETE, destination.elementId(), "");
+                    return savedTask;
+                }
+            }
+        } catch (Exception e) { //catch w/e could go wrong to save time.
+            throw new IllegalArgumentException("Task could not be saved.", e);
+        }
+
+        return null;
+    }
+
+    private static HashType getCorresponding(TVAElementType elementType) {
+        HashType hashType;
+        switch (elementType) {
+        case BRAND:
+            hashType = HashType.CONTENT;
+            break;
+        case SERIES:
+            hashType = HashType.CONTENT;
+            break;
+        case ITEM:
+            hashType = HashType.CONTENT;
+            break;
+        case VERSION:
+            hashType = HashType.VERSION;
+            break;
+        case ONDEMAND:
+            hashType = HashType.ON_DEMAND;
+            break;
+        case BROADCAST:
+            hashType = HashType.BROADCAST;
+            break;
+        case CHANNEL:
+            hashType = HashType.CHANNEL;
+            break;
+        default:
+            throw new IllegalArgumentException("YV Element type ("
+                                               + elementType
+                                               + ") does not correspond to a valid HashType.");
+        }
+
+        return hashType;
     }
 
     private boolean shouldSave(HashType type, String id, Payload payload) {
