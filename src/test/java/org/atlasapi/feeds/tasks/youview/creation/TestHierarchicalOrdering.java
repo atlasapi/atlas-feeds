@@ -18,7 +18,7 @@ import com.google.common.collect.Iterables;
 
 public class TestHierarchicalOrdering {
 
-    private final HierarchicalOrdering ordering = new HierarchicalOrdering();
+    private final HierarchicalOrdering ordering = HierarchicalOrdering.create();
     
     @Test
     public void testHierarchicalContentOrdering() {

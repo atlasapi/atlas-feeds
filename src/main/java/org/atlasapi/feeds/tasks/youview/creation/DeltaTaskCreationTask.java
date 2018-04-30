@@ -1,12 +1,8 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
+import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
@@ -25,14 +21,16 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
-
-import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -42,7 +40,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
     public static final Duration UPDATE_WINDOW_GRACE_PERIOD = Duration.standardHours(2);
 
-    private static final Ordering<Content> HIERARCHICAL_ORDER = new HierarchicalOrdering();
+    private static final Ordering<Content> HIERARCHICAL_ORDER = HierarchicalOrdering.create();
 
     protected final YouViewContentResolver contentResolver;
     private final YouviewContentMerger youviewContentMerger;
