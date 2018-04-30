@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
+import javax.net.ssl.SSLHandshakeException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.Source;
@@ -86,11 +87,24 @@ public class SiteMapOutputterTest extends TestCase {
 		factory.setNamespaceAware(true);
 		
 		SchemaFactory schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
-		factory.setSchema(schemaFactory.newSchema(
-				new Source[] {new StreamSource("https://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"),
-							  new StreamSource("https://www.google.com/schemas/sitemap-video/1.1/sitemap-video.xsd"),
-							  new StreamSource("https://www.sitemaps.org/schemas/sitemap/0.9/siteindex.xsd")}));
-		
+		try {
+			factory.setSchema(schemaFactory.newSchema(
+					new Source[] {
+							new StreamSource(
+									"https://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"),
+							new StreamSource(
+									"https://www.google.com/schemas/sitemap-video/1.1/sitemap-video.xsd"),
+							new StreamSource(
+									"https://www.sitemaps.org/schemas/sitemap/0.9/siteindex.xsd") }));
+		} catch (Exception e){
+			if(e.getCause() instanceof SSLHandshakeException){
+				System.out.print("WARNING: Website could not be contacted. testThatTheTestDataValidates test was ignored.");
+				e.printStackTrace();
+				return;
+			} else {
+				throw e;
+			}
+		}
 		SAXParser parser = factory.newSAXParser();
 		XMLReader reader = parser.getXMLReader();
 		
