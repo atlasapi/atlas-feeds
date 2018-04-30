@@ -175,26 +175,39 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     protected UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
 
-        Map<String, ItemAndVersion> versionHierarchies = Maps.filterValues(
-                hierarchyExpander.versionHierarchiesFor(item),
-                FilterFactory.versionFilter(updatedSince)
-        );
-        Map<String, ItemBroadcastHierarchy> broadcastHierarchies = Maps.filterValues(
-                hierarchyExpander.broadcastHierarchiesFor(item),
-                FilterFactory.broadcastFilter(updatedSince)
-        );
-        Map<String, ItemOnDemandHierarchy> onDemandHierarchies = Maps.filterValues(
-                hierarchyExpander.onDemandHierarchiesFor(item),
-                FilterFactory.onDemandFilter(updatedSince)
-        );
+        Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor(item);
+        Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor(item);
+        Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor(item);
+        if (action.equals(Action.UPDATE)) {
+            versionHierarchies = Maps.filterValues(
+                    versionHierarchies,
+                    FilterFactory.versionFilter(updatedSince)
+            );
+            broadcastHierarchies = Maps.filterValues(
+                    broadcastHierarchies,
+                    FilterFactory.broadcastFilter(updatedSince)
+            );
+            onDemandHierarchies = Maps.filterValues(
+                    onDemandHierarchies,
+                    FilterFactory.onDemandFilter(updatedSince)
+            );
+        }
 
         UpdateProgress progress = UpdateProgress.START;
 
         for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
-            progress = progress.reduce(processVersion(version.getKey(), version.getValue(), action));
+            progress = progress.reduce(processVersion(
+                    version.getKey(),
+                    version.getValue(),
+                    action
+            ));
         }
         for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcastHierarchies.entrySet()) {
-            progress = progress.reduce(processBroadcast(broadcast.getKey(), broadcast.getValue(), action));
+            progress = progress.reduce(processBroadcast(
+                    broadcast.getKey(),
+                    broadcast.getValue(),
+                    action
+            ));
         }
         for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemandHierarchies.entrySet()) {
             progress = progress.reduce(processOnDemand(onDemand.getKey(), onDemand.getValue()));
