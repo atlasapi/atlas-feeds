@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
 import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Ordering;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
@@ -11,6 +11,7 @@ import org.atlasapi.feeds.youview.YouviewContentMerger;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
+import org.atlasapi.feeds.youview.persistence.HashType;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
@@ -21,6 +22,7 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
+import com.google.common.collect.Sets;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -39,6 +41,9 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     private static final Logger log = LoggerFactory.getLogger(DeltaTaskCreationTask.class);
 
     public static final Duration UPDATE_WINDOW_GRACE_PERIOD = Duration.standardHours(2);
+
+    private static final String GB_AMAZON_ASIN = "gb:amazon:asin";
+    private static final String URI_PREFIX = "http://unbox.amazon.co.uk/";
 
     private static final Ordering<Content> HIERARCHICAL_ORDER = HierarchicalOrdering.create();
 
@@ -101,17 +106,17 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
         YouViewContentProcessor deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
 
-        List<Content> deleted;
+        Set<Content> forDeletion;
         if(getPublisher().equals(Publisher.BBC_NITRO)){
-            deleted = uploadFromBBC(updatedContent, uploadProcessor);
+            forDeletion = uploadFromBBC(updatedContent, uploadProcessor);
         }
         else if(getPublisher().equals(Publisher.AMAZON_UNBOX)){
-            deleted = uploadFromAmazon(updatedContent, uploadProcessor);
+            forDeletion = uploadFromAmazon(updatedContent, uploadProcessor);
         } else {
             throw new IllegalStateException("Uploading from "+getPublisher()+" to YV is not supported.");
         }
 
-        List<Content> sortedContentForDeletion = sortContentForDeletion(deleted);
+        Set<Content> sortedContentForDeletion = ImmutableSortedSet.copyOf(HIERARCHICAL_ORDER, forDeletion);
         for (Content toBeDeleted : sortedContentForDeletion) {
             deletionProcessor.process(toBeDeleted);
             reportStatus("Deletes: " + deletionProcessor.getResult());
@@ -129,10 +134,10 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     }
 
     //Returns the content that should be deleted.
-    protected List<Content> uploadFromAmazon(Iterator<Content> contentPieces,
+    protected Set<Content> uploadFromAmazon(Iterator<Content> contentPieces,
             YouViewContentProcessor uploadProcessor) {
 
-        List<Content> forDeletion = Lists.newArrayList();
+        Set<Content> forDeletion = Sets.newLinkedHashSet();
         while (contentPieces.hasNext()) {
             Content updatedContent = contentPieces.next();
             if (!updatedContent.isActivelyPublished()) {
@@ -185,9 +190,6 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
     //does not include self.
     public static Set<String> getContributingAsins(Content mergedContent) {
-        String GB_AMAZON_ASIN = "gb:amazon:asin";
-        String URI_PREFIX = "http://unbox.amazon.co.uk/";
-
         //find all URIs that took part in the merge
         String ourAsin = AmazonIdGenerator.getAsin(mergedContent);
         Set<Alias> aliases = mergedContent.getAliases();
@@ -204,11 +206,11 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     }
 
     //returns the content that should be deleted.
-    private List<Content> uploadFromBBC(
+    private Set<Content> uploadFromBBC(
             Iterator<Content> updatedContent,
             YouViewContentProcessor uploadProcessor) {
 
-        List<Content> deleted = Lists.newArrayList();
+        Set<Content> deleted = Sets.newLinkedHashSet();
         while (updatedContent.hasNext()) {
             Content updated = updatedContent.next();
             if (updated.isActivelyPublished()) {
