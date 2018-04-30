@@ -425,7 +425,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     onDemandHierarchy.item().getCanonicalUri(),
                     onDemandHierarchy.version().getCanonicalUri(),
                     onDemandHierarchy.encoding().toString(),
-                    location.toString(),
+                    onDemandHierarchy.locations().get(0).toString(),
                     e
             );
             Task task = taskStore.save(taskCreator.taskFor(
