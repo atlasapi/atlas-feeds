@@ -204,7 +204,7 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
     //Genres in this context describes the availability of the media. 
     private Set<GenreType> generateGenres(List<Location> locations) {
 
-        Set<GenreType> plans = new HashSet<>();
+        List<GenreType> plans = new ArrayList<>();
 
         //All media ingested by Amazon is available
         GenreType mediaAvailable = new GenreType();
@@ -239,7 +239,7 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
         return ImmutableSet.copyOf(plans);
     }
 
-    private boolean setContainsGenre(Set<GenreType> types, GenreType type) {
+    private boolean setContainsGenre(List<GenreType> types, GenreType type) {
         for (GenreType genreType : types) {
             if (genreType.getType().equals(type.getType()) &&
                 genreType.getHref().equals(type.getHref())) {
