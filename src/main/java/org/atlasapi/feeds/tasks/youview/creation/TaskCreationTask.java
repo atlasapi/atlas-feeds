@@ -412,7 +412,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
         }
     }
 
-    //Returns null if nothing was saved. Throws an exception is nothing could be saved.
+    //Returns null if nothing was saved. Throws an exception if nothing could be saved.
     private static Task save(
             YouViewPayloadHashStore payloadHashStore,
             TaskStore taskStore,

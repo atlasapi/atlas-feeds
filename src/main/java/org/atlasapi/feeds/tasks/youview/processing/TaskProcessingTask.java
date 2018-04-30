@@ -21,6 +21,7 @@ import com.metabroadcast.common.query.Selection;
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
 
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,9 @@ public abstract class TaskProcessingTask extends ScheduledTask {
     private static final List<TVAElementType> ELEMENT_TYPE_ORDER =
             Collections.unmodifiableList(Arrays.asList(
                     //do brands, series, then everything else (null).
-                    TVAElementType.CHANNEL, TVAElementType.BRAND, TVAElementType.SERIES, TVAElementType.ITEM, null
+                    TVAElementType.CHANNEL, TVAElementType.BRAND, TVAElementType.SERIES,
+                    TVAElementType.ITEM, TVAElementType.VERSION,
+                    TVAElementType.ONDEMAND, TVAElementType.BROADCAST
             ));
     private static final int NUM_TO_CHECK_PER_ITTERATION = 1000;
 
@@ -74,7 +77,9 @@ public abstract class TaskProcessingTask extends ScheduledTask {
         telescope.startReporting();
 
         //go through items based on type, then status, then in chunks of NUM_TO_CHECK_PER_ITTERATION
-        for (TVAElementType elementType : ELEMENT_TYPE_ORDER) {
+        for (TVAElementType elementType : (action().equals(Action.UPDATE)
+                                           ? ELEMENT_TYPE_ORDER
+                                           : Lists.reverse(ELEMENT_TYPE_ORDER))) {
             for (Status status : validStatuses()) {
                 //We limit the amount of stuff because too many cause a mongo driver exception
                 //(presumably due to the sort on date)
