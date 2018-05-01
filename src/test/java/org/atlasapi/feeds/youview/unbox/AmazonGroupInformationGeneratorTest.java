@@ -212,7 +212,7 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         assertEquals("urn:mpeg:mpeg7:cs:FileFormatCS:2001:1", relatedMaterial.getFormat().getHref());
 
         assertEquals(
-            "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur&source="
+            "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur-fixed-dimensions&source="
             + "https%3A%2F%2Fm.media-amazon.com%2Fimages%2FS%2Faiv-image%2Fjp%2F84e17b33-8910-491a-b8a1-1e81cbecce65-f193b98f-3d70-458c-b44e-c7d685779341_RGB_SD.jpg",
             relatedMaterial.getMediaLocator().getMediaUri()
         );
@@ -354,7 +354,7 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
         assertEquals(
-            "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur&source="
+            "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur-fixed-dimensions&source="
             + "episode+image",
             relatedMaterial.getMediaLocator().getMediaUri()
         );
@@ -384,7 +384,7 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
         assertEquals(
-            "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur&source="
+            "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur-fixed-dimensions&source="
             + "episode+image",
             relatedMaterial.getMediaLocator().getMediaUri()
         );
