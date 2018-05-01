@@ -5,7 +5,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.regex.Pattern;
 
+import com.google.common.base.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.joda.time.DateTime;
 
@@ -16,6 +18,9 @@ public final class Payload {
 
     private final String payload;
     private final DateTime created;
+
+    private static final Pattern TVAMAIN_PATTERN = Pattern.compile("<TVAMain[^>]+>");
+    private static final Pattern NS_PATTERN = Pattern.compile("</?\bns[0-9]?:");
 
     public Payload(String payload, DateTime created) {
         this.payload = checkNotNull(payload);
@@ -33,8 +38,12 @@ public final class Payload {
     public String hash() {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            md.update(payload.getBytes("UTF-8"));
+            //We have seen namespaces swapping order in the TVAMain element tag. This causes
+            //different hashes without actual difference in the xml. We will remove the namespacing.
+            String p = TVAMAIN_PATTERN.matcher(payload).replaceAll("");
+            p = NS_PATTERN.matcher(p).replaceAll("");
 
+            md.update(p.getBytes("UTF-8"));
             byte[] digest = md.digest();
 
             return new String(Base64.encodeBase64(digest, false), "UTF-8");
