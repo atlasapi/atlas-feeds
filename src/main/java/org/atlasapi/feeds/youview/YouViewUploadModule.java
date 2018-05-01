@@ -331,6 +331,7 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
     }
 
     /**
+     * WIP: Untested code.
      * Checks the representativeId service for changes and creates new tasks to handle the changes.
      * @param publisher
      * @return
