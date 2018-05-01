@@ -20,7 +20,7 @@ public final class Payload {
     private final DateTime created;
 
     private static final Pattern TVAMAIN_PATTERN = Pattern.compile("<TVAMain[^>]+>");
-    private static final Pattern NS_PATTERN = Pattern.compile("</?\bns[0-9]?:");
+    private static final Pattern NS_PATTERN = Pattern.compile("\\bns[0-9]?:");
 
     public Payload(String payload, DateTime created) {
         this.payload = checkNotNull(payload);
