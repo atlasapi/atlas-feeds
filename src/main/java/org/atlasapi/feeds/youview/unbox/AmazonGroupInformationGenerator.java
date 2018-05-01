@@ -93,7 +93,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     private static final String CONTENT_TYPE_MOVIE = "movie";
     private static final String CONTENT_TYPE_EPISODE = "episode";
 
-    private static final String MBST_BASE_IMAGE_URL = "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur&source=";
+    private static final String MBST_BASE_IMAGE_URL = "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur-fixed-dimensions&source=";
     private static final int MBST_IMAGE_WIDTH = 1024;
     private static final int MBST_IMAGE_HEIGHT = 576;
     
