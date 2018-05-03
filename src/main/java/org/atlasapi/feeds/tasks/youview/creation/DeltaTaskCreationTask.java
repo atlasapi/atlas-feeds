@@ -36,8 +36,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.metabroadcast.common.stream.MoreStreams;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class DeltaTaskCreationTask extends TaskCreationTask {
@@ -115,7 +113,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             forDeletion = uploadFromBBC(updatedContent, uploadProcessor);
         }
         else if(getPublisher().equals(Publisher.AMAZON_UNBOX)){
-            forDeletion = uploadFromAmazon(updatedContent, uploadProcessor);
+            forDeletion = uploadFromAmazon(Iterators.filter(updatedContent, Brand.class), uploadProcessor);
         } else {
             throw new IllegalStateException("Uploading from "+getPublisher()+" to YV is not supported.");
         }
