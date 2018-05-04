@@ -43,7 +43,7 @@ import tva.mpeg7._2008.TextualType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.atlasapi.feeds.tasks.Destination.DestinationType.YOUVIEW;
-
+import static org.atlasapi.feeds.tasks.youview.creation.TaskCreationTask.save;
 
 public class ReferentialIntegrityCheckingReportHandler implements YouViewReportHandler {
 
@@ -178,13 +178,15 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
     private void createAndWriteTaskFor(Content content) throws PayloadGenerationException {
         IdGenerator idGenerator = IdGeneratorFactory.create(content.getPublisher());
         String contentCrid = idGenerator.generateContentCrid(content);
-        Payload payload = payloadCreator.payloadFrom(contentCrid, content);
-        if (shouldSave(HashType.CONTENT, contentCrid, payload)) {
-            taskStore.save(taskCreator.taskFor
-                    (contentCrid, content, payload, Action.UPDATE)
-            );
-            payloadHashStore.saveHash(HashType.CONTENT, contentCrid, payload.hash());
-        } else {
+        Payload p = payloadCreator.payloadFrom(contentCrid, content);
+        if (shouldSave(HashType.CONTENT, contentCrid, p)) {
+            if (Publisher.AMAZON_UNBOX.equals(content.getPublisher())) {
+                save(payloadHashStore, taskStore, taskCreator.taskFor(contentCrid, content, p, Action.UPDATE));
+            } else {
+                taskStore.save(taskCreator.taskFor(contentCrid, content, p, Action.UPDATE));
+                payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
+            }
+        } else{
             log.debug("Existing hash found for Content {}, not updating", contentCrid);
         }
     }
@@ -201,13 +203,14 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         if (versionHierarchy == null) {
             throw new RuntimeException("Missing version crid " + versionCrid + " is not a valid version crid for content " + contentUri);
         }
-        Payload payload = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
-        if (shouldSave(HashType.CONTENT, versionCrid, payload)) {
-            taskStore.save(taskCreator.taskFor
-                    (versionCrid, versionHierarchy, payload, Action.UPDATE)
-            );
-
-            payloadHashStore.saveHash(HashType.CONTENT, versionCrid, payload.hash());
+        Payload p = payloadCreator.payloadFrom(versionCrid, versionHierarchy);
+        if (shouldSave(HashType.CONTENT, versionCrid, p)) {
+            if (Publisher.AMAZON_UNBOX.equals(resolved.getPublisher())) {
+                save(payloadHashStore, taskStore, taskCreator.taskFor(versionCrid, resolved, p, Action.UPDATE));
+            } else {
+                taskStore.save(taskCreator.taskFor(versionCrid, versionHierarchy, p, Action.UPDATE));
+                payloadHashStore.saveHash(HashType.CONTENT, versionCrid, p.hash());
+            }
         } else {
             log.debug("Existing hash found for Content {}, not updating", versionCrid);
         }
