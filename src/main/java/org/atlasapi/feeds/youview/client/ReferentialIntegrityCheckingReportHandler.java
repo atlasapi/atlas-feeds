@@ -179,16 +179,17 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         IdGenerator idGenerator = IdGeneratorFactory.create(content.getPublisher());
         String contentCrid = idGenerator.generateContentCrid(content);
         Payload p = payloadCreator.payloadFrom(contentCrid, content);
-        if (shouldSave(HashType.CONTENT, contentCrid, p)) {
+
             if (Publisher.AMAZON_UNBOX.equals(content.getPublisher())) {
                 save(payloadHashStore, taskStore, taskCreator.taskFor(contentCrid, content, p, Action.UPDATE));
-            } else {
+            } else { if (shouldSave(HashType.CONTENT, contentCrid, p)) {
                 taskStore.save(taskCreator.taskFor(contentCrid, content, p, Action.UPDATE));
                 payloadHashStore.saveHash(HashType.CONTENT, contentCrid, p.hash());
+            } else{
+                log.debug("Existing hash found for Content {}, not updating", contentCrid);
             }
-        } else{
-            log.debug("Existing hash found for Content {}, not updating", contentCrid);
-        }
+            }
+
     }
 
     private void handleMissingVersion(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
