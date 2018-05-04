@@ -21,6 +21,7 @@ import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.ResolvedContent;
@@ -114,7 +115,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             forDeletion = uploadFromBBC(updatedContent, uploadProcessor);
         }
         else if(getPublisher().equals(Publisher.AMAZON_UNBOX)){
-            forDeletion = uploadFromAmazon(Iterators.filter(updatedContent, Series.class), uploadProcessor);
+            forDeletion = uploadFromAmazon(Iterators.filter(updatedContent, Film.class), uploadProcessor);
         } else {
             throw new IllegalStateException("Uploading from "+getPublisher()+" to YV is not supported.");
         }
