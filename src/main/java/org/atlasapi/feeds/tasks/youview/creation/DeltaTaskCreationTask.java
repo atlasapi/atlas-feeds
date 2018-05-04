@@ -22,9 +22,11 @@ import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import com.google.common.collect.Sets;
+import com.google.common.collect.UnmodifiableIterator;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -113,7 +115,10 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             forDeletion = uploadFromBBC(updatedContent, uploadProcessor);
         }
         else if(getPublisher().equals(Publisher.AMAZON_UNBOX)){
-            forDeletion = uploadFromAmazon(Iterators.filter(updatedContent, Brand.class), uploadProcessor);
+            UnmodifiableIterator<Brand> brands = Iterators.filter(updatedContent, Brand.class);
+            UnmodifiableIterator<Series> series = Iterators.filter(updatedContent, Series.class);
+
+            forDeletion = uploadFromAmazon(Iterators.concat(brands, series), uploadProcessor);
         } else {
             throw new IllegalStateException("Uploading from "+getPublisher()+" to YV is not supported.");
         }
