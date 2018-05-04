@@ -785,6 +785,7 @@ public class YouViewUploadController {
                 .withCreated(clock.now())
                 .withPublisher(content.get().getPublisher())
                 .withStatus(Status.NEW)
+                .withManuallyCreated(true)
                 .build();
         taskStore.save(task);
 
