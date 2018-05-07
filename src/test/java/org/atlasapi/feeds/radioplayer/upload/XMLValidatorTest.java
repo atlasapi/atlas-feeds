@@ -10,11 +10,13 @@ import nu.xom.ValidityException;
 
 import org.atlasapi.feeds.xml.XMLValidator;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 
+@Ignore
 public class XMLValidatorTest {
 	
 	@Test

@@ -12,6 +12,7 @@ import org.atlasapi.feeds.xml.XMLValidator;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.integration.junit4.JMock;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -20,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 
 @RunWith(JMock.class)
+@Ignore
 public class ValidatingFTPFileUploadTest {
 
     private final Mockery context = new Mockery();

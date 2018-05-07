@@ -28,6 +28,7 @@ import com.youview.refdata.schemas._2011_07_06.ExtendedOnDemandProgramType;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
+import org.junit.Ignore;
 import org.junit.Test;
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AudioAttributesType;
