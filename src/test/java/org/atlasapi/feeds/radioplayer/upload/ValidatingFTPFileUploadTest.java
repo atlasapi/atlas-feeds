@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 
 @RunWith(JMock.class)
+@Ignore
 public class ValidatingFTPFileUploadTest {
 
     private final Mockery context = new Mockery();
