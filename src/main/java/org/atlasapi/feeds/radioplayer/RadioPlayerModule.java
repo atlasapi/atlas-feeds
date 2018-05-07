@@ -71,6 +71,8 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Resources;
 import com.google.common.net.HostSpecifier;
 import org.joda.time.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -81,6 +83,8 @@ import static org.atlasapi.persistence.logging.AdapterLogEntry.infoEntry;
 
 @Configuration
 public class RadioPlayerModule {
+
+    private static final Logger log = LoggerFactory.getLogger(RadioPlayerModule.class);
 
     private static final String NITRO_ID_GENRE_PREFIX = "http://nitro.bbc.co.uk/genres/";
 
@@ -122,7 +126,7 @@ public class RadioPlayerModule {
 
     private @Autowired KnownTypeContentResolver knownTypeContentResolver;
     private @Autowired SimpleScheduler scheduler;
-    private @Autowired AdapterLog log;
+    private @Autowired AdapterLog adapterLog;
     private @Autowired DatabasedMongo mongo;
     private @Autowired HealthController health;
     private @Autowired ScheduleResolver scheduleResolver;
@@ -154,11 +158,11 @@ public class RadioPlayerModule {
                         serviceId,
                         ImmutableList.copyOf(Splitter.on("|").split(serviceConfig))
                 );
-                log.record(infoEntry().withSource(getClass())
+                adapterLog.record(infoEntry().withSource(getClass())
                         .withDescription("Found details for service %s: %s", serviceId, details));
                 remotes.put(serviceId, details);
             } else {
-                log.record(infoEntry().withSource(getClass())
+                adapterLog.record(infoEntry().withSource(getClass())
                         .withDescription("Ignoring service %s: no details", serviceId));
             }
         }
@@ -189,7 +193,7 @@ public class RadioPlayerModule {
                 s3ServiceId,
                 s3Bucket,
                 radioPlayerS3Credentials(),
-                log,
+                adapterLog,
                 radioPlayerValidator(),
                 radioPlayerUploadServiceDetails()
         );
@@ -202,7 +206,7 @@ public class RadioPlayerModule {
                 s3ServiceId,
                 s3Bucket,
                 radioPlayerS3Credentials(),
-                log,
+                adapterLog,
                 radioPlayerValidator(),
                 httpsServiceId,
                 radioPlayerHttpClient(),
@@ -275,7 +279,8 @@ public class RadioPlayerModule {
                     Resources.getResource("rpDataTypes_11.xsd").openStream()
             ));
         } catch (Exception e) {
-            throw Throwables.propagate(e);
+            log.error("radioPlayerValidator creation failed, returning dummy", e);
+            return XMLValidator.dummy();
         }
     }
 
@@ -288,7 +293,7 @@ public class RadioPlayerModule {
                 BBC,
                 uploadResultRecorder(),
                 channelResolver
-        ).withLog(log);
+        ).withLog(adapterLog);
     }
 
     @Bean RadioPlayerUploadTaskBuilder radioPlayerHttpsUploadTaskBuilder() {
@@ -300,7 +305,7 @@ public class RadioPlayerModule {
                 NITRO,
                 uploadResultRecorder(),
                 channelResolver
-        ).withLog(log);
+        ).withLog(adapterLog);
     }
 
     @Bean RadioPlayerRecordingExecutor radioPlayerUploadTaskRunner() {
@@ -371,7 +376,7 @@ public class RadioPlayerModule {
                         new RadioPlayerFtpRemoteProcessingChecker(
                                 radioPlayerUploadServiceDetails(),
                                 uploadResultRecorder(),
-                                log
+                                adapterLog
                         ).withName("Radioplayer Remote Processing Checker"),
                         UPLOAD_EVERY_TEN_MINUTES.withOffset(Duration.standardMinutes(5))
                 );
@@ -416,7 +421,7 @@ public class RadioPlayerModule {
                                 radioPlayerHttpClient(),
                                 httpsServiceId,
                                 uploadResultRecorder(),
-                                log
+                                adapterLog
                         ).withName("Radioplayer HTTPS Remote Processing Checker"),
                         UPLOAD_EVERY_FIVE_MINUTES.withOffset(Duration.standardMinutes(5))
                 );
@@ -442,7 +447,7 @@ public class RadioPlayerModule {
                     && !Boolean.parseBoolean(httpsUpload)
                     && !Boolean.parseBoolean(s3FtpUpload)
                     && !Boolean.parseBoolean(s3FtpUpload)) {
-                log.record(
+                adapterLog.record(
                         new AdapterLogEntry(Severity.INFO)
                                 .withSource(getClass())
                                 .withDescription("Not installing Radioplayer uploader")

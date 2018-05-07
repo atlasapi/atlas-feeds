@@ -69,4 +69,15 @@ public class XMLValidator {
         return new XMLValidator(schema);
     }
 
+    public static XMLValidator dummy() {
+        return new XMLValidator(null) {
+            @Override public boolean validate(Source input) {
+                return true;
+            }
+            @Override public boolean validate(InputStream input) {
+                return true;
+            }
+        };
+    }
+
 }
