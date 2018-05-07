@@ -270,18 +270,20 @@ public class RadioPlayerModule {
     }
 
     @Bean XMLValidator radioPlayerValidator() {
-        try {
-            return XMLValidator.forSchemas(ImmutableSet.of(
-                    Resources.getResource("xml.xsd").openStream(),
-                    Resources.getResource("epgSI_11.xsd").openStream(),
-                    Resources.getResource("epgSchedule_11.xsd").openStream(),
-                    Resources.getResource("epgDataTypes_11.xsd").openStream(),
-                    Resources.getResource("rpDataTypes_11.xsd").openStream()
-            ));
-        } catch (Exception e) {
-            log.error("radioPlayerValidator creation failed, returning dummy", e);
-            return XMLValidator.dummy();
-        }
+        //TODO: THe xmlvalidator has been disabled because RP website seems to be unresponsive.
+        return XMLValidator.dummy();
+//        try {
+//            return XMLValidator.forSchemas(ImmutableSet.of(
+//                    Resources.getResource("xml.xsd").openStream(),
+//                    Resources.getResource("epgSI_11.xsd").openStream(),
+//                    Resources.getResource("epgSchedule_11.xsd").openStream(),
+//                    Resources.getResource("epgDataTypes_11.xsd").openStream(),
+//                    Resources.getResource("rpDataTypes_11.xsd").openStream()
+//            ));
+//        } catch (Exception e) {
+//            log.error("radioPlayerValidator creation failed, returning dummy", e);
+//            return XMLValidator.dummy();
+//        }
     }
 
     @Bean RadioPlayerUploadTaskBuilder radioPlayerFtpUploadTaskBuilder() {
