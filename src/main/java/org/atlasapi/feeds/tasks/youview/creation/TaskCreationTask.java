@@ -447,7 +447,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
         try {
             YouViewDestination destination = (YouViewDestination) task.destination();
-            HashType hashType = getCorresponding(destination.elementType());
+            HashType hashType = matchHashType(destination.elementType());
 
             if (Action.UPDATE.equals(task.action())) {
                 //if this an update, we need to remove the delete hash (if any)
@@ -477,7 +477,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return null;
     }
 
-    private static HashType getCorresponding(TVAElementType elementType) {
+    private static HashType matchHashType(TVAElementType elementType) {
         switch (elementType) {
         case BRAND: return HashType.CONTENT;
         case SERIES: return HashType.CONTENT;
