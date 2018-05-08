@@ -67,5 +67,5 @@ bbc_world_service,dvb://233a..17bc,,bbc_world_service_233a_17bc
 cbbc,dvb://233a..1200,,cbbc_233a_1200
 cbbc_hd,dvb://233a..46C0,,cbbc_hd_233a_46C0
 cbeebies,dvb://233a..1240,,cbeebies_233a_1240
-cbeebies_hd,dvb://233a..A020,,cbeebies_hd_233a_A020
+cbeebies_hd,dvb://233a..A020,,cbeebies_hd_233a_b030
 youview,crid://bbc.co.uk/iplayer/flash_player/1,,youview
