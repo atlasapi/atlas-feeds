@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.atlasapi.feeds.tvanytime.ProgramInformationGenerator;
-import org.atlasapi.feeds.youview.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.YouViewGeneratorUtils;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -30,7 +29,6 @@ import org.joda.time.Duration;
 import org.junit.Test;
 import tva.metadata._2010.ProgramInformationType;
 import tva.metadata.extended._2010.ExtendedContentDescriptionType;
-import tva.mpeg7._2008.UniqueIDType;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

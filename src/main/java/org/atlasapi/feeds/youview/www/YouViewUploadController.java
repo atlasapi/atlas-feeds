@@ -23,7 +23,7 @@ import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
-import org.atlasapi.feeds.youview.AmazonContentConsolidator;
+import org.atlasapi.feeds.youview.unbox.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.ContentHierarchyExpanderFactory;
 import org.atlasapi.feeds.youview.IdGeneratorFactory;
 import org.atlasapi.feeds.youview.YouviewContentMerger;
@@ -89,7 +89,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
 import static org.atlasapi.feeds.tasks.youview.creation.DeltaTaskCreationTask.getContributingAsins;
-import static org.atlasapi.feeds.tasks.youview.creation.TaskCreationTask.save;
 
 // TODO remove all the duplication
 @Controller

@@ -1,4 +1,4 @@
-package org.atlasapi.feeds.youview;
+package org.atlasapi.feeds.youview.unbox;
 
 import java.util.Arrays;
 import java.util.HashSet;

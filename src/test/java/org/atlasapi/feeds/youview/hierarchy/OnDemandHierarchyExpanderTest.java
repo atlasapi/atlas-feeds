@@ -10,7 +10,7 @@ import java.util.Random;
 import java.util.Set;
 
 import org.atlasapi.TestsWithConfiguration;
-import org.atlasapi.feeds.youview.AmazonContentConsolidator;
+import org.atlasapi.feeds.youview.unbox.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.UniqueIdGenerator;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.unbox.AmazonIdGenerator;
