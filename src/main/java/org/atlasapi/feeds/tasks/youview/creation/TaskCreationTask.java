@@ -336,6 +336,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
         try {
             log.debug("Processing Broadcast {}", broadcastImi);
 
+            //This might not return a payload based a different mechanism. Getting an empty
+            //payload here is part of the logic.
             Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
             if (!payload.isPresent()) {
                 return UpdateProgress.START;
