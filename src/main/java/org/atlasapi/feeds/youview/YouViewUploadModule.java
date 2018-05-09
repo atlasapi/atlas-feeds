@@ -413,7 +413,8 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
                 payloadHashStore(),
                 payloadCreator(),
                 contentResolver,
-                contentHierarchy
+                contentHierarchy,
+                new YouviewContentMerger(mergingResolver, Publisher.AMAZON_UNBOX)
         );
     }
 

@@ -13,6 +13,7 @@ import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
 import org.atlasapi.feeds.youview.IdGeneratorFactory;
 import org.atlasapi.feeds.youview.UnexpectedContentTypeException;
+import org.atlasapi.feeds.youview.YouviewContentMerger;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -20,6 +21,7 @@ import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
 import org.atlasapi.feeds.youview.persistence.HashType;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
+import org.atlasapi.feeds.youview.unbox.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.unbox.AmazonIdGenerator;
 import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Content;
@@ -64,6 +66,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
     private final YouViewPayloadHashStore payloadHashStore;
     private final ContentHierarchyExtractor hierarchyExtractor;
     private PayloadCreator payloadCreator;
+    private final YouviewContentMerger amazonContentMerger;
 
     public ReferentialIntegrityCheckingReportHandler(
             TaskCreator taskCreator,
@@ -71,7 +74,8 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
             YouViewPayloadHashStore payloadHashStore,
             PayloadCreator payloadCreator,
             ContentResolver contentResolver,
-            ContentHierarchyExtractor hierarchyExtractor) {
+            ContentHierarchyExtractor hierarchyExtractor,
+            YouviewContentMerger amazonContentMerger) {
 
         this.taskCreator = checkNotNull(taskCreator);
         this.taskStore = checkNotNull(taskStore);
@@ -79,6 +83,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         this.payloadCreator = checkNotNull(payloadCreator);
         this.contentResolver = checkNotNull(contentResolver);
         this.hierarchyExtractor = checkNotNull(hierarchyExtractor);
+        this.amazonContentMerger = checkNotNull(amazonContentMerger);
     }
 
     @Override
@@ -115,7 +120,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
                         message.getComment().getValue()
                         ));
             case SERIES:
-                handleMissingSeries(message, destination.contentUri());
+                handleMissingBrand(message, destination.contentUri());
                 break;
             case ITEM:
                 handleMissingContainer(message, destination.contentUri());
@@ -137,19 +142,43 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         }
     }
 
-    private void handleMissingSeries(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
+    private void handleMissingBrand(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
         Content resolved = resolveContentFor(contentUri);
         if (!(resolved instanceof Series)) {
             throw new UnexpectedContentTypeException(Series.class, resolved);
         }
         Series series = (Series) resolved;
 
-        Optional<Brand> brand = hierarchyExtractor.brandFor(series);
-        if (!brand.isPresent()) {
+        Optional<Brand> brandOptional = hierarchyExtractor.brandFor(series);
+        if (!brandOptional.isPresent()) {
             throw new RuntimeException("unable to resolve expected brand for series " + contentUri);
         }
-        
-        createAndWriteTaskFor(brand.get());
+
+        createAndWriteTaskFor(amazonProcessing(brandOptional.get()));
+    }
+
+    //Do amazon specific processing. Dem hacks.
+    private Content amazonProcessing(Content parentContent) {
+        if (parentContent.getPublisher().equals(Publisher.AMAZON_UNBOX)) {
+            try {
+                parentContent = amazonContentMerger.equivAndMerge(parentContent);
+            } catch (Exception e) {
+                log.error("Failed during the attempt to equiv, merge or get a repId. "
+                          + "The attempted Content was {}.",
+                        parentContent.getCanonicalUri(), e
+                );
+            }
+            try {
+                AmazonContentConsolidator.consolidate(parentContent); //mutates the item
+            } catch (Exception e) {
+                log.error("Failed during the attempt to consolidate versions. "
+                          + " The attempted Content was {}.",
+                       parentContent.getCanonicalUri(), e
+                );
+            }
+        }
+
+        return parentContent;
     }
 
     private void handleMissingContainer(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
@@ -157,14 +186,14 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         if (!(resolved instanceof Item)) {
             throw new UnexpectedContentTypeException(Item.class, resolved);
         }
-        Optional<Series> series = hierarchyExtractor.seriesFor((Item) resolved);
-        if (series.isPresent()) {
-            createAndWriteTaskFor(series.get());
+        Optional<Series> seriesOpt = hierarchyExtractor.seriesFor((Item) resolved);
+        if (seriesOpt.isPresent()) {
+            createAndWriteTaskFor(amazonProcessing(seriesOpt.get()));
             return;
         }
-        Optional<Brand> brand = hierarchyExtractor.brandFor((Item) resolved);
-        if (brand.isPresent()) {       
-            createAndWriteTaskFor(brand.get());
+        Optional<Brand> brandOpt = hierarchyExtractor.brandFor((Item) resolved);
+        if (brandOpt.isPresent()) {
+            createAndWriteTaskFor(amazonProcessing(brandOpt.get()));
             return;
         }
         throw new RuntimeException("No series or brand found for item " + contentUri + ", unable to resolve semantic integrity error");
@@ -172,7 +201,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
 
     private void handleMissingItem(ControlledMessageType message, String contentUri) throws PayloadGenerationException {
         Content resolved = resolveContentFor(contentUri);
-        createAndWriteTaskFor(resolved);
+        createAndWriteTaskFor(amazonProcessing(resolved));
     }
 
     private void createAndWriteTaskFor(Content content) throws PayloadGenerationException {
@@ -196,6 +225,7 @@ public class ReferentialIntegrityCheckingReportHandler implements YouViewReportH
         if (!(resolved instanceof Item)) {
             throw new UnexpectedContentTypeException(Item.class, resolved);
         }
+        resolved = amazonProcessing(resolved);
         String versionCrid = resolveVersionId(resolved.getPublisher(), message.getComment());
         IdGenerator idGenerator = IdGeneratorFactory.create(resolved.getPublisher());
         VersionHierarchyExpander versionExpander = new VersionHierarchyExpander(idGenerator);

@@ -33,7 +33,7 @@ public class AmazonContentConsolidator {
     public static Content consolidate(Content content) {
         Set<Version> versions = content.getVersions();
         // If there is none or one version, nothing to consolidate.
-        if (versions.size() <= 1) {
+        if (versions == null || versions.size() <= 1) {
             return content;
         }
 

@@ -15,6 +15,7 @@ import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.youview.ContentHierarchyExtractor;
+import org.atlasapi.feeds.youview.YouviewContentMerger;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.VersionHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -31,6 +32,7 @@ import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
+
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -67,18 +69,23 @@ public class NitroReferentialIntegrityCheckingReportHandlerTest {
     private IdGenerator idGenerator = mock(IdGenerator.class);
     private VersionHierarchyExpander versionExpander = new VersionHierarchyExpander(idGenerator);
     private ContentHierarchyExtractor hierarchyExtractor = mock(ContentHierarchyExtractor.class);
+    private YouviewContentMerger contentMerger = mock(YouviewContentMerger.class);
     
-    private final YouViewReportHandler handler = new ReferentialIntegrityCheckingReportHandler(
-            taskCreator,
-            taskStore,
-            payloadHashStore,
-            payloadCreator,
-            contentResolver,
-            hierarchyExtractor
-    );
+    private YouViewReportHandler handler;
     
     @Before
     public void setup() {
+
+        handler = new ReferentialIntegrityCheckingReportHandler(
+                taskCreator,
+                taskStore,
+                payloadHashStore,
+                payloadCreator,
+                contentResolver,
+                hierarchyExtractor,
+                contentMerger
+        );
+
         when(task.id()).thenReturn(TASK_ID);
         when(taskStore.save(task)).thenReturn(task);
     }
