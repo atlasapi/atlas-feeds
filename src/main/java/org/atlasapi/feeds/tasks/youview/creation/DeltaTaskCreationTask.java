@@ -113,7 +113,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             forDeletion = uploadFromBBC(updatedContent, uploadProcessor);
         }
         else if(getPublisher().equals(Publisher.AMAZON_UNBOX)){
-            forDeletion = uploadFromAmazon(Iterators.filter(updatedContent, Episode.class), uploadProcessor);
+            forDeletion = uploadFromAmazon(updatedContent, uploadProcessor);
         } else {
             throw new IllegalStateException("Uploading from "+getPublisher()+" to YV is not supported.");
         }
