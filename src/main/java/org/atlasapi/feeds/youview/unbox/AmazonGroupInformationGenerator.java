@@ -20,7 +20,6 @@ import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
-import org.atlasapi.media.entity.Image;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Series;
@@ -135,6 +134,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         }
     };
     private static final String SEASON = "Season ";
+    private static final String AMAZON_DEFAULT_FILL_IN_IMAGE_URL = "http://images.atlas.metabroadcast.com/amazon/OnDemandService.png";
 
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
@@ -321,25 +321,37 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     }
 
     private Optional<RelatedMaterialType> generateRelatedMaterial(@Nullable Content content) {
-        if (content == null || Strings.isNullOrEmpty(content.getImage())) {
+
+        if (content == null) {
             return Optional.absent();
         }
+        String imageUrl = content.getImage();
+        if (Strings.isNullOrEmpty(imageUrl)) {
+            //As requested by YV, if it's a film with no image, inject a default image.
+            if (content instanceof Film) {
+                imageUrl = AMAZON_DEFAULT_FILL_IN_IMAGE_URL;
+            } else {
+                return Optional.absent();
+            }
+        }
+
         ExtendedRelatedMaterialType relatedMaterial = new ExtendedRelatedMaterialType();
         
         relatedMaterial.setHowRelated(generateHowRelated());
         relatedMaterial.setFormat(generateFormat());
-        relatedMaterial.setMediaLocator(generateMediaLocator(content));
-        relatedMaterial.setContentProperties(generateContentProperties(content));
+        relatedMaterial.setMediaLocator(generateMediaLocator(imageUrl));
+        relatedMaterial.setContentProperties(generateContentProperties());
         
-        return Optional.<RelatedMaterialType>of(relatedMaterial);
+        return Optional.of(relatedMaterial);
     }
+
     private UniqueIDType generateOtherIdentifier(String authority, String asin) {
         UniqueIDType id = new UniqueIDType();
         id.setAuthority(authority);
         id.setValue(asin);
         return id;
     }
-    private ContentPropertiesType generateContentProperties(Content content) {
+    private ContentPropertiesType generateContentProperties() {
         ContentPropertiesType contentProperties = new ContentPropertiesType();
         StillImageContentAttributesType attributes = new StillImageContentAttributesType();
 
@@ -376,15 +388,19 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     }
 
     private MediaLocatorType generateMediaLocator(Content content) {
+        return generateMediaLocator(content.getImage());
+    }
+
+    private MediaLocatorType generateMediaLocator(String imageUrl) {
         MediaLocatorType mediaLocator = new MediaLocatorType();
-        mediaLocator.setMediaUri(getMetabroadcastImageUrl(content.getImage()));
+        mediaLocator.setMediaUri(getMetabroadcastImageUrl(imageUrl));
         return mediaLocator;
     }
 
     public static String getMetabroadcastImageUrl(String amazonUrl) {
         //Chop amazon's native resizing out of their url (ECOTEST-265)
         //e.g. from https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD._SX320_SY240_.jpg
-        //go to https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD.jpg
+        //get to https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD.jpg
         int lastDot = amazonUrl.lastIndexOf('.');
         int preLastDot = amazonUrl.lastIndexOf('.', lastDot - 1);
         if (lastDot > 0 || preLastDot > 0) {

@@ -22,6 +22,7 @@ import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Image;
+import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
@@ -74,14 +75,26 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
 
     @Test
     public void testRelatedMaterialNotGeneratedIfNullOrEmptyImageString() {
+        //Films have default images injected if no image is present.
         Film film = createFilm();
+        film.setImage(null);
+        BasicContentDescriptionType filmDesc = generator.generate(film).getBasicDescription();
+        assertTrue(!filmDesc.getRelatedMaterial().isEmpty());
+
         film.setImage("");
+        filmDesc = generator.generate(film).getBasicDescription();
+        assertTrue(!filmDesc.getRelatedMaterial().isEmpty());
 
-        GroupInformationType groupInfo = generator.generate(film);
+        //The rest should have no image sent
+        Episode ep = createEpisode();
+        ep.setImage("");
+        BasicContentDescriptionType epDesc =
+                generator.generate(ep, Optional.absent(), Optional.absent())
+                .getBasicDescription();
+        assertTrue(epDesc.getRelatedMaterial().isEmpty());
 
-        BasicContentDescriptionType desc = groupInfo.getBasicDescription();
-
-        assertTrue(desc.getRelatedMaterial().isEmpty());
+        //brand and series don't need to be tested, because for some obscure reason they use
+        //the image of the children.
     }
 
 
