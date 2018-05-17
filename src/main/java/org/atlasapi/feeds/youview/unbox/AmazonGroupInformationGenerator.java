@@ -134,7 +134,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         }
     };
     private static final String SEASON = "Season ";
-    private static final String AMAZON_DEFAULT_FILL_IN_IMAGE_URL = "http://images.atlas.metabroadcast.com/amazon/placeholder.png";
+    private static final String AMAZON_DEFAULT_FILL_IN_IMAGE_URL = "https://users-images-atlas.metabroadcast.com/?source=http%3A%2F%2Fimages.atlas.metabroadcast.com%2Famazon%2Fplaceholder.png";
 
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
@@ -398,17 +398,19 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     }
 
     public static String getMetabroadcastImageUrl(String amazonUrl) {
-        if (!AMAZON_DEFAULT_FILL_IN_IMAGE_URL.equals(amazonUrl)) { //+1 in code quality.
-            //Chop amazon's native resizing out of their url (ECOTEST-265)
-            //e.g. from https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD._SX320_SY240_.jpg
-            //get to https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD.jpg
-            int lastDot = amazonUrl.lastIndexOf('.');
-            int preLastDot = amazonUrl.lastIndexOf('.', lastDot - 1);
-            if (lastDot > 0 || preLastDot > 0) {
-                amazonUrl = amazonUrl.substring(0, preLastDot)
-                            + amazonUrl.substring(lastDot, amazonUrl.length());
-            }
+        if (AMAZON_DEFAULT_FILL_IN_IMAGE_URL.equals(amazonUrl)) { //+1 for code quality.
+            return amazonUrl;
         }
+        //Chop amazon's native resizing out of their url (ECOTEST-265)
+        //e.g. from https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD._SX320_SY240_.jpg
+        //     to   https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD.jpg
+        int lastDot = amazonUrl.lastIndexOf('.');
+        int preLastDot = amazonUrl.lastIndexOf('.', lastDot - 1);
+        if (lastDot > 0 || preLastDot > 0) {
+            amazonUrl = amazonUrl.substring(0, preLastDot)
+                        + amazonUrl.substring(lastDot, amazonUrl.length());
+        }
+
         try {
             return MBST_BASE_IMAGE_URL + URLEncoder.encode(amazonUrl, "UTF-8");
         } catch (UnsupportedEncodingException e) {
