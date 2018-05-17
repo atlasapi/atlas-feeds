@@ -134,7 +134,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         }
     };
     private static final String SEASON = "Season ";
-    private static final String AMAZON_DEFAULT_FILL_IN_IMAGE_URL = "http://images.atlas.metabroadcast.com/amazon/OnDemandService.png";
+    private static final String AMAZON_DEFAULT_FILL_IN_IMAGE_URL = "http://images.atlas.metabroadcast.com/amazon/placeholder.png";
 
     private final IdGenerator idGenerator;
     private final GenreMapping genreMapping;
