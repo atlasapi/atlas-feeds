@@ -84,6 +84,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
+import org.atlasapi.persistence.lookup.entry.LookupEntryStore;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Duration;
@@ -155,6 +156,7 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
     private @Autowired @Qualifier("YouviewQueryExecutor") KnownTypeQueryExecutor mergingResolver;
     private @Autowired ScheduleResolver scheduleResolver;
     private @Autowired ContentHierarchyExpanderFactory contentHierarchyExpanderFactory;
+    private @Autowired LookupEntryStore lookupEntryStore;
 
     private @Value("${youview.upload.validation}") String performValidation;
 
@@ -317,7 +319,7 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
                 lastUpdatedStore(), 
                 publisher,
                 contentHierarchyExpanderFactory.create(publisher),
-                IdGeneratorFactory.create(publisher),
+                IdGeneratorFactory.create(publisher),YouView Delta TVAnytime Amazon Unbox GB (Lovefilm) Upload
                 taskStore, 
                 taskCreator(), 
                 payloadCreator(), 
@@ -325,7 +327,8 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
                 getDeltaContentResolver(publisher),
                 payloadHashStore(),
                 channelResolver,
-                mergingResolver
+                mergingResolver,
+                lookupEntryStore
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
