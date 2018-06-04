@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
+import com.google.api.client.util.Sets;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Payload;
 import org.atlasapi.feeds.tasks.Status;
@@ -31,6 +32,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import org.atlasapi.persistence.lookup.entry.LookupEntryStore;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -64,6 +66,7 @@ public class DeltaTaskCreationTaskTest {
     @Mock private YouViewPayloadHashStore payloadHashStore;
     @Mock private ChannelResolver channelResolver;
     @Mock private KnownTypeQueryExecutor mergingResolver;
+    @Mock private LookupEntryStore lookupEntryStore;
 
     @Before
     public void setUp() {
@@ -84,7 +87,8 @@ public class DeltaTaskCreationTaskTest {
                 contentResolver,
                 payloadHashStore,
                 channelResolver,
-                mergingResolver
+                mergingResolver,
+                lookupEntryStore
         );
         when(channelResolver.allChannels(any(ChannelQuery.class))).thenReturn(ImmutableList.of());
     }
@@ -123,6 +127,7 @@ public class DeltaTaskCreationTaskTest {
         when(taskCreator.taskFor(contentCrid, content, payload, action)).thenReturn(withoutId);
         when(taskStore.save(withoutId)).thenReturn(withId);
         when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(payload);
+        when(lookupEntryStore.updatedSince(any(DateTime.class))).thenReturn(Sets.newHashSet());
 
         task.runTask();
 

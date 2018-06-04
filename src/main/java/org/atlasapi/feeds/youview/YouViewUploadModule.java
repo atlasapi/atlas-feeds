@@ -319,7 +319,7 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
                 lastUpdatedStore(), 
                 publisher,
                 contentHierarchyExpanderFactory.create(publisher),
-                IdGeneratorFactory.create(publisher),YouView Delta TVAnytime Amazon Unbox GB (Lovefilm) Upload
+                IdGeneratorFactory.create(publisher),
                 taskStore, 
                 taskCreator(), 
                 payloadCreator(), 
@@ -355,7 +355,8 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
                 getDeltaContentResolver(publisher),
                 payloadHashStore(),
                 channelResolver,
-                mergingResolver
+                mergingResolver,
+                lookupEntryStore
         ).withName(String.format("YouView representativeId changes handling for %s", publisher.title()));
     }
 

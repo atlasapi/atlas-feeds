@@ -22,6 +22,7 @@ import org.atlasapi.persistence.audit.NoLoggingPersistenceAuditLog;
 import org.atlasapi.persistence.content.mongo.MongoContentResolver;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import org.atlasapi.persistence.lookup.entry.LookupEntry;
+import org.atlasapi.persistence.lookup.entry.LookupEntryStore;
 import org.atlasapi.persistence.lookup.mongo.MongoLookupEntryStore;
 
 import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
@@ -65,7 +66,8 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
             YouViewContentResolver contentResolver,
             YouViewPayloadHashStore payloadHashStore,
             ChannelResolver channelResolver,
-            KnownTypeQueryExecutor mergingResolver) {
+            KnownTypeQueryExecutor mergingResolver,
+            LookupEntryStore lookupEntryStore) {
         super(
                 lastUpdatedStore,
                 publisher,
@@ -78,7 +80,8 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
                 contentResolver,
                 payloadHashStore,
                 channelResolver,
-                mergingResolver
+                mergingResolver,
+                lookupEntryStore
         );
     }
 
