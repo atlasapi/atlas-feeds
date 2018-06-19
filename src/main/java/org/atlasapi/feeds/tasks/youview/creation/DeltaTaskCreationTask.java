@@ -1,7 +1,9 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Ordering;
 import org.atlasapi.feeds.tasks.Action;
@@ -19,14 +21,20 @@ import org.atlasapi.feeds.youview.unbox.AmazonIdGenerator;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Alias;
 import org.atlasapi.media.entity.Brand;
+import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
+import org.atlasapi.media.entity.Identified;
+import org.atlasapi.media.entity.Item;
+import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
 import com.google.common.collect.Sets;
+import org.atlasapi.persistence.lookup.entry.LookupEntry;
+import org.atlasapi.persistence.lookup.entry.LookupEntryStore;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
@@ -37,6 +45,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -55,6 +64,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     private final YouviewContentMerger youviewContentMerger;
     private final ChannelResolver channelResolver;
     private final UpdateTask updateTask;
+    private final LookupEntryStore lookupEntryStore;
 
     public DeltaTaskCreationTask(
             YouViewLastUpdatedStore lastUpdatedStore,
@@ -68,7 +78,9 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             YouViewContentResolver contentResolver,
             YouViewPayloadHashStore payloadHashStore,
             ChannelResolver channelResolver,
-            KnownTypeQueryExecutor mergingResolver) {
+            KnownTypeQueryExecutor mergingResolver,
+            LookupEntryStore lookupEntryStore
+            ) {
         super(
                 lastUpdatedStore,
                 publisher,
@@ -88,6 +100,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         this.youviewContentMerger = new YouviewContentMerger(
                 mergingResolver,
                 getPublisher());
+
+        this.lookupEntryStore = checkNotNull(lookupEntryStore);
     }
 
     @Override
@@ -106,6 +120,23 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         Iterator<Content> updatedContent = contentResolver.updatedSince(
                 lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD)
         );
+
+        if (getPublisher().equals(Publisher.AMAZON_UNBOX)) {
+            Iterable<LookupEntry> updatedAmazonSet = lookupEntryStore.updatedSince(lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD));
+
+            Set<Long> resolvedIds = Sets.newHashSet(updatedContent).stream()
+                    .map(Identified::getId)
+                    .collect(Collectors.toSet());
+
+            ResolvedContent resolved = contentResolver.findByUris(
+                    StreamSupport.stream(updatedAmazonSet.spliterator(), false)
+                            .filter(entry -> !resolvedIds.contains(entry.id()))
+                            .map(LookupEntry::uri)
+                            .collect(Collectors.toList())
+            );
+
+            updatedContent = Iterators.concat(updatedContent, translateResolvedToContent(resolved));
+        }
 
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
         YouViewContentProcessor deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
@@ -229,5 +260,35 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     
     protected static List<Content> sortContentForDeletion(Iterable<Content> toBeDeleted) {
         return HIERARCHICAL_ORDER.immutableSortedCopy(toBeDeleted);
+    }
+
+    private Iterator<Content> translateResolvedToContent(ResolvedContent resolvedContent) {
+        if (resolvedContent.isEmpty()) {
+            Set<Content> nothing = Sets.newHashSet();
+            return nothing.iterator();
+        }
+
+        ImmutableList.Builder<Content> contentBuilder = ImmutableList.builder();
+
+        resolvedContent.getAllResolvedResults().stream()
+                .filter(res -> ((Content) res).getMediaType().equals(MediaType.VIDEO))
+                .forEach(
+                        res -> {
+                            if (res instanceof Episode) {
+                                contentBuilder.add((Episode) res);
+                            } else if (res instanceof Series) {
+                                contentBuilder.add((Series) res);
+                            } else if (res instanceof Brand) {
+                                contentBuilder.add((Brand) res);
+                            } else if (res instanceof Item) {
+                                contentBuilder.add((Item) res);
+                            } else if (res instanceof Container) {
+                                contentBuilder.add((Container) res);
+                            } else {
+                                contentBuilder.add((Content) res);
+                            }
+                        });
+
+        return contentBuilder.build().iterator();
     }
 }
