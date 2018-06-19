@@ -165,12 +165,10 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
         for (Entry<String, Publisher> publisherEntry : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
             if (isEnabled(publisherPrefix)) {
-                scheduler.schedule(scheduleBootstrapTaskCreationTask(publisherEntry.getValue()), BOOTSTRAP_CONTENT_CHECK);
-
                 if(publisherEntry.getValue().equals(Publisher.BBC_NITRO)){
                     scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), NITRO_DELTA_CONTENT_CHECK);
-                }
-                else if(publisherEntry.getValue().equals(Publisher.AMAZON_UNBOX)){
+                    scheduler.schedule(scheduleBootstrapTaskCreationTask(publisherEntry.getValue()), BOOTSTRAP_CONTENT_CHECK);
+                } else if(publisherEntry.getValue().equals(Publisher.AMAZON_UNBOX)){
                     scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), AMAZON_DELTA_CONTENT_CHECK);
                     scheduler.schedule(scheduleRepIdChangesHandlingTask(Publisher.AMAZON_UNBOX), REPID_CHANGES_HANDLING);
                 }
