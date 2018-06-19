@@ -127,7 +127,7 @@ public class DeltaTaskCreationTaskTest {
         when(taskCreator.taskFor(contentCrid, content, payload, action)).thenReturn(withoutId);
         when(taskStore.save(withoutId)).thenReturn(withId);
         when(payloadCreator.payloadFrom(contentCrid, content)).thenReturn(payload);
-        when(lookupEntryStore.updatedSince(any(DateTime.class))).thenReturn(Sets.newHashSet());
+        when(lookupEntryStore.updatedSince(any(Publisher.class), any(DateTime.class))).thenReturn(Sets.newHashSet());
 
         task.runTask();
 
