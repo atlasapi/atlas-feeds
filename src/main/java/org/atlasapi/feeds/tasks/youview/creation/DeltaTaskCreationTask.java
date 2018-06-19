@@ -148,7 +148,9 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
         log.info("Started uploading YV tasks from {}.", getPublisher());
         reportStatus("Uploading tasks to YouView");
-        updateTask.run();
+        if(getPublisher().equals(Publisher.BBC_NITRO)) {
+            updateTask.run();
+        }
 
         log.info("Done uploading tasks to YV from {}", getPublisher());
         reportStatus("Done uploading tasks to YouView");
