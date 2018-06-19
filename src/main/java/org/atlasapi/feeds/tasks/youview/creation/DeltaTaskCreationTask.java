@@ -120,22 +120,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         Iterator<Content> updatedContent = contentResolver.updatedSince(
                 lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD)
         );
-
         if (getPublisher().equals(Publisher.AMAZON_UNBOX)) {
-            Iterable<LookupEntry> updatedAmazonSet = lookupEntryStore.updatedSince(lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD));
-
-            Set<Long> resolvedIds = Sets.newHashSet(updatedContent).stream()
-                    .map(Identified::getId)
-                    .collect(Collectors.toSet());
-
-            ResolvedContent resolved = contentResolver.findByUris(
-                    StreamSupport.stream(updatedAmazonSet.spliterator(), false)
-                            .filter(entry -> !resolvedIds.contains(entry.id()))
-                            .map(LookupEntry::uri)
-                            .collect(Collectors.toList())
-            );
-
-            updatedContent = Iterators.concat(updatedContent, translateResolvedToContent(resolved));
+            updatedContent = appendEquivalenceChanges(lastUpdated, updatedContent);
         }
 
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
@@ -166,6 +152,28 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
         log.info("Done uploading tasks to YV from {}", getPublisher());
         reportStatus("Done uploading tasks to YouView");
+    }
+
+    private Iterator<Content> appendEquivalenceChanges(Optional<DateTime> lastUpdated,
+            Iterator<Content> updatedContent) {
+
+            Iterable<LookupEntry> updatedAmazonSet = lookupEntryStore.updatedSince(
+                    Publisher.AMAZON_UNBOX,
+                    lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD));
+
+            Set<Long> resolvedIds = Sets.newHashSet(updatedContent).stream()
+                    .map(Identified::getId)
+                    .collect(Collectors.toSet());
+
+            ResolvedContent resolved = contentResolver.findByUris(
+                    StreamSupport.stream(updatedAmazonSet.spliterator(), false)
+                            //filter out the id's we already have.
+                            .filter(entry -> !resolvedIds.contains(entry.id()))
+                            .map(LookupEntry::uri)
+                            .collect(Collectors.toList())
+            );
+
+            return Iterators.concat(updatedContent, translateResolvedToContent(resolved));
     }
 
     //Returns the content that should be deleted.
