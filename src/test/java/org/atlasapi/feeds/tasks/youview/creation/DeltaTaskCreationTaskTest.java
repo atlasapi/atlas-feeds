@@ -8,6 +8,7 @@ import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.tasks.youview.processing.DeleteTask;
 import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
@@ -62,6 +63,7 @@ public class DeltaTaskCreationTaskTest {
     @Mock private TaskCreator taskCreator;
     @Mock private PayloadCreator payloadCreator;
     @Mock private UpdateTask updateTask;
+    @Mock private DeleteTask deleteTask;
     @Mock private YouViewContentResolver contentResolver;
     @Mock private YouViewPayloadHashStore payloadHashStore;
     @Mock private ChannelResolver channelResolver;
@@ -84,7 +86,8 @@ public class DeltaTaskCreationTaskTest {
                 taskCreator,
                 payloadCreator,
                 updateTask,
-                deleteTask(publisher), contentResolver,
+                deleteTask,
+                contentResolver,
                 payloadHashStore,
                 channelResolver,
                 mergingResolver,
