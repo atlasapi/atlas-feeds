@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.tasks.youview.processing.DeleteTask;
 import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -63,6 +64,7 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
             IdGenerator idGenerator, TaskStore taskStore,
             TaskCreator taskCreator, PayloadCreator payloadCreator,
             UpdateTask updateTask,
+            DeleteTask deleteTask,
             YouViewContentResolver contentResolver,
             YouViewPayloadHashStore payloadHashStore,
             ChannelResolver channelResolver,
@@ -77,6 +79,7 @@ public class RepresentativeIdChangesHandlingTask extends DeltaTaskCreationTask {
                 taskCreator,
                 payloadCreator,
                 updateTask,
+                deleteTask,
                 contentResolver,
                 payloadHashStore,
                 channelResolver,

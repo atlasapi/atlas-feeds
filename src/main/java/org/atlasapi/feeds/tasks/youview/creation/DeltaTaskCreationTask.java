@@ -3,11 +3,11 @@ package org.atlasapi.feeds.tasks.youview.creation;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Ordering;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.tasks.youview.processing.DeleteTask;
 import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
 import org.atlasapi.feeds.youview.unbox.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.YouviewContentMerger;
@@ -24,7 +24,6 @@ import org.atlasapi.media.entity.Brand;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Content;
 import org.atlasapi.media.entity.Episode;
-import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Identified;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
@@ -47,6 +46,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import com.metabroadcast.common.scheduling.ScheduledTask;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class DeltaTaskCreationTask extends TaskCreationTask {
@@ -64,6 +65,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     private final YouviewContentMerger youviewContentMerger;
     private final ChannelResolver channelResolver;
     private final UpdateTask updateTask;
+    private final DeleteTask deleteTask;
     private final LookupEntryStore lookupEntryStore;
 
     public DeltaTaskCreationTask(
@@ -75,12 +77,13 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             TaskCreator taskCreator,
             PayloadCreator payloadCreator,
             UpdateTask updateTask,
+            DeleteTask deleteTask,
             YouViewContentResolver contentResolver,
             YouViewPayloadHashStore payloadHashStore,
             ChannelResolver channelResolver,
             KnownTypeQueryExecutor mergingResolver,
             LookupEntryStore lookupEntryStore
-            ) {
+    ) {
         super(
                 lastUpdatedStore,
                 publisher,
@@ -94,6 +97,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         this.channelResolver = checkNotNull(channelResolver);
         this.contentResolver = checkNotNull(contentResolver);
         this.updateTask = checkNotNull(updateTask);
+        this.deleteTask = checkNotNull(deleteTask);
         checkNotNull(mergingResolver);
 
 
@@ -150,6 +154,9 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         reportStatus("Uploading tasks to YouView");
 
         updateTask.run();
+        if(getPublisher().equals(Publisher.AMAZON_UNBOX)){ //bbc deletes run on schedule. Don't know why, don't wanna mess with it, doubt it would be a problem.
+            deleteTask.run();
+        }
 
         log.info("Done uploading tasks to YV from {}", getPublisher());
         reportStatus("Done uploading tasks to YouView");

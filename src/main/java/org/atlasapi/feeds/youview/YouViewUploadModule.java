@@ -129,8 +129,6 @@ public class YouViewUploadModule {
 
     private static final RepetitionRule NITRO_DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
     private static final RepetitionRule AMAZON_DELTA_CONTENT_CHECK = RepetitionRules.NEVER; //RepetitionRules.daily(LocalTime.MIDNIGHT.plusHours(12));
-    private static final RepetitionRule REPID_CHANGES_HANDLING = RepetitionRules.NEVER;
-private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
     // Uploads are being performed as part of the delta job.
     private static final RepetitionRule NEVER = RepetitionRules.NEVER;
@@ -167,18 +165,18 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
             if (isEnabled(publisherPrefix)) {
                 if(publisherEntry.getValue().equals(Publisher.BBC_NITRO)){
                     scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), NITRO_DELTA_CONTENT_CHECK);
-                    scheduler.schedule(scheduleBootstrapTaskCreationTask(publisherEntry.getValue()), BOOTSTRAP_CONTENT_CHECK);
+                    scheduler.schedule(scheduleBootstrapTaskCreationTask(publisherEntry.getValue()), NEVER);
                 } else if(publisherEntry.getValue().equals(Publisher.AMAZON_UNBOX)){
-                    scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), AMAZON_DELTA_CONTENT_CHECK);
-                    scheduler.schedule(scheduleRepIdChangesHandlingTask(Publisher.AMAZON_UNBOX), REPID_CHANGES_HANDLING);
+                    scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), NEVER);
+                    scheduler.schedule(scheduleRepIdChangesHandlingTask(Publisher.AMAZON_UNBOX), NEVER);
                 }
             }
         }
 
-        scheduler.schedule(uploadTask().withName("Send YouView Uploads (ALL)"), NEVER);
-        scheduler.schedule(deleteTask().withName("Send YouView Deletes (ALL)"), NEVER);
-        scheduler.schedule(deleteTask(Publisher.BBC_NITRO).withName("Send YouView Deletes ("+Publisher.BBC_NITRO.title()+")"), DELETE);
-        scheduler.schedule(remoteCheckTask().withName("YouView Task Status Check"), REMOTE_CHECK);
+        scheduler.schedule(uploadTask().withName("YouView send Uploads (ALL)"), NEVER);
+        scheduler.schedule(deleteTask().withName("YouView send Deletes (ALL)"), NEVER);
+        scheduler.schedule(deleteTask(Publisher.BBC_NITRO).withName("YouView send Deletes ("+Publisher.BBC_NITRO.title()+")"), DELETE);
+        scheduler.schedule(remoteCheckTask().withName("YouView Remote Task Status Check"), REMOTE_CHECK);
         scheduler.schedule(taskTrimmingTask().withName("Old Task Removal"), TASK_REMOVAL);
         
         resultHandler().registerReportHandler(reportHandler());
@@ -291,11 +289,11 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
         return new UpdateTask(taskStore, taskProcessor(), publisher, DESTINATION_TYPE);
     }
 
-    private ScheduledTask deleteTask() throws JAXBException, SAXException {
+    private DeleteTask deleteTask() throws JAXBException, SAXException {
         return new DeleteTask(taskStore, taskProcessor(), null, DESTINATION_TYPE); //null for all publishers
     }
 
-    private ScheduledTask deleteTask(Publisher publisher) throws JAXBException, SAXException {
+    private DeleteTask deleteTask(Publisher publisher) throws JAXBException, SAXException {
         return new DeleteTask(taskStore, taskProcessor(), publisher, DESTINATION_TYPE);
     }
 
@@ -325,8 +323,9 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
                 IdGeneratorFactory.create(publisher),
                 taskStore, 
                 taskCreator(), 
-                payloadCreator(), 
+                payloadCreator(),
                 uploadTask(publisher),
+                deleteTask(publisher),
                 getDeltaContentResolver(publisher),
                 payloadHashStore(),
                 channelResolver,
@@ -355,6 +354,7 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
                 taskCreator(),
                 payloadCreator(),
                 uploadTask(publisher),
+                deleteTask(publisher),
                 getDeltaContentResolver(publisher),
                 payloadHashStore(),
                 channelResolver,

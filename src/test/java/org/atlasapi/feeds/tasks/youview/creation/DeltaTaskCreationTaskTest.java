@@ -84,7 +84,7 @@ public class DeltaTaskCreationTaskTest {
                 taskCreator,
                 payloadCreator,
                 updateTask,
-                contentResolver,
+                deleteTask(publisher), contentResolver,
                 payloadHashStore,
                 channelResolver,
                 mergingResolver,
