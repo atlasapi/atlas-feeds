@@ -133,7 +133,7 @@ public class YouViewUploadModule {
 private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NEVER;
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
     // Uploads are being performed as part of the delta job.
-    private static final RepetitionRule UPLOAD = RepetitionRules.NEVER;
+    private static final RepetitionRule NEVER = RepetitionRules.NEVER;
     private static final RepetitionRule DELETE = RepetitionRules.every(Duration.standardMinutes(15)).withOffset(Duration.standardMinutes(5));
     private static final RepetitionRule TASK_REMOVAL = RepetitionRules.daily(LocalTime.MIDNIGHT);
     
@@ -175,8 +175,9 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
             }
         }
 
-        scheduler.schedule(uploadTask().withName("YouView Uploads"), UPLOAD);
-        scheduler.schedule(deleteTask().withName("YouView Deletes"), DELETE);
+        scheduler.schedule(uploadTask().withName("Send YouView Uploads (ALL)"), NEVER);
+        scheduler.schedule(deleteTask().withName("Send YouView Deletes (ALL)"), NEVER);
+        scheduler.schedule(deleteTask(Publisher.BBC_NITRO).withName("Send YouView Deletes ("+Publisher.BBC_NITRO.title()+")"), DELETE);
         scheduler.schedule(remoteCheckTask().withName("YouView Task Status Check"), REMOTE_CHECK);
         scheduler.schedule(taskTrimmingTask().withName("Old Task Removal"), TASK_REMOVAL);
         
@@ -289,9 +290,13 @@ private static final RepetitionRule BOOTSTRAP_CONTENT_CHECK = RepetitionRules.NE
     private UpdateTask uploadTask(Publisher publisher) throws JAXBException, SAXException {
         return new UpdateTask(taskStore, taskProcessor(), publisher, DESTINATION_TYPE);
     }
-    
+
     private ScheduledTask deleteTask() throws JAXBException, SAXException {
-        return new DeleteTask(taskStore, taskProcessor(), null, DESTINATION_TYPE);
+        return new DeleteTask(taskStore, taskProcessor(), null, DESTINATION_TYPE); //null for all publishers
+    }
+
+    private ScheduledTask deleteTask(Publisher publisher) throws JAXBException, SAXException {
+        return new DeleteTask(taskStore, taskProcessor(), publisher, DESTINATION_TYPE);
     }
 
     private ScheduledTask scheduleBootstrapTaskCreationTask(Publisher publisher) 
