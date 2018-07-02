@@ -125,7 +125,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                 lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD)
         );
         if (getPublisher().equals(Publisher.AMAZON_UNBOX)) {
-            updatedContent = appendEquivalenceChanges(lastUpdated, updatedContent);
+//            updatedContent = appendEquivalenceChanges(lastUpdated, updatedContent);
         }
 
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
