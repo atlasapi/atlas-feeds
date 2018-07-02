@@ -1,8 +1,8 @@
 package org.atlasapi.feeds.youview.unbox;
 
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.atlasapi.TestsWithConfiguration;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -18,8 +18,10 @@ import org.atlasapi.media.entity.Version;
 import com.google.common.collect.ImmutableList;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
-import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 public class AmazonIdGeneratorTest extends TestsWithConfiguration{
@@ -82,4 +84,11 @@ public class AmazonIdGeneratorTest extends TestsWithConfiguration{
         return ImmutableList.of(location);
     }
 
+    @Test
+    public void getVersionCridPattern() {
+        Pattern versionCridPattern = AmazonIdGenerator.getVersionCridPattern();
+        Matcher matcher = versionCridPattern.matcher(
+                "crid://stage-metabroadcast.com/amazon.com:content:wtf:version");
+        assertTrue(matcher.matches());
+    }
 }

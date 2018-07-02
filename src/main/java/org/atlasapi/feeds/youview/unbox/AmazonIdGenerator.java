@@ -19,10 +19,12 @@ import com.metabroadcast.common.properties.Configurer;
 
 public class AmazonIdGenerator implements IdGenerator {
 
-    private MbstCridGenerator mbstCridGenerator = new MbstCridGenerator(
+    private static MbstCridGenerator mbstCridGenerator = new MbstCridGenerator(
             Environment.parse(Configurer.getPlatform()),
             "amazon.com" //amazon crid identifier
     );
+
+    private static Pattern versionPattern = null;
 
     /**
      * @return crid://amazon.com/metabroadcast.com/ITEM_ASIN
@@ -85,8 +87,18 @@ public class AmazonIdGenerator implements IdGenerator {
     }
 
     public static Pattern getVersionCridPattern(){
-        //version format is crid://amazon.com/metabroadcast.com/ITEM_ASIN/version
-        return Pattern.compile("crid://amazon.com/metabroadcast.com/" + "[A-Za-z0-9]*" + "/version");
+        if(versionPattern == null) {
+            //version format is crid://metabroadcast.com/amazon.com/ITEM_ASIN/version
+            Identified identified = new Identified();
+            identified.setId(51955835295115080L); //will encode to nnnnnnnnnnnn
+            String versionCrid = mbstCridGenerator.getVersionCrid(identified);
+            String firstPart = versionCrid.substring(0, versionCrid.indexOf("nnnnnnnnnnnn"));
+            String lastPart = versionCrid.substring(
+                    versionCrid.indexOf("nnnnnnnnnnnn") + 12,
+                    versionCrid.length());
+            versionPattern = Pattern.compile(firstPart + "[A-Za-z0-9]*" + lastPart);
+        }
+        return versionPattern;
     }
 
     /**

@@ -13,19 +13,19 @@ import static com.metabroadcast.representative.util.Utils.encode;
 
 public class MbstCridGenerator {
 
-    private static final Map<Environment, String> MBST_IDENTIFIER = ImmutableMap.of(
+    public static final Map<Environment, String> MBST_IDENTIFIER = ImmutableMap.of(
             Environment.PROD, "metabroadcast.com",
             Environment.STAGE, "stage-metabroadcast.com"
     );
 
-    private static final Joiner COLON = Joiner.on(":");
-    private static final Joiner SLASH = Joiner.on("/");
+    public static final Joiner COLON = Joiner.on(":");
+    public static final Joiner SLASH = Joiner.on("/");
 
-    private static final String CRID_START = "crid:/"; //<-missing a slash so we can use the Joiner.
-    private static final String IMI_START = "imi"; //<-missing the colon so we can use the Joiner.
-    private static final String CONTENT = "content";
-    private static final String VERSION = "version";
-    private static final String ONDEMAND = "ondemand";
+    public static final String CRID_START = "crid:/"; //<-missing a slash so we can use the Joiner.
+    public static final String IMI_START = "imi"; //<-missing the colon so we can use the Joiner.
+    public static final String CONTENT = "content";
+    public static final String VERSION = "version";
+    public static final String ONDEMAND = "ondemand";
 
     public enum Quality {
         SD,
