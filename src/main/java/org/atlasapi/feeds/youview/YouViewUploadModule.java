@@ -128,7 +128,7 @@ public class YouViewUploadModule {
     );
 
     private static final RepetitionRule NITRO_DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
-    private static final RepetitionRule AMAZON_DELTA_CONTENT_CHECK = RepetitionRules.NEVER; //RepetitionRules.daily(LocalTime.MIDNIGHT.plusHours(12));
+    private static final RepetitionRule AMAZON_DELTA_CONTENT_CHECK = RepetitionRules.daily(LocalTime.MIDNIGHT.plusHours(8));
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
     // Uploads are being performed as part of the delta job.
     private static final RepetitionRule NEVER = RepetitionRules.NEVER;
@@ -164,10 +164,10 @@ public class YouViewUploadModule {
             String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
             if (isEnabled(publisherPrefix)) {
                 if(publisherEntry.getValue().equals(Publisher.BBC_NITRO)){
-                    scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), NITRO_DELTA_CONTENT_CHECK);
-                    scheduler.schedule(scheduleBootstrapTaskCreationTask(publisherEntry.getValue()), NEVER);
+                    scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.BBC_NITRO), NITRO_DELTA_CONTENT_CHECK);
+                    scheduler.schedule(scheduleBootstrapTaskCreationTask(Publisher.BBC_NITRO), NEVER);
                 } else if(publisherEntry.getValue().equals(Publisher.AMAZON_UNBOX)){
-                    scheduler.schedule(scheduleDeltaTaskCreationTask(publisherEntry.getValue()), NEVER);
+                    scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.AMAZON_UNBOX), AMAZON_DELTA_CONTENT_CHECK);
                     scheduler.schedule(scheduleRepIdChangesHandlingTask(Publisher.AMAZON_UNBOX), NEVER);
                 }
             }
