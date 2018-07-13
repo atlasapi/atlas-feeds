@@ -128,7 +128,7 @@ public class YouViewUploadModule {
     );
 
     private static final RepetitionRule NITRO_DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
-    private static final RepetitionRule AMAZON_DELTA_CONTENT_CHECK = RepetitionRules.daily(new LocalTime(9, 0, 0));
+    private static final RepetitionRule AMAZON_DELTA_CONTENT_CHECK = RepetitionRules.daily(LocalTime.MIDNIGHT.plusHours(8));
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
     // Uploads are being performed as part of the delta job.
     private static final RepetitionRule NEVER = RepetitionRules.NEVER;
