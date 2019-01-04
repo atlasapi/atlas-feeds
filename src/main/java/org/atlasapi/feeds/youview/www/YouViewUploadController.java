@@ -23,7 +23,6 @@ import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
-import org.atlasapi.feeds.youview.unbox.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.ContentHierarchyExpanderFactory;
 import org.atlasapi.feeds.youview.IdGeneratorFactory;
 import org.atlasapi.feeds.youview.YouviewContentMerger;
@@ -35,6 +34,7 @@ import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
+import org.atlasapi.feeds.youview.unbox.AmazonContentConsolidator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
@@ -437,16 +437,16 @@ public class YouViewUploadController {
             case BRAND:
             case ITEM:
             case SERIES:
-                handleContent(elementId, immediate, hierarchyExpander, response, content, payload, telescope);
+                handleContent(elementId, immediate, content, payload, telescope);
                 break;
             case BROADCAST:
                 handleBroadcast(elementId, immediate, hierarchyExpander, response, content, telescope);
                 break;
             case ONDEMAND:
-                handleOnDemand(elementId, immediate, hierarchyExpander, response, content, payload, telescope);
+                handleOnDemand(elementId, immediate, hierarchyExpander, content, payload, telescope);
                 break;
             case VERSION:
-                handleVersion(elementId, immediate, hierarchyExpander, response, content, payload, telescope);
+                handleVersion(elementId, immediate, hierarchyExpander, content, payload, telescope);
                 break;
             default:
                 throw new IllegalArgumentException("Invalid type provided");
@@ -459,12 +459,10 @@ public class YouViewUploadController {
     private void handleContent(
             @Nullable String elementId,
             boolean immediate,
-            ContentHierarchyExpander hierarchyExpander,
-            HttpServletResponse response,
             Content toBeUploaded,
             Payload payload,
             FeedsTelescopeReporter telescope
-    ) throws IOException, IllegalArgumentException {
+    ) throws IllegalArgumentException {
 
         if (elementId == null) {
             throw new NullPointerException("required parameter 'element_id' not specified when uploading an individual TVAnytime element");
@@ -483,11 +481,10 @@ public class YouViewUploadController {
             String elementId,
             boolean immediate,
             ContentHierarchyExpander hierarchyExpander,
-            HttpServletResponse response,
             Content content,
             Payload payload,
             FeedsTelescopeReporter telescope
-    ) throws IOException, IllegalArgumentException {
+    ) throws IllegalArgumentException {
 
         if (!(content instanceof Item)) {
             throw new IllegalArgumentException( "content must be an Item to upload a Version");
@@ -509,11 +506,10 @@ public class YouViewUploadController {
             String elementId,
             boolean immediate,
             ContentHierarchyExpander hierarchyExpander,
-            HttpServletResponse response,
             Content content,
             Payload payload,
             FeedsTelescopeReporter telescope
-    )  throws IOException, IllegalArgumentException {
+    )  throws IllegalArgumentException {
 
         if (!(content instanceof Item)) {
             throw new IllegalArgumentException( "content must be an Item to upload a OnDemand");
@@ -540,7 +536,7 @@ public class YouViewUploadController {
             HttpServletResponse response,
             Content content,
             FeedsTelescopeReporter telescope
-    ) throws IOException, PayloadGenerationException, IllegalArgumentException {
+    ) throws PayloadGenerationException, IllegalArgumentException {
 
         if (!(content instanceof Item)) {
             throw new IllegalArgumentException( "content must be an Item to upload a Broadcast");
@@ -737,11 +733,13 @@ public class YouViewUploadController {
      * @throws IOException
      */
     @RequestMapping(value = "/feeds/youview/{publisher}/delete", method = RequestMethod.POST)
-    public void deleteContent(HttpServletResponse response,
+    public void deleteContent(
+            HttpServletResponse response,
             @PathVariable("publisher") String publisherStr,
-            @RequestParam(value = "uri", required = true) String uri,
-            @RequestParam(value = "element_id", required = true) String elementId,
-            @RequestParam(value = "type", required = true) String typeStr) throws IOException {
+            @RequestParam(value = "uri") String uri,
+            @RequestParam(value = "element_id") String elementId,
+            @RequestParam(value = "type") String typeStr
+    ) throws IOException, PayloadGenerationException {
 
         Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
         if (!publisher.isPresent()) {
@@ -760,11 +758,12 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "required parameter 'type' not specified");
             return;
         }
-        java.util.Optional<Content> content = getContent(uri);
-        if (!content.isPresent()) {
+        java.util.Optional<Content> optionalContent = getContent(uri);
+        if (!optionalContent.isPresent()) {
             sendError(response, SC_BAD_REQUEST, "content does not exist");
             return;
         }
+        Content content = optionalContent.get();
 
         TVAElementType type = parseTypeFrom(typeStr);
         if (type == null) {
@@ -772,10 +771,10 @@ public class YouViewUploadController {
             return;
         }
 
-        // TODO ideally this would go via the TaskCreator, but that would require resolving 
+        // TODO ideally this would go via the TaskCreator, but that would require resolving
         // the hierarchies for each type of element
         Destination destination = new YouViewDestination(
-                content.get().getCanonicalUri(),
+                content.getCanonicalUri(),
                 type,
                 elementId
         );
@@ -783,11 +782,35 @@ public class YouViewUploadController {
                 .withAction(Action.DELETE)
                 .withDestination(destination)
                 .withCreated(clock.now())
-                .withPublisher(content.get().getPublisher())
+                .withPublisher(content.getPublisher())
                 .withStatus(Status.NEW)
                 .withManuallyCreated(true)
                 .build();
         taskStore.save(task);
+
+        if (content instanceof Item) {
+            ContentHierarchyExpander hierarchyExpander = contentHierarchyExpanderFactory.create(
+                    content.getPublisher()
+            );
+
+            Map<String, ItemOnDemandHierarchy> onDemands =
+                    hierarchyExpander.onDemandHierarchiesFor((Item) content);
+
+            for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
+                ItemOnDemandHierarchy onDemandHierarchy = onDemand.getValue();
+                Payload odPayload = payloadCreator.payloadFrom(
+                        onDemand.getKey(),
+                        onDemandHierarchy
+                );
+                Task odTask = taskCreator.taskFor(
+                        onDemand.getKey(),
+                        onDemandHierarchy,
+                        odPayload,
+                        Action.DELETE
+                );
+                taskStore.save(Task.copy(odTask).withManuallyCreated(true).build());
+            }
+        }
 
         //If this amazon, we'll get in the trouble of figuring out what the merged content would be
         //and inform our user on the response.
@@ -796,14 +819,14 @@ public class YouViewUploadController {
                     mergingResolver,
                     Publisher.AMAZON_UNBOX
             );
-            Content merged = merger.equivAndMerge(content.get());
+            Content merged = merger.equivAndMerge(content);
             AmazonContentConsolidator.consolidate(merged); //mutates the item
 
             Set<String> contributingUris = getContributingAsins(merged);
             sendOkResponse(
                     response,
                     new StringBuilder().append("Delete for ")
-                            .append(content.get().getCanonicalUri())
+                            .append(content.getCanonicalUri())
                             .append(" sent successfully.<br>")
                             .append("This amazon content is represented by ")
                             .append(merged.getCanonicalUri())
