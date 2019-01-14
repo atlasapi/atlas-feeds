@@ -153,16 +153,16 @@ public class LakeviewModule {
 		return new MongoFileUploadResultStore(mongo);
 	}
 	
-	@PostConstruct
-	public void scheduleTasks() {
-		if (Boolean.parseBoolean(enabled)) {
-			LakeviewFileUpdater updater = new LakeviewFileUpdater(
-					lakeviewContentFetcher(), lakeviewFeedCompiler(),
-					lakeviewFeedOutputter(), FILENAME_PROVIDER_ID,
-					SCHEMA_VERSION, lakeviewAzureUploader(), new SystemClock(),
-					log);
-			scheduler.schedule(updater.withName("Lakeview Azure updater"),
-					LAKEVIEW_UPLOAD);
-		}
-	}
+//	@PostConstruct
+//	public void scheduleTasks() {
+//		if (Boolean.parseBoolean(enabled)) {
+//			LakeviewFileUpdater updater = new LakeviewFileUpdater(
+//					lakeviewContentFetcher(), lakeviewFeedCompiler(),
+//					lakeviewFeedOutputter(), FILENAME_PROVIDER_ID,
+//					SCHEMA_VERSION, lakeviewAzureUploader(), new SystemClock(),
+//					log);
+//			scheduler.schedule(updater.withName("Lakeview Azure updater"),
+//					LAKEVIEW_UPLOAD);
+//		}
+//	}
 }
