@@ -30,6 +30,7 @@ import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.hierarchy.ItemAndVersion;
 import org.atlasapi.feeds.youview.hierarchy.ItemBroadcastHierarchy;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
+import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
@@ -739,7 +740,7 @@ public class YouViewUploadController {
             @RequestParam(value = "uri") String uri,
             @RequestParam(value = "element_id") String elementId,
             @RequestParam(value = "type") String typeStr
-    ) throws IOException, PayloadGenerationException {
+    ) throws IOException {
 
         Optional<Publisher> publisher = findPublisher(publisherStr.trim().toUpperCase());
         if (!publisher.isPresent()) {
@@ -771,6 +772,19 @@ public class YouViewUploadController {
             return;
         }
 
+        if (content instanceof Item) {
+            OnDemandHierarchyExpander onDemandHierarchyExpander = new OnDemandHierarchyExpander(
+                    IdGeneratorFactory.create(content.getPublisher())
+            );
+            Map<String, ItemOnDemandHierarchy> onDemands =
+                    onDemandHierarchyExpander.expandHierarchy((Item) content);
+
+            for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
+                Task odTask = taskCreator.deleteFor(onDemand.getKey(), onDemand.getValue());
+                taskStore.save(Task.copy(odTask).withManuallyCreated(true).build());
+            }
+        }
+
         // TODO ideally this would go via the TaskCreator, but that would require resolving
         // the hierarchies for each type of element
         Destination destination = new YouViewDestination(
@@ -787,30 +801,6 @@ public class YouViewUploadController {
                 .withManuallyCreated(true)
                 .build();
         taskStore.save(task);
-
-        if (content instanceof Item) {
-            ContentHierarchyExpander hierarchyExpander = contentHierarchyExpanderFactory.create(
-                    content.getPublisher()
-            );
-
-            Map<String, ItemOnDemandHierarchy> onDemands =
-                    hierarchyExpander.onDemandHierarchiesFor((Item) content);
-
-            for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
-                ItemOnDemandHierarchy onDemandHierarchy = onDemand.getValue();
-                Payload odPayload = payloadCreator.payloadFrom(
-                        onDemand.getKey(),
-                        onDemandHierarchy
-                );
-                Task odTask = taskCreator.taskFor(
-                        onDemand.getKey(),
-                        onDemandHierarchy,
-                        odPayload,
-                        Action.DELETE
-                );
-                taskStore.save(Task.copy(odTask).withManuallyCreated(true).build());
-            }
-        }
 
         //If this amazon, we'll get in the trouble of figuring out what the merged content would be
         //and inform our user on the response.
