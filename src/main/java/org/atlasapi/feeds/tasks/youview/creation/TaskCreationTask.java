@@ -389,6 +389,9 @@ public abstract class TaskCreationTask extends ScheduledTask {
             //Nitro only has 1 location.
             Location location = onDemandHierarchy.locations().get(0);
             action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+            if (action.equals(Action.DELETE)) {
+                log.info("Will process DELETE action on location with URI {}", location.getCanonicalUri());
+            }
         }
 
         HashType hashType = action == Action.UPDATE ? HashType.ON_DEMAND : HashType.DELETE;
