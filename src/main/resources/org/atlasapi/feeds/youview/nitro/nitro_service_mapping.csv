@@ -1,4 +1,6 @@
 # SERVICE_ID, SERVICE_LOCATOR, SERVICE_LOCATOR_TYPE, YOUVIEW_SERVICE_ID
+bbc_scotland_hd,dvb://233a..433c,,bbc_scotland_hd_233a_433c
+bbc_scotland,dvb://233a..133c,,bbc_scotland_233a_133c
 bbc_1xtra,dvb://233a..1700,,bbc_1xtra_233a_1700
 bbc_1xtra,dvb://233a..173c,,bbc_1xtra_233a_173c
 bbc_6music,dvb://233a..1680,,bbc_6music_233a_1680
