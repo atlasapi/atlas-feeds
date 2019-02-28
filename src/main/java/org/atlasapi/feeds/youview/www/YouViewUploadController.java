@@ -585,54 +585,68 @@ public class YouViewUploadController {
         if (content instanceof Item) {
             Map<String, ItemAndVersion> versions = hierarchyExpander.versionHierarchiesFor((Item) content);
             for (Entry<String, ItemAndVersion> version : versions.entrySet()) {
-                Payload versionPayload = payloadCreator.payloadFrom(
-                        version.getKey(),
-                        version.getValue()
-                );
-                Task versionTask = taskCreator.taskFor(
-                        version.getKey(),
-                        version.getValue(),
-                        versionPayload,
-                        Action.UPDATE
-                );
-                processTask(versionTask, immediate, telescope);
+                try {
+                    Payload versionPayload = payloadCreator.payloadFrom(
+                            version.getKey(),
+                            version.getValue()
+                    );
+
+                    Task versionTask = taskCreator.taskFor(
+                            version.getKey(),
+                            version.getValue(),
+                            versionPayload,
+                            Action.UPDATE
+                    );
+                    processTask(versionTask, immediate, telescope);
+                } catch (PayloadGenerationException e){
+                    e.printStackTrace();
+                }
             }
             Map<String, ItemBroadcastHierarchy> broadcasts =
                     hierarchyExpander.broadcastHierarchiesFor((Item) content);
             for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcasts.entrySet()) {
-                Optional<Payload> broadcastPayload = payloadCreator.payloadFrom(
-                        broadcast.getKey(),
-                        broadcast.getValue()
-                );
-                if (broadcastPayload.isPresent()) {
-                    Task bcastTask = taskCreator.taskFor(
-                            broadcast.getKey(),
-                            broadcast.getValue(),
-                            broadcastPayload.get(),
-                            Action.UPDATE
-                    );
-                    processTask(bcastTask, immediate, telescope);
+                try {
+                        Optional<Payload> broadcastPayload = payloadCreator.payloadFrom(
+                                broadcast.getKey(),
+                                broadcast.getValue()
+                        );
+
+                    if (broadcastPayload.isPresent()) {
+                        Task bcastTask = taskCreator.taskFor(
+                                broadcast.getKey(),
+                                broadcast.getValue(),
+                                broadcastPayload.get(),
+                                Action.UPDATE
+                        );
+                        processTask(bcastTask, immediate, telescope);
+                    }
+                } catch (PayloadGenerationException e){
+                    e.printStackTrace();
                 }
             }
             Map<String, ItemOnDemandHierarchy> onDemands =
                     hierarchyExpander.onDemandHierarchiesFor((Item) content);
             for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
-                ItemOnDemandHierarchy onDemandHierarchy = onDemand.getValue();
-                //If this has multiple locations, they should all be the same in terms of available.
-                Location location = onDemandHierarchy.locations().get(0);
-                Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+                try {
+                    ItemOnDemandHierarchy onDemandHierarchy = onDemand.getValue();
+                    //If this has multiple locations, they should all be the same in terms of available.
+                    Location location = onDemandHierarchy.locations().get(0);
+                    Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
 
-                Payload odPayload = payloadCreator.payloadFrom(
-                        onDemand.getKey(),
-                        onDemandHierarchy
-                );
-                Task odTask = taskCreator.taskFor(
-                        onDemand.getKey(),
-                        onDemandHierarchy,
-                        odPayload,
-                        action
-                );
-                processTask(odTask, immediate, telescope);
+                    Payload odPayload = payloadCreator.payloadFrom(
+                            onDemand.getKey(),
+                            onDemandHierarchy
+                    );
+                    Task odTask = taskCreator.taskFor(
+                            onDemand.getKey(),
+                            onDemandHierarchy,
+                            odPayload,
+                            action
+                    );
+                    processTask(odTask, immediate, telescope);
+                } catch (PayloadGenerationException e){
+                    e.printStackTrace();
+                }
             }
 
             if (immediate) {
