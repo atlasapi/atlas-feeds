@@ -33,7 +33,7 @@ public class BroadcastHierarchyExpander {
     private final ServiceIdResolver serviceIdResolver;
     private final Clock clock;
 
-    private static final Duration MAXIMUM_BROADCAST_AGE = Duration.standardDays(7);
+    private static final Duration MAXIMUM_BROADCAST_AGE = Duration.standardDays(20);
 
     public BroadcastHierarchyExpander(
             IdGenerator idGenerator,
