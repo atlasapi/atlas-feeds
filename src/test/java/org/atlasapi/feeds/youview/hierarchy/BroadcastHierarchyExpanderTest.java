@@ -29,7 +29,7 @@ import com.metabroadcast.common.time.TimeMachine;
 
 public class BroadcastHierarchyExpanderTest {
 
-    private static int DAYS_TO_MAKE_BROADCAST_OLD = 8;
+    private static int DAYS_TO_MAKE_BROADCAST_OLD = 21;
 
     private Clock clock = new TimeMachine();
     private IdGenerator idGenerator;
