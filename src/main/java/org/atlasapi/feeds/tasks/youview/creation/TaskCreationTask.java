@@ -445,8 +445,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
     public static Task save(
             YouViewPayloadHashStore payloadHashStore,
             TaskStore taskStore,
-            Task task) throws IllegalArgumentException {
-
+            Task task
+    ) throws IllegalArgumentException {
         try {
             YouViewDestination destination = (YouViewDestination) task.destination();
             HashType hashType = matchHashType(destination.elementType());
@@ -465,7 +465,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 //if there was no update hash, it means that the fragment we are trying to delete
                 // was never uploaded, and as such we don't need to delete it.
                 // (this can happen by sending proactive delete requests for equived content).
-                if (writeResult.getN() > 0) {
+                if (writeResult.getN() >= 0) { // temporary hack (=0) to send DELETEs even if the upload hash was not stored in the DB (to be investigated)
                     //otherwise save the delete task, and the delete hash
                     Task savedTask = taskStore.save(task);
                     payloadHashStore.saveHash(HashType.DELETE, destination.elementId(), "");
