@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.atlasapi.feeds.RepIdClientFactory;
 import org.atlasapi.feeds.tasks.Action;
@@ -26,15 +27,20 @@ import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelType;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Quality;
+import org.atlasapi.media.entity.Version;
 
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
+import com.metabroadcast.common.stream.MoreCollectors;
 import com.metabroadcast.representative.client.RepIdClientWithApp;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.mongodb.WriteResult;
 import org.joda.time.DateTime;
@@ -178,6 +184,9 @@ public abstract class TaskCreationTask extends ScheduledTask {
         Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor(item);
         Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor(item);
         Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor(item);
+
+        amazonHackaround(item, action);
+
         if (action.equals(Action.UPDATE)) {
             versionHierarchies = Maps.filterValues(
                     versionHierarchies,
@@ -217,6 +226,53 @@ public abstract class TaskCreationTask extends ScheduledTask {
             );
         }
         return progress;
+    }
+
+    // So lets say that there is an equiv graph of MBIDs a - b.
+    // When "a" was the rep id of the graph, you have uploaded ondemands
+    // a:SD and a:HD. "a", which was the SD version, got unpublished. You are now trying to
+    // delete a:SD, but who is going to delete a:HD? Nobody is going to delete a:HD!
+    // When b:HD is being uploaded it is no longer aware that "a" even existed, so it cannot
+    // delete its predecessors (i.e. a:HD). Similarly at the point that we are deleting a:SD,
+    // we don't know if "a" has been uploaded with other qualities as well.
+    // So, to solve this, we are doing to delete all of them *insert evil emoticon*
+    // This is safe, because if "a" is being unpublished, then all relevant qualities that
+    // "a" used to represent should be unpublished, and it is also safe, because if we
+    // haven't uploaded some of them, the hashstore will prevent deletes from being sent to
+    // YV. The question is how to unpublish all qualities, and this is where this sad
+    // hack comes in.
+    private void amazonHackaround(Item item, Action action) {
+        if (action.equals(Action.DELETE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
+
+            //there should only be one, because when we are deleting this, it is non merged
+            java.util.Optional<Version> versionOpt = item.getVersions()
+                    .stream()
+                    .findFirst();
+
+            if (versionOpt.isPresent()) {
+                Version version = versionOpt.get();
+                item.removeVersion(version);
+
+                //as above, only 1
+                java.util.Optional<Encoding> encodingOpt = version.getManifestedAs()
+                        .stream()
+                        .findFirst();
+                if (encodingOpt.isPresent()) {
+                    Encoding encoding = encodingOpt.get();
+
+                    //try to add all other qualities. The ASINs will be wrong, but for deletes
+                    //it should not matter as they are based on the imi only
+                    for (Quality quality : Quality.values()) {
+                        if (quality != encoding.getQuality()) {
+                            Encoding copy = encoding.copy();
+                            copy.setQuality(quality);
+                            version.addManifestedAs(encoding);
+                        }
+                    }
+                }
+                item.addVersion(version);
+            }
+        }
     }
 
     private UpdateProgress processContent(Content content, Action action) {
@@ -462,10 +518,10 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 //if this is a delete, we need to remove from the db the hash of the upload
                 WriteResult writeResult =
                         payloadHashStore.removeHash(hashType, destination.elementId());
-                //if there was no update hash, it means that the fragment we are trying to delete
+                // if there was no update hash, it means that the fragment we are trying to delete
                 // was never uploaded, and as such we don't need to delete it.
                 // (this can happen by sending proactive delete requests for equived content).
-                if (writeResult.getN() >= 0) { // temporary hack (= 0) to send DELETEs even if the upload hash was not in the DB (to be investigated)
+                if (writeResult.getN() > 0) {
                     //otherwise save the delete task, and the delete hash
                     Task savedTask = taskStore.save(task);
                     payloadHashStore.saveHash(HashType.DELETE, destination.elementId(), "");
