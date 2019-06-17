@@ -263,11 +263,11 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     //try to add all other qualities. The ASINs will be wrong, but for deletes
                     //it should not matter as they are based on the imi only
                     for (Quality quality : Quality.values()) {
-                        Encoding copy = encoding.copy();
-                        copy.setCanonicalUri(quality.toString()); //this is so can add them to the same set.
-                        copy.setQuality(quality);
-                        version.addManifestedAs(encoding);
-
+                        if (quality != encoding.getQuality()) {
+                            Encoding copy = encoding.copy();
+                            copy.setQuality(quality);
+                            version.addManifestedAs(copy);
+                        }
                     }
                 }
                 item.addVersion(version);
