@@ -181,11 +181,11 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
     protected UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
 
+        amazonHackaround(item, action);
+
         Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor(item);
         Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor(item);
         Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor(item);
-
-        amazonHackaround(item, action);
 
         if (action.equals(Action.UPDATE)) {
             versionHierarchies = Maps.filterValues(
