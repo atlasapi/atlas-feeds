@@ -194,30 +194,30 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             Content updatedContent = contentPieces.next();
             if (!updatedContent.isActivelyPublished()) {
                 forDeletion.add(updatedContent);
-//                continue;
+                continue;
             }
 
             //Commented the block underneath to only process the DELETEs
 
-//            Content mergedContent;
-//            try {
-//                mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
-//            } catch (Exception e) {
-//                log.error("Failed during the attempt to equiv, merge or get a repId. "
-//                          + "This item will not be pushed to YV. Content {}. ",
-//                        updatedContent.getCanonicalUri(), e);
-//                continue;
-//            }
-//            try {
-//                AmazonContentConsolidator.consolidate(mergedContent); //mutates the item
-//                forDeletion.addAll(extractForDeletion(mergedContent));
-//            } catch (Exception e) {
-//                log.error("Failed during the attempt to consolidate versions. "
-//                          + "This item will not be pushed to YV. Content {}. ",
-//                        updatedContent.getCanonicalUri(), e);
-//                continue;
-//            }
-//
+            Content mergedContent;
+            try {
+                mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
+            } catch (Exception e) {
+                log.error("Failed during the attempt to equiv, merge or get a repId. "
+                          + "This item will not be pushed to YV. Content {}. ",
+                        updatedContent.getCanonicalUri(), e);
+                continue;
+            }
+            try {
+                AmazonContentConsolidator.consolidate(mergedContent); //mutates the item
+                forDeletion.addAll(extractForDeletion(mergedContent));
+            } catch (Exception e) {
+                log.error("Failed during the attempt to consolidate versions. "
+                          + "This item will not be pushed to YV. Content {}. ",
+                        updatedContent.getCanonicalUri(), e);
+                continue;
+            }
+
 //            uploadProcessor.process(mergedContent);
 //            reportStatus("Uploads: " + uploadProcessor.getResult());
 
