@@ -185,9 +185,10 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     }
 
     //Returns the content that should be deleted.
-    protected Set<Content> uploadFromAmazon(Iterator<? extends Content> contentPieces,
-            YouViewContentProcessor uploadProcessor) {
-
+    protected Set<Content> uploadFromAmazon(
+            Iterator<? extends Content> contentPieces,
+            YouViewContentProcessor uploadProcessor
+    ) {
         Set<Content> forDeletion = Sets.newLinkedHashSet();
         while (contentPieces.hasNext()) {
             Content updatedContent = contentPieces.next();
