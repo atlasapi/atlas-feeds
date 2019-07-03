@@ -521,18 +521,18 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 // if there was no update hash, it means that the fragment we are trying to delete
                 // was never uploaded, and as such we don't need to delete it.
                 // (this can happen by sending proactive delete requests for equived content).
-                if (writeResult.getN() > 0) {
+//                if (writeResult.getN() > 0) {
                     //otherwise save the delete task, and the delete hash
                     Task savedTask = taskStore.save(task);
                     payloadHashStore.saveHash(HashType.DELETE, destination.elementId(), "");
                     return savedTask;
-                }
+//                }
             }
         } catch (Exception e) { //catch w/e could go wrong to save time.
             throw new IllegalArgumentException("Task could not be saved.", e);
         }
 
-        return null;
+//        return null;
     }
 
     private static HashType matchHashType(TVAElementType elementType) {
