@@ -586,7 +586,8 @@ public class YouViewUploadController {
                     hierarchyExpander,
                     actionToProcess.getValue(),
                     actionToProcess.getKey(),
-                    telescope
+                    telescope,
+                    false
             );
         }
 
@@ -599,7 +600,8 @@ public class YouViewUploadController {
                         hierarchyExpander,
                         actionToProcess.getValue(),
                         actionToProcess.getKey(),
-                        telescope
+                        telescope,
+                        true
                 );
             }
         }
@@ -610,16 +612,22 @@ public class YouViewUploadController {
             ContentHierarchyExpander hierarchyExpander,
             Content content,
             Action action,
-            FeedsTelescopeReporter telescope
+            FeedsTelescopeReporter telescope,
+            boolean deleteContent
     ) throws PayloadGenerationException {
-        Payload p = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(content), content);
-        Task task = taskCreator.taskFor(
-                hierarchyExpander.contentCridFor(content),
-                content,
-                p,
-                action
-        );
-        processTask(task, immediate, telescope);
+        if (deleteContent) {
+            Payload p = payloadCreator.payloadFrom(
+                    hierarchyExpander.contentCridFor(content),
+                    content
+            );
+            Task task = taskCreator.taskFor(
+                    hierarchyExpander.contentCridFor(content),
+                    content,
+                    p,
+                    action
+            );
+            processTask(task, immediate, telescope);
+        }
 
         if (content instanceof Item) {
             Map<String, ItemAndVersion> versions = hierarchyExpander.versionHierarchiesFor((Item) content);
@@ -778,13 +786,10 @@ public class YouViewUploadController {
         // initial update which needs to be processed anyway
         actionsToProcess.put(Action.UPDATE, item);
 
-        //create new item with qualities to delete
-        Item itemWithQualitiesToDelete = item.copy();
-
         Set<Quality> qualitiesOnItem = new HashSet<>();
-        for (Version version : itemWithQualitiesToDelete.getVersions()) {
+        for (Version version : item.getVersions()) {
             // delete the current versions that will be uploaded through item
-            itemWithQualitiesToDelete.removeVersion(version);
+            item.removeVersion(version);
             for (Encoding encoding : version.getManifestedAs()) {
                 qualitiesOnItem.add(encoding.getQuality());
             }
@@ -810,11 +815,11 @@ public class YouViewUploadController {
                 Version newVersion = version.copy();
                 newVersion.setManifestedAs(ImmutableSet.of(encoding));
 
-                itemWithQualitiesToDelete.addVersion(newVersion);
+                item.addVersion(newVersion);
             }
         }
 
-        actionsToProcess.put(Action.DELETE, itemWithQualitiesToDelete);
+        actionsToProcess.put(Action.DELETE, item);
     }
 
     private void uploadChannel(
