@@ -76,6 +76,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -786,16 +787,17 @@ public class YouViewUploadController {
         // initial update which needs to be processed anyway
         actionsToProcess.put(Action.UPDATE, item);
 
+        Item itemWithQualitiesToDelete = new Item();
+        itemWithQualitiesToDelete = item;
         Set<Quality> qualitiesOnItem = new HashSet<>();
         for (Version version : item.getVersions()) {
-            // delete the current versions that will be uploaded through item
-            item.removeVersion(version);
+            itemWithQualitiesToDelete.removeVersion(version);
             for (Encoding encoding : version.getManifestedAs()) {
                 qualitiesOnItem.add(encoding.getQuality());
             }
         }
 
-        // get copies of Version and Encoding for itemWithQualitiesToDelete
+        // get copies of Version and Encoding to use as templates
         Version version = item.getVersions()
                 .stream()
                 .findFirst()
@@ -806,20 +808,22 @@ public class YouViewUploadController {
                 .findFirst()
                 .get();
 
-        //create Version and Encoding for each quality not present on the item
+        //create Encoding for each quality not present on the item
+        Set<Encoding> newEncodings = Sets.newHashSet();
         for (Quality quality : Quality.values()) {
             if (!qualitiesOnItem.contains(quality)) {
                 Encoding newEncoding = encoding.copy();
                 newEncoding.setQuality(quality);
-
-                Version newVersion = version.copy();
-                newVersion.setManifestedAs(ImmutableSet.of(encoding));
-
-                item.addVersion(newVersion);
+                newEncodings.add(newEncoding);
             }
         }
 
-        actionsToProcess.put(Action.DELETE, item);
+        if (!newEncodings.isEmpty()) {
+            version.setManifestedAs(newEncodings);
+            item.addVersion(version);
+
+            actionsToProcess.put(Action.DELETE, item);
+        }
     }
 
     private void uploadChannel(
