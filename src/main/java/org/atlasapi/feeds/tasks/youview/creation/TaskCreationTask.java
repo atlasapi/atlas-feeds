@@ -2,6 +2,7 @@ package org.atlasapi.feeds.tasks.youview.creation;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -36,11 +37,10 @@ import org.atlasapi.media.entity.Version;
 
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
-import com.metabroadcast.common.stream.MoreCollectors;
 import com.metabroadcast.representative.client.RepIdClientWithApp;
 
 import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.mongodb.WriteResult;
 import org.joda.time.DateTime;
@@ -180,9 +180,25 @@ public abstract class TaskCreationTask extends ScheduledTask {
     }
 
     protected UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
+        Map<Action, Item> actionsToProcess = amazonHackaround(item, action);
 
-        amazonHackaround(item, action);
+        UpdateProgress progress = UpdateProgress.START;
 
+        for (Entry<Action, Item> actionToProcess : actionsToProcess.entrySet()) {
+            item = actionToProcess.getValue();
+            action = actionToProcess.getKey();
+            processActions(item, updatedSince, action, progress);
+        }
+
+        return progress;
+    }
+
+    private UpdateProgress processActions(
+            Item item,
+            DateTime updatedSince,
+            Action action,
+            UpdateProgress progress
+    ) {
         Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor(item);
         Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor(item);
         Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor(item);
@@ -201,8 +217,6 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     FilterFactory.onDemandFilter(updatedSince)
             );
         }
-
-        UpdateProgress progress = UpdateProgress.START;
 
         for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
             progress = progress.reduce(processVersion(
@@ -241,38 +255,104 @@ public abstract class TaskCreationTask extends ScheduledTask {
     // haven't uploaded some of them, the hashstore will prevent deletes from being sent to
     // YV. The question is how to unpublish all qualities, and this is where this sad
     // hack comes in.
-    private void amazonHackaround(Item item, Action action) {
-        if (action.equals(Action.DELETE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
+    private Map<Action, Item> amazonHackaround(Item item, Action action) {
+        Map<Action, Item> actionsToProcess = Maps.newHashMap();
 
-            //there should only be one, because when we are deleting this, it is non merged
-            java.util.Optional<Version> versionOpt = item.getVersions()
+        if (action.equals(Action.DELETE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
+            triggerDeleteForAllQualitiesUnderRepId(item, actionsToProcess);
+        }
+
+        // from example above, say b is unpublished. b:HD will be deleted, but that doesn't exists.
+        // because the equiv set changed, it'll trigger update for the rest of the IDs from its
+        // previous equiv set. so, when a is updated, we need to delete the qualities that are not
+        // present on the item at that point, in this case a:HD
+        if (action.equals(Action.UPDATE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
+            // initial update which needs to be processed anyway
+            actionsToProcess.put(Action.UPDATE, item);
+
+            triggerDeleteForStaleQualitiesUnderRepId(item, actionsToProcess);
+        }
+
+        return actionsToProcess;
+    }
+
+    private void triggerDeleteForAllQualitiesUnderRepId(
+            Item item,
+            Map<Action, Item> actionsToProcess
+    ) {
+        //there should only be one, because when we are deleting this, it is non merged
+        java.util.Optional<Version> versionOpt = item.getVersions()
+                .stream()
+                .findFirst();
+
+        if (versionOpt.isPresent()) {
+            Version version = versionOpt.get();
+            item.removeVersion(version);
+
+            //as above, only 1
+            java.util.Optional<Encoding> encodingOpt = version.getManifestedAs()
                     .stream()
                     .findFirst();
+            if (encodingOpt.isPresent()) {
+                Encoding encoding = encodingOpt.get();
 
-            if (versionOpt.isPresent()) {
-                Version version = versionOpt.get();
-                item.removeVersion(version);
-
-                //as above, only 1
-                java.util.Optional<Encoding> encodingOpt = version.getManifestedAs()
-                        .stream()
-                        .findFirst();
-                if (encodingOpt.isPresent()) {
-                    Encoding encoding = encodingOpt.get();
-
-                    //try to add all other qualities. The ASINs will be wrong, but for deletes
-                    //it should not matter as they are based on the imi only
-                    for (Quality quality : Quality.values()) {
-                        if (quality != encoding.getQuality()) {
-                            Encoding copy = encoding.copy();
-                            copy.setQuality(quality);
-                            version.addManifestedAs(copy);
-                        }
+                //try to add all other qualities. The ASINs will be wrong, but for deletes
+                //it should not matter as they are based on the imi only
+                for (Quality quality : Quality.values()) {
+                    if (quality != encoding.getQuality()) {
+                        Encoding copy = encoding.copy();
+                        copy.setQuality(quality);
+                        version.addManifestedAs(copy);
                     }
                 }
-                item.addVersion(version);
+            }
+            item.addVersion(version);
+
+            actionsToProcess.put(Action.DELETE, item);
+        }
+    }
+
+    private void triggerDeleteForStaleQualitiesUnderRepId(
+            Item item,
+            Map<Action, Item> actionsToProcess
+    ) {
+        //create new item with qualities to delete
+        Item itemWithQualitiesToDelete = item.copy();
+
+        Set<Quality> qualitiesOnItem = new HashSet<>();
+        for (Version version : item.getVersions()) {
+            // delete the current versions that will be uploaded through item
+            itemWithQualitiesToDelete.removeVersion(version);
+            for (Encoding encoding : version.getManifestedAs()) {
+                qualitiesOnItem.add(encoding.getQuality());
             }
         }
+
+        // get copies of Version and Encoding for itemWithQualitiesToDelete
+        Version version = item.getVersions()
+                .stream()
+                .findFirst()
+                .get();
+        Encoding encoding = version
+                .getManifestedAs()
+                .stream()
+                .findFirst()
+                .get();
+
+        //create Version and Encoding for each quality not present on the item
+        for (Quality quality : Quality.values()) {
+            if (!qualitiesOnItem.contains(quality)) {
+                Encoding newEncoding = encoding.copy();
+                newEncoding.setQuality(quality);
+
+                Version newVersion = version.copy();
+                newVersion.setManifestedAs(ImmutableSet.of(encoding));
+
+                itemWithQualitiesToDelete.addVersion(newVersion);
+            }
+        }
+
+        actionsToProcess.put(Action.DELETE, itemWithQualitiesToDelete);
     }
 
     private UpdateProgress processContent(Content content, Action action) {

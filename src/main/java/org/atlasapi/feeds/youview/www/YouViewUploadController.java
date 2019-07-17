@@ -1,6 +1,7 @@
 package org.atlasapi.feeds.youview.www;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -8,6 +9,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
@@ -39,12 +41,15 @@ import org.atlasapi.feeds.youview.unbox.AmazonContentConsolidator;
 import org.atlasapi.media.channel.Channel;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Content;
+import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Quality;
 import org.atlasapi.media.entity.Schedule;
+import org.atlasapi.media.entity.Version;
 import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.ScheduleResolver;
@@ -70,6 +75,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -573,12 +579,45 @@ public class YouViewUploadController {
             log.info("Force uploading content {}", content.getCanonicalUri());
         }
 
+        Map<Action, Item> actionsToProcess = amazonHackaround((Item) content, Action.UPDATE);
+        for (Entry<Action, Item> actionToProcess : actionsToProcess.entrySet()) {
+            processUploadContent(
+                    immediate,
+                    hierarchyExpander,
+                    actionToProcess.getValue(),
+                    actionToProcess.getKey(),
+                    telescope
+            );
+        }
+
+        Set<Content> forDeletion = extractForDeletion(content);
+        for (Content contentToDelete : forDeletion) {
+            actionsToProcess = amazonHackaround((Item) contentToDelete, Action.DELETE);
+            for (Entry<Action, Item> actionToProcess : actionsToProcess.entrySet()) {
+                processUploadContent(
+                        immediate,
+                        hierarchyExpander,
+                        actionToProcess.getValue(),
+                        actionToProcess.getKey(),
+                        telescope
+                );
+            }
+        }
+    }
+
+    private void processUploadContent(
+            boolean immediate,
+            ContentHierarchyExpander hierarchyExpander,
+            Content content,
+            Action action,
+            FeedsTelescopeReporter telescope
+    ) throws PayloadGenerationException {
         Payload p = payloadCreator.payloadFrom(hierarchyExpander.contentCridFor(content), content);
         Task task = taskCreator.taskFor(
                 hierarchyExpander.contentCridFor(content),
                 content,
                 p,
-                Action.UPDATE
+                action
         );
         processTask(task, immediate, telescope);
 
@@ -595,7 +634,7 @@ public class YouViewUploadController {
                             version.getKey(),
                             version.getValue(),
                             versionPayload,
-                            Action.UPDATE
+                            action
                     );
                     processTask(versionTask, immediate, telescope);
                 } catch (PayloadGenerationException e){
@@ -616,7 +655,7 @@ public class YouViewUploadController {
                                 broadcast.getKey(),
                                 broadcast.getValue(),
                                 broadcastPayload.get(),
-                                Action.UPDATE
+                                action
                         );
                         processTask(bcastTask, immediate, telescope);
                     }
@@ -631,7 +670,7 @@ public class YouViewUploadController {
                     ItemOnDemandHierarchy onDemandHierarchy = onDemand.getValue();
                     //If this has multiple locations, they should all be the same in terms of available.
                     Location location = onDemandHierarchy.locations().get(0);
-                    Action action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
+                    action = location.getAvailable() ? Action.UPDATE : Action.DELETE;
 
                     Payload odPayload = payloadCreator.payloadFrom(
                             onDemand.getKey(),
@@ -659,6 +698,123 @@ public class YouViewUploadController {
                 }
             }
         }
+    }
+
+    private Set<Content> extractForDeletion(Content mergedContent) {
+        //Good, now that we have the merged content, we need to ensure that the pieces this
+        //represents are not uploaded to YV separately. One case that can cause this is that
+        //content was uploaded to YV before it had a chance to equivalate, and thus each
+        //piece was uploaded separately.
+        Set<String> contributingUris = getContributingAsins(mergedContent);
+
+        ResolvedContent resolved = contentResolver.findByUris(contributingUris);
+        if (resolved != null && resolved.getAllResolvedResults() != null) {
+            return resolved.getAllResolvedResults().stream()
+                    .filter(c -> c instanceof Content)
+                    .map(c -> (Content) c)
+                    .collect(Collectors.toSet());
+        }
+        return new HashSet<>();
+    }
+
+    private Map<Action, Item> amazonHackaround(Item item, Action action) {
+        Map<Action, Item> actionsToProcess = Maps.newHashMap();
+
+        // from example above, say b is unpublished. b:HD will be deleted, but that doesn't exists.
+        // because the equiv set changed, it'll trigger update for the rest of the IDs from its
+        // previous equiv set. so, when a is updated, we need to delete the qualities that are not
+        // present on the item at that point
+        if (action.equals(Action.UPDATE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
+            triggerDeleteForStaleQualitiesUnderRepId(item, actionsToProcess);
+        }
+
+        if (action.equals(Action.DELETE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
+            triggerDeleteForAllQualitiesUnderRepId(item, actionsToProcess);
+        }
+
+        return actionsToProcess;
+    }
+
+    private void triggerDeleteForAllQualitiesUnderRepId(
+            Item item,
+            Map<Action, Item> actionsToProcess
+    ) {
+        //there should only be one, because when we are deleting this, it is non merged
+        java.util.Optional<Version> versionOpt = item.getVersions()
+                .stream()
+                .findFirst();
+
+        if (versionOpt.isPresent()) {
+            Version version = versionOpt.get();
+            item.removeVersion(version);
+
+            //as above, only 1
+            java.util.Optional<Encoding> encodingOpt = version.getManifestedAs()
+                    .stream()
+                    .findFirst();
+            if (encodingOpt.isPresent()) {
+                Encoding encoding = encodingOpt.get();
+
+                //try to add all other qualities. The ASINs will be wrong, but for deletes
+                //it should not matter as they are based on the imi only
+                for (Quality quality : Quality.values()) {
+                    if (quality != encoding.getQuality()) {
+                        Encoding copy = encoding.copy();
+                        copy.setQuality(quality);
+                        version.addManifestedAs(copy);
+                    }
+                }
+            }
+            item.addVersion(version);
+
+            actionsToProcess.put(Action.DELETE, item);
+        }
+    }
+
+    private void triggerDeleteForStaleQualitiesUnderRepId(
+            Item item,
+            Map<Action, Item> actionsToProcess
+    ) {
+        // initial update which needs to be processed anyway
+        actionsToProcess.put(Action.UPDATE, item);
+
+        //create new item with qualities to delete
+        Item itemWithQualitiesToDelete = item.copy();
+
+        Set<Quality> qualitiesOnItem = new HashSet<>();
+        for (Version version : itemWithQualitiesToDelete.getVersions()) {
+            // delete the current versions that will be uploaded through item
+            itemWithQualitiesToDelete.removeVersion(version);
+            for (Encoding encoding : version.getManifestedAs()) {
+                qualitiesOnItem.add(encoding.getQuality());
+            }
+        }
+
+        // get copies of Version and Encoding for itemWithQualitiesToDelete
+        Version version = item.getVersions()
+                .stream()
+                .findFirst()
+                .get();
+        Encoding encoding = version
+                .getManifestedAs()
+                .stream()
+                .findFirst()
+                .get();
+
+        //create Version and Encoding for each quality not present on the item
+        for (Quality quality : Quality.values()) {
+            if (!qualitiesOnItem.contains(quality)) {
+                Encoding newEncoding = encoding.copy();
+                newEncoding.setQuality(quality);
+
+                Version newVersion = version.copy();
+                newVersion.setManifestedAs(ImmutableSet.of(encoding));
+
+                itemWithQualitiesToDelete.addVersion(newVersion);
+            }
+        }
+
+        actionsToProcess.put(Action.DELETE, itemWithQualitiesToDelete);
     }
 
     private void uploadChannel(
@@ -713,7 +869,7 @@ public class YouViewUploadController {
         if (task == null) {
             return;
         }
-        
+
         Task savedTask = taskStore.save(Task.copy(task).withManuallyCreated(true).build());
 
         if (immediate) {
