@@ -787,8 +787,7 @@ public class YouViewUploadController {
         // initial update which needs to be processed anyway
         actionsToProcess.put(Action.UPDATE, item);
 
-        Item itemWithQualitiesToDelete = new Item();
-        itemWithQualitiesToDelete = item;
+        Item itemWithQualitiesToDelete = item.copy();
         Set<Quality> qualitiesOnItem = new HashSet<>();
         for (Version version : item.getVersions()) {
             itemWithQualitiesToDelete.removeVersion(version);
@@ -798,11 +797,12 @@ public class YouViewUploadController {
         }
 
         // get copies of Version and Encoding to use as templates
-        Version version = item.getVersions()
+        Version newVersion = item.getVersions()
                 .stream()
                 .findFirst()
-                .get();
-        Encoding encoding = version
+                .get()
+                .copy();
+        Encoding encoding = newVersion
                 .getManifestedAs()
                 .stream()
                 .findFirst()
@@ -819,10 +819,10 @@ public class YouViewUploadController {
         }
 
         if (!newEncodings.isEmpty()) {
-            version.setManifestedAs(newEncodings);
-            item.addVersion(version);
+            newVersion.setManifestedAs(newEncodings);
+            itemWithQualitiesToDelete.addVersion(newVersion);
 
-            actionsToProcess.put(Action.DELETE, item);
+            actionsToProcess.put(Action.DELETE, itemWithQualitiesToDelete);
         }
     }
 
