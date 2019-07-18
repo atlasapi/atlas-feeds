@@ -710,10 +710,6 @@ public class YouViewUploadController {
     }
 
     private Set<Content> extractForDeletion(Content mergedContent) {
-        //Good, now that we have the merged content, we need to ensure that the pieces this
-        //represents are not uploaded to YV separately. One case that can cause this is that
-        //content was uploaded to YV before it had a chance to equivalate, and thus each
-        //piece was uploaded separately.
         Set<String> contributingUris = getContributingAsins(mergedContent);
 
         ResolvedContent resolved = contentResolver.findByUris(contributingUris);
@@ -729,16 +725,14 @@ public class YouViewUploadController {
     private Map<Action, Item> amazonHackaround(Item item, Action action) {
         Map<Action, Item> actionsToProcess = Maps.newHashMap();
 
-        // from example above, say b is unpublished. b:HD will be deleted, but that doesn't exists.
-        // because the equiv set changed, it'll trigger update for the rest of the IDs from its
-        // previous equiv set. so, when a is updated, we need to delete the qualities that are not
-        // present on the item at that point
-        if (action.equals(Action.UPDATE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
-            triggerDeleteForStaleQualitiesUnderRepId(item, actionsToProcess);
-        }
-
         if (action.equals(Action.DELETE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
             triggerDeleteForAllQualitiesUnderRepId(item, actionsToProcess);
+        }
+
+        if (action.equals(Action.UPDATE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
+            actionsToProcess.put(Action.UPDATE, item);
+
+            triggerDeleteForStaleQualitiesUnderRepId(item, actionsToProcess);
         }
 
         return actionsToProcess;
@@ -785,10 +779,8 @@ public class YouViewUploadController {
             Item item,
             Map<Action, Item> actionsToProcess
     ) {
-        // initial update which needs to be processed anyway
-        actionsToProcess.put(Action.UPDATE, item);
-
         Item itemWithQualitiesToDelete = item.copy();
+
         Set<Quality> qualitiesOnItem = new HashSet<>();
         for (Version version : item.getVersions()) {
             itemWithQualitiesToDelete.removeVersion(version);

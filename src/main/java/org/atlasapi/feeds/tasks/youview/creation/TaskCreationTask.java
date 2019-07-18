@@ -295,6 +295,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                     .findFirst();
             if (encodingOpt.isPresent()) {
                 Encoding encoding = encodingOpt.get();
+                encoding.getAvailableAt().forEach(location -> location.setAvailable(false));
 
                 //try to add all other qualities. The ASINs will be wrong, but for deletes
                 //it should not matter as they are based on the imi only
@@ -338,6 +339,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 .stream()
                 .findFirst()
                 .get();
+        encoding.getAvailableAt().forEach(location -> location.setAvailable(false));
 
         //create Version and Encoding for each quality not present on the item
         for (Quality quality : Quality.values()) {
