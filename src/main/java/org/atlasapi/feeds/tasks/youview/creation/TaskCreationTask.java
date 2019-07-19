@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import org.atlasapi.feeds.RepIdClientFactory;
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.Payload;
@@ -139,7 +141,12 @@ public abstract class TaskCreationTask extends ScheduledTask {
             public boolean process(Content content) {
                 try {
                     if (content instanceof Item) {
-                        progress = progress.reduce(processVersions((Item) content, updatedSince, action));
+                        Map<Action, Item> actionsToProcess = getActions((Item)content, action);
+                        for (Entry<Action, Item> actionToProcess : actionsToProcess.entrySet()) {
+                            Item item = actionToProcess.getValue();
+                            Action action = actionToProcess.getKey();
+                            progress = progress.reduce(processVersions(item, updatedSince, action, progress));
+                        }
                     }
                     progress = progress.reduce(processContent(content, action));
                 } catch (Exception e) {
@@ -179,21 +186,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
         };
     }
 
-    protected UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
-        Map<Action, Item> actionsToProcess = amazonHackaround(item, action);
-
-        UpdateProgress progress = UpdateProgress.START;
-
-        for (Entry<Action, Item> actionToProcess : actionsToProcess.entrySet()) {
-            item = actionToProcess.getValue();
-            action = actionToProcess.getKey();
-            processActions(item, updatedSince, action, progress);
-        }
-
-        return progress;
-    }
-
-    private UpdateProgress processActions(
+    private UpdateProgress processVersions(
             Item item,
             DateTime updatedSince,
             Action action,
@@ -242,44 +235,42 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return progress;
     }
 
-    // So lets say that there is an equiv graph of MBIDs a - b.
-    // When "a" was the rep id of the graph, you have uploaded ondemands
-    // a:SD and a:HD. "a", which was the SD version, got unpublished. You are now trying to
-    // delete a:SD, but who is going to delete a:HD? Nobody is going to delete a:HD!
-    // When b:HD is being uploaded it is no longer aware that "a" even existed, so it cannot
-    // delete its predecessors (i.e. a:HD). Similarly at the point that we are deleting a:SD,
-    // we don't know if "a" has been uploaded with other qualities as well.
-    // So, to solve this, we are doing to delete all of them *insert evil emoticon*
-    // This is safe, because if "a" is being unpublished, then all relevant qualities that
-    // "a" used to represent should be unpublished, and it is also safe, because if we
-    // haven't uploaded some of them, the hashstore will prevent deletes from being sent to
-    // YV. The question is how to unpublish all qualities, and this is where this sad
-    // hack comes in.
-    private Map<Action, Item> amazonHackaround(Item item, Action action) {
+    private Map<Action, Item> getActions(Item item, Action action) {
         Map<Action, Item> actionsToProcess = Maps.newHashMap();
 
-        if (action.equals(Action.DELETE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
-            triggerDeleteForAllQualitiesUnderRepId(item, actionsToProcess);
-        }
-
-        // from example above, say b is unpublished. b:HD will be deleted, but that doesn't exists.
-        // because the equiv set changed, it'll trigger update for the rest of the IDs from its
-        // previous equiv set. so, when a is updated, we need to delete the qualities that are not
-        // present on the item at that point, in this case a:HD
-        if (action.equals(Action.UPDATE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
-            // initial update which needs to be processed anyway
-            actionsToProcess.put(Action.UPDATE, item);
-
-            triggerDeleteForStaleQualitiesUnderRepId(item, actionsToProcess);
+        if(Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
+            // So lets say that there is an equiv graph of MBIDs a - b.
+            // When "a" was the rep id of the graph, you have uploaded ondemands
+            // a:SD and a:HD. "a", which was the SD version, got unpublished. You are now trying to
+            // delete a:SD, but who is going to delete a:HD? Nobody is going to delete a:HD!
+            // When b:HD is being uploaded it is no longer aware that "a" even existed, so it cannot
+            // delete its predecessors (i.e. a:HD). Similarly at the point that we are deleting a:SD,
+            // we don't know if "a" has been uploaded with other qualities as well.
+            // So, to solve this, we are doing to delete all of them *insert evil emoticon*
+            // This is safe, because if "a" is being unpublished, then all relevant qualities that
+            // "a" used to represent should be unpublished, and it is also safe, because if we
+            // haven't uploaded some of them, the hashstore will prevent deletes from being sent to
+            // YV. The question is how to unpublish all qualities, and this is where this sad
+            // hack comes in.
+            if (action.equals(Action.DELETE)) {
+                actionsToProcess.put(Action.DELETE, getWithAllQualities(item));
+            }
+            // from example above, say b is unpublished. b:HD will be deleted, but that doesn't exists.
+            // because the equiv set changed, it'll trigger update for the rest of the IDs from its
+            // previous equiv set. so, when a is updated, we need to delete the qualities that are not
+            // present on the item at that point, in this case a:HD
+             else if (action.equals(Action.UPDATE)) {
+                actionsToProcess.put(Action.UPDATE, item);
+                actionsToProcess.put(Action.DELETE, getWithStaleQualities(item));
+            }
+        } else {
+            actionsToProcess.put(action, item);
         }
 
         return actionsToProcess;
     }
 
-    private void triggerDeleteForAllQualitiesUnderRepId(
-            Item item,
-            Map<Action, Item> actionsToProcess
-    ) {
+    private Item getWithAllQualities(@Nonnull Item item) {
         //there should only be one, because when we are deleting this, it is non merged
         java.util.Optional<Version> versionOpt = item.getVersions()
                 .stream()
@@ -309,14 +300,12 @@ public abstract class TaskCreationTask extends ScheduledTask {
             }
             item.addVersion(version);
 
-            actionsToProcess.put(Action.DELETE, item);
+          return item;
         }
+        return item;
     }
 
-    private void triggerDeleteForStaleQualitiesUnderRepId(
-            Item item,
-            Map<Action, Item> actionsToProcess
-    ) {
+    private Item getWithStaleQualities(Item item) {
         //create new item with qualities to delete
         Item itemWithQualitiesToDelete = item.copy();
 
@@ -354,7 +343,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             }
         }
 
-        actionsToProcess.put(Action.DELETE, itemWithQualitiesToDelete);
+        return itemWithQualitiesToDelete;
     }
 
     private UpdateProgress processContent(Content content, Action action) {
