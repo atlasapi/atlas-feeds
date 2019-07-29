@@ -3,6 +3,7 @@ package org.atlasapi.feeds.tasks.youview.creation;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -43,7 +44,9 @@ import com.metabroadcast.representative.client.RepIdClientWithApp;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.mongodb.WriteResult;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -309,35 +312,39 @@ public abstract class TaskCreationTask extends ScheduledTask {
         //create new item with qualities to delete
         Item itemWithQualitiesToDelete = item.copy();
 
-        Set<Quality> qualitiesOnItem = new HashSet<>();
-        for (Version version : item.getVersions()) {
-            // delete the current versions that will be uploaded through item
+        java.util.Optional<Version> versionOpt = item.getVersions()
+                .stream()
+                .findFirst();
+        if (versionOpt.isPresent()) {
+            Version version = versionOpt.get();
+            // delete the current version that will be uploaded through item
             itemWithQualitiesToDelete.removeVersion(version);
-            for (Encoding encoding : version.getManifestedAs()) {
-                qualitiesOnItem.add(encoding.getQuality());
-            }
-        }
 
-        // get copies of Version and Encoding for itemWithQualitiesToDelete
-        Version version = item.getVersions()
-                .stream()
-                .findFirst()
-                .get();
-        Encoding encoding = version
-                .getManifestedAs()
-                .stream()
-                .findFirst()
-                .get();
-        encoding.getAvailableAt().forEach(location -> location.setAvailable(false));
+            java.util.Optional<Encoding> encodingOpt = version.getManifestedAs()
+                    .stream()
+                    .findFirst();
+            if (encodingOpt.isPresent()) {
+                Set<Quality> qualitiesOnItem = new HashSet<>();
 
-        //create Version and Encoding for each quality not present on the item
-        for (Quality quality : Quality.values()) {
-            if (!qualitiesOnItem.contains(quality)) {
-                Encoding newEncoding = encoding.copy();
-                newEncoding.setQuality(quality);
+                for (Encoding encoding : version.getManifestedAs()) {
+                    qualitiesOnItem.add(encoding.getQuality());
+                }
+
+                Encoding encoding = encodingOpt.get();
+                encoding.getAvailableAt().forEach(location -> location.setAvailable(false));
+
+                Set<Encoding> staleEncodings = Sets.newHashSet();
+
+                for (Quality quality : Quality.values()) {
+                    if (!qualitiesOnItem.contains(quality)) {
+                        Encoding staleEncoding = encoding.copy();
+                        staleEncoding.setQuality(quality);
+                        staleEncodings.add(staleEncoding);
+                    }
+                }
 
                 Version newVersion = version.copy();
-                newVersion.setManifestedAs(ImmutableSet.of(encoding));
+                newVersion.setManifestedAs(staleEncodings);
 
                 itemWithQualitiesToDelete.addVersion(newVersion);
             }
