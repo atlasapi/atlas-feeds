@@ -3,7 +3,6 @@ package org.atlasapi.feeds.tasks.youview.creation;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -40,11 +39,11 @@ import org.atlasapi.media.entity.Version;
 
 import com.metabroadcast.common.scheduling.ScheduledTask;
 import com.metabroadcast.common.scheduling.UpdateProgress;
+import com.metabroadcast.common.stream.MoreCollectors;
 import com.metabroadcast.representative.client.RepIdClientWithApp;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.mongodb.WriteResult;
@@ -69,6 +68,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
     private final TaskCreator taskCreator;
     private final PayloadCreator payloadCreator;
     private final RepIdClientWithApp repIdClient;
+    public static final ImmutableSet<Quality[]> ALL_QUALITIES =ImmutableSet.of(Quality.values());
 
     public TaskCreationTask(
             YouViewLastUpdatedStore lastUpdatedStore,
@@ -215,11 +215,13 @@ public abstract class TaskCreationTask extends ScheduledTask {
         }
 
         for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
-            progress = progress.reduce(processVersion(
-                    version.getKey(),
-                    version.getValue(),
-                    action
-            ));
+            if(shouldProcessVersion(item, action, version.getValue().version())) {
+                progress = progress.reduce(processVersion(
+                        version.getKey(),
+                        version.getValue(),
+                        action
+                ));
+            }
         }
         for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcastHierarchies.entrySet()) {
             progress = progress.reduce(processBroadcast(
@@ -236,6 +238,28 @@ public abstract class TaskCreationTask extends ScheduledTask {
             );
         }
         return progress;
+    }
+
+    private boolean shouldProcessVersion(Item item, Action action, Version version) {
+        try{
+            ImmutableSet<Quality> qualities = version
+                    .getManifestedAs()
+                    .stream()
+                    .map(Encoding::getQuality)
+                    .collect(MoreCollectors.toImmutableSet());
+            // The amazon workaround ENG-408 no follows the logic of "if you are updating content
+            // A:SD, then delete A:HD and A:UHD. This however means that A itself will try to be
+            // both updated and deleted. What we are saying here, is that unless you are trying
+            // to remove all 3 ondemands, don't delete A, as you still need it.
+            if (action.equals(Action.DELETE)
+                && Publisher.AMAZON_UNBOX.equals(item.getPublisher())
+                && !qualities.containsAll(ALL_QUALITIES)){
+                return false;
+            }
+        } catch (Exception e){ //brute force protection for NPEs
+            return true;
+        }
+        return true;
     }
 
     private Map<Action, Item> getActions(Item item, Action action) {
@@ -312,7 +336,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
         //create new item with qualities to delete
         Item itemWithQualitiesToDelete = item.copy();
 
-        java.util.Optional<Version> versionOpt = item.getVersions()
+        java.util.Optional<Version> versionOpt = itemWithQualitiesToDelete.getVersions()
                 .stream()
                 .findFirst();
         if (versionOpt.isPresent()) {
