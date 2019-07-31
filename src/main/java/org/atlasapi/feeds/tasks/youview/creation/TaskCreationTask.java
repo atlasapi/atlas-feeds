@@ -2,6 +2,7 @@ package org.atlasapi.feeds.tasks.youview.creation;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,7 +43,9 @@ import com.metabroadcast.common.scheduling.UpdateProgress;
 import com.metabroadcast.common.stream.MoreCollectors;
 import com.metabroadcast.representative.client.RepIdClientWithApp;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -68,8 +71,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
     private final TaskCreator taskCreator;
     private final PayloadCreator payloadCreator;
     private final RepIdClientWithApp repIdClient;
-    public static final ImmutableSet<Quality[]> ALL_QUALITIES =ImmutableSet.of(Quality.values());
-
+    public static final ImmutableSet<Quality> ALL_QUALITIES = ImmutableSet.copyOf(Arrays.asList(Quality.values()));
     public TaskCreationTask(
             YouViewLastUpdatedStore lastUpdatedStore,
             Publisher publisher,
@@ -115,11 +117,11 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return repIdClient;
     }
 
-    protected Optional<DateTime> getLastUpdatedTime() {
+    protected com.google.common.base.Optional<DateTime> getLastUpdatedTime() {
         return lastUpdatedStore.getLastUpdated(publisher);
     }
 
-    protected Optional<DateTime> getLastRepIdChangesChecked() {
+    protected com.google.common.base.Optional<DateTime> getLastRepIdChangesChecked() {
         return lastUpdatedStore.getLastRepIdChangesChecked(publisher);
     }
 
@@ -288,7 +290,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
             // present on the item at that point, in this case a:HD
              else if (action.equals(Action.UPDATE)) {
                 actionsToProcess.put(Action.UPDATE, item);
-                actionsToProcess.put(Action.DELETE, getWithStaleQualities(item));
+                actionsToProcess.put(Action.DELETE, getWithStaleQualities(item.copy()));
             }
         } else {
             actionsToProcess.put(action, item);
@@ -297,6 +299,16 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return actionsToProcess;
     }
 
+    /**
+     * MUTATES THE ITEM
+     *
+     * Takes the item, and adds any missing Qualities to the Version. E.g. if the given item had
+     * SD, the returned item will have SD, HD, FOUR_K.
+     *
+     * The item is expected to only have a single Version (as of the time of writting, either a
+     * single amazon content, or a Consolidated amazon content). The operation is only performed on
+     * the first Version.
+     */
     private Item getWithAllQualities(@Nonnull Item item) {
         //there should only be one, because when we are deleting this, it is non merged
         java.util.Optional<Version> versionOpt = item.getVersions()
@@ -332,49 +344,52 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return item;
     }
 
+    /**
+     * MUTATES THE ITEM
+     *
+     * Gets an item, changed its Version so that it has exactly the opposite Qualities. E.g. if
+     * you given item has HD, the returned item will have SD and FOUR_K instead. It also sets the
+     * location as unavailable.
+     *
+     * The item is expected to only have a single Version (as of the time of writting, either a
+     * single amazon content, or a Consolidated amazon content). The operation is only performed on
+     * the first Version.
+     */
     private Item getWithStaleQualities(Item item) {
-        //create new item with qualities to delete
-        Item itemWithQualitiesToDelete = item.copy();
-
-        java.util.Optional<Version> versionOpt = itemWithQualitiesToDelete.getVersions()
-                .stream()
-                .findFirst();
+        //there should only be one Version
+        java.util.Optional<Version> versionOpt = item.getVersions().stream().findFirst();
         if (versionOpt.isPresent()) {
             Version version = versionOpt.get();
-            // delete the current version that will be uploaded through item
-            itemWithQualitiesToDelete.removeVersion(version);
 
-            java.util.Optional<Encoding> encodingOpt = version.getManifestedAs()
-                    .stream()
-                    .findFirst();
-            if (encodingOpt.isPresent()) {
-                Set<Quality> qualitiesOnItem = new HashSet<>();
+            // remove the version from item.
+            item.removeVersion(version);
 
-                for (Encoding encoding : version.getManifestedAs()) {
-                    qualitiesOnItem.add(encoding.getQuality());
-                }
+            Optional<Encoding> encodingTemplateOpt =
+                    version.getManifestedAs().stream().findFirst();
+            if (encodingTemplateOpt.isPresent()) {
+                Encoding encodingTemplate = encodingTemplateOpt.get();
+                encodingTemplate.getAvailableAt().forEach(location -> location.setAvailable(false));
 
-                Encoding encoding = encodingOpt.get();
-                encoding.getAvailableAt().forEach(location -> location.setAvailable(false));
+                Set<Quality> existingQualities = version.getManifestedAs().stream()
+                        .map(Encoding::getQuality)
+                        .collect(Collectors.toSet());
 
                 Set<Encoding> staleEncodings = Sets.newHashSet();
-
                 for (Quality quality : Quality.values()) {
-                    if (!qualitiesOnItem.contains(quality)) {
-                        Encoding staleEncoding = encoding.copy();
+                    if (!existingQualities.contains(quality)) {
+                        Encoding staleEncoding = encodingTemplate.copy();
                         staleEncoding.setQuality(quality);
                         staleEncodings.add(staleEncoding);
                     }
                 }
 
-                Version newVersion = version.copy();
-                newVersion.setManifestedAs(staleEncodings);
+                version.setManifestedAs(staleEncodings);
 
-                itemWithQualitiesToDelete.addVersion(newVersion);
+                item.addVersion(version);
             }
         }
 
-        return itemWithQualitiesToDelete;
+        return item;
     }
 
     private UpdateProgress processContent(Content content, Action action) {
