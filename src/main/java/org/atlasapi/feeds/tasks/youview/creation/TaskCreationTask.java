@@ -357,7 +357,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
      */
     private Item getWithStaleQualities(Item item) {
         //there should only be one Version
-        java.util.Optional<Version> versionOpt = item.getVersions().stream().findFirst();
+        Optional<Version> versionOpt = item.getVersions().stream().findFirst();
         if (versionOpt.isPresent()) {
             Version version = versionOpt.get();
 
@@ -511,7 +511,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
             //This might not return a payload based a different mechanism. Getting an empty
             //payload here is part of the logic.
-            Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
+            com.google.common.base.Optional<Payload> payload =
+                    payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
             if (!payload.isPresent()) {
                 return UpdateProgress.START;
             }
@@ -628,7 +629,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 //if this an update, we need to remove the delete hash (if any)
                 payloadHashStore.removeHash(HashType.DELETE, destination.elementId());
                 Task savedTask = taskStore.save(task);
-                Optional<String> hash = task.payload().transform(Payload::hash);
+                com.google.common.base.Optional<String> hash = task.payload().transform(Payload::hash);
                 payloadHashStore.saveHash( hashType, destination.elementId(), hash.get() );
                 return savedTask;
             } else {
