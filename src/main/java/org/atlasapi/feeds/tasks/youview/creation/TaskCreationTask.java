@@ -2,9 +2,13 @@ package org.atlasapi.feeds.tasks.youview.creation;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import javax.annotation.Nonnull;
 
 import org.atlasapi.feeds.RepIdClientFactory;
 import org.atlasapi.feeds.tasks.Action;
@@ -39,9 +43,12 @@ import com.metabroadcast.common.scheduling.UpdateProgress;
 import com.metabroadcast.common.stream.MoreCollectors;
 import com.metabroadcast.representative.client.RepIdClientWithApp;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.mongodb.WriteResult;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -64,7 +71,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
     private final TaskCreator taskCreator;
     private final PayloadCreator payloadCreator;
     private final RepIdClientWithApp repIdClient;
-
+    public static final ImmutableSet<Quality> ALL_QUALITIES = ImmutableSet.copyOf(Arrays.asList(Quality.values()));
     public TaskCreationTask(
             YouViewLastUpdatedStore lastUpdatedStore,
             Publisher publisher,
@@ -110,11 +117,11 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return repIdClient;
     }
 
-    protected Optional<DateTime> getLastUpdatedTime() {
+    protected com.google.common.base.Optional<DateTime> getLastUpdatedTime() {
         return lastUpdatedStore.getLastUpdated(publisher);
     }
 
-    protected Optional<DateTime> getLastRepIdChangesChecked() {
+    protected com.google.common.base.Optional<DateTime> getLastRepIdChangesChecked() {
         return lastUpdatedStore.getLastRepIdChangesChecked(publisher);
     }
 
@@ -139,7 +146,12 @@ public abstract class TaskCreationTask extends ScheduledTask {
             public boolean process(Content content) {
                 try {
                     if (content instanceof Item) {
-                        progress = progress.reduce(processVersions((Item) content, updatedSince, action));
+                        Map<Action, Item> actionsToProcess = getActions((Item)content, action);
+                        for (Entry<Action, Item> actionToProcess : actionsToProcess.entrySet()) {
+                            Item item = actionToProcess.getValue();
+                            Action action = actionToProcess.getKey();
+                            progress = progress.reduce(processVersions(item, updatedSince, action, progress));
+                        }
                     }
                     progress = progress.reduce(processContent(content, action));
                 } catch (Exception e) {
@@ -179,10 +191,12 @@ public abstract class TaskCreationTask extends ScheduledTask {
         };
     }
 
-    protected UpdateProgress processVersions(Item item, DateTime updatedSince, Action action) {
-
-        amazonHackaround(item, action);
-
+    private UpdateProgress processVersions(
+            Item item,
+            DateTime updatedSince,
+            Action action,
+            UpdateProgress progress
+    ) {
         Map<String, ItemAndVersion> versionHierarchies = hierarchyExpander.versionHierarchiesFor(item);
         Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor(item);
         Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor(item);
@@ -202,14 +216,14 @@ public abstract class TaskCreationTask extends ScheduledTask {
             );
         }
 
-        UpdateProgress progress = UpdateProgress.START;
-
         for (Entry<String, ItemAndVersion> version : versionHierarchies.entrySet()) {
-            progress = progress.reduce(processVersion(
-                    version.getKey(),
-                    version.getValue(),
-                    action
-            ));
+            if(shouldProcessVersion(item, action, version.getValue().version())) {
+                progress = progress.reduce(processVersion(
+                        version.getKey(),
+                        version.getValue(),
+                        action
+                ));
+            }
         }
         for (Entry<String, ItemBroadcastHierarchy> broadcast : broadcastHierarchies.entrySet()) {
             progress = progress.reduce(processBroadcast(
@@ -228,51 +242,154 @@ public abstract class TaskCreationTask extends ScheduledTask {
         return progress;
     }
 
-    // So lets say that there is an equiv graph of MBIDs a - b.
-    // When "a" was the rep id of the graph, you have uploaded ondemands
-    // a:SD and a:HD. "a", which was the SD version, got unpublished. You are now trying to
-    // delete a:SD, but who is going to delete a:HD? Nobody is going to delete a:HD!
-    // When b:HD is being uploaded it is no longer aware that "a" even existed, so it cannot
-    // delete its predecessors (i.e. a:HD). Similarly at the point that we are deleting a:SD,
-    // we don't know if "a" has been uploaded with other qualities as well.
-    // So, to solve this, we are doing to delete all of them *insert evil emoticon*
-    // This is safe, because if "a" is being unpublished, then all relevant qualities that
-    // "a" used to represent should be unpublished, and it is also safe, because if we
-    // haven't uploaded some of them, the hashstore will prevent deletes from being sent to
-    // YV. The question is how to unpublish all qualities, and this is where this sad
-    // hack comes in.
-    private void amazonHackaround(Item item, Action action) {
-        if (action.equals(Action.DELETE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
+    private boolean shouldProcessVersion(Item item, Action action, Version version) {
+        try{
+            ImmutableSet<Quality> qualities = version
+                    .getManifestedAs()
+                    .stream()
+                    .map(Encoding::getQuality)
+                    .collect(MoreCollectors.toImmutableSet());
+            // The amazon workaround ENG-408 no follows the logic of "if you are updating content
+            // A:SD, then delete A:HD and A:UHD. This however means that A itself will try to be
+            // both updated and deleted. What we are saying here, is that unless you are trying
+            // to remove all 3 ondemands, don't delete A, as you still need it.
+            if (action.equals(Action.DELETE)
+                && Publisher.AMAZON_UNBOX.equals(item.getPublisher())
+                && !qualities.containsAll(ALL_QUALITIES)){
+                return false;
+            }
+        } catch (Exception e){ //brute force protection for NPEs
+            return true;
+        }
+        return true;
+    }
 
-            //there should only be one, because when we are deleting this, it is non merged
-            java.util.Optional<Version> versionOpt = item.getVersions()
+    private Map<Action, Item> getActions(Item item, Action action) {
+        Map<Action, Item> actionsToProcess = Maps.newHashMap();
+
+        if(Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
+            // So lets say that there is an equiv graph of MBIDs a - b.
+            // When "a" was the rep id of the graph, you have uploaded ondemands
+            // a:SD and a:HD. "a", which was the SD version, got unpublished. You are now trying to
+            // delete a:SD, but who is going to delete a:HD? Nobody is going to delete a:HD!
+            // When b:HD is being uploaded it is no longer aware that "a" even existed, so it cannot
+            // delete its predecessors (i.e. a:HD). Similarly at the point that we are deleting a:SD,
+            // we don't know if "a" has been uploaded with other qualities as well.
+            // So, to solve this, we are doing to delete all of them *insert evil emoticon*
+            // This is safe, because if "a" is being unpublished, then all relevant qualities that
+            // "a" used to represent should be unpublished, and it is also safe, because if we
+            // haven't uploaded some of them, the hashstore will prevent deletes from being sent to
+            // YV. The question is how to unpublish all qualities, and this is where this sad
+            // hack comes in.
+            if (action.equals(Action.DELETE)) {
+                actionsToProcess.put(Action.DELETE, getWithAllQualities(item));
+            }
+            // from example above, say b is unpublished. b:HD will be deleted, but that doesn't exists.
+            // because the equiv set changed, it'll trigger update for the rest of the IDs from its
+            // previous equiv set. so, when a is updated, we need to delete the qualities that are not
+            // present on the item at that point, in this case a:HD
+             else if (action.equals(Action.UPDATE)) {
+                actionsToProcess.put(Action.UPDATE, item);
+                actionsToProcess.put(Action.DELETE, getWithStaleQualities(item.copy()));
+            }
+        } else {
+            actionsToProcess.put(action, item);
+        }
+
+        return actionsToProcess;
+    }
+
+    /**
+     * MUTATES THE ITEM
+     *
+     * Takes the item, and adds any missing Qualities to the Version. E.g. if the given item had
+     * SD, the returned item will have SD, HD, FOUR_K.
+     *
+     * The item is expected to only have a single Version (as of the time of writting, either a
+     * single amazon content, or a Consolidated amazon content). The operation is only performed on
+     * the first Version.
+     */
+    private Item getWithAllQualities(@Nonnull Item item) {
+        //there should only be one, because when we are deleting this, it is non merged
+        java.util.Optional<Version> versionOpt = item.getVersions()
+                .stream()
+                .findFirst();
+
+        if (versionOpt.isPresent()) {
+            Version version = versionOpt.get();
+            item.removeVersion(version);
+
+            //as above, only 1
+            java.util.Optional<Encoding> encodingOpt = version.getManifestedAs()
                     .stream()
                     .findFirst();
+            if (encodingOpt.isPresent()) {
+                Encoding encoding = encodingOpt.get();
+                encoding.getAvailableAt().forEach(location -> location.setAvailable(false));
 
-            if (versionOpt.isPresent()) {
-                Version version = versionOpt.get();
-                item.removeVersion(version);
-
-                //as above, only 1
-                java.util.Optional<Encoding> encodingOpt = version.getManifestedAs()
-                        .stream()
-                        .findFirst();
-                if (encodingOpt.isPresent()) {
-                    Encoding encoding = encodingOpt.get();
-
-                    //try to add all other qualities. The ASINs will be wrong, but for deletes
-                    //it should not matter as they are based on the imi only
-                    for (Quality quality : Quality.values()) {
-                        if (quality != encoding.getQuality()) {
-                            Encoding copy = encoding.copy();
-                            copy.setQuality(quality);
-                            version.addManifestedAs(copy);
-                        }
+                //try to add all other qualities. The ASINs will be wrong, but for deletes
+                //it should not matter as they are based on the imi only
+                for (Quality quality : Quality.values()) {
+                    if (quality != encoding.getQuality()) {
+                        Encoding copy = encoding.copy();
+                        copy.setQuality(quality);
+                        version.addManifestedAs(copy);
                     }
                 }
+            }
+            item.addVersion(version);
+
+          return item;
+        }
+        return item;
+    }
+
+    /**
+     * MUTATES THE ITEM
+     *
+     * Gets an item, changed its Version so that it has exactly the opposite Qualities. E.g. if
+     * you given item has HD, the returned item will have SD and FOUR_K instead. It also sets the
+     * location as unavailable.
+     *
+     * The item is expected to only have a single Version (as of the time of writting, either a
+     * single amazon content, or a Consolidated amazon content). The operation is only performed on
+     * the first Version.
+     */
+    private Item getWithStaleQualities(Item item) {
+        //there should only be one Version
+        Optional<Version> versionOpt = item.getVersions().stream().findFirst();
+        if (versionOpt.isPresent()) {
+            Version version = versionOpt.get();
+
+            // remove the version from item.
+            item.removeVersion(version);
+
+            Optional<Encoding> encodingTemplateOpt =
+                    version.getManifestedAs().stream().findFirst();
+            if (encodingTemplateOpt.isPresent()) {
+                Encoding encodingTemplate = encodingTemplateOpt.get();
+                encodingTemplate.getAvailableAt().forEach(location -> location.setAvailable(false));
+
+                Set<Quality> existingQualities = version.getManifestedAs().stream()
+                        .map(Encoding::getQuality)
+                        .collect(Collectors.toSet());
+
+                Set<Encoding> staleEncodings = Sets.newHashSet();
+                for (Quality quality : Quality.values()) {
+                    if (!existingQualities.contains(quality)) {
+                        Encoding staleEncoding = encodingTemplate.copy();
+                        staleEncoding.setQuality(quality);
+                        staleEncodings.add(staleEncoding);
+                    }
+                }
+
+                version.setManifestedAs(staleEncodings);
+
                 item.addVersion(version);
             }
         }
+
+        return item;
     }
 
     private UpdateProgress processContent(Content content, Action action) {
@@ -394,7 +511,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
 
             //This might not return a payload based a different mechanism. Getting an empty
             //payload here is part of the logic.
-            Optional<Payload> payload = payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
+            com.google.common.base.Optional<Payload> payload =
+                    payloadCreator.payloadFrom(broadcastImi, broadcastHierarchy);
             if (!payload.isPresent()) {
                 return UpdateProgress.START;
             }
@@ -511,7 +629,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 //if this an update, we need to remove the delete hash (if any)
                 payloadHashStore.removeHash(HashType.DELETE, destination.elementId());
                 Task savedTask = taskStore.save(task);
-                Optional<String> hash = task.payload().transform(Payload::hash);
+                com.google.common.base.Optional<String> hash = task.payload().transform(Payload::hash);
                 payloadHashStore.saveHash( hashType, destination.elementId(), hash.get() );
                 return savedTask;
             } else {
