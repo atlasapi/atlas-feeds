@@ -7,6 +7,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,6 +34,7 @@ import org.atlasapi.media.entity.Version;
 import org.joda.time.Duration;
 import org.junit.Test;
 
+import org.mortbay.util.UrlEncoded;
 import tva.metadata._2010.BaseMemberOfType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ControlledTermType;
@@ -337,12 +340,10 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
     }
 
     @Test
-    public void testSeriesGroupInformationGeneration() {
-        Episode episode = createEpisode();
-        episode.setId(1L);
-        episode.setImage("episode image");
+    public void testSeriesGroupInformationGeneration() throws UnsupportedEncodingException {
+        Series series = createSeries();
 
-        GroupInformationType groupInfo = generator.generate(createSeries(), Optional.of(createBrand()), episode);
+        GroupInformationType groupInfo = generator.generate(series, Optional.of(createBrand()), null);
 
         assertEquals("crid://stage-metabroadcast.com/amazon.com:content:qq", groupInfo.getGroupId());
         assertTrue(groupInfo.isOrdered());
@@ -368,8 +369,48 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
 
         assertEquals(
             "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur-fixed-dimensions&source="
-            + "episode+image",
+            + URLEncoder.encode("http://www.lovefilm.jpg", "UTF-8"),
             relatedMaterial.getMediaLocator().getMediaUri()
+        );
+    }
+
+    @Test
+    public void testSeriesGroupInformationGenerationFromEpisode() {
+        Episode episode = createEpisode();
+        episode.setId(1L);
+        episode.setImage("episode image");
+
+        Series series = createSeries();
+        series.setImage(null);
+
+        GroupInformationType groupInfo = generator.generate(series, Optional.of(createBrand()), episode);
+
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:qq", groupInfo.getGroupId());
+        assertTrue(groupInfo.isOrdered());
+
+        BaseMemberOfType memberOf = Iterables.getOnlyElement(groupInfo.getMemberOf());
+        assertEquals("crid://stage-metabroadcast.com/amazon.com:content:wtf", memberOf.getCrid());
+        assertEquals(Long.valueOf(2), memberOf.getIndex());
+
+        ProgramGroupTypeType groupType = (ProgramGroupTypeType) groupInfo.getGroupType();
+        assertEquals("series", groupType.getValue());
+
+        BasicContentDescriptionType desc = groupInfo.getBasicDescription();
+
+        TitleType title = Iterables.getOnlyElement(desc.getTitle());
+        assertEquals("Season 2", title.getValue()); //Synthesized series title
+        assertEquals("main", Iterables.getOnlyElement(title.getType()));
+
+        ExtendedLanguageType language = Iterables.getOnlyElement(desc.getLanguage());
+        assertEquals("original", language.getType());
+        assertEquals("en", language.getValue());
+
+        ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
+
+        assertEquals(
+                "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur-fixed-dimensions&source="
+                        + "episode+image",
+                relatedMaterial.getMediaLocator().getMediaUri()
         );
     }
 
