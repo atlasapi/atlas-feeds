@@ -40,6 +40,11 @@ public class FullHierarchyResolvingContentResolver implements YouViewContentReso
     }
 
     @Override
+    public Iterator<Content> updatedBetween(DateTime from, DateTime to) {
+        return resolveHierarchyFor(delegate.updatedBetween(from, to));
+    }
+
+    @Override
     public ResolvedContent findByUris(Iterable<String> uris) {
         return delegate.findByUris(uris);
     }

@@ -67,6 +67,14 @@ public class UpdatedContentResolver implements YouViewContentResolver {
     }
 
     @Override
+    public Iterator<Content> updatedBetween(DateTime from, DateTime to) {
+        return Iterators.filter(
+                contentFinder.updatedBetween(publisher, from, to),
+                IS_VIDEO_CONTENT
+        );
+    }
+
+    @Override
     public ResolvedContent findByUris(Iterable<String> uris){
         return contentResolver.findByUris(uris);
     }

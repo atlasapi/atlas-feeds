@@ -12,5 +12,7 @@ public interface YouViewContentResolver {
 
     Iterator<Content> updatedSince(DateTime dateTime);
 
+    Iterator<Content> updatedBetween(DateTime from, DateTime to);
+
     ResolvedContent findByUris(Iterable<String> uris);
 }

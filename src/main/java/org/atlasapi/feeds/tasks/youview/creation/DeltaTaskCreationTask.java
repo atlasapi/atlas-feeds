@@ -1,15 +1,16 @@
 package org.atlasapi.feeds.tasks.youview.creation;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Ordering;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
 import org.atlasapi.feeds.tasks.Action;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.processing.DeleteTask;
 import org.atlasapi.feeds.tasks.youview.processing.UpdateTask;
-import org.atlasapi.feeds.youview.unbox.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.YouviewContentMerger;
 import org.atlasapi.feeds.youview.hierarchy.ContentHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -17,6 +18,7 @@ import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.persistence.YouViewLastUpdatedStore;
 import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.resolution.YouViewContentResolver;
+import org.atlasapi.feeds.youview.unbox.AmazonContentConsolidator;
 import org.atlasapi.feeds.youview.unbox.AmazonIdGenerator;
 import org.atlasapi.media.channel.ChannelResolver;
 import org.atlasapi.media.entity.Alias;
@@ -31,22 +33,19 @@ import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.persistence.content.ResolvedContent;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
-import com.google.common.collect.Sets;
 import org.atlasapi.persistence.lookup.entry.LookupEntry;
 import org.atlasapi.persistence.lookup.entry.LookupEntryStore;
+
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Ordering;
+import com.google.common.collect.Sets;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import com.metabroadcast.common.scheduling.ScheduledTask;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -118,14 +117,28 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                                             + "running the delta upload.");
         }
         
-        Optional<DateTime> startOfTask = Optional.of(new DateTime());
-        log.info("Started a delta YV task creation process for {} from {}", getPublisher(), lastUpdated);
+        java.util.Optional<DateTime> startOfTask = java.util.Optional.of(new DateTime());
 
-        Iterator<Content> updatedContent = contentResolver.updatedSince(
-                lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD)
-        );
+        Iterator<Content> updatedContent;
+        DateTime from;
+        DateTime to;
+
         if (getPublisher().equals(Publisher.AMAZON_UNBOX)) {
+            from = lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD);
+            to = startOfTask.get().isBefore(from.plusMonths(3))
+                    ? startOfTask.get()
+                    : from.plusMonths(3);
+            updatedContent = contentResolver.updatedBetween(from, to);
 //            updatedContent = appendEquivalenceChanges(lastUpdated, updatedContent);
+
+            log.info("Started a delta YV task creation process for {} from {} to {}",
+                    getPublisher(), from, to);
+        } else {
+            from = lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD);
+            to = startOfTask.get();
+            updatedContent = contentResolver.updatedSince(from);
+            log.info("Started a delta YV task creation process for {} from {}",
+                    getPublisher(), lastUpdated);
         }
 
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
@@ -148,7 +161,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         }
 
         log.info("Done creating {} tasks for YV up to {}.", getPublisher(), startOfTask.get());
-        setLastUpdatedTime(startOfTask.get());
+        setLastUpdatedTime(to);
 
         log.info("Started uploading YV tasks from {}.", getPublisher());
         reportStatus("Uploading tasks to YouView");
