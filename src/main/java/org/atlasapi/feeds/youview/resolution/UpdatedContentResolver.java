@@ -63,15 +63,12 @@ public class UpdatedContentResolver implements YouViewContentResolver {
 
     @Override
     public Iterator<Content> updatedSince(DateTime dateTime) {
-        return fetchContentUpdatedSinceDate(dateTime);
+        return filterContent(contentFinder.updatedSince(publisher, dateTime));
     }
 
     @Override
     public Iterator<Content> updatedBetween(DateTime from, DateTime to) {
-        return Iterators.filter(
-                contentFinder.updatedBetween(publisher, from, to),
-                IS_VIDEO_CONTENT
-        );
+        return filterContent(contentFinder.updatedBetween(publisher, from, to));
     }
 
     @Override
@@ -79,16 +76,15 @@ public class UpdatedContentResolver implements YouViewContentResolver {
         return contentResolver.findByUris(uris);
     }
 
-    private Iterator<Content> fetchContentUpdatedSinceDate(DateTime since) {
-        //bbc specific hack. I don't know whence this requirement stems.
+    private Iterator<Content> filterContent(Iterator<Content> contentIterator) {
         if (Publisher.BBC == publisher) {
             return Iterators.filter(
-                    contentFinder.updatedSince(publisher, since),
+                    contentIterator,
                     Predicates.and(IS_VIDEO_CONTENT, HAS_MASTER_BRAND_MAPPING)
             );
         } else {
             return Iterators.filter(
-                    contentFinder.updatedSince(publisher, since),
+                    contentIterator,
                     IS_VIDEO_CONTENT
             );
         }
