@@ -1,12 +1,5 @@
 package org.atlasapi.feeds.youview.unbox;
 
-import static org.atlasapi.feeds.youview.unbox.AmazonGroupInformationGenerator.GROUP_INFO_SERVICE_ID;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Collections;
@@ -24,17 +17,23 @@ import org.atlasapi.media.entity.CrewMember;
 import org.atlasapi.media.entity.Episode;
 import org.atlasapi.media.entity.Film;
 import org.atlasapi.media.entity.Image;
-import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.ParentRef;
 import org.atlasapi.media.entity.Publisher;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
 import org.atlasapi.media.entity.Version;
+
+import com.metabroadcast.common.intl.Countries;
+
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import org.joda.time.Duration;
 import org.junit.Test;
-
-import org.mortbay.util.UrlEncoded;
 import tva.metadata._2010.BaseMemberOfType;
 import tva.metadata._2010.BasicContentDescriptionType;
 import tva.metadata._2010.ControlledTermType;
@@ -52,13 +51,12 @@ import tva.mpeg7._2008.NameComponentType;
 import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.metabroadcast.common.intl.Countries;
+import static org.atlasapi.feeds.youview.unbox.AmazonGroupInformationGenerator.GROUP_INFO_SERVICE_ID;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithConfiguration {
 
@@ -368,9 +366,9 @@ public class AmazonGroupInformationGeneratorTest extends org.atlasapi.TestsWithC
         ExtendedRelatedMaterialType relatedMaterial = (ExtendedRelatedMaterialType) Iterables.getOnlyElement(desc.getRelatedMaterial());
 
         assertEquals(
-            "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur-fixed-dimensions&source="
-            + URLEncoder.encode("http://www.lovefilm.jpg", "UTF-8"),
-            relatedMaterial.getMediaLocator().getMediaUri()
+                "https://users-images-atlas.metabroadcast.com/?profile=sixteen-nine-blur-fixed-dimensions&source="
+                        + URLEncoder.encode("http://www.lovefilm.jpg", "UTF-8"),
+                relatedMaterial.getMediaLocator().getMediaUri()
         );
     }
 
