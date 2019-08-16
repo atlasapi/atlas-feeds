@@ -271,9 +271,11 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         if (content instanceof Series) {
             // If available, try to generate series fragments using their own information.
             // If not, use one of the series's children.
-            relatedMaterial = !Strings.isNullOrEmpty(content.getImage()) ?
-                              generateRelatedMaterial(content) :
-                              generateRelatedMaterial(item);
+            relatedMaterial = generateRelatedMaterial(content);
+            if (!relatedMaterial.isPresent()) {
+                relatedMaterial = generateRelatedMaterial(item);
+            }
+
         } else if (content instanceof Brand) {
             // Since the Amazon content catalog doesn't contain any brand level information,
             // generate brand fragments based on one of the brand's children.
