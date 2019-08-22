@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -590,7 +591,7 @@ public class YouViewUploadController {
         processTask(task, immediate, telescope);
 
         if (content instanceof Item) {
-            Map<Action, Item> actionsToProcess = amazonHackaround((Item) content, Action.UPDATE);
+            Map<Action, Item> actionsToProcess = getActionsToProcess((Item) content, Action.UPDATE);
             for (Entry<Action, Item> actionToProcess : actionsToProcess.entrySet()) {
                 processUploadContent(
                         immediate,
@@ -602,18 +603,20 @@ public class YouViewUploadController {
                 );
             }
 
-            Set<Content> forDeletion = extractForDeletion(content);
-            for (Content contentToDelete : forDeletion) {
-                actionsToProcess = amazonHackaround((Item) contentToDelete, Action.DELETE);
-                for (Entry<Action, Item> actionToProcess : actionsToProcess.entrySet()) {
-                    processUploadContent(
-                            immediate,
-                            hierarchyExpander,
-                            actionToProcess.getValue(),
-                            actionToProcess.getKey(),
-                            telescope,
-                            true
-                    );
+            if(Publisher.AMAZON_UNBOX.equals(content.getPublisher())) {
+                Set<Content> forDeletion = extractForDeletion(content);
+                for (Content contentToDelete : forDeletion) {
+                    actionsToProcess = getActionsToProcess((Item) contentToDelete, Action.DELETE);
+                    for (Entry<Action, Item> actionToProcess : actionsToProcess.entrySet()) {
+                        processUploadContent(
+                                immediate,
+                                hierarchyExpander,
+                                actionToProcess.getValue(),
+                                actionToProcess.getKey(),
+                                telescope,
+                                true
+                        );
+                    }
                 }
             }
         }
@@ -731,26 +734,25 @@ public class YouViewUploadController {
         return new HashSet<>();
     }
 
-    private Map<Action, Item> amazonHackaround(Item item, Action action) {
+    private Map<Action, Item> getActionsToProcess(Item item, Action action) {
         Map<Action, Item> actionsToProcess = Maps.newHashMap();
 
-        if (action.equals(Action.DELETE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
-            triggerDeleteForAllQualitiesUnderRepId(item, actionsToProcess);
-        }
-
-        if (action.equals(Action.UPDATE) && Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
-            actionsToProcess.put(Action.UPDATE, item);
-
-            triggerDeleteForStaleQualitiesUnderRepId(item, actionsToProcess);
+        if(Publisher.AMAZON_UNBOX.equals(item.getPublisher())) {
+            if (action.equals(Action.DELETE)) {
+                actionsToProcess.put(Action.DELETE, getWithAllQualities(item));
+            }
+            else if (action.equals(Action.UPDATE)) {
+                actionsToProcess.put(Action.UPDATE, item);
+                actionsToProcess.put(Action.DELETE, getWithStaleQualities(item.copy()));
+            }
+        } else {
+            actionsToProcess.put(action, item);
         }
 
         return actionsToProcess;
     }
 
-    private void triggerDeleteForAllQualitiesUnderRepId(
-            Item item,
-            Map<Action, Item> actionsToProcess
-    ) {
+    private Item getWithAllQualities(@Nonnull Item item) {
         //there should only be one, because when we are deleting this, it is non merged
         java.util.Optional<Version> versionOpt = item.getVersions()
                 .stream()
@@ -780,53 +782,46 @@ public class YouViewUploadController {
             }
             item.addVersion(version);
 
-            actionsToProcess.put(Action.DELETE, item);
+            return item;
         }
+        return item;
     }
 
-    private void triggerDeleteForStaleQualitiesUnderRepId(
-            Item item,
-            Map<Action, Item> actionsToProcess
-    ) {
-        Item itemWithQualitiesToDelete = item.copy();
+    private Item getWithStaleQualities(Item item) {
+        //there should only be one Version
+        java.util.Optional<Version> versionOpt = item.getVersions().stream().findFirst();
+        if (versionOpt.isPresent()) {
+            Version version = versionOpt.get();
 
-        Set<Quality> qualitiesOnItem = new HashSet<>();
-        for (Version version : item.getVersions()) {
-            itemWithQualitiesToDelete.removeVersion(version);
-            for (Encoding encoding : version.getManifestedAs()) {
-                qualitiesOnItem.add(encoding.getQuality());
+            // remove the version from item.
+            item.removeVersion(version);
+
+            java.util.Optional<Encoding> encodingTemplateOpt =
+                    version.getManifestedAs().stream().findFirst();
+            if (encodingTemplateOpt.isPresent()) {
+                Encoding encodingTemplate = encodingTemplateOpt.get();
+                encodingTemplate.getAvailableAt().forEach(location -> location.setAvailable(false));
+
+                Set<Quality> existingQualities = version.getManifestedAs().stream()
+                        .map(Encoding::getQuality)
+                        .collect(Collectors.toSet());
+
+                Set<Encoding> staleEncodings = Sets.newHashSet();
+                for (Quality quality : Quality.values()) {
+                    if (!existingQualities.contains(quality)) {
+                        Encoding staleEncoding = encodingTemplate.copy();
+                        staleEncoding.setQuality(quality);
+                        staleEncodings.add(staleEncoding);
+                    }
+                }
+
+                version.setManifestedAs(staleEncodings);
+
+                item.addVersion(version);
             }
         }
 
-        // get copies of Version and Encoding to use as templates
-        Version newVersion = item.getVersions()
-                .stream()
-                .findFirst()
-                .get()
-                .copy();
-        Encoding encoding = newVersion
-                .getManifestedAs()
-                .stream()
-                .findFirst()
-                .get();
-        encoding.getAvailableAt().forEach(location -> location.setAvailable(false));
-
-        //create Encoding for each quality not present on the item
-        Set<Encoding> newEncodings = Sets.newHashSet();
-        for (Quality quality : Quality.values()) {
-            if (!qualitiesOnItem.contains(quality)) {
-                Encoding newEncoding = encoding.copy();
-                newEncoding.setQuality(quality);
-                newEncodings.add(newEncoding);
-            }
-        }
-
-        if (!newEncodings.isEmpty()) {
-            newVersion.setManifestedAs(newEncodings);
-            itemWithQualitiesToDelete.addVersion(newVersion);
-
-            actionsToProcess.put(Action.DELETE, itemWithQualitiesToDelete);
-        }
+        return item;
     }
 
     private void uploadChannel(
