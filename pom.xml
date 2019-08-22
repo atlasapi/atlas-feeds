@@ -337,7 +337,7 @@
     </repositories>
 
     <properties>
-        <atlas.version>{project.version}</atlas.version>
+        <atlas.version>${project.version}</atlas.version>
 
         <spring.version>4.0.9.RELEASE</spring.version>
         <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
