@@ -201,7 +201,7 @@ public abstract class TaskCreationTask extends ScheduledTask {
         Map<String, ItemBroadcastHierarchy> broadcastHierarchies = hierarchyExpander.broadcastHierarchiesFor(item);
         Map<String, ItemOnDemandHierarchy> onDemandHierarchies = hierarchyExpander.onDemandHierarchiesFor(item);
 
-        if (action.equals(Action.UPDATE)) {
+        if (action.equals(Action.UPDATE) && !item.getPublisher().equals(Publisher.AMAZON_UNBOX)) {
             versionHierarchies = Maps.filterValues(
                     versionHierarchies,
                     FilterFactory.versionFilter(updatedSince)
