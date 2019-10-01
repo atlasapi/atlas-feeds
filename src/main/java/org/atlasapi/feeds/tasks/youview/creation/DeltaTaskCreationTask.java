@@ -135,7 +135,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                     getPublisher(), from, to);
         } else {
             from = lastUpdated.get();
-            to = lastUpdated.get().plusHours(1);
+            to = startOfTask.get();
             updatedContent = contentResolver.updatedSince(from);
             log.info("Started a delta YV task creation process for {} from {}",
                     getPublisher(), lastUpdated);
