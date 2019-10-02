@@ -166,13 +166,10 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         log.info("Started uploading YV tasks from {}.", getPublisher());
         reportStatus("Uploading tasks to YouView");
 
-        // temporarily disable AMAZON uploads & deletes (commented out below)
-        if(!getPublisher().equals(Publisher.AMAZON_UNBOX)) {
-            updateTask.run();
+        updateTask.run();
+        if(getPublisher().equals(Publisher.AMAZON_UNBOX)){ //bbc deletes run on schedule. Don't know why, don't wanna mess with it, doubt it would be a problem.
+            deleteTask.run();
         }
-//        if(getPublisher().equals(Publisher.AMAZON_UNBOX)){ //bbc deletes run on schedule. Don't know why, don't wanna mess with it, doubt it would be a problem.
-//            deleteTask.run();
-//        }
 
         log.info("Done uploading tasks to YV from {}", getPublisher());
         reportStatus("Done uploading tasks to YouView");
