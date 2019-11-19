@@ -1,5 +1,6 @@
 package org.atlasapi.feeds.youview;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.metabroadcast.representative.util.Utils.decode;
-
+import static org.atlasapi.output.Annotation.RESPECT_API_KEY_FOR_EQUIV_LIST;
 
 public class YouviewContentMerger {
 
@@ -74,6 +75,8 @@ public class YouviewContentMerger {
                 .withSelection(Selection.all())
                 .withApplication(application)
                 .build();
+
+        contentQuery = contentQuery.copyWithAnnotations(Collections.singleton(RESPECT_API_KEY_FOR_EQUIV_LIST));
 
         Map<String, List<Identified>> mergedResults =
                 mergingResolver.executeUriQuery(
