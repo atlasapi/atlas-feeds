@@ -1,20 +1,26 @@
 package org.atlasapi.feeds.radioplayer.outputting;
 
+import com.google.common.base.Function;
 import org.atlasapi.media.entity.Broadcast;
 import org.atlasapi.media.entity.Container;
 import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Version;
 
-import com.google.common.base.Function;
+import javax.annotation.Nullable;
+import java.util.Comparator;
 
 public class RadioPlayerBroadcastItem implements Comparable<RadioPlayerBroadcastItem> {
 
+    private static final Comparator<Broadcast> broadcastComparator = Comparator.nullsLast(
+            Comparator.comparing(Broadcast::getTransmissionTime)
+    );
+
     private final Item item;
     private final Version version;
-    private final Broadcast broadcast;
+    @Nullable private final Broadcast broadcast;
     private Container container;
 
-    public RadioPlayerBroadcastItem(Item item, Version version, Broadcast broadcast) {
+    public RadioPlayerBroadcastItem(Item item, Version version, @Nullable Broadcast broadcast) {
         this.item = item;
         this.version = version;
         this.broadcast = broadcast;
@@ -28,13 +34,14 @@ public class RadioPlayerBroadcastItem implements Comparable<RadioPlayerBroadcast
         return version;
     }
 
+    @Nullable
     public Broadcast getBroadcast() {
         return broadcast;
     }
 
     @Override
     public int compareTo(RadioPlayerBroadcastItem that) {
-        return this.broadcast.getTransmissionTime().compareTo(that.getBroadcast().getTransmissionTime());
+        return broadcastComparator.compare(this.getBroadcast(), that.getBroadcast());
     }
 
     public RadioPlayerBroadcastItem withContainer(Container container) {
