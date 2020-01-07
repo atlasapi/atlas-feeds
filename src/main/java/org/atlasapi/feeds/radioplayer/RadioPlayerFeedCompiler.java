@@ -41,13 +41,13 @@ import org.joda.time.DateTime;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
 import static org.atlasapi.feeds.radioplayer.upload.FileType.OD;
 import static org.atlasapi.feeds.radioplayer.upload.FileType.PI;
@@ -184,24 +184,22 @@ public abstract class RadioPlayerFeedCompiler {
         @Override
         public List<RadioPlayerBroadcastItem> transform(List<Item> items, String serviceUri) {
             final Map<String, Identified> containers = containersFor(items);
-            return items.stream()
-                    .map(item -> {
-                        ArrayList<RadioPlayerBroadcastItem> broadcastItems = Lists.newArrayList();
-                        for (Version version : item.nativeVersions()) {
-                            RadioPlayerBroadcastItem broadcastItem = new RadioPlayerBroadcastItem(
-                                    item,
-                                    version,
-                                    null //broadcast information is not used for OD
-                            );
-                            if (item.getContainer() != null && containers.containsKey(item.getContainer().getUri())) {
-                                broadcastItem.withContainer((Container) containers.get(item.getContainer().getUri()));
+            return ImmutableList.copyOf(concat(Iterables.transform(items, new Function<Item, Iterable<RadioPlayerBroadcastItem>>() {
+                @Override
+                public Iterable<RadioPlayerBroadcastItem> apply(Item item) {
+                    ArrayList<RadioPlayerBroadcastItem> broadcastItems = Lists.newArrayList();
+                    for (Version version : item.nativeVersions()) {
+                        for (Broadcast broadcast : version.getBroadcasts()) {
+                            RadioPlayerBroadcastItem broadcastItem = new RadioPlayerBroadcastItem(item, version, broadcast);
+                            if(item.getContainer() != null && containers.containsKey(item.getContainer().getUri())) {
+                                broadcastItem.withContainer((Container)containers.get(item.getContainer().getUri()));
                             }
                             broadcastItems.add(broadcastItem);
                         }
-                        return broadcastItems;
-                    })
-                    .flatMap(Collection::stream)
-                    .collect(MoreCollectors.toImmutableList());
+                    }
+                    return broadcastItems;
+                }
+            })));
         }
     }
     
