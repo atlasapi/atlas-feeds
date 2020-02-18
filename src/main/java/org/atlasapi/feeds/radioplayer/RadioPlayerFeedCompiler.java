@@ -116,6 +116,11 @@ public abstract class RadioPlayerFeedCompiler {
         @Override
         public List<RadioPlayerBroadcastItem> transform(List<Item> items, String serviceUri) {
             final Map<String, Identified> containers = containersFor(items);
+            // ENG-618 - we pick the first available version so that we will actually upload something for this content.
+            // Before we just took the first version which might not have been available, and this caused some content
+            // which had an available version to get completely omitted from uploading. It is also worth noting
+            // that the schedule resolver puts the only broadcast on the first version, even if the broadcast actually
+            // belonged to a different version.
             return items.stream()
                     .map(item -> {
                         //we only expect to find one due to how schedule resolver works
