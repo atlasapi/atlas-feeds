@@ -1,20 +1,35 @@
 package org.atlasapi.feeds.youview;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.annotation.PostConstruct;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-
+import com.codahale.metrics.JvmAttributeGaugeSet;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
+import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
+import com.metabroadcast.common.media.MimeType;
+import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
+import com.metabroadcast.common.properties.Configurer;
+import com.metabroadcast.common.scheduling.RepetitionRule;
+import com.metabroadcast.common.scheduling.RepetitionRules;
+import com.metabroadcast.common.scheduling.ScheduledTask;
+import com.metabroadcast.common.scheduling.SimpleScheduler;
+import com.metabroadcast.common.security.UsernameAndPassword;
+import com.metabroadcast.common.time.Clock;
+import com.metabroadcast.common.time.SystemClock;
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.dropwizard.DropwizardExports;
 import org.atlasapi.feeds.tasks.Destination.DestinationType;
 import org.atlasapi.feeds.tasks.checking.RemoteCheckTask;
 import org.atlasapi.feeds.tasks.maintainance.TaskTrimmingTask;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.feeds.tasks.youview.creation.BootstrapTaskCreationTask;
 import org.atlasapi.feeds.tasks.youview.creation.DeltaTaskCreationTask;
-import org.atlasapi.feeds.tasks.youview.creation.RepresentativeIdChangesHandlingTask;
 import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.tasks.youview.creation.YouViewEntityTaskCreator;
 import org.atlasapi.feeds.tasks.youview.processing.DeleteTask;
@@ -58,32 +73,6 @@ import org.atlasapi.persistence.content.ContentResolver;
 import org.atlasapi.persistence.content.ScheduleResolver;
 import org.atlasapi.persistence.content.mongo.LastUpdatedContentFinder;
 import org.atlasapi.persistence.content.query.KnownTypeQueryExecutor;
-
-import com.metabroadcast.common.media.MimeType;
-import com.metabroadcast.common.persistence.mongo.DatabasedMongo;
-import com.metabroadcast.common.properties.Configurer;
-import com.metabroadcast.common.scheduling.RepetitionRule;
-import com.metabroadcast.common.scheduling.RepetitionRules;
-import com.metabroadcast.common.scheduling.ScheduledTask;
-import com.metabroadcast.common.scheduling.SimpleScheduler;
-import com.metabroadcast.common.security.UsernameAndPassword;
-import com.metabroadcast.common.time.Clock;
-import com.metabroadcast.common.time.SystemClock;
-
-import com.codahale.metrics.JvmAttributeGaugeSet;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
-import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
-import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableMap;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.dropwizard.DropwizardExports;
 import org.atlasapi.persistence.lookup.entry.LookupEntryStore;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -99,6 +88,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.xml.sax.SAXException;
 import tva.metadata._2010.TVAMainType;
+
+import javax.annotation.PostConstruct;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import static com.metabroadcast.common.time.DateTimeZones.UTC;
 import static java.lang.management.ManagementFactory.getGarbageCollectorMXBeans;
@@ -168,7 +164,6 @@ public class YouViewUploadModule {
                     scheduler.schedule(scheduleBootstrapTaskCreationTask(Publisher.BBC_NITRO), NEVER);
                 } else if(publisherEntry.getValue().equals(Publisher.AMAZON_UNBOX)){
                     scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.AMAZON_UNBOX), AMAZON_DELTA_CONTENT_CHECK);
-                    scheduler.schedule(scheduleRepIdChangesHandlingTask(Publisher.AMAZON_UNBOX), NEVER);
                 }
             }
         }
@@ -334,36 +329,6 @@ public class YouViewUploadModule {
         )
         .withName(String.format(TASK_NAME_PATTERN, "Delta", publisher.title()));
     }
-
-    /**
-     * WIP: Untested code.
-     * Checks the representativeId service for changes and creates new tasks to handle the changes.
-     * @param publisher
-     * @return
-     * @throws JAXBException
-     * @throws SAXException
-     */
-    private ScheduledTask scheduleRepIdChangesHandlingTask(Publisher publisher)
-            throws JAXBException, SAXException {
-        return new RepresentativeIdChangesHandlingTask(
-                lastUpdatedStore(),
-                publisher,
-                contentHierarchyExpanderFactory.create(publisher),
-                IdGeneratorFactory.create(publisher),
-                taskStore,
-                taskCreator(),
-                payloadCreator(),
-                uploadTask(publisher),
-                deleteTask(publisher),
-                getDeltaContentResolver(publisher),
-                payloadHashStore(),
-                channelResolver,
-                mergingResolver,
-                lookupEntryStore
-        ).withName(String.format("YouView representativeId changes handling for %s", publisher.title()));
-    }
-
-
     
     private PayloadCreator payloadCreator() throws JAXBException, SAXException {
         return payloadCreator(rollingWindowBroadcastEventDeduplicator());
