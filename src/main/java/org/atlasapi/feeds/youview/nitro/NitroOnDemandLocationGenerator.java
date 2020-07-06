@@ -62,33 +62,33 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
     private static final String BRITISH_SIGN_LANGUAGE = "bfi";
     private static final Pattern NITRO_URI_PATTERN = Pattern.compile("^http://nitro.bbc.co.uk/programmes/([a-zA-Z0-9]+)$");
 
-    private final OnDemandDateFudger onDemandDateFudger;
     private final IdGenerator idGenerator;
     
     public NitroOnDemandLocationGenerator(IdGenerator idGenerator) {
         this.idGenerator = checkNotNull(idGenerator);
-        onDemandDateFudger = OnDemandDateFudger.create(new SystemClock());
     }
     
     @Override
     public final OnDemandProgramType generate(ItemOnDemandHierarchy hierarchy, String imi) {
 
-        ItemOnDemandHierarchy doctoredDates = onDemandDateFudger.fudgeStartDates(hierarchy);
+        //disabled because affects YV negatively + obsolete, probably (MTS-1277)
+//        ItemOnDemandHierarchy doctoredDates = onDemandDateFudger.fudgeStartDates(hierarchy);
+
         //bbc ondemands should have exactly 1 locations.
-        Location location = doctoredDates.locations().get(0);
+        Location location = hierarchy.locations().get(0);
 
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
 
         onDemand.setServiceIDRef(YOUVIEW_SERVICE);
-        onDemand.setProgram(generateProgram(doctoredDates.item(), doctoredDates.version()));
+        onDemand.setProgram(generateProgram(hierarchy.item(), hierarchy.version()));
         onDemand.setInstanceMetadataId(imi);
         onDemand.setInstanceDescription(generateInstanceDescription(
-                doctoredDates.item(),
-                doctoredDates.encoding(),
+                hierarchy.item(),
+                hierarchy.encoding(),
                 location,
-                getLanguageCodeFor(doctoredDates.item())
+                getLanguageCodeFor(hierarchy.item())
         ));
-        onDemand.setPublishedDuration(generatePublishedDuration(doctoredDates.version()));
+        onDemand.setPublishedDuration(generatePublishedDuration(hierarchy.version()));
         onDemand.setStartOfAvailability(generateAvailabilityStart(location));
         onDemand.setEndOfAvailability(generateAvailabilityEnd(location));
         onDemand.setFree(generateFree());
