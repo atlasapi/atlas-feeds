@@ -128,8 +128,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             // sometimes the amazon-yv upload fails, so we want to schedule it to run a few times;
             // but it can only run after amazon ingest & equiv have run (the latter starts at 3am)
             DateTime startOfDay = new DateTime(startOfTask.get().withTimeAtStartOfDay());
-            if (!startOfTask.get().isAfter(startOfDay.plusHours(9))
-                    || startOfTask.get().isBefore(startOfDay.plusHours(17))) {
+            if (startOfTask.get().isBefore(startOfDay.plusHours(9))
+                    || startOfTask.get().isAfter(startOfDay.plusHours(17))) {
                 return;
             }
 
