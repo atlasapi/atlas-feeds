@@ -1,7 +1,6 @@
 package org.atlasapi.feeds.youview;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -129,12 +128,7 @@ public class YouViewUploadModule {
     );
 
     private static final RepetitionRule NITRO_DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
-    private static final List<RepetitionRule> AMAZON_DELTA_CONTENT_CHECK = ImmutableList.of(
-            RepetitionRules.daily(new LocalTime(9, 0, 0)),
-            RepetitionRules.daily(new LocalTime(11, 0, 0)),
-            RepetitionRules.daily(new LocalTime(13, 0, 0)),
-            RepetitionRules.daily(new LocalTime(15, 0, 0))
-    );
+    private static final RepetitionRule AMAZON_DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardHours(2));
     private static final RepetitionRule REMOTE_CHECK = RepetitionRules.every(Duration.standardHours(1));
     // Uploads are being performed as part of the delta job.
     private static final RepetitionRule NEVER = RepetitionRules.NEVER;
@@ -173,9 +167,7 @@ public class YouViewUploadModule {
                     scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.BBC_NITRO), NITRO_DELTA_CONTENT_CHECK);
                     scheduler.schedule(scheduleBootstrapTaskCreationTask(Publisher.BBC_NITRO), NEVER);
                 } else if(publisherEntry.getValue().equals(Publisher.AMAZON_UNBOX)){
-                    for (RepetitionRule rule: AMAZON_DELTA_CONTENT_CHECK) {
-                        scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.AMAZON_UNBOX), rule);
-                    }
+                    scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.AMAZON_UNBOX), AMAZON_DELTA_CONTENT_CHECK);
                 }
             }
         }
