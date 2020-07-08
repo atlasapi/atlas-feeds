@@ -81,8 +81,7 @@ public class NitroOnDemandLocationGeneratorTest {
 
         assertEquals("P0DT1H30M0.000S", onDemand.getPublishedDuration().toString());
 
-        // we fudge all content that's already available to -6h
-        DateTime expectedStart = now.minusHours(6);
+        DateTime expectedStart = now.minusMinutes(60);
         DateTime expectedEnd = now.plus(DEFAULT_AVAILABILITY_END);
 
         assertEquals(
