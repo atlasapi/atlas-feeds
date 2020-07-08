@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 import javax.xml.datatype.Duration;
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import org.atlasapi.feeds.tasks.youview.creation.OnDemandDateFudger;
 import org.atlasapi.feeds.tvanytime.OnDemandLocationGenerator;
 import org.atlasapi.feeds.tvanytime.TvAnytimeElementFactory;
 import org.atlasapi.feeds.youview.hierarchy.ItemOnDemandHierarchy;
@@ -21,8 +20,6 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Version;
-
-import com.metabroadcast.common.time.SystemClock;
 
 import tva.metadata._2010.AVAttributesType;
 import tva.metadata._2010.AspectRatioType;
@@ -71,10 +68,7 @@ public class NitroOnDemandLocationGenerator implements OnDemandLocationGenerator
     @Override
     public final OnDemandProgramType generate(ItemOnDemandHierarchy hierarchy, String imi) {
 
-        //disabled because affects YV negatively + obsolete, probably (MTS-1277)
-//        ItemOnDemandHierarchy doctoredDates = onDemandDateFudger.fudgeStartDates(hierarchy);
-
-        //bbc ondemands should have exactly 1 locations.
+        //bbc ItemOnDemandHierarchy should have exactly 1 locations
         Location location = hierarchy.locations().get(0);
 
         ExtendedOnDemandProgramType onDemand = new ExtendedOnDemandProgramType();
