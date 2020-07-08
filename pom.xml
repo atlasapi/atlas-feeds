@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.atlasapi</groupId>
     <artifactId>atlas-feeds</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.0-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -102,7 +102,7 @@
         <dependency>
             <groupId>org.atlasapi</groupId>
             <artifactId>atlas-applications</artifactId>
-            <version>5.0-SNAPSHOT</version>
+            <version>${atlas.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>xerces</groupId>
