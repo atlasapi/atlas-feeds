@@ -31,6 +31,7 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
     private static final String COLLECTION_NAME = "youviewTasks";
     private static final String STATUS_KEY = "status";
     private static final String CREATED_KEY = "created";
+    private static final String PUBLISHER_KEY = "publisher";
 
     private final DBCollection collection;
     private final TaskStore taskStore;
@@ -53,12 +54,14 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
         int successfulTasks = getTasksCreatedInTheLastDurationByStatus(
                 timeBeforeNow,
                 Status.ACCEPTED.name(),
-                Status.PUBLISHED.name()
+                Status.PUBLISHED.name(),
+                publisher
         );
         int unsuccessfulTasks = getTasksCreatedInTheLastDurationByStatus(
                 timeBeforeNow,
                 Status.FAILED.name(),
-                Status.REJECTED.name()
+                Status.REJECTED.name(),
+                publisher
         );
 
         Optional<Duration> latency = calculateLatency(publisher);
@@ -116,13 +119,16 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
     private int getTasksCreatedInTheLastDurationByStatus(
             Period timeBeforeNow,
             String firstStatus,
-            String secondStatus
+            String secondStatus,
+            Publisher publisher
     ) {
+
         DBObject firstStatusClause = QueryBuilder.start(STATUS_KEY).is(firstStatus).get();
         DBObject secondStatusClause = QueryBuilder.start(STATUS_KEY).is(secondStatus).get();
 
         Date timeBeforePeriod = new DateTime().minus(timeBeforeNow).toDate();
         DBObject query = QueryBuilder.start(CREATED_KEY).greaterThanEquals(timeBeforePeriod)
+                .and(PUBLISHER_KEY).is(publisher.key())
                 .or(firstStatusClause, secondStatusClause)
                 .get();
 
