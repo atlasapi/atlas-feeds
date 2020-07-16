@@ -97,7 +97,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_NOT_FOUND;
-import static org.atlasapi.feeds.tasks.youview.creation.DeltaTaskCreationTask.getContributingAsins;
+import static org.atlasapi.feeds.tasks.youview.creation.DeltaTaskCreationTask.getContributingUris;
 
 // TODO remove all the duplication
 @Controller
@@ -989,7 +989,7 @@ public class YouViewUploadController {
             Content merged = merger.equivAndMerge(content);
             AmazonContentConsolidator.consolidate(merged); //mutates the item
 
-            Set<String> contributingUris = getContributingAsins(merged);
+            Set<String> contributingUris = getContributingUris(repId, merged);
             sendOkResponse(
                     response,
                     new StringBuilder().append("Delete for ")
