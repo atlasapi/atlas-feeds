@@ -11,6 +11,7 @@ import org.atlasapi.feeds.tasks.TaskQuery;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
 import org.atlasapi.media.entity.Publisher;
 
+import com.google.common.collect.ImmutableList;
 import com.mongodb.QueryBuilder;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -32,6 +33,7 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
     private static final String STATUS_KEY = "status";
     private static final String CREATED_KEY = "created";
     private static final String PUBLISHER_KEY = "publisher";
+    private static final String DESTINATION_KEY = "destinationType";
 
     private final DBCollection collection;
     private final TaskStore taskStore;
@@ -98,8 +100,8 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
     private Optional<Duration> calculateLatency(Publisher publisher) {
         BasicDBObject query = new BasicDBObject();
         query.put(STATUS_KEY, Status.NEW.name());
-        query.put("publisher", publisher.key());
-        query.put("destinationType", destinationType.name());
+        query.put(PUBLISHER_KEY, publisher.key());
+        query.put(DESTINATION_KEY, destinationType.name());
 
         DBObject stats = collection
                 .find(query)
@@ -123,13 +125,12 @@ public class MongoFeedStatisticsStore implements FeedStatisticsResolver {
             Publisher publisher
     ) {
 
-        DBObject firstStatusClause = QueryBuilder.start(STATUS_KEY).is(firstStatus).get();
-        DBObject secondStatusClause = QueryBuilder.start(STATUS_KEY).is(secondStatus).get();
-
         Date timeBeforePeriod = new DateTime().minus(timeBeforeNow).toDate();
-        DBObject query = QueryBuilder.start(CREATED_KEY).greaterThanEquals(timeBeforePeriod)
-                .and(PUBLISHER_KEY).is(publisher.key())
-                .or(firstStatusClause, secondStatusClause)
+        DBObject query = QueryBuilder
+                .start(PUBLISHER_KEY).is(publisher.key())
+                .and(CREATED_KEY).greaterThanEquals(timeBeforePeriod)
+                .and(STATUS_KEY).in(ImmutableList.of(firstStatus, secondStatus))
+                .and(DESTINATION_KEY).is(destinationType.name())
                 .get();
 
         return collection.find(query).count();
