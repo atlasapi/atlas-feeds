@@ -24,6 +24,7 @@ import org.atlasapi.feeds.tasks.TVAElementType;
 import org.atlasapi.feeds.tasks.Task;
 import org.atlasapi.feeds.tasks.YouViewDestination;
 import org.atlasapi.feeds.tasks.persistence.TaskStore;
+import org.atlasapi.feeds.tasks.youview.creation.TaskCreationTask;
 import org.atlasapi.feeds.tasks.youview.creation.TaskCreator;
 import org.atlasapi.feeds.tasks.youview.processing.TaskProcessor;
 import org.atlasapi.feeds.youview.ContentHierarchyExpanderFactory;
@@ -37,6 +38,7 @@ import org.atlasapi.feeds.youview.hierarchy.OnDemandHierarchyExpander;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.feeds.youview.payload.PayloadCreator;
 import org.atlasapi.feeds.youview.payload.PayloadGenerationException;
+import org.atlasapi.feeds.youview.persistence.YouViewPayloadHashStore;
 import org.atlasapi.feeds.youview.revocation.RevocationProcessor;
 import org.atlasapi.feeds.youview.unbox.AmazonContentConsolidator;
 import org.atlasapi.media.channel.Channel;
@@ -128,6 +130,7 @@ public class YouViewUploadController {
     private final ChannelResolver channelResolver;
     private final SubstitutionTableNumberCodec channelIdCodec;
     private final ListeningExecutorService executor;
+    private final YouViewPayloadHashStore payloadHashStore;
 
     public static Builder builder() {
         return new Builder();
@@ -142,7 +145,8 @@ public class YouViewUploadController {
             TaskProcessor taskProcessor,
             ScheduleResolver scheduleResolver,
             ChannelResolver channelResolver,
-            Clock clock
+            Clock clock,
+            YouViewPayloadHashStore payloadHashStore
     ) {
         this.contentResolver = checkNotNull(contentResolver);
         this.taskCreator = checkNotNull(taskCreator);
@@ -153,6 +157,7 @@ public class YouViewUploadController {
         this.clock = checkNotNull(clock);
         this.scheduleResolver = checkNotNull(scheduleResolver);
         this.channelResolver = checkNotNull(channelResolver);
+        this.payloadHashStore = checkNotNull(payloadHashStore);
 
         this.dateTimeInQueryParser = new DateTimeInQueryParser();
         this.executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
@@ -977,7 +982,7 @@ public class YouViewUploadController {
                 .withStatus(Status.NEW)
                 .withManuallyCreated(true)
                 .build();
-        taskStore.save(task);
+        TaskCreationTask.save(payloadHashStore, taskStore, task);
 
         //If this amazon, we'll get in the trouble of figuring out what the merged content would be
         //and inform our user on the response.
@@ -1227,6 +1232,7 @@ public class YouViewUploadController {
         private TaskProcessor taskProcessor;
         private ScheduleResolver scheduleResolver;
         private ChannelResolver channelResolver;
+        private YouViewPayloadHashStore payloadHashStore;
 
         private Builder() {
         }
@@ -1276,6 +1282,11 @@ public class YouViewUploadController {
             return this;
         }
 
+        public Builder withPayloadHashStore(YouViewPayloadHashStore val) {
+            payloadHashStore = val;
+            return this;
+        }
+
         public YouViewUploadController build() {
             return new YouViewUploadController(
                     contentResolver,
@@ -1286,7 +1297,8 @@ public class YouViewUploadController {
                     taskProcessor,
                     scheduleResolver,
                     channelResolver,
-                    clock
+                    clock,
+                    payloadHashStore
             );
         }
     }
