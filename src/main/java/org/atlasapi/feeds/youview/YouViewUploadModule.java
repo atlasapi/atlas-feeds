@@ -272,6 +272,7 @@ public class YouViewUploadModule {
                 .withScheduleResolver(scheduleResolver)
                 .withChannelResolver(channelResolver)
                 .withClock(clock)
+                .withPayloadHashStore(payloadHashStore())
                 .build();
     }
 
