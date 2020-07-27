@@ -976,7 +976,7 @@ public class YouViewUploadController {
         // TODO ideally this would go via the TaskCreator, but that would require resolving
         // the hierarchies for each type of element
         Destination destination = new YouViewDestination(
-                content == null ? null : content.getCanonicalUri(),
+                content == null ? "" : content.getCanonicalUri(),
                 type,
                 elementId
         );
