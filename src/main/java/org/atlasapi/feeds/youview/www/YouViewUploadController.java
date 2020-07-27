@@ -929,7 +929,18 @@ public class YouViewUploadController {
             sendError(response, SC_NOT_FOUND, "Publisher " + publisherStr + " not found.");
             return;
         }
-        if (uri == null) {
+
+        if (typeStr == null) {
+            sendError(response, SC_BAD_REQUEST, "required parameter 'type' not specified");
+            return;
+        }
+        TVAElementType type = parseTypeFrom(typeStr);
+        if (type == null) {
+            sendError(response, SC_BAD_REQUEST, "Invalid type provided");
+            return;
+        }
+
+        if (uri == null && type != TVAElementType.ONDEMAND) {
             sendError(response, SC_BAD_REQUEST, "required parameter 'uri' not specified");
             return;
         }
@@ -937,40 +948,35 @@ public class YouViewUploadController {
             sendError(response, SC_BAD_REQUEST, "required parameter 'element_id' not specified");
             return;
         }
-        if (typeStr == null) {
-            sendError(response, SC_BAD_REQUEST, "required parameter 'type' not specified");
-            return;
-        }
-        java.util.Optional<Content> optionalContent = getContent(uri);
-        if (!optionalContent.isPresent()) {
-            sendError(response, SC_BAD_REQUEST, "content does not exist");
-            return;
-        }
-        Content content = optionalContent.get();
 
-        TVAElementType type = parseTypeFrom(typeStr);
-        if (type == null) {
-            sendError(response, SC_BAD_REQUEST, "Invalid type provided");
-            return;
-        }
+        Content content = null;
+        if (uri != null) {
 
-        if (content instanceof Item) {
-            OnDemandHierarchyExpander onDemandHierarchyExpander = new OnDemandHierarchyExpander(
-                    IdGeneratorFactory.create(content.getPublisher())
-            );
-            Map<String, ItemOnDemandHierarchy> onDemands =
-                    onDemandHierarchyExpander.expandHierarchy((Item) content);
+            java.util.Optional<Content> optionalContent = getContent(uri);
+            if (!optionalContent.isPresent()) {
+                sendError(response, SC_BAD_REQUEST, "content does not exist");
+                return;
+            }
+            content = optionalContent.get();
 
-            for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
-                Task odTask = taskCreator.deleteFor(onDemand.getKey(), onDemand.getValue());
-                taskStore.save(Task.copy(odTask).withManuallyCreated(true).build());
+            if (content instanceof Item) {
+                OnDemandHierarchyExpander onDemandHierarchyExpander = new OnDemandHierarchyExpander(
+                        IdGeneratorFactory.create(content.getPublisher())
+                );
+                Map<String, ItemOnDemandHierarchy> onDemands =
+                        onDemandHierarchyExpander.expandHierarchy((Item) content);
+
+                for (Entry<String, ItemOnDemandHierarchy> onDemand : onDemands.entrySet()) {
+                    Task odTask = taskCreator.deleteFor(onDemand.getKey(), onDemand.getValue());
+                    taskStore.save(Task.copy(odTask).withManuallyCreated(true).build());
+                }
             }
         }
 
         // TODO ideally this would go via the TaskCreator, but that would require resolving
         // the hierarchies for each type of element
         Destination destination = new YouViewDestination(
-                content.getCanonicalUri(),
+                content == null ? null : content.getCanonicalUri(),
                 type,
                 elementId
         );
@@ -978,7 +984,7 @@ public class YouViewUploadController {
                 .withAction(Action.DELETE)
                 .withDestination(destination)
                 .withCreated(clock.now())
-                .withPublisher(content.getPublisher())
+                .withPublisher(content == null ? publisher.get() : content.getPublisher())
                 .withStatus(Status.NEW)
                 .withManuallyCreated(true)
                 .build();
@@ -986,7 +992,7 @@ public class YouViewUploadController {
 
         //If this amazon, we'll get in the trouble of figuring out what the merged content would be
         //and inform our user on the response.
-        if (publisher.get().equals(Publisher.AMAZON_UNBOX)) {
+        if (publisher.get().equals(Publisher.AMAZON_UNBOX) && content != null) {
             YouviewContentMerger merger = new YouviewContentMerger(
                     mergingResolver,
                     Publisher.AMAZON_UNBOX
