@@ -1013,8 +1013,10 @@ public class YouViewUploadController {
                             .append(contributingUris)
                             .toString()
             );
-        } else {
+        } else if (uri != null) {
             sendOkResponse(response, "Delete for " + uri + " sent successfully ");
+        } else {
+            sendOkResponse(response, "Delete for " + elementId + " sent successfully ");
         }
     }
 
