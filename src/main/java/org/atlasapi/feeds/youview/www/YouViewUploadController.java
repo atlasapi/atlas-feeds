@@ -919,7 +919,7 @@ public class YouViewUploadController {
     public void deleteContent(
             HttpServletResponse response,
             @PathVariable("publisher") String publisherStr,
-            @RequestParam(value = "uri") String uri,
+            @RequestParam(value = "uri", required = false) String uri,
             @RequestParam(value = "element_id") String elementId,
             @RequestParam(value = "type") String typeStr
     ) throws IOException {
