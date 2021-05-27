@@ -168,6 +168,8 @@ public class YouViewUploadModule {
                     scheduler.schedule(scheduleBootstrapTaskCreationTask(Publisher.BBC_NITRO), NEVER);
                 } else if(publisherEntry.getValue().equals(Publisher.AMAZON_UNBOX)){
                     scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.AMAZON_UNBOX), AMAZON_DELTA_CONTENT_CHECK);
+                } else if(publisherEntry.getValue().equals(Publisher.AMAZON_V3)){
+                    scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.AMAZON_V3), NEVER);
                 }
             }
         }

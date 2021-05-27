@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.atlasapi.feeds.tasks.Action;
@@ -46,6 +47,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.actors.threadpool.Arrays;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -142,12 +144,23 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
             log.info("Started a delta YV task creation process for {} from {} to {}",
                     getPublisher(), from, to);
+            setLastUpdatedTime(to);
+        } else if (getPublisher().equals(Publisher.AMAZON_V3)) {
+
+            Set<String> contentUris = Stream.of("http://v3.amazon.co.uk/amzn1.dv.gti.2eb76463-7bba-4ef6-f38d-a1e59a40dc4e:GB", "http://v3.amazon.co.uk/amzn1.dv.gti.e2b8b2a4-94c7-a622-aa95-1af60936b0cd:GB").collect(Collectors.toSet());
+
+            ResolvedContent resolvedContent = contentResolver.findByUris(contentUris);
+            updatedContent = translateResolvedToContent(resolvedContent);
+
+            log.info("Started a delta YV task creation process for {} for uris {}",
+                    getPublisher(), contentUris);
         } else {
             from = lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD);
             to = startOfTask.get();
             updatedContent = contentResolver.updatedSince(from);
             log.info("Started a delta YV task creation process for {} from {}",
                     getPublisher(), lastUpdated);
+            setLastUpdatedTime(to);
         }
 
         YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
@@ -159,6 +172,8 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         }
         else if(getPublisher().equals(Publisher.AMAZON_UNBOX)){
             forDeletion = uploadFromAmazon(updatedContent, uploadProcessor);
+        } else if(getPublisher().equals(Publisher.AMAZON_V3)){
+            forDeletion = uploadFromNewAmazon(updatedContent, uploadProcessor);
         } else {
             throw new IllegalStateException("Uploading from "+getPublisher()+" to YV is not supported.");
         }
@@ -170,13 +185,13 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         }
 
         log.info("Done creating {} tasks for YV up to {}.", getPublisher(), startOfTask.get());
-        setLastUpdatedTime(to);
+//        setLastUpdatedTime(to);
 
         log.info("Started uploading YV tasks from {}.", getPublisher());
         reportStatus("Uploading tasks to YouView");
 
         updateTask.run();
-        if(getPublisher().equals(Publisher.AMAZON_UNBOX)){ //bbc deletes run on schedule. Don't know why, don't wanna mess with it, doubt it would be a problem.
+        if(getPublisher().equals(Publisher.AMAZON_UNBOX) || getPublisher().equals(Publisher.AMAZON_V3)){ //bbc deletes run on schedule. Don't know why, don't wanna mess with it, doubt it would be a problem.
             deleteTask.run();
         }
 
@@ -234,6 +249,36 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             } catch (Exception e) {
                 log.error("Failed during the attempt to consolidate versions. "
                           + "This item will not be pushed to YV. Content {}. ",
+                        updatedContent.getCanonicalUri(), e);
+                continue;
+            }
+
+            uploadProcessor.process(mergedContent);
+            reportStatus("Uploads: " + uploadProcessor.getResult());
+
+        }
+        return forDeletion;
+    }
+
+    //Returns the content that should be deleted.
+    protected Set<Content> uploadFromNewAmazon(
+            Iterator<? extends Content> contentPieces,
+            YouViewContentProcessor uploadProcessor
+    ) {
+        Set<Content> forDeletion = Sets.newLinkedHashSet();
+        while (contentPieces.hasNext()) {
+            Content updatedContent = contentPieces.next();
+            if (!updatedContent.isActivelyPublished()) {
+                forDeletion.add(updatedContent);
+                continue;
+            }
+
+            Content mergedContent;
+            try {
+                mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
+            } catch (Exception e) {
+                log.error("Failed during the attempt to equiv, merge or get a repId. "
+                                + "This item will not be pushed to YV. Content {}. ",
                         updatedContent.getCanonicalUri(), e);
                 continue;
             }
