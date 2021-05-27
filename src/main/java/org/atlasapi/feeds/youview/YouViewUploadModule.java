@@ -124,7 +124,8 @@ public class YouViewUploadModule {
 
     private static final Map<String, Publisher> PUBLISHER_MAPPING = ImmutableMap.of(
             "nitro", Publisher.BBC_NITRO,
-            "unbox", Publisher.AMAZON_UNBOX
+            "unbox", Publisher.AMAZON_UNBOX,
+            "amazon", Publisher.AMAZON_V3
     );
 
     private static final RepetitionRule NITRO_DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
