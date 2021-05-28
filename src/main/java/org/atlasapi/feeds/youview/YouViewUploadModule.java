@@ -163,7 +163,7 @@ public class YouViewUploadModule {
     public void startScheduledTasks() throws JAXBException, SAXException {
         for (Entry<String, Publisher> publisherEntry : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
-            if (isEnabled(publisherPrefix)) {
+            if (publisherPrefix.equals("youview.upload.amazon") || isEnabled(publisherPrefix)) {
                 if(publisherEntry.getValue().equals(Publisher.BBC_NITRO)){
                     scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.BBC_NITRO), NITRO_DELTA_CONTENT_CHECK);
                     scheduler.schedule(scheduleBootstrapTaskCreationTask(Publisher.BBC_NITRO), NEVER);
