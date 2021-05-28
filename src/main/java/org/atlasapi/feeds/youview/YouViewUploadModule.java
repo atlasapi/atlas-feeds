@@ -170,6 +170,7 @@ public class YouViewUploadModule {
                 } else if(publisherEntry.getValue().equals(Publisher.AMAZON_UNBOX)){
                     scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.AMAZON_UNBOX), AMAZON_DELTA_CONTENT_CHECK);
                 } else if(publisherEntry.getValue().equals(Publisher.AMAZON_V3)){
+                    scheduler.schedule(scheduleBootstrapTaskCreationTask(Publisher.AMAZON_V3), NEVER);
                     scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.AMAZON_V3), NEVER);
                 }
             }
