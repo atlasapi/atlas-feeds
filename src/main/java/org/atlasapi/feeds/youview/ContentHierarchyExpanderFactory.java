@@ -23,6 +23,7 @@ public class ContentHierarchyExpanderFactory {
         Map<Publisher, ContentHierarchyExpander> expanderMapping
                 = ImmutableMap.<Publisher, ContentHierarchyExpander>builder()
                 .put(Publisher.AMAZON_UNBOX, amazonContentHierarchyExpander)
+                .put(Publisher.AMAZON_V3, amazonContentHierarchyExpander)
                 .put(Publisher.BBC_NITRO, nitroContentHierarchyExpander)
                 .build();
         return expanderMapping.get(publisher);
