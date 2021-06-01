@@ -112,7 +112,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     @Override
     protected void runTask() {
         Optional<DateTime> lastUpdated = getLastUpdatedTime();
-        if (!lastUpdated.isPresent()) {
+        if (!lastUpdated.isPresent() && !getPublisher().equals(Publisher.AMAZON_V3)) {
             throw new IllegalStateException("The bootstrap for "+ getPublisher()
                                             + " has not successfully run. Please run the "
                                             + "bootstrap upload and ensure that it succeeds before "
