@@ -24,8 +24,8 @@ import java.util.Set;
 
 public class AmazonGenreMapping implements GenreMapping, OldGenreMapping {
     
-    private static final String UNBOX_GENRE_FILENAME = "Amazon_Unbox_YouView_GenreMapping.csv";
-    private static final String UNBOX_GENRE_PREFIX = "http://unbox.amazon.co.uk/genres/";
+    private static final String AMAZON_GENRE_FILENAME = "Amazon_Unbox_YouView_GenreMapping.csv";
+    private static final String AMAZON_GENRE_PREFIX = "http://unbox.amazon.co.uk/genres/";
     
     private final Logger log = LoggerFactory.getLogger(AmazonGenreMapping.class);
    
@@ -54,7 +54,7 @@ public class AmazonGenreMapping implements GenreMapping, OldGenreMapping {
         return new Function<String, String>() {
             @Override
             public String apply(String input) {
-                return GenreTransformer.toAtlasGenre(UNBOX_GENRE_PREFIX, input);
+                return GenreTransformer.toAtlasGenre(AMAZON_GENRE_PREFIX, input);
             }
         };
     }
@@ -64,7 +64,7 @@ public class AmazonGenreMapping implements GenreMapping, OldGenreMapping {
         return new Function<String, String>() {
             @Override
             public String apply(String input) {
-                return GenreTransformer.toAtlasSubGenre(UNBOX_GENRE_PREFIX, input);
+                return GenreTransformer.toAtlasSubGenre(AMAZON_GENRE_PREFIX, input);
             }
         };
     }
@@ -76,12 +76,12 @@ public class AmazonGenreMapping implements GenreMapping, OldGenreMapping {
 
     private Multimap<String, String> generateLines() {
         try {
-            URL resource = Resources.getResource(getClass(), UNBOX_GENRE_FILENAME);
+            URL resource = Resources.getResource(getClass(), AMAZON_GENRE_FILENAME);
             InputSupplier<InputStreamReader> supplier = Resources.newReaderSupplier(resource, Charsets.UTF_8);
 
-            return CharStreams.readLines(supplier, new GenreMappingLineProcessor(UNBOX_GENRE_PREFIX));
+            return CharStreams.readLines(supplier, new GenreMappingLineProcessor(AMAZON_GENRE_PREFIX));
         } catch (IOException e) {
-            log.error(String.format("Error reading genre file %s", UNBOX_GENRE_FILENAME), e);
+            log.error(String.format("Error reading genre file %s", AMAZON_GENRE_FILENAME), e);
             return null;
         }
     }

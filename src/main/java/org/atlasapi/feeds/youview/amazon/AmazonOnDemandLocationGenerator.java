@@ -77,11 +77,9 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
         onDemand.setPublishedDuration(generatePublishedDuration(onDemandHierarchy.version()));
         //This assumes that all amazon locations represent the same thing, and thus have the same
         //start and end dates.
+        // TODO: is the above comment true?
         onDemand.setStartOfAvailability(generateAvailabilityStart(locations.get(0)));
-        //Amazon does not send start and end dates. These are fixed by us to certain dates.
-        //YV has requested we do not send end-dates for content available indefinitely, and simply
-        //revoke it if is no longer available.
-       // onDemand.setEndOfAvailability(generateAvailabilityEnd(locations.get(0)));
+        onDemand.setEndOfAvailability(generateAvailabilityEnd(locations.get(0)));
         onDemand.setFree(generateFree());
 
         return onDemand;
@@ -106,8 +104,9 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
         
         instanceDescription.getGenre().addAll(generateGenres(onDemandHie.locations()));
         instanceDescription.setAVAttributes(generateAvAttributes(encoding));
-        instanceDescription.getOtherIdentifier().add(generateDeepLinkingId(onDemandHie.locations()));
-        instanceDescription.getOtherIdentifier().add(generateOtherAuthorityId(onDemandHie.locations()));
+        // TODO: Location ASIN?
+//        instanceDescription.getOtherIdentifier().add(generateDeepLinkingId(onDemandHie.locations()));
+//        instanceDescription.getOtherIdentifier().add(generateOtherAuthorityId(onDemandHie.locations()));
 
         return instanceDescription;
     }
@@ -225,6 +224,10 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
             case SUBSCRIPTION:
                 revenuePlan.setHref(YOUVIEW_ENTITLEMENT_SUBSCRIPTION);
                 break;
+            case FREE_TO_VIEW:
+                // TODO: Add href
+                revenuePlan.setHref("");
+                break;
             default:
                 throw new IllegalDataException(
                         "Amazon onDemand content is not accessible via sub, rent or buy. Location uri="
@@ -270,7 +273,8 @@ public class AmazonOnDemandLocationGenerator implements OnDemandLocationGenerato
         private final Map<Policy.RevenueContract, Integer> scores = ImmutableMap.of(
                 Policy.RevenueContract.PAY_TO_BUY, 1,
                 Policy.RevenueContract.PAY_TO_RENT, 2,
-                Policy.RevenueContract.SUBSCRIPTION, 3
+                Policy.RevenueContract.SUBSCRIPTION, 3,
+                Policy.RevenueContract.FREE_TO_VIEW, 4
         );
 
         @Override

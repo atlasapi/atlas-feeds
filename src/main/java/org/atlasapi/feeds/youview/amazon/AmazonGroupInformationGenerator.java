@@ -259,7 +259,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
 
         basicDescription.getSynopsis().addAll(generateSynopses(content));
-        basicDescription.getGenre().addAll(generateGenres(content));
+//        basicDescription.getGenre().addAll(generateGenres(content));
         basicDescription.getGenre().add(generateGenreFromSpecialization(content));
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
         basicDescription.getLanguage().addAll(generateLanguage(content));
@@ -274,9 +274,12 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             }
 
         } else if (content instanceof Brand) {
-            // Since the Amazon content catalog doesn't contain any brand level information,
-            // generate brand fragments based on one of the brand's children.
-            relatedMaterial = generateRelatedMaterial(item);
+            // If available, try to generate series fragments using their own information.
+            // If not, use one of the series's children.
+            relatedMaterial = generateRelatedMaterial(content);
+            if (!relatedMaterial.isPresent()) {
+                relatedMaterial = generateRelatedMaterial(item);
+            }
         } else {
             relatedMaterial = generateRelatedMaterial(content);
         }
@@ -402,24 +405,24 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     }
 
     public static String getMetabroadcastImageUrl(String amazonUrl) {
-        if (AMAZON_DEFAULT_FILL_IN_IMAGE_URL.equals(amazonUrl)) { //+1 for code quality.
-            return amazonUrl;
-        }
-        //Chop amazon's native resizing out of their url (ECOTEST-265)
-        //e.g. from https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD._SX320_SY240_.jpg
-        //     to   https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD.jpg
-        int lastDot = amazonUrl.lastIndexOf('.');
-        int preLastDot = amazonUrl.lastIndexOf('.', lastDot - 1);
-        if (lastDot > 0 || preLastDot > 0) {
-            amazonUrl = amazonUrl.substring(0, preLastDot)
-                        + amazonUrl.substring(lastDot, amazonUrl.length());
-        }
-
-        try {
-            return MBST_BASE_IMAGE_URL + URLEncoder.encode(amazonUrl, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            log.error("", e);
-        }
+//        if (AMAZON_DEFAULT_FILL_IN_IMAGE_URL.equals(amazonUrl)) { //+1 for code quality.
+//            return amazonUrl;
+//        }
+//        //Chop amazon's native resizing out of their url (ECOTEST-265)
+//        //e.g. from https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD._SX320_SY240_.jpg
+//        //     to   https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD.jpg
+//        int lastDot = amazonUrl.lastIndexOf('.');
+//        int preLastDot = amazonUrl.lastIndexOf('.', lastDot - 1);
+//        if (lastDot > 0 || preLastDot > 0) {
+//            amazonUrl = amazonUrl.substring(0, preLastDot)
+//                        + amazonUrl.substring(lastDot, amazonUrl.length());
+//        }
+//
+//        try {
+//            return MBST_BASE_IMAGE_URL + URLEncoder.encode(amazonUrl, "UTF-8");
+//        } catch (UnsupportedEncodingException e) {
+//            log.error("", e);
+//        }
 
         return amazonUrl;
     }
@@ -457,18 +460,25 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     private static Iterable<CrewMember> getOrderedCrewMembers(Content content) {
         List<CrewMember> actors = new ArrayList<>();
         List<CrewMember> directors = new ArrayList<>();
+        List<CrewMember> producers = new ArrayList<>();
+        List<CrewMember> writers = new ArrayList<>();
         List<CrewMember> other = new ArrayList<>();
-        //sort actors first, directors second. atm amazon ingest does not contain anything else.
+        //sort actors first, directors second, producers third, writers forth, others (currently executive_producers) fifth
         for (CrewMember person : content.people()) {
             if (person.role() == CrewMember.Role.ACTOR) {
                 actors.add(person);
             } else if (person.role() == CrewMember.Role.DIRECTOR) {
                 directors.add(person);
-            } else {
+            } else if (person.role() == CrewMember.Role.PRODUCER) {
+                producers.add(person);
+            } else if (person.role() == CrewMember.Role.WRITER) {
+                writers.add(person);
+            }
+            else {
                 other.add(person);
             }
         }
-        return Iterables.concat(actors, directors, other);
+        return Iterables.concat(actors, directors, producers, writers, other);
     }
 
     private List<ExtendedLanguageType> generateLanguage(Content content) {
@@ -521,6 +531,9 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         List<SynopsisType> synopses = Lists.newArrayList();
         for (Entry<SynopsisLengthType, Truncator> entry : YOUVIEW_SYNOPSIS_LENGTH_MAP.entrySet()) {
             String description = content.getDescription();
+            if(entry.getKey().equals(SynopsisLengthType.LONG) && !Strings.isNullOrEmpty(content.getLongDescription())) {
+                description = content.getLongDescription();
+            }
             if (description == null){
                description = "";
             } else {

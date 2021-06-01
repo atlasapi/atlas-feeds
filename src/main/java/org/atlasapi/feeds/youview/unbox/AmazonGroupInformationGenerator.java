@@ -60,7 +60,7 @@ import tva.mpeg7._2008.TitleType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAmazonAsin;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getUnboxAsin;
 
 public class AmazonGroupInformationGenerator implements GroupInformationGenerator {
 
@@ -154,7 +154,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
 
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         groupInfo.setServiceIDRef(GROUP_INFO_SERVICE_ID);
-        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getAmazonAsin(film)));
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getUnboxAsin(film)));
         groupInfo.getOtherIdentifier().add(generateOtherIdentifier(
                 OTHER_IDENTIFIER_AUTHORITY_CONTENT_TYPE,
                 CONTENT_TYPE_MOVIE
@@ -196,7 +196,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             }
             groupInfo.getMemberOf().add(memberOf);
         }
-        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getAmazonAsin(item)));
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getUnboxAsin(item)));
         groupInfo.getOtherIdentifier().add(generateOtherIdentifier(
                 OTHER_IDENTIFIER_AUTHORITY_CONTENT_TYPE,
                 CONTENT_TYPE_EPISODE //films are handled elsewhere, if they land here is a bug.
@@ -225,7 +225,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             groupInfo.setServiceIDRef(GROUP_INFO_SERVICE_ID);
         }
 
-        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_SERIES, getAmazonAsin(series)));
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_SERIES, getUnboxAsin(series)));
         
         return groupInfo;
     }
@@ -239,7 +239,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         groupInfo.setOrdered(true);
         groupInfo.setServiceIDRef(GROUP_INFO_SERVICE_ID);
 
-        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_BRAND, getAmazonAsin(brand)));
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_BRAND, getUnboxAsin(brand)));
         
         return groupInfo;
     }

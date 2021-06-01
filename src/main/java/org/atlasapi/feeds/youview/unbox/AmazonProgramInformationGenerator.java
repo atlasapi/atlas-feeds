@@ -40,7 +40,7 @@ import tva.mpeg7._2008.ControlledTermUseType;
 import tva.mpeg7._2008.UniqueIDType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAmazonAsin;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getUnboxAsin;
 
 
 public class AmazonProgramInformationGenerator implements ProgramInformationGenerator {
@@ -149,7 +149,7 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
         UniqueIDType id = new UniqueIDType();
         
         id.setAuthority(AmazonOnDemandLocationGenerator.DEEP_LINKING_AUTHORITY);
-        id.setValue(getAmazonAsin(item));
+        id.setValue(getUnboxAsin(item));
         
         return id;
     }
