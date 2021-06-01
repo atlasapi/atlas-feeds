@@ -163,8 +163,15 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             setLastUpdatedTime(to);
         }
 
-        YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
-        YouViewContentProcessor deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
+        YouViewContentProcessor uploadProcessor;
+        YouViewContentProcessor deletionProcessor;
+        if(getPublisher().equals(Publisher.AMAZON_V3)){
+            uploadProcessor = contentProcessor(new DateTime("2021-05-31T10:11:12.123"), Action.UPDATE);
+            deletionProcessor = contentProcessor(new DateTime("2021-05-31T10:11:12.123"), Action.DELETE);
+        } else {
+            uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
+            deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
+        }
 
         Set<Content> forDeletion;
         if(getPublisher().equals(Publisher.BBC_NITRO)){
