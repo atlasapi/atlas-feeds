@@ -472,7 +472,8 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             } else if (person.role() == CrewMember.Role.PRODUCER) {
                 producers.add(person);
             } else if (person.role() == CrewMember.Role.WRITER) {
-                writers.add(person);
+                //TODO: add writers (they currently miss tva uri prefix)
+//                writers.add(person);
             }
             else {
                 other.add(person);

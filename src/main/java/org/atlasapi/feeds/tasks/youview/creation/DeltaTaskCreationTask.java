@@ -47,7 +47,6 @@ import org.joda.time.DateTime;
 import org.joda.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.actors.threadpool.Arrays;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -175,12 +174,12 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
         Set<Content> forDeletion;
         if(getPublisher().equals(Publisher.BBC_NITRO)){
-            forDeletion = uploadFromBBC(updatedContent, uploadProcessor);
+            forDeletion = uploadDefault(updatedContent, uploadProcessor);
         }
         else if(getPublisher().equals(Publisher.AMAZON_UNBOX)){
             forDeletion = uploadFromAmazon(updatedContent, uploadProcessor);
         } else if(getPublisher().equals(Publisher.AMAZON_V3)){
-            forDeletion = uploadFromNewAmazon(updatedContent, uploadProcessor);
+            forDeletion = uploadDefault(updatedContent, uploadProcessor);
         } else {
             throw new IllegalStateException("Uploading from "+getPublisher()+" to YV is not supported.");
         }
@@ -267,36 +266,6 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         return forDeletion;
     }
 
-    //Returns the content that should be deleted.
-    protected Set<Content> uploadFromNewAmazon(
-            Iterator<? extends Content> contentPieces,
-            YouViewContentProcessor uploadProcessor
-    ) {
-        Set<Content> forDeletion = Sets.newLinkedHashSet();
-        while (contentPieces.hasNext()) {
-            Content updatedContent = contentPieces.next();
-            if (!updatedContent.isActivelyPublished()) {
-                forDeletion.add(updatedContent);
-                continue;
-            }
-
-            Content mergedContent;
-            try {
-                mergedContent = youviewContentMerger.equivAndMerge(updatedContent);
-            } catch (Exception e) {
-                log.error("Failed during the attempt to equiv, merge or get a repId. "
-                                + "This item will not be pushed to YV. Content {}. ",
-                        updatedContent.getCanonicalUri(), e);
-                continue;
-            }
-
-            uploadProcessor.process(mergedContent);
-            reportStatus("Uploads: " + uploadProcessor.getResult());
-
-        }
-        return forDeletion;
-    }
-
     private Set<Content> extractForDeletion(Content mergedContent) {
         //Good, now that we have the merged content, we need to ensure that the pieces this
         //represents are not uploaded to YV separately. One case that can cause this is that
@@ -332,7 +301,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     }
 
     //returns the content that should be deleted.
-    private Set<Content> uploadFromBBC(
+    private Set<Content> uploadDefault(
             Iterator<Content> updatedContent,
             YouViewContentProcessor uploadProcessor) {
 
