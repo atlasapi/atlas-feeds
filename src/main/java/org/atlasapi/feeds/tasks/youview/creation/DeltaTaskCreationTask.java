@@ -144,13 +144,14 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
             log.info("Started a delta YV task creation process for {} from {} to {}",
                     getPublisher(), from, to);
-            setLastUpdatedTime(to);
         } else if (getPublisher().equals(Publisher.AMAZON_V3)) {
 
             Set<String> contentUris = Stream.of("http://v3.amazon.co.uk/amzn1.dv.gti.2eb76463-7bba-4ef6-f38d-a1e59a40dc4e:GB", "http://v3.amazon.co.uk/amzn1.dv.gti.e2b8b2a4-94c7-a622-aa95-1af60936b0cd:GB").collect(Collectors.toSet());
 
             ResolvedContent resolvedContent = contentResolver.findByUris(contentUris);
             updatedContent = translateResolvedToContent(resolvedContent);
+
+            to = new DateTime("2021-01-01T10:11:12.123");
 
             log.info("Started a delta YV task creation process for {} for uris {}",
                     getPublisher(), contentUris);
@@ -160,14 +161,13 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
             updatedContent = contentResolver.updatedSince(from);
             log.info("Started a delta YV task creation process for {} from {}",
                     getPublisher(), lastUpdated);
-            setLastUpdatedTime(to);
         }
 
         YouViewContentProcessor uploadProcessor;
         YouViewContentProcessor deletionProcessor;
         if(getPublisher().equals(Publisher.AMAZON_V3)){
-            uploadProcessor = contentProcessor(new DateTime("2021-05-31T10:11:12.123"), Action.UPDATE);
-            deletionProcessor = contentProcessor(new DateTime("2021-05-31T10:11:12.123"), Action.DELETE);
+            uploadProcessor = contentProcessor(new DateTime("2021-02-01T10:11:12.123"), Action.UPDATE);
+            deletionProcessor = contentProcessor(new DateTime("2021-02-01T10:11:12.123"), Action.DELETE);
         } else {
             uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
             deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
@@ -192,7 +192,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         }
 
         log.info("Done creating {} tasks for YV up to {}.", getPublisher(), startOfTask.get());
-//        setLastUpdatedTime(to);
+        setLastUpdatedTime(to);
 
         log.info("Started uploading YV tasks from {}.", getPublisher());
         reportStatus("Uploading tasks to YouView");
