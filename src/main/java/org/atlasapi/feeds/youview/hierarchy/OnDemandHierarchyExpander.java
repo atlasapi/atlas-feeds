@@ -111,12 +111,12 @@ public class OnDemandHierarchyExpander {
 
     private boolean isYouViewIPlayerLocation(Location location, Item item){
         Policy policy = location.getPolicy();
-        if(item.getPublisher().equals(Publisher.BBC_NITRO) || item.getPublisher().equals(Publisher.AMAZON_UNBOX)) {
-            return (policy !=null && policy.getPlatform() != null &&
-                    (Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform())
-                            || Platform.YOUVIEW_AMAZON.equals(policy.getPlatform())));
+        if(item.getPublisher().equals(Publisher.AMAZON_V3)) {
+            return true;
         }
-        return true;
+        return (policy !=null && policy.getPlatform() != null &&
+                (Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform())
+                        || Platform.YOUVIEW_AMAZON.equals(policy.getPlatform())));
     }
 
 }
