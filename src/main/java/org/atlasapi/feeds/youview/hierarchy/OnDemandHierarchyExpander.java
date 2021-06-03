@@ -77,7 +77,7 @@ public class OnDemandHierarchyExpander {
 
         ImmutableList.Builder<Location> locationsBuilder = ImmutableList.builder();
         for (Location location : encoding.getAvailableAt()) {
-            if (isYouViewIPlayerLocation(location)) {
+            if (isYouViewIPlayerLocation(location, item)) {
                 locationsBuilder.add(location);
             }
         }
@@ -98,7 +98,7 @@ public class OnDemandHierarchyExpander {
     private ItemOnDemandHierarchy createOndemandForEachLocation(
             Item item, Version version, Encoding encoding, Location location) {
 
-        if (isYouViewIPlayerLocation(location)) {
+        if (isYouViewIPlayerLocation(location, item)) {
             return new ItemOnDemandHierarchy(
                     item,
                     version,
@@ -109,11 +109,14 @@ public class OnDemandHierarchyExpander {
         return null;
     }
 
-    private boolean isYouViewIPlayerLocation(Location location){
+    private boolean isYouViewIPlayerLocation(Location location, Item item){
         Policy policy = location.getPolicy();
-        return (policy !=null && policy.getPlatform() != null &&
-                (Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform())
-                 || Platform.YOUVIEW_AMAZON.equals(policy.getPlatform())));
+        if(item.getPublisher().equals(Publisher.BBC_NITRO) || item.getPublisher().equals(Publisher.AMAZON_UNBOX)) {
+            return (policy !=null && policy.getPlatform() != null &&
+                    (Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform())
+                            || Platform.YOUVIEW_AMAZON.equals(policy.getPlatform())));
+        }
+        return true;
     }
 
 }
