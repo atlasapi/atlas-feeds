@@ -10,6 +10,7 @@ import org.atlasapi.media.entity.Policy.Platform;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import org.atlasapi.media.entity.Publisher;
 import org.joda.time.DateTime;
 
 public class FilterFactory {
@@ -76,7 +77,7 @@ public class FilterFactory {
                 boolean allYv = true;
                 for (Location location : input.locations()) {
                     Policy policy = location.getPolicy();
-                    if (policy != null
+                    if (policy != null && !input.item().getPublisher().equals(Publisher.AMAZON_V3)
                         && (!Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform())
                             && !Platform.YOUVIEW_AMAZON.equals(policy.getPlatform()))) {
                         allYv = false;

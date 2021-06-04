@@ -82,41 +82,39 @@ public class AmazonProgramInformationGenerator implements ProgramInformationGene
 
     private static final String YOUVIEW_DEFAULT_CERTIFICATE = "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated";
     private static final String YOUVIEW_DEFAULT_EXPLANATION = "Rating to be announced";
+    // TODO: Add all classification systems
     private static final Map<String, String> YOUVIEW_CERTIFICATE_MAPPING = ImmutableMap.<String, String>builder()
-            //The mapping is as agreed in YV ticket ECOTEST-283
-            .put("amazon_maturity_rating|all_ages", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#no_parental_controls")
-            .put("amazon_maturity_rating|children", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#no_parental_controls")
-            .put("amazon_maturity_rating|guidance_suggested", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#parental_guidance")
-            .put("amazon_maturity_rating|ages_9_and_older", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#twelve")
-            .put("amazon_maturity_rating|ages_13_and_older", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#fifteen")
-            .put("amazon_maturity_rating|ages_17_and_older", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#eighteen")
-            .put("amazon_maturity_rating|adult_content", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#eighteen")
-            .put("amazon_maturity_rating|mature", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#eighteen")
+            .put("amr|all", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#no_parental_controls")
+            .put("amr|7+", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#twelve")
+            .put("amr|13+", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#fifteen")
+            .put("amr|16+", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#eighteen")
+            .put("amr|18+", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#eighteen")
+            .put("amr|nr", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated")
 
-            .put("bbfc_rating|universal", "http://bbfc.org.uk/BBFCRatingCS/2002#U")
-            .put("bbfc_rating|parental_guidance", "http://bbfc.org.uk/BBFCRatingCS/2002#PG")
-            .put("bbfc_rating|ages_12_and_over", "http://bbfc.org.uk/BBFCRatingCS/2002#12")
-            .put("bbfc_rating|ages_15_and_over", "http://bbfc.org.uk/BBFCRatingCS/2002#15")
-            .put("bbfc_rating|ages_18_and_over", "http://bbfc.org.uk/BBFCRatingCS/2002#18")
-            .put("bbfc_rating|to_be_announced", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated")
+            .put("bbfc|u", "http://bbfc.org.uk/BBFCRatingCS/2002#U")
+            .put("bbfc|pg", "http://bbfc.org.uk/BBFCRatingCS/2002#PG")
+            .put("bbfc|12", "http://bbfc.org.uk/BBFCRatingCS/2002#12")
+            .put("bbfc|15", "http://bbfc.org.uk/BBFCRatingCS/2002#15")
+            .put("bbfc|18", "http://bbfc.org.uk/BBFCRatingCS/2002#18")
+            .put("bbfc|nr", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated")
+            .put("bbfc|tbc", "http://refdata.youview.com/mpeg7cs/YouViewContentRatingCS/2010-11-25#unrated")
             .build();
 
     private static final Map<String, String> YOUVIEW_CERTIFICATE_EXPLANATION_MAPPING = ImmutableMap.<String, String>builder()
-            .put("amazon_maturity_rating|all_ages", "")
-            .put("amazon_maturity_rating|children", "")
-            .put("amazon_maturity_rating|guidance_suggested","Guidance Suggested")
-            .put("amazon_maturity_rating|ages_9_and_older","Suitable for 9 years and over")
-            .put("amazon_maturity_rating|ages_13_and_older","Suitable for 13 years and over")
-            .put("amazon_maturity_rating|ages_17_and_older","Suitable for 17 years and over")
-            .put("amazon_maturity_rating|adult_content", "Suitable for 18 years and over")
-            .put("amazon_maturity_rating|mature","Suitable for 18 years and over")
+            .put("amr|all", "General audience")
+            .put("amr|7+", "Suitable for 7 years or older")
+            .put("amr|13+","Suitable for 13 years or older")
+            .put("amr|16+","Suitable for 16 years or older")
+            .put("amr|18+","Adults only")
+            .put("amr|nr","Not rated")
 
-            .put("bbfc_rating|universal","")
-            .put("bbfc_rating|parental_guidance","")
-            .put("bbfc_rating|ages_12_and_over", "")
-            .put("bbfc_rating|ages_15_and_over", "")
-            .put("bbfc_rating|ages_18_and_over","")
-            .put("bbfc_rating|to_be_announced", "Rating to be announced")
+            .put("bbfc|u", "Suitable for all")
+            .put("bbfc|pg", "Parental guidance")
+            .put("bbfc|12", "Video release suitable for 12 years and over")
+            .put("bbfc|15", "Suitable only for 15 years and over")
+            .put("bbfc|18", "Suitable only for adults")
+            .put("bbfc|nr", "Not rated")
+            .put("bbfc|tbc", "Not yet rated")
             .build();
     
     private final IdGenerator idGenerator;
