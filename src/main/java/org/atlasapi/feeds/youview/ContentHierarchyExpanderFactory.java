@@ -16,6 +16,7 @@ public class ContentHierarchyExpanderFactory {
 
     private static final Logger log = LoggerFactory.getLogger(ContentHierarchyExpanderFactory.class);
 
+    private @Autowired ContentHierarchyExpander newAmazonContentHierarchyExpander;
     private @Autowired ContentHierarchyExpander amazonContentHierarchyExpander;
     private @Autowired ContentHierarchyExpander nitroContentHierarchyExpander;
 
@@ -23,7 +24,7 @@ public class ContentHierarchyExpanderFactory {
         Map<Publisher, ContentHierarchyExpander> expanderMapping
                 = ImmutableMap.<Publisher, ContentHierarchyExpander>builder()
                 .put(Publisher.AMAZON_UNBOX, amazonContentHierarchyExpander)
-                .put(Publisher.AMAZON_V3, amazonContentHierarchyExpander)
+                .put(Publisher.AMAZON_V3, newAmazonContentHierarchyExpander)
                 .put(Publisher.BBC_NITRO, nitroContentHierarchyExpander)
                 .build();
         return expanderMapping.get(publisher);
