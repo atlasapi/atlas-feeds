@@ -124,7 +124,8 @@ public class YouViewUploadModule {
 
     private static final Map<String, Publisher> PUBLISHER_MAPPING = ImmutableMap.of(
             "nitro", Publisher.BBC_NITRO,
-            "unbox", Publisher.AMAZON_UNBOX
+            "unbox", Publisher.AMAZON_UNBOX,
+            "amazon", Publisher.AMAZON_V3
     );
 
     private static final RepetitionRule NITRO_DELTA_CONTENT_CHECK = RepetitionRules.every(Duration.standardMinutes(2));
@@ -162,12 +163,15 @@ public class YouViewUploadModule {
     public void startScheduledTasks() throws JAXBException, SAXException {
         for (Entry<String, Publisher> publisherEntry : PUBLISHER_MAPPING.entrySet()) {
             String publisherPrefix = CONFIG_PREFIX + publisherEntry.getKey();
-            if (isEnabled(publisherPrefix)) {
+            if (publisherPrefix.equals("youview.upload.amazon") || isEnabled(publisherPrefix)) {
                 if(publisherEntry.getValue().equals(Publisher.BBC_NITRO)){
                     scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.BBC_NITRO), NITRO_DELTA_CONTENT_CHECK);
                     scheduler.schedule(scheduleBootstrapTaskCreationTask(Publisher.BBC_NITRO), NEVER);
                 } else if(publisherEntry.getValue().equals(Publisher.AMAZON_UNBOX)){
                     scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.AMAZON_UNBOX), AMAZON_DELTA_CONTENT_CHECK);
+                } else if(publisherEntry.getValue().equals(Publisher.AMAZON_V3)){
+                    scheduler.schedule(scheduleBootstrapTaskCreationTask(Publisher.AMAZON_V3), NEVER);
+                    scheduler.schedule(scheduleDeltaTaskCreationTask(Publisher.AMAZON_V3), NEVER);
                 }
             }
         }

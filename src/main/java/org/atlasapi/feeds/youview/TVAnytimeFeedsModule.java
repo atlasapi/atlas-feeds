@@ -52,6 +52,13 @@ public class TVAnytimeFeedsModule {
     private @Autowired AmazonBroadcastEventGenerator unboxBroadcastGenerator;
     private @Autowired AmazonChannelGenerator amazonChannelGenerator;
     private @Autowired AmazonMasterbrandGenerator amazonMasterbrandGenerator;
+
+    private @Autowired org.atlasapi.feeds.youview.amazon.AmazonProgramInformationGenerator newAmazonProgInfoGenerator;
+    private @Autowired org.atlasapi.feeds.youview.amazon.AmazonGroupInformationGenerator newAmazonGroupInfoGenerator;
+    private @Autowired org.atlasapi.feeds.youview.amazon.AmazonOnDemandLocationGenerator newAmazonOnDemandGenerator;
+    private @Autowired org.atlasapi.feeds.youview.amazon.AmazonBroadcastEventGenerator newAmazonBroadcastGenerator;
+    private @Autowired org.atlasapi.feeds.youview.amazon.AmazonChannelGenerator newAmazonChannelGenerator;
+    private @Autowired org.atlasapi.feeds.youview.amazon.AmazonMasterbrandGenerator newAmazonMasterbrandGenerator;
     
     private @Autowired NitroProgramInformationGenerator nitroProgInfoGenerator;
     private @Autowired NitroGroupInformationGenerator nitroGroupInfoGenerator;
@@ -90,10 +97,23 @@ public class TVAnytimeFeedsModule {
         Map<Publisher, TvAnytimeGenerator> generatorMapping 
                 = ImmutableMap.<Publisher, TvAnytimeGenerator>builder()
                 .put(Publisher.AMAZON_UNBOX, unboxTVAGenerator())
+                .put(Publisher.AMAZON_V3, amazonTVAGenerator())
                 .put(Publisher.BBC_NITRO, nitroTVAGenerator())
                 .build();
         
         return new PublisherSpecificTVAnytimeGenerator(generatorMapping);
+    }
+
+    private TvAnytimeGenerator amazonTVAGenerator() {
+        return new JaxbTvAnytimeGenerator(new DefaultTvAnytimeElementCreator(
+                newAmazonProgInfoGenerator,
+                newAmazonGroupInfoGenerator,
+                newAmazonOnDemandGenerator,
+                newAmazonBroadcastGenerator,
+                newAmazonChannelGenerator,
+                newAmazonMasterbrandGenerator,
+                contentHierarchy()
+        ));
     }
 
     private TvAnytimeGenerator unboxTVAGenerator() {

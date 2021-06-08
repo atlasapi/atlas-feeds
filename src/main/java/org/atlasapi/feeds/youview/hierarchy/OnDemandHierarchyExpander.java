@@ -1,7 +1,9 @@
 package org.atlasapi.feeds.youview.hierarchy;
 
 import java.util.Map;
+import java.util.Set;
 
+import com.google.common.collect.Sets;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
 import org.atlasapi.media.entity.Encoding;
 import org.atlasapi.media.entity.Item;
@@ -9,6 +11,7 @@ import org.atlasapi.media.entity.Location;
 import org.atlasapi.media.entity.Policy;
 import org.atlasapi.media.entity.Policy.Platform;
 import org.atlasapi.media.entity.Publisher;
+import org.atlasapi.media.entity.Quality;
 import org.atlasapi.media.entity.Version;
 
 import com.google.common.collect.ImmutableList;
@@ -49,8 +52,11 @@ public class OnDemandHierarchyExpander {
         ImmutableList.Builder<ItemOnDemandHierarchy> list = ImmutableList.builder();
 
         for (Version version : item.getVersions()) {
+            Set<Location> fourKLocations = Sets.newHashSet();
+            Set<Location> hdLocations = Sets.newHashSet();
+            Set<Location> sdLocations = Sets.newHashSet();
             for (Encoding encoding : version.getManifestedAs()) {
-                //Amazon has one odemand per encoding
+                //Amazon Unbox has one odemand per encoding
                 if (item.getPublisher().equals(Publisher.AMAZON_UNBOX)) {
                     ItemOnDemandHierarchy ondemand =
                             createOndemandForEachEncoding(item, version, encoding);
@@ -58,13 +64,44 @@ public class OnDemandHierarchyExpander {
                         list.add(ondemand);
                     }
                 } else {
-                    //everything else has an ondemand per location
                     for (Location location : encoding.getAvailableAt()) {
-                        ItemOnDemandHierarchy ondemand =
-                                createOndemandForEachLocation(item, version, encoding, location);
-                        if (ondemand != null) {
-                            list.add(ondemand);
+                        //combine locations under the same quality for Amazon V3
+                        if(item.getPublisher().equals(Publisher.AMAZON_V3)) {
+                            if(encoding.getQuality().equals(Quality.SD)) {
+                                sdLocations.add(location);
+                            } else if(encoding.getQuality().equals(Quality.HD)) {
+                                hdLocations.add(location);
+                            } else if(encoding.getQuality().equals(Quality.FOUR_K)) {
+                                fourKLocations.add(location);
+                            }
+                            //everything else has an ondemand per location
+                        } else {
+                            ItemOnDemandHierarchy ondemand =
+                                    createOndemandForEachLocation(item, version, encoding, location);
+                            if (ondemand != null) {
+                                list.add(ondemand);
+                            }
                         }
+                    }
+                }
+            }
+            //create encodings for the combined locations for Amazon V3
+            if(item.getPublisher().equals(Publisher.AMAZON_V3)) {
+                ImmutableList.Builder<Encoding> encodings = ImmutableList.builder();
+                if(!sdLocations.isEmpty()) {
+                    encodings.add(createEncoding(Quality.SD, sdLocations));
+                }
+                if(!hdLocations.isEmpty()) {
+                    encodings.add(createEncoding(Quality.HD, hdLocations));
+                }
+                if(!fourKLocations.isEmpty()) {
+                    encodings.add(createEncoding(Quality.FOUR_K, fourKLocations));
+                }
+                for (Encoding encoding : encodings.build()) {
+                    ItemOnDemandHierarchy ondemand =
+                            createOndemandForEachEncoding(item, version, encoding);
+                    if (ondemand != null) {
+                        list.add(ondemand);
                     }
                 }
             }
@@ -72,12 +109,25 @@ public class OnDemandHierarchyExpander {
         return list.build();
     }
 
+    private Encoding createEncoding(org.atlasapi.media.entity.Quality quality,
+                                    Set<Location> locations) {
+
+        Encoding encoding = new Encoding();
+        if (quality != org.atlasapi.media.entity.Quality.SD) {
+            encoding.setHighDefinition(true);
+        }
+
+        encoding.setQuality(quality);
+        encoding.setAvailableAt(locations);
+        return encoding;
+    }
+
     private ItemOnDemandHierarchy createOndemandForEachEncoding(
             Item item, Version version, Encoding encoding) {
 
         ImmutableList.Builder<Location> locationsBuilder = ImmutableList.builder();
         for (Location location : encoding.getAvailableAt()) {
-            if (isYouViewIPlayerLocation(location)) {
+            if (isYouViewIPlayerLocation(location, item)) {
                 locationsBuilder.add(location);
             }
         }
@@ -98,7 +148,7 @@ public class OnDemandHierarchyExpander {
     private ItemOnDemandHierarchy createOndemandForEachLocation(
             Item item, Version version, Encoding encoding, Location location) {
 
-        if (isYouViewIPlayerLocation(location)) {
+        if (isYouViewIPlayerLocation(location, item)) {
             return new ItemOnDemandHierarchy(
                     item,
                     version,
@@ -109,11 +159,14 @@ public class OnDemandHierarchyExpander {
         return null;
     }
 
-    private boolean isYouViewIPlayerLocation(Location location){
+    private boolean isYouViewIPlayerLocation(Location location, Item item){
         Policy policy = location.getPolicy();
+        if(item.getPublisher().equals(Publisher.AMAZON_V3)) {
+            return true;
+        }
         return (policy !=null && policy.getPlatform() != null &&
                 (Platform.YOUVIEW_IPLAYER.equals(policy.getPlatform())
-                 || Platform.YOUVIEW_AMAZON.equals(policy.getPlatform())));
+                        || Platform.YOUVIEW_AMAZON.equals(policy.getPlatform())));
     }
 
 }

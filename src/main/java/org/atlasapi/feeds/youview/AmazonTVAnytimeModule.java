@@ -91,4 +91,68 @@ public class AmazonTVAnytimeModule {
     public BroadcastHierarchyExpander broadcastHierarchyExpander() {
         return new BroadcastHierarchyExpander(amazonIdGenerator(), amazonBroadcastServiceMapping(), amazonServiceIdResolver() , new SystemClock());
     }
+
+    @Bean
+    public org.atlasapi.feeds.youview.amazon.AmazonProgramInformationGenerator newAmazonProgInfoGenerator() {
+        return new org.atlasapi.feeds.youview.amazon.AmazonProgramInformationGenerator(newAmazonIdGenerator());
+    }
+
+    @Bean
+    public org.atlasapi.feeds.youview.amazon.AmazonGroupInformationGenerator newAmazonGroupInfoGenerator() {
+        return new org.atlasapi.feeds.youview.amazon.AmazonGroupInformationGenerator(newAmazonIdGenerator(), newAmazonGenreMapping());
+    }
+
+    @Bean
+    public org.atlasapi.feeds.youview.amazon.AmazonOnDemandLocationGenerator newAmazonOnDemandGenerator() {
+        return new org.atlasapi.feeds.youview.amazon.AmazonOnDemandLocationGenerator(newAmazonIdGenerator());
+    }
+
+    @Bean
+    public org.atlasapi.feeds.youview.amazon.AmazonBroadcastEventGenerator newAmazonBroadcastGenerator() {
+        return new org.atlasapi.feeds.youview.amazon.AmazonBroadcastEventGenerator();
+    }
+    @Bean
+    public org.atlasapi.feeds.youview.amazon.AmazonChannelGenerator newAmazonChannelGenerator() {
+        return new org.atlasapi.feeds.youview.amazon.AmazonChannelGenerator();
+    }
+
+    @Bean
+    public org.atlasapi.feeds.youview.amazon.AmazonMasterbrandGenerator newAmazonMasterbrandGenerator() {
+        return new org.atlasapi.feeds.youview.amazon.AmazonMasterbrandGenerator();
+    }
+    @Bean
+    public org.atlasapi.feeds.youview.amazon.AmazonIdGenerator newAmazonIdGenerator() {
+        return new org.atlasapi.feeds.youview.amazon.AmazonIdGenerator();
+    }
+
+    @Bean
+    public org.atlasapi.feeds.youview.amazon.AmazonGenreMapping newAmazonGenreMapping() {
+        return new org.atlasapi.feeds.youview.amazon.AmazonGenreMapping();
+    }
+
+    @Bean
+    public org.atlasapi.feeds.youview.amazon.AmazonBroadcastServiceMapping newAmazonBroadcastServiceMapping() {
+        return new org.atlasapi.feeds.youview.amazon.AmazonBroadcastServiceMapping();
+    }
+
+    public ServiceIdResolver newAmazonServiceIdResolver() {
+        return new org.atlasapi.feeds.youview.amazon.AmazonServiceIdResolver();
+    }
+
+    @Bean
+    public ContentHierarchyExpander newAmazonContentHierarchyExpander() {
+        return new ContentHierarchyExpanderImpl(newVersionHierarchyExpander(), newBroadcastHierarchyExpander(), newOnDemandHierarchyExpander(), newAmazonIdGenerator());
+    }
+
+    public VersionHierarchyExpander newVersionHierarchyExpander() {
+        return new VersionHierarchyExpander(newAmazonIdGenerator());
+    }
+
+    public OnDemandHierarchyExpander newOnDemandHierarchyExpander() {
+        return new OnDemandHierarchyExpander(newAmazonIdGenerator());
+    }
+
+    public BroadcastHierarchyExpander newBroadcastHierarchyExpander() {
+        return new BroadcastHierarchyExpander(newAmazonIdGenerator(), newAmazonBroadcastServiceMapping(), newAmazonServiceIdResolver() , new SystemClock());
+    }
 }

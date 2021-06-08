@@ -13,6 +13,9 @@ public class IdGeneratorFactory {
         else if (publisher == Publisher.AMAZON_UNBOX){
             return new AmazonIdGenerator();
         }
+        else if (publisher == Publisher.AMAZON_V3){
+            return new org.atlasapi.feeds.youview.amazon.AmazonIdGenerator();
+        }
 
         throw new IllegalArgumentException("There is no known idGenerator for publisher="+publisher);
     }

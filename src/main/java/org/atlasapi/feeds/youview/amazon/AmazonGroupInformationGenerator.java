@@ -1,17 +1,14 @@
-package org.atlasapi.feeds.youview.unbox;
+package org.atlasapi.feeds.youview.amazon;
 
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.annotation.Nullable;
-import javax.xml.bind.JAXBElement;
-import javax.xml.namespace.QName;
-
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Strings;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.metabroadcast.common.text.Truncator;
 import org.atlasapi.feeds.tvanytime.GroupInformationGenerator;
 import org.atlasapi.feeds.youview.genres.GenreMapping;
 import org.atlasapi.feeds.youview.ids.IdGenerator;
@@ -24,17 +21,6 @@ import org.atlasapi.media.entity.Item;
 import org.atlasapi.media.entity.MediaType;
 import org.atlasapi.media.entity.Series;
 import org.atlasapi.media.entity.Specialization;
-
-import com.metabroadcast.common.text.Truncator;
-
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Strings;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import tva.metadata._2010.BaseProgramGroupTypeType;
@@ -59,8 +45,19 @@ import tva.mpeg7._2008.PersonNameType;
 import tva.mpeg7._2008.TitleType;
 import tva.mpeg7._2008.UniqueIDType;
 
+import javax.annotation.Nullable;
+import javax.xml.bind.JAXBElement;
+import javax.xml.namespace.QName;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getUnboxAsin;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAmazonAsin;
 
 public class AmazonGroupInformationGenerator implements GroupInformationGenerator {
 
@@ -154,7 +151,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
 
         groupInfo.setGroupType(generateGroupType(GROUP_TYPE_PROGRAMCONCEPT));
         groupInfo.setServiceIDRef(GROUP_INFO_SERVICE_ID);
-        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getUnboxAsin(film)));
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getAmazonAsin(film)));
         groupInfo.getOtherIdentifier().add(generateOtherIdentifier(
                 OTHER_IDENTIFIER_AUTHORITY_CONTENT_TYPE,
                 CONTENT_TYPE_MOVIE
@@ -196,7 +193,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             }
             groupInfo.getMemberOf().add(memberOf);
         }
-        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getUnboxAsin(item)));
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_EPISODE, getAmazonAsin(item)));
         groupInfo.getOtherIdentifier().add(generateOtherIdentifier(
                 OTHER_IDENTIFIER_AUTHORITY_CONTENT_TYPE,
                 CONTENT_TYPE_EPISODE //films are handled elsewhere, if they land here is a bug.
@@ -225,7 +222,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             groupInfo.setServiceIDRef(GROUP_INFO_SERVICE_ID);
         }
 
-        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_SERIES, getUnboxAsin(series)));
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_SERIES, getAmazonAsin(series)));
         
         return groupInfo;
     }
@@ -239,7 +236,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         groupInfo.setOrdered(true);
         groupInfo.setServiceIDRef(GROUP_INFO_SERVICE_ID);
 
-        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_BRAND, getUnboxAsin(brand)));
+        groupInfo.getOtherIdentifier().add(generateOtherIdentifier(OTHER_IDENTIFIER_AUTHORITY_BRAND, getAmazonAsin(brand)));
         
         return groupInfo;
     }
@@ -262,7 +259,7 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         BasicContentDescriptionType basicDescription = new BasicContentDescriptionType();
 
         basicDescription.getSynopsis().addAll(generateSynopses(content));
-        basicDescription.getGenre().addAll(generateGenres(content));
+//        basicDescription.getGenre().addAll(generateGenres(content));
         basicDescription.getGenre().add(generateGenreFromSpecialization(content));
         basicDescription.getGenre().add(generateGenreFromMediaType(content));
         basicDescription.getLanguage().addAll(generateLanguage(content));
@@ -277,9 +274,12 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
             }
 
         } else if (content instanceof Brand) {
-            // Since the Amazon content catalog doesn't contain any brand level information,
-            // generate brand fragments based on one of the brand's children.
-            relatedMaterial = generateRelatedMaterial(item);
+            // If available, try to generate series fragments using their own information.
+            // If not, use one of the series's children.
+            relatedMaterial = generateRelatedMaterial(content);
+            if (!relatedMaterial.isPresent()) {
+                relatedMaterial = generateRelatedMaterial(item);
+            }
         } else {
             relatedMaterial = generateRelatedMaterial(content);
         }
@@ -405,24 +405,24 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     }
 
     public static String getMetabroadcastImageUrl(String amazonUrl) {
-        if (AMAZON_DEFAULT_FILL_IN_IMAGE_URL.equals(amazonUrl)) { //+1 for code quality.
-            return amazonUrl;
-        }
-        //Chop amazon's native resizing out of their url (ECOTEST-265)
-        //e.g. from https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD._SX320_SY240_.jpg
-        //     to   https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD.jpg
-        int lastDot = amazonUrl.lastIndexOf('.');
-        int preLastDot = amazonUrl.lastIndexOf('.', lastDot - 1);
-        if (lastDot > 0 || preLastDot > 0) {
-            amazonUrl = amazonUrl.substring(0, preLastDot)
-                        + amazonUrl.substring(lastDot, amazonUrl.length());
-        }
-
-        try {
-            return MBST_BASE_IMAGE_URL + URLEncoder.encode(amazonUrl, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            log.error("", e);
-        }
+//        if (AMAZON_DEFAULT_FILL_IN_IMAGE_URL.equals(amazonUrl)) { //+1 for code quality.
+//            return amazonUrl;
+//        }
+//        //Chop amazon's native resizing out of their url (ECOTEST-265)
+//        //e.g. from https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD._SX320_SY240_.jpg
+//        //     to   https://m.media-amazon.com/images/S/aiv-image/jp/8-9341_RGB_SD.jpg
+//        int lastDot = amazonUrl.lastIndexOf('.');
+//        int preLastDot = amazonUrl.lastIndexOf('.', lastDot - 1);
+//        if (lastDot > 0 || preLastDot > 0) {
+//            amazonUrl = amazonUrl.substring(0, preLastDot)
+//                        + amazonUrl.substring(lastDot, amazonUrl.length());
+//        }
+//
+//        try {
+//            return MBST_BASE_IMAGE_URL + URLEncoder.encode(amazonUrl, "UTF-8");
+//        } catch (UnsupportedEncodingException e) {
+//            log.error("", e);
+//        }
 
         return amazonUrl;
     }
@@ -460,18 +460,26 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
     private static Iterable<CrewMember> getOrderedCrewMembers(Content content) {
         List<CrewMember> actors = new ArrayList<>();
         List<CrewMember> directors = new ArrayList<>();
+        List<CrewMember> producers = new ArrayList<>();
+        List<CrewMember> writers = new ArrayList<>();
         List<CrewMember> other = new ArrayList<>();
-        //sort actors first, directors second. atm amazon ingest does not contain anything else.
+        //sort actors first, directors second, producers third, writers forth, others (currently executive_producers) fifth
         for (CrewMember person : content.people()) {
             if (person.role() == CrewMember.Role.ACTOR) {
                 actors.add(person);
             } else if (person.role() == CrewMember.Role.DIRECTOR) {
                 directors.add(person);
-            } else {
+            } else if (person.role() == CrewMember.Role.PRODUCER) {
+                producers.add(person);
+            } else if (person.role() == CrewMember.Role.WRITER) {
+                //TODO: add writers (they currently miss tva uri prefix)
+//                writers.add(person);
+            }
+            else {
                 other.add(person);
             }
         }
-        return Iterables.concat(actors, directors, other);
+        return Iterables.concat(actors, directors, producers, writers, other);
     }
 
     private List<ExtendedLanguageType> generateLanguage(Content content) {
@@ -524,6 +532,9 @@ public class AmazonGroupInformationGenerator implements GroupInformationGenerato
         List<SynopsisType> synopses = Lists.newArrayList();
         for (Entry<SynopsisLengthType, Truncator> entry : YOUVIEW_SYNOPSIS_LENGTH_MAP.entrySet()) {
             String description = content.getDescription();
+            if(entry.getKey().equals(SynopsisLengthType.LONG) && !Strings.isNullOrEmpty(content.getLongDescription())) {
+                description = content.getLongDescription();
+            }
             if (description == null){
                description = "";
             } else {

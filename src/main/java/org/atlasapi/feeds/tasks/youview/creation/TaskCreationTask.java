@@ -402,6 +402,11 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 if (shouldSave(hashType, contentCrid, p)) {
                     save(payloadHashStore, taskStore, taskCreator.taskFor(contentCrid, content, p, action));
                 }
+            } else if (Publisher.AMAZON_V3.equals(content.getPublisher())) {
+                Payload p = payloadCreator.payloadFrom(contentCrid, content);
+                if (shouldSave(HashType.CONTENT, contentCrid, p)) {
+                    save(payloadHashStore, taskStore, taskCreator.taskFor(contentCrid, content, p, action));
+                }
             } else {
                 // not strictly necessary, but will save space
                 if (!Action.DELETE.equals(action)) {
@@ -473,6 +478,12 @@ public abstract class TaskCreationTask extends ScheduledTask {
                 HashType hashType = action == Action.UPDATE ? HashType.VERSION : HashType.DELETE;
                 if (shouldSave(hashType, versionCrid, payload)) {
                     save(payloadHashStore, taskStore, task);
+                }
+            } else if (Publisher.AMAZON_V3.equals(versionHierarchy.item().getPublisher())) {
+                if (shouldSave(HashType.VERSION, versionCrid, payload)) {
+                    save(payloadHashStore, taskStore, task);
+                } else {
+                    log.debug("Existing hash found for Version {}, not updating", versionCrid);
                 }
             } else {
                 if (shouldSave(HashType.VERSION, versionCrid, payload)) {
@@ -573,7 +584,8 @@ public abstract class TaskCreationTask extends ScheduledTask {
             Payload p = payloadCreator.payloadFrom(onDemandImi, onDemandHierarchy);
 
             if (shouldSave(hashType, onDemandImi, p)) {
-                if (Publisher.AMAZON_UNBOX.equals(onDemandHierarchy.item().getPublisher())) {
+                if (Publisher.AMAZON_UNBOX.equals(onDemandHierarchy.item().getPublisher()) ||
+                        Publisher.AMAZON_V3.equals(onDemandHierarchy.item().getPublisher())) {
                     save(payloadHashStore, taskStore, taskCreator.taskFor(
                             onDemandImi,
                             onDemandHierarchy,

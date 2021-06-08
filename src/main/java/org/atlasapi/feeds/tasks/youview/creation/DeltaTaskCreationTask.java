@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.atlasapi.feeds.tasks.Action;
@@ -110,7 +111,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     @Override
     protected void runTask() {
         Optional<DateTime> lastUpdated = getLastUpdatedTime();
-        if (!lastUpdated.isPresent()) {
+        if (!lastUpdated.isPresent() && !getPublisher().equals(Publisher.AMAZON_V3)) {
             throw new IllegalStateException("The bootstrap for "+ getPublisher()
                                             + " has not successfully run. Please run the "
                                             + "bootstrap upload and ensure that it succeeds before "
@@ -142,6 +143,17 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
 
             log.info("Started a delta YV task creation process for {} from {} to {}",
                     getPublisher(), from, to);
+        } else if (getPublisher().equals(Publisher.AMAZON_V3)) {
+
+            Set<String> contentUris = Stream.of("http://v3.amazon.co.uk/amzn1.dv.gti.2eb76463-7bba-4ef6-f38d-a1e59a40dc4e:GB", "http://v3.amazon.co.uk/amzn1.dv.gti.e2b8b2a4-94c7-a622-aa95-1af60936b0cd:GB").collect(Collectors.toSet());
+
+            ResolvedContent resolvedContent = contentResolver.findByUris(contentUris);
+            updatedContent = translateResolvedToContent(resolvedContent);
+
+            to = new DateTime("2021-01-01T10:11:12.123");
+
+            log.info("Started a delta YV task creation process for {} for uris {}",
+                    getPublisher(), contentUris);
         } else {
             from = lastUpdated.get().minus(UPDATE_WINDOW_GRACE_PERIOD);
             to = startOfTask.get();
@@ -150,15 +162,24 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
                     getPublisher(), lastUpdated);
         }
 
-        YouViewContentProcessor uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
-        YouViewContentProcessor deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
+        YouViewContentProcessor uploadProcessor;
+        YouViewContentProcessor deletionProcessor;
+        if(getPublisher().equals(Publisher.AMAZON_V3)){
+            uploadProcessor = contentProcessor(new DateTime("2021-02-01T10:11:12.123"), Action.UPDATE);
+            deletionProcessor = contentProcessor(new DateTime("2021-02-01T10:11:12.123"), Action.DELETE);
+        } else {
+            uploadProcessor = contentProcessor(lastUpdated.get(), Action.UPDATE);
+            deletionProcessor = contentProcessor(lastUpdated.get(), Action.DELETE);
+        }
 
         Set<Content> forDeletion;
         if(getPublisher().equals(Publisher.BBC_NITRO)){
-            forDeletion = uploadFromBBC(updatedContent, uploadProcessor);
+            forDeletion = uploadDefault(updatedContent, uploadProcessor);
         }
         else if(getPublisher().equals(Publisher.AMAZON_UNBOX)){
             forDeletion = uploadFromAmazon(updatedContent, uploadProcessor);
+        } else if(getPublisher().equals(Publisher.AMAZON_V3)){
+            forDeletion = uploadDefault(updatedContent, uploadProcessor);
         } else {
             throw new IllegalStateException("Uploading from "+getPublisher()+" to YV is not supported.");
         }
@@ -176,7 +197,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
         reportStatus("Uploading tasks to YouView");
 
         updateTask.run();
-        if(getPublisher().equals(Publisher.AMAZON_UNBOX)){ //bbc deletes run on schedule. Don't know why, don't wanna mess with it, doubt it would be a problem.
+        if(getPublisher().equals(Publisher.AMAZON_UNBOX) || getPublisher().equals(Publisher.AMAZON_V3)){ //bbc deletes run on schedule. Don't know why, don't wanna mess with it, doubt it would be a problem.
             deleteTask.run();
         }
 
@@ -280,7 +301,7 @@ public class DeltaTaskCreationTask extends TaskCreationTask {
     }
 
     //returns the content that should be deleted.
-    private Set<Content> uploadFromBBC(
+    private Set<Content> uploadDefault(
             Iterator<Content> updatedContent,
             YouViewContentProcessor uploadProcessor) {
 

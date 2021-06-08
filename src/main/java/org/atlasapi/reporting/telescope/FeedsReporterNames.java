@@ -12,6 +12,7 @@ public enum FeedsReporterNames implements TelescopeReporterName {
     YOU_VIEW_MANUAL_UPLOADER("youview.manual-uploader", "YouView Manual Uploader"),
     YOU_VIEW_MANUAL_SCHEDULE_UPLOADER("youview.manual-schedule-uploader", "YouView Manual Schedule Uploader"),
     YOU_VIEW_AUTOMATIC_UPLOADER("youview.automatic-uploader", "YouView Auto Uploader (All)"),
+    YOU_VIEW_AUTOMATIC_UPLOADER_UNBOX("youview.unbox.automatic-uploader", "YouView Auto Uploader (Amazon Unbox)"),
     YOU_VIEW_AUTOMATIC_UPLOADER_AMAZON("youview.amazon.automatic-uploader", "YouView Auto Uploader (Amazon)"),
     YOU_VIEW_AUTOMATIC_UPLOADER_NITRO("youview.nitro.automatic-uploader", "YouView Auto Uploader (Nitro)"),
     YOU_VIEW_AUTOMATIC_DELETER("youview.automatic-deleter", "YouView Auto Deleter" ),

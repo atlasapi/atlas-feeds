@@ -1,7 +1,7 @@
 package org.atlasapi.feeds.youview.lovefilm;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getAmazonAsin;
+import static org.atlasapi.feeds.youview.YouViewGeneratorUtils.getUnboxAsin;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -128,7 +128,7 @@ public class LoveFilmOnDemandLocationGenerator implements OnDemandLocationGenera
     private UniqueIDType generateOtherId(Item item) {
         UniqueIDType id = new UniqueIDType();
         id.setAuthority(LOVEFILM_DEEP_LINKING_ID);
-        id.setValue(getAmazonAsin(item));
+        id.setValue(getUnboxAsin(item));
         return id;
     }
 

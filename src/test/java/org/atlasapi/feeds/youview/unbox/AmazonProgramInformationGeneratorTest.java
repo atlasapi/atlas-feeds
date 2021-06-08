@@ -178,7 +178,7 @@ public class AmazonProgramInformationGeneratorTest extends org.atlasapi.TestsWit
         film.setId(1L);
         film.setCanonicalUri("FilmUri");
         film.setPublisher(Publisher.AMAZON_UNBOX);
-        film.addAlias(new Alias(YouViewGeneratorUtils.ASIN_NAMESPACE,"AB123456"));
+        film.addAlias(new Alias(YouViewGeneratorUtils.ASIN_NAMESPACE_UNBOX,"AB123456"));
 
         film.setVersions(ImmutableSet.of(version1, version2));
         return film;
